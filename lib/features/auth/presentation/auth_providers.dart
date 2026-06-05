@@ -7,6 +7,7 @@
 ///
 /// Rule 3 — all state via Riverpod, no setState.
 /// Rule 4 — repository calls always return [Result<T>].
+// ignore_for_file: avoid_print
 library;
 
 import 'package:riverpod_annotation/riverpod_annotation.dart';
@@ -41,23 +42,31 @@ AuthRepository authRepository(Ref ref) {
 class CurrentUser extends _$CurrentUser {
   @override
   Future<Staff?> build() async {
+    print('AUTH_PROVIDER: CurrentUser.build() started');
     final AuthRepository repo = ref.read(authRepositoryProvider);
 
-    if (!SupabaseService.instance.isAuthenticated) {
+    final isAuth = SupabaseService.instance.isAuthenticated;
+    print('AUTH_PROVIDER: isAuthenticated = $isAuth');
+    if (!isAuth) {
+      print('AUTH_PROVIDER: Not authenticated, returning null');
       return null;
     }
 
+    print('AUTH_PROVIDER: Authenticated, fetching profile...');
     final Result<Staff?> result = await repo.getCurrentUserStaffProfile();
+    print('AUTH_PROVIDER: Profile fetch completed');
 
     switch (result) {
       case Success<Staff?>(:final data):
+        print('AUTH_PROVIDER: Profile fetch success: ${data?.fullName}');
         if (data != null && !data.isActive) {
-          // Reject unapproved sessions — best-effort sign-out.
+          print('AUTH_PROVIDER: Account inactive, signing out...');
           await repo.signOut();
           return null;
         }
         return data;
       case Failure<Staff?>(:final exception):
+        print('AUTH_PROVIDER: Profile fetch failure: $exception');
         throw exception;
     }
   }
@@ -100,3 +109,17 @@ class CurrentUser extends _$CurrentUser {
     state = const AsyncValue<Staff?>.data(null);
   }
 }
+
+/// Family provider resolving staff profile by ID.
+@riverpod
+Future<Staff> staffProfile(Ref ref, String staffId) async {
+  final AuthRepository repo = ref.read(authRepositoryProvider);
+  final Result<Staff> result = await repo.getStaffProfile(staffId);
+  switch (result) {
+    case Success<Staff>(:final data):
+      return data;
+    case Failure<Staff>(:final exception):
+      throw exception;
+  }
+}
+

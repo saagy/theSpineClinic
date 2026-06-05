@@ -28,6 +28,9 @@ abstract class Staff with _$Staff {
     /// Unique email address used for authentication.
     required String email,
 
+    /// Phone number of the staff member.
+    String? phone,
+
     /// Access-control tier (super_admin / receptionist / doctor).
     required UserRole role,
 

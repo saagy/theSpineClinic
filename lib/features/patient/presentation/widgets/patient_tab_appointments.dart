@@ -3,12 +3,17 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:spine_clinic_app/core/constants/app_colors.dart';
 import 'package:spine_clinic_app/core/constants/app_sizes.dart';
 import 'package:spine_clinic_app/core/constants/app_strings.dart';
+import 'package:go_router/go_router.dart';
+import 'package:spine_clinic_app/core/network/app_routes.dart';
+import 'package:spine_clinic_app/core/errors/app_exception.dart';
 import 'package:spine_clinic_app/features/auth/domain/user_role.dart';
 import 'package:spine_clinic_app/features/auth/presentation/auth_providers.dart';
 import 'package:spine_clinic_app/features/patient/domain/patient.dart';
-import 'package:spine_clinic_app/shared/widgets/app_badge.dart';
+import 'package:spine_clinic_app/features/patient/presentation/widgets/patient_appointment_row.dart';
+import 'package:spine_clinic_app/features/appointment/presentation/appointment_providers.dart';
 import 'package:spine_clinic_app/shared/widgets/app_button.dart';
-import 'package:spine_clinic_app/shared/widgets/data_list_tile.dart';
+import 'package:spine_clinic_app/shared/widgets/empty_state.dart';
+import 'package:spine_clinic_app/shared/widgets/error_view.dart';
 
 /// Renders a chronological list of appointments for a patient.
 class PatientTabAppointments extends ConsumerWidget {
@@ -22,32 +27,7 @@ class PatientTabAppointments extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final user = ref.watch(currentUserProvider).value;
     final isDoctor = user?.role == UserRole.doctor;
-
-    // Mock appointments data.
-    final List<Map<String, dynamic>> mockAppointments = [
-      {
-        'time': '2026-06-05 10:00 AM',
-        'type': AppStrings.session,
-        'status': AppStrings.scheduled,
-        'doctors': 'Dr. Hassan Aly',
-        'isReplacement': false,
-      },
-      {
-        'time': '2026-06-05 11:30 AM',
-        'type': AppStrings.gehazShadFakarat,
-        'status': AppStrings.scheduled,
-        'doctors': 'Dr. Khaled Amin',
-        'isReplacement': true,
-        'replacedDoctor': 'Dr. Hassan Aly',
-      },
-      {
-        'time': '2026-06-03 04:00 PM',
-        'type': AppStrings.session,
-        'status': AppStrings.completed,
-        'doctors': 'Dr. Khaled Amin',
-        'isReplacement': false,
-      },
-    ];
+    final appointmentsAsync = ref.watch(patientAppointmentsProvider(patient.id));
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -58,61 +38,54 @@ class PatientTabAppointments extends ConsumerWidget {
             child: AppButton(
               labelText: AppStrings.bookAppointment,
               onPressed: () {
-                // To be wired to NewAppointmentScreen in a future phase.
+                context.push('${AppRoutes.newAppointment}?patientId=${patient.id}');
               },
             ),
           ),
           const Divider(height: 1, thickness: 1, color: AppColors.border),
         ],
         Expanded(
-          child: ListView.builder(
-            itemCount: mockAppointments.length,
-            itemBuilder: (context, index) {
-              final apt = mockAppointments[index];
-              final bool isRep = apt['isReplacement'] as bool;
-              final String subtitle = isRep
-                  ? '${apt['doctors']} (Covering ${apt['replacedDoctor']})'
-                  : apt['doctors'] as String;
+          child: appointmentsAsync.when(
+            data: (appointments) {
+              if (appointments.isEmpty) {
+                return const EmptyState(
+                  message: AppStrings.noAppointments,
+                  icon: Icons.calendar_today_rounded,
+                );
+              }
 
-              return DataListTile(
-                title: apt['time'] as String,
-                subtitle: subtitle,
-                leading: AppBadge(
-                  label: apt['type'] as String,
-                  textColor: AppColors.primary,
-                  backgroundColor: AppColors.primaryLight,
-                ),
-                trailing: _buildStatusBadge(apt['status'] as String),
-                onTap: () {
-                  // To be wired to AppointmentDetailScreen in a future phase.
+              return RefreshIndicator(
+                onRefresh: () async {
+                  ref.invalidate(patientAppointmentsProvider(patient.id));
                 },
+                color: AppColors.primary,
+                backgroundColor: AppColors.surface,
+                child: ListView.builder(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  itemCount: appointments.length,
+                  itemBuilder: (context, index) {
+                    final appointment = appointments[index];
+                    return PatientAppointmentRow(appointment: appointment);
+                  },
+                ),
+              );
+            },
+            loading: () => const Center(
+              child: CircularProgressIndicator(color: AppColors.primary),
+            ),
+            error: (error, _) {
+              return ErrorView(
+                exception: error is AppException
+                    ? error
+                    : const UnknownException(
+                        message: AppStrings.errorDatabaseQueryFailed,
+                      ),
+                onRetry: () => ref.invalidate(patientAppointmentsProvider(patient.id)),
               );
             },
           ),
         ),
       ],
-    );
-  }
-
-  Widget _buildStatusBadge(String status) {
-    Color txtColor = AppColors.textSecondary;
-    Color bgColor = AppColors.background;
-
-    if (status == AppStrings.scheduled) {
-      txtColor = AppColors.info;
-      bgColor = AppColors.infoBg;
-    } else if (status == AppStrings.completed) {
-      txtColor = AppColors.success;
-      bgColor = AppColors.successBg;
-    } else if (status == AppStrings.cancelled) {
-      txtColor = AppColors.error;
-      bgColor = AppColors.errorBg;
-    }
-
-    return AppBadge(
-      label: status,
-      textColor: txtColor,
-      backgroundColor: bgColor,
     );
   }
 }

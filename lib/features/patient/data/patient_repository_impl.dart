@@ -13,6 +13,7 @@ library;
 import 'package:spine_clinic_app/core/errors/app_exception.dart';
 import 'package:spine_clinic_app/core/errors/result.dart';
 import 'package:spine_clinic_app/core/network/supabase_service.dart';
+import 'package:spine_clinic_app/features/auth/domain/staff.dart';
 import 'package:spine_clinic_app/features/patient/domain/clinic_location.dart';
 import 'package:spine_clinic_app/features/patient/domain/patient.dart';
 import 'package:spine_clinic_app/features/patient/domain/patient_repository.dart';
@@ -27,6 +28,9 @@ class PatientRepositoryImpl implements PatientRepository {
 
   /// Table name constant — avoids magic strings in queries.
   static const String _table = 'patients';
+
+  /// Junction table name constant for patient-doctor assignments.
+  static const String _doctorsTable = 'patient_doctors';
 
   /// Maximum number of search results to return per query.
   static const int _searchLimit = 50;
@@ -82,4 +86,266 @@ class PatientRepositoryImpl implements PatientRepository {
       return Result.failure(AppException.fromSupabaseException(error));
     }
   }
+
+  @override
+  Future<Result<Patient>> createPatient(
+    Patient patient,
+    List<String> assignedDoctorIds,
+  ) async {
+    try {
+      final Map<String, dynamic> patientJson = patient.toJson();
+      if (patient.id.isEmpty) {
+        patientJson.remove('id');
+      }
+
+      // 1. Insert patient and retrieve the generated patient row
+      final Map<String, dynamic> row = await _service.guardQuery(
+        () => _service.from(_table).insert(patientJson).select().single(),
+      );
+      final Patient createdPatient = Patient.fromJson(row);
+
+      // 2. Insert junction table records for assigned doctors
+      for (final String doctorId in assignedDoctorIds) {
+        await _service.guardQuery(
+          () => _service.from(_doctorsTable).insert({
+            'patient_id': createdPatient.id,
+            'doctor_id': doctorId,
+          }),
+        );
+      }
+
+      return Result.success(createdPatient);
+    } on AppException catch (error) {
+      return Result.failure(error);
+    } on Exception catch (error) {
+      return Result.failure(AppException.fromSupabaseException(error));
+    }
+  }
+
+  @override
+  Future<Result<void>> updatePatient(Patient patient) async {
+    try {
+      final Map<String, dynamic> patientJson = patient.toJson();
+      patientJson.remove('id');
+      patientJson.remove('created_at');
+
+      await _service.guardQuery(
+        () => _service.from(_table).update(patientJson).eq('id', patient.id),
+      );
+      return const Result.success(null);
+    } on AppException catch (error) {
+      return Result.failure(error);
+    } on Exception catch (error) {
+      return Result.failure(AppException.fromSupabaseException(error));
+    }
+  }
+
+  @override
+  Future<Result<void>> updatePatientDoctors(
+    String patientId,
+    List<String> currentDoctorIds,
+  ) async {
+    try {
+      // 1. Fetch current doctor assignments
+      final List<Map<String, dynamic>> rows = await _service.guardQuery(
+        () => _service
+            .from(_doctorsTable)
+            .select('doctor_id')
+            .eq('patient_id', patientId),
+      );
+      final Set<String> existingDoctorIds =
+          rows.map((row) => row['doctor_id'] as String).toSet();
+
+      // 2. Compute diff using Set operations
+      final Set<String> targetDoctorIds = currentDoctorIds.toSet();
+      final Set<String> toDelete = existingDoctorIds.difference(targetDoctorIds);
+      final Set<String> toInsert = targetDoctorIds.difference(existingDoctorIds);
+
+      // 3. Execute deletes
+      for (final String doctorId in toDelete) {
+        await _service.guardQuery(
+          () => _service
+              .from(_doctorsTable)
+              .delete()
+              .eq('patient_id', patientId)
+              .eq('doctor_id', doctorId),
+        );
+      }
+
+      // 4. Execute inserts
+      for (final String doctorId in toInsert) {
+        await _service.guardQuery(
+          () => _service.from(_doctorsTable).insert({
+            'patient_id': patientId,
+            'doctor_id': doctorId,
+          }),
+        );
+      }
+
+      return const Result.success(null);
+    } on AppException catch (error) {
+      return Result.failure(error);
+    } on Exception catch (error) {
+      return Result.failure(AppException.fromSupabaseException(error));
+    }
+  }
+
+  @override
+  Future<Result<List<Staff>>> getActiveDoctors() async {
+    try {
+      final List<Map<String, dynamic>> rows = await _service.guardQuery(
+        () => _service
+            .from('staff')
+            .select()
+            .eq('role', 'doctor')
+            .eq('is_active', true)
+            .order('full_name'),
+      );
+      final List<Staff> doctors = rows.map(Staff.fromJson).toList();
+      return Result.success(doctors);
+    } on AppException catch (error) {
+      return Result.failure(error);
+    } on Exception catch (error) {
+      return Result.failure(AppException.fromSupabaseException(error));
+    }
+  }
+
+  @override
+  Future<Result<List<Patient>>> getAssignedPatients({
+    required String doctorId,
+    String? query,
+  }) async {
+    try {
+      var queryBuilder = _service
+          .from(_table)
+          .select('*, patient_doctors!inner()')
+          .eq('patient_doctors.doctor_id', doctorId);
+
+      if (query != null && query.trim().isNotEmpty) {
+        final String pattern = '%${query.trim()}%';
+        queryBuilder = queryBuilder.or('full_name.ilike.$pattern,phone_number.ilike.$pattern');
+      }
+
+      final List<Map<String, dynamic>> rows = await _service.guardQuery(
+        () => queryBuilder.order('full_name'),
+      );
+
+      final List<Patient> patients = rows.map(Patient.fromJson).toList();
+      return Result.success(patients);
+    } on AppException catch (error) {
+      return Result.failure(error);
+    } on Exception catch (error) {
+      return Result.failure(AppException.fromSupabaseException(error));
+    }
+  }
+
+  @override
+  Future<Result<List<Patient>>> getReplacementPatients({
+    required String doctorId,
+    String? query,
+  }) async {
+    try {
+      final String todayStr = DateTime.now().toIso8601String().split('T')[0];
+      final List<Map<String, dynamic>> replacements = await _service.guardQuery(
+        () => _service
+            .from('doctor_replacements')
+            .select('absent_doctor_id')
+            .eq('covering_doctor_id', doctorId)
+            .eq('replacement_date', todayStr),
+      );
+
+      final List<String> absentDoctorIds = replacements
+          .map((r) => r['absent_doctor_id'] as String)
+          .toList();
+
+      if (absentDoctorIds.isEmpty) {
+        return const Result.success([]);
+      }
+
+      var queryBuilder = _service
+          .from(_table)
+          .select('*, patient_doctors!inner()')
+          .inFilter('patient_doctors.doctor_id', absentDoctorIds);
+
+      if (query != null && query.trim().isNotEmpty) {
+        final String pattern = '%${query.trim()}%';
+        queryBuilder = queryBuilder.or('full_name.ilike.$pattern,phone_number.ilike.$pattern');
+      }
+
+      final List<Map<String, dynamic>> rows = await _service.guardQuery(
+        () => queryBuilder.order('full_name'),
+      );
+
+      final List<Patient> patients = rows.map(Patient.fromJson).toList();
+      return Result.success(patients);
+    } on AppException catch (error) {
+      return Result.failure(error);
+    } on Exception catch (error) {
+      return Result.failure(AppException.fromSupabaseException(error));
+    }
+  }
+
+  @override
+  Future<Result<List<Staff>>> getActiveReplacementsForDoctor({
+    required String doctorId,
+  }) async {
+    try {
+      final String todayStr = DateTime.now().toIso8601String().split('T')[0];
+      final List<Map<String, dynamic>> rows = await _service.guardQuery(
+        () => _service
+            .from('doctor_replacements')
+            .select('staff:staff!absent_doctor_id(*)')
+            .eq('covering_doctor_id', doctorId)
+            .eq('replacement_date', todayStr),
+      );
+
+      final List<Staff> absentDoctors = rows
+          .map((row) {
+            final Map<String, dynamic>? staffJson = row['staff'] as Map<String, dynamic>?;
+            return staffJson != null ? Staff.fromJson(staffJson) : null;
+          })
+          .whereType<Staff>()
+          .toList();
+
+      return Result.success(absentDoctors);
+    } on AppException catch (error) {
+      return Result.failure(error);
+    } on Exception catch (error) {
+      return Result.failure(AppException.fromSupabaseException(error));
+    }
+  }
+
+  @override
+  Future<Result<Map<String, String>>> getPatientReplacementMapping({
+    required List<String> absentDoctorIds,
+  }) async {
+    try {
+      if (absentDoctorIds.isEmpty) {
+        return const Result.success({});
+      }
+
+      final List<Map<String, dynamic>> rows = await _service.guardQuery(
+        () => _service
+            .from('patient_doctors')
+            .select('patient_id, doctor:staff!doctor_id(full_name)')
+            .inFilter('doctor_id', absentDoctorIds),
+      );
+
+      final Map<String, String> mapping = {};
+      for (final Map<String, dynamic> row in rows) {
+        final String? patientId = row['patient_id'] as String?;
+        final Map<String, dynamic>? doctorMap = row['doctor'] as Map<String, dynamic>?;
+        final String? doctorName = doctorMap?['full_name'] as String?;
+        if (patientId != null && doctorName != null) {
+          mapping[patientId] = doctorName;
+        }
+      }
+      return Result.success(mapping);
+    } on AppException catch (error) {
+      return Result.failure(error);
+    } on Exception catch (error) {
+      return Result.failure(AppException.fromSupabaseException(error));
+    }
+  }
 }
+

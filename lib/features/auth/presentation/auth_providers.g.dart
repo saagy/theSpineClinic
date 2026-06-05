@@ -106,7 +106,7 @@ final class CurrentUserProvider
   CurrentUser create() => CurrentUser();
 }
 
-String _$currentUserHash() => r'fcbe777f8b6e1aaf2354c0e40b424b4160e9aa15';
+String _$currentUserHash() => r'b11f80540ab273b1ebb120fb235d401d3d5e3887';
 
 /// Reactive authentication state holding the current [Staff] profile.
 ///
@@ -134,4 +134,82 @@ abstract class _$CurrentUser extends $AsyncNotifier<Staff?> {
             >;
     element.handleCreate(ref, build);
   }
+}
+
+/// Family provider resolving staff profile by ID.
+
+@ProviderFor(staffProfile)
+final staffProfileProvider = StaffProfileFamily._();
+
+/// Family provider resolving staff profile by ID.
+
+final class StaffProfileProvider
+    extends $FunctionalProvider<AsyncValue<Staff>, Staff, FutureOr<Staff>>
+    with $FutureModifier<Staff>, $FutureProvider<Staff> {
+  /// Family provider resolving staff profile by ID.
+  StaffProfileProvider._({
+    required StaffProfileFamily super.from,
+    required String super.argument,
+  }) : super(
+         retry: null,
+         name: r'staffProfileProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
+
+  @override
+  String debugGetCreateSourceHash() => _$staffProfileHash();
+
+  @override
+  String toString() {
+    return r'staffProfileProvider'
+        ''
+        '($argument)';
+  }
+
+  @$internal
+  @override
+  $FutureProviderElement<Staff> $createElement($ProviderPointer pointer) =>
+      $FutureProviderElement(pointer);
+
+  @override
+  FutureOr<Staff> create(Ref ref) {
+    final argument = this.argument as String;
+    return staffProfile(ref, argument);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is StaffProfileProvider && other.argument == argument;
+  }
+
+  @override
+  int get hashCode {
+    return argument.hashCode;
+  }
+}
+
+String _$staffProfileHash() => r'efb956b6d6ae798dce5798b6daaa9774892826ce';
+
+/// Family provider resolving staff profile by ID.
+
+final class StaffProfileFamily extends $Family
+    with $FunctionalFamilyOverride<FutureOr<Staff>, String> {
+  StaffProfileFamily._()
+    : super(
+        retry: null,
+        name: r'staffProfileProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
+  /// Family provider resolving staff profile by ID.
+
+  StaffProfileProvider call(String staffId) =>
+      StaffProfileProvider._(argument: staffId, from: this);
+
+  @override
+  String toString() => r'staffProfileProvider';
 }

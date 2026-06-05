@@ -40,4 +40,8 @@ abstract class AuthRepository {
     required String phone,
     required String password,
   });
+
+  /// Resolves the staff profile for a given staff ID.
+  Future<Result<Staff>> getStaffProfile(String staffId);
 }
+

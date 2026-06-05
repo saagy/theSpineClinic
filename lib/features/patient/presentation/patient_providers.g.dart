@@ -207,3 +207,249 @@ abstract class _$PatientSearch extends $AsyncNotifier<List<Patient>> {
     element.handleCreate(ref, build);
   }
 }
+
+/// Fetches all active/approved staff members with the role of doctor.
+
+@ProviderFor(activeDoctors)
+final activeDoctorsProvider = ActiveDoctorsProvider._();
+
+/// Fetches all active/approved staff members with the role of doctor.
+
+final class ActiveDoctorsProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<List<Staff>>,
+          List<Staff>,
+          FutureOr<List<Staff>>
+        >
+    with $FutureModifier<List<Staff>>, $FutureProvider<List<Staff>> {
+  /// Fetches all active/approved staff members with the role of doctor.
+  ActiveDoctorsProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'activeDoctorsProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$activeDoctorsHash();
+
+  @$internal
+  @override
+  $FutureProviderElement<List<Staff>> $createElement(
+    $ProviderPointer pointer,
+  ) => $FutureProviderElement(pointer);
+
+  @override
+  FutureOr<List<Staff>> create(Ref ref) {
+    return activeDoctors(ref);
+  }
+}
+
+String _$activeDoctorsHash() => r'836a4743177b9ddccbb96c1dc422000ea0c03a8b';
+
+/// Fetches active doctors assigned to a patient.
+
+@ProviderFor(patientAssignedDoctors)
+final patientAssignedDoctorsProvider = PatientAssignedDoctorsFamily._();
+
+/// Fetches active doctors assigned to a patient.
+
+final class PatientAssignedDoctorsProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<List<Staff>>,
+          List<Staff>,
+          FutureOr<List<Staff>>
+        >
+    with $FutureModifier<List<Staff>>, $FutureProvider<List<Staff>> {
+  /// Fetches active doctors assigned to a patient.
+  PatientAssignedDoctorsProvider._({
+    required PatientAssignedDoctorsFamily super.from,
+    required String super.argument,
+  }) : super(
+         retry: null,
+         name: r'patientAssignedDoctorsProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
+
+  @override
+  String debugGetCreateSourceHash() => _$patientAssignedDoctorsHash();
+
+  @override
+  String toString() {
+    return r'patientAssignedDoctorsProvider'
+        ''
+        '($argument)';
+  }
+
+  @$internal
+  @override
+  $FutureProviderElement<List<Staff>> $createElement(
+    $ProviderPointer pointer,
+  ) => $FutureProviderElement(pointer);
+
+  @override
+  FutureOr<List<Staff>> create(Ref ref) {
+    final argument = this.argument as String;
+    return patientAssignedDoctors(ref, argument);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is PatientAssignedDoctorsProvider &&
+        other.argument == argument;
+  }
+
+  @override
+  int get hashCode {
+    return argument.hashCode;
+  }
+}
+
+String _$patientAssignedDoctorsHash() =>
+    r'5190ae751d18cba8dc1073bd779ad8c363ca4200';
+
+/// Fetches active doctors assigned to a patient.
+
+final class PatientAssignedDoctorsFamily extends $Family
+    with $FunctionalFamilyOverride<FutureOr<List<Staff>>, String> {
+  PatientAssignedDoctorsFamily._()
+    : super(
+        retry: null,
+        name: r'patientAssignedDoctorsProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
+  /// Fetches active doctors assigned to a patient.
+
+  PatientAssignedDoctorsProvider call(String patientId) =>
+      PatientAssignedDoctorsProvider._(argument: patientId, from: this);
+
+  @override
+  String toString() => r'patientAssignedDoctorsProvider';
+}
+
+/// Controller managing the roster of patients assigned to the logged-in doctor.
+
+@ProviderFor(MyPatientsController)
+final myPatientsControllerProvider = MyPatientsControllerProvider._();
+
+/// Controller managing the roster of patients assigned to the logged-in doctor.
+final class MyPatientsControllerProvider
+    extends $AsyncNotifierProvider<MyPatientsController, List<Patient>> {
+  /// Controller managing the roster of patients assigned to the logged-in doctor.
+  MyPatientsControllerProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'myPatientsControllerProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$myPatientsControllerHash();
+
+  @$internal
+  @override
+  MyPatientsController create() => MyPatientsController();
+}
+
+String _$myPatientsControllerHash() =>
+    r'be3f68732db1a3034533455dc5f515e8695ad45a';
+
+/// Controller managing the roster of patients assigned to the logged-in doctor.
+
+abstract class _$MyPatientsController extends $AsyncNotifier<List<Patient>> {
+  FutureOr<List<Patient>> build();
+  @$mustCallSuper
+  @override
+  void runBuild() {
+    final ref = this.ref as $Ref<AsyncValue<List<Patient>>, List<Patient>>;
+    final element =
+        ref.element
+            as $ClassProviderElement<
+              AnyNotifier<AsyncValue<List<Patient>>, List<Patient>>,
+              AsyncValue<List<Patient>>,
+              Object?,
+              Object?
+            >;
+    element.handleCreate(ref, build);
+  }
+}
+
+/// Controller managing replacement patients the doctor can access today.
+
+@ProviderFor(ReplacementPatientsController)
+final replacementPatientsControllerProvider =
+    ReplacementPatientsControllerProvider._();
+
+/// Controller managing replacement patients the doctor can access today.
+final class ReplacementPatientsControllerProvider
+    extends
+        $AsyncNotifierProvider<
+          ReplacementPatientsController,
+          ReplacementPatientsState
+        > {
+  /// Controller managing replacement patients the doctor can access today.
+  ReplacementPatientsControllerProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'replacementPatientsControllerProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$replacementPatientsControllerHash();
+
+  @$internal
+  @override
+  ReplacementPatientsController create() => ReplacementPatientsController();
+}
+
+String _$replacementPatientsControllerHash() =>
+    r'12dbbbc37f1426a5362ec1bc93f5a4cb93f0d39e';
+
+/// Controller managing replacement patients the doctor can access today.
+
+abstract class _$ReplacementPatientsController
+    extends $AsyncNotifier<ReplacementPatientsState> {
+  FutureOr<ReplacementPatientsState> build();
+  @$mustCallSuper
+  @override
+  void runBuild() {
+    final ref =
+        this.ref
+            as $Ref<
+              AsyncValue<ReplacementPatientsState>,
+              ReplacementPatientsState
+            >;
+    final element =
+        ref.element
+            as $ClassProviderElement<
+              AnyNotifier<
+                AsyncValue<ReplacementPatientsState>,
+                ReplacementPatientsState
+              >,
+              AsyncValue<ReplacementPatientsState>,
+              Object?,
+              Object?
+            >;
+    element.handleCreate(ref, build);
+  }
+}

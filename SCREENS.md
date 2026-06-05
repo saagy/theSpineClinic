@@ -34,7 +34,7 @@
 
 ---
 
-### 🌐 [ ] DoctorRegisterScreen
+### 🌐 [x] DoctorRegisterScreen
 **Location:** `lib/features/auth/presentation/doctor_register_screen.dart`
 
 **Purpose:**
@@ -81,7 +81,7 @@ an admin approves it.
 
 ---
 
-### 🌐 [ ] LoginScreen
+### 🌐 [x] LoginScreen
 **Location:** `lib/features/auth/presentation/login_screen.dart`
 
 **Purpose:**
@@ -116,7 +116,7 @@ If `is_active = false`, sign out immediately and show rejection message.
 
 ---
 
-### [ ] PatientDetailScreen
+### [x] PatientDetailScreen
 **Location:** `lib/features/patient/presentation/patient_detail_screen.dart`
 
 **Purpose:**
@@ -176,7 +176,7 @@ Role determines which tabs and actions are visible.
 
 ---
 
-### [ ] AppointmentDetailScreen
+### [x] AppointmentDetailScreen
 **Location:** `lib/features/appointment/presentation/appointment_detail_screen.dart`
 
 **Purpose:**
@@ -247,7 +247,7 @@ Accessed from PatientDetailScreen → Medical Records tab.
 
 ---
 
-### 🧑‍💼 👑 [ ] HomeScreen
+### 🧑‍💼 👑 [x] HomeScreen
 **Location:** `lib/features/appointment/presentation/home_screen.dart`
 
 **Purpose:**
@@ -277,7 +277,7 @@ full appointment schedule sorted by time. Primary action hub.
 
 ---
 
-### 🧑‍💼 👑 [ ] PatientSearchScreen
+### 🧑‍💼 👑 [x] PatientSearchScreen
 **Location:** `lib/features/patient/presentation/patient_search_screen.dart`
 
 **Purpose:**
@@ -304,7 +304,7 @@ Entry point to all patient-related actions.
 
 ---
 
-### 🧑‍💼 👑 [ ] NewPatientScreen
+### 🧑‍💼 👑 [x] NewPatientScreen
 **Location:** `lib/features/patient/presentation/new_patient_screen.dart`
 
 **Purpose:**
@@ -346,7 +346,7 @@ Register a new patient with all required info and assign doctors.
 
 ---
 
-### 🧑‍💼 👑 [ ] EditPatientScreen
+### 🧑‍💼 👑 [x] EditPatientScreen
 **Location:** `lib/features/patient/presentation/edit_patient_screen.dart`
 
 **Purpose:**
@@ -371,7 +371,7 @@ but pre-filled. Opened from PatientDetailScreen → Info tab.
 
 ---
 
-### 🧑‍💼 👑 [ ] NewAppointmentScreen
+### 🧑‍💼 👑 [x] NewAppointmentScreen
 **Location:** `lib/features/appointment/presentation/new_appointment_screen.dart`
 
 **Purpose:**
@@ -385,7 +385,10 @@ and recurring booking (multiple dates generated from a pattern).
     Multi-select, max 2
     Only shows doctors assigned to the selected patient
     Disabled until patient is selected
-- Use package toggle (default: on)
+- Use package Switch toggle (default: on)
+- Live Ledger Preview Card:
+    * Displays 4 metrics: Current Balance, Upcoming Booked, Net Available Balance, and Current Order Count.
+    * Shifts color themes dynamically from success (green) to warning (crimson) on deficits.
 - Single / Recurring toggle:
 
     If Single:
@@ -411,6 +414,7 @@ and recurring booking (multiple dates generated from a pattern).
 - Confirm (recurring) → create N Appointments + AppointmentDoctor rows
   for each → show success: "X appointments created" → pop
 - Cancel → ConfirmationDialog if form has data → pop
+- Live Ledger update → recalculates balance and leftover slots reactively as form values change.
 
 **States:**
 - Default: empty form
@@ -419,6 +423,7 @@ and recurring booking (multiple dates generated from a pattern).
 - Error: server error banner
 - Conflict warning: highlighted dates in preview (warning, not a blocker —
   receptionist can still confirm)
+- Deficit Lock: crimson style diagnostics card, primary Confirm button disabled.
 
 **Validation:**
 - Patient: required
@@ -426,6 +431,7 @@ and recurring booking (multiple dates generated from a pattern).
 - At least 1 doctor: required
 - Date/time: required for single
 - Days + session count: required for recurring, session count min 1
+- Package balance validation: locks submit if proposed count exceeds net available balance when package booking is selected.
 
 ---
 
@@ -903,26 +909,26 @@ Phase 3 — Shared Widgets
   [x]  AppBottomSheet
 
 Phase 4 — Navigation
-  [ ]  go_router setup with all routes defined upfront
-  [ ]  currentUserProvider + role-based redirect logic
+  [x]  go_router setup with all routes defined upfront
+  [x]  currentUserProvider + role-based redirect logic
   [x]  AppBottomNav
   [x]  AppShell
 
 Phase 5 — Auth
-  [ ]  Auth repository
-  [ ]  LoginScreen
-  [ ]  DoctorRegisterScreen
+  [x]  Auth repository
+  [x]  LoginScreen
+  [x]  DoctorRegisterScreen
 
 Phase 6 — Patients
-  [ ]  PatientSearchScreen
-  [ ]  PatientDetailScreen (tabs scaffold first, fill tabs one by one)
-  [ ]  NewPatientScreen
-  [ ]  EditPatientScreen
+  [x]  PatientSearchScreen
+  [x]  PatientDetailScreen (tabs scaffold first, fill tabs one by one)
+  [x]  NewPatientScreen
+  [x]  EditPatientScreen
 
 Phase 7 — Appointments
-  [ ]  HomeScreen
-  [ ]  NewAppointmentScreen
-  [ ]  AppointmentDetailScreen
+  [x]  HomeScreen
+  [x]  NewAppointmentScreen
+  [x]  AppointmentDetailScreen
 
 Phase 8 — Medical Records
   [ ]  AddVisitNotesScreen

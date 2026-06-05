@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:spine_clinic_app/core/constants/app_sizes.dart';
 import 'package:spine_clinic_app/core/constants/app_strings.dart';
+import 'package:spine_clinic_app/core/network/app_routes.dart';
 import 'package:spine_clinic_app/features/auth/domain/user_role.dart';
 import 'package:spine_clinic_app/features/auth/presentation/auth_providers.dart';
 import 'package:spine_clinic_app/features/patient/domain/patient.dart';
+import 'package:spine_clinic_app/features/patient/presentation/patient_providers.dart';
 import 'package:spine_clinic_app/shared/widgets/app_button.dart';
 import 'package:spine_clinic_app/shared/widgets/app_chip.dart';
 import 'package:spine_clinic_app/shared/widgets/info_row.dart';
@@ -22,9 +25,7 @@ class PatientTabInfo extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final user = ref.watch(currentUserProvider).value;
     final isDoctor = user?.role == UserRole.doctor;
-
-    // Assigned doctors are currently mocked.
-    final List<String> mockDoctors = ['Dr. Hassan Aly', 'Dr. Khaled Amin'];
+    final assignedDoctorsAsync = ref.watch(patientAssignedDoctorsProvider(patient.id));
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(AppSizes.p16),
@@ -37,10 +38,6 @@ class PatientTabInfo extends ConsumerWidget {
               children: [
                 InfoRow(label: AppStrings.fullName, value: patient.fullName),
                 InfoRow(label: AppStrings.phone, value: patient.phoneNumber),
-                // DOB, Gender, and Blood Type are stubs pending DB updates.
-                const InfoRow(label: 'Date of Birth', value: '1985-05-12'),
-                const InfoRow(label: 'Gender', value: 'Male'),
-                const InfoRow(label: 'Blood Type', value: 'O+'),
                 InfoRow(label: AppStrings.program, value: patient.program ?? 'None'),
                 InfoRow(label: AppStrings.clinic, value: patient.clinic.displayLabel),
               ],
@@ -49,22 +46,38 @@ class PatientTabInfo extends ConsumerWidget {
           const SizedBox(height: AppSizes.p16),
           SectionCard(
             title: AppStrings.assignedDoctors,
-            child: mockDoctors.isEmpty
-                ? const Text('No doctors assigned')
-                : Wrap(
-                    spacing: AppSizes.p8,
-                    runSpacing: AppSizes.p8,
-                    children: mockDoctors
-                        .map((doc) => AppChip(label: doc))
-                        .toList(),
-                  ),
+            child: assignedDoctorsAsync.when(
+              data: (doctors) {
+                if (doctors.isEmpty) {
+                  return const Text('No doctors assigned');
+                }
+                return Wrap(
+                  spacing: AppSizes.p8,
+                  runSpacing: AppSizes.p8,
+                  children: doctors
+                      .map((doc) => AppChip(label: doc.fullName))
+                      .toList(),
+                );
+              },
+              loading: () => const Center(
+                child: SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                ),
+              ),
+              error: (_, __) => const Text('Error loading assigned doctors'),
+            ),
           ),
           if (!isDoctor) ...[
             const SizedBox(height: AppSizes.p24),
             AppButton(
               labelText: AppStrings.editPatient,
               onPressed: () {
-                // To be wired to EditPatientScreen in a future phase.
+                context.push(
+                  AppRoutes.editPatient.replaceAll(':id', patient.id),
+                  extra: patient,
+                );
               },
             ),
           ],

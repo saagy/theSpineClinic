@@ -1,17 +1,9 @@
 /// Centralized GoRouter configuration with role-based redirect guards.
-///
-/// Listens to [currentUserProvider] state transitions via a
-/// [ChangeNotifier] bridge to drive navigation without recursion.
-///
-/// Route path strings are sourced from [AppRoutes].
-/// Splash overlay is sourced from [SplashScreen].
-/// Both files are decoupled to respect the 200-line boundary.
 library;
 
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
-
 import 'package:spine_clinic_app/core/constants/app_strings.dart';
 import 'package:spine_clinic_app/core/network/app_routes.dart';
 import 'package:spine_clinic_app/features/auth/domain/staff.dart';
@@ -21,19 +13,24 @@ import 'package:spine_clinic_app/features/auth/presentation/doctor_register_scre
 import 'package:spine_clinic_app/features/auth/presentation/login_screen.dart';
 import 'package:spine_clinic_app/features/auth/presentation/splash_screen.dart';
 import 'package:spine_clinic_app/features/appointment/presentation/home_screen.dart';
+import 'package:spine_clinic_app/features/appointment/presentation/new_appointment_screen.dart';
+import 'package:spine_clinic_app/features/appointment/presentation/appointment_detail_screen.dart';
+import 'package:spine_clinic_app/features/patient/domain/patient.dart';
+import 'package:spine_clinic_app/features/patient/presentation/edit_patient_screen.dart';
+import 'package:spine_clinic_app/features/patient/presentation/my_patients_screen.dart';
+import 'package:spine_clinic_app/features/patient/presentation/new_patient_screen.dart';
 import 'package:spine_clinic_app/features/patient/presentation/patient_detail_screen.dart';
 import 'package:spine_clinic_app/features/patient/presentation/patient_search_screen.dart';
+import 'package:spine_clinic_app/features/payments/presentation/record_payment_screen.dart';
+import 'package:spine_clinic_app/features/appointment/presentation/my_schedule_screen.dart';
+import 'package:spine_clinic_app/features/replacements/presentation/replacement_patients_screen.dart';
 import 'package:spine_clinic_app/shared/widgets/app_shell.dart';
+import 'package:spine_clinic_app/features/medical_records/presentation/add_visit_notes_screen.dart';
+import 'package:spine_clinic_app/features/medical_records/presentation/visit_detail_screen.dart';
+import 'package:spine_clinic_app/features/replacements/presentation/manage_replacement_screen.dart';
 
 part 'router.g.dart';
 
-// ─────────────────── Listenable Bridge ───────────────────
-
-/// One-way valve: [currentUserProvider] state → [GoRouter] refresh.
-///
-/// Fires [notifyListeners] whenever the provider emits a new
-/// [AsyncValue]. The router's [redirect] reads the latest value
-/// without mutating state, breaking the recursion chain.
 class _RouterRefreshNotifier extends ChangeNotifier {
   _RouterRefreshNotifier(Ref ref) {
     ref.listen<AsyncValue<Staff?>>(
@@ -43,80 +40,63 @@ class _RouterRefreshNotifier extends ChangeNotifier {
   }
 }
 
-// ─────────────────── Router Provider ───────────────────
-
-/// Provides the application's centralized [GoRouter] instance.
 @Riverpod(keepAlive: true)
 GoRouter router(Ref ref) {
   final _RouterRefreshNotifier refreshNotifier = _RouterRefreshNotifier(ref);
-
   final GoRouter goRouter = GoRouter(
     initialLocation: AppRoutes.splash,
     refreshListenable: refreshNotifier,
-    redirect: (BuildContext context, GoRouterState state) =>
-        _redirect(ref, state),
+    redirect: (BuildContext context, GoRouterState state) => _redirect(ref, state),
     routes: _buildRoutes(ref),
   );
-
   ref.onDispose(() {
     refreshNotifier.dispose();
     goRouter.dispose();
   });
-
   return goRouter;
 }
 
-// ─────────────────── Redirect Engine ───────────────────
-
-/// Pure redirect function — reads state, never mutates it.
 String? _redirect(Ref ref, GoRouterState state) {
   final AsyncValue<Staff?> asyncUser = ref.read(currentUserProvider);
   final String location = state.matchedLocation;
 
-  // Loading → park on splash
   if (asyncUser.isLoading) {
+    // If we're already on login/register, stay there and let the screen show its loading overlay.
+    if (location == AppRoutes.login || location == AppRoutes.register) {
+      return null;
+    }
     return location == AppRoutes.splash ? null : AppRoutes.splash;
   }
 
-  // Error → send to login
   if (asyncUser.hasError) {
-    return _isPublicRoute(location) ? null : AppRoutes.login;
+    // If there is an auth error, redirect to login unless already on a public form page.
+    if (location == AppRoutes.login || location == AppRoutes.register) {
+      return null;
+    }
+    return AppRoutes.login;
   }
 
   final Staff? user = asyncUser.value;
-
-  // Unauthenticated → only public routes allowed
-  if (user == null) {
-    return _isPublicRoute(location) ? null : AppRoutes.login;
+  if (user == null || !user.isActive) {
+    return (location == AppRoutes.login || location == AppRoutes.register) ? null : AppRoutes.login;
   }
 
-  // Safety net: inactive staff (notifier should have auto-logged out)
-  if (!user.isActive) {
-    return _isPublicRoute(location) ? null : AppRoutes.login;
-  }
-
-  // Authenticated + active → block public routes, send to role home
   if (_isPublicRoute(location)) {
     return _homeRouteForRole(user.role);
   }
-
-  return null; // already on a valid authenticated route
+  return null;
 }
 
-/// Returns `true` for routes accessible without authentication.
 bool _isPublicRoute(String location) =>
     location == AppRoutes.login ||
     location == AppRoutes.register ||
     location == AppRoutes.splash;
 
-/// Maps a [UserRole] to its designated landing route path.
 String _homeRouteForRole(UserRole role) => switch (role) {
       UserRole.doctor => AppRoutes.schedule,
       UserRole.receptionist => AppRoutes.home,
       UserRole.superAdmin => AppRoutes.home,
     };
-
-// ─────────────────── Route Tree ───────────────────
 
 List<RouteBase> _buildRoutes(Ref ref) {
   return [
@@ -143,17 +123,92 @@ List<RouteBase> _buildRoutes(Ref ref) {
         return PatientDetailScreen(patientId: patientId);
       },
     ),
+    GoRoute(
+      path: AppRoutes.editPatient,
+      builder: (_, GoRouterState state) {
+        final String patientId = state.pathParameters['id'] ?? '';
+        final Patient? patient = state.extra as Patient?;
+        return EditPatientScreen(patientId: patientId, patient: patient);
+      },
+    ),
+    GoRoute(
+      path: AppRoutes.recordPayment,
+      builder: (_, GoRouterState state) {
+        final String patientId = state.pathParameters['id'] ?? '';
+        return RecordPaymentScreen(patientId: patientId);
+      },
+    ),
+    GoRoute(
+      path: AppRoutes.newPatient,
+      builder: (_, __) => const NewPatientScreen(),
+    ),
+    GoRoute(
+      path: AppRoutes.newAppointment,
+      builder: (_, GoRouterState state) {
+        final String? patientId = state.uri.queryParameters['patientId'];
+        return NewAppointmentScreen(preselectedPatientId: patientId);
+      },
+    ),
+    GoRoute(
+      path: AppRoutes.appointmentDetail,
+      builder: (_, GoRouterState state) {
+        final String appointmentId = state.pathParameters['id'] ?? '';
+        return AppointmentDetailScreen(appointmentId: appointmentId);
+      },
+    ),
+    GoRoute(
+      path: AppRoutes.addVisitNotes,
+      builder: (_, GoRouterState state) {
+        final String appointmentId = state.pathParameters['id'] ?? '';
+        return AddVisitNotesScreen(appointmentId: appointmentId);
+      },
+    ),
+    GoRoute(
+      path: AppRoutes.visitDetail,
+      builder: (_, GoRouterState state) {
+        final String appointmentId = state.pathParameters['id'] ?? '';
+        return VisitDetailScreen(appointmentId: appointmentId);
+      },
+    ),
+    GoRoute(
+      path: AppRoutes.manageReplacement,
+      builder: (_, __) => const ManageReplacementScreen(),
+    ),
     ShellRoute(
       builder: (BuildContext context, GoRouterState state, Widget child) {
-        final Staff? user =
-            ref.read(currentUserProvider).value;
+        final Staff? user = ref.read(currentUserProvider).value;
         final String role = user?.role.dbValue ?? 'receptionist';
+        final int activeIndex = role == 'doctor'
+            ? (state.matchedLocation == AppRoutes.myPatients
+                ? 1
+                : (state.matchedLocation == AppRoutes.replacements ? 2 : 0))
+            : 0;
 
         return AppShell(
           title: AppStrings.appName,
           userRole: role,
-          currentTabIndex: 0, // wired in a future navigation phase
-          onTabSelected: (_) {}, // wired in a future navigation phase
+          currentTabIndex: activeIndex,
+          onTabSelected: (int index) {
+            if (role == 'doctor') {
+              switch (index) {
+                case 0:
+                  context.go(AppRoutes.schedule);
+                  break;
+                case 1:
+                  context.go(AppRoutes.myPatients);
+                  break;
+                case 2:
+                  context.go(AppRoutes.replacements);
+                  break;
+              }
+            } else {
+              switch (index) {
+                case 0:
+                  context.go(AppRoutes.home);
+                  break;
+              }
+            }
+          },
           actions: state.matchedLocation == AppRoutes.home
               ? [
                   IconButton(
@@ -172,19 +227,17 @@ List<RouteBase> _buildRoutes(Ref ref) {
         ),
         GoRoute(
           path: AppRoutes.schedule,
-          builder: (_, __) => const _ScheduleStub(),
+          builder: (_, __) => const MyScheduleScreen(),
+        ),
+        GoRoute(
+          path: AppRoutes.myPatients,
+          builder: (_, __) => const MyPatientsScreen(),
+        ),
+        GoRoute(
+          path: AppRoutes.replacements,
+          builder: (_, __) => const ReplacementPatientsScreen(),
         ),
       ],
     ),
   ];
-}
-
-// ─────────────────── Temporary Stub Screens ───────────────────
-// Lightweight placeholders for screens not yet built.
-
-class _ScheduleStub extends StatelessWidget {
-  const _ScheduleStub();
-  @override
-  Widget build(BuildContext context) =>
-      const Center(child: Text(AppStrings.appointments));
 }

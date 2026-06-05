@@ -4,7 +4,9 @@
 /// Display labels come from [AppStrings] (Rule 7).
 library;
 
+import 'package:flutter/material.dart';
 import 'package:json_annotation/json_annotation.dart';
+import 'package:spine_clinic_app/core/constants/app_colors.dart';
 import 'package:spine_clinic_app/core/constants/app_strings.dart';
 
 /// The workflow status of an appointment.
@@ -37,5 +39,21 @@ enum AppointmentStatus {
     AppointmentStatus.completed => AppStrings.completed,
     AppointmentStatus.cancelled => AppStrings.cancelled,
     AppointmentStatus.noShow => AppStrings.noShow,
+  };
+
+  /// Text color for UI badges.
+  Color get textColor => switch (this) {
+    AppointmentStatus.scheduled => AppColors.info,
+    AppointmentStatus.checkedIn => AppColors.warning,
+    AppointmentStatus.completed => AppColors.success,
+    AppointmentStatus.cancelled || AppointmentStatus.noShow => AppColors.error,
+  };
+
+  /// Background color for UI badges.
+  Color get backgroundColor => switch (this) {
+    AppointmentStatus.scheduled => AppColors.infoBg,
+    AppointmentStatus.checkedIn => AppColors.warningBg,
+    AppointmentStatus.completed => AppColors.successBg,
+    AppointmentStatus.cancelled || AppointmentStatus.noShow => AppColors.errorBg,
   };
 }

@@ -43,29 +43,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   final TextEditingController _passwordCtrl = TextEditingController();
 
   @override
-  void initState() {
-    super.initState();
-    // Listen for auth errors and surface them as snackbars.
-    // Placed in addPostFrameCallback to avoid ref.listen during build.
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      ref.listen(currentUserProvider, (_, AsyncValue next) {
-        if (!mounted) return;
-        if (next.hasError && next.error is AppException) {
-          final AppException error = next.error! as AppException;
-          final String message = error.code == 'auth/account-inactive'
-              ? AppStringsAuth.pendingApproval
-              : AppStrings.fromKey(error.userMessageKey);
-          AppSnackbar.show(
-            context,
-            message: message,
-            variant: AppSnackbarVariant.error,
-          );
-        }
-      });
-    });
-  }
-
-  @override
   void dispose() {
     _emailCtrl.dispose();
     _passwordCtrl.dispose();
@@ -82,6 +59,20 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
+    ref.listen(currentUserProvider, (_, AsyncValue next) {
+      if (next.hasError && next.error is AppException) {
+        final AppException error = next.error! as AppException;
+        final String message = error.code == 'auth/account-inactive'
+            ? AppStringsAuth.pendingApproval
+            : AppStrings.fromKey(error.userMessageKey);
+        AppSnackbar.show(
+          context,
+          message: message,
+          variant: AppSnackbarVariant.error,
+        );
+      }
+    });
+
     final bool isLoading = ref.watch(currentUserProvider).isLoading;
 
     return Scaffold(

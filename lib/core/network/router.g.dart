@@ -8,17 +8,13 @@ part of 'router.dart';
 
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // ignore_for_file: type=lint, type=warning
-/// Provides the application's centralized [GoRouter] instance.
 
 @ProviderFor(router)
 final routerProvider = RouterProvider._();
 
-/// Provides the application's centralized [GoRouter] instance.
-
 final class RouterProvider
     extends $FunctionalProvider<GoRouter, GoRouter, GoRouter>
     with $Provider<GoRouter> {
-  /// Provides the application's centralized [GoRouter] instance.
   RouterProvider._()
     : super(
         from: null,

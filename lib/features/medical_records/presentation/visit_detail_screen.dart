@@ -1,0 +1,236 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+import 'package:spine_clinic_app/core/constants/app_colors.dart';
+import 'package:spine_clinic_app/core/constants/app_sizes.dart';
+import 'package:spine_clinic_app/core/constants/app_strings.dart';
+import 'package:spine_clinic_app/core/constants/app_text_styles.dart';
+import 'package:spine_clinic_app/core/errors/app_exception.dart';
+import 'package:spine_clinic_app/core/network/app_routes.dart';
+import 'package:spine_clinic_app/core/utils/formatters.dart';
+import 'package:spine_clinic_app/features/medical_records/presentation/visit_detail_controller.dart';
+import 'package:spine_clinic_app/shared/widgets/app_badge.dart';
+import 'package:spine_clinic_app/shared/widgets/error_view.dart';
+import 'package:spine_clinic_app/shared/widgets/info_row.dart';
+import 'package:spine_clinic_app/shared/widgets/section_card.dart';
+
+/// Pushed full-screen route for viewing completed clinical visit notes.
+class VisitDetailScreen extends ConsumerWidget {
+  /// Creates a [VisitDetailScreen].
+  const VisitDetailScreen({super.key, required this.appointmentId});
+
+  /// The appointment ID of the visit to detail.
+  final String appointmentId;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final AsyncValue<VisitDetailState> stateAsync =
+        ref.watch(visitDetailControllerProvider(appointmentId));
+
+    return Scaffold(
+      backgroundColor: AppColors.background,
+      appBar: AppBar(
+        title: const Text(
+          'Visit Details',
+          style: AppTextStyles.headingSmall,
+        ),
+        backgroundColor: AppColors.surface,
+        surfaceTintColor: Colors.transparent,
+        leading: const BackButton(),
+        actions: [
+          stateAsync.maybeWhen(
+            data: (VisitDetailState state) {
+              if (state.canEditNotes) {
+                return IconButton(
+                  icon: const Icon(Icons.edit_note_rounded),
+                  tooltip: 'Edit Notes',
+                  onPressed: () => context.push(
+                    AppRoutes.addVisitNotes.replaceAll(':id', appointmentId),
+                  ),
+                );
+              }
+              return const SizedBox.shrink();
+            },
+            orElse: () => const SizedBox.shrink(),
+          ),
+        ],
+      ),
+      body: stateAsync.when(
+        loading: () => const Center(
+          child: CircularProgressIndicator(color: AppColors.primary),
+        ),
+        error: (Object err, StackTrace stack) => ErrorView(
+          exception: err is AppException
+              ? err
+              : AppException.fromSupabaseException(err),
+          onRetry: () =>
+              ref.invalidate(visitDetailControllerProvider(appointmentId)),
+        ),
+        data: (VisitDetailState state) {
+          return SingleChildScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            child: Padding(
+              padding: const EdgeInsets.all(AppSizes.p24),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  // Patient & Appointment Info Section
+                  SectionCard(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        InkWell(
+                          onTap: () => context.push(
+                            AppRoutes.patientDetail
+                                .replaceAll(':id', state.patient.id),
+                          ),
+                          borderRadius: const BorderRadius.all(
+                            Radius.circular(AppSizes.r4),
+                          ),
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(
+                              vertical: AppSizes.p4,
+                            ),
+                            child: Row(
+                              children: [
+                                const Icon(
+                                  Icons.person_rounded,
+                                  color: AppColors.primary,
+                                  size: AppSizes.iconDefault,
+                                ),
+                                const SizedBox(width: AppSizes.p8),
+                                Expanded(
+                                  child: Text(
+                                    state.patient.fullName,
+                                    style: AppTextStyles.bodyBold.copyWith(
+                                      color: AppColors.primary,
+                                      decoration: TextDecoration.underline,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                        const Divider(height: AppSizes.p24),
+                        InfoRow(
+                          label: AppStrings.date,
+                          value: Formatters.formatDateMedium(
+                            state.appointment.scheduledAt,
+                          ),
+                        ),
+                        InfoRow(
+                          label: AppStrings.time,
+                          value: Formatters.formatTime(
+                            state.appointment.scheduledAt,
+                          ),
+                        ),
+                        const SizedBox(height: AppSizes.p12),
+                        Row(
+                          children: [
+                            AppBadge(
+                              label: state.appointment.type.displayLabel,
+                              textColor: state.appointment.type.textColor,
+                              backgroundColor:
+                                  state.appointment.type.backgroundColor,
+                            ),
+                            const SizedBox(width: AppSizes.p8),
+                            AppBadge(
+                              label: state.appointment.status.displayLabel,
+                              textColor: state.appointment.status.textColor,
+                              backgroundColor:
+                                  state.appointment.status.backgroundColor,
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: AppSizes.p16),
+
+                  // Attending Doctors Section
+                  SectionCard(
+                    title: 'Attending Staff',
+                    child: state.activeDoctors.isEmpty
+                        ? const Text(
+                            'No staff assigned to this session.',
+                            style: AppTextStyles.caption,
+                          )
+                        : Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: state.activeDoctors.map((docDetail) {
+                              final bool isReplacement =
+                                  docDetail.assignment.isReplacement;
+                              final String? replacedDoctorName =
+                                  docDetail.replacedDoctor?.fullName;
+
+                              return Padding(
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: AppSizes.p4,
+                                ),
+                                child: Row(
+                                  children: [
+                                    const Icon(
+                                      Icons.medical_services_outlined,
+                                      color: AppColors.textSecondary,
+                                      size: AppSizes.iconSmall,
+                                    ),
+                                    const SizedBox(width: AppSizes.p8),
+                                    Expanded(
+                                      child: RichText(
+                                        text: TextSpan(
+                                          style: AppTextStyles.body,
+                                          children: [
+                                            TextSpan(
+                                              text: docDetail.doctor.fullName,
+                                              style: AppTextStyles.bodyMedium,
+                                            ),
+                                            if (isReplacement &&
+                                                replacedDoctorName != null)
+                                              TextSpan(
+                                                text:
+                                                    ' (Covering $replacedDoctorName)',
+                                                style: AppTextStyles.caption
+                                                    .copyWith(
+                                                  color: AppColors.warning,
+                                                  fontWeight: FontWeight.w600,
+                                                ),
+                                              ),
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              );
+                            }).toList(),
+                          ),
+                  ),
+                  const SizedBox(height: AppSizes.p16),
+
+                  // Visit Notes Card
+                  SectionCard(
+                    title: 'Clinical Visit Notes',
+                    child: Text(
+                      state.appointment.notes?.isNotEmpty == true
+                          ? state.appointment.notes!
+                          : 'No visit notes recorded for this session.',
+                      style: AppTextStyles.body.copyWith(
+                        color: state.appointment.notes?.isNotEmpty == true
+                            ? AppColors.textPrimary
+                            : AppColors.textMuted,
+                        fontStyle: state.appointment.notes?.isNotEmpty == true
+                            ? FontStyle.normal
+                            : FontStyle.italic,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+}

@@ -1,76 +1,40 @@
 /// Centralised string constants for the Spine Clinic application.
-///
 /// Rule 7 — no hardcoded strings anywhere outside this file.
-///
-/// ## Error-message keys
-///
-/// Every `userMessageKey` emitted by [AppException] subtypes has a
-/// matching entry here so that the presentation layer can resolve
-/// a human-readable message via [AppStrings.fromKey].
 library;
 
 /// Application-wide string constants.
 abstract final class AppStrings {
-  // ──────────────────── App Identity ────────────────────
-
+  // App Identity
   static const String appName = 'Spine Clinic';
   static const String appTagline = 'Patient & Appointment Manager';
 
-  // ──────────────────── Error Messages (userMessageKey) ─────
-  //
-  // Keys MUST stay in sync with the `userMessageKey` values in
-  // `lib/core/errors/app_exception.dart`.
+  // Error Messages (userMessageKey)
+  static const String errorAuthGeneric = 'Authentication failed. Please try again.';
+  static const String errorAuthInvalidCredentials = 'Invalid email or password.';
+  static const String errorAuthEmailNotConfirmed = 'Email not confirmed. Check your inbox.';
+  static const String errorAuthUserAlreadyExists = 'An account with this email already exists.';
+  static const String errorAuthSessionExpired = 'Your session has expired. Sign in again.';
+  static const String errorAuthRateLimited = 'Too many attempts. Please wait a moment and try again.';
 
-  // Auth errors
-  static const String errorAuthGeneric =
-      'Authentication failed. Please try again.';
-  static const String errorAuthInvalidCredentials =
-      'Invalid email or password. Please check your credentials.';
-  static const String errorAuthEmailNotConfirmed =
-      'Your email has not been confirmed yet. Please check your inbox.';
-  static const String errorAuthUserAlreadyExists =
-      'An account with this email already exists.';
-  static const String errorAuthSessionExpired =
-      'Your session has expired. Please sign in again.';
+  static const String errorDatabaseGeneric = 'A database error occurred. Try again.';
+  static const String errorDatabasePermissionDenied = 'You do not have permission.';
+  static const String errorDatabaseReferenceNotFound = 'Referenced record not found.';
+  static const String errorDatabaseDuplicateRecord = 'Record already exists.';
+  static const String errorDatabaseRequiredFieldMissing = 'Required field is missing.';
+  static const String errorDatabaseValidationFailed = 'Data validation failed.';
+  static const String errorDatabaseQueryFailed = 'Database query failed. Try again.';
+  static const String errorNetworkGeneric = 'Unable to reach server. Check connection.';
+  static const String errorUnknown = 'An unexpected error occurred. Try again.';
 
-  // Database errors
-  static const String errorDatabaseGeneric =
-      'A database error occurred. Please try again later.';
-  static const String errorDatabasePermissionDenied =
-      'You do not have permission to perform this action.';
-  static const String errorDatabaseReferenceNotFound =
-      'The referenced record could not be found.';
-  static const String errorDatabaseDuplicateRecord =
-      'This record already exists. Duplicates are not allowed.';
-  static const String errorDatabaseRequiredFieldMissing =
-      'A required field is missing. Please fill in all fields.';
-  static const String errorDatabaseValidationFailed =
-      'Data validation failed. Please check your input.';
-  static const String errorDatabaseQueryFailed =
-      'The database query failed. Please try again.';
-
-  // Network errors
-  static const String errorNetworkGeneric =
-      'Unable to reach the server. Check your internet connection.';
-
-  // Unknown / catch-all
-  static const String errorUnknown =
-      'An unexpected error occurred. Please try again.';
-
-  /// Maps a `userMessageKey` string (from [AppException]) to its
-  /// user-facing message.
-  ///
-  /// Returns [errorUnknown] when the key is not recognised.
   static String fromKey(String key) => _keyMap[key] ?? errorUnknown;
 
   static const Map<String, String> _keyMap = {
-    // Auth
     'error_auth_generic': errorAuthGeneric,
     'error_auth_invalid_credentials': errorAuthInvalidCredentials,
     'error_auth_email_not_confirmed': errorAuthEmailNotConfirmed,
     'error_auth_user_already_exists': errorAuthUserAlreadyExists,
     'error_auth_session_expired': errorAuthSessionExpired,
-    // Database
+    'error_auth_rate_limited': errorAuthRateLimited,
     'error_database_generic': errorDatabaseGeneric,
     'error_database_permission_denied': errorDatabasePermissionDenied,
     'error_database_reference_not_found': errorDatabaseReferenceNotFound,
@@ -78,27 +42,19 @@ abstract final class AppStrings {
     'error_database_required_field_missing': errorDatabaseRequiredFieldMissing,
     'error_database_validation_failed': errorDatabaseValidationFailed,
     'error_database_query_failed': errorDatabaseQueryFailed,
-    // Network
     'error_network_generic': errorNetworkGeneric,
-    // Unknown
     'error_unknown': errorUnknown,
   };
 
-  // ──────────────────── Common Form Labels ────────────────────
-
+  // Form Labels & Search
   static const String email = 'Email';
   static const String fullName = 'Full Name';
   static const String phone = 'Phone Number';
-
-  // ──────────────────── Patient Search ────────────────────
-
   static const String searchPatients = 'Search patients\u2026';
-  static const String searchPatientsPrompt =
-      'Search by name or phone number';
+  static const String searchPatientsPrompt = 'Search by name or phone number';
   static const String all = 'All';
 
-  // ──────────────────── Navigation / Sections ────────────────
-
+  // Navigation / Sections
   static const String patients = 'Patients';
   static const String appointments = 'Appointments';
   static const String payments = 'Payments';
@@ -109,8 +65,7 @@ abstract final class AppStrings {
   static const String dashboard = 'Dashboard';
   static const String medicalRecords = 'Medical Records';
 
-  // ──────────────────── Common Actions ────────────────────
-
+  // Actions
   static const String save = 'Save';
   static const String cancel = 'Cancel';
   static const String delete = 'Delete';
@@ -129,8 +84,7 @@ abstract final class AppStrings {
   static const String viewDetails = 'View Details';
   static const String viewAll = 'View All';
 
-  // ──────────────────── State Messages ────────────────────
-
+  // State Messages
   static const String loading = 'Loading…';
   static const String noData = 'No data available.';
   static const String noResults = 'No results found.';
@@ -141,8 +95,7 @@ abstract final class AppStrings {
   static const String noReplacements = 'No replacements for today.';
   static const String noDocuments = 'No documents uploaded.';
 
-  // ──────────────────── Patient ────────────────────
-
+  // Patient
   static const String registerPatient = 'Register Patient';
   static const String editPatient = 'Edit Patient';
   static const String patientDetails = 'Patient Details';
@@ -153,8 +106,7 @@ abstract final class AppStrings {
   static const String packageBalance = 'Package Balance';
   static const String assignedDoctors = 'Assigned Doctors';
 
-  // ──────────────────── Appointment ────────────────────
-
+  // Appointment
   static const String bookAppointment = 'Book Appointment';
   static const String appointmentDetails = 'Appointment Details';
   static const String session = 'Session';
@@ -168,22 +120,99 @@ abstract final class AppStrings {
   static const String notes = 'Notes';
   static const String checkIn = 'Check In';
   static const String markComplete = 'Mark Complete';
+  static const String originalDoctors = 'Original Doctors';
+  static const String coveringDr = 'Covering Dr.';
+  static const String confirmCheckIn =
+      'Check in this patient for their appointment?';
+  static const String confirmMarkComplete =
+      'Mark this appointment as completed?';
+  static const String appointmentNotFound = 'Appointment not found.';
+  static const String date = 'Date';
+  static const String time = 'Time';
+  static const String type = 'Type';
+  static const String doctors = 'Doctors';
+  static const String yes = 'Yes';
+  static const String no = 'No';
 
-  // ──────────────────── Replacement ────────────────────
-
+  // Replacement
   static const String initiateReplacement = 'Initiate Replacement';
   static const String absentDoctor = 'Absent Doctor';
   static const String coveringDoctor = 'Covering Doctor';
   static const String replacementDate = 'Replacement Date';
   static const String swapDoctors = 'Swap Doctors';
+  static const String manageReplacement = 'Manage Replacement';
+  static const String selectAbsentDoctor = 'Select absent doctor';
+  static const String selectCoveringDoctor = 'Select covering doctor';
+  static const String confirmReplacement = 'Confirm Replacement';
+  static const String replacementAccessDenied =
+      'Doctors cannot access this screen. Receptionist/Admin only.';
+  static const String affectedAppointmentsHeader = 'Affected Appointments';
+  static const String replacementSwapSuccess =
+      'Appointments swapped successfully.';
+  static const String skipManualSwap = "Skip, I'll handle manually";
+  static const String selectAll = 'Select All';
+  static const String applyToSelected = 'Apply to Selected';
+  static const String noAffectedAppointments =
+      'No appointments found for this doctor on this date.';
 
-  // ──────────────────── Confirmation Dialogs ────────────────
-
-  static const String confirmDelete =
-      'Are you sure you want to delete this record?';
-  static const String confirmCancel =
-      'Are you sure you want to cancel this appointment?';
-  static const String confirmSignOut =
-      'Are you sure you want to sign out?';
+  // Confirmation Dialogs
+  static const String confirmDelete = 'Are you sure you want to delete this record?';
+  static const String confirmCancel = 'Are you sure you want to cancel this appointment?';
+  static const String confirmSignOut = 'Are you sure you want to sign out?';
   static const String actionCannotBeUndone = 'This action cannot be undone.';
+
+  // New Booking Screen Strings
+  static const String newAppointment = 'New Appointment';
+  static const String patientId = 'Patient ID';
+  static const String appointmentType = 'Appointment Type';
+  static const String single = 'Single';
+  static const String recurring = 'Recurring';
+  static const String isRecurring = 'Is Recurring?';
+  static const String selectDays = 'Select Days of Week';
+  static const String numberOfSessions = 'Number of Sessions';
+  static const String scheduledSlots = 'Scheduled Slots Preview';
+  static const String bookingSuccess = 'Appointment booked successfully.';
+  static const String bookingRecurringSuccess = 'Recurring appointments booked successfully.';
+  static const String bookingError = 'Failed to book appointment.';
+  static const String accessDenied = 'Access denied. Receptionist/Admin only.';
+  static const String patientRequired = 'Patient ID is required.';
+  static const String dateRequired = 'Date is required.';
+  static const String timeRequired = 'Time is required.';
+  static const String sessionsRequired = 'Number of sessions is required.';
+  static const String daysRequired = 'At least one day must be selected.';
+  static const String noAssignedDoctors = 'No assigned doctors found for this patient.';
+  static const String selectDate = 'Select Date';
+  static const String selectTime = 'Select Time';
+  static const String checkInPatient = 'Check In Patient';
+  static const String cancelAppointment = 'Cancel Appointment';
+  static const String markAsCompleted = 'Mark as Completed';
+  static const String historicalNote = 'This appointment is read-only.';
+  static const String statusUpdateSuccess = 'Status updated successfully.';
+  static const String statusUpdateError = 'Failed to update status.';
+
+  // Payment Screen Strings
+  static const String recordPayment = 'Record Payment';
+  static const String paymentAmount = 'Amount';
+  static const String amountRequired = 'Amount is required';
+  static const String amountMustBePositive = 'Amount must be greater than zero';
+  static const String reasonRequired = 'Reason is required';
+  static const String paymentReason = 'Reason';
+  static const String paymentReasonPackage = 'Package';
+  static const String paymentReasonSession = 'Session';
+  static const String paymentReasonGehaz = 'Gehaz';
+  static const String paymentReasonOther = 'Other';
+  static const String customReason = 'Custom Reason';
+  static const String customReasonRequired = 'Custom reason is required';
+  static const String paymentRecordedSuccess = 'Payment recorded successfully.';
+  static const String selectPackage = 'Select Package';
+  static const String patientDisplayName = 'Patient';
+  static const String doctorAccessBlocked = 'Doctors are completely restricted from modifying payment databases.';
+
+  // Package Balance Edit Strings
+  static const String editPackageBalance = 'Edit Package Balance';
+  static const String enterNewPackageBalance = 'Enter new package balance';
+  static const String balanceRequired = 'Please enter a balance';
+  static const String balanceMustBeInteger = 'Must be a valid integer';
+  static const String packageBalanceUpdatedSuccess = 'Package balance updated successfully.';
+  static const String editPackageBalanceAccessDenied = 'Only super admins and receptionists can edit package balance.';
 }

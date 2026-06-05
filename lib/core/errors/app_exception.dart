@@ -109,6 +109,17 @@ class AuthException extends AppException {
       );
     }
 
+    // Rate-limit (HTTP 429 "Too Many Requests")
+    if (msg.contains('rate limit') ||
+        msg.contains('too many requests') ||
+        error.statusCode == '429') {
+      return AuthException(
+        code: 'auth/rate-limited',
+        message: error.message,
+        userMessageKey: 'error_auth_rate_limited',
+      );
+    }
+
     return AuthException(
       code: 'auth/unknown',
       message: error.message,
@@ -132,6 +143,19 @@ class DatabaseException extends AppException {
     supabase.PostgrestException error,
   ) {
     final String? pgCode = error.code;
+
+    // HTTP 401 Unauthorized — no active session / RLS blocked
+    final int? httpStatus = int.tryParse('${error.code}');
+    if (httpStatus == 401 ||
+        error.message.toLowerCase().contains('jwt') ||
+        error.message.toLowerCase().contains('not authenticated')) {
+      return DatabaseException(
+        code: 'db/unauthorized',
+        message: error.message,
+        userMessageKey: 'error_auth_generic',
+        pgCode: pgCode,
+      );
+    }
 
     // RLS violation — user lacks permission
     if (pgCode == '42501') {

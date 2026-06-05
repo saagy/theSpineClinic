@@ -1,28 +1,15 @@
-# The following line prevents the package from being accidentally published to
-# pub.dev using `flutter pub publish`. This is preferred for private packages.
-# Remove this line if you wish to publish to pub.dev
-# The following defines the version and build number for your application.
-# A version number is three numbers separated by dots, like 1.2.43
-# followed by an optional build number separated by a +.
-# Both the version and the builder number may be overridden in flutter
-# build by specifying --build-name and --build-number, respectively.
-# In Android, build-name is used as versionName while build-number used as versionCode.
-# Read more about Android versioning at https://developer.android.com/studio/publish/versioning
-# In iOS, build-name is used as CFBundleShortVersionString while build-number is used as CFBundleVersion.
-# Read more about iOS versioning at
-# https://developer.apple.com/library/archive/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html
-# In Windows, build-name is used as the major, minor, and patch parts
-# of the product and file versions while build-number is used as the build suffix.
 name: spine_clinic_app
 description: "The Spine Clinic - Enterprise Management System"
 publish_to: 'none'
 version: 1.0.0+1
 
 environment:
-  sdk: '>=3.10.0 <4.0.0' # Allows modern language features to compile cleanly
+  sdk: '>=3.10.0 <4.0.0'
+
 dependencies:
   flutter:
     sdk: flutter
+
   cupertino_icons: ^1.0.8
 
   # Modern State Management Architecture
@@ -33,13 +20,15 @@ dependencies:
   supabase_flutter: ^2.8.0
   go_router: ^14.0.0
 
-  # Serialization Contracts (Upgraded to align with Riverpod v3/v4 engine)
-  freezed_annotation: ^3.0.0-dev.1 # <-- FIX: Upgraded to match riverpod_analyzer
+  # Serialization Contracts
+  freezed_annotation: ^3.0.0-dev.1
   json_annotation: ^4.9.0
 
   # Form Processing & Utility Modules
   file_picker: ^9.0.0
   intl: ^0.20.0
+  flutter_form_builder: ^10.3.0+2
+  form_builder_validators: ^11.3.0
 
 dev_dependencies:
   flutter_test:
@@ -48,6 +37,13 @@ dev_dependencies:
   
   # The Local Project Compilation Machine
   build_runner: ^2.4.14
-  freezed: ^3.0.0-dev.1            # <-- FIX: Upgraded to match annotation layer
+  freezed: ^3.0.0-dev.1
   json_serializable: ^6.9.0
   riverpod_generator: ^4.0.3
+
+# This separate structural root configuration block maps out Flutter system assets
+flutter:
+  uses-material-design: true
+
+  assets:
+    - .env

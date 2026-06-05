@@ -16,6 +16,9 @@ import 'package:spine_clinic_app/core/constants/app_colors.dart';
 import 'package:spine_clinic_app/core/constants/app_sizes.dart';
 import 'package:spine_clinic_app/core/constants/app_strings.dart';
 import 'package:spine_clinic_app/core/constants/app_text_styles.dart';
+import 'package:spine_clinic_app/core/network/app_routes.dart';
+import 'package:spine_clinic_app/features/auth/domain/user_role.dart';
+import 'package:spine_clinic_app/features/auth/presentation/auth_providers.dart';
 import 'package:spine_clinic_app/features/patient/domain/clinic_location.dart';
 import 'package:spine_clinic_app/features/patient/domain/patient.dart';
 import 'package:spine_clinic_app/features/patient/presentation/patient_providers.dart';
@@ -61,6 +64,8 @@ class _PatientSearchScreenState extends ConsumerState<PatientSearchScreen> {
   Widget build(BuildContext context) {
     final AsyncValue<List<Patient>> asyncPatients =
         ref.watch(patientSearchProvider);
+    final user = ref.watch(currentUserProvider).value;
+    final showFab = user != null && user.role != UserRole.doctor;
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -128,11 +133,11 @@ class _PatientSearchScreenState extends ConsumerState<PatientSearchScreen> {
                 if (patients.isEmpty) {
                   return EmptyState(
                     message: _currentQuery.isEmpty
-                        ? AppStrings.searchPatientsPrompt
-                        : AppStrings.noResults,
+                      ? AppStrings.searchPatientsPrompt
+                      : AppStrings.noResults,
                     icon: _currentQuery.isEmpty
-                        ? Icons.search_rounded
-                        : Icons.person_off_rounded,
+                      ? Icons.search_rounded
+                      : Icons.person_off_rounded,
                   );
                 }
                 return ListView.builder(
@@ -142,7 +147,7 @@ class _PatientSearchScreenState extends ConsumerState<PatientSearchScreen> {
                     return DataListTile(
                       title: patient.fullName,
                       subtitle:
-                          '${patient.phoneNumber} · ${patient.clinic.displayLabel}',
+                        '${patient.phoneNumber} · ${patient.clinic.displayLabel}',
                       trailing: PatientBalanceChip(
                         balance: patient.packageBalance,
                       ),
@@ -157,6 +162,13 @@ class _PatientSearchScreenState extends ConsumerState<PatientSearchScreen> {
           ),
         ],
       ),
+      floatingActionButton: showFab
+        ? FloatingActionButton(
+            onPressed: () => context.push(AppRoutes.newPatient),
+            backgroundColor: AppColors.primary,
+            child: const Icon(Icons.add, color: Colors.white),
+          )
+        : null,
     );
   }
 

@@ -7,6 +7,7 @@
 /// Rule 4 — every method returns `Result<T>`.
 library;
 
+import 'package:flutter/foundation.dart';
 import 'package:spine_clinic_app/core/errors/app_exception.dart';
 import 'package:spine_clinic_app/core/errors/result.dart';
 import 'package:spine_clinic_app/core/network/supabase_service.dart';
@@ -105,12 +106,18 @@ class AuthRepositoryImpl implements AuthRepository {
     required String password,
   }) async {
     try {
+      debugPrint('REGISTER: Starting signup for $email');
       final response = await _service.signUpWithEmail(
         email: email,
         password: password,
       );
 
       final String? userId = response.user?.id;
+      debugPrint('REGISTER: signUp returned userId=$userId');
+      debugPrint(
+        'REGISTER: session exists=${response.session != null}',
+      );
+
       if (userId == null) {
         return const Result.failure(
           AuthException(
@@ -120,20 +127,64 @@ class AuthRepositoryImpl implements AuthRepository {
         );
       }
 
+      // Verify we have an active session before inserting into staff.
+      // Without a session the RLS INSERT policy (requires `authenticated`
+      // role) will reject the request with HTTP 401.
+      if (!_service.isAuthenticated) {
+        debugPrint(
+          'REGISTER: No session after signUp — email confirmation '
+          'may be enabled in Supabase. Cannot insert staff row.',
+        );
+        return const Result.failure(
+          AuthException(
+            code: 'auth/no-session-after-signup',
+            message:
+                'Registration created but email confirmation is required. '
+                'Please ask your administrator to disable email confirmation '
+                'in the Supabase Dashboard, or confirm your email first.',
+            userMessageKey: 'error_auth_email_not_confirmed',
+          ),
+        );
+      }
+
+      debugPrint('REGISTER: Inserting staff row for $userId');
       await _service.guardQuery(
         () => _service.from(_staffTable).insert({
           'user_id': userId,
           'full_name': fullName,
           'email': email,
+          'phone': phone,
           'role': 'doctor',
           'is_active': false,
         }),
       );
 
+      debugPrint('REGISTER: Staff row inserted, signing out');
       // Clear the session — doctor must NOT be logged in after registration.
       await _service.signOut();
 
+      debugPrint('REGISTER: Registration complete');
       return const Result.success(null);
+    } on AppException catch (error) {
+      debugPrint('REGISTER: AppException — ${error.code}: ${error.message}');
+      return Result.failure(error);
+    } on Exception catch (error) {
+      debugPrint('REGISTER: Exception — $error');
+      return Result.failure(AppException.fromSupabaseException(error));
+    }
+  }
+
+  @override
+  Future<Result<Staff>> getStaffProfile(String staffId) async {
+    try {
+      final Map<String, dynamic> row = await _service.guardQuery(
+        () => _service
+            .from(_staffTable)
+            .select()
+            .eq('id', staffId)
+            .single(),
+      );
+      return Result.success(Staff.fromJson(row));
     } on AppException catch (error) {
       return Result.failure(error);
     } on Exception catch (error) {
@@ -141,3 +192,4 @@ class AuthRepositoryImpl implements AuthRepository {
     }
   }
 }
+

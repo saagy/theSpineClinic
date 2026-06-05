@@ -67,6 +67,7 @@ id                uuid          PK, default gen_random_uuid()
 user_id           uuid          unique, references auth.users(id) on delete cascade, nullable
 full_name         text          not null
 email             text          unique, not null
+phone             text          nullable
 role              user_role     enum: 'super_admin' | 'receptionist' | 'doctor'
 is_active         boolean       default true
 created_at        timestamptz   default now()
@@ -369,6 +370,23 @@ FOR DELETE TO authenticated USING (
     WHERE staff_role IN ('super_admin'::user_role, 'receptionist'::user_role)
     AND staff_active = true
   )
+);
+```
+
+### Staff policies
+```sql
+-- Allow users to view their own profile (SELECT)
+CREATE POLICY "Allow users to view their own profile" ON public.staff
+FOR SELECT TO authenticated
+USING (user_id = auth.uid());
+
+-- Allow users to insert their own profile (INSERT)
+CREATE POLICY "Allow users to insert their own profile" ON public.staff 
+FOR INSERT TO authenticated 
+WITH CHECK (
+  user_id = auth.uid() 
+  AND is_active = false 
+  AND role = 'doctor'::user_role
 );
 ```
 

@@ -4,7 +4,9 @@
 /// Display labels come from [AppStrings] (Rule 7).
 library;
 
+import 'package:flutter/material.dart';
 import 'package:json_annotation/json_annotation.dart';
+import 'package:spine_clinic_app/core/constants/app_colors.dart';
 import 'package:spine_clinic_app/core/constants/app_strings.dart';
 
 /// The type of appointment.
@@ -25,5 +27,17 @@ enum AppointmentType {
   String get displayLabel => switch (this) {
     AppointmentType.session => AppStrings.session,
     AppointmentType.gehazShadFakarat => AppStrings.gehazShadFakarat,
+  };
+
+  /// Text color for UI badges.
+  Color get textColor => switch (this) {
+    AppointmentType.session => AppColors.primary,
+    AppointmentType.gehazShadFakarat => AppColors.warning,
+  };
+
+  /// Background color for UI badges.
+  Color get backgroundColor => switch (this) {
+    AppointmentType.session => AppColors.primaryLight,
+    AppointmentType.gehazShadFakarat => AppColors.warningBg,
   };
 }
