@@ -15,6 +15,7 @@ import 'package:spine_clinic_app/features/appointment/domain/appointment_doctor.
 import 'package:spine_clinic_app/features/appointment/domain/appointment_repository.dart';
 import 'package:spine_clinic_app/features/appointment/domain/appointment_status.dart';
 import 'package:spine_clinic_app/features/appointment/presentation/appointment_providers.dart';
+import 'package:spine_clinic_app/features/appointment/presentation/my_schedule_controller.dart';
 import 'package:spine_clinic_app/features/auth/domain/staff.dart';
 import 'package:spine_clinic_app/features/auth/presentation/auth_providers.dart';
 import 'package:spine_clinic_app/features/patient/domain/patient.dart';
@@ -103,7 +104,7 @@ class AppointmentDetailController extends _$AppointmentDetailController {
     );
     switch (result) {
       case Success<void>():
-        ref.invalidate(todayAppointmentsProvider);
+        _invalidateCaches();
         ref.invalidateSelf();
         await future;
       case Failure<void>(:final exception):
@@ -120,7 +121,7 @@ class AppointmentDetailController extends _$AppointmentDetailController {
     );
     switch (result) {
       case Success<void>():
-        ref.invalidate(todayAppointmentsProvider);
+        _invalidateCaches();
         ref.invalidateSelf();
         await future;
       case Failure<void>(:final exception):
@@ -128,20 +129,30 @@ class AppointmentDetailController extends _$AppointmentDetailController {
     }
   }
 
-  /// Transitions appointment status to [AppointmentStatus.completed].
-  Future<void> markComplete() async {
+  /// Transitions appointment status back to [AppointmentStatus.scheduled].
+  Future<void> revertToScheduled() async {
     final AppointmentRepository repo = ref.read(appointmentRepositoryProvider);
     final Result<void> result = await repo.updateAppointmentStatus(
       appointmentId,
-      AppointmentStatus.completed,
+      AppointmentStatus.scheduled,
     );
     switch (result) {
       case Success<void>():
-        ref.invalidate(todayAppointmentsProvider);
+        _invalidateCaches();
         ref.invalidateSelf();
         await future;
       case Failure<void>(:final exception):
         throw exception;
     }
+  }
+
+  void _invalidateCaches() {
+    final patientId = state.value?.appointment.patientId;
+    ref.invalidate(todayAppointmentsProvider);
+    if (patientId != null) {
+      ref.invalidate(patientAppointmentsProvider(patientId));
+      ref.invalidate(patientDetailProvider(patientId));
+    }
+    ref.invalidate(myScheduleControllerProvider);
   }
 }

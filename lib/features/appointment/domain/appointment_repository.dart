@@ -12,6 +12,8 @@ import 'package:spine_clinic_app/features/auth/domain/staff.dart';
 
 import 'package:spine_clinic_app/features/patient/domain/patient.dart';
 
+import 'package:spine_clinic_app/features/patient/domain/clinic_location.dart';
+
 /// Defines the appointment data operations available to the application.
 ///
 /// The contract enforces that all Supabase-level errors are normalised
@@ -20,7 +22,7 @@ abstract class AppointmentRepository {
   /// Fetches all active appointments for today, sorted by schedule time ascending.
   ///
   /// Today is calculated in UTC bounds from 00:00:00 to 23:59:59.
-  Future<Result<List<Appointment>>> getAppointmentsForToday();
+  Future<Result<List<Appointment>>> getAppointmentsForToday(ClinicLocation clinic);
 
   /// Updates the status column of an appointment.
   ///

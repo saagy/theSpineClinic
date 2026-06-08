@@ -98,7 +98,7 @@ final class TodayAppointmentsProvider
   TodayAppointments create() => TodayAppointments();
 }
 
-String _$todayAppointmentsHash() => r'66844ffcf2b367f26c2ebcaf4228b1be7eb1f5f7';
+String _$todayAppointmentsHash() => r'e7d83fa5162a53e293bfdacbe33afad3ceaa1aa0';
 
 /// Reactive notifier holding today's schedule of appointments.
 ///
@@ -552,4 +552,88 @@ final class AvailablePackageBalanceFamily extends $Family
 
   @override
   String toString() => r'availablePackageBalanceProvider';
+}
+
+/// Family provider resolving a single appointment by ID.
+
+@ProviderFor(singleAppointment)
+final singleAppointmentProvider = SingleAppointmentFamily._();
+
+/// Family provider resolving a single appointment by ID.
+
+final class SingleAppointmentProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<Appointment>,
+          Appointment,
+          FutureOr<Appointment>
+        >
+    with $FutureModifier<Appointment>, $FutureProvider<Appointment> {
+  /// Family provider resolving a single appointment by ID.
+  SingleAppointmentProvider._({
+    required SingleAppointmentFamily super.from,
+    required String super.argument,
+  }) : super(
+         retry: null,
+         name: r'singleAppointmentProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
+
+  @override
+  String debugGetCreateSourceHash() => _$singleAppointmentHash();
+
+  @override
+  String toString() {
+    return r'singleAppointmentProvider'
+        ''
+        '($argument)';
+  }
+
+  @$internal
+  @override
+  $FutureProviderElement<Appointment> $createElement(
+    $ProviderPointer pointer,
+  ) => $FutureProviderElement(pointer);
+
+  @override
+  FutureOr<Appointment> create(Ref ref) {
+    final argument = this.argument as String;
+    return singleAppointment(ref, argument);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is SingleAppointmentProvider && other.argument == argument;
+  }
+
+  @override
+  int get hashCode {
+    return argument.hashCode;
+  }
+}
+
+String _$singleAppointmentHash() => r'61a1712054d080aed7c5d37c59df9ca7aa20ca46';
+
+/// Family provider resolving a single appointment by ID.
+
+final class SingleAppointmentFamily extends $Family
+    with $FunctionalFamilyOverride<FutureOr<Appointment>, String> {
+  SingleAppointmentFamily._()
+    : super(
+        retry: null,
+        name: r'singleAppointmentProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
+  /// Family provider resolving a single appointment by ID.
+
+  SingleAppointmentProvider call(String appointmentId) =>
+      SingleAppointmentProvider._(argument: appointmentId, from: this);
+
+  @override
+  String toString() => r'singleAppointmentProvider';
 }

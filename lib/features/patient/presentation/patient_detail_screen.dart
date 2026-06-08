@@ -5,6 +5,8 @@ import 'package:spine_clinic_app/core/constants/app_sizes.dart';
 import 'package:spine_clinic_app/core/constants/app_strings.dart';
 import 'package:spine_clinic_app/core/constants/app_text_styles.dart';
 import 'package:spine_clinic_app/core/errors/app_exception.dart';
+import 'package:spine_clinic_app/features/auth/domain/user_role.dart';
+import 'package:spine_clinic_app/features/auth/presentation/auth_providers.dart';
 import 'package:spine_clinic_app/features/patient/domain/clinic_location.dart';
 import 'package:spine_clinic_app/features/patient/domain/patient.dart';
 import 'package:spine_clinic_app/features/patient/presentation/patient_providers.dart';
@@ -29,6 +31,8 @@ class PatientDetailScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final AsyncValue<Patient> asyncPatient =
         ref.watch(patientDetailProvider(patientId));
+    final user = ref.watch(currentUserProvider).value;
+    final isDoctor = user?.role == UserRole.doctor;
 
     return asyncPatient.when(
       loading: () => const Scaffold(
@@ -54,48 +58,54 @@ class PatientDetailScreen extends ConsumerWidget {
           ),
         );
       },
-      data: (patient) => DefaultTabController(
-        length: 5,
-        child: Scaffold(
-          backgroundColor: AppColors.background,
-          appBar: AppBar(
-            backgroundColor: AppColors.surface,
-            foregroundColor: AppColors.textPrimary,
-            elevation: 0,
-            title: Text(patient.fullName, style: AppTextStyles.headingSmall),
-            bottom: const TabBar(
-              labelColor: AppColors.primary,
-              unselectedLabelColor: AppColors.textSecondary,
-              indicatorColor: AppColors.primary,
-              isScrollable: true,
-              tabs: [
-                Tab(text: 'Info'),
-                Tab(text: 'Appointments'),
-                Tab(text: 'Records'),
-                Tab(text: 'Payments'),
-                Tab(text: 'Documents'),
+      data: (patient) {
+        final List<Tab> tabs = [
+          const Tab(text: 'Info'),
+          const Tab(text: 'Appointments'),
+          const Tab(text: 'Records'),
+          if (!isDoctor) const Tab(text: 'Payments'),
+          const Tab(text: 'Documents'),
+        ];
+
+        final List<Widget> tabViews = [
+          PatientTabInfo(patient: patient),
+          PatientTabAppointments(patient: patient),
+          PatientTabRecords(patient: patient),
+          if (!isDoctor) PatientTabPayments(patient: patient),
+          PatientTabDocuments(patient: patient),
+        ];
+
+        return DefaultTabController(
+          length: tabs.length,
+          child: Scaffold(
+            backgroundColor: AppColors.background,
+            appBar: AppBar(
+              backgroundColor: AppColors.surface,
+              foregroundColor: AppColors.textPrimary,
+              elevation: 0,
+              title: Text(patient.fullName, style: AppTextStyles.headingSmall),
+              bottom: TabBar(
+                labelColor: AppColors.primary,
+                unselectedLabelColor: AppColors.textSecondary,
+                indicatorColor: AppColors.primary,
+                isScrollable: true,
+                tabs: tabs,
+              ),
+            ),
+            body: Column(
+              children: [
+                _buildHeader(patient),
+                const Divider(height: 1, thickness: 1, color: AppColors.border),
+                Expanded(
+                  child: TabBarView(
+                    children: tabViews,
+                  ),
+                ),
               ],
             ),
           ),
-          body: Column(
-            children: [
-              _buildHeader(patient),
-              const Divider(height: 1, thickness: 1, color: AppColors.border),
-              Expanded(
-                child: TabBarView(
-                  children: [
-                    PatientTabInfo(patient: patient),
-                    PatientTabAppointments(patient: patient),
-                    PatientTabRecords(patient: patient),
-                    PatientTabPayments(patient: patient),
-                    PatientTabDocuments(patient: patient),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
+        );
+      },
     );
   }
 

@@ -70,6 +70,9 @@ abstract final class AppColors {
   /// Rose 600 — error / destructive foreground.
   static const Color error = Color(0xFFE11D48);
 
+  /// Alias for error/destructive action color.
+  static const Color danger = error;
+
   /// Rose 50 — error badge / chip background.
   static const Color errorBg = Color(0xFFFFF1F2);
 

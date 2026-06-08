@@ -20,6 +20,8 @@ import 'package:spine_clinic_app/features/appointment/domain/appointment_reposit
 import 'package:spine_clinic_app/features/auth/domain/staff.dart';
 import 'package:spine_clinic_app/features/auth/presentation/auth_providers.dart';
 import 'package:spine_clinic_app/features/patient/presentation/patient_providers.dart';
+import 'package:spine_clinic_app/features/admin/presentation/branch_providers.dart';
+import 'package:spine_clinic_app/features/patient/domain/clinic_location.dart';
 
 part 'appointment_providers.g.dart';
 
@@ -32,6 +34,7 @@ AppointmentRepository appointmentRepository(Ref ref) {
   );
 }
 
+
 /// Reactive notifier holding today's schedule of appointments.
 ///
 /// Uses [ref.invalidateSelf()] during reload to trigger Riverpod's built-in
@@ -40,8 +43,9 @@ AppointmentRepository appointmentRepository(Ref ref) {
 class TodayAppointments extends _$TodayAppointments {
   @override
   Future<List<Appointment>> build() async {
+    final ClinicLocation clinic = ref.watch(activeBranchProvider);
     final AppointmentRepository repo = ref.read(appointmentRepositoryProvider);
-    final Result<List<Appointment>> result = await repo.getAppointmentsForToday();
+    final Result<List<Appointment>> result = await repo.getAppointmentsForToday(clinic);
 
     switch (result) {
       case Success<List<Appointment>>(:final data):
@@ -157,6 +161,17 @@ Future<int> availablePackageBalance(Ref ref, String patientId) async {
   final patient = await ref.watch(patientDetailProvider(patientId).future);
   final futureCommitments = await ref.watch(futureScheduledAppointmentsCountProvider(patientId).future);
   return patient.packageBalance - futureCommitments;
+}
+
+/// Family provider resolving a single appointment by ID.
+@riverpod
+Future<Appointment> singleAppointment(Ref ref, String appointmentId) async {
+  final repo = ref.watch(appointmentRepositoryProvider);
+  final result = await repo.getAppointmentById(appointmentId);
+  return result.when(
+    success: (data) => data,
+    failure: (err) => throw err,
+  );
 }
 
 

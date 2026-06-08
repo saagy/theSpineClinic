@@ -8,6 +8,8 @@ import 'package:spine_clinic_app/features/appointment/domain/appointment_status.
 import 'package:spine_clinic_app/features/auth/domain/staff.dart';
 import 'package:spine_clinic_app/features/patient/domain/patient.dart';
 
+import 'package:spine_clinic_app/features/patient/domain/clinic_location.dart';
+
 /// Supabase-backed implementation of [AppointmentRepository].
 class AppointmentRepositoryImpl implements AppointmentRepository {
   AppointmentRepositoryImpl({required SupabaseService supabaseService}) : _service = supabaseService;
@@ -28,13 +30,15 @@ class AppointmentRepositoryImpl implements AppointmentRepository {
   }
 
   @override
-  Future<Result<List<Appointment>>> getAppointmentsForToday() {
+  Future<Result<List<Appointment>>> getAppointmentsForToday(ClinicLocation clinic) {
     return _run(() async {
       final DateTime localNow = DateTime.now();
       final DateTime todayStart = DateTime(localNow.year, localNow.month, localNow.day).toUtc();
       final DateTime tomorrowStart = todayStart.add(const Duration(days: 1));
 
-      final List<Map<String, dynamic>> rows = await _service.from(_appointmentsTable).select()
+      final List<Map<String, dynamic>> rows = await _service.from(_appointmentsTable)
+          .select('*, patient:patients!inner(clinic)')
+          .eq('patient.clinic', clinic.dbValue)
           .gte('scheduled_at', todayStart.toIso8601String())
           .lt('scheduled_at', tomorrowStart.toIso8601String())
           .order('scheduled_at', ascending: true);

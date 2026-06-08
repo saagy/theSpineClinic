@@ -107,12 +107,11 @@ uploaded_at       timestamptz   default now()
 ```
 id                uuid          PK, default gen_random_uuid()
 patient_id        uuid          references patients(id) on delete cascade
-type              appointment_type enum: 'session' | 'gehaz_shad_fakarat'
+type              appointment_type enum: 'session' | 'gehaz_shad_fakarat' | 'check_up'
 scheduled_at      timestamptz   default now()
 status            appointment_status enum: 'scheduled' | 'checked_in' | 'completed'
                                 | 'cancelled' | 'no_show', default 'scheduled'
 use_package       boolean       default true
-notes             text          nullable
 created_by        uuid          references staff(id) on delete set null, nullable
 created_at        timestamptz   default now()
 
@@ -162,6 +161,17 @@ recorded_by       uuid          references staff(id) on delete set null, nullabl
 recorded_at       timestamptz   default now()
 ```
 
+### patient_notes
+```
+id                uuid          PK, default gen_random_uuid()
+patient_id        uuid          references patients(id) on delete cascade
+appointment_id    uuid          references appointments(id) on delete set null, nullable
+created_by        uuid          references staff(id) on delete restrict
+note_text         text          not null
+created_at        timestamptz   default now()
+updated_at        timestamptz   default now()
+```
+
 ### clinic_settings  (single row)
 ```
 id                uuid          PK, default gen_random_uuid()
@@ -180,14 +190,14 @@ updated_at        timestamptz   default now()
 | Register patients | ✅ | ✅ | ❌ |
 | View all patients | ✅ | ✅ | ❌ |
 | View assigned patients | ✅ | ✅ | ✅ (own + replacements today) |
-| Edit patient info | ✅ | ✅ | ❌ |
+| Edit patient info | ✅ | ✅ | ✅ (assigned/covering only) |
 | Upload patient documents | ✅ | ✅ | ❌ |
 | Edit package balance | ✅ | ✅ | ❌ |
 | Book appointments | ✅ | ✅ | ❌ |
 | Cancel appointments | ✅ | ✅ | ❌ |
 | Check in patient | ✅ | ✅ | ❌ |
 | Mark appointment complete | ✅ | ❌ | own only |
-| Add visit notes | ✅ | ❌ | own + replacement |
+| Add patient & visit notes | ✅ | ✅ | ✅ (any with view access) |
 | View payment records | ✅ | ✅ | ❌ (completely blocked) |
 | Record payments | ✅ | ✅ | ❌ |
 | Initiate replacement | ✅ | ✅ (manual override) | own only |
@@ -442,6 +452,7 @@ CREATE TRIGGER trigger_appointment_package_deduction
 9. Every screen must handle four states: loading, error, empty, and data.
 10. Run flutter analyze and confirm zero errors before marking any task done.
 11. Phone-only app. No hover states, no MouseRegion widgets, no desktop/web interaction patterns. Touch only.
+12. DEBOUNCED FILTERS. Any interactive text search or filter query hitting a Repository or Supabase must use a minimum 300ms debounce pattern via Riverpod or an explicit debouncer mechanism. Never trigger database hits on every single keystroke.
 
 ---
 
@@ -528,25 +539,41 @@ Replace bracketed sections with the specific task details.
 [PASTE ENTIRE AGENT_CONTEXT.MD ABOVE THIS LINE]
 ========================================================================
 
-CURRENT TASK: Build [target class name and file path]
+# ROLE & CONTEXT
+You are an expert Flutter & Riverpod Engineer specialized in Clean Architecture. You are working on the "Spine Clinic" platform. 
 
-SPECIFIC REQUIREMENTS:
-- [requirement 1]
-- [requirement 2]
+# PROJECT GUIDANCE
+- Use the exact schemas, database rules, and structural constraints documented in @AGENT_CONTEXT.md and @SCREENS.md.
+- Ensure all business logic remains in Repositories; Widgets are for UI and State Consumption only.
 
-STATES TO HANDLE:
-- Loading: use LoadingOverlay or skeleton
-- Error: use ErrorView with retry
-- Empty: use EmptyState widget
-- Data: [describe what data state looks like]
+# CURRENT TASK: [Phase Name & Screen Name]
+**Target Files:**
+- [List specific file paths here]
 
-ROLE RESTRICTIONS:
-- [which buttons/sections are hidden for which roles]
+**Requirements:**
+1. [Functional Requirement 1]
+2. [Functional Requirement 2]
+3. [Role-Based Requirement: Define who can see/do what]
 
-BEFORE WRITING ANY CODE, RESPOND WITH:
-1. Files you will create or modify (exact paths)
-2. Data flow: Widget → Provider → Repository → Supabase
-3. Any edge cases or architectural concerns
+# CRITICAL INVIOLABLE CODE RULES (STRICT ENFORCEMENT) (from agent_context.md)
+- RULE 1: LINT LIMIT. No file may exceed 200 lines. If a screen is complex, you MUST extract sub-widgets into a `widgets/` folder.
+- RULE 2: DATA ISOLATION. Zero Supabase/Database calls inside widgets. Use the Repository pattern.
+- RULE 3: STATE HANDLING. Every screen must handle 4 states: Loading (Skeletons/Spinners), Error (with retry), Empty (EmptyState widget), and Data.
+- RULE 4: TYPING. No 'dynamic' types. Use strict, explicit typing. All Repository methods must return `Future<Result<T>>`.
+- RULE 5: PERMISSIONS. Read the operating staff role from `currentUserProvider` for all write actions.
 
-Then write the code.
+# REFACTORING & SAFETY GUARD
+- DO NOT rewrite existing repository methods unless explicitly requested.
+- If you need to add a method to a Repository, extend the Interface first, then implement it.
+- After writing code, you MUST run `build_runner` and `flutter analyze`. 
+- If `flutter analyze` reports any warnings or errors, you must iterate and fix them automatically before finalizing.
+
+# AUTONOMOUS EXECUTION CONTRACT
+1. Generate an Internal Implementation Plan first.
+2. YOU ARE GRANTED 100% EXPLICIT APPROVAL TO PROCEED AUTONOMOUSLY. Do not pause for user confirmation.
+3. Fix all compilation errors via internal iteration.
+4. Only halt if you discover a logical contradiction in the established @AGENT_CONTEXT.md or have any questions/concerns.
+
+# OUTPUT FORMAT
+Provide a concise "Walkthrough" summarizing the files created/modified, the verification results (Analysis/Build Runner), and the specific role-guards implemented.
 ========================================================================

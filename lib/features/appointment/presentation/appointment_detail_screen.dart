@@ -15,7 +15,6 @@ import 'package:spine_clinic_app/core/constants/app_strings.dart';
 import 'package:spine_clinic_app/core/constants/app_text_styles.dart';
 import 'package:spine_clinic_app/core/errors/app_exception.dart';
 import 'package:spine_clinic_app/core/utils/formatters.dart';
-import 'package:spine_clinic_app/features/appointment/domain/appointment_status.dart';
 import 'package:spine_clinic_app/features/appointment/presentation/appointment_detail_controller.dart';
 import 'package:spine_clinic_app/features/appointment/presentation/widgets/appointment_action_buttons.dart';
 import 'package:spine_clinic_app/features/appointment/presentation/widgets/appointment_detail_header.dart';
@@ -25,10 +24,7 @@ import 'package:spine_clinic_app/shared/widgets/empty_state.dart';
 import 'package:spine_clinic_app/shared/widgets/error_view.dart';
 import 'package:spine_clinic_app/shared/widgets/info_row.dart';
 import 'package:spine_clinic_app/shared/widgets/section_card.dart';
-import 'package:go_router/go_router.dart';
-import 'package:spine_clinic_app/core/network/app_routes.dart';
-import 'package:spine_clinic_app/features/auth/domain/user_role.dart';
-import 'package:spine_clinic_app/shared/widgets/app_button.dart';
+import 'package:spine_clinic_app/features/appointment/presentation/widgets/appointment_notes_card.dart';
 
 /// Screen displaying the full detail view for a single appointment.
 class AppointmentDetailScreen extends ConsumerWidget {
@@ -146,43 +142,9 @@ class _AppointmentDetailBody extends ConsumerWidget {
           // Notes Section Card
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: AppSizes.p24),
-            child: SectionCard(
-              title: AppStrings.notes,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Text(
-                    state.appointment.notes?.isNotEmpty == true
-                        ? state.appointment.notes!
-                        : 'No visit notes recorded.',
-                    style: AppTextStyles.body.copyWith(
-                      color: state.appointment.notes?.isNotEmpty == true
-                          ? AppColors.textPrimary
-                          : AppColors.textMuted,
-                      fontStyle: state.appointment.notes?.isNotEmpty == true
-                          ? FontStyle.normal
-                          : FontStyle.italic,
-                    ),
-                  ),
-                  if ((userRole == UserRole.doctor ||
-                          userRole == UserRole.superAdmin) &&
-                      (state.appointment.status == AppointmentStatus.checkedIn ||
-                          state.appointment.status == AppointmentStatus.completed)) ...[
-                    if (userRole == UserRole.superAdmin ||
-                        state.activeDoctors.any(
-                            (d) => d.doctor.id == ref.read(currentUserProvider).value?.id)) ...[
-                      const SizedBox(height: AppSizes.p12),
-                      AppButton(
-                        labelText: 'Edit Visit Notes',
-                        onPressed: () => context.push(
-                          AppRoutes.addVisitNotes.replaceAll(':id', state.appointment.id),
-                        ),
-                        variant: AppButtonVariant.secondary,
-                      ),
-                    ],
-                  ],
-                ],
-              ),
+            child: AppointmentNotesCard(
+              appointmentId: state.appointment.id,
+              patientId: state.appointment.patientId,
             ),
           ),
 

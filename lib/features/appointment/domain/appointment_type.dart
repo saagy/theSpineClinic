@@ -16,7 +16,10 @@ enum AppointmentType {
   session('session'),
 
   /// Gehaz Shad Fakarat traction device session.
-  gehazShadFakarat('gehaz_shad_fakarat');
+  gehazShadFakarat('gehaz_shad_fakarat'),
+
+  /// Check-up appointment.
+  checkUp('check_up');
 
   const AppointmentType(this.dbValue);
 
@@ -27,17 +30,20 @@ enum AppointmentType {
   String get displayLabel => switch (this) {
     AppointmentType.session => AppStrings.session,
     AppointmentType.gehazShadFakarat => AppStrings.gehazShadFakarat,
+    AppointmentType.checkUp => AppStrings.checkUp,
   };
 
   /// Text color for UI badges.
   Color get textColor => switch (this) {
     AppointmentType.session => AppColors.primary,
     AppointmentType.gehazShadFakarat => AppColors.warning,
+    AppointmentType.checkUp => AppColors.info,
   };
 
   /// Background color for UI badges.
   Color get backgroundColor => switch (this) {
     AppointmentType.session => AppColors.primaryLight,
     AppointmentType.gehazShadFakarat => AppColors.warningBg,
+    AppointmentType.checkUp => AppColors.infoBg,
   };
 }

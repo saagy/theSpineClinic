@@ -55,10 +55,6 @@ class SupabaseService {
         email: email,
         password: password,
       );
-    } on AuthException catch (error) {
-      throw app_errors.AppException.fromSupabaseException(error);
-    } on SocketException catch (error) {
-      throw app_errors.AppException.fromSupabaseException(error);
     } on Exception catch (error) {
       throw app_errors.AppException.fromSupabaseException(error);
     }
@@ -77,10 +73,6 @@ class SupabaseService {
         email: email,
         password: password,
       );
-    } on AuthException catch (error) {
-      throw app_errors.AppException.fromSupabaseException(error);
-    } on SocketException catch (error) {
-      throw app_errors.AppException.fromSupabaseException(error);
     } on Exception catch (error) {
       throw app_errors.AppException.fromSupabaseException(error);
     }
@@ -92,10 +84,6 @@ class SupabaseService {
   Future<void> signOut() async {
     try {
       await _client.auth.signOut();
-    } on AuthException catch (error) {
-      throw app_errors.AppException.fromSupabaseException(error);
-    } on SocketException catch (error) {
-      throw app_errors.AppException.fromSupabaseException(error);
     } on Exception catch (error) {
       throw app_errors.AppException.fromSupabaseException(error);
     }
@@ -169,4 +157,42 @@ class SupabaseService {
   /// which must never be shipped in client bundles. Guard usage behind
   /// a super_admin role check.
   GoTrueAdminApi get adminAuth => _client.auth.admin;
+
+  // ---------------------------------------------------------------------------
+  // Patient Notes helpers
+  // ---------------------------------------------------------------------------
+
+  /// Fetches notes for a patient by [patientId] ordered by created_at DESC.
+  Future<List<Map<String, dynamic>>> getPatientNotes(String patientId) async {
+    return guardQuery(() => _client
+        .from('patient_notes')
+        .select()
+        .eq('patient_id', patientId)
+        .order('created_at', ascending: false));
+  }
+
+  /// Inserts a new patient note.
+  Future<Map<String, dynamic>> insertPatientNote(
+    Map<String, dynamic> note,
+  ) async {
+    return guardQuery(() => _client
+        .from('patient_notes')
+        .insert(note)
+        .select()
+        .single());
+  }
+
+  /// Fetches a note linked to a specific appointment.
+  Future<Map<String, dynamic>?> getNoteByAppointmentId(
+    String appointmentId,
+  ) async {
+    return guardQuery(() async {
+      final List<Map<String, dynamic>> rows = await _client
+          .from('patient_notes')
+          .select()
+          .eq('appointment_id', appointmentId)
+          .limit(1);
+      return rows.isEmpty ? null : rows.first;
+    });
+  }
 }

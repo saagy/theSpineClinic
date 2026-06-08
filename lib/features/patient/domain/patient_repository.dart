@@ -5,7 +5,6 @@
 library;
 
 import 'package:spine_clinic_app/core/errors/result.dart';
-import 'package:spine_clinic_app/features/auth/domain/staff.dart';
 import 'package:spine_clinic_app/features/patient/domain/clinic_location.dart';
 import 'package:spine_clinic_app/features/patient/domain/patient.dart';
 
@@ -50,29 +49,6 @@ abstract class PatientRepository {
     List<String> currentDoctorIds,
   );
 
-  /// Fetches all active/approved staff members with the role of doctor.
-  Future<Result<List<Staff>>> getActiveDoctors();
 
-  /// Fetches patients permanently assigned to the given doctor.
-  Future<Result<List<Patient>>> getAssignedPatients({
-    required String doctorId,
-    String? query,
-  });
-
-  /// Fetches patients accessible today via active doctor replacements for the covering doctor.
-  Future<Result<List<Patient>>> getReplacementPatients({
-    required String doctorId,
-    String? query,
-  });
-
-  /// Fetches active replacements for the given covering doctor today.
-  Future<Result<List<Staff>>> getActiveReplacementsForDoctor({
-    required String doctorId,
-  });
-
-  /// Fetches a mapping of patient ID to the absent doctor's name for coverage display.
-  Future<Result<Map<String, String>>> getPatientReplacementMapping({
-    required List<String> absentDoctorIds,
-  });
 }
 

@@ -1,0 +1,130 @@
+import 'package:spine_clinic_app/core/errors/app_exception.dart';
+import 'package:spine_clinic_app/core/errors/result.dart';
+import 'package:spine_clinic_app/core/network/supabase_service.dart';
+import 'package:spine_clinic_app/features/auth/domain/staff.dart';
+import 'package:spine_clinic_app/features/patient/domain/patient.dart';
+
+abstract class StaffRepository {
+  Future<Result<List<Staff>>> getActiveDoctors();
+  Future<Result<List<Patient>>> getAssignedPatients({required String doctorId, String? query});
+  Future<Result<List<Patient>>> getReplacementPatients({required String doctorId, String? query});
+  Future<Result<List<Staff>>> getActiveReplacementsForDoctor({required String doctorId});
+  Future<Result<Map<String, String>>> getPatientReplacementMapping({required List<String> absentDoctorIds});
+}
+
+class StaffRepositoryImpl implements StaffRepository {
+  StaffRepositoryImpl({required SupabaseService supabaseService}) : _service = supabaseService;
+  final SupabaseService _service;
+
+  @override
+  Future<Result<List<Staff>>> getActiveDoctors() async {
+    try {
+      final rows = await _service.guardQuery(() => _service
+          .from('staff')
+          .select()
+          .or('role.eq.doctor,role.eq.super_admin')
+          .eq('is_active', true)
+          .order('full_name'));
+      return Result.success(rows.map(Staff.fromJson).toList());
+    } on AppException catch (e) {
+      return Result.failure(e);
+    } on Exception catch (e) {
+      return Result.failure(AppException.fromSupabaseException(e));
+    }
+  }
+
+  @override
+  Future<Result<List<Patient>>> getAssignedPatients({required String doctorId, String? query}) async {
+    try {
+      var builder = _service.from('patients').select('*, patient_doctors!inner()').eq('patient_doctors.doctor_id', doctorId);
+      if (query != null && query.trim().isNotEmpty) {
+        for (final token in query.trim().split(RegExp(r'\s+'))) {
+          if (token.isNotEmpty) {
+            builder = builder.or('full_name.ilike.%$token%,phone_number.ilike.%$token%');
+          }
+        }
+      }
+      final rows = await _service.guardQuery(() => builder.order('full_name'));
+      return Result.success(rows.map(Patient.fromJson).toList());
+    } on AppException catch (e) {
+      return Result.failure(e);
+    } on Exception catch (e) {
+      return Result.failure(AppException.fromSupabaseException(e));
+    }
+  }
+
+  @override
+  Future<Result<List<Patient>>> getReplacementPatients({required String doctorId, String? query}) async {
+    try {
+      final todayStr = DateTime.now().toIso8601String().split('T')[0];
+      final replacements = await _service.guardQuery(() => _service
+          .from('doctor_replacements')
+          .select('absent_doctor_id')
+          .eq('covering_doctor_id', doctorId)
+          .eq('replacement_date', todayStr));
+      final absentIds = replacements.map((r) => r['absent_doctor_id'] as String).toList();
+      if (absentIds.isEmpty) return const Result.success([]);
+
+      var builder = _service.from('patients').select('*, patient_doctors!inner()').inFilter('patient_doctors.doctor_id', absentIds);
+      if (query != null && query.trim().isNotEmpty) {
+        for (final token in query.trim().split(RegExp(r'\s+'))) {
+          if (token.isNotEmpty) {
+            builder = builder.or('full_name.ilike.%$token%,phone_number.ilike.%$token%');
+          }
+        }
+      }
+      final rows = await _service.guardQuery(() => builder.order('full_name'));
+      return Result.success(rows.map(Patient.fromJson).toList());
+    } on AppException catch (e) {
+      return Result.failure(e);
+    } on Exception catch (e) {
+      return Result.failure(AppException.fromSupabaseException(e));
+    }
+  }
+
+  @override
+  Future<Result<List<Staff>>> getActiveReplacementsForDoctor({required String doctorId}) async {
+    try {
+      final todayStr = DateTime.now().toIso8601String().split('T')[0];
+      final rows = await _service.guardQuery(() => _service
+          .from('doctor_replacements')
+          .select('staff:staff!absent_doctor_id(*)')
+          .eq('covering_doctor_id', doctorId)
+          .eq('replacement_date', todayStr));
+      final absentDoctors = rows
+          .map((row) => row['staff'] != null ? Staff.fromJson(row['staff'] as Map<String, dynamic>) : null)
+          .whereType<Staff>()
+          .toList();
+      return Result.success(absentDoctors);
+    } on AppException catch (e) {
+      return Result.failure(e);
+    } on Exception catch (e) {
+      return Result.failure(AppException.fromSupabaseException(e));
+    }
+  }
+
+  @override
+  Future<Result<Map<String, String>>> getPatientReplacementMapping({required List<String> absentDoctorIds}) async {
+    try {
+      if (absentDoctorIds.isEmpty) return const Result.success({});
+      final rows = await _service.guardQuery(() => _service
+          .from('patient_doctors')
+          .select('patient_id, doctor:staff!doctor_id(full_name)')
+          .inFilter('doctor_id', absentDoctorIds));
+      final Map<String, String> mapping = {};
+      for (final row in rows) {
+        final patientId = row['patient_id'] as String?;
+        final doctorMap = row['doctor'] as Map<String, dynamic>?;
+        final doctorName = doctorMap?['full_name'] as String?;
+        if (patientId != null && doctorName != null) {
+          mapping[patientId] = doctorName;
+        }
+      }
+      return Result.success(mapping);
+    } on AppException catch (e) {
+      return Result.failure(e);
+    } on Exception catch (e) {
+      return Result.failure(AppException.fromSupabaseException(e));
+    }
+  }
+}

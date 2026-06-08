@@ -22,6 +22,9 @@ enum AppButtonVariant {
 
   /// Rose 600 solid background, white text.
   danger,
+
+  /// Amber 600 solid background, white text.
+  warning,
 }
 
 /// A highly-polished button component built with Spine Clinic design tokens.
@@ -129,6 +132,12 @@ class _AppButtonState extends State<AppButton> with SingleTickerProviderStateMix
           break;
         case AppButtonVariant.danger:
           backgroundColor = AppColors.error;
+          textColor = AppColors.textOnPrimary;
+          borderSide = BorderSide.none;
+          shadows = const [];
+          break;
+        case AppButtonVariant.warning:
+          backgroundColor = AppColors.warning;
           textColor = AppColors.textOnPrimary;
           borderSide = BorderSide.none;
           shadows = const [];

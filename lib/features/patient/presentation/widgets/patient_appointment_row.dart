@@ -1,13 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+import 'package:spine_clinic_app/core/network/app_routes.dart';
 import 'package:spine_clinic_app/core/utils/formatters.dart';
 import 'package:spine_clinic_app/features/appointment/domain/appointment.dart';
 import 'package:spine_clinic_app/features/appointment/presentation/appointment_providers.dart';
-import 'package:spine_clinic_app/features/appointment/presentation/widgets/appointment_actions_sheet.dart';
+import 'package:spine_clinic_app/features/appointment/presentation/widgets/appointment_actions_trailing.dart';
 import 'package:spine_clinic_app/shared/widgets/app_badge.dart';
 import 'package:spine_clinic_app/shared/widgets/data_list_tile.dart';
 
 /// Single row representing a patient appointment.
+/// Rule 1 — strictly under 200 lines.
 class PatientAppointmentRow extends ConsumerWidget {
   /// Creates a [PatientAppointmentRow].
   const PatientAppointmentRow({
@@ -48,14 +51,9 @@ class PatientAppointmentRow extends ConsumerWidget {
         textColor: appointment.type.textColor,
         backgroundColor: appointment.type.backgroundColor,
       ),
-      trailing: AppBadge(
-        label: appointment.status.displayLabel,
-        textColor: appointment.status.textColor,
-        backgroundColor: appointment.status.backgroundColor,
-      ),
-      onTap: () => showModalBottomSheet(
-        context: context,
-        builder: (_) => AppointmentActionsSheet(appointment: appointment),
+      trailing: AppointmentActionsTrailing(appointment: appointment),
+      onTap: () => context.push(
+        AppRoutes.appointmentDetail.replaceAll(':id', appointment.id),
       ),
     );
   }

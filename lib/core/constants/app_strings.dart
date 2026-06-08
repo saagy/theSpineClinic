@@ -110,7 +110,8 @@ abstract final class AppStrings {
   static const String bookAppointment = 'Book Appointment';
   static const String appointmentDetails = 'Appointment Details';
   static const String session = 'Session';
-  static const String gehazShadFakarat = 'Gehaz Shad Fakarat';
+  static const String gehazShadFakarat = 'Spinal Traction';
+  static const String checkUp = 'Check-up';
   static const String scheduled = 'Scheduled';
   static const String checkedIn = 'Checked In';
   static const String completed = 'Completed';
@@ -215,4 +216,10 @@ abstract final class AppStrings {
   static const String balanceMustBeInteger = 'Must be a valid integer';
   static const String packageBalanceUpdatedSuccess = 'Package balance updated successfully.';
   static const String editPackageBalanceAccessDenied = 'Only super admins and receptionists can edit package balance.';
+
+  // Appointment Recovery Strings
+  static const String revertToScheduled = 'Revert to Scheduled';
+  static const String restoreToScheduled = 'Restore to Scheduled';
+  static const String confirmRevert = 'Are you sure you want to revert this appointment to scheduled?';
+  static const String confirmRestore = 'Are you sure you want to restore this appointment to scheduled?';
 }

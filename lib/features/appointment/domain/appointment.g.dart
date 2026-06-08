@@ -36,6 +36,7 @@ Map<String, dynamic> _$AppointmentToJson(_Appointment instance) =>
 const _$AppointmentTypeEnumMap = {
   AppointmentType.session: 'session',
   AppointmentType.gehazShadFakarat: 'gehaz_shad_fakarat',
+  AppointmentType.checkUp: 'check_up',
 };
 
 const _$AppointmentStatusEnumMap = {

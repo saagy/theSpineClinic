@@ -127,7 +127,7 @@ Role determines which tabs and actions are visible.
 **UI Elements:**
 - Top header: patient full name, clinic badge (Tagamoa / Masr Elgedida),
   package balance chip (shows balance, highlighted red if 0 or negative)
-- 5 tabs: Info, Appointments, Medical Records, Payments, Documents
+- 5 tabs: Info, Appointments, Medical Records (Notes), Payments, Documents
 
 **Tab 1 — Info:**
 - Full name, phone, DOB, gender, blood type, program, clinic
@@ -142,11 +142,12 @@ Role determines which tabs and actions are visible.
 - Tap row → AppointmentDetailScreen
 - Add appointment FAB (🧑‍💼 👑 only) → NewAppointmentScreen
 
-**Tab 3 — Medical Records:**
-- List of completed visits with notes
-- Each row: date, doctor name, short note preview
-- Tap row → VisitDetailScreen
-- Empty state: "No visit notes recorded yet"
+**Tab 3 — Medical Records (Notes):**
+- Unified chronological feed of all notes (both standalone patient notes and appointment-linked notes)
+- Each item: date/time, author name, short preview, and "On appointment [Type]" indicator if applicable
+- Tap item → VisitDetailScreen (if linked to appointment) or view/edit full note dialog
+- "+ Add Note" button for any authenticated user to create a standalone note
+- Empty state: "No notes recorded yet"
 
 **Tab 4 — Payments:**
 - List of PaymentRecord rows, newest first
@@ -186,13 +187,13 @@ and current appointment status.
 **UI Elements:**
 - Patient name + link to PatientDetailScreen
 - Date and time
-- Type badge (Session / Gehaz Shad Fakarat)
+- Type badge (Session / Spinal Traction / Check-up)
 - Status badge (Scheduled / Checked In / Completed / Cancelled / No Show)
 - Use package indicator (Yes / No)
 - Doctors section:
     Active doctors list (name, replacement indicator if covering)
     Inactive doctors list collapsed under "Original doctors" (audit trail)
-- Notes field (read-only for receptionist/admin, editable for 🩺)
+- Notes field (editable for any user who can view the appointment)
 - Action buttons (see below)
 
 **Actions by role and status:**
@@ -202,8 +203,8 @@ and current appointment status.
 | Check In | 🧑‍💼 👑 | scheduled |
 | Mark No Show | 🧑‍💼 👑 | scheduled |
 | Cancel | 🧑‍💼 👑 | scheduled, checked_in |
-| Mark Complete | 🩺 | checked_in |
-| Add / Edit Notes | 🩺 | checked_in, completed |
+| Mark Complete | 🩺 🧑‍💼 👑 | checked_in |
+| Add / Edit Notes | 🩺 🧑‍💼 👑 | checked_in, completed, scheduled |
 | Swap Doctor | 🧑‍💼 👑 | scheduled, checked_in |
 
 - Check In → ConfirmationDialog → update status to checked_in →
@@ -211,7 +212,7 @@ and current appointment status.
 - Cancel → ConfirmationDialog → update status to cancelled
 - Mark Complete → update status to completed
 - Swap Doctor → SwapDoctorDialog (inline, not a new screen)
-- Add/Edit Notes → inline editable text field, save button
+- Add/Edit Notes → inline editable text field, save button (accessible by anyone who can view the appointment)
 
 **States:**
 - Loading: full screen loader
@@ -220,7 +221,7 @@ and current appointment status.
 
 ---
 
-### [ ] VisitDetailScreen
+### [x] VisitDetailScreen
 **Location:** `lib/features/medical_records/presentation/visit_detail_screen.dart`
 
 **Purpose:**
@@ -380,10 +381,11 @@ and recurring booking (multiple dates generated from a pattern).
 
 **UI Elements:**
 - Patient selector (search, pre-filled if opened from PatientDetailScreen)
-- Appointment type selector (Session / Gehaz Shad Fakarat)
-- Doctor selector:
+- Appointment type selector (Session / Spinal Traction / Check-up)
+- Doctor selector (Searchable Dropdown):
     Multi-select, max 2
-    Only shows doctors assigned to the selected patient
+    Defaults to doctors assigned to the selected patient, but searchable across all active doctors (including those with the super_admin role).
+    If "Check-up" (كشف) is selected as the type, defaults the pre-selection to the Admin (Senior Doctor), though it remains fully modifiable.
     Disabled until patient is selected
 - Use package Switch toggle (default: on)
 - Live Ledger Preview Card:
@@ -435,7 +437,7 @@ and recurring booking (multiple dates generated from a pattern).
 
 ---
 
-### 🧑‍💼 👑 [ ] RecordPaymentScreen
+### 🧑‍💼 👑 [x] RecordPaymentScreen
 **Location:** `lib/features/payments/presentation/record_payment_screen.dart`
 
 **Purpose:**
@@ -445,7 +447,7 @@ Record a payment made by a patient. Pure record — no balance tracking.
 - Patient display (name, non-editable if pre-filled from PatientDetailScreen)
 - Amount field (numeric, decimal allowed)
 - Reason section:
-    Quick-select chips: "Package" / "Session" / "Gehaz" / "Other"
+    Quick-select chips: "Package" / "Session" / "Spinal Traction" / "Other"
     If "Package" selected:
       Package selector dropdown (from ClinicSettings.packages)
       Amount auto-fills from selected package price (editable)
@@ -469,7 +471,7 @@ Record a payment made by a patient. Pure record — no balance tracking.
 
 ---
 
-### 🧑‍💼 👑 [ ] ManageReplacementScreen
+### 🧑‍💼 👑 [x] ManageReplacementScreen
 **Location:** `lib/features/replacements/presentation/manage_replacement_screen.dart`
 
 **Purpose:**
@@ -519,7 +521,7 @@ checklist for optional bulk swapping.
 
 ---
 
-### 🩺 [ ] MyScheduleScreen
+### 🩺 [x] MyScheduleScreen
 **Location:** `lib/features/appointment/presentation/my_schedule_screen.dart`
 
 **Purpose:**
@@ -547,7 +549,7 @@ filtered to active AppointmentDoctor rows only.
 
 ---
 
-### 🩺 [ ] MyPatientsScreen
+### 🩺 [x] MyPatientsScreen
 **Location:** `lib/features/patient/presentation/my_patients_screen.dart`
 
 **Purpose:**
@@ -572,7 +574,7 @@ Does not include replacement patients (those are separate).
 
 ---
 
-### 🩺 [ ] ReplacementPatientsScreen
+### 🩺 [x] ReplacementPatientsScreen
 **Location:** `lib/features/replacements/presentation/replacement_patients_screen.dart`
 
 **Purpose:**
@@ -629,13 +631,13 @@ Doctor can only initiate replacements for themselves (absent_doctor = self).
 
 ---
 
-### 🩺 [ ] AddVisitNotesScreen
+### 🩺 🧑‍💼 👑 [x] AddVisitNotesScreen
 **Location:** `lib/features/medical_records/presentation/add_visit_notes_screen.dart`
 
 **Purpose:**
-Doctor adds or edits notes for a specific appointment.
-Only accessible when appointment status is checked_in or completed.
-Only the doctor assigned to (or covering) the appointment can edit.
+Adds or edits notes for a specific appointment.
+Only accessible when appointment status is checked_in, completed, or scheduled.
+Accessible by any authenticated user who has read access to the appointment.
 
 **UI Elements:**
 - Patient name (non-editable header)
@@ -645,7 +647,7 @@ Only the doctor assigned to (or covering) the appointment can edit.
 - Mark as Complete button (only if status = checked_in)
 
 **Actions:**
-- Save Notes → update appointment.notes field → show success snackbar
+- Save Notes → insert or update patient_notes record for this appointment ID → show success snackbar
 - Mark as Complete → ConfirmationDialog → update status to completed →
   pop back to AppointmentDetailScreen
 
@@ -931,20 +933,20 @@ Phase 7 — Appointments
   [x]  AppointmentDetailScreen
 
 Phase 8 — Medical Records
-  [ ]  AddVisitNotesScreen
-  [ ]  VisitDetailScreen
+  [x]  AddVisitNotesScreen
+  [x]  VisitDetailScreen
 
 Phase 9 — Payments
-  [ ]  RecordPaymentScreen
+  [x]  RecordPaymentScreen
 
 Phase 10 — Replacements
-  [ ]  ManageReplacementScreen
+  [x]  ManageReplacementScreen
   [ ]  InitiateReplacementScreen
-  [ ]  ReplacementPatientsScreen
+  [x]  ReplacementPatientsScreen
 
 Phase 11 — Doctor
-  [ ]  MyScheduleScreen
-  [ ]  MyPatientsScreen
+  [x]  MyScheduleScreen
+  [x]  MyPatientsScreen
 
 Phase 12 — Admin
   [ ]  AdminHubScreen
@@ -962,5 +964,5 @@ Polish
 
 ---
 
-*Last updated: Phase 3 Shared Widgets and Phase 4 Navigation Widgets complete*
-*Next: Routing (go_router, currentUserProvider) & Phase 5 Auth*
+*Last updated: Phase 11 Doctor complete, including partial Replacements (Phase 10)*
+*Next: Doctor self-initiated replacements (InitiateReplacementScreen) & Phase 12 Admin features*

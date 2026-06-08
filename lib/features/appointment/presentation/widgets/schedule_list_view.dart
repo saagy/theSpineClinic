@@ -10,10 +10,10 @@ import 'package:spine_clinic_app/core/utils/formatters.dart';
 import 'package:spine_clinic_app/features/appointment/domain/appointment_repository.dart';
 import 'package:spine_clinic_app/features/appointment/presentation/my_schedule_controller.dart';
 import 'package:spine_clinic_app/core/network/app_routes.dart';
-import 'package:spine_clinic_app/shared/widgets/app_badge.dart';
 import 'package:spine_clinic_app/shared/widgets/data_list_tile.dart';
 import 'package:spine_clinic_app/shared/widgets/empty_state.dart';
 import 'package:spine_clinic_app/shared/widgets/error_view.dart';
+import 'package:spine_clinic_app/features/appointment/presentation/widgets/appointment_actions_trailing.dart';
 
 /// Renders the chronological (Today) or grouped (Week) calendar agenda.
 class ScheduleListView extends StatelessWidget {
@@ -150,22 +150,7 @@ class ScheduleListView extends StatelessWidget {
           ),
         ),
       ),
-      trailing: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          AppBadge(
-            label: appointment.type.displayLabel,
-            textColor: appointment.type.textColor,
-            backgroundColor: appointment.type.backgroundColor,
-          ),
-          const SizedBox(width: AppSizes.p8),
-          AppBadge(
-            label: appointment.status.displayLabel,
-            textColor: appointment.status.textColor,
-            backgroundColor: appointment.status.backgroundColor,
-          ),
-        ],
-      ),
+      trailing: AppointmentActionsTrailing(appointment: appointment),
       onTap: () {
         context.push(
           AppRoutes.appointmentDetail.replaceAll(':id', appointment.id),

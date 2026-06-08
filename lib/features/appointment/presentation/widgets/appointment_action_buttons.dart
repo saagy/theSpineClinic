@@ -44,24 +44,21 @@ class _AppointmentActionButtonsState
   bool _isLoading = false;
 
   bool get _canCheckIn =>
-      widget.appointment.status == AppointmentStatus.scheduled &&
-      (widget.userRole == UserRole.receptionist ||
-          widget.userRole == UserRole.superAdmin);
+      widget.appointment.status == AppointmentStatus.scheduled;
 
   bool get _canCancel =>
-      (widget.appointment.status == AppointmentStatus.scheduled ||
-          widget.appointment.status == AppointmentStatus.checkedIn) &&
-      (widget.userRole == UserRole.receptionist ||
-          widget.userRole == UserRole.superAdmin);
+      widget.appointment.status == AppointmentStatus.scheduled ||
+      widget.appointment.status == AppointmentStatus.checkedIn;
 
-  bool get _canMarkComplete =>
-      widget.appointment.status == AppointmentStatus.checkedIn &&
-      (widget.userRole == UserRole.doctor ||
-          widget.userRole == UserRole.superAdmin);
+  bool get _canRevert =>
+      widget.appointment.status == AppointmentStatus.checkedIn;
+
+  bool get _canRestore =>
+      widget.appointment.status == AppointmentStatus.cancelled;
 
   @override
   Widget build(BuildContext context) {
-    final bool hasActions = _canCheckIn || _canCancel || _canMarkComplete;
+    final bool hasActions = _canCheckIn || _canCancel || _canRevert || _canRestore;
     if (!hasActions) return const SizedBox.shrink();
 
     return Padding(
@@ -78,16 +75,7 @@ class _AppointmentActionButtonsState
               isLoading: _isLoading,
               onPressed: _isLoading ? null : () => _handleAction(_doCheckIn),
             ),
-          if (_canCheckIn && (_canCancel || _canMarkComplete))
-            const SizedBox(height: AppSizes.p12),
-          if (_canMarkComplete)
-            AppButton(
-              labelText: AppStrings.markComplete,
-              isLoading: _isLoading,
-              onPressed:
-                  _isLoading ? null : () => _handleAction(_doMarkComplete),
-            ),
-          if (_canMarkComplete && _canCancel)
+          if (_canCheckIn && (_canCancel || _canRevert || _canRestore))
             const SizedBox(height: AppSizes.p12),
           if (_canCancel)
             AppButton(
@@ -95,6 +83,22 @@ class _AppointmentActionButtonsState
               variant: AppButtonVariant.danger,
               isLoading: _isLoading,
               onPressed: _isLoading ? null : () => _handleAction(_doCancel),
+            ),
+          if (_canCancel && (_canRevert || _canRestore))
+            const SizedBox(height: AppSizes.p12),
+          if (_canRevert)
+            AppButton(
+              labelText: AppStrings.revertToScheduled,
+              variant: AppButtonVariant.warning,
+              isLoading: _isLoading,
+              onPressed: _isLoading ? null : () => _handleAction(_doRevert),
+            ),
+          if (_canRestore)
+            AppButton(
+              labelText: AppStrings.restoreToScheduled,
+              variant: AppButtonVariant.warning,
+              isLoading: _isLoading,
+              onPressed: _isLoading ? null : () => _handleAction(_doRestore),
             ),
         ],
       ),
@@ -106,7 +110,13 @@ class _AppointmentActionButtonsState
     try {
       await action();
     } on Exception catch (_) {
-      if (mounted) AppSnackbar.show(context, message: AppStrings.statusUpdateError, variant: AppSnackbarVariant.error);
+      if (mounted) {
+        AppSnackbar.show(
+          context,
+          message: AppStrings.statusUpdateError,
+          variant: AppSnackbarVariant.error,
+        );
+      }
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
@@ -125,7 +135,13 @@ class _AppointmentActionButtonsState
         .read(appointmentDetailControllerProvider(widget.appointment.id)
             .notifier)
         .checkIn();
-    if (mounted) AppSnackbar.show(context, message: AppStrings.statusUpdateSuccess, variant: AppSnackbarVariant.success);
+    if (mounted) {
+      AppSnackbar.show(
+        context,
+        message: AppStrings.statusUpdateSuccess,
+        variant: AppSnackbarVariant.success,
+      );
+    }
   }
 
   Future<void> _doCancel() async {
@@ -142,22 +158,56 @@ class _AppointmentActionButtonsState
         .read(appointmentDetailControllerProvider(widget.appointment.id)
             .notifier)
         .cancel();
-    if (mounted) AppSnackbar.show(context, message: AppStrings.statusUpdateSuccess, variant: AppSnackbarVariant.success);
+    if (mounted) {
+      AppSnackbar.show(
+        context,
+        message: AppStrings.statusUpdateSuccess,
+        variant: AppSnackbarVariant.success,
+      );
+    }
   }
 
-  Future<void> _doMarkComplete() async {
+  Future<void> _doRevert() async {
     final bool? confirmed = await showDialog<bool>(
       context: context,
       builder: (_) => const ConfirmationDialog(
-        title: AppStrings.markAsCompleted,
-        message: AppStrings.confirmMarkComplete,
+        title: AppStrings.revertToScheduled,
+        message: AppStrings.confirmRevert,
       ),
     );
     if (confirmed != true) return;
     await ref
         .read(appointmentDetailControllerProvider(widget.appointment.id)
             .notifier)
-        .markComplete();
-    if (mounted) AppSnackbar.show(context, message: AppStrings.statusUpdateSuccess, variant: AppSnackbarVariant.success);
+        .revertToScheduled();
+    if (mounted) {
+      AppSnackbar.show(
+        context,
+        message: AppStrings.statusUpdateSuccess,
+        variant: AppSnackbarVariant.success,
+      );
+    }
+  }
+
+  Future<void> _doRestore() async {
+    final bool? confirmed = await showDialog<bool>(
+      context: context,
+      builder: (_) => const ConfirmationDialog(
+        title: AppStrings.restoreToScheduled,
+        message: AppStrings.confirmRestore,
+      ),
+    );
+    if (confirmed != true) return;
+    await ref
+        .read(appointmentDetailControllerProvider(widget.appointment.id)
+            .notifier)
+        .revertToScheduled();
+    if (mounted) {
+      AppSnackbar.show(
+        context,
+        message: AppStrings.statusUpdateSuccess,
+        variant: AppSnackbarVariant.success,
+      );
+    }
   }
 }
