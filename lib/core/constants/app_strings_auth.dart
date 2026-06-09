@@ -40,4 +40,8 @@ abstract final class AppStringsAuth {
       'Passwords do not match.';
   static const String validationPhoneInvalid =
       'Please enter a valid phone number (digits only).';
+  static const String validationDoctorRequired =
+      'At least one doctor must be assigned.';
+  static const String patientUpdatedSuccess =
+      'Patient updated successfully.';
 }

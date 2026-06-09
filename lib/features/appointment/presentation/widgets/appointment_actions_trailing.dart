@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:spine_clinic_app/shared/widgets/app_badge.dart';
 import 'package:go_router/go_router.dart';
 import 'package:spine_clinic_app/core/constants/app_colors.dart';
 import 'package:spine_clinic_app/core/constants/app_sizes.dart';
@@ -34,16 +35,19 @@ class AppointmentActionsTrailing extends ConsumerWidget {
     final user = ref.watch(currentUserProvider).value;
     if (user == null) return const SizedBox.shrink();
 
-    final bool isStaff = user.role == UserRole.receptionist ||
-        user.role == UserRole.superAdmin ||
-        user.role == UserRole.doctor;
-
-    final bool showCheckIn = isStaff && appointment.status == AppointmentStatus.scheduled;
-    const bool showCancel = true; // Visible to all roles on all statuses
+    final bool isAuthorizedStaff = user.role == UserRole.receptionist || user.role == UserRole.superAdmin;
+    final bool showCheckIn = isAuthorizedStaff && appointment.status == AppointmentStatus.scheduled;
+    final bool showCancel = isAuthorizedStaff && appointment.status == AppointmentStatus.scheduled;
 
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
+        AppBadge(
+          label: appointment.status.displayLabel,
+          textColor: appointment.status.textColor,
+          backgroundColor: appointment.status.backgroundColor,
+        ),
+        const SizedBox(width: AppSizes.p12),
         if (showCheckIn) ...[
           IconButton(
             tooltip: AppStrings.checkIn,

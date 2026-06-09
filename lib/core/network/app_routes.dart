@@ -57,4 +57,22 @@ abstract final class AppRoutes {
 
   /// Admin/receptionist doctor replacement management wizard.
   static const String manageReplacement = '/admin/replacements/manage';
+
+  /// Admin staff list screen.
+  static const String staffList = '/admin/staff';
+
+  /// Admin staff form screen (create/edit).
+  static const String staffForm = '/admin/staff/form';
+
+  /// Admin central hub dashboard.
+  static const String adminHub = '/admin';
+
+  /// Doctor registration applications management.
+  static const String doctorApplications = '/admin/doctor-applications';
+
+  /// Clinic global packages and configuration settings.
+  static const String clinicSettings = '/admin/clinic-settings';
+
+  /// Clinic statistical reports and analytics dashboard.
+  static const String reports = '/admin/reports';
 }

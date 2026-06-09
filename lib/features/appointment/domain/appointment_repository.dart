@@ -33,12 +33,6 @@ abstract class AppointmentRepository {
     AppointmentStatus status,
   );
 
-  /// Updates the notes column of an appointment.
-  Future<Result<void>> updateAppointmentNotes(
-    String appointmentId,
-    String notes,
-  );
-
   /// Queries all active doctors attached to a specific appointment.
   ///
   /// Active doctor assignments are those with `is_active = true`.

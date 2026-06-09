@@ -25,6 +25,7 @@ import 'package:spine_clinic_app/shared/widgets/error_view.dart';
 import 'package:spine_clinic_app/shared/widgets/info_row.dart';
 import 'package:spine_clinic_app/shared/widgets/section_card.dart';
 import 'package:spine_clinic_app/features/appointment/presentation/widgets/appointment_notes_card.dart';
+import 'package:spine_clinic_app/shared/widgets/app_back_button.dart';
 
 /// Screen displaying the full detail view for a single appointment.
 class AppointmentDetailScreen extends ConsumerWidget {
@@ -48,7 +49,7 @@ class AppointmentDetailScreen extends ConsumerWidget {
         ),
         backgroundColor: AppColors.surface,
         surfaceTintColor: Colors.transparent,
-        leading: const BackButton(),
+        leading: const AppBackButton(),
       ),
       body: detailAsync.when(
         loading: () => const Center(

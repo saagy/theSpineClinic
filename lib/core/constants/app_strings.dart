@@ -222,4 +222,58 @@ abstract final class AppStrings {
   static const String restoreToScheduled = 'Restore to Scheduled';
   static const String confirmRevert = 'Are you sure you want to revert this appointment to scheduled?';
   static const String confirmRestore = 'Are you sure you want to restore this appointment to scheduled?';
+
+  // Staff Management Strings
+  static const String staffManagement = 'Staff Management';
+  static const String addStaff = 'Add Staff';
+  static const String editStaff = 'Edit Staff';
+  static const String superAdmin = 'Super Admin';
+  static const String receptionist = 'Receptionist';
+  static const String role = 'Role';
+  static const String password = 'Password';
+  static const String confirmPassword = 'Confirm Password';
+  static const String isActive = 'Is Active';
+  static const String changePassword = 'Change Password';
+  static const String deactivateStaffConfirm = 'Deactivate this staff member? They will no longer be able to log in.';
+  static const String selfDeactivationError = 'You cannot deactivate your own account.';
+  static const String staffCreateSuccess = 'Staff member created successfully.';
+  static const String staffUpdateSuccess = 'Staff member updated successfully.';
+  static const String passwordRequired = 'Password is required';
+  static const String passwordsDoNotMatch = 'Passwords do not match';
+  static const String passwordMinLength = 'Password must be at least 8 characters';
+  static const String emailRequired = 'Email is required';
+  static const String emailInvalid = 'Invalid email format';
+  static const String fullNameRequired = 'Full name is required';
+  static const String roleRequired = 'Role is required';
+
+  // Admin Hub Strings
+  static const String adminHub = 'Admin Hub';
+  static const String doctorApplications = 'Doctor Applications';
+  static const String clinicSettings = 'Clinic Settings';
+  static const String reportsAndAnalytics = 'Reports & Analytics';
+  static const String manageDoctorsLabel = 'Review and approve new doctors';
+  static const String manageStaffLabel = 'Manage receptionist and admin accounts';
+  static const String configureClinicLabel = 'Set up session packages and pricing';
+  static const String viewReportsLabel = 'Check clinic statistics and performance';
+  static const String noPendingApplications = 'No pending applications found.';
+  static const String pending = 'Pending';
+  static const String allApplications = 'All Applications';
+
+  // Clinic Packages Strings
+  static const String addPackage = 'Add Package';
+  static const String editPackage = 'Edit Package';
+  static const String packageName = 'Package Name';
+  static const String sessionCount = 'Session Count';
+  static const String price = 'Price';
+  static const String nameRequired = 'Package name is required';
+  static const String sessionCountRequired = 'Session count is required';
+  static const String sessionCountPositive = 'Session count must be an integer greater than zero';
+  static const String priceRequired = 'Price is required';
+  static const String pricePositive = 'Price must be greater than zero';
+  static const String packageCreatedSuccess = 'Package added successfully.';
+  static const String packageUpdatedSuccess = 'Package updated successfully.';
+  static const String packageDeletedSuccess = 'Package deleted successfully.';
+  static const String deletePackageConfirm = 'Are you sure you want to delete this package? This action cannot be undone.';
+  static const String noPackages = 'No clinic packages configured yet.';
+  static const String doctor = 'Doctor';
 }

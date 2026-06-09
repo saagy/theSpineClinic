@@ -100,6 +100,14 @@ class SupabaseService {
   /// normalisation at execution time.
   SupabaseQueryBuilder from(String table) => _client.from(table);
 
+  /// Executes a database RPC function.
+  Future<T> rpc<T>(
+    String fn, {
+    Map<String, dynamic>? params,
+  }) async {
+    return _client.rpc(fn, params: params);
+  }
+
   /// Executes an arbitrary async Supabase operation and normalises
   /// any thrown exception into an [app_errors.AppException].
   ///

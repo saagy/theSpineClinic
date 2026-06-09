@@ -3,13 +3,16 @@ import 'package:spine_clinic_app/core/constants/app_colors.dart';
 import 'package:spine_clinic_app/core/constants/app_sizes.dart';
 import 'package:spine_clinic_app/core/constants/app_text_styles.dart';
 
-/// Modal dialog overlay to add a standalone clinical note for a patient.
+/// Modal dialog overlay to add or edit a standalone clinical note for a patient.
 class AddStandaloneNoteDialog extends StatefulWidget {
   /// Creates an [AddStandaloneNoteDialog].
-  const AddStandaloneNoteDialog({super.key, required this.onSave});
+  const AddStandaloneNoteDialog({super.key, required this.onSave, this.initialText});
 
   /// Callback when saving note content.
   final ValueChanged<String> onSave;
+
+  /// Optional initial text for editing an existing note.
+  final String? initialText;
 
   @override
   State<AddStandaloneNoteDialog> createState() => _AddStandaloneNoteDialogState();
@@ -21,7 +24,7 @@ class _AddStandaloneNoteDialogState extends State<AddStandaloneNoteDialog> {
   @override
   void initState() {
     super.initState();
-    _controller = TextEditingController();
+    _controller = TextEditingController(text: widget.initialText);
   }
 
   @override
@@ -44,7 +47,7 @@ class _AddStandaloneNoteDialogState extends State<AddStandaloneNoteDialog> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Text(
-              'Add Standalone Note',
+              widget.initialText != null ? 'Edit Note' : 'Add Standalone Note',
               style: AppTextStyles.headingSmall.copyWith(color: AppColors.textPrimary),
             ),
             const SizedBox(height: AppSizes.p16),

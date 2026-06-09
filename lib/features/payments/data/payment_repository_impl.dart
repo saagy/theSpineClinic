@@ -78,4 +78,30 @@ class PaymentRepositoryImpl implements PaymentRepository {
       failure: (error) => Result.failure(error),
     );
   }
+
+  @override
+  Future<Result<void>> updateClinicPackages(List<ClinicPackage> packages, String updatedBy) async {
+    try {
+      final settingsResult = await getClinicSettings();
+      return await settingsResult.when(
+        success: (settings) async {
+          final packageListJson = packages.map((p) => p.toJson()).toList();
+          await _service.guardQuery(() => _service
+              .from(_clinicSettingsTable)
+              .update({
+                'packages': packageListJson,
+                'updated_by': updatedBy,
+                'updated_at': DateTime.now().toIso8601String(),
+              })
+              .eq('id', settings.id));
+          return const Result.success(null);
+        },
+        failure: (error) => Result.failure(error),
+      );
+    } on AppException catch (error) {
+      return Result.failure(error);
+    } on Exception catch (error) {
+      return Result.failure(AppException.fromSupabaseException(error));
+    }
+  }
 }

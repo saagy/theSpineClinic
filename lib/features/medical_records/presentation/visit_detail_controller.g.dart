@@ -54,7 +54,7 @@ final class VisitDetailControllerProvider
 }
 
 String _$visitDetailControllerHash() =>
-    r'3191d41ad32e0e42dc3dc8c144ecca406e0ee555';
+    r'6dafcc07b192bfcf64d2ae4047d615e9f5b6d20e';
 
 /// Controller managing a single completed visit's detail state.
 

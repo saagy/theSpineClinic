@@ -10,6 +10,8 @@ import 'package:spine_clinic_app/features/auth/domain/user_role.dart';
 import 'package:spine_clinic_app/features/auth/presentation/auth_providers.dart';
 import 'package:spine_clinic_app/features/patient/domain/patient.dart';
 import 'package:spine_clinic_app/features/patient/presentation/patient_providers.dart';
+import 'package:spine_clinic_app/features/medical_records/domain/patient_note.dart';
+import 'package:spine_clinic_app/features/medical_records/presentation/medical_records_providers.dart';
 
 part 'visit_detail_controller.g.dart';
 
@@ -18,6 +20,7 @@ typedef VisitDetailState = ({
   Appointment appointment,
   Patient patient,
   List<AppointmentDoctorDetail> activeDoctors,
+  PatientNote? note,
   bool canEditNotes,
 });
 
@@ -38,7 +41,7 @@ class VisitDetailController extends _$VisitDetailController {
 
     // 2. Fetch patient
     final Patient patient =
-        await ref.read(patientDetailProvider(appointment.patientId).future);
+        await ref.watch(patientDetailProvider(appointment.patientId).future);
 
     // 3. Fetch active attending doctor assignments (is_active == true)
     final Result<List<AppointmentDoctor>> assignmentsResult =
@@ -52,7 +55,10 @@ class VisitDetailController extends _$VisitDetailController {
     final List<AppointmentDoctorDetail> activeDoctors =
         await Future.wait(activeAssignments.map(_resolveDetail));
 
-    // 5. Evaluate notes editing access (Rule 6)
+    // 5. Fetch linked note from patient_notes
+    final PatientNote? note = await ref.watch(appointmentNoteProvider(appointmentId).future);
+
+    // 6. Evaluate notes editing access (Rule 6)
     final Staff? currentUser = ref.watch(currentUserProvider).value;
     bool canEditNotes = false;
 
@@ -70,6 +76,7 @@ class VisitDetailController extends _$VisitDetailController {
       appointment: appointment,
       patient: patient,
       activeDoctors: activeDoctors,
+      note: note,
       canEditNotes: canEditNotes,
     );
   }

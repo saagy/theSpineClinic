@@ -9,6 +9,7 @@ import 'package:spine_clinic_app/features/appointment/domain/appointment_reposit
 import 'package:spine_clinic_app/features/appointment/domain/appointment_status.dart';
 import 'package:spine_clinic_app/features/appointment/domain/appointment_type.dart';
 import 'package:spine_clinic_app/features/auth/domain/staff.dart';
+import 'package:spine_clinic_app/core/network/supabase_service.dart';
 
 /// Encapsulates the loop/transaction creation of appointments and assignment of doctors.
 abstract final class BookingSubmitHelper {
@@ -42,7 +43,6 @@ abstract final class BookingSubmitHelper {
           scheduledAt: scheduledAt,
           status: AppointmentStatus.scheduled,
           usePackage: usePackage,
-          notes: notes,
           createdBy: creatorId,
           createdAt: DateTime.now().toUtc(),
         );
@@ -73,6 +73,17 @@ abstract final class BookingSubmitHelper {
                   errorResult = Result.failure(err);
                 },
               );
+            }
+
+            if (notes != null && notes.trim().isNotEmpty) {
+              try {
+                await SupabaseService.instance.insertPatientNote({
+                  'patient_id': patientId,
+                  'note_text': notes.trim(),
+                  'created_by': creatorId ?? '',
+                  'appointment_id': newAppointmentId,
+                });
+              } catch (_) {}
             }
           },
           failure: (err) {

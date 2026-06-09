@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_form_builder/flutter_form_builder.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:spine_clinic_app/core/network/app_routes.dart';
 import 'package:spine_clinic_app/core/constants/app_colors.dart';
 import 'package:spine_clinic_app/core/constants/app_sizes.dart';
 import 'package:spine_clinic_app/core/constants/app_strings.dart';
@@ -97,7 +98,7 @@ class _NewPatientFormState extends ConsumerState<NewPatientForm> {
     result.when(
       success: (createdPatient) {
         AppSnackbar.show(context, message: 'Patient registered successfully.', variant: AppSnackbarVariant.success);
-        context.replace('/patient/${createdPatient.id}');
+        context.go(AppRoutes.patientDetail.replaceAll(':id', createdPatient.id));
       },
       failure: (error) {
         AppSnackbar.show(context, message: AppStrings.fromKey(error.userMessageKey), variant: AppSnackbarVariant.error);

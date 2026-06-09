@@ -147,22 +147,15 @@ final class PatientNotesFamily extends $Family
   String toString() => r'patientNotesProvider';
 }
 
-/// Fetches the note linked to a specific appointment.
+/// Manages the note linked to a specific appointment.
 
-@ProviderFor(appointmentNote)
+@ProviderFor(AppointmentNote)
 final appointmentNoteProvider = AppointmentNoteFamily._();
 
-/// Fetches the note linked to a specific appointment.
-
+/// Manages the note linked to a specific appointment.
 final class AppointmentNoteProvider
-    extends
-        $FunctionalProvider<
-          AsyncValue<PatientNote?>,
-          PatientNote?,
-          FutureOr<PatientNote?>
-        >
-    with $FutureModifier<PatientNote?>, $FutureProvider<PatientNote?> {
-  /// Fetches the note linked to a specific appointment.
+    extends $AsyncNotifierProvider<AppointmentNote, PatientNote?> {
+  /// Manages the note linked to a specific appointment.
   AppointmentNoteProvider._({
     required AppointmentNoteFamily super.from,
     required String super.argument,
@@ -186,15 +179,7 @@ final class AppointmentNoteProvider
 
   @$internal
   @override
-  $FutureProviderElement<PatientNote?> $createElement(
-    $ProviderPointer pointer,
-  ) => $FutureProviderElement(pointer);
-
-  @override
-  FutureOr<PatientNote?> create(Ref ref) {
-    final argument = this.argument as String;
-    return appointmentNote(ref, argument);
-  }
+  AppointmentNote create() => AppointmentNote();
 
   @override
   bool operator ==(Object other) {
@@ -207,12 +192,19 @@ final class AppointmentNoteProvider
   }
 }
 
-String _$appointmentNoteHash() => r'94716713109490238a7b337a5c25007ebc568559';
+String _$appointmentNoteHash() => r'501beebd643894b4d356243d5eb49aa4e7570745';
 
-/// Fetches the note linked to a specific appointment.
+/// Manages the note linked to a specific appointment.
 
 final class AppointmentNoteFamily extends $Family
-    with $FunctionalFamilyOverride<FutureOr<PatientNote?>, String> {
+    with
+        $ClassFamilyOverride<
+          AppointmentNote,
+          AsyncValue<PatientNote?>,
+          PatientNote?,
+          FutureOr<PatientNote?>,
+          String
+        > {
   AppointmentNoteFamily._()
     : super(
         retry: null,
@@ -222,13 +214,36 @@ final class AppointmentNoteFamily extends $Family
         isAutoDispose: true,
       );
 
-  /// Fetches the note linked to a specific appointment.
+  /// Manages the note linked to a specific appointment.
 
   AppointmentNoteProvider call(String appointmentId) =>
       AppointmentNoteProvider._(argument: appointmentId, from: this);
 
   @override
   String toString() => r'appointmentNoteProvider';
+}
+
+/// Manages the note linked to a specific appointment.
+
+abstract class _$AppointmentNote extends $AsyncNotifier<PatientNote?> {
+  late final _$args = ref.$arg as String;
+  String get appointmentId => _$args;
+
+  FutureOr<PatientNote?> build(String appointmentId);
+  @$mustCallSuper
+  @override
+  void runBuild() {
+    final ref = this.ref as $Ref<AsyncValue<PatientNote?>, PatientNote?>;
+    final element =
+        ref.element
+            as $ClassProviderElement<
+              AnyNotifier<AsyncValue<PatientNote?>, PatientNote?>,
+              AsyncValue<PatientNote?>,
+              Object?,
+              Object?
+            >;
+    element.handleCreate(ref, () => build(_$args));
+  }
 }
 
 /// Family notifier managing the patient notes list state.
@@ -282,7 +297,7 @@ final class PatientNotesNotifierNotifierProvider
 }
 
 String _$patientNotesNotifierNotifierHash() =>
-    r'679ca79087d3b00b10e0a61ce3d8efcc7aafe6d4';
+    r'f2249888261a149d55d29ac4d33c0147cbbd44f8';
 
 /// Family notifier managing the patient notes list state.
 

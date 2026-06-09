@@ -28,6 +28,12 @@ import 'package:spine_clinic_app/shared/widgets/app_shell.dart';
 import 'package:spine_clinic_app/features/medical_records/presentation/add_visit_notes_screen.dart';
 import 'package:spine_clinic_app/features/medical_records/presentation/visit_detail_screen.dart';
 import 'package:spine_clinic_app/features/replacements/presentation/manage_replacement_screen.dart';
+import 'package:spine_clinic_app/features/staff/presentation/staff_form_screen.dart';
+import 'package:spine_clinic_app/features/staff/presentation/staff_list_screen.dart';
+import 'package:spine_clinic_app/features/admin/presentation/admin_hub_screen.dart';
+import 'package:spine_clinic_app/features/admin/presentation/doctor_applications_screen.dart';
+import 'package:spine_clinic_app/features/admin/presentation/clinic_settings_screen.dart';
+import 'package:spine_clinic_app/features/admin/presentation/reports_screen.dart';
 
 part 'router.g.dart';
 
@@ -174,6 +180,29 @@ List<RouteBase> _buildRoutes(Ref ref) {
       path: AppRoutes.manageReplacement,
       builder: (_, __) => const ManageReplacementScreen(),
     ),
+    GoRoute(
+      path: AppRoutes.staffList,
+      builder: (_, __) => const StaffListScreen(),
+    ),
+    GoRoute(
+      path: AppRoutes.staffForm,
+      builder: (_, GoRouterState state) {
+        final Staff? staff = state.extra as Staff?;
+        return StaffFormScreen(staff: staff);
+      },
+    ),
+    GoRoute(
+      path: AppRoutes.doctorApplications,
+      builder: (_, __) => const DoctorApplicationsScreen(),
+    ),
+    GoRoute(
+      path: AppRoutes.clinicSettings,
+      builder: (_, __) => const ClinicSettingsScreen(),
+    ),
+    GoRoute(
+      path: AppRoutes.reports,
+      builder: (_, __) => const ReportsScreen(),
+    ),
     ShellRoute(
       builder: (BuildContext context, GoRouterState state, Widget child) {
         final Staff? user = ref.read(currentUserProvider).value;
@@ -182,7 +211,9 @@ List<RouteBase> _buildRoutes(Ref ref) {
             ? (state.matchedLocation == AppRoutes.myPatients
                 ? 1
                 : (state.matchedLocation == AppRoutes.replacements ? 2 : 0))
-            : 0;
+            : (role == 'super_admin'
+                ? (state.matchedLocation == AppRoutes.adminHub ? 3 : 1)
+                : 0);
 
         return AppShell(
           title: AppStrings.appName,
@@ -199,6 +230,15 @@ List<RouteBase> _buildRoutes(Ref ref) {
                   break;
                 case 2:
                   context.go(AppRoutes.replacements);
+                  break;
+              }
+            } else if (role == 'super_admin') {
+              switch (index) {
+                case 1:
+                  context.go(AppRoutes.home);
+                  break;
+                case 3:
+                  context.go(AppRoutes.adminHub);
                   break;
               }
             } else {
@@ -224,6 +264,10 @@ List<RouteBase> _buildRoutes(Ref ref) {
         GoRoute(
           path: AppRoutes.home,
           builder: (_, __) => const HomeScreen(),
+        ),
+        GoRoute(
+          path: AppRoutes.adminHub,
+          builder: (_, __) => const AdminHubScreen(),
         ),
         GoRoute(
           path: AppRoutes.schedule,

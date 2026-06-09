@@ -52,11 +52,6 @@ class AppointmentRepositoryImpl implements AppointmentRepository {
   }
 
   @override
-  Future<Result<void>> updateAppointmentNotes(String appointmentId, String notes) {
-    return _run(() => _service.from(_appointmentsTable).update({'notes': notes}).eq('id', appointmentId));
-  }
-
-  @override
   Future<Result<List<AppointmentDoctor>>> getAppointmentDoctors(String appointmentId) {
     return _run(() async {
       final List<Map<String, dynamic>> rows = await _service.from(_appointmentDoctorsTable).select().eq('appointment_id', appointmentId).eq('is_active', true);

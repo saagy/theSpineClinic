@@ -17,6 +17,7 @@ import 'package:spine_clinic_app/features/patient/presentation/widgets/patient_t
 import 'package:spine_clinic_app/features/patient/presentation/widgets/patient_tab_payments.dart';
 import 'package:spine_clinic_app/features/patient/presentation/widgets/patient_tab_records.dart';
 import 'package:spine_clinic_app/shared/widgets/app_badge.dart';
+import 'package:spine_clinic_app/shared/widgets/app_back_button.dart';
 import 'package:spine_clinic_app/shared/widgets/error_view.dart';
 
 /// Top-level orchestrator screen for patient details.
@@ -50,6 +51,7 @@ class PatientDetailScreen extends ConsumerWidget {
             backgroundColor: AppColors.surface,
             foregroundColor: AppColors.textPrimary,
             elevation: 0,
+            leading: const AppBackButton(),
           ),
           backgroundColor: AppColors.background,
           body: ErrorView(
@@ -83,6 +85,7 @@ class PatientDetailScreen extends ConsumerWidget {
               backgroundColor: AppColors.surface,
               foregroundColor: AppColors.textPrimary,
               elevation: 0,
+              leading: const AppBackButton(),
               title: Text(patient.fullName, style: AppTextStyles.headingSmall),
               bottom: TabBar(
                 labelColor: AppColors.primary,

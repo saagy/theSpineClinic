@@ -15,7 +15,6 @@ _Appointment _$AppointmentFromJson(Map<String, dynamic> json) => _Appointment(
       $enumDecodeNullable(_$AppointmentStatusEnumMap, json['status']) ??
       AppointmentStatus.scheduled,
   usePackage: json['use_package'] as bool? ?? true,
-  notes: json['notes'] as String?,
   createdBy: json['created_by'] as String?,
   createdAt: DateTime.parse(json['created_at'] as String),
 );
@@ -28,7 +27,6 @@ Map<String, dynamic> _$AppointmentToJson(_Appointment instance) =>
       'scheduled_at': instance.scheduledAt.toIso8601String(),
       'status': _$AppointmentStatusEnumMap[instance.status]!,
       'use_package': instance.usePackage,
-      'notes': instance.notes,
       'created_by': instance.createdBy,
       'created_at': instance.createdAt.toIso8601String(),
     };

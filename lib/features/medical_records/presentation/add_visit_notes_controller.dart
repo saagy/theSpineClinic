@@ -11,6 +11,8 @@ import 'package:spine_clinic_app/features/auth/domain/user_role.dart';
 import 'package:spine_clinic_app/features/auth/presentation/auth_providers.dart';
 import 'package:spine_clinic_app/features/patient/domain/patient.dart';
 import 'package:spine_clinic_app/features/patient/presentation/patient_providers.dart';
+import 'package:spine_clinic_app/features/medical_records/domain/patient_note.dart';
+import 'package:spine_clinic_app/features/medical_records/presentation/medical_records_providers.dart';
 
 part 'add_visit_notes_controller.g.dart';
 
@@ -18,6 +20,7 @@ part 'add_visit_notes_controller.g.dart';
 typedef AddVisitNotesState = ({
   Appointment appointment,
   Patient patient,
+  PatientNote? note,
   bool isAuthorized,
 });
 
@@ -38,7 +41,7 @@ class AddVisitNotesController extends _$AddVisitNotesController {
 
     // 2. Fetch patient
     final Patient patient =
-        await ref.read(patientDetailProvider(appointment.patientId).future);
+        await ref.watch(patientDetailProvider(appointment.patientId).future);
 
     // 3. Check authorization (Rule 6)
     final Staff? currentUser = ref.watch(currentUserProvider).value;
@@ -61,9 +64,13 @@ class AddVisitNotesController extends _$AddVisitNotesController {
       }
     }
 
+    // 4. Fetch linked note
+    final PatientNote? note = await ref.watch(appointmentNoteProvider(appointmentId).future);
+
     return (
       appointment: appointment,
       patient: patient,
+      note: note,
       isAuthorized: isAuthorized,
     );
   }
@@ -75,19 +82,18 @@ class AddVisitNotesController extends _$AddVisitNotesController {
       throw Exception('Access denied: Unauthorized role or assignment.');
     }
 
-    final AppointmentRepository repo = ref.read(appointmentRepositoryProvider);
-    final Result<void> result =
-        await repo.updateAppointmentNotes(appointmentId, notes);
+    // Save notes to patient_notes table
+    await ref
+        .read(appointmentNoteProvider(appointmentId).notifier)
+        .saveNote(
+          noteText: notes,
+          patientId: currentState.appointment.patientId,
+        );
 
-    switch (result) {
-      case Success<void>():
-        ref.invalidate(appointmentDetailControllerProvider(appointmentId));
-        ref.invalidate(todayAppointmentsProvider);
-        ref.invalidateSelf();
-        await future;
-      case Failure<void>(:final exception):
-        throw exception;
-    }
+    ref.invalidate(appointmentDetailControllerProvider(appointmentId));
+    ref.invalidate(todayAppointmentsProvider);
+    ref.invalidateSelf();
+    await future;
   }
 
   /// Saves notes and transitions appointment status to completed.
@@ -97,18 +103,15 @@ class AddVisitNotesController extends _$AddVisitNotesController {
       throw Exception('Access denied: Unauthorized role or assignment.');
     }
 
-    final AppointmentRepository repo = ref.read(appointmentRepositoryProvider);
-
     // First save the current notes
-    final Result<void> notesResult =
-        await repo.updateAppointmentNotes(appointmentId, notes);
-    switch (notesResult) {
-      case Failure<void>(:final exception):
-        throw exception;
-      case Success<void>():
-        break;
-    }
+    await ref
+        .read(appointmentNoteProvider(appointmentId).notifier)
+        .saveNote(
+          noteText: notes,
+          patientId: currentState.appointment.patientId,
+        );
 
+    final AppointmentRepository repo = ref.read(appointmentRepositoryProvider);
     // Then mark appointment as completed
     final Result<void> statusResult = await repo.updateAppointmentStatus(
       appointmentId,

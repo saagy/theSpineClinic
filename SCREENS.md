@@ -668,7 +668,7 @@ Accessible by any authenticated user who has read access to the appointment.
 
 ---
 
-### 👑 [ ] AdminHubScreen
+### 👑 [x] AdminHubScreen
 **Location:** `lib/features/admin/presentation/admin_hub_screen.dart`
 
 **Purpose:**
@@ -693,7 +693,7 @@ Accessible by any authenticated user who has read access to the appointment.
 
 ---
 
-### 👑 [ ] DoctorApplicationsScreen
+### 👑 [x] DoctorApplicationsScreen
 **Location:** `lib/features/admin/presentation/doctor_applications_screen.dart`
 
 **Purpose:**
@@ -737,7 +737,7 @@ approves or rejects each application.
 
 ---
 
-### 👑 [ ] StaffListScreen
+### 👑 [x] StaffListScreen
 **Location:** `lib/features/staff/presentation/staff_list_screen.dart`
 
 **Purpose:**
@@ -761,7 +761,7 @@ Does not include doctors — those are managed in DoctorApplicationsScreen.
 
 ---
 
-### 👑 [ ] StaffFormScreen
+### 👑 [x] StaffFormScreen
 **Location:** `lib/features/staff/presentation/staff_form_screen.dart`
 
 **Purpose:**
@@ -875,10 +875,12 @@ High-level clinic statistics. Numbers only for now — no charts yet.
 | `EmptyState` | Empty list/data state with icon and message |
 | `AppBadge` | Polymorphic colored badge (replaces StatusBadge, TypeBadge, ClinicBadge) |
 | `AppChip` | Entity token with optional delete button (replaces ReplacementChip) |
+| `AppBackButton` | Styled native back button navigation |
 
 > [!NOTE]
 > - **SwapDoctorDialog** is built inline during [AppointmentDetailScreen](#-appointmentdetailscreen).
 > - **PackageBalanceEditDialog** is built inline during [PatientDetailScreen](#-patientdetailscreen).
+> - **AppointmentReadOnlyNotesCard** is a leftover unused widget. The active notes view is fully managed via `AppointmentNotesCard` which supports editing.
 >
 > These are feature-specific and will be extracted to shared/widgets only if reused across more than one screen.
 
@@ -949,10 +951,10 @@ Phase 11 — Doctor
   [x]  MyPatientsScreen
 
 Phase 12 — Admin
-  [ ]  AdminHubScreen
-  [ ]  DoctorApplicationsScreen
-  [ ]  StaffListScreen
-  [ ]  StaffFormScreen
+  [x]  AdminHubScreen
+  [x]  DoctorApplicationsScreen
+  [x]  StaffListScreen
+  [x]  StaffFormScreen
   [ ]  ClinicSettingsScreen
   [ ]  ReportsScreen
 

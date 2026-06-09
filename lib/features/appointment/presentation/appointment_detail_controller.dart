@@ -48,7 +48,7 @@ class AppointmentDetailController extends _$AppointmentDetailController {
 
     // 2. Fetch patient
     final Patient patient =
-        await ref.read(patientDetailProvider(appointment.patientId).future);
+        await ref.watch(patientDetailProvider(appointment.patientId).future);
 
     // 3. Fetch ALL doctor assignments (active + inactive)
     final Result<List<AppointmentDoctor>> allDoctorsResult =

@@ -49,6 +49,10 @@ abstract class PatientRepository {
     List<String> currentDoctorIds,
   );
 
-
+  /// Checks if a doctor is actively assigned to a patient, or covering via active replacement today.
+  Future<Result<bool>> isDoctorAssignedOrCovering({
+    required String patientId,
+    required String doctorId,
+  });
 }
 

@@ -1,9 +1,7 @@
-// Placeholder smoke test.
-//
-// The template counter app was replaced with the Spine Clinic
-// router-driven application. A proper widget test will be added
-// once the login and home screens are built in a future phase.
+import 'package:flutter_test/flutter_test.dart';
 
 void main() {
-  // No-op — prevents `flutter test` from failing due to an empty file.
+  test('Placeholder smoke test', () {
+    expect(true, isTrue);
+  });
 }

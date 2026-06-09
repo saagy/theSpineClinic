@@ -22,4 +22,7 @@ abstract class PaymentRepository {
 
   /// Fetches the configured clinic packages directly.
   Future<Result<List<ClinicPackage>>> getClinicPackages();
+
+  /// Updates the configured clinic packages list inside clinic_settings.
+  Future<Result<void>> updateClinicPackages(List<ClinicPackage> packages, String updatedBy);
 }

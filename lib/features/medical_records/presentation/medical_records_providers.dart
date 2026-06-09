@@ -42,16 +42,79 @@ FutureOr<List<PatientNote>> patientNotes(Ref ref, String patientId) async {
   );
 }
 
-/// Fetches the note linked to a specific appointment.
+/// Manages the note linked to a specific appointment.
 @riverpod
-FutureOr<PatientNote?> appointmentNote(Ref ref, String appointmentId) async {
-  final PatientNotesRepository repo = ref.watch(patientNotesRepositoryProvider);
-  final Result<PatientNote?> result =
-      await repo.getNoteByAppointmentId(appointmentId);
-  return result.when(
-    success: (PatientNote? data) => data,
-    failure: (AppException exception) => throw exception,
-  );
+class AppointmentNote extends _$AppointmentNote {
+  @override
+  FutureOr<PatientNote?> build(String appointmentId) async {
+    final PatientNotesRepository repo = ref.watch(patientNotesRepositoryProvider);
+    final Result<PatientNote?> result =
+        await repo.getNoteByAppointmentId(appointmentId);
+    return result.when(
+      success: (PatientNote? data) => data,
+      failure: (AppException exception) => throw exception,
+    );
+  }
+
+  /// Saves or updates the note for this appointment.
+  Future<void> saveNote({
+    required String noteText,
+    required String patientId,
+  }) async {
+    state = const AsyncValue.loading();
+
+    // Rule 6: Every write action must read currentUserProvider to fetch staff ID
+    final Staff? currentUser = ref.read(currentUserProvider).value;
+    if (currentUser == null) {
+      final AuthException exception = const AuthException(
+        code: 'auth/unauthorized',
+        message: 'User must be authenticated to add notes.',
+        userMessageKey: 'error_auth_generic',
+      );
+      state = AsyncValue.error(exception, StackTrace.current);
+      throw exception;
+    }
+
+    final PatientNotesRepository repo = ref.read(patientNotesRepositoryProvider);
+
+    final Result<PatientNote?> existingResult =
+        await repo.getNoteByAppointmentId(appointmentId);
+
+    final PatientNote? existingNote = await existingResult.when(
+      success: (PatientNote? note) => note,
+      failure: (AppException exception) {
+        state = AsyncValue.error(exception, StackTrace.current);
+        throw exception;
+      },
+    );
+
+    Result<PatientNote> result;
+    if (existingNote != null) {
+      result = await repo.updateNote(
+        noteId: existingNote.id,
+        noteText: noteText,
+      );
+    } else {
+      result = await repo.createNote(
+        patientId: patientId,
+        noteText: noteText,
+        createdBy: currentUser.id,
+        appointmentId: appointmentId,
+      );
+    }
+
+    await result.when(
+      success: (PatientNote newNote) async {
+        state = AsyncValue.data(newNote);
+        // Invalidate the patient notes notifier since the list has changed
+        ref.invalidate(patientNotesNotifierProvider(patientId));
+      },
+      failure: (AppException exception) {
+        state = AsyncValue.error(exception, StackTrace.current);
+        throw exception;
+      },
+    );
+  }
 }
 
 /// Family notifier managing the patient notes list state.
@@ -130,7 +193,38 @@ class PatientNotesNotifierNotifier extends _$PatientNotesNotifierNotifier {
         if (appointmentId != null) {
           ref.invalidate(appointmentNoteProvider(appointmentId));
         }
-        ref.invalidateSelf();
+        final Result<List<PatientNote>> notesResult = await repo.getNotesForPatient(patientId);
+        state = notesResult.when(
+          success: (notes) => AsyncValue.data(notes),
+          failure: (error) => AsyncValue.error(error, StackTrace.current),
+        );
+      },
+      failure: (AppException exception) {
+        state = AsyncValue.error(exception, StackTrace.current);
+        throw exception;
+      },
+    );
+  }
+
+  /// Updates an existing patient note.
+  Future<void> updateExistingNote({
+    required String noteId,
+    required String noteText,
+  }) async {
+    state = const AsyncValue.loading();
+    final repo = ref.read(patientNotesRepositoryProvider);
+    final result = await repo.updateNote(noteId: noteId, noteText: noteText);
+
+    await result.when(
+      success: (PatientNote updatedNote) async {
+        if (updatedNote.appointmentId != null) {
+          ref.invalidate(appointmentNoteProvider(updatedNote.appointmentId!));
+        }
+        final Result<List<PatientNote>> notesResult = await repo.getNotesForPatient(patientId);
+        state = notesResult.when(
+          success: (notes) => AsyncValue.data(notes),
+          failure: (error) => AsyncValue.error(error, StackTrace.current),
+        );
       },
       failure: (AppException exception) {
         state = AsyncValue.error(exception, StackTrace.current);

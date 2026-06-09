@@ -1,5 +1,8 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:spine_clinic_app/core/errors/app_exception.dart';
 import 'package:spine_clinic_app/core/errors/result.dart';
+import 'package:spine_clinic_app/features/auth/domain/user_role.dart';
+import 'package:spine_clinic_app/features/auth/presentation/auth_providers.dart';
 import 'package:spine_clinic_app/features/patient/domain/patient.dart';
 import 'package:spine_clinic_app/features/patient/presentation/patient_providers.dart';
 
@@ -26,6 +29,43 @@ class EditPatientController extends _$EditPatientController {
     state = const AsyncValue.loading();
     final repo = ref.read(patientRepositoryProvider);
 
+    final currentUser = ref.read(currentUserProvider).value;
+    if (currentUser == null) {
+      state = AsyncValue.error(
+        const AuthException(
+          code: 'auth/unauthorized',
+          message: 'User must be authenticated to edit patient info.',
+          userMessageKey: 'error_auth_generic',
+        ),
+        StackTrace.current,
+      );
+      return false;
+    }
+
+    if (currentUser.role == UserRole.doctor) {
+      final Result<bool> isAssignedResult = await repo.isDoctorAssignedOrCovering(
+        patientId: patient.id,
+        doctorId: currentUser.id,
+      );
+      
+      final bool isAssigned = isAssignedResult.when(
+        success: (val) => val,
+        failure: (_) => false,
+      );
+
+      if (!isAssigned) {
+        state = AsyncValue.error(
+          const DatabaseException(
+            code: 'db/rls-violation',
+            message: 'Doctors can only edit info for their assigned or replacement patients.',
+            userMessageKey: 'error_database_permission_denied',
+          ),
+          StackTrace.current,
+        );
+        return false;
+      }
+    }
+
     // 1. Update patient core fields
     final Result<void> patientResult = await repo.updatePatient(patient);
     if (patientResult is Failure<void>) {
@@ -33,14 +73,16 @@ class EditPatientController extends _$EditPatientController {
       return false;
     }
 
-    // 2. Update patient doctor assignments
-    final Result<void> doctorsResult = await repo.updatePatientDoctors(
-      patient.id,
-      selectedDoctorIds,
-    );
-    if (doctorsResult is Failure<void>) {
-      state = AsyncValue.error(doctorsResult.exception, StackTrace.current);
-      return false;
+    // 2. Update patient doctor assignments (only for admin/receptionist)
+    if (currentUser.role != UserRole.doctor) {
+      final Result<void> doctorsResult = await repo.updatePatientDoctors(
+        patient.id,
+        selectedDoctorIds,
+      );
+      if (doctorsResult is Failure<void>) {
+        state = AsyncValue.error(doctorsResult.exception, StackTrace.current);
+        return false;
+      }
     }
 
     // Invalidate detail data upstream to refresh presentation layer

@@ -4,8 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:spine_clinic_app/core/constants/app_sizes.dart';
 import 'package:spine_clinic_app/core/constants/app_strings.dart';
 import 'package:spine_clinic_app/core/network/app_routes.dart';
-import 'package:spine_clinic_app/features/auth/domain/user_role.dart';
-import 'package:spine_clinic_app/features/auth/presentation/auth_providers.dart';
+
 import 'package:spine_clinic_app/features/patient/domain/patient.dart';
 import 'package:spine_clinic_app/features/patient/presentation/patient_providers.dart';
 import 'package:spine_clinic_app/shared/widgets/app_button.dart';
@@ -23,8 +22,6 @@ class PatientTabInfo extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final user = ref.watch(currentUserProvider).value;
-    final isDoctor = user?.role == UserRole.doctor;
     final assignedDoctorsAsync = ref.watch(patientAssignedDoctorsProvider(patient.id));
 
     return SingleChildScrollView(
@@ -69,18 +66,16 @@ class PatientTabInfo extends ConsumerWidget {
               error: (_, __) => const Text('Error loading assigned doctors'),
             ),
           ),
-          if (!isDoctor) ...[
-            const SizedBox(height: AppSizes.p24),
-            AppButton(
-              labelText: AppStrings.editPatient,
-              onPressed: () {
-                context.push(
-                  AppRoutes.editPatient.replaceAll(':id', patient.id),
-                  extra: patient,
-                );
-              },
-            ),
-          ],
+          const SizedBox(height: AppSizes.p24),
+          AppButton(
+            labelText: AppStrings.editPatient,
+            onPressed: () {
+              context.push(
+                AppRoutes.editPatient.replaceAll(':id', patient.id),
+                extra: patient,
+              );
+            },
+          ),
         ],
       ),
     );

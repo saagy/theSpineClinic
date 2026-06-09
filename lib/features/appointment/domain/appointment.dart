@@ -33,9 +33,6 @@ abstract class Appointment with _$Appointment {
     /// Whether this appointment uses/deducts from the patient's package balance.
     @JsonKey(name: 'use_package') @Default(true) bool usePackage,
 
-    /// Optional notes added by receptionist or doctor.
-    String? notes,
-
     /// FK references `staff(id)` representing the receptionist/admin who booked it.
     @JsonKey(name: 'created_by') String? createdBy,
 

@@ -439,7 +439,7 @@ CREATE TRIGGER trigger_appointment_package_deduction
 
 ---
 
-## 11. The 10 Inviolable Code Rules
+## 11. The 12 Inviolable Code Rules
 
 1. No file longer than 200 lines. Split it immediately if it grows past that.
 2. No Supabase calls inside widgets. All data access in repository classes only.
@@ -506,6 +506,7 @@ Core UI Primitives:
   AppButton          — primary/secondary/danger variants, isLoading state
   AppTextField       — focus tracking, validation error state
   AppSearchBar       — inline search with debounce and clear button
+  AppBackButton      — styled native back button navigation
   LoadingOverlay     — full-screen blocking overlay for async operations
   ErrorView          — displays AppException message with retry callback
   AppSnackbar        — global helper function (not a widget) for
@@ -530,7 +531,38 @@ Navigation & Shell:
 
 ---
 
-## 15. Standard Prompt Template
+## 15. Codebase Rule Violations & Leftovers
+
+This section tracks existing legacy code that violates the inviolable rules or contains unused files.
+
+### Rule 1 Violations (Files exceeding 200 lines)
+The following files exceed the 200-line limit:
+- [app_strings.dart](file:///c:/Users/Elite-Store/spine_clinic_app/lib/core/constants/app_strings.dart) (225 lines) - Exception: centralized localization string definitions.
+- [app_exception.dart](file:///c:/Users/Elite-Store/spine_clinic_app/lib/core/errors/app_exception.dart) (245 lines) - Base exception classes and Supabase mapper.
+- [router.dart](file:///c:/Users/Elite-Store/spine_clinic_app/lib/core/network/router.dart) (243 lines) - Central app router configuration.
+- [appointment_action_buttons.dart](file:///c:/Users/Elite-Store/spine_clinic_app/lib/features/appointment/presentation/widgets/appointment_action_buttons.dart) (213 lines) - Form/action buttons sheet.
+- [booking_form_fields.dart](file:///c:/Users/Elite-Store/spine_clinic_app/lib/features/appointment/presentation/widgets/booking_form_fields.dart) (261 lines) - Form fields wrapper.
+- [new_appointment_form.dart](file:///c:/Users/Elite-Store/spine_clinic_app/lib/features/appointment/presentation/widgets/new_appointment_form.dart) (220 lines) - Booking builder.
+- [doctor_register_screen.dart](file:///c:/Users/Elite-Store/spine_clinic_app/lib/features/auth/presentation/doctor_register_screen.dart) (207 lines) - Doctor self-registration screen.
+- [medical_records_providers.dart](file:///c:/Users/Elite-Store/spine_clinic_app/lib/features/medical_records/presentation/medical_records_providers.dart) (235 lines) - Providers configuration.
+- [edit_patient_form.dart](file:///c:/Users/Elite-Store/spine_clinic_app/lib/features/patient/presentation/widgets/edit_patient_form.dart) (241 lines) - Patient data editor form.
+- [record_payment_screen.dart](file:///c:/Users/Elite-Store/spine_clinic_app/lib/features/payments/presentation/record_payment_screen.dart) (239 lines) - Payment entry form.
+- [payment_form_fields.dart](file:///c:/Users/Elite-Store/spine_clinic_app/lib/features/payments/presentation/widgets/payment_form_fields.dart) (217 lines) - Payment fields.
+- [manage_replacement_controller.dart](file:///c:/Users/Elite-Store/spine_clinic_app/lib/features/replacements/presentation/manage_replacement_controller.dart) (303 lines) - Replacements scheduler controller.
+- [affected_appointments_checklist.dart](file:///c:/Users/Elite-Store/spine_clinic_app/lib/features/replacements/presentation/widgets/affected_appointments_checklist.dart) (226 lines) - Bulk swap selector UI.
+- [app_doctor_multi_select_field.dart](file:///c:/Users/Elite-Store/spine_clinic_app/lib/features/staff/presentation/widgets/app_doctor_multi_select_field.dart) (211 lines) - Custom multiselect field.
+
+### Rule 8 & 11 Compliance
+- **Rule 8**: Verified. No hardcoded hex colors or direct material colors found in `lib/features`. Paddings and sizes are correctly bound to `AppSizes` tokens.
+- **Rule 11**: Verified. [file_opener_helper_mobile.dart](file:///c:/Users/Elite-Store/spine_clinic_app/lib/core/utils/file_opener_helper_mobile.dart) and [file_cache_manager.dart](file:///c:/Users/Elite-Store/spine_clinic_app/lib/core/utils/file_cache_manager.dart) download files to local secure document cache directories and handle native storage and file-opening permissions gracefully.
+
+### Leftover / Unused Codebase Files
+- [AppointmentReadOnlyNotesCard](file:///c:/Users/Elite-Store/spine_clinic_app/lib/features/appointment/presentation/widgets/appointment_read_only_notes_card.dart) - Unused widget. Editable appointment notes are handled by `AppointmentNotesCard` on `AppointmentDetailScreen`.
+- `branch_providers.dart` (under `lib/features/admin/presentation/`) - Correctly integrated with active branch configuration, not a leftover.
+
+---
+
+## 16. Standard Prompt Template
 
 Use this template for every task given to the agent.
 Replace bracketed sections with the specific task details.

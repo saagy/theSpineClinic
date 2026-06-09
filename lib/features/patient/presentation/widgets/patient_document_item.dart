@@ -9,7 +9,7 @@ import 'package:spine_clinic_app/core/constants/app_sizes.dart';
 import 'package:spine_clinic_app/core/constants/app_strings.dart';
 import 'package:spine_clinic_app/core/constants/app_text_styles.dart';
 import 'package:spine_clinic_app/core/utils/file_cache_manager.dart';
-import 'package:spine_clinic_app/core/utils/file_download_helper.dart';
+import 'package:spine_clinic_app/core/utils/file_opener_helper.dart';
 import 'package:spine_clinic_app/features/auth/domain/user_role.dart';
 import 'package:spine_clinic_app/features/auth/presentation/auth_providers.dart';
 import 'package:spine_clinic_app/features/patient/domain/patient_document.dart';
@@ -24,40 +24,21 @@ class PatientDocumentItem extends ConsumerWidget {
   const PatientDocumentItem({super.key, required this.doc});
   final PatientDocument doc;
 
-  Future<void> _handleDownload(BuildContext context) async {
-    if (kIsWeb) {
-      AppSnackbar.show(context, message: 'Downloading file...', variant: AppSnackbarVariant.info);
-      try {
-        await FileDownloadHelper.downloadFile(doc.fileUrl, doc.fileName);
-        if (context.mounted) {
-          AppSnackbar.show(context, message: 'Download started in browser.', variant: AppSnackbarVariant.success);
-        }
-      } catch (e) {
-        if (context.mounted) {
-          AppSnackbar.show(context, message: 'Download failed: $e', variant: AppSnackbarVariant.error);
-        }
-      }
-      return;
-    }
-
-    final cache = FileCacheManager.instance;
-    final String localPath = await cache.getLocalFilePath(doc.fileUrl, doc.fileName);
-    if (!context.mounted) return;
-    final exists = await File(localPath).exists();
-    if (!context.mounted) return;
-    if (exists) {
-      AppSnackbar.show(context, message: 'File loaded from cache: $localPath', variant: AppSnackbarVariant.success);
-      return;
-    }
-    AppSnackbar.show(context, message: 'Downloading file...', variant: AppSnackbarVariant.info);
+  Future<void> _handleOpen(BuildContext context) async {
+    AppSnackbar.show(
+      context,
+      message: 'Opening document...',
+      variant: AppSnackbarVariant.info,
+    );
     try {
-      final File cachedFile = await cache.getFile(doc.fileUrl, doc.fileName);
-      if (context.mounted) {
-        AppSnackbar.show(context, message: 'Saved to cache: ${cachedFile.path}', variant: AppSnackbarVariant.success);
-      }
+      await FileOpenerHelper.openFile(doc.fileUrl, doc.fileName);
     } catch (e) {
       if (context.mounted) {
-        AppSnackbar.show(context, message: 'Download failed: $e', variant: AppSnackbarVariant.error);
+        AppSnackbar.show(
+          context,
+          message: 'Could not open document: $e',
+          variant: AppSnackbarVariant.error,
+        );
       }
     }
   }
@@ -115,8 +96,9 @@ class PatientDocumentItem extends ConsumerWidget {
       mainAxisSize: MainAxisSize.min,
       children: [
         IconButton(
-          icon: const Icon(Icons.download_rounded, color: AppColors.primary),
-          onPressed: () => _handleDownload(context),
+          icon: const Icon(Icons.open_in_new_rounded, color: AppColors.primary),
+          tooltip: 'Open',
+          onPressed: () => _handleOpen(context),
         ),
         if (!isDoctor)
           IconButton(

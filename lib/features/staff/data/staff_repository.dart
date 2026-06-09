@@ -2,6 +2,7 @@ import 'package:spine_clinic_app/core/errors/app_exception.dart';
 import 'package:spine_clinic_app/core/errors/result.dart';
 import 'package:spine_clinic_app/core/network/supabase_service.dart';
 import 'package:spine_clinic_app/features/auth/domain/staff.dart';
+import 'package:spine_clinic_app/features/auth/domain/user_role.dart';
 import 'package:spine_clinic_app/features/patient/domain/patient.dart';
 
 abstract class StaffRepository {
@@ -10,6 +11,18 @@ abstract class StaffRepository {
   Future<Result<List<Patient>>> getReplacementPatients({required String doctorId, String? query});
   Future<Result<List<Staff>>> getActiveReplacementsForDoctor({required String doctorId});
   Future<Result<Map<String, String>>> getPatientReplacementMapping({required List<String> absentDoctorIds});
+  Future<Result<List<Staff>>> getAllStaff();
+  Future<Result<void>> createStaff({
+    required String fullName,
+    required String email,
+    required UserRole role,
+    required String password,
+    String? phone,
+  });
+  Future<Result<void>> updateStaff({
+    required Staff staff,
+    String? newPassword,
+  });
 }
 
 class StaffRepositoryImpl implements StaffRepository {
@@ -121,6 +134,96 @@ class StaffRepositoryImpl implements StaffRepository {
         }
       }
       return Result.success(mapping);
+    } on AppException catch (e) {
+      return Result.failure(e);
+    } on Exception catch (e) {
+      return Result.failure(AppException.fromSupabaseException(e));
+    }
+  }
+
+  @override
+  Future<Result<List<Staff>>> getAllStaff() async {
+    try {
+      final rows = await _service.guardQuery(() => _service
+          .from('staff')
+          .select()
+          .order('full_name'));
+      return Result.success(rows.map(Staff.fromJson).toList());
+    } on AppException catch (e) {
+      return Result.failure(e);
+    } on Exception catch (e) {
+      return Result.failure(AppException.fromSupabaseException(e));
+    }
+  }
+
+  @override
+  Future<Result<void>> createStaff({
+    required String fullName,
+    required String email,
+    required UserRole role,
+    required String password,
+    String? phone,
+  }) async {
+    try {
+      await _service.guardQuery(() => _service.rpc(
+        'create_staff_user',
+        params: {
+          'new_email': email,
+          'new_password': password,
+          'new_full_name': fullName,
+          'new_role': role.dbValue,
+          'new_phone': phone,
+        },
+      ));
+      return const Result.success(null);
+    } on AppException catch (e) {
+      return Result.failure(e);
+    } on Exception catch (e) {
+      return Result.failure(AppException.fromSupabaseException(e));
+    }
+  }
+
+  @override
+  Future<Result<void>> updateStaff({
+    required Staff staff,
+    String? newPassword,
+  }) async {
+    try {
+      if (staff.userId == _service.currentUserId && !staff.isActive) {
+        return Result.failure(const AuthException(
+          code: 'auth/self-deactivation',
+          message: 'You cannot deactivate your own account.',
+        ));
+      }
+
+      await _service.guardQuery(() => _service
+          .from('staff')
+          .update({
+            'full_name': staff.fullName,
+            'email': staff.email,
+            'phone': staff.phone,
+            'role': staff.role.dbValue,
+            'is_active': staff.isActive,
+          })
+          .eq('id', staff.id));
+
+      if (newPassword != null && newPassword.isNotEmpty) {
+        if (staff.userId == null) {
+          return Result.failure(const AuthException(
+            code: 'auth/no-user-id',
+            message: 'Cannot update password: Staff member has no associated user ID.',
+          ));
+        }
+        await _service.guardQuery(() => _service.rpc(
+          'update_user_password',
+          params: {
+            'target_user_id': staff.userId,
+            'new_password': newPassword,
+          },
+        ));
+      }
+
+      return const Result.success(null);
     } on AppException catch (e) {
       return Result.failure(e);
     } on Exception catch (e) {

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_form_builder/flutter_form_builder.dart';
 import 'package:form_builder_validators/form_builder_validators.dart';
-import 'package:intl/intl.dart';
+
 import 'package:spine_clinic_app/core/constants/app_colors.dart';
 import 'package:spine_clinic_app/core/constants/app_sizes.dart';
 import 'package:spine_clinic_app/core/constants/app_strings.dart';
@@ -78,35 +78,6 @@ class PatientFormFields extends StatelessWidget {
         ),
         const SizedBox(height: AppSizes.p16),
 
-        // ── Date of Birth (DOB) ──
-        FormBuilderDateTimePicker(
-          name: 'dob',
-          enabled: enabled,
-          inputType: InputType.date,
-          format: DateFormat('yyyy-MM-dd'),
-          decoration: _buildDecoration(labelText: 'Date of Birth (Optional)', hintText: 'Select date of birth'),
-        ),
-        const SizedBox(height: AppSizes.p16),
-
-        // ── Gender Selector ──
-        FormBuilderDropdown<String>(
-          name: 'gender',
-          enabled: enabled,
-          decoration: _buildDecoration(labelText: 'Gender (Optional)', hintText: 'Select gender'),
-          items: const [
-            DropdownMenuItem(value: 'Male', child: Text('Male')),
-            DropdownMenuItem(value: 'Female', child: Text('Female')),
-          ],
-        ),
-        const SizedBox(height: AppSizes.p16),
-
-        // ── Blood Type ──
-        FormBuilderTextField(
-          name: 'blood_type',
-          enabled: enabled,
-          decoration: _buildDecoration(labelText: 'Blood Type (Optional)', hintText: 'e.g. A+, O-, etc.'),
-        ),
-        const SizedBox(height: AppSizes.p16),
 
         // ── Program ──
         FormBuilderTextField(

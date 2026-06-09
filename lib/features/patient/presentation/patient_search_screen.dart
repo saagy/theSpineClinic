@@ -23,6 +23,7 @@ import 'package:spine_clinic_app/features/patient/domain/clinic_location.dart';
 import 'package:spine_clinic_app/features/patient/domain/patient.dart';
 import 'package:spine_clinic_app/features/patient/presentation/patient_providers.dart';
 import 'package:spine_clinic_app/features/patient/presentation/widgets/patient_balance_chip.dart';
+import 'package:spine_clinic_app/features/patient/presentation/widgets/patient_search_filters.dart';
 import 'package:spine_clinic_app/shared/widgets/app_search_bar.dart';
 import 'package:spine_clinic_app/shared/widgets/data_list_tile.dart';
 import 'package:spine_clinic_app/shared/widgets/empty_state.dart';
@@ -92,7 +93,10 @@ class _PatientSearchScreenState extends ConsumerState<PatientSearchScreen> {
           ),
 
           // ── Clinic filter chips ──
-          _buildClinicFilters(),
+          PatientSearchFilters(
+            selectedClinic: _selectedClinic,
+            onClinicSelected: _onClinicSelected,
+          ),
           const SizedBox(height: AppSizes.p8),
 
           // ── Results ──
@@ -172,63 +176,4 @@ class _PatientSearchScreenState extends ConsumerState<PatientSearchScreen> {
     );
   }
 
-  /// Builds the clinic filter chip row.
-  Widget _buildClinicFilters() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: AppSizes.p16),
-      child: Row(
-        children: [
-          _buildChip(
-            label: AppStrings.all,
-            selected: _selectedClinic == null,
-            onTap: () => _onClinicSelected(null),
-          ),
-          const SizedBox(width: AppSizes.p8),
-          _buildChip(
-            label: AppStrings.clinicTagamoa,
-            selected: _selectedClinic == ClinicLocation.tagamoa,
-            onTap: () => _onClinicSelected(ClinicLocation.tagamoa),
-          ),
-          const SizedBox(width: AppSizes.p8),
-          _buildChip(
-            label: AppStrings.clinicMasrElgedida,
-            selected: _selectedClinic == ClinicLocation.masrElgedida,
-            onTap: () => _onClinicSelected(ClinicLocation.masrElgedida),
-          ),
-        ],
-      ),
-    );
-  }
-
-  /// Builds a single clinic filter chip.
-  Widget _buildChip({
-    required String label,
-    required bool selected,
-    required VoidCallback onTap,
-  }) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(
-          horizontal: AppSizes.p12,
-          vertical: AppSizes.p6,
-        ),
-        decoration: BoxDecoration(
-          color: selected ? AppColors.primary : AppColors.surface,
-          borderRadius: AppSizes.borderRadiusBadge,
-          border: Border.all(
-            color: selected ? AppColors.primary : AppColors.border,
-            width: AppSizes.borderWidth,
-          ),
-        ),
-        child: Text(
-          label,
-          style: AppTextStyles.caption.copyWith(
-            color: selected ? Colors.white : AppColors.textSecondary,
-            fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
-          ),
-        ),
-      ),
-    );
-  }
 }
