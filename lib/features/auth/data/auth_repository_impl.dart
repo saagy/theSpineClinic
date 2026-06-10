@@ -26,6 +26,9 @@ class AuthRepositoryImpl implements AuthRepository {
   static const String _staffTable = 'staff';
 
   @override
+  bool get isAuthenticated => _service.isAuthenticated;
+
+  @override
   Future<Result<Staff>> signInWithEmailAndPassword(
     String email,
     String password,
@@ -185,6 +188,42 @@ class AuthRepositoryImpl implements AuthRepository {
             .single(),
       );
       return Result.success(Staff.fromJson(row));
+    } on AppException catch (error) {
+      return Result.failure(error);
+    } on Exception catch (error) {
+      return Result.failure(AppException.fromSupabaseException(error));
+    }
+  }
+
+  @override
+  Future<Result<void>> updateStaffProfile({
+    required Staff staff,
+    String? newPassword,
+  }) async {
+    try {
+      await _service.guardQuery(
+        () => _service.from(_staffTable).update({
+          'full_name': staff.fullName,
+          'email': staff.email,
+        }).eq('id', staff.id),
+      );
+
+      if (newPassword != null && newPassword.isNotEmpty) {
+        if (staff.userId == null) {
+          return const Result.failure(AuthException(
+            code: 'auth/no-user-id',
+            message: 'Cannot update password: no associated user ID.',
+          ));
+        }
+        await _service.guardQuery(
+          () => _service.rpc('update_user_password', params: {
+            'target_user_id': staff.userId,
+            'new_password': newPassword,
+          }),
+        );
+      }
+
+      return const Result.success(null);
     } on AppException catch (error) {
       return Result.failure(error);
     } on Exception catch (error) {

@@ -45,7 +45,7 @@ class CurrentUser extends _$CurrentUser {
     print('AUTH_PROVIDER: CurrentUser.build() started');
     final AuthRepository repo = ref.read(authRepositoryProvider);
 
-    final isAuth = SupabaseService.instance.isAuthenticated;
+    final isAuth = repo.isAuthenticated;
     print('AUTH_PROVIDER: isAuthenticated = $isAuth');
     if (!isAuth) {
       print('AUTH_PROVIDER: Not authenticated, returning null');
@@ -107,6 +107,16 @@ class CurrentUser extends _$CurrentUser {
     final AuthRepository repo = ref.read(authRepositoryProvider);
     await repo.signOut();
     state = const AsyncValue<Staff?>.data(null);
+  }
+
+  /// Clears any stale error state without changing the current data.
+  ///
+  /// Used before a new login attempt to prevent the UI from flashing
+  /// a previous authentication error when correct credentials are entered.
+  void clearError() {
+    if (state.hasError) {
+      state = const AsyncValue<Staff?>.data(null);
+    }
   }
 }
 

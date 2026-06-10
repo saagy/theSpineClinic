@@ -58,6 +58,18 @@ abstract final class AppRoutes {
   /// Admin/receptionist doctor replacement management wizard.
   static const String manageReplacement = '/admin/replacements/manage';
 
+  /// Patient list shell route for receptionist and admin roles.
+  static const String patientList = '/patients';
+
+  /// Receptionist profile/settings shell route.
+  static const String receptionistProfile = '/receptionist/profile';
+
+  /// Doctor profile shell route.
+  static const String doctorProfile = '/doctor/profile';
+
+  /// Doctor historic appointments full history view.
+  static const String doctorHistory = '/doctor/history';
+
   /// Admin staff list screen.
   static const String staffList = '/admin/staff';
 

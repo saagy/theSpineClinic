@@ -50,6 +50,12 @@ class RecordPaymentController extends _$RecordPaymentController {
   }
 
   /// Submits the recorded payment to the database.
+  ///
+  /// After the async repository call completes, [ref.mounted] is
+  /// checked before any state mutation or provider invalidation.
+  /// If the notifier was disposed while waiting (e.g. the calling
+  /// sheet was popped), the result is returned to the caller directly
+  /// so that the sheet can handle success / failure on its own.
   Future<Result<void>> submitPayment({
     required String patientId,
     required double amount,
@@ -69,6 +75,12 @@ class RecordPaymentController extends _$RecordPaymentController {
     );
 
     final Result<void> result = await repo.recordPayment(payment);
+
+    // Guard: the notifier may have been disposed while we awaited
+    // the repository call (e.g. the sheet was dismissed).  When
+    // that happens we must not touch ref or state — just hand the
+    // raw result back to the caller.
+    if (!ref.mounted) return result;
 
     state = result.when(
       success: (_) {

@@ -568,7 +568,7 @@ Use this template for every task given to the agent.
 Replace bracketed sections with the specific task details.
 
 ========================================================================
-[PASTE ENTIRE AGENT_CONTEXT.MD ABOVE THIS LINE]
+read agennt_context.md
 ========================================================================
 
 # ROLE & CONTEXT
@@ -579,15 +579,14 @@ You are an expert Flutter & Riverpod Engineer specialized in Clean Architecture.
 - Ensure all business logic remains in Repositories; Widgets are for UI and State Consumption only.
 
 # CURRENT TASK: [Phase Name & Screen Name]
-**Target Files:**
-- [List specific file paths here]
+
 
 **Requirements:**
 1. [Functional Requirement 1]
 2. [Functional Requirement 2]
 3. [Role-Based Requirement: Define who can see/do what]
 
-# CRITICAL INVIOLABLE CODE RULES (STRICT ENFORCEMENT) (from agent_context.md)
+# CRITICAL INVIOLABLE CODE RULES (STRICT ENFORCEMENT) (relevant ones from agent_context.md) (must always force modularity and no hardcoded strings,sizes and colors)
 - RULE 1: LINT LIMIT. No file may exceed 200 lines. If a screen is complex, you MUST extract sub-widgets into a `widgets/` folder.
 - RULE 2: DATA ISOLATION. Zero Supabase/Database calls inside widgets. Use the Repository pattern.
 - RULE 3: STATE HANDLING. Every screen must handle 4 states: Loading (Skeletons/Spinners), Error (with retry), Empty (EmptyState widget), and Data.

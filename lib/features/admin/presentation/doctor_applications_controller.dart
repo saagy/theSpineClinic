@@ -77,6 +77,7 @@ class DoctorApplicationsAction extends _$DoctorApplicationsAction {
     state = const AsyncValue.loading();
     final repo = ref.read(adminRepositoryProvider);
     final result = await repo.approveDoctor(id);
+    if (!ref.mounted) return result;
 
     state = result.when(
       success: (_) {
@@ -94,6 +95,7 @@ class DoctorApplicationsAction extends _$DoctorApplicationsAction {
     state = const AsyncValue.loading();
     final repo = ref.read(adminRepositoryProvider);
     final result = await repo.rejectDoctor(id: id, userId: userId);
+    if (!ref.mounted) return result;
 
     state = result.when(
       success: (_) {

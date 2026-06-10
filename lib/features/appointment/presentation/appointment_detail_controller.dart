@@ -102,6 +102,7 @@ class AppointmentDetailController extends _$AppointmentDetailController {
       appointmentId,
       AppointmentStatus.checkedIn,
     );
+    if (!ref.mounted) return;
     switch (result) {
       case Success<void>():
         _invalidateCaches();
@@ -119,6 +120,7 @@ class AppointmentDetailController extends _$AppointmentDetailController {
       appointmentId,
       AppointmentStatus.cancelled,
     );
+    if (!ref.mounted) return;
     switch (result) {
       case Success<void>():
         _invalidateCaches();
@@ -136,6 +138,7 @@ class AppointmentDetailController extends _$AppointmentDetailController {
       appointmentId,
       AppointmentStatus.scheduled,
     );
+    if (!ref.mounted) return;
     switch (result) {
       case Success<void>():
         _invalidateCaches();

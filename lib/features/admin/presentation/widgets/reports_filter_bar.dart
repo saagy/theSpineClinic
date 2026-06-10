@@ -44,7 +44,7 @@ class ReportsFilterBar extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final filter = ref.watch(reportsFilterStateProvider);
+    final ReportsFilter filter = ref.watch(reportsFilterStateProvider);
 
     return Container(
       color: AppColors.surface,
@@ -74,7 +74,7 @@ class ReportsFilterBar extends ConsumerWidget {
                   items: const [
                     DropdownMenuItem(
                       value: null,
-                      child: Text('All Clinics'),
+                      child: Text(AppStrings.allClinics),
                     ),
                     DropdownMenuItem(
                       value: ClinicLocation.tagamoa,
@@ -98,7 +98,7 @@ class ReportsFilterBar extends ConsumerWidget {
             child: Row(
               children: [
                 _FilterChipItem(
-                  label: 'Today',
+                  label: AppStrings.today,
                   selected: filter.dateFrame == DateFrame.today,
                   onSelected: () => ref
                       .read(reportsFilterStateProvider.notifier)
@@ -106,7 +106,7 @@ class ReportsFilterBar extends ConsumerWidget {
                 ),
                 const SizedBox(width: AppSizes.p8),
                 _FilterChipItem(
-                  label: 'This Week',
+                  label: AppStrings.thisWeek,
                   selected: filter.dateFrame == DateFrame.thisWeek,
                   onSelected: () => ref
                       .read(reportsFilterStateProvider.notifier)
@@ -114,7 +114,7 @@ class ReportsFilterBar extends ConsumerWidget {
                 ),
                 const SizedBox(width: AppSizes.p8),
                 _FilterChipItem(
-                  label: 'This Month',
+                  label: AppStrings.thisMonth,
                   selected: filter.dateFrame == DateFrame.thisMonth,
                   onSelected: () => ref
                       .read(reportsFilterStateProvider.notifier)
@@ -123,8 +123,8 @@ class ReportsFilterBar extends ConsumerWidget {
                 const SizedBox(width: AppSizes.p8),
                 _FilterChipItem(
                   label: filter.dateFrame == DateFrame.custom
-                      ? 'Custom Range'
-                      : 'Custom',
+                      ? AppStrings.customRange
+                      : AppStrings.custom,
                   selected: filter.dateFrame == DateFrame.custom,
                   onSelected: () => _selectCustomDateRange(context, ref),
                 ),

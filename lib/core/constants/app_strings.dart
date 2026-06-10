@@ -276,4 +276,104 @@ abstract final class AppStrings {
   static const String deletePackageConfirm = 'Are you sure you want to delete this package? This action cannot be undone.';
   static const String noPackages = 'No clinic packages configured yet.';
   static const String doctor = 'Doctor';
+
+  // Profile / Settings
+  static const String profile = 'Profile';
+  static const String activeBranch = 'Active Branch';
+  static const String selectBranch = 'Select Branch';
+  static const String signOut = 'Sign Out';
+  static const String historicAppointments = 'Historic Appointments';
+  static const String noHistoricAppointments = 'No past appointments found.';
+  static const String branchSelectionHint = 'Select your active branch';
+  static const String profileSettingsDescription = 'Manage your preferences and account settings.';
+
+  // Patient List
+  static const String allPatients = 'All Patients';
+  static const String filterByDoctor = 'Filter by Doctor';
+  static const String filterByBranch = 'Filter by Branch';
+  static const String allDoctors = 'All Doctors';
+  static const String allBranches = 'All Branches';
+  static const String loadMore = 'Load More';
+  static const String registerNewPatient = 'Register New Patient';
+  static const String patientRegisteredSuccess = 'Patient registered successfully.';
+  static const String quickPayment = 'Quick Payment';
+  static const String paymentAmountHint = 'Enter amount';
+  static const String paymentReasonHint = 'Enter reason';
+  static const String confirmPayment = 'Confirm Payment';
+  static const String confirmPaymentMessage = 'Record a payment of %s for this patient?';
+
+  // Note deletion
+  static const String deleteNote = 'Delete Note';
+  static const String confirmDeleteNote = 'Are you sure you want to delete this note?';
+  static const String noteDeleted = 'Note deleted successfully.';
+
+  // Payment CRUD
+  static const String deletePayment = 'Delete Payment';
+  static const String confirmDeletePayment = 'Are you sure you want to delete this payment record?';
+  static const String paymentDeleted = 'Payment deleted successfully.';
+  static const String editPayment = 'Edit Payment';
+  static const String paymentUpdated = 'Payment updated successfully.';
+
+  // Role display labels
+  static const String adminRoleLabel = 'Admin';
+  static const String receptionistRoleLabel = 'Receptionist';
+  static const String doctorRoleLabel = 'Doctor';
+
+  // Profile / Edit
+  static const String editProfile = 'Edit Profile';
+  static const String recentAppointments = 'Recent Appointments';
+  static const String changePasswordOptional = 'Change Password (optional)';
+  static const String newPasswordHint = 'New Password';
+  static const String profileUpdatedSuccess = 'Profile updated successfully.';
+  static const String searchByPatientNameHint = 'Search by patient name...';
+
+  // Filter labels
+  static const String fromDate = 'From';
+  static const String toDate = 'To';
+  static const String clearFilters = 'Clear';
+
+  // Quick Payment
+  static const String fillAmountAndReason = 'Please fill in amount and reason.';
+  static const String packageBalanceMustBeInteger = 'Package balance must be a valid integer.';
+  static const String addPackageBalanceOptional = 'Add Package Balance (optional)';
+  static const String packageBalanceHint = 'E.g. 5 to add 5 sessions';
+
+  // Note / Appointment labels
+  static const String loadingAuthor = 'Loading...';
+  static const String unknownAuthor = 'Unknown Author';
+  static const String onAppointmentPrefix = 'On appointment: ';
+  static const String loadingDetails = 'Loading details...';
+  static const String linkedAppointmentLabel = 'Linked Appointment';
+
+  // ── Admin Reports / Analytics ──
+  static const String totalPatients = 'Total Patients';
+  static const String newPatients = 'New Patients';
+  static const String appointmentsCount = 'Appointments';
+  static const String activeDoctorsCount = 'Active Doctors';
+  static const String registeredInPeriod = 'Registered in period';
+  static const String bookedInPeriod = 'Booked in period';
+  static const String assignedInPeriod = 'Assigned in period';
+  static const String allClinics = 'All Clinics';
+  static const String today = 'Today';
+  static const String thisWeek = 'This Week';
+  static const String thisMonth = 'This Month';
+  static const String custom = 'Custom';
+  static const String customRange = 'Custom Range';
+  static const String noRecordsInWindow = 'No records in this window.';
+  static const String appointmentsByStatus = 'Appointments by Status';
+  static const String appointmentsByType = 'Appointments by Type';
+  static const String appointmentsPerDoctor = 'Appointments per Doctor';
+
+  // Revenue & Balance
+  static const String grossIncome = 'Gross Income';
+  static const String totalPackageBalances = 'Total Package Balances';
+  static const String activeSessions = 'Active Sessions';
+  static const String revenue = 'Revenue';
+  static const String visits = 'Visits';
+  static const String monthlyTrends = 'Monthly Trends';
+  static const String yearlyTrends = 'Yearly Trends';
+  static const String branchComparison = 'Branch Comparison';
+  static const String yearLabel = 'Year';
+  static const String egpPrefix = 'EGP ';
+  static const String noTrendData = 'No trend data for this period.';
 }

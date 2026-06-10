@@ -5,11 +5,12 @@
 library;
 
 import 'dart:io';
-import 'dart:typed_data';
+import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'package:spine_clinic_app/core/errors/app_exception.dart';
 import 'package:spine_clinic_app/core/errors/result.dart';
+import 'package:spine_clinic_app/core/utils/file_cache_manager.dart';
 import 'package:spine_clinic_app/features/patient/domain/patient_document.dart';
 
 /// Repository interface defining document operations.
@@ -24,6 +25,15 @@ abstract class PatientDocumentsRepository {
     String? filePath,
     Uint8List? fileBytes,
     required String uploadedBy,
+  });
+
+  /// Downloads raw bytes for a stored document.
+  ///
+  /// On web, downloads directly from Supabase Storage.
+  /// On mobile/desktop, reads cached file bytes from the local file system.
+  Future<Result<Uint8List>> downloadDocumentBytes({
+    required String fileUrl,
+    required String fileName,
   });
 
   /// Deletes a document record from database and its file from storage.
@@ -114,6 +124,43 @@ class PatientDocumentsRepositoryImpl implements PatientDocumentsRepository {
       final PatientDocument createdDoc = PatientDocument.fromJson(row);
       return Result.success(createdDoc);
     } on PostgrestException catch (e) {
+      return Result.failure(AppException.fromSupabaseException(e));
+    } on Exception catch (e) {
+      return Result.failure(AppException.fromSupabaseException(e));
+    }
+  }
+
+  @override
+  Future<Result<Uint8List>> downloadDocumentBytes({
+    required String fileUrl,
+    required String fileName,
+  }) async {
+    try {
+      final String key = 'patient-documents/';
+      final int index = fileUrl.indexOf(key);
+      final String storagePath = index != -1
+          ? Uri.decodeComponent(fileUrl.substring(index + key.length))
+          : '';
+      if (storagePath.isEmpty) {
+        return const Result.failure(
+          DatabaseException(
+            code: 'db/invalid-path',
+            message: 'Invalid storage path extracted from file URL.',
+            userMessageKey: 'error_database_generic',
+          ),
+        );
+      }
+      if (kIsWeb) {
+        final Uint8List bytes = await _client.storage
+            .from('patient-documents')
+            .download(storagePath);
+        return Result.success(bytes);
+      } else {
+        final File file = await FileCacheManager.instance.getFile(fileUrl, fileName);
+        final Uint8List bytes = await file.readAsBytes();
+        return Result.success(bytes);
+      }
+    } on StorageException catch (e) {
       return Result.failure(AppException.fromSupabaseException(e));
     } on Exception catch (e) {
       return Result.failure(AppException.fromSupabaseException(e));

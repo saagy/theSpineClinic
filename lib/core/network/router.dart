@@ -9,8 +9,11 @@ import 'package:spine_clinic_app/core/network/app_routes.dart';
 import 'package:spine_clinic_app/features/auth/domain/staff.dart';
 import 'package:spine_clinic_app/features/auth/domain/user_role.dart';
 import 'package:spine_clinic_app/features/auth/presentation/auth_providers.dart';
+import 'package:spine_clinic_app/features/auth/presentation/doctor_history_screen.dart';
+import 'package:spine_clinic_app/features/auth/presentation/doctor_profile_screen.dart';
 import 'package:spine_clinic_app/features/auth/presentation/doctor_register_screen.dart';
 import 'package:spine_clinic_app/features/auth/presentation/login_screen.dart';
+import 'package:spine_clinic_app/features/auth/presentation/receptionist_profile_screen.dart';
 import 'package:spine_clinic_app/features/auth/presentation/splash_screen.dart';
 import 'package:spine_clinic_app/features/appointment/presentation/home_screen.dart';
 import 'package:spine_clinic_app/features/appointment/presentation/new_appointment_screen.dart';
@@ -20,6 +23,7 @@ import 'package:spine_clinic_app/features/patient/presentation/edit_patient_scre
 import 'package:spine_clinic_app/features/patient/presentation/my_patients_screen.dart';
 import 'package:spine_clinic_app/features/patient/presentation/new_patient_screen.dart';
 import 'package:spine_clinic_app/features/patient/presentation/patient_detail_screen.dart';
+import 'package:spine_clinic_app/features/patient/presentation/patient_list_screen.dart';
 import 'package:spine_clinic_app/features/patient/presentation/patient_search_screen.dart';
 import 'package:spine_clinic_app/features/payments/presentation/record_payment_screen.dart';
 import 'package:spine_clinic_app/features/appointment/presentation/my_schedule_screen.dart';
@@ -67,7 +71,6 @@ String? _redirect(Ref ref, GoRouterState state) {
   final String location = state.matchedLocation;
 
   if (asyncUser.isLoading) {
-    // If we're already on login/register, stay there and let the screen show its loading overlay.
     if (location == AppRoutes.login || location == AppRoutes.register) {
       return null;
     }
@@ -75,7 +78,6 @@ String? _redirect(Ref ref, GoRouterState state) {
   }
 
   if (asyncUser.hasError) {
-    // If there is an auth error, redirect to login unless already on a public form page.
     if (location == AppRoutes.login || location == AppRoutes.register) {
       return null;
     }
@@ -177,6 +179,10 @@ List<RouteBase> _buildRoutes(Ref ref) {
       },
     ),
     GoRoute(
+      path: AppRoutes.doctorHistory,
+      builder: (_, __) => const DoctorHistoryScreen(),
+    ),
+    GoRoute(
       path: AppRoutes.manageReplacement,
       builder: (_, __) => const ManageReplacementScreen(),
     ),
@@ -207,48 +213,13 @@ List<RouteBase> _buildRoutes(Ref ref) {
       builder: (BuildContext context, GoRouterState state, Widget child) {
         final Staff? user = ref.read(currentUserProvider).value;
         final String role = user?.role.dbValue ?? 'receptionist';
-        final int activeIndex = role == 'doctor'
-            ? (state.matchedLocation == AppRoutes.myPatients
-                ? 1
-                : (state.matchedLocation == AppRoutes.replacements ? 2 : 0))
-            : (role == 'super_admin'
-                ? (state.matchedLocation == AppRoutes.adminHub ? 3 : 1)
-                : 0);
+        final int activeIndex = _resolveActiveIndex(role, state.matchedLocation);
 
         return AppShell(
           title: AppStrings.appName,
           userRole: role,
           currentTabIndex: activeIndex,
-          onTabSelected: (int index) {
-            if (role == 'doctor') {
-              switch (index) {
-                case 0:
-                  context.go(AppRoutes.schedule);
-                  break;
-                case 1:
-                  context.go(AppRoutes.myPatients);
-                  break;
-                case 2:
-                  context.go(AppRoutes.replacements);
-                  break;
-              }
-            } else if (role == 'super_admin') {
-              switch (index) {
-                case 1:
-                  context.go(AppRoutes.home);
-                  break;
-                case 3:
-                  context.go(AppRoutes.adminHub);
-                  break;
-              }
-            } else {
-              switch (index) {
-                case 0:
-                  context.go(AppRoutes.home);
-                  break;
-              }
-            }
-          },
+          onTabSelected: (int index) => _onTabSelected(context, role, index),
           actions: state.matchedLocation == AppRoutes.home
               ? [
                   IconButton(
@@ -281,7 +252,76 @@ List<RouteBase> _buildRoutes(Ref ref) {
           path: AppRoutes.replacements,
           builder: (_, __) => const ReplacementPatientsScreen(),
         ),
+        GoRoute(
+          path: AppRoutes.patientList,
+          builder: (_, __) => const PatientListScreen(),
+        ),
+        GoRoute(
+          path: AppRoutes.receptionistProfile,
+          builder: (_, __) => const ReceptionistProfileScreen(),
+        ),
+        GoRoute(
+          path: AppRoutes.doctorProfile,
+          builder: (_, __) => const DoctorProfileScreen(),
+        ),
       ],
     ),
   ];
+}
+
+int _resolveActiveIndex(String role, String location) {
+  switch (role) {
+    case 'doctor':
+      if (location == AppRoutes.myPatients) return 1;
+      if (location == AppRoutes.replacements) return 2;
+      if (location == AppRoutes.doctorProfile) return 3;
+      return 0; // schedule
+    case 'super_admin':
+      if (location == AppRoutes.adminHub) return 3;
+      if (location == AppRoutes.patientList) return 2;
+      if (location == AppRoutes.home) return 1;
+      return 0; // analytics (home)
+    case 'receptionist':
+    default:
+      if (location == AppRoutes.patientList) return 1;
+      if (location == AppRoutes.receptionistProfile) return 2;
+      return 0; // calendar (home)
+  }
+}
+
+void _onTabSelected(BuildContext context, String role, int index) {
+  switch (role) {
+    case 'doctor':
+      switch (index) {
+        case 0:
+          context.go(AppRoutes.schedule);
+        case 1:
+          context.go(AppRoutes.myPatients);
+        case 2:
+          context.go(AppRoutes.replacements);
+        case 3:
+          context.go(AppRoutes.doctorProfile);
+      }
+    case 'super_admin':
+      switch (index) {
+        case 0:
+          context.go(AppRoutes.home);
+        case 1:
+          context.go(AppRoutes.home);
+        case 2:
+          context.go(AppRoutes.patientList);
+        case 3:
+          context.go(AppRoutes.adminHub);
+      }
+    case 'receptionist':
+    default:
+      switch (index) {
+        case 0:
+          context.go(AppRoutes.home);
+        case 1:
+          context.go(AppRoutes.patientList);
+        case 2:
+          context.go(AppRoutes.receptionistProfile);
+      }
+  }
 }

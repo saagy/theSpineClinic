@@ -71,6 +71,7 @@ class PatientDocumentsNotifierNotifier
       fileBytes: fileBytes,
       uploadedBy: currentUser.id,
     );
+    if (!ref.mounted) return result;
 
     await result.when(
       success: (PatientDocument newDoc) async {
@@ -113,6 +114,7 @@ class PatientDocumentsNotifierNotifier
       documentId: doc.id,
       storagePath: storagePath,
     );
+    if (!ref.mounted) return result;
 
     await result.when(
       success: (_) async {

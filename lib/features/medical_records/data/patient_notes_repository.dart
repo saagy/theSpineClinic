@@ -30,6 +30,9 @@ abstract class PatientNotesRepository {
     required String noteId,
     required String noteText,
   });
+
+  /// Deletes a note by its ID.
+  Future<Result<void>> deleteNote(String noteId);
 }
 
 /// Supabase-backed implementation of [PatientNotesRepository].
@@ -114,6 +117,20 @@ class PatientNotesRepositoryImpl implements PatientNotesRepository {
       );
       final PatientNote note = PatientNote.fromJson(row);
       return Result.success(note);
+    } on AppException catch (error) {
+      return Result.failure(error);
+    } on Exception catch (error) {
+      return Result.failure(AppException.fromSupabaseException(error));
+    }
+  }
+
+  @override
+  Future<Result<void>> deleteNote(String noteId) async {
+    try {
+      await _service.guardQuery(
+        () => _service.from('patient_notes').delete().eq('id', noteId),
+      );
+      return const Result.success(null);
     } on AppException catch (error) {
       return Result.failure(error);
     } on Exception catch (error) {

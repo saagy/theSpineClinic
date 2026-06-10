@@ -78,6 +78,7 @@ class AddVisitNotesController extends _$AddVisitNotesController {
   /// Updates notes column for the current appointment.
   Future<void> saveNotes(String notes) async {
     final AddVisitNotesState currentState = await future;
+    if (!ref.mounted) return;
     if (!currentState.isAuthorized) {
       throw Exception('Access denied: Unauthorized role or assignment.');
     }
@@ -89,6 +90,7 @@ class AddVisitNotesController extends _$AddVisitNotesController {
           noteText: notes,
           patientId: currentState.appointment.patientId,
         );
+    if (!ref.mounted) return;
 
     ref.invalidate(appointmentDetailControllerProvider(appointmentId));
     ref.invalidate(todayAppointmentsProvider);
@@ -99,6 +101,7 @@ class AddVisitNotesController extends _$AddVisitNotesController {
   /// Saves notes and transitions appointment status to completed.
   Future<void> completeAppointment(String notes) async {
     final AddVisitNotesState currentState = await future;
+    if (!ref.mounted) return;
     if (!currentState.isAuthorized) {
       throw Exception('Access denied: Unauthorized role or assignment.');
     }
@@ -110,6 +113,7 @@ class AddVisitNotesController extends _$AddVisitNotesController {
           noteText: notes,
           patientId: currentState.appointment.patientId,
         );
+    if (!ref.mounted) return;
 
     final AppointmentRepository repo = ref.read(appointmentRepositoryProvider);
     // Then mark appointment as completed
@@ -117,6 +121,7 @@ class AddVisitNotesController extends _$AddVisitNotesController {
       appointmentId,
       AppointmentStatus.completed,
     );
+    if (!ref.mounted) return;
 
     switch (statusResult) {
       case Success<void>():

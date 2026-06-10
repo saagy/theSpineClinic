@@ -1,17 +1,15 @@
-import 'dart:io';
-import 'package:flutter/foundation.dart';
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path/path.dart' as p;
-import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:spine_clinic_app/core/constants/app_colors.dart';
 import 'package:spine_clinic_app/core/constants/app_sizes.dart';
 import 'package:spine_clinic_app/core/constants/app_strings.dart';
 import 'package:spine_clinic_app/core/constants/app_text_styles.dart';
-import 'package:spine_clinic_app/core/utils/file_cache_manager.dart';
 import 'package:spine_clinic_app/core/utils/file_opener_helper.dart';
 import 'package:spine_clinic_app/features/auth/domain/user_role.dart';
 import 'package:spine_clinic_app/features/auth/presentation/auth_providers.dart';
+import 'package:spine_clinic_app/features/patient/data/patient_documents_repository.dart';
 import 'package:spine_clinic_app/features/patient/domain/patient_document.dart';
 import 'package:spine_clinic_app/features/patient/presentation/patient_documents_providers.dart';
 import 'package:spine_clinic_app/shared/widgets/app_snackbar.dart';
@@ -65,23 +63,16 @@ class PatientDocumentItem extends ConsumerWidget {
     );
   }
 
-  Future<Uint8List> _loadImageBytes() async {
-    final String key = 'patient-documents/';
-    final int index = doc.fileUrl.indexOf(key);
-    final String storagePath = index != -1
-        ? Uri.decodeComponent(doc.fileUrl.substring(index + key.length))
-        : '';
-    if (storagePath.isEmpty) {
-      throw Exception('Invalid storage path');
-    }
-    if (kIsWeb) {
-      return await Supabase.instance.client.storage
-          .from('patient-documents')
-          .download(storagePath);
-    } else {
-      final File file = await FileCacheManager.instance.getFile(doc.fileUrl, doc.fileName);
-      return await file.readAsBytes();
-    }
+  Future<Uint8List> _loadImageBytes(WidgetRef ref) async {
+    final PatientDocumentsRepository repo = ref.read(patientDocumentsRepositoryProvider);
+    final result = await repo.downloadDocumentBytes(
+      fileUrl: doc.fileUrl,
+      fileName: doc.fileName,
+    );
+    return result.when(
+      success: (bytes) => bytes,
+      failure: (error) => throw error,
+    );
   }
 
   @override
@@ -127,7 +118,7 @@ class PatientDocumentItem extends ConsumerWidget {
                 height: 80,
                 color: AppColors.background,
                 child: FutureBuilder<Uint8List>(
-                  future: _loadImageBytes(),
+                  future: _loadImageBytes(ref),
                   builder: (context, snapshot) {
                     if (snapshot.connectionState == ConnectionState.waiting) {
                       return const Center(child: SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2)));

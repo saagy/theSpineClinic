@@ -51,6 +51,12 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
   Future<void> _handleLogin() async {
     if (!_formKey.currentState!.validate()) return;
+
+    // Clear any stale error state before initiating the new login attempt.
+    // This prevents the UI from flashing a previous error when correct
+    // credentials are entered.
+    ref.read(currentUserProvider.notifier).clearError();
+
     await ref.read(currentUserProvider.notifier).login(
           _emailCtrl.text.trim(),
           _passwordCtrl.text,
@@ -60,6 +66,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     ref.listen(currentUserProvider, (_, AsyncValue next) {
+      // Only show snackbar for fresh errors — skip stale/cleared states.
       if (next.hasError && next.error is AppException) {
         final AppException error = next.error! as AppException;
         final String message = error.code == 'auth/account-inactive'

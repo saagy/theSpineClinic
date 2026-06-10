@@ -12,6 +12,11 @@ import 'package:spine_clinic_app/features/auth/domain/staff.dart';
 /// The contract enforces that all Supabase-level errors are normalised
 /// into [AppException] subtypes before being wrapped in [Result].
 abstract class AuthRepository {
+  /// Returns whether a non-expired session is currently active.
+  ///
+  /// Backed by [SupabaseService.isAuthenticated].
+  bool get isAuthenticated;
+
   /// Authenticates with email / password and resolves the staff profile.
   ///
   /// Returns the matching `public.staff` row for the authenticated user.
@@ -43,5 +48,14 @@ abstract class AuthRepository {
 
   /// Resolves the staff profile for a given staff ID.
   Future<Result<Staff>> getStaffProfile(String staffId);
+
+  /// Updates the staff profile fields (name, email) and optionally the password.
+  ///
+  /// [staff] carries the updated name/email values.
+  /// [newPassword] is only applied when non-null and non-empty.
+  Future<Result<void>> updateStaffProfile({
+    required Staff staff,
+    String? newPassword,
+  });
 }
 

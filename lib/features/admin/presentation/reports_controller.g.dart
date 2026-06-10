@@ -8,15 +8,15 @@ part of 'reports_controller.dart';
 
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // ignore_for_file: type=lint, type=warning
-/// Provider managing active report query filters.
+/// Provider managing active report query filters with 300ms debounce.
 
 @ProviderFor(ReportsFilterState)
 final reportsFilterStateProvider = ReportsFilterStateProvider._();
 
-/// Provider managing active report query filters.
+/// Provider managing active report query filters with 300ms debounce.
 final class ReportsFilterStateProvider
     extends $NotifierProvider<ReportsFilterState, ReportsFilter> {
-  /// Provider managing active report query filters.
+  /// Provider managing active report query filters with 300ms debounce.
   ReportsFilterStateProvider._()
     : super(
         from: null,
@@ -45,9 +45,9 @@ final class ReportsFilterStateProvider
 }
 
 String _$reportsFilterStateHash() =>
-    r'79bc1b86c7deb04c511c520e133e210df4a31316';
+    r'49d5a71069404c5d12412ba3d0e4ce0af5a5e7a1';
 
-/// Provider managing active report query filters.
+/// Provider managing active report query filters with 300ms debounce.
 
 abstract class _$ReportsFilterState extends $Notifier<ReportsFilter> {
   ReportsFilter build();

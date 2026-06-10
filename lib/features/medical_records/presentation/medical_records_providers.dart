@@ -79,6 +79,7 @@ class AppointmentNote extends _$AppointmentNote {
 
     final Result<PatientNote?> existingResult =
         await repo.getNoteByAppointmentId(appointmentId);
+    if (!ref.mounted) return;
 
     final PatientNote? existingNote = await existingResult.when(
       success: (PatientNote? note) => note,
@@ -102,6 +103,7 @@ class AppointmentNote extends _$AppointmentNote {
         appointmentId: appointmentId,
       );
     }
+    if (!ref.mounted) return;
 
     await result.when(
       success: (PatientNote newNote) async {
@@ -157,6 +159,7 @@ class PatientNotesNotifierNotifier extends _$PatientNotesNotifierNotifier {
     if (appointmentId != null) {
       final Result<PatientNote?> existingResult =
           await repo.getNoteByAppointmentId(appointmentId);
+      if (!ref.mounted) return;
 
       final PatientNote? existingNote = await existingResult.when(
         success: (PatientNote? note) => note,
@@ -187,6 +190,7 @@ class PatientNotesNotifierNotifier extends _$PatientNotesNotifierNotifier {
         appointmentId: appointmentId,
       );
     }
+    if (!ref.mounted) return;
 
     await result.when(
       success: (PatientNote newNote) async {
@@ -194,6 +198,7 @@ class PatientNotesNotifierNotifier extends _$PatientNotesNotifierNotifier {
           ref.invalidate(appointmentNoteProvider(appointmentId));
         }
         final Result<List<PatientNote>> notesResult = await repo.getNotesForPatient(patientId);
+        if (!ref.mounted) return;
         state = notesResult.when(
           success: (notes) => AsyncValue.data(notes),
           failure: (error) => AsyncValue.error(error, StackTrace.current),
@@ -214,6 +219,7 @@ class PatientNotesNotifierNotifier extends _$PatientNotesNotifierNotifier {
     state = const AsyncValue.loading();
     final repo = ref.read(patientNotesRepositoryProvider);
     final result = await repo.updateNote(noteId: noteId, noteText: noteText);
+    if (!ref.mounted) return;
 
     await result.when(
       success: (PatientNote updatedNote) async {
@@ -221,6 +227,7 @@ class PatientNotesNotifierNotifier extends _$PatientNotesNotifierNotifier {
           ref.invalidate(appointmentNoteProvider(updatedNote.appointmentId!));
         }
         final Result<List<PatientNote>> notesResult = await repo.getNotesForPatient(patientId);
+        if (!ref.mounted) return;
         state = notesResult.when(
           success: (notes) => AsyncValue.data(notes),
           failure: (error) => AsyncValue.error(error, StackTrace.current),

@@ -44,8 +44,8 @@ class StatsMetricCard extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Container(
-                  height: 14,
-                  width: 80,
+                  height: AppSizes.skeletonLabelHeight,
+                  width: AppSizes.skeletonLabelWidth,
                   decoration: const BoxDecoration(
                     color: AppColors.border,
                     borderRadius: BorderRadius.all(Radius.circular(AppSizes.r4)),
@@ -64,8 +64,8 @@ class StatsMetricCard extends StatelessWidget {
             ),
             const SizedBox(height: AppSizes.p12),
             Container(
-              height: 24,
-              width: 50,
+              height: AppSizes.skeletonValueHeight,
+              width: AppSizes.skeletonValueWidth,
               decoration: const BoxDecoration(
                 color: AppColors.border,
                 borderRadius: BorderRadius.all(Radius.circular(AppSizes.r4)),
@@ -74,8 +74,8 @@ class StatsMetricCard extends StatelessWidget {
             if (subtitle != null) ...[
               const SizedBox(height: AppSizes.p8),
               Container(
-                height: 12,
-                width: 110,
+                height: AppSizes.skeletonSubtitleHeight,
+                width: AppSizes.skeletonSubtitleWidth,
                 decoration: const BoxDecoration(
                   color: AppColors.border,
                   borderRadius: BorderRadius.all(Radius.circular(AppSizes.r4)),

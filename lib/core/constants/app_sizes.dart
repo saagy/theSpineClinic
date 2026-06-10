@@ -133,4 +133,50 @@ abstract final class AppSizes {
 
   /// Dialog body padding (20 px all sides).
   static const EdgeInsets paddingDialog = EdgeInsets.all(p20);
+
+  // ──────────────────── Layout Constants ────────────────────
+
+  /// Info-row label column width (e.g. profile detail screens).
+  static const double labelColumnWidth = 80.0;
+
+  /// Y-offset for overlay dropdowns (inputHeight + border allowance).
+  static const double overlayDropdownOffset = 44.0;
+
+  /// Default Material elevation for dropdown overlays.
+  static const double overlayElevation = 6.0;
+
+  // ──────────────────── Chart Sizes ────────────────────
+
+  /// Height of a single bar in a trend chart.
+  static const double chartBarMaxHeight = 160.0;
+
+  /// Minimum height for a non-zero chart bar.
+  static const double chartBarMinHeight = 4.0;
+
+  /// Width of each bar in a trend chart.
+  static const double chartBarWidth = 24.0;
+
+  /// Height of the trend chart container.
+  static const double chartContainerHeight = 220.0;
+
+  /// Skeleton placeholder width for metric label.
+  static const double skeletonLabelWidth = 80.0;
+
+  /// Skeleton placeholder width for metric value.
+  static const double skeletonValueWidth = 50.0;
+
+  /// Skeleton placeholder width for subtitle.
+  static const double skeletonSubtitleWidth = 110.0;
+
+  /// Skeleton placeholder height for label text.
+  static const double skeletonLabelHeight = 14.0;
+
+  /// Skeleton placeholder height for value text.
+  static const double skeletonValueHeight = 24.0;
+
+  /// Skeleton placeholder height for subtitle text.
+  static const double skeletonSubtitleHeight = 12.0;
+
+  /// Revenue card icon container size.
+  static const double revenueIconSize = 40.0;
 }

@@ -104,4 +104,39 @@ class PaymentRepositoryImpl implements PaymentRepository {
       return Result.failure(AppException.fromSupabaseException(error));
     }
   }
+
+  @override
+  Future<Result<void>> deletePayment(String paymentId) async {
+    try {
+      await _service.guardQuery(
+        () => _service.from(_paymentRecordsTable).delete().eq('id', paymentId),
+      );
+      return const Result.success(null);
+    } on AppException catch (error) {
+      return Result.failure(error);
+    } on Exception catch (error) {
+      return Result.failure(AppException.fromSupabaseException(error));
+    }
+  }
+
+  @override
+  Future<Result<void>> updatePayment({
+    required String paymentId,
+    required double amount,
+    required String reason,
+  }) async {
+    try {
+      await _service.guardQuery(
+        () => _service.from(_paymentRecordsTable).update({
+          'amount': amount,
+          'reason': reason,
+        }).eq('id', paymentId),
+      );
+      return const Result.success(null);
+    } on AppException catch (error) {
+      return Result.failure(error);
+    } on Exception catch (error) {
+      return Result.failure(AppException.fromSupabaseException(error));
+    }
+  }
 }

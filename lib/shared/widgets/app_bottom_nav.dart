@@ -113,8 +113,7 @@ class AppBottomNav extends StatelessWidget {
         return const [
           _TabItem(icon: Icons.calendar_month_rounded, label: "Calendar"),
           _TabItem(icon: Icons.people_alt_rounded, label: "Patients"),
-          _TabItem(icon: Icons.payments_rounded, label: "Payments"),
-          _TabItem(icon: Icons.grid_view_rounded, label: "More"),
+          _TabItem(icon: Icons.person_rounded, label: "Profile"),
         ];
       case 'super_admin':
       default:

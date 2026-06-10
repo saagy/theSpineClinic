@@ -54,5 +54,24 @@ abstract class PatientRepository {
     required String patientId,
     required String doctorId,
   });
+
+  /// Fetches a paginated list of all patients with optional search, doctor, and branch filters.
+  ///
+  /// [query] searches by name or phone. [doctorId] filters by assigned doctor.
+  /// [clinic] filters by clinic location. [offset] and [limit] control pagination.
+  Future<Result<List<Patient>>> getAllPatients({
+    String? query,
+    String? doctorId,
+    ClinicLocation? clinic,
+    int offset = 0,
+    int limit = 30,
+  });
+
+  /// Counts total patients matching the given filters (for pagination).
+  Future<Result<int>> countAllPatients({
+    String? query,
+    String? doctorId,
+    ClinicLocation? clinic,
+  });
 }
 

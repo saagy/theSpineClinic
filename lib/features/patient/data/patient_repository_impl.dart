@@ -23,14 +23,12 @@ class PatientRepositoryImpl implements PatientRepository {
       final String trimmed = query.trim();
       if (trimmed.isEmpty) return const Result.success([]);
       final List<String> tokens = trimmed.split(RegExp(r'\s+'));
-      var q = _service.from(_table).select();
-      for (final String token in tokens) {
-        if (token.isNotEmpty) {
-          q = q.or('full_name.ilike.%$token%,phone_number.ilike.%$token%');
-        }
-      }
-      if (clinic != null) q = q.eq('clinic', clinic.dbValue);
-      final List<Map<String, dynamic>> rows = await _service.guardQuery(() => q.order('full_name').limit(_searchLimit));
+      final List<Map<String, dynamic>> rows = await _service.guardQuery(() {
+        final base = _service.from(_table).select();
+        final filtered = tokens.where((t) => t.isNotEmpty).fold(base, (q, token) => q.or('full_name.ilike.%$token%,phone_number.ilike.%$token%'));
+        final withClinic = clinic != null ? filtered.eq('clinic', clinic.dbValue) : filtered;
+        return withClinic.order('full_name').limit(_searchLimit);
+      });
       return Result.success(rows.map(Patient.fromJson).toList());
     } on AppException catch (e) {
       return Result.failure(e);
@@ -137,6 +135,61 @@ class PatientRepositoryImpl implements PatientRepository {
           .eq('replacement_date', todayStr)
           .inFilter('absent_doctor_id', potentialAbsentDoctorIds));
       return Result.success(replacementRows.isNotEmpty);
+    } on AppException catch (e) {
+      return Result.failure(e);
+    } catch (e) {
+      return Result.failure(AppException.fromSupabaseException(e));
+    }
+  }
+
+  @override
+  Future<Result<List<Patient>>> getAllPatients({
+    String? query,
+    String? doctorId,
+    ClinicLocation? clinic,
+    int offset = 0,
+    int limit = 30,
+  }) async {
+    try {
+      final List<Map<String, dynamic>> rows = await _service.guardQuery(() {
+        final base = doctorId != null
+            ? _service.from(_table).select('*, patient_doctors!inner()').eq('patient_doctors.doctor_id', doctorId)
+            : _service.from(_table).select();
+        final withClinic = clinic != null ? base.eq('clinic', clinic.dbValue) : base;
+        if (query != null && query.trim().isNotEmpty) {
+          final tokens = query.trim().split(RegExp(r'\s+')).where((t) => t.isNotEmpty);
+          final built = tokens.fold(withClinic, (q, t) => q.or('full_name.ilike.%$t%,phone_number.ilike.%$t%'));
+          return built.order('full_name').range(offset, offset + limit - 1);
+        }
+        return withClinic.order('full_name').range(offset, offset + limit - 1);
+      });
+      return Result.success(rows.map(Patient.fromJson).toList());
+    } on AppException catch (e) {
+      return Result.failure(e);
+    } catch (e) {
+      return Result.failure(AppException.fromSupabaseException(e));
+    }
+  }
+
+  @override
+  Future<Result<int>> countAllPatients({
+    String? query,
+    String? doctorId,
+    ClinicLocation? clinic,
+  }) async {
+    try {
+      final List<Map<String, dynamic>> rows = await _service.guardQuery(() {
+        final base = doctorId != null
+            ? _service.from(_table).select('*, patient_doctors!inner()').eq('patient_doctors.doctor_id', doctorId)
+            : _service.from(_table).select();
+        final withClinic = clinic != null ? base.eq('clinic', clinic.dbValue) : base;
+        if (query != null && query.trim().isNotEmpty) {
+          final tokens = query.trim().split(RegExp(r'\s+')).where((t) => t.isNotEmpty);
+          return tokens.fold(withClinic, (q, t) => q.or('full_name.ilike.%$t%,phone_number.ilike.%$t%')).select('id');
+        }
+        return withClinic.select('id');
+      });
+      return Result.success(rows.length);
     } on AppException catch (e) {
       return Result.failure(e);
     } catch (e) {

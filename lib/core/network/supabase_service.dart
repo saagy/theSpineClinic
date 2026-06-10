@@ -8,6 +8,7 @@
 /// Repositories call this service and wrap the result in [Result<T>].
 library;
 
+import 'dart:async';
 import 'dart:io';
 
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -111,6 +112,10 @@ class SupabaseService {
   /// Executes an arbitrary async Supabase operation and normalises
   /// any thrown exception into an [app_errors.AppException].
   ///
+  /// Enforces a hard 10‑second timeout on every request. If the
+  /// operation does not complete in time a [TimeoutException] is
+  /// caught and normalised into a network [app_errors.AppException].
+  ///
   /// Usage in a repository:
   /// ```dart
   /// final data = await _service.guardQuery(
@@ -120,12 +125,24 @@ class SupabaseService {
   /// ```
   Future<T> guardQuery<T>(Future<T> Function() query) async {
     try {
-      return await query();
+      return await query().timeout(
+        const Duration(seconds: 10),
+        onTimeout: () {
+          throw TimeoutException(
+            'The request timed out after 10 seconds. Please check your connection.',
+          );
+        },
+      );
+    } on TimeoutException catch (error) {
+      throw app_errors.NetworkException(
+        code: 'network/timeout',
+        message: error.message ?? 'Request timed out. Please check your connection.',
+      );
+    } on SocketException catch (error) {
+      throw app_errors.AppException.fromSupabaseException(error);
     } on PostgrestException catch (error) {
       throw app_errors.AppException.fromSupabaseException(error);
     } on AuthException catch (error) {
-      throw app_errors.AppException.fromSupabaseException(error);
-    } on SocketException catch (error) {
       throw app_errors.AppException.fromSupabaseException(error);
     } on Exception catch (error) {
       throw app_errors.AppException.fromSupabaseException(error);

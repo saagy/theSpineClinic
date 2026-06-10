@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:spine_clinic_app/features/admin/data/admin_repository.dart';
 import 'package:spine_clinic_app/features/admin/presentation/admin_providers.dart';
@@ -58,29 +60,38 @@ class ReportsFilter {
   }
 }
 
-/// Provider managing active report query filters.
+/// Provider managing active report query filters with 300ms debounce.
 @riverpod
 class ReportsFilterState extends _$ReportsFilterState {
+  Timer? _debounce;
+
   @override
   ReportsFilter build() {
+    ref.onDispose(() => _debounce?.cancel());
     return const ReportsFilter(
       clinic: null,
       dateFrame: DateFrame.thisMonth,
     );
   }
 
-  /// Changes the filtered clinic.
+  /// Changes the filtered clinic with debounce.
   void setClinic(ClinicLocation? clinic) {
-    state = state.copyWith(clinic: () => clinic);
+    _debounce?.cancel();
+    _debounce = Timer(const Duration(milliseconds: 300), () {
+      state = state.copyWith(clinic: () => clinic);
+    });
   }
 
-  /// Sets the date preset or custom range bounds.
+  /// Sets the date preset or custom range bounds with debounce.
   void setDateFrame(DateFrame dateFrame, {DateTime? start, DateTime? end}) {
-    state = state.copyWith(
-      dateFrame: dateFrame,
-      customStartDate: start,
-      customEndDate: end,
-    );
+    _debounce?.cancel();
+    _debounce = Timer(const Duration(milliseconds: 300), () {
+      state = state.copyWith(
+        dateFrame: dateFrame,
+        customStartDate: start,
+        customEndDate: end,
+      );
+    });
   }
 }
 

@@ -78,13 +78,17 @@ class MyScheduleController extends _$MyScheduleController {
   /// Switches the calendar display horizon.
   Future<void> toggleHorizon(MyScheduleHorizon horizon) async {
     state = const AsyncValue.loading();
-    state = await AsyncValue.guard(() => _fetchState(horizon));
+    final AsyncValue<MyScheduleState> next = await AsyncValue.guard(() => _fetchState(horizon));
+    if (!ref.mounted) return;
+    state = next;
   }
 
   /// Forces a database reload using the current active view horizon.
   Future<void> refresh() async {
     final currentHorizon = state.value?.horizon ?? MyScheduleHorizon.today;
     state = const AsyncValue.loading();
-    state = await AsyncValue.guard(() => _fetchState(currentHorizon));
+    final AsyncValue<MyScheduleState> next = await AsyncValue.guard(() => _fetchState(currentHorizon));
+    if (!ref.mounted) return;
+    state = next;
   }
 }

@@ -11,6 +11,7 @@ import 'package:spine_clinic_app/features/appointment/presentation/appointment_p
 import 'package:spine_clinic_app/features/appointment/presentation/widgets/booking_form_fields.dart';
 import 'package:spine_clinic_app/features/appointment/presentation/widgets/booking_slots_preview.dart';
 import 'package:spine_clinic_app/features/appointment/presentation/widgets/booking_submit_helper.dart';
+import 'package:spine_clinic_app/features/medical_records/presentation/medical_records_providers.dart';
 import 'package:spine_clinic_app/features/appointment/presentation/widgets/date_recurrence_utils.dart';
 import 'package:spine_clinic_app/features/appointment/presentation/widgets/recurring_pattern_picker.dart';
 import 'package:spine_clinic_app/features/appointment/presentation/widgets/selected_doctors_chips.dart';
@@ -113,7 +114,9 @@ class _NewAppointmentFormState extends ConsumerState<NewAppointmentForm> {
     }
     setState(() => _isSubmitting = true);
     final Result<void> result = await BookingSubmitHelper.executeBooking(
-      repo: ref.read(appointmentRepositoryProvider), patientId: _patientIdController.text.trim(), type: _selectedType, slots: _computedSlots,
+      repo: ref.read(appointmentRepositoryProvider),
+      notesRepo: ref.read(patientNotesRepositoryProvider),
+      patientId: _patientIdController.text.trim(), type: _selectedType, slots: _computedSlots,
       time: _selectedTime!, notes: _notesController.text.trim().isEmpty ? null : _notesController.text.trim(),
       creatorId: ref.read(currentUserProvider).value?.id, doctors: _assignedDoctors, usePackage: _usePackage,
     );

@@ -39,6 +39,7 @@ class PackageBalanceController extends _$PackageBalanceController {
     final repo = ref.read(patientRepositoryProvider);
     final updatedPatient = patient.copyWith(packageBalance: newBalance);
     final Result<void> result = await repo.updatePatient(updatedPatient);
+    if (!ref.mounted) return result;
 
     state = result.when(
       success: (_) {

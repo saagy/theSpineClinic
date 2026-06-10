@@ -25,4 +25,14 @@ abstract class PaymentRepository {
 
   /// Updates the configured clinic packages list inside clinic_settings.
   Future<Result<void>> updateClinicPackages(List<ClinicPackage> packages, String updatedBy);
+
+  /// Deletes a payment record by ID.
+  Future<Result<void>> deletePayment(String paymentId);
+
+  /// Updates an existing payment record's amount and reason.
+  Future<Result<void>> updatePayment({
+    required String paymentId,
+    required double amount,
+    required String reason,
+  });
 }

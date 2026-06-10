@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:spine_clinic_app/core/constants/app_colors.dart';
 import 'package:spine_clinic_app/core/constants/app_sizes.dart';
+import 'package:spine_clinic_app/core/constants/app_strings.dart';
 import 'package:spine_clinic_app/core/constants/app_text_styles.dart';
 import 'package:spine_clinic_app/core/utils/formatters.dart';
 import 'package:spine_clinic_app/features/appointment/domain/appointment.dart';
@@ -13,8 +14,12 @@ import 'package:spine_clinic_app/features/medical_records/domain/patient_note.da
 import 'package:spine_clinic_app/features/medical_records/presentation/medical_records_providers.dart';
 import 'package:spine_clinic_app/features/patient/presentation/widgets/add_standalone_note_dialog.dart';
 import 'package:spine_clinic_app/shared/widgets/app_badge.dart';
+import 'package:spine_clinic_app/shared/widgets/app_snackbar.dart';
+import 'package:spine_clinic_app/shared/widgets/confirmation_dialog.dart';
 
 /// Renders a single [PatientNote] in a chronological notes feed card.
+///
+/// Supports tap-to-edit and long-press-to-delete for any staff with view access.
 class PatientNoteItem extends ConsumerWidget {
   /// Creates a [PatientNoteItem].
   const PatientNoteItem({super.key, required this.note});
@@ -38,6 +43,7 @@ class PatientNoteItem extends ConsumerWidget {
       child: InkWell(
         borderRadius: const BorderRadius.all(Radius.circular(AppSizes.r8)),
         onTap: () => _showEditNoteDialog(context, ref),
+        onLongPress: () => _confirmDeleteNote(context, ref),
         child: Padding(
           padding: const EdgeInsets.all(AppSizes.p16),
           child: Column(
@@ -49,21 +55,35 @@ class PatientNoteItem extends ConsumerWidget {
                   staffAsync.when(
                     data: (staff) {
                       final String roleName = switch (staff.role) {
-                        UserRole.superAdmin => 'Admin',
-                        UserRole.receptionist => 'Receptionist',
-                        UserRole.doctor => 'Doctor',
+                        UserRole.superAdmin => AppStrings.adminRoleLabel,
+                        UserRole.receptionist => AppStrings.receptionistRoleLabel,
+                        UserRole.doctor => AppStrings.doctorRoleLabel,
                       };
                       return Text(
                         '${staff.fullName} ($roleName)',
                         style: AppTextStyles.bodyBold.copyWith(color: AppColors.textPrimary),
                       );
                     },
-                    loading: () => const Text('Loading...', style: AppTextStyles.bodySecondary),
-                    error: (_, __) => const Text('Unknown Author', style: AppTextStyles.bodySecondary),
+                    loading: () => const Text(AppStrings.loadingAuthor, style: AppTextStyles.bodySecondary),
+                    error: (_, __) => const Text(AppStrings.unknownAuthor, style: AppTextStyles.bodySecondary),
                   ),
-                  Text(
-                    dateStr,
-                    style: AppTextStyles.caption.copyWith(color: AppColors.textMuted),
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        dateStr,
+                        style: AppTextStyles.caption.copyWith(color: AppColors.textMuted),
+                      ),
+                      const SizedBox(width: AppSizes.p8),
+                      GestureDetector(
+                        onTap: () => _confirmDeleteNote(context, ref),
+                        child: const Icon(
+                          Icons.delete_outline_rounded,
+                          size: AppSizes.iconSmall,
+                          color: AppColors.error,
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),
@@ -86,7 +106,7 @@ class PatientNoteItem extends ConsumerWidget {
   void _showEditNoteDialog(BuildContext context, WidgetRef ref) {
     showDialog<void>(
       context: context,
-      builder: (BuildContext context) {
+      builder: (BuildContext ctx) {
         return AddStandaloneNoteDialog(
           initialText: note.noteText,
           onSave: (String noteText) {
@@ -100,6 +120,40 @@ class PatientNoteItem extends ConsumerWidget {
         );
       },
     );
+  }
+
+  Future<void> _confirmDeleteNote(BuildContext context, WidgetRef ref) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (_) => const ConfirmationDialog(
+        title: AppStrings.deleteNote,
+        message: AppStrings.confirmDeleteNote,
+        confirmLabel: AppStrings.delete,
+        cancelLabel: AppStrings.cancel,
+        isDestructive: true,
+      ),
+    );
+    if (confirm == true && context.mounted) {
+      final repo = ref.read(patientNotesRepositoryProvider);
+      final result = await repo.deleteNote(note.id);
+      if (context.mounted) {
+        result.when(
+          success: (_) {
+            AppSnackbar.show(context,
+                message: AppStrings.noteDeleted,
+                variant: AppSnackbarVariant.success);
+            ref.invalidate(patientNotesNotifierProvider(note.patientId));
+            if (note.appointmentId != null) {
+              ref.invalidate(appointmentNoteProvider(note.appointmentId!));
+            }
+          },
+          failure: (error) {
+            AppSnackbar.show(context,
+                message: error.message, variant: AppSnackbarVariant.error);
+          },
+        );
+      }
+    }
   }
 }
 
@@ -119,13 +173,13 @@ class _AppointmentLinkIndicator extends ConsumerWidget {
           data: (appt) {
             final apptDate = Formatters.formatDateMedium(appt.scheduledAt);
             return AppBadge(
-              label: 'On appointment: ${appt.type.displayLabel} ($apptDate)',
+              label: '${AppStrings.onAppointmentPrefix}${appt.type.displayLabel} ($apptDate)',
               textColor: AppColors.info,
               backgroundColor: AppColors.infoBg,
             );
           },
-          loading: () => const Text('Loading details...', style: AppTextStyles.caption),
-          error: (_, __) => const Text('Linked Appointment', style: AppTextStyles.caption),
+          loading: () => const Text(AppStrings.loadingDetails, style: AppTextStyles.caption),
+          error: (_, __) => const Text(AppStrings.linkedAppointmentLabel, style: AppTextStyles.caption),
         ),
       ],
     );

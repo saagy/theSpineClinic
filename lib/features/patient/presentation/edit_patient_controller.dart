@@ -47,7 +47,8 @@ class EditPatientController extends _$EditPatientController {
         patientId: patient.id,
         doctorId: currentUser.id,
       );
-      
+      if (!ref.mounted) return false;
+
       final bool isAssigned = isAssignedResult.when(
         success: (val) => val,
         failure: (_) => false,
@@ -68,6 +69,7 @@ class EditPatientController extends _$EditPatientController {
 
     // 1. Update patient core fields
     final Result<void> patientResult = await repo.updatePatient(patient);
+    if (!ref.mounted) return false;
     if (patientResult is Failure<void>) {
       state = AsyncValue.error(patientResult.exception, StackTrace.current);
       return false;
@@ -79,6 +81,7 @@ class EditPatientController extends _$EditPatientController {
         patient.id,
         selectedDoctorIds,
       );
+      if (!ref.mounted) return false;
       if (doctorsResult is Failure<void>) {
         state = AsyncValue.error(doctorsResult.exception, StackTrace.current);
         return false;

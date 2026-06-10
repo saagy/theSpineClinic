@@ -190,6 +190,7 @@ class ManageReplacementController extends _$ManageReplacementController {
       date: current.selectedDate,
       initiatedBy: user.id,
     );
+    if (!ref.mounted) return;
 
     switch (createResult) {
       case Failure<String>(:final exception):
@@ -210,6 +211,7 @@ class ManageReplacementController extends _$ManageReplacementController {
       absentDoctorId: current.absentDoctorId!,
       date: current.selectedDate,
     );
+    if (!ref.mounted) return;
 
     switch (apptResult) {
       case Success<List<AffectedAppointmentItem>>(:final data):
@@ -281,6 +283,7 @@ class ManageReplacementController extends _$ManageReplacementController {
       coveringDoctorId: current.coveringDoctorId!,
       addedBy: user.id,
     );
+    if (!ref.mounted) return false;
 
     switch (result) {
       case Success<int>():

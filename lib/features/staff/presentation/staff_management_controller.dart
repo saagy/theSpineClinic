@@ -89,6 +89,7 @@ class StaffFormController extends _$StaffFormController {
       password: password,
       phone: phone,
     );
+    if (!ref.mounted) return result;
 
     state = result.when(
       success: (_) {
@@ -111,6 +112,7 @@ class StaffFormController extends _$StaffFormController {
       staff: staff,
       newPassword: newPassword,
     );
+    if (!ref.mounted) return result;
 
     state = result.when(
       success: (_) {

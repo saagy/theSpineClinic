@@ -38,6 +38,7 @@ class ClinicSettingsAction extends _$ClinicSettingsAction {
     final updatedList = [...currentPackages, package];
 
     final result = await repo.updateClinicPackages(updatedList, staffId);
+    if (!ref.mounted) return result;
 
     state = result.when(
       success: (_) {
@@ -77,6 +78,7 @@ class ClinicSettingsAction extends _$ClinicSettingsAction {
     updatedList[index] = package;
 
     final result = await repo.updateClinicPackages(updatedList, staffId);
+    if (!ref.mounted) return result;
 
     state = result.when(
       success: (_) {
@@ -116,6 +118,7 @@ class ClinicSettingsAction extends _$ClinicSettingsAction {
     updatedList.removeAt(index);
 
     final result = await repo.updateClinicPackages(updatedList, staffId);
+    if (!ref.mounted) return result;
 
     state = result.when(
       success: (_) {

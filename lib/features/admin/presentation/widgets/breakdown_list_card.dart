@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:spine_clinic_app/core/constants/app_colors.dart';
 import 'package:spine_clinic_app/core/constants/app_sizes.dart';
+import 'package:spine_clinic_app/core/constants/app_strings.dart';
 import 'package:spine_clinic_app/core/constants/app_text_styles.dart';
 import 'package:spine_clinic_app/shared/widgets/section_card.dart';
 
@@ -34,7 +35,7 @@ class BreakdownListCard extends StatelessWidget {
               padding: const EdgeInsets.symmetric(vertical: AppSizes.p24),
               child: Center(
                 child: Text(
-                  'No records in this window.',
+                  AppStrings.noRecordsInWindow,
                   style: AppTextStyles.caption.copyWith(color: AppColors.textMuted),
                 ),
               ),

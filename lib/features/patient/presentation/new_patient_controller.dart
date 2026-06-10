@@ -47,6 +47,7 @@ class NewPatientController extends _$NewPatientController {
 
     final Result<Patient> result =
         await patientRepo.createPatient(patient, assignedDoctorIds);
+    if (!ref.mounted) return result;
 
     if (result is Success<Patient> && attachments.isNotEmpty) {
       final createdPatient = result.data;
@@ -60,9 +61,11 @@ class NewPatientController extends _$NewPatientController {
           fileBytes: file.bytes,
           uploadedBy: currentUser?.id ?? '',
         );
+        if (!ref.mounted) return result;
       }
     }
 
+    if (!ref.mounted) return result;
     state = result.when(
       success: (createdPatient) {
         ref.invalidate(patientSearchProvider);
