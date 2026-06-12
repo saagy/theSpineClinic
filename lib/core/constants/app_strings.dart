@@ -330,6 +330,8 @@ abstract final class AppStrings {
   // Filter labels
   static const String fromDate = 'From';
   static const String toDate = 'To';
+  static const String filterByType = 'Filter by Type';
+  static const String allTypes = 'All Types';
   static const String clearFilters = 'Clear';
 
   // Quick Payment
@@ -344,6 +346,15 @@ abstract final class AppStrings {
   static const String onAppointmentPrefix = 'On appointment: ';
   static const String loadingDetails = 'Loading details...';
   static const String linkedAppointmentLabel = 'Linked Appointment';
+
+  // ── All Appointments ──
+  static const String allAppointments = 'All Appointments';
+  static const String filterByStatus = 'Filter by Status';
+  static const String allStatuses = 'All Statuses';
+  static const String filterByDate = 'Filter by Date';
+  static const String noAppointmentsFound = 'No appointments found.';
+  static const String allDoctorsAppts = 'All Doctors';
+  static const String accessDeniedAdminReceptionOnly = 'Access denied. Receptionist/Admin only.';
 
   // ── Admin Reports / Analytics ──
   static const String totalPatients = 'Total Patients';
@@ -376,4 +387,101 @@ abstract final class AppStrings {
   static const String yearLabel = 'Year';
   static const String egpPrefix = 'EGP ';
   static const String noTrendData = 'No trend data for this period.';
+
+  // ── Navigation Tab Labels ──
+  static const String navMySchedule = 'My Schedule';
+  static const String navMyPatients = 'My Patients';
+  static const String navCoverageLogs = 'Coverage Logs';
+  static const String navCalendar = 'Calendar';
+  static const String navAnalytics = 'Analytics';
+  static const String navAppts = 'Appts';
+  static const String navAdmin = 'Admin';
+
+  // ── Misc Labels ──
+  static const String backTooltip = 'Back';
+  static const String unknownDoctorFallback = 'Doctor';
+  static const String unknownFallback = 'Unknown';
+
+  // ── Replacements ──
+  static const String noReplacementPatientsToday = 'No replacement patients assigned to you today.';
+  static const String noReplacementPatientsForQuery = 'No replacement patients today';
+
+  // ── My Patients ──
+  static const String noAssignedPatientsYet = 'No patients assigned to you yet';
+
+  // ── Parameterized Messages ──
+
+  /// Returns a formatted "Covering [name]" label for replacement doctor display.
+  static String coveringDoctorLabel(String name) => 'Covering $name';
+
+  /// Returns formatted "No patients found for '[query]'" message.
+  static String noPatientsFoundFor(String query) => "No patients found for '$query'";
+
+  /// Returns formatted "You are covering for [name] today" banner message.
+  static String coveringForDoctorToday(String name) => 'You are covering for $name today';
+
+  /// Returns formatted "Today, [date]" header string.
+  static String todayWithDate(String dateStr) => 'Today, $dateStr';
+
+  // ── Visit Notes ──
+  static const String addVisitNotes = 'Add Visit Notes';
+  static const String visitDetails = 'Visit Details';
+  static const String editNotesTooltip = 'Edit Notes';
+  static const String noStaffAssignedToSession = 'No staff assigned to this session.';
+
+  // ── Doctor Overlay ──
+  static const String noMatchingDoctorsFound = 'No matching doctors found.';
+  static const String errorLoadingDoctors = 'Error loading doctors.';
+
+  // ── Patient Tabs ──
+  static const String usePackageBalance = 'Use Package Balance';
+  static const String noPaymentsRecorded = 'No payments recorded';
+  static const String totalPaid = 'Total Paid';
+  static const String noDoctorsAssigned = 'No doctors assigned';
+  static const String errorLoadingAssignedDoctors = 'Error loading assigned doctors';
+
+  // ── Document Actions ──
+  static const String openTooltip = 'Open';
+
+  // ── Payment Tabs ──
+  static const String paymentHistory = 'Payment History';
+  static const String paymentSummary = 'Payment Summary';
+
+  // ── Visit Detail ──
+  static const String attendingStaff = 'Attending Staff';
+
+  // ── Analytics Dashboard ──
+  static const String analyticsDashboard = 'Analytics';
+  static const String financialOverview = 'Financial Overview';
+  static const String appointmentAnalytics = 'Appointment Analytics';
+  static const String staffPerformance = 'Staff Performance';
+  static const String patientDemographics = 'Patient Demographics';
+  static const String totalAppointments = 'Total Appointments';
+  static const String totalRevenue = 'Total Revenue';
+  static const String completionRate = 'Completion Rate';
+  static const String cancellationRate = 'Cancellation Rate';
+  static const String revenueByPaymentType = 'Revenue by Payment Type';
+  static const String revenueByBranch = 'Revenue by Branch';
+  static const String outstandingBalances = 'Outstanding Balances';
+  static const String packageSales = 'Package Sales';
+  static const String appointmentsByDay = 'Appointments by Day';
+  static const String topPerformingDoctors = 'Top Performing Doctors';
+  static const String newStaffInPeriod = 'New Staff in Period';
+  static const String newRegistrations = 'New Registrations';
+  static const String activePatients = 'Active Patients';
+  static const String patientsByBranch = 'Patients by Branch';
+  static const String returningVsNew = 'Returning vs New';
+  static const String lastMonth = 'Last Month';
+  static const String yearToDate = 'Year to Date';
+  static const String busiestDay = 'Busiest Day';
+  static const String noFinancialData = 'No financial data for this period.';
+  static const String noAppointmentData = 'No appointment data for this period.';
+  static const String noStaffData = 'No staff data for this period.';
+  static const String noPatientData = 'No patient data for this period.';
+  static const String cashPayments = 'Cash / Card';
+  static const String packageRedemptions = 'Package Redemptions';
+  static const String patientsWithNegativeBalance = 'Patients with negative balance';
+  static const String packagesSold = 'Packages Sold';
+  static const String packagesSoldValue = 'Packages Sold Value';
+  static const String sessionsCompleted = 'Sessions Completed';
 }

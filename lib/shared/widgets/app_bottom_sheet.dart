@@ -36,7 +36,7 @@ class AppBottomSheet extends StatelessWidget {
     return showModalBottomSheet<T>(
       context: context,
       isScrollControlled: isScrollControlled,
-      backgroundColor: Colors.transparent, // Let Container handle styling shapes
+      backgroundColor: AppColors.transparent, // Let Container handle styling shapes
       elevation: 0,
       builder: (context) => AppBottomSheet(
         title: title,
@@ -70,11 +70,11 @@ class AppBottomSheet extends StatelessWidget {
               // Centered cosmetic drag handle bar
               Center(
                 child: Container(
-                  width: 32.0,
-                  height: 4.0,
+                  width: AppSizes.handleWidth,
+                  height: AppSizes.handleHeight,
                   decoration: const BoxDecoration(
                     color: AppColors.border, // Slate 200 cosmetic line
-                    borderRadius: BorderRadius.all(Radius.circular(2.0)),
+                    borderRadius: BorderRadius.all(Radius.circular(AppSizes.p2)),
                   ),
                 ),
               ),
@@ -110,8 +110,8 @@ class AppBottomSheet extends StatelessWidget {
               const SizedBox(height: AppSizes.p12),
               // Border line divider separating the header
               const Divider(
-                height: 1.0,
-                thickness: 1.0,
+                height: AppSizes.borderWidth,
+                thickness: AppSizes.borderWidth,
                 color: AppColors.border,
               ),
               // Sheet body content block

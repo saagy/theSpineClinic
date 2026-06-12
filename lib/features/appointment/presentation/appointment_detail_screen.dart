@@ -48,7 +48,7 @@ class AppointmentDetailScreen extends ConsumerWidget {
           style: AppTextStyles.headingSmall,
         ),
         backgroundColor: AppColors.surface,
-        surfaceTintColor: Colors.transparent,
+        surfaceTintColor: AppColors.transparent,
         leading: const AppBackButton(),
       ),
       body: detailAsync.when(

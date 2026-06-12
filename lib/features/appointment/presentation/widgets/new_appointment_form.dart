@@ -182,7 +182,7 @@ class _NewAppointmentFormState extends ConsumerState<NewAppointmentForm> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text('Use Package Balance', style: AppTextStyles.body.copyWith(color: AppColors.textPrimary)),
+                Text(AppStrings.usePackageBalance, style: AppTextStyles.body.copyWith(color: AppColors.textPrimary)),
                 Switch(value: _usePackage, onChanged: (val) => setState(() => _usePackage = val), activeThumbColor: AppColors.primary),
               ],
             ),

@@ -88,8 +88,8 @@ class _MyPatientsScreenState extends ConsumerState<MyPatientsScreen> {
                   if (patients.isEmpty) {
                     return EmptyState(
                       message: _currentQuery.isEmpty
-                          ? 'No patients assigned to you yet'
-                          : "No patients found for '$_currentQuery'",
+                          ? AppStrings.noAssignedPatientsYet
+                          : AppStrings.noPatientsFoundFor(_currentQuery),
                       icon: _currentQuery.isEmpty
                           ? Icons.people_outline_rounded
                           : Icons.person_off_rounded,

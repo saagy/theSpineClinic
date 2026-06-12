@@ -60,7 +60,7 @@ class _ReplacementPatientsScreenState
             // Rule 9 / Req 3: If no replacement records, abort layout and show EmptyState
             if (state.absentDoctors.isEmpty) {
               return const EmptyState(
-                message: 'No replacement patients assigned to you today.',
+                message: AppStrings.noReplacementPatientsToday,
                 icon: Icons.people_outline_rounded,
               );
             }
@@ -90,8 +90,8 @@ class _ReplacementPatientsScreenState
                   child: state.patients.isEmpty
                       ? EmptyState(
                           message: _currentQuery.isEmpty
-                              ? 'No replacement patients today'
-                              : "No patients found for '$_currentQuery'",
+                              ? AppStrings.noReplacementPatientsForQuery
+                              : AppStrings.noPatientsFoundFor(_currentQuery),
                           icon: _currentQuery.isEmpty
                               ? Icons.group_off_rounded
                               : Icons.person_off_rounded,
@@ -101,7 +101,7 @@ class _ReplacementPatientsScreenState
                           itemBuilder: (context, index) {
                             final Patient patient = state.patients[index];
                             final String absentDoctorName =
-                                state.patientDoctorMap[patient.id] ?? 'Unknown';
+                                state.patientDoctorMap[patient.id] ?? AppStrings.unknownFallback;
 
                             return DataListTile(
                               title: patient.fullName,
@@ -112,7 +112,7 @@ class _ReplacementPatientsScreenState
                                 backgroundColor: AppColors.infoBg,
                               ),
                               trailing: AppBadge(
-                                label: 'Covering $absentDoctorName',
+                                label: AppStrings.coveringDoctorLabel(absentDoctorName),
                                 textColor: AppColors.warning,
                                 backgroundColor: AppColors.warningBg,
                               ),
@@ -154,7 +154,7 @@ class _ReplacementPatientsScreenState
           const SizedBox(width: AppSizes.p12),
           Expanded(
             child: Text(
-              'You are covering for ${doctor.fullName} today',
+              AppStrings.coveringForDoctorToday(doctor.fullName),
               style: AppTextStyles.bodyBold.copyWith(
                 color: AppColors.info,
               ),

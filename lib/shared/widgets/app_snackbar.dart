@@ -43,12 +43,12 @@ abstract final class AppSnackbar {
       case AppSnackbarVariant.success:
         backgroundColor = AppColors.successBg;
         textColor = AppColors.success;
-        border = Border.all(color: Colors.transparent, width: 0);
+        border = Border.all(color: AppColors.transparent, width: 0);
         break;
       case AppSnackbarVariant.error:
         backgroundColor = AppColors.errorBg;
         textColor = AppColors.error;
-        border = Border.all(color: Colors.transparent, width: 0);
+        border = Border.all(color: AppColors.transparent, width: 0);
         break;
       case AppSnackbarVariant.info:
         backgroundColor = AppColors.surface;
@@ -59,7 +59,7 @@ abstract final class AppSnackbar {
 
     final SnackBar snackBar = SnackBar(
       behavior: SnackBarBehavior.floating,
-      backgroundColor: Colors.transparent,
+      backgroundColor: AppColors.transparent,
       elevation: 0,
       margin: const EdgeInsets.all(AppSizes.p16),
       padding: EdgeInsets.zero,

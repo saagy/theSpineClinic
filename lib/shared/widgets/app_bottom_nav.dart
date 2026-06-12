@@ -9,6 +9,7 @@ library;
 import 'package:flutter/material.dart';
 import 'package:spine_clinic_app/core/constants/app_colors.dart';
 import 'package:spine_clinic_app/core/constants/app_sizes.dart';
+import 'package:spine_clinic_app/core/constants/app_strings.dart';
 import 'package:spine_clinic_app/core/constants/app_text_styles.dart';
 
 /// Representation of a single navigation tab item.
@@ -85,7 +86,7 @@ class AppBottomNav extends StatelessWidget {
                     tab.label,
                     style: AppTextStyles.captionMedium.copyWith(
                       color: itemColor,
-                      fontSize: 10.5, // Specialized extra-small text layout layer
+                      fontSize: AppSizes.fontSizeSm2, // Specialized extra-small text layout layer
                     ),
                     textAlign: TextAlign.center,
                     maxLines: 1,
@@ -104,24 +105,24 @@ class AppBottomNav extends StatelessWidget {
     switch (role) {
       case 'doctor':
         return const [
-          _TabItem(icon: Icons.calendar_today_rounded, label: "Today's Appts"),
-          _TabItem(icon: Icons.people_alt_rounded, label: "My Patients"),
-          _TabItem(icon: Icons.swap_horiz_rounded, label: "Coverage Logs"),
-          _TabItem(icon: Icons.person_rounded, label: "Profile"),
+          _TabItem(icon: Icons.calendar_today_rounded, label: AppStrings.navMySchedule),
+          _TabItem(icon: Icons.people_alt_rounded, label: AppStrings.navMyPatients),
+          _TabItem(icon: Icons.person_rounded, label: AppStrings.profile),
         ];
       case 'receptionist':
         return const [
-          _TabItem(icon: Icons.calendar_month_rounded, label: "Calendar"),
-          _TabItem(icon: Icons.people_alt_rounded, label: "Patients"),
-          _TabItem(icon: Icons.person_rounded, label: "Profile"),
+          _TabItem(icon: Icons.event_note_rounded, label: AppStrings.navAppts),
+          _TabItem(icon: Icons.people_alt_rounded, label: AppStrings.patients),
+          _TabItem(icon: Icons.person_rounded, label: AppStrings.profile),
         ];
       case 'super_admin':
       default:
         return const [
-          _TabItem(icon: Icons.analytics_rounded, label: "Analytics"),
-          _TabItem(icon: Icons.calendar_month_rounded, label: "Appts"),
-          _TabItem(icon: Icons.people_alt_rounded, label: "Patients"),
-          _TabItem(icon: Icons.settings_applications_rounded, label: "Admin"),
+          _TabItem(icon: Icons.analytics_rounded, label: AppStrings.navAnalytics),
+          _TabItem(icon: Icons.event_note_rounded, label: AppStrings.navAppts),
+          _TabItem(icon: Icons.calendar_today_rounded, label: AppStrings.navMySchedule),
+          _TabItem(icon: Icons.people_alt_rounded, label: AppStrings.patients),
+          _TabItem(icon: Icons.settings_applications_rounded, label: AppStrings.navAdmin),
         ];
     }
   }

@@ -96,7 +96,7 @@ class _StaffListScaffold extends ConsumerWidget {
                       physics: AlwaysScrollableScrollPhysics(),
                       child: Center(
                         child: Padding(
-                          padding: EdgeInsets.only(top: 100),
+                          padding: EdgeInsets.only(top: AppSizes.emptyStateTopOffset),
                           child: EmptyState(
                             message: AppStrings.noStaff,
                             icon: Icons.people_alt_rounded,

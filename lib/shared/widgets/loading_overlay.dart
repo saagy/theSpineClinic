@@ -34,7 +34,7 @@ class LoadingOverlay extends StatelessWidget {
           AbsorbPointer(
             absorbing: true,
             child: Container(
-              color: Colors.black.withAlpha(102), // ~0.4 opacity background barrier
+              color: AppColors.overlayScrim, // ~0.4 opacity background barrier
               child: const Center(
                 child: CircularProgressIndicator(
                   valueColor: AlwaysStoppedAnimation<Color>(AppColors.primary),

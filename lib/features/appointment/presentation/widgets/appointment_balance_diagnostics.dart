@@ -74,7 +74,7 @@ class AppointmentBalanceDiagnostics extends ConsumerWidget {
     return Container(
       decoration: BoxDecoration(
         color: cardBgColor,
-        border: Border.all(color: cardBorderColor, width: 1.5),
+        border: Border.all(color: cardBorderColor, width: AppSizes.borderWidthMedium),
         borderRadius: const BorderRadius.all(Radius.circular(AppSizes.r6)),
       ),
       padding: const EdgeInsets.all(AppSizes.p16),

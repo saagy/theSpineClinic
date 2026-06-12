@@ -68,7 +68,7 @@ class _AppointmentActionsSheetState extends ConsumerState<AppointmentActionsShee
   @override
   Widget build(BuildContext context) {
     final appointment = widget.appointment;
-    final String timeStr = Formatters.formatTime(appointment.scheduledAt);
+    final String timeStr = Formatters.formatTime(appointment.scheduledAt.toLocal());
 
     return LoadingOverlay(
       isLoading: _isLoading,

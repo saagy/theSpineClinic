@@ -39,7 +39,7 @@ class ReplacementSetupForm extends ConsumerWidget {
             doctorsAsync.when(
               loading: () => const SizedBox(
                 height: AppSizes.inputHeight,
-                child: Center(child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.primary)),
+                child: Center(child: CircularProgressIndicator(strokeWidth: AppSizes.strokeWidthThin, color: AppColors.primary)),
               ),
               error: (_, __) => Text(
                 AppStrings.errorDatabaseGeneric,
@@ -59,7 +59,7 @@ class ReplacementSetupForm extends ConsumerWidget {
             doctorsAsync.when(
               loading: () => const SizedBox(
                 height: AppSizes.inputHeight,
-                child: Center(child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.primary)),
+                child: Center(child: CircularProgressIndicator(strokeWidth: AppSizes.strokeWidthThin, color: AppColors.primary)),
               ),
               error: (_, __) => Text(
                 AppStrings.errorDatabaseGeneric,

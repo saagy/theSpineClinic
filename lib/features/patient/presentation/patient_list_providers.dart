@@ -25,11 +25,14 @@ part 'patient_list_providers.g.dart';
 class PatientList extends _$PatientList {
   String _currentQuery = '';
   String? _doctorId;
-  ClinicLocation? _clinic;
+  ClinicLocation? _clinicFilter;
   int _offset = 0;
+
+  /// The currently active clinic/branch filter, or null for all branches.
+  ClinicLocation? get currentClinicFilter => _clinicFilter;
   static const int _pageSize = 30;
 
-  bool get hasMore => _offset < _totalCount;
+  bool get hasMore => (state.value?.length ?? 0) < _totalCount;
   int _totalCount = 0;
 
   @override
@@ -42,7 +45,7 @@ class PatientList extends _$PatientList {
     final Result<List<Patient>> result = await repo.getAllPatients(
       query: _currentQuery.isEmpty ? null : _currentQuery,
       doctorId: _doctorId,
-      clinic: _clinic,
+      clinic: _clinicFilter,
       offset: _offset,
       limit: _pageSize,
     );
@@ -52,11 +55,11 @@ class PatientList extends _$PatientList {
       final Result<int> countResult = await repo.countAllPatients(
         query: _currentQuery.isEmpty ? null : _currentQuery,
         doctorId: _doctorId,
-        clinic: _clinic,
+        clinic: _clinicFilter,
       );
       countResult.when(
         success: (int count) => _totalCount = count,
-        failure: (_) {},
+        failure: (_) => _totalCount = 0,
       );
     }
 
@@ -70,10 +73,17 @@ class PatientList extends _$PatientList {
   void searchNow(String query) {
     _currentQuery = query;
     _offset = 0;
+    _totalCount = 0;
     state = const AsyncValue.loading();
     _fetch().then(
-      (data) => state = AsyncValue.data(data),
-      onError: (err, stack) => state = AsyncValue.error(err, stack),
+      (data) {
+        if (!ref.mounted) return;
+        state = AsyncValue.data(data);
+      },
+      onError: (err, stack) {
+        if (!ref.mounted) return;
+        state = AsyncValue.error(err, stack);
+      },
     );
   }
 
@@ -81,21 +91,35 @@ class PatientList extends _$PatientList {
   void setDoctorFilter(String? doctorId) {
     _doctorId = doctorId;
     _offset = 0;
+    _totalCount = 0;
     state = const AsyncValue.loading();
     _fetch().then(
-      (data) => state = AsyncValue.data(data),
-      onError: (err, stack) => state = AsyncValue.error(err, stack),
+      (data) {
+        if (!ref.mounted) return;
+        state = AsyncValue.data(data);
+      },
+      onError: (err, stack) {
+        if (!ref.mounted) return;
+        state = AsyncValue.error(err, stack);
+      },
     );
   }
 
   /// Applies clinic filter.
   void setClinicFilter(ClinicLocation? clinic) {
-    _clinic = clinic;
+    _clinicFilter = clinic;
     _offset = 0;
+    _totalCount = 0;
     state = const AsyncValue.loading();
     _fetch().then(
-      (data) => state = AsyncValue.data(data),
-      onError: (err, stack) => state = AsyncValue.error(err, stack),
+      (data) {
+        if (!ref.mounted) return;
+        state = AsyncValue.data(data);
+      },
+      onError: (err, stack) {
+        if (!ref.mounted) return;
+        state = AsyncValue.error(err, stack);
+      },
     );
   }
 
@@ -106,8 +130,10 @@ class PatientList extends _$PatientList {
     _offset += _pageSize;
     try {
       final newPatients = await _fetch();
+      if (!ref.mounted) return;
       state = AsyncValue.data([...currentData, ...newPatients]);
     } catch (err, stack) {
+      if (!ref.mounted) return;
       _offset -= _pageSize;
       state = AsyncValue.error(err, stack);
     }
@@ -116,11 +142,14 @@ class PatientList extends _$PatientList {
   /// Force-refreshes from scratch.
   Future<void> refresh() async {
     _offset = 0;
+    _totalCount = 0;
     state = const AsyncValue.loading();
     try {
       final data = await _fetch();
+      if (!ref.mounted) return;
       state = AsyncValue.data(data);
     } catch (err, stack) {
+      if (!ref.mounted) return;
       state = AsyncValue.error(err, stack);
     }
   }

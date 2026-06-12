@@ -183,7 +183,7 @@ class ClinicSettingsScreen extends ConsumerWidget {
                     physics: AlwaysScrollableScrollPhysics(),
                     child: Center(
                       child: Padding(
-                        padding: EdgeInsets.only(top: 100),
+                        padding: EdgeInsets.only(top: AppSizes.emptyStateTopOffset),
                         child: EmptyState(
                           message: AppStrings.noPackages,
                           icon: Icons.inventory_2_outlined,

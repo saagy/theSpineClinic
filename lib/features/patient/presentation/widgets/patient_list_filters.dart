@@ -29,14 +29,14 @@ class PatientListFilters extends ConsumerWidget {
             child: doctorsAsync.when(
               loading: () => const SizedBox(
                 height: AppSizes.inputHeight,
-                child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
+                child: Center(child: CircularProgressIndicator(strokeWidth: AppSizes.strokeWidthThin)),
               ),
               error: (_, __) => const SizedBox.shrink(),
               data: (List<Staff> doctors) => _SearchableDoctorFilter(doctors: doctors),
             ),
           ),
           const SizedBox(width: AppSizes.p8),
-          Expanded(child: _BranchFilterChips()),
+          Expanded(child: _BranchFilterDropdown()),
         ],
       ),
     );
@@ -210,41 +210,36 @@ class _FilterItem extends StatelessWidget {
   }
 }
 
-class _BranchFilterChips extends ConsumerWidget {
+class _BranchFilterDropdown extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final notifier = ref.read(patientListProvider.notifier);
-    return Row(
-      children: [
-        Expanded(child: _BranchChip(label: AppStrings.allBranches, onTap: () => notifier.setClinicFilter(null))),
-        const SizedBox(width: AppSizes.p4),
-        Expanded(child: _BranchChip(label: ClinicLocation.tagamoa.displayLabel, onTap: () => notifier.setClinicFilter(ClinicLocation.tagamoa))),
-        const SizedBox(width: AppSizes.p4),
-        Expanded(child: _BranchChip(label: ClinicLocation.masrElgedida.displayLabel, onTap: () => notifier.setClinicFilter(ClinicLocation.masrElgedida))),
-      ],
-    );
-  }
-}
-
-class _BranchChip extends StatelessWidget {
-  const _BranchChip({required this.label, required this.onTap});
-  final String label;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        height: AppSizes.inputHeight,
-        alignment: Alignment.center,
-        decoration: BoxDecoration(
-          color: AppColors.surface,
-          borderRadius: const BorderRadius.all(Radius.circular(AppSizes.r6)),
-          border: Border.all(color: AppColors.border, width: AppSizes.borderWidth),
+    return DropdownButtonFormField<ClinicLocation?>(
+      initialValue: notifier.currentClinicFilter,
+      decoration: InputDecoration(
+        isDense: true,
+        contentPadding: const EdgeInsets.symmetric(horizontal: AppSizes.p12, vertical: AppSizes.p8),
+        border: const OutlineInputBorder(
+          borderRadius: BorderRadius.all(Radius.circular(AppSizes.r6)),
+          borderSide: BorderSide(color: AppColors.border, width: AppSizes.borderWidth),
         ),
-        child: Text(label, style: AppTextStyles.captionMedium.copyWith(color: AppColors.textSecondary), maxLines: 1, overflow: TextOverflow.ellipsis),
+        enabledBorder: const OutlineInputBorder(
+          borderRadius: BorderRadius.all(Radius.circular(AppSizes.r6)),
+          borderSide: BorderSide(color: AppColors.border, width: AppSizes.borderWidth),
+        ),
+        focusedBorder: const OutlineInputBorder(
+          borderRadius: BorderRadius.all(Radius.circular(AppSizes.r6)),
+          borderSide: BorderSide(color: AppColors.borderStrong, width: AppSizes.borderWidthFocused),
+        ),
       ),
+      hint: Text(AppStrings.allBranches,
+          style: AppTextStyles.captionMedium.copyWith(color: AppColors.textSecondary)),
+      items: const [
+        DropdownMenuItem<ClinicLocation?>(value: null, child: Text(AppStrings.allBranches)),
+        DropdownMenuItem<ClinicLocation?>(value: ClinicLocation.tagamoa, child: Text(AppStrings.clinicTagamoa)),
+        DropdownMenuItem<ClinicLocation?>(value: ClinicLocation.masrElgedida, child: Text(AppStrings.clinicMasrElgedida)),
+      ],
+      onChanged: notifier.setClinicFilter,
     );
   }
 }

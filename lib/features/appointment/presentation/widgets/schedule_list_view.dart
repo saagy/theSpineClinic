@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import 'package:go_router/go_router.dart';
 import 'package:spine_clinic_app/core/constants/app_colors.dart';
 import 'package:spine_clinic_app/core/constants/app_sizes.dart';
+import 'package:spine_clinic_app/core/constants/app_strings.dart';
 import 'package:spine_clinic_app/core/constants/app_text_styles.dart';
 import 'package:spine_clinic_app/core/errors/app_exception.dart';
 import 'package:spine_clinic_app/core/utils/formatters.dart';
@@ -135,7 +136,7 @@ class ScheduleListView extends StatelessWidget {
     final appointmentDoctor = item.appointmentDoctor;
 
     final String? subtitle = appointmentDoctor.isReplacement
-        ? 'Covering ${item.replacedDoctor?.fullName ?? "Doctor"}'
+        ? 'Covering ${item.replacedDoctor?.fullName ?? AppStrings.unknownDoctorFallback}'
         : null;
 
     return DataListTile(
@@ -144,7 +145,7 @@ class ScheduleListView extends StatelessWidget {
       leading: Padding(
         padding: const EdgeInsets.only(right: AppSizes.p4),
         child: Text(
-          Formatters.formatTime(appointment.scheduledAt),
+          Formatters.formatTime(appointment.scheduledAt.toLocal()),
           style: AppTextStyles.bodyBold.copyWith(
             color: AppColors.textPrimary,
           ),

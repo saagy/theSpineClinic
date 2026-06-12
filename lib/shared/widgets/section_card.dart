@@ -76,8 +76,8 @@ class SectionCard extends StatelessWidget {
             const SizedBox(height: AppSizes.p12),
             // Minimalist horizontal grid line divider
             const Divider(
-              height: 1.0,
-              thickness: 1.0,
+              height: AppSizes.borderWidth,
+              thickness: AppSizes.borderWidth,
               color: AppColors.border,
             ),
           ],

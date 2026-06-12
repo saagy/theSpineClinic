@@ -99,7 +99,7 @@ class HomeScreen extends ConsumerWidget {
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('Today, $dateStr', style: AppTextStyles.bodySecondary),
+                  Text(AppStrings.todayWithDate(dateStr), style: AppTextStyles.bodySecondary),
                   const SizedBox(height: AppSizes.p4),
                   Text(AppStrings.appointments, style: AppTextStyles.headingLarge),
                 ],
@@ -167,7 +167,7 @@ class _AppointmentRow extends ConsumerWidget {
       leading: Padding(
         padding: const EdgeInsets.only(right: AppSizes.p4),
         child: Text(
-          Formatters.formatTime(appointment.scheduledAt),
+          Formatters.formatTime(appointment.scheduledAt.toLocal()),
           style: AppTextStyles.bodyBold.copyWith(color: AppColors.textPrimary),
         ),
       ),

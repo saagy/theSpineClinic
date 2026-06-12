@@ -160,10 +160,10 @@ class _PackageBalanceEditDialogState extends State<PackageBalanceEditDialog> {
                     },
               child: isLoading
                   ? const SizedBox(
-                      width: 20,
-                      height: 20,
+                      width: AppSizes.thumbnailDefault,
+                      height: AppSizes.thumbnailDefault,
                       child: CircularProgressIndicator(
-                        strokeWidth: 2,
+                        strokeWidth: AppSizes.strokeWidthThin,
                         color: AppColors.textOnPrimary,
                       ),
                     )

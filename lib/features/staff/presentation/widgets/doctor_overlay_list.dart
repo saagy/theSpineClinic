@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:spine_clinic_app/core/constants/app_colors.dart';
 import 'package:spine_clinic_app/core/constants/app_sizes.dart';
+import 'package:spine_clinic_app/core/constants/app_strings.dart';
 import 'package:spine_clinic_app/core/constants/app_text_styles.dart';
 import 'package:spine_clinic_app/features/auth/domain/staff.dart';
 import 'package:spine_clinic_app/features/staff/presentation/staff_providers.dart';
@@ -37,13 +38,13 @@ class DoctorOverlayList extends ConsumerWidget {
         if (filtered.isEmpty) {
           return const Padding(
             padding: EdgeInsets.all(AppSizes.p16),
-            child: Text('No matching doctors found.',
+            child: Text(AppStrings.noMatchingDoctorsFound,
                 style: AppTextStyles.bodySecondary),
           );
         }
 
         return ConstrainedBox(
-          constraints: const BoxConstraints(maxHeight: 220),
+          constraints: const BoxConstraints(maxHeight: AppSizes.overlayDropdownMaxHeight),
           child: ListView.builder(
             padding: EdgeInsets.zero,
             shrinkWrap: true,
@@ -67,11 +68,11 @@ class DoctorOverlayList extends ConsumerWidget {
       },
       loading: () => const Padding(
         padding: EdgeInsets.all(AppSizes.p16),
-        child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
+        child: Center(child: CircularProgressIndicator(strokeWidth: AppSizes.strokeWidthThin)),
       ),
       error: (_, __) => const Padding(
         padding: EdgeInsets.all(AppSizes.p16),
-        child: Text('Error loading doctors.',
+        child: Text(AppStrings.errorLoadingDoctors,
             style: TextStyle(color: AppColors.error)),
       ),
     );

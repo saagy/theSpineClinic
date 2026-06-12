@@ -79,8 +79,8 @@ class RecurringPatternPicker extends StatelessWidget {
               onTap: () => _toggleWeekday(value),
               borderRadius: const BorderRadius.all(Radius.circular(AppSizes.r6)),
               child: Container(
-                width: 44.0,
-                height: 44.0,
+                width: AppSizes.tappableMin,
+                height: AppSizes.tappableMin,
                 alignment: Alignment.center,
                 decoration: BoxDecoration(
                   color: isSelected ? AppColors.primary : AppColors.surface,

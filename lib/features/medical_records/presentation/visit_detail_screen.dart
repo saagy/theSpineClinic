@@ -30,16 +30,16 @@ class VisitDetailScreen extends ConsumerWidget {
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
-        title: const Text('Visit Details', style: AppTextStyles.headingSmall),
+        title: const Text(AppStrings.visitDetails, style: AppTextStyles.headingSmall),
         backgroundColor: AppColors.surface,
-        surfaceTintColor: Colors.transparent,
+        surfaceTintColor: AppColors.transparent,
         leading: const AppBackButton(),
         actions: [
           stateAsync.maybeWhen(
             data: (state) => state.canEditNotes
                 ? IconButton(
                     icon: const Icon(Icons.edit_note_rounded),
-                    tooltip: 'Edit Notes',
+                    tooltip: AppStrings.editNotesTooltip,
                     onPressed: () => context.push(
                       AppRoutes.addVisitNotes.replaceAll(':id', appointmentId),
                     ),
@@ -125,9 +125,9 @@ class VisitDetailScreen extends ConsumerWidget {
 
   Widget _buildDoctorsSection(VisitDetailState state) {
     return SectionCard(
-      title: 'Attending Staff',
+      title: AppStrings.attendingStaff,
       child: state.activeDoctors.isEmpty
-          ? const Text('No staff assigned to this session.', style: AppTextStyles.caption)
+          ? const Text(AppStrings.noStaffAssignedToSession, style: AppTextStyles.caption)
           : Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: state.activeDoctors.map((docDetail) {

@@ -200,7 +200,7 @@ class _BarGroup extends StatelessWidget {
             width: AppSizes.chartBarWidth + AppSizes.p8,
             child: Text(
               point.label,
-              style: AppTextStyles.caption.copyWith(color: AppColors.textMuted, fontSize: 9),
+              style: AppTextStyles.caption.copyWith(color: AppColors.textMuted, fontSize: AppSizes.fontSizeXs),
               textAlign: TextAlign.center,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,

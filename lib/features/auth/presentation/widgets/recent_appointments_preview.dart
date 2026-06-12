@@ -79,7 +79,7 @@ class RecentAppointmentsPreview extends ConsumerWidget {
             return DataListTile(
               title: item.patient.fullName,
               subtitle:
-                  '${item.appointment.type.displayLabel} · ${Formatters.formatDateMedium(item.appointment.scheduledAt)}',
+                  '${item.appointment.type.displayLabel} · ${Formatters.formatDateMedium(item.appointment.scheduledAt.toLocal())}',
               transparent: true,
               onTap: () => context.push(
                 AppRoutes.appointmentDetail.replaceAll(':id', item.appointment.id),

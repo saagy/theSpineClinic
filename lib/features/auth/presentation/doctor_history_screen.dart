@@ -18,6 +18,8 @@ import 'package:spine_clinic_app/features/appointment/domain/appointment_reposit
 import 'package:spine_clinic_app/features/appointment/domain/appointment_type.dart';
 import 'package:spine_clinic_app/features/appointment/presentation/appointment_providers.dart';
 import 'package:spine_clinic_app/features/auth/presentation/auth_providers.dart';
+import 'package:spine_clinic_app/features/auth/presentation/widgets/history_filter_bar.dart';
+import 'package:spine_clinic_app/features/patient/domain/clinic_location.dart';
 import 'package:spine_clinic_app/shared/widgets/app_back_button.dart';
 import 'package:spine_clinic_app/shared/widgets/app_search_bar.dart';
 import 'package:spine_clinic_app/shared/widgets/data_list_tile.dart';
@@ -42,6 +44,7 @@ class _DoctorHistoryScreenState extends ConsumerState<DoctorHistoryScreen> {
   DateTime? _dateFrom;
   DateTime? _dateTo;
   AppointmentType? _typeFilter;
+  ClinicLocation? _branchFilter;
   int _visibleCount = 30;
 
   @override
@@ -106,6 +109,10 @@ class _DoctorHistoryScreenState extends ConsumerState<DoctorHistoryScreen> {
       final AppointmentType type = _typeFilter!;
       result = result.where((i) => i.appointment.type == type).toList();
     }
+    if (_branchFilter != null) {
+      final ClinicLocation branch = _branchFilter!;
+      result = result.where((i) => i.patient.clinic == branch).toList();
+    }
 
     setState(() {
       _filteredItems = result;
@@ -157,7 +164,30 @@ class _DoctorHistoryScreenState extends ConsumerState<DoctorHistoryScreen> {
               onChanged: _onSearchChanged,
             ),
           ),
-          _buildFilterBar(),
+          HistoryFilterBar(
+            dateFrom: _dateFrom,
+            dateTo: _dateTo,
+            typeFilter: _typeFilter,
+            branchFilter: _branchFilter,
+            onPickDate: _pickDate,
+            onTypeChanged: (type) {
+              setState(() => _typeFilter = type);
+              _applyFilters();
+            },
+            onBranchChanged: (branch) {
+              setState(() => _branchFilter = branch);
+              _applyFilters();
+            },
+            onClear: () {
+              setState(() {
+                _dateFrom = null;
+                _dateTo = null;
+                _typeFilter = null;
+                _branchFilter = null;
+              });
+              _applyFilters();
+            },
+          ),
           Expanded(
             child: _isLoading
                 ? const Center(child: CircularProgressIndicator(color: AppColors.primary))
@@ -181,7 +211,7 @@ class _DoctorHistoryScreenState extends ConsumerState<DoctorHistoryScreen> {
                               final item = _filteredItems[index];
                               return DataListTile(
                                 title: item.patient.fullName,
-                                subtitle: '${item.appointment.type.displayLabel} · ${Formatters.formatDateMedium(item.appointment.scheduledAt)}',
+                                subtitle: '${item.appointment.type.displayLabel} · ${Formatters.formatDateMedium(item.appointment.scheduledAt.toLocal())}',
                                 onTap: () => context.push(
                                   AppRoutes.appointmentDetail.replaceAll(':id', item.appointment.id),
                                 ),
@@ -189,58 +219,6 @@ class _DoctorHistoryScreenState extends ConsumerState<DoctorHistoryScreen> {
                             },
                           ),
           ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildFilterBar() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: AppSizes.p16, vertical: AppSizes.p8),
-      child: Wrap(
-        spacing: AppSizes.p8,
-        runSpacing: AppSizes.p8,
-        children: [
-          // Date from
-          ActionChip(
-            avatar: const Icon(Icons.calendar_today_rounded, size: 16),
-            label: Text(_dateFrom != null ? Formatters.formatDateShort(_dateFrom!) : AppStrings.fromDate),
-            onPressed: () => _pickDate(true),
-            backgroundColor: _dateFrom != null ? AppColors.primaryLight : AppColors.surface,
-          ),
-          // Date to
-          ActionChip(
-            avatar: const Icon(Icons.calendar_today_rounded, size: 16),
-            label: Text(_dateTo != null ? Formatters.formatDateShort(_dateTo!) : AppStrings.toDate),
-            onPressed: () => _pickDate(false),
-            backgroundColor: _dateTo != null ? AppColors.primaryLight : AppColors.surface,
-          ),
-          // Type filter
-          ...AppointmentType.values.map((type) {
-            final isSelected = _typeFilter == type;
-            return ActionChip(
-              label: Text(type.displayLabel, style: AppTextStyles.caption.copyWith(color: isSelected ? AppColors.primary : AppColors.textSecondary)),
-              backgroundColor: isSelected ? AppColors.primaryLight : AppColors.surface,
-              onPressed: () {
-                setState(() => _typeFilter = isSelected ? null : type);
-                _applyFilters();
-              },
-            );
-          }),
-          // Clear filters
-          if (_dateFrom != null || _dateTo != null || _typeFilter != null)
-            ActionChip(
-              avatar: const Icon(Icons.clear_rounded, size: 16, color: AppColors.error),
-              label: Text(AppStrings.clearFilters, style: AppTextStyles.caption.copyWith(color: AppColors.error)),
-              onPressed: () {
-                setState(() {
-                  _dateFrom = null;
-                  _dateTo = null;
-                  _typeFilter = null;
-                });
-                _applyFilters();
-              },
-            ),
         ],
       ),
     );

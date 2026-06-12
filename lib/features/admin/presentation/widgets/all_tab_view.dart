@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:spine_clinic_app/core/constants/app_colors.dart';
+import 'package:spine_clinic_app/core/constants/app_sizes.dart';
 import 'package:spine_clinic_app/core/constants/app_strings.dart';
 import 'package:spine_clinic_app/core/errors/app_exception.dart';
 import 'package:spine_clinic_app/core/utils/formatters.dart';
@@ -30,7 +31,7 @@ class AllTabView extends ConsumerWidget {
               physics: AlwaysScrollableScrollPhysics(),
               child: Center(
                 child: Padding(
-                  padding: EdgeInsets.only(top: 100),
+                  padding: EdgeInsets.only(top: AppSizes.emptyStateTopOffset),
                   child: EmptyState(
                     message: AppStrings.noStaff,
                     icon: Icons.people_alt_rounded,

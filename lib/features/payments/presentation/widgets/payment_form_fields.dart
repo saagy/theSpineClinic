@@ -123,7 +123,7 @@ class _PaymentFormFieldsState extends State<PaymentFormFields> {
                         color: selected ? AppColors.textOnPrimary : AppColors.textSecondary,
                       ),
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(100),
+                        borderRadius: BorderRadius.circular(AppSizes.radiusPill),
                         side: BorderSide(
                           color: selected ? AppColors.primary : AppColors.border,
                           width: AppSizes.borderWidth,

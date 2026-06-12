@@ -1,1 +1,15 @@
-/* /index.html   200
+/login    /index.html    200
+/register  /index.html    200
+/home      /index.html    200
+/splash    /index.html    200
+/search    /index.html    200
+/patient/*  /index.html    200
+/appointment/*  /index.html    200
+/visit/*   /index.html    200
+/new-patient  /index.html    200
+/new-appointment  /index.html    200
+/admin/*   /index.html    200
+/doctor/*  /index.html    200
+/appointments  /index.html    200
+/patients  /index.html    200
+/receptionist/*  /index.html    200

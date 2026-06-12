@@ -29,9 +29,9 @@ class AddVisitNotesScreen extends ConsumerWidget {
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
-        title: const Text('Add Visit Notes', style: AppTextStyles.headingSmall),
+        title: const Text(AppStrings.addVisitNotes, style: AppTextStyles.headingSmall),
         backgroundColor: AppColors.surface,
-        surfaceTintColor: Colors.transparent,
+        surfaceTintColor: AppColors.transparent,
         leading: const AppBackButton(),
       ),
       body: stateAsync.when(

@@ -135,7 +135,7 @@ class ManageReplacementScreen extends ConsumerWidget {
                 AbsorbPointer(
                   absorbing: true,
                   child: Container(
-                    color: Colors.black.withAlpha(102),
+                    color: AppColors.overlayScrim,
                     child: const Center(
                       child: CircularProgressIndicator(
                         color: AppColors.primary,

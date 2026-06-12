@@ -28,30 +28,42 @@ abstract final class Formatters {
 
   /// Formats a [DateTime] into a clean short table-row numeric string: `dd/MM/yyyy`.
   ///
+  /// Always converts to local time before formatting so that UTC timestamps
+  /// from Supabase display in Cairo local time.
+  ///
   /// Example: `24/10/2026`
   static String formatDateShort(DateTime date) {
-    return DateFormat('dd/MM/yyyy').format(date);
+    return DateFormat('dd/MM/yyyy').format(date.toLocal());
   }
 
   /// Formats a [DateTime] into a human-readable medium structure: `MMM d, yyyy`.
   ///
+  /// Always converts to local time before formatting so that UTC timestamps
+  /// from Supabase display in Cairo local time.
+  ///
   /// Example: `Oct 24, 2026`
   static String formatDateMedium(DateTime date) {
-    return DateFormat('MMM d, yyyy').format(date);
+    return DateFormat('MMM d, yyyy').format(date.toLocal());
   }
 
   /// Formats a [DateTime] with hour and minute resolution: `MMM d, yyyy, hh:mm a`.
   ///
+  /// Always converts to local time before formatting so that UTC timestamps
+  /// from Supabase display in Cairo local time.
+  ///
   /// Example: `Oct 24, 2026, 04:30 PM`
   static String formatDateTime(DateTime date) {
-    return DateFormat('MMM d, yyyy, hh:mm a').format(date);
+    return DateFormat('MMM d, yyyy, hh:mm a').format(date.toLocal());
   }
 
   /// Formats a [DateTime] into a short time-only layout: `hh:mm a`.
   ///
+  /// Always converts to local time before formatting so that UTC timestamps
+  /// from Supabase display in Cairo local time.
+  ///
   /// Example: `04:30 PM`
   static String formatTime(DateTime date) {
-    return DateFormat('hh:mm a').format(date);
+    return DateFormat('hh:mm a').format(date.toLocal());
   }
 
   // ──────────────────── Phone Formatting ────────────────────

@@ -65,12 +65,12 @@ class PatientTabPayments extends ConsumerWidget {
               ),
               const SizedBox(height: AppSizes.p16),
               SectionCard(
-                title: 'Payment History',
+                title: AppStrings.paymentHistory,
                 child: payments.isEmpty
                     ? const Center(
                         child: Padding(
                           padding: EdgeInsets.symmetric(vertical: AppSizes.p24),
-                          child: Text('No payments recorded'),
+                          child: Text(AppStrings.noPaymentsRecorded),
                         ),
                       )
                     : Column(
@@ -107,14 +107,14 @@ class _PaymentSummaryHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SectionCard(
-      title: 'Payment Summary',
+      title: AppStrings.paymentSummary,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text('Total Paid', style: AppTextStyles.bodySecondary),
+              Text(AppStrings.totalPaid, style: AppTextStyles.bodySecondary),
               Text(
                 totalPaid.toCurrencyString(),
                 style: AppTextStyles.headingLarge.copyWith(

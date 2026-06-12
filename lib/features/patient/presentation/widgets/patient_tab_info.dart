@@ -46,7 +46,7 @@ class PatientTabInfo extends ConsumerWidget {
             child: assignedDoctorsAsync.when(
               data: (doctors) {
                 if (doctors.isEmpty) {
-                  return const Text('No doctors assigned');
+                  return const Text(AppStrings.noDoctorsAssigned);
                 }
                 return Wrap(
                   spacing: AppSizes.p8,
@@ -58,12 +58,12 @@ class PatientTabInfo extends ConsumerWidget {
               },
               loading: () => const Center(
                 child: SizedBox(
-                  width: 20,
-                  height: 20,
-                  child: CircularProgressIndicator(strokeWidth: 2),
+                  width: AppSizes.thumbnailDefault,
+                  height: AppSizes.thumbnailDefault,
+                  child: CircularProgressIndicator(strokeWidth: AppSizes.strokeWidthThin),
                 ),
               ),
-              error: (_, __) => const Text('Error loading assigned doctors'),
+              error: (_, __) => const Text(AppStrings.errorLoadingAssignedDoctors),
             ),
           ),
           const SizedBox(height: AppSizes.p24),

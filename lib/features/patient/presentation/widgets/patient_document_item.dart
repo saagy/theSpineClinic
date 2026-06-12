@@ -88,7 +88,7 @@ class PatientDocumentItem extends ConsumerWidget {
       children: [
         IconButton(
           icon: const Icon(Icons.open_in_new_rounded, color: AppColors.primary),
-          tooltip: 'Open',
+          tooltip: AppStrings.openTooltip,
           onPressed: () => _handleOpen(context),
         ),
         if (!isDoctor)
@@ -121,7 +121,7 @@ class PatientDocumentItem extends ConsumerWidget {
                   future: _loadImageBytes(ref),
                   builder: (context, snapshot) {
                     if (snapshot.connectionState == ConnectionState.waiting) {
-                      return const Center(child: SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2)));
+                      return const Center(child: SizedBox(width: AppSizes.thumbnailDefault, height: AppSizes.thumbnailDefault, child: CircularProgressIndicator(strokeWidth: AppSizes.strokeWidthThin)));
                     }
                     if (snapshot.hasError) {
                       return Container(color: AppColors.errorBg, child: const Icon(Icons.broken_image_outlined, color: AppColors.error, size: AppSizes.iconLarge));

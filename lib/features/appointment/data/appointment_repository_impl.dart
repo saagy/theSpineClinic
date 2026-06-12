@@ -7,6 +7,7 @@ import 'package:spine_clinic_app/features/appointment/domain/appointment_reposit
 import 'package:spine_clinic_app/features/appointment/domain/appointment_status.dart';
 import 'package:spine_clinic_app/features/auth/domain/staff.dart';
 import 'package:spine_clinic_app/features/patient/domain/patient.dart';
+import 'package:supabase_flutter/supabase_flutter.dart' show PostgrestFilterBuilder;
 
 import 'package:spine_clinic_app/features/patient/domain/clinic_location.dart';
 
@@ -166,5 +167,118 @@ class AppointmentRepositoryImpl implements AppointmentRepository {
       items.sort((a, b) => a.appointment.scheduledAt.compareTo(b.appointment.scheduledAt));
       return items;
     });
+  }
+
+  @override
+  Future<Result<List<AppointmentWithPatient>>> getAllAppointments({
+    DateTime? dateFrom,
+    DateTime? dateTo,
+    String? doctorId,
+    String? clinic,
+    String? status,
+    String? patientQuery,
+    int offset = 0,
+    int limit = 30,
+  }) {
+    return _run(() async {
+      final List<String>? doctorIds = await _resolveDoctorIds(doctorId);
+      if (doctorIds != null && doctorIds.isEmpty) return <AppointmentWithPatient>[];
+
+      final builder = _applyFilters(
+        doctorIds: doctorIds,
+        dateFrom: dateFrom,
+        dateTo: dateTo,
+        status: status,
+        clinic: clinic,
+        patientQuery: patientQuery,
+      );
+
+      final List<Map<String, dynamic>> rows = await builder
+          .order('scheduled_at', ascending: false)
+          .range(offset, offset + limit - 1);
+      return rows
+          .where((r) => r['patient'] != null)
+          .map((r) => AppointmentWithPatient(
+                appointment: Appointment.fromJson(r),
+                patient: Patient.fromJson(r['patient'] as Map<String, dynamic>),
+              ))
+          .toList();
+    });
+  }
+
+  @override
+  Future<Result<int>> countAllAppointments({
+    DateTime? dateFrom,
+    DateTime? dateTo,
+    String? doctorId,
+    String? clinic,
+    String? status,
+    String? patientQuery,
+  }) {
+    return _run(() async {
+      final List<String>? doctorIds = await _resolveDoctorIds(doctorId);
+      if (doctorIds != null && doctorIds.isEmpty) return 0;
+
+      final builder = _applyFilters(
+        doctorIds: doctorIds,
+        dateFrom: dateFrom,
+        dateTo: dateTo,
+        status: status,
+        clinic: clinic,
+        patientQuery: patientQuery,
+      );
+
+      // Use the same inner-join query that getAllAppointments uses,
+      // counting rows client-side so the !inner constraint is preserved.
+      final List<Map<String, dynamic>> rows = await builder;
+      return rows.length;
+    });
+  }
+
+  /// Resolves appointment IDs for a doctor filter. Returns `null` when no
+  /// doctor filter is active, or an empty list when the doctor has no appointments.
+  Future<List<String>?> _resolveDoctorIds(String? doctorId) async {
+    if (doctorId == null) return null;
+    final List<Map<String, dynamic>> rows = await _service
+        .from(_appointmentDoctorsTable)
+        .select('appointment_id')
+        .eq('doctor_id', doctorId)
+        .eq('is_active', true);
+    return rows.map((r) => r['appointment_id'] as String).toList();
+  }
+
+  /// Applies all non-doctor filters to the base query.
+  PostgrestFilterBuilder _applyFilters({
+    required List<String>? doctorIds,
+    DateTime? dateFrom,
+    DateTime? dateTo,
+    String? status,
+    String? clinic,
+    String? patientQuery,
+  }) {
+    var builder = _service.from(_appointmentsTable).select('*, patient:patients!inner(*)');
+    if (dateFrom != null) builder = builder.gte('scheduled_at', dateFrom.toUtc().toIso8601String());
+    if (dateTo != null) builder = builder.lt('scheduled_at', dateTo.toUtc().toIso8601String());
+    if (status != null) builder = builder.eq('status', status);
+    if (clinic != null) builder = builder.eq('patient.clinic', clinic);
+    if (doctorIds != null) builder = builder.inFilter('id', doctorIds);
+
+    if (patientQuery != null && patientQuery.trim().isNotEmpty) {
+      for (final String token in patientQuery.trim().split(RegExp(r'\s+'))) {
+        if (token.isNotEmpty) {
+          final String escaped = _escapeLike(token);
+          builder = builder.or('patient.full_name.ilike.%$escaped%,patient.phone_number.ilike.%$escaped%');
+        }
+      }
+    }
+    return builder;
+  }
+
+  /// Escapes SQL LIKE metacharacters so user search input is matched literally.
+  static String _escapeLike(String value) {
+    return value
+        .replaceAll('\\', '\\\\')
+        .replaceAll('%', r'\%')
+        .replaceAll('_', r'\_');
   }
 }

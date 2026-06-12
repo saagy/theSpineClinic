@@ -102,7 +102,7 @@ class DataListTile extends StatelessWidget {
         ),
       ),
       child: Material(
-        color: transparent ? Colors.transparent : AppColors.surface,
+        color: transparent ? AppColors.transparent : AppColors.surface,
         child: onTap != null
             ? InkWell(
                 onTap: onTap,

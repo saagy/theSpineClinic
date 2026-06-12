@@ -9,6 +9,7 @@ library;
 import 'package:flutter/material.dart';
 import 'package:spine_clinic_app/core/constants/app_colors.dart';
 import 'package:spine_clinic_app/core/constants/app_sizes.dart';
+import 'package:spine_clinic_app/core/constants/app_strings.dart';
 import 'package:spine_clinic_app/core/constants/app_text_styles.dart';
 import 'package:spine_clinic_app/shared/widgets/app_button.dart';
 
@@ -19,8 +20,8 @@ class ConfirmationDialog extends StatelessWidget {
     super.key,
     required this.title,
     required this.message,
-    this.confirmLabel = 'Confirm',
-    this.cancelLabel = 'Cancel',
+    this.confirmLabel = AppStrings.confirm,
+    this.cancelLabel = AppStrings.cancel,
     this.isDestructive = false,
   });
 
@@ -43,7 +44,7 @@ class ConfirmationDialog extends StatelessWidget {
   Widget build(BuildContext context) {
     return AlertDialog(
       backgroundColor: AppColors.surface, // Pure white background
-      surfaceTintColor: Colors.transparent, // Disable Material 3 overlay tinting
+      surfaceTintColor: AppColors.transparent, // Disable Material 3 overlay tinting
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.all(Radius.circular(AppSizes.r8)), // Max standard card radius
       ),

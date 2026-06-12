@@ -179,4 +179,41 @@ abstract final class AppSizes {
 
   /// Revenue card icon container size.
   static const double revenueIconSize = 40.0;
+
+  // ──────────────────── Font Size Overrides ────────────────────
+
+  /// Extra-small font size for chart axis labels (9 px).
+  static const double fontSizeXs = 9.0;
+
+  /// Small-2 font size for bottom navigation labels (10.5 px).
+  static const double fontSizeSm2 = 10.5;
+
+  // ──────────────────── Misc Component Tokens ────────────────────
+
+  /// Default thumbnail size for document/image loading indicators.
+  static const double thumbnailDefault = 20.0;
+
+  /// Thin stroke width for compact progress indicators.
+  static const double strokeWidthThin = 2.0;
+
+  /// Large radius for pill-shaped containers (effectively infinite).
+  static const double radiusPill = 100.0;
+
+  /// Top offset for centering empty-state placeholder views vertically.
+  static const double emptyStateTopOffset = 100.0;
+
+  /// Drag handle width for bottom sheet cosmetic indicator.
+  static const double handleWidth = 32.0;
+
+  /// Drag handle height for bottom sheet cosmetic indicator.
+  static const double handleHeight = 4.0;
+
+  /// Maximum height constraint for doctor dropdown overlay lists.
+  static const double overlayDropdownMaxHeight = 220.0;
+
+  /// Medium border width for diagnostic/emphasis borders (1.5 px).
+  static const double borderWidthMedium = 1.5;
+
+  /// Minimum tappable touch target size per accessibility guidelines (44 px).
+  static const double tappableMin = 44.0;
 }

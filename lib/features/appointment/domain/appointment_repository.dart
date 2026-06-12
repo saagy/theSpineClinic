@@ -68,6 +68,34 @@ abstract class AppointmentRepository {
 
   /// Fetches the active schedule (appointments where the doctor is active).
   Future<Result<List<DoctorScheduleItem>>> getDoctorSchedule(String doctorId);
+
+  /// Fetches all appointments across all doctors and branches with optional filters.
+  ///
+  /// Each filter is optional and all are combinable. Results are ordered by
+  /// [scheduledAt] descending (most recent first). Supports pagination via
+  /// [offset] and [limit].
+  Future<Result<List<AppointmentWithPatient>>> getAllAppointments({
+    DateTime? dateFrom,
+    DateTime? dateTo,
+    String? doctorId,
+    String? clinic,
+    String? status,
+    String? patientQuery,
+    int offset = 0,
+    int limit = 30,
+  });
+
+  /// Returns the total count of appointments matching the given optional filters.
+  ///
+  /// Used for pagination hasMore checks.
+  Future<Result<int>> countAllAppointments({
+    DateTime? dateFrom,
+    DateTime? dateTo,
+    String? doctorId,
+    String? clinic,
+    String? status,
+    String? patientQuery,
+  });
 }
 
 /// Helper domain model wrapping a doctor's active appointment assignment
@@ -83,5 +111,16 @@ class DoctorScheduleItem {
     required this.appointmentDoctor,
     required this.patient,
     this.replacedDoctor,
+  });
+}
+
+/// Lightweight wrapper combining an appointment with its patient for list views.
+class AppointmentWithPatient {
+  final Appointment appointment;
+  final Patient patient;
+
+  const AppointmentWithPatient({
+    required this.appointment,
+    required this.patient,
   });
 }

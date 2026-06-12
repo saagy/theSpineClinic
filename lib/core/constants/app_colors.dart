@@ -100,4 +100,12 @@ abstract final class AppColors {
     blurRadius: 8,
     offset: Offset(0, 4),
   );
+
+  // ──────────────────── Utility ────────────────────
+
+  /// Fully transparent — for surfaceTintColor, background barriers.
+  static const Color transparent = Colors.transparent;
+
+  /// Semi-transparent black scrim for loading overlays and modal backdrops (~40 % opacity).
+  static const Color overlayScrim = Color(0x66000000);
 }
