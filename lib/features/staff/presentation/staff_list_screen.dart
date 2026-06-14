@@ -4,12 +4,12 @@ import 'package:go_router/go_router.dart';
 import 'package:spine_clinic_app/core/constants/app_colors.dart';
 import 'package:spine_clinic_app/core/constants/app_sizes.dart';
 import 'package:spine_clinic_app/core/constants/app_strings.dart';
-import 'package:spine_clinic_app/core/constants/app_text_styles.dart';
 import 'package:spine_clinic_app/core/errors/app_exception.dart';
 import 'package:spine_clinic_app/core/network/app_routes.dart';
 import 'package:spine_clinic_app/features/auth/domain/staff.dart';
 import 'package:spine_clinic_app/features/auth/domain/user_role.dart';
 import 'package:spine_clinic_app/features/auth/presentation/auth_providers.dart';
+import 'package:spine_clinic_app/features/patient/domain/clinic_location.dart';
 import 'package:spine_clinic_app/features/staff/presentation/staff_management_controller.dart';
 import 'package:spine_clinic_app/shared/widgets/app_badge.dart';
 import 'package:spine_clinic_app/shared/widgets/app_bottom_sheet.dart';
@@ -18,10 +18,10 @@ import 'package:spine_clinic_app/shared/widgets/data_list_tile.dart';
 import 'package:spine_clinic_app/shared/widgets/empty_state.dart';
 import 'package:spine_clinic_app/shared/widgets/error_view.dart';
 import 'package:spine_clinic_app/shared/widgets/filter_chip.dart';
-import 'package:spine_clinic_app/shared/widgets/primary_button.dart';
 import 'package:spine_clinic_app/shared/widgets/section_header.dart';
 import 'package:spine_clinic_app/shared/widgets/sort_filter_bar.dart';
 import 'package:spine_clinic_app/shared/widgets/sort_options_sheet.dart';
+import 'package:spine_clinic_app/shared/widgets/unified_filter_sheet.dart';
 import 'package:spine_clinic_app/shared/widgets/active_filter_chips_row.dart';
 
 /// Screen listing all non-doctor staff members.
@@ -140,135 +140,76 @@ class _StaffListScaffoldState extends ConsumerState<_StaffListScaffold> {
       title: 'Filters',
       builder: (ctx, scrollCtrl) => StatefulBuilder(
         builder: (context, setSheetState) {
-          return Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Expanded(
-                child: SingleChildScrollView(
-                  controller: scrollCtrl,
-                  padding: const EdgeInsets.symmetric(horizontal: AppSizes.p20),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      const SectionHeader(title: 'Role'),
-                      const SizedBox(height: AppSizes.p8),
-                      Wrap(
-                        spacing: AppSizes.p8,
-                        runSpacing: AppSizes.p8,
-                        children: [
-                          AppFilterChip(
-                            label: AppStrings.all,
-                            isActive: localRole == 'All',
-                            onTap: () {
-                              localRole = 'All';
-                              setSheetState(() {});
-                            },
-                          ),
-                          AppFilterChip(
-                            label: AppStrings.superAdmin,
-                            isActive: localRole == 'super_admin',
-                            onTap: () {
-                              localRole = 'super_admin';
-                              setSheetState(() {});
-                            },
-                          ),
-                          AppFilterChip(
-                            label: AppStrings.receptionist,
-                            isActive: localRole == 'receptionist',
-                            onTap: () {
-                              localRole = 'receptionist';
-                              setSheetState(() {});
-                            },
-                          ),
-                          AppFilterChip(
-                            label: AppStrings.doctor,
-                            isActive: localRole == 'doctor',
-                            onTap: () {
-                              localRole = 'doctor';
-                              setSheetState(() {});
-                            },
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: AppSizes.p16),
-                      const SectionHeader(title: 'Status'),
-                      const SizedBox(height: AppSizes.p8),
-                      Wrap(
-                        spacing: AppSizes.p8,
-                        runSpacing: AppSizes.p8,
-                        children: [
-                          AppFilterChip(
-                            label: 'All',
-                            isActive: localStatus == null,
-                            onTap: () {
-                              localStatus = null;
-                              setSheetState(() {});
-                            },
-                          ),
-                          AppFilterChip(
-                            label: 'Active',
-                            isActive: localStatus == true,
-                            onTap: () {
-                              localStatus = true;
-                              setSheetState(() {});
-                            },
-                          ),
-                          AppFilterChip(
-                            label: 'Inactive',
-                            isActive: localStatus == false,
-                            onTap: () {
-                              localStatus = false;
-                              setSheetState(() {});
-                            },
-                          ),
-                        ],
-                      ),
-                    ],
+          return UnifiedFilterSheet(
+            initialDoctorId: null,
+            initialClinic: null,
+            showDoctorFilter: false,
+            showBranchFilter: false,
+            scrollController: scrollCtrl,
+            additionalFilters: [
+              const SectionHeader(title: 'Role'),
+              const SizedBox(height: AppSizes.p8),
+              Wrap(
+                spacing: AppSizes.p8,
+                runSpacing: AppSizes.p8,
+                children: [
+                  AppFilterChip(
+                    label: AppStrings.all,
+                    isActive: localRole == 'All',
+                    onTap: () { localRole = 'All'; setSheetState(() {}); },
                   ),
-                ),
+                  AppFilterChip(
+                    label: AppStrings.superAdmin,
+                    isActive: localRole == 'super_admin',
+                    onTap: () { localRole = 'super_admin'; setSheetState(() {}); },
+                  ),
+                  AppFilterChip(
+                    label: AppStrings.receptionist,
+                    isActive: localRole == 'receptionist',
+                    onTap: () { localRole = 'receptionist'; setSheetState(() {}); },
+                  ),
+                  AppFilterChip(
+                    label: AppStrings.doctor,
+                    isActive: localRole == 'doctor',
+                    onTap: () { localRole = 'doctor'; setSheetState(() {}); },
+                  ),
+                ],
               ),
-              // ── Pinned Reset + Apply row ──
-              Padding(
-                padding: const EdgeInsets.fromLTRB(
-                  AppSizes.p20, AppSizes.p8, AppSizes.p20, AppSizes.p16,
-                ),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: OutlinedButton(
-                        onPressed: () {
-                          ref.read(staffFilterProvider.notifier).setFilter('All');
-                          setState(() => _activeStatusFilter = null);
-                          Navigator.of(ctx).pop();
-                        },
-                        style: OutlinedButton.styleFrom(
-                          side: const BorderSide(color: AppColors.border),
-                          padding: const EdgeInsets.symmetric(vertical: AppSizes.p14),
-                          shape: const StadiumBorder(),
-                        ),
-                        child: Text(
-                          'Reset',
-                          style: AppTextStyles.bodyMedium.copyWith(
-                            color: AppColors.textSecondary,
-                          ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: AppSizes.p12),
-                    Expanded(
-                      child: PrimaryButton(
-                        label: AppStrings.applyFilters,
-                        onPressed: () {
-                          ref.read(staffFilterProvider.notifier).setFilter(localRole);
-                          setState(() => _activeStatusFilter = localStatus);
-                          Navigator.of(ctx).pop();
-                        },
-                      ),
-                    ),
-                  ],
-                ),
+              const SizedBox(height: AppSizes.p16),
+              const SectionHeader(title: 'Status'),
+              const SizedBox(height: AppSizes.p8),
+              Wrap(
+                spacing: AppSizes.p8,
+                runSpacing: AppSizes.p8,
+                children: [
+                  AppFilterChip(
+                    label: 'All',
+                    isActive: localStatus == null,
+                    onTap: () { localStatus = null; setSheetState(() {}); },
+                  ),
+                  AppFilterChip(
+                    label: 'Active',
+                    isActive: localStatus == true,
+                    onTap: () { localStatus = true; setSheetState(() {}); },
+                  ),
+                  AppFilterChip(
+                    label: 'Inactive',
+                    isActive: localStatus == false,
+                    onTap: () { localStatus = false; setSheetState(() {}); },
+                  ),
+                ],
               ),
             ],
+            onReset: () {
+              ref.read(staffFilterProvider.notifier).setFilter('All');
+              setState(() => _activeStatusFilter = null);
+              Navigator.of(ctx).pop();
+            },
+            onApplied: (String? doctorId, ClinicLocation? clinic) {
+              ref.read(staffFilterProvider.notifier).setFilter(localRole);
+              setState(() => _activeStatusFilter = localStatus);
+              Navigator.of(ctx).pop();
+            },
           );
         },
       ),

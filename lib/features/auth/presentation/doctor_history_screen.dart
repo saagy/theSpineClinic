@@ -27,12 +27,10 @@ import 'package:spine_clinic_app/shared/widgets/app_bottom_sheet.dart';
 import 'package:spine_clinic_app/shared/widgets/app_search_bar.dart';
 import 'package:spine_clinic_app/shared/widgets/data_list_tile.dart';
 import 'package:spine_clinic_app/shared/widgets/empty_state.dart';
-import 'package:spine_clinic_app/shared/widgets/filter_chip.dart';
-import 'package:spine_clinic_app/shared/widgets/section_header.dart';
 import 'package:spine_clinic_app/shared/widgets/sort_filter_bar.dart';
 import 'package:spine_clinic_app/shared/widgets/sort_options_sheet.dart';
-import 'package:spine_clinic_app/shared/widgets/unified_filter_sheet.dart';
 import 'package:spine_clinic_app/shared/widgets/active_filter_chips_row.dart';
+import 'widgets/history_filter_content.dart';
 
 /// Full-screen history view for a doctor's appointments.
 class DoctorHistoryScreen extends ConsumerStatefulWidget {
@@ -222,128 +220,24 @@ class _DoctorHistoryScreenState extends ConsumerState<DoctorHistoryScreen> {
   }
 
   void _showFilterSheet() {
-    // Capture current filter state at open time.
-    DateTime? sheetDateFrom = _dateFrom;
-    DateTime? sheetDateTo = _dateTo;
-    AppointmentType? sheetType = _typeFilter;
-    ClinicLocation? sheetBranch = _branchFilter;
-
-    Future<void> pickSheetDate(bool isFrom) async {
-      final picked = await showDatePicker(
-        context: context,
-        initialDate: isFrom
-            ? (sheetDateFrom ?? DateTime.now().subtract(const Duration(days: 30)))
-            : (sheetDateTo ?? DateTime.now()),
-        firstDate: DateTime(2020),
-        lastDate: DateTime.now().add(const Duration(days: 365)),
-      );
-      if (picked != null) {
-        if (isFrom) {
-          sheetDateFrom = picked;
-        } else {
-          sheetDateTo = picked;
-        }
-      }
-    }
-
     AppBottomSheet.show(
       context: context,
       title: 'Filters',
-      builder: (ctx, scrollCtrl) => StatefulBuilder(
-        builder: (ctx, setSheetState) {
-          Widget buildDateChips() {
-            return Row(
-              children: [
-                Expanded(
-                  child: AppFilterChip(
-                    label: sheetDateFrom != null
-                        ? Formatters.formatDateShort(sheetDateFrom!)
-                        : AppStrings.fromDate,
-                    isActive: sheetDateFrom != null,
-                    onTap: () async {
-                      await pickSheetDate(true);
-                      setSheetState(() {});
-                    },
-                  ),
-                ),
-                const SizedBox(width: AppSizes.p8),
-                Expanded(
-                  child: AppFilterChip(
-                    label: sheetDateTo != null
-                        ? Formatters.formatDateShort(sheetDateTo!)
-                        : AppStrings.toDate,
-                    isActive: sheetDateTo != null,
-                    onTap: () async {
-                      await pickSheetDate(false);
-                      setSheetState(() {});
-                    },
-                  ),
-                ),
-              ],
-            );
-          }
-
-          Widget buildTypeChips() {
-            return Wrap(
-              spacing: AppSizes.p8,
-              runSpacing: AppSizes.p8,
-              children: [
-                AppFilterChip(
-                  label: 'All',
-                  isActive: sheetType == null,
-                  onTap: () => setSheetState(() => sheetType = null),
-                ),
-                ...AppointmentType.values.map(
-                  (t) => AppFilterChip(
-                    label: t.displayLabel,
-                    isActive: sheetType == t,
-                    onTap: () => setSheetState(() => sheetType = t),
-                  ),
-                ),
-              ],
-            );
-          }
-
-          return UnifiedFilterSheet(
-            initialDoctorId: null,
-            initialClinic: sheetBranch,
-            showDoctorFilter: false,
-            showBranchFilter: true,
-            scrollController: scrollCtrl,
-            additionalFilters: [
-              const SectionHeader(title: 'Date Range'),
-              const SizedBox(height: AppSizes.p8),
-              buildDateChips(),
-              const SizedBox(height: AppSizes.p16),
-              const SectionHeader(title: 'Session Type'),
-              const SizedBox(height: AppSizes.p8),
-              buildTypeChips(),
-            ],
-            onReset: () {
-              sheetDateFrom = null;
-              sheetDateTo = null;
-              sheetType = null;
-              sheetBranch = null;
-              setState(() {
-                _dateFrom = null;
-                _dateTo = null;
-                _typeFilter = null;
-                _branchFilter = null;
-              });
-              _applyFilters();
-              Navigator.of(ctx).pop();
-            },
-            onApplied: (String? doctorId, ClinicLocation? clinic) {
-              setState(() {
-                _dateFrom = sheetDateFrom;
-                _dateTo = sheetDateTo;
-                _typeFilter = sheetType;
-                _branchFilter = clinic;
-              });
-              _applyFilters();
-              Navigator.of(ctx).pop();
-            },
-          );
+      builder: (ctx, scrollCtrl) => HistoryFilterContent(
+        initialDateFrom: _dateFrom,
+        initialDateTo: _dateTo,
+        initialType: _typeFilter,
+        initialBranch: _branchFilter,
+        scrollController: scrollCtrl,
+        onApplied: ({required dateFrom, required dateTo, required type, required clinic}) {
+          setState(() {
+            _dateFrom = dateFrom;
+            _dateTo = dateTo;
+            _typeFilter = type;
+            _branchFilter = clinic;
+          });
+          _applyFilters();
+          Navigator.of(ctx).pop();
         },
       ),
     );
