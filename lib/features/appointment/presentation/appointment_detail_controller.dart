@@ -14,11 +14,13 @@ import 'package:spine_clinic_app/features/appointment/domain/appointment.dart';
 import 'package:spine_clinic_app/features/appointment/domain/appointment_doctor.dart';
 import 'package:spine_clinic_app/features/appointment/domain/appointment_repository.dart';
 import 'package:spine_clinic_app/features/appointment/domain/appointment_status.dart';
+import 'package:spine_clinic_app/features/appointment/presentation/all_appointments_providers.dart';
 import 'package:spine_clinic_app/features/appointment/presentation/appointment_providers.dart';
 import 'package:spine_clinic_app/features/appointment/presentation/my_schedule_controller.dart';
 import 'package:spine_clinic_app/features/auth/domain/staff.dart';
 import 'package:spine_clinic_app/features/auth/presentation/auth_providers.dart';
 import 'package:spine_clinic_app/features/patient/domain/patient.dart';
+import 'package:spine_clinic_app/features/patient/presentation/patient_list_providers.dart';
 import 'package:spine_clinic_app/features/patient/presentation/patient_providers.dart';
 
 part 'appointment_detail_controller.g.dart';
@@ -152,10 +154,12 @@ class AppointmentDetailController extends _$AppointmentDetailController {
   void _invalidateCaches() {
     final patientId = state.value?.appointment.patientId;
     ref.invalidate(todayAppointmentsProvider);
+    ref.read(allAppointmentsProvider.notifier).refresh();
     if (patientId != null) {
       ref.invalidate(patientAppointmentsProvider(patientId));
       ref.invalidate(patientDetailProvider(patientId));
     }
     ref.invalidate(myScheduleControllerProvider);
+    ref.invalidate(patientListProvider);
   }
 }

@@ -1,26 +1,33 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:spine_clinic_app/shared/widgets/app_badge.dart';
-import 'package:go_router/go_router.dart';
 import 'package:spine_clinic_app/core/constants/app_colors.dart';
 import 'package:spine_clinic_app/core/constants/app_sizes.dart';
 import 'package:spine_clinic_app/core/constants/app_strings.dart';
 import 'package:spine_clinic_app/core/constants/app_text_styles.dart';
-import 'package:spine_clinic_app/core/network/app_routes.dart';
 import 'package:spine_clinic_app/features/appointment/domain/appointment.dart';
 import 'package:spine_clinic_app/features/appointment/domain/appointment_status.dart';
+import 'package:spine_clinic_app/features/appointment/presentation/all_appointments_providers.dart';
 import 'package:spine_clinic_app/features/appointment/presentation/appointment_providers.dart';
 import 'package:spine_clinic_app/features/appointment/presentation/my_schedule_controller.dart';
 import 'package:spine_clinic_app/features/auth/domain/user_role.dart';
 import 'package:spine_clinic_app/features/auth/presentation/auth_providers.dart';
+import 'package:spine_clinic_app/features/patient/presentation/patient_list_providers.dart';
 import 'package:spine_clinic_app/features/patient/presentation/patient_providers.dart';
 import 'package:spine_clinic_app/shared/widgets/app_snackbar.dart';
 import 'package:spine_clinic_app/shared/widgets/confirmation_dialog.dart';
 
-/// Trailing actions grouped to fit into the `trailing` slot of [DataListTile].
-/// Supports Check-In, Cancel, and View Details Pill actions.
+/// Trailing actions for appointment rows.
+///
+/// - **Scheduled** (authorized staff): [Check In] pill + [✕] cancel icon (no badge).
+/// - **Checked In**: green animated badge.
+/// - **Cancelled / No Show**: red badge.
+/// - **Completed**: green badge.
+///
+/// Check-in is immediate (no confirmation). Cancel always requires confirmation.
 /// Rule 1 — keep files under 200 lines.
-class AppointmentActionsTrailing extends ConsumerWidget {
+class AppointmentActionsTrailing extends ConsumerStatefulWidget {
   /// Creates an [AppointmentActionsTrailing].
   const AppointmentActionsTrailing({
     super.key,
@@ -31,109 +38,142 @@ class AppointmentActionsTrailing extends ConsumerWidget {
   final Appointment appointment;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<AppointmentActionsTrailing> createState() =>
+      _AppointmentActionsTrailingState();
+}
+
+class _AppointmentActionsTrailingState
+    extends ConsumerState<AppointmentActionsTrailing> {
+  bool _isProcessing = false;
+
+  @override
+  Widget build(BuildContext context) {
     final user = ref.watch(currentUserProvider).value;
     if (user == null) return const SizedBox.shrink();
 
-    final bool isAuthorizedStaff = user.role == UserRole.receptionist || user.role == UserRole.superAdmin;
-    final bool showCheckIn = isAuthorizedStaff && appointment.status == AppointmentStatus.scheduled;
-    final bool showCancel = isAuthorizedStaff && appointment.status == AppointmentStatus.scheduled;
+    final bool isAuthorizedStaff =
+        user.role == UserRole.receptionist || user.role == UserRole.superAdmin;
+    final AppointmentStatus status = widget.appointment.status;
 
+    // ── Scheduled → action buttons for authorized staff, badge for others ──
+    if (status == AppointmentStatus.scheduled) {
+      if (isAuthorizedStaff) {
+        return _buildScheduledActions();
+      }
+      return _badge(status);
+    }
+
+    // ── Checked In → green animated badge ──
+    if (status == AppointmentStatus.checkedIn) {
+      return _badge(status)
+          .animate()
+          .scale(duration: 300.ms, begin: const Offset(0.85, 0.85))
+          .fadeIn(duration: 250.ms);
+    }
+
+    // ── Cancelled / No Show → red badge, Completed → green badge ──
+    return _badge(status);
+  }
+
+  /// Action buttons for scheduled appointments: [Check In] pill + [✕] cancel.
+  Widget _buildScheduledActions() {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        AppBadge(
-          label: appointment.status.displayLabel,
-          textColor: appointment.status.textColor,
-          backgroundColor: appointment.status.backgroundColor,
-        ),
-        const SizedBox(width: AppSizes.p12),
-        if (showCheckIn) ...[
-          IconButton(
-            tooltip: AppStrings.checkIn,
-            icon: const Icon(Icons.check_circle_outline),
-            color: AppColors.success,
-            iconSize: AppSizes.iconDefault,
-            padding: EdgeInsets.zero,
-            constraints: const BoxConstraints(),
-            onPressed: () => _handleCheckIn(context, ref),
-          ),
-          const SizedBox(width: AppSizes.p12),
-        ],
-        if (showCancel) ...[
-          IconButton(
-            tooltip: AppStrings.cancelAppointment,
-            icon: const Icon(Icons.cancel_outlined),
-            color: AppColors.danger,
-            iconSize: AppSizes.iconDefault,
-            padding: EdgeInsets.zero,
-            constraints: const BoxConstraints(),
-            onPressed: () => _handleCancel(context, ref),
-          ),
-          const SizedBox(width: AppSizes.p12),
-        ],
-        GestureDetector(
-          onTap: () => context.push(
-            AppRoutes.appointmentDetail.replaceAll(':id', appointment.id),
-          ),
-          child: Container(
-            decoration: const ShapeDecoration(
-              color: AppColors.primaryLight,
-              shape: StadiumBorder(),
-            ),
-            padding: const EdgeInsets.symmetric(
-              horizontal: AppSizes.p12,
-              vertical: AppSizes.p6,
-            ),
-            child: Text(
-              AppStrings.viewDetails,
-              style: AppTextStyles.captionBold.copyWith(
-                color: AppColors.primary,
+        // ── Check In pill button ──
+        Material(
+          color: _isProcessing ? AppColors.textMuted : AppColors.success,
+          borderRadius: const BorderRadius.all(Radius.circular(AppSizes.r24)),
+          child: InkWell(
+            borderRadius:
+                const BorderRadius.all(Radius.circular(AppSizes.r24)),
+            onTap: _isProcessing ? null : _handleCheckIn,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppSizes.p12,
+                vertical: AppSizes.p6,
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(Icons.check, size: 16, color: AppColors.textOnPrimary),
+                  const SizedBox(width: AppSizes.p4),
+                  Text(
+                    AppStrings.checkIn,
+                    style: AppTextStyles.captionBold.copyWith(
+                      color: AppColors.textOnPrimary,
+                    ),
+                  ),
+                ],
               ),
             ),
           ),
+        ),
+        const SizedBox(width: AppSizes.p8),
+        // ── Cancel icon button ──
+        IconButton(
+          tooltip: AppStrings.cancelAppointment,
+          icon: const Icon(Icons.close),
+          color: AppColors.danger,
+          iconSize: 20,
+          padding: EdgeInsets.zero,
+          constraints: const BoxConstraints(),
+          onPressed: _isProcessing ? null : _handleCancel,
         ),
       ],
     );
   }
 
-  Future<void> _handleCheckIn(BuildContext context, WidgetRef ref) async {
-    final bool? confirmed = await showDialog<bool>(
-      context: context,
-      builder: (_) => const ConfirmationDialog(
-        title: AppStrings.checkInPatient,
-        message: AppStrings.confirmCheckIn,
-      ),
-    );
-
-    if (confirmed != true) return;
-
-    final result = await ref
-        .read(appointmentRepositoryProvider)
-        .updateAppointmentStatus(appointment.id, AppointmentStatus.checkedIn);
-
-    if (!context.mounted) return;
-
-    result.when(
-      success: (_) {
-        _invalidateCaches(ref);
-        AppSnackbar.show(
-          context,
-          message: AppStrings.statusUpdateSuccess,
-          variant: AppSnackbarVariant.success,
-        );
-      },
-      failure: (error) {
-        AppSnackbar.show(
-          context,
-          message: AppStrings.fromKey(error.userMessageKey),
-          variant: AppSnackbarVariant.error,
-        );
-      },
+  /// Status badge for terminal / non-actionable statuses.
+  Widget _badge(AppointmentStatus status) {
+    return AppBadge(
+      label: status.displayLabel,
+      textColor: status.textColor,
+      backgroundColor: status.backgroundColor,
     );
   }
 
-  Future<void> _handleCancel(BuildContext context, WidgetRef ref) async {
+  /// Immediate check-in — no confirmation for speed (receptionist workflow).
+  ///
+  /// The [_isProcessing] flag prevents double-taps from firing
+  /// two concurrent writes.
+  Future<void> _handleCheckIn() async {
+    if (_isProcessing) return;
+    setState(() => _isProcessing = true);
+
+    try {
+      final result = await ref
+          .read(appointmentRepositoryProvider)
+          .updateAppointmentStatus(
+              widget.appointment.id, AppointmentStatus.checkedIn);
+
+      if (!mounted) return;
+
+      result.when(
+        success: (_) {
+          _invalidateCaches();
+          AppSnackbar.show(
+            context,
+            message: AppStrings.statusUpdateSuccess,
+            variant: AppSnackbarVariant.success,
+          );
+        },
+        failure: (error) {
+          AppSnackbar.show(
+            context,
+            message: AppStrings.fromKey(error.userMessageKey),
+            variant: AppSnackbarVariant.error,
+          );
+        },
+      );
+    } finally {
+      if (mounted) setState(() => _isProcessing = false);
+    }
+  }
+
+  /// Cancel with destructive confirmation dialog.
+  Future<void> _handleCancel() async {
+    if (_isProcessing) return;
     final bool? confirmed = await showDialog<bool>(
       context: context,
       builder: (_) => ConfirmationDialog(
@@ -143,37 +183,46 @@ class AppointmentActionsTrailing extends ConsumerWidget {
       ),
     );
 
-    if (confirmed != true) return;
+    if (confirmed != true || !mounted) return;
 
-    final result = await ref
-        .read(appointmentRepositoryProvider)
-        .updateAppointmentStatus(appointment.id, AppointmentStatus.cancelled);
+    setState(() => _isProcessing = true);
+    try {
+      final result = await ref
+          .read(appointmentRepositoryProvider)
+          .updateAppointmentStatus(
+              widget.appointment.id, AppointmentStatus.cancelled);
 
-    if (!context.mounted) return;
+      if (!mounted) return;
 
-    result.when(
-      success: (_) {
-        _invalidateCaches(ref);
-        AppSnackbar.show(
-          context,
-          message: AppStrings.statusUpdateSuccess,
-          variant: AppSnackbarVariant.success,
-        );
-      },
-      failure: (error) {
-        AppSnackbar.show(
-          context,
-          message: AppStrings.fromKey(error.userMessageKey),
-          variant: AppSnackbarVariant.error,
-        );
-      },
-    );
+      result.when(
+        success: (_) {
+          _invalidateCaches();
+          AppSnackbar.show(
+            context,
+            message: AppStrings.statusUpdateSuccess,
+            variant: AppSnackbarVariant.success,
+          );
+        },
+        failure: (error) {
+          AppSnackbar.show(
+            context,
+            message: AppStrings.fromKey(error.userMessageKey),
+            variant: AppSnackbarVariant.error,
+          );
+        },
+      );
+    } finally {
+      if (mounted) setState(() => _isProcessing = false);
+    }
   }
 
-  void _invalidateCaches(WidgetRef ref) {
+  void _invalidateCaches() {
     ref.invalidate(todayAppointmentsProvider);
-    ref.invalidate(patientAppointmentsProvider(appointment.patientId));
-    ref.invalidate(patientDetailProvider(appointment.patientId));
+    ref.read(allAppointmentsProvider.notifier).refresh();
+    ref.invalidate(
+        patientAppointmentsProvider(widget.appointment.patientId));
+    ref.invalidate(patientDetailProvider(widget.appointment.patientId));
     ref.invalidate(myScheduleControllerProvider);
+    ref.invalidate(patientListProvider);
   }
 }

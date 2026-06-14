@@ -45,7 +45,7 @@ final class ClinicSettingsActionProvider
 }
 
 String _$clinicSettingsActionHash() =>
-    r'2155055e980fb14465e70d40f0b3f76532794965';
+    r'08c5a92255bf826c523a63214f62db97836c7b3f';
 
 /// Controller managing update mutations for the clinic settings packages.
 

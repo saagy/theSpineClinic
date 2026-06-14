@@ -23,9 +23,11 @@ abstract class Patient with _$Patient {
     @JsonKey(name: 'package_balance') @Default(0) int packageBalance,
     @JsonKey(name: 'created_by') String? createdBy,
     @JsonKey(name: 'created_at') required DateTime createdAt,
+    @JsonKey(includeFromJson: false, includeToJson: false) DateTime? lastAppointmentDate,
   }) = _Patient;
 
   /// Deserialises from a Supabase JSON row.
   factory Patient.fromJson(Map<String, dynamic> json) =>
       _$PatientFromJson(json);
 }
+

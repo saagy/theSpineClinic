@@ -22,6 +22,7 @@ class DataListTile extends StatelessWidget {
     this.trailing,
     this.onTap,
     this.transparent = false,
+    this.margin,
   });
 
   /// The primary textual descriptor of this row cell.
@@ -42,13 +43,13 @@ class DataListTile extends StatelessWidget {
   /// If true, uses transparent background instead of AppColors.surface.
   final bool transparent;
 
+  /// Optional custom margin spacing around the tile card.
+  final EdgeInsetsGeometry? margin;
+
   @override
   Widget build(BuildContext context) {
     final Widget cellContent = Padding(
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppSizes.p12, // Compact 12px horizontal padding
-        vertical: AppSizes.p8,    // High-density 8px vertical padding
-      ),
+      padding: const EdgeInsets.all(AppSizes.p16), // Comfortable touch-padding (Rule 13)
       child: Row(
         children: [
           if (leading != null) ...[
@@ -91,27 +92,35 @@ class DataListTile extends StatelessWidget {
       ),
     );
 
-    // Decorate the tile container with bottom separator line
+    // Decorate the tile container as an M3 Card (Rule 13)
     final Widget tileContainer = Container(
-      decoration: const BoxDecoration(
-        border: Border(
-          bottom: BorderSide(
-            color: AppColors.border, // Slate 200 thin bottom separator border
-            width: AppSizes.borderWidth,
-          ),
+      margin: margin ?? (transparent ? EdgeInsets.zero : const EdgeInsets.only(bottom: AppSizes.p12)),
+      decoration: transparent
+          ? const BoxDecoration()
+          : BoxDecoration(
+              color: AppColors.surface,
+              borderRadius: const BorderRadius.all(Radius.circular(AppSizes.r16)),
+              border: Border.all(
+                color: AppColors.border,
+                width: AppSizes.borderWidth,
+              ),
+              boxShadow: const [AppColors.cardShadow],
+            ),
+      child: ClipRRect(
+        borderRadius: const BorderRadius.all(Radius.circular(AppSizes.r16)),
+        child: Material(
+          color: transparent ? AppColors.transparent : AppColors.surface,
+          child: onTap != null
+              ? InkWell(
+                  onTap: onTap,
+                  // Match the visual theme with Slate 50 touch highlight tint
+                  splashColor: AppColors.background,
+                  highlightColor: AppColors.background.withAlpha(128),
+                  borderRadius: const BorderRadius.all(Radius.circular(AppSizes.r16)),
+                  child: cellContent,
+                )
+              : cellContent,
         ),
-      ),
-      child: Material(
-        color: transparent ? AppColors.transparent : AppColors.surface,
-        child: onTap != null
-            ? InkWell(
-                onTap: onTap,
-                // Match the visual theme with Slate 50 touch highlight tint
-                splashColor: AppColors.background,
-                highlightColor: AppColors.background.withAlpha(128),
-                child: cellContent,
-              )
-            : cellContent,
       ),
     );
 

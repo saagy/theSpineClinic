@@ -13,6 +13,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:spine_clinic_app/core/errors/app_exception.dart';
 import 'package:spine_clinic_app/core/errors/result.dart';
+import 'package:spine_clinic_app/features/admin/presentation/branch_providers.dart';
+import 'package:spine_clinic_app/features/auth/domain/user_role.dart';
+import 'package:spine_clinic_app/features/auth/presentation/auth_providers.dart';
 import 'package:spine_clinic_app/features/appointment/domain/appointment_repository.dart';
 import 'package:spine_clinic_app/features/appointment/presentation/appointment_providers.dart';
 
@@ -46,6 +49,7 @@ class _FilterSnapshot {
     required this.doctorId,
     required this.clinic,
     required this.status,
+    required this.type,
     required this.patientQuery,
   });
 
@@ -54,6 +58,7 @@ class _FilterSnapshot {
   final String? doctorId;
   final String? clinic;
   final String? status;
+  final String? type;
   final String patientQuery;
 }
 
@@ -66,8 +71,10 @@ class AllAppointmentsNotifier
   String? doctorId;
   String? clinic;
   String? status;
+  String? type;
 
   String _patientQuery = '';
+  bool _ascending = false;
   int _offset = 0;
   int _totalCount = 0;
   int _generation = 0;
@@ -87,6 +94,16 @@ class AllAppointmentsNotifier
     final DateTime now = DateTime.now();
     dateFrom = DateTime(now.year, now.month, 1);
     dateTo = DateTime(now.year, now.month + 1, 1);
+    type = null;
+
+    final user = ref.watch(currentUserProvider).value;
+    if (user?.role == UserRole.receptionist) {
+      final activeBranch = ref.watch(activeBranchProvider);
+      clinic = activeBranch.dbValue;
+    } else {
+      clinic = null;
+    }
+
     return _fetch(_currentSnapshot());
   }
 
@@ -96,6 +113,7 @@ class AllAppointmentsNotifier
         doctorId: doctorId,
         clinic: clinic,
         status: status,
+        type: type,
         patientQuery: _patientQuery,
       );
 
@@ -110,9 +128,11 @@ class AllAppointmentsNotifier
       doctorId: snap.doctorId,
       clinic: snap.clinic,
       status: snap.status,
+      type: snap.type,
       patientQuery: queryParam,
       offset: _offset,
       limit: _pageSize,
+      ascending: _ascending,
     );
 
     // Fetch total count on first page.
@@ -123,6 +143,7 @@ class AllAppointmentsNotifier
         doctorId: snap.doctorId,
         clinic: snap.clinic,
         status: snap.status,
+        type: snap.type,
         patientQuery: queryParam,
       );
       countResult.when(
@@ -139,6 +160,12 @@ class AllAppointmentsNotifier
         if (data.length < _pageSize) {
           _totalCount = _offset + data.length;
         }
+        // Defensive: guard against transient count < data mismatch
+        // during Supabase replication lag after status changes.
+        final int expectedMin = _offset + data.length;
+        if (_totalCount < expectedMin) {
+          _totalCount = expectedMin;
+        }
         return data;
       },
       failure: (AppException exception) => throw exception,
@@ -147,24 +174,37 @@ class AllAppointmentsNotifier
 
   /// Re-fetches from scratch. Snapshots filter values at call time so
   /// subsequent rapid filter changes cannot corrupt in-flight queries.
+  ///
+  /// Includes a 150 ms defensive debounce to let Supabase replication
+  /// settle after write operations (check-in / cancel). Existing data
+  /// stays visible during the brief wait to avoid a loading flash.
   void _reload() {
     final _FilterSnapshot snap = _currentSnapshot();
     _generation++;
     final int gen = _generation;
     _offset = 0;
     _totalCount = _pageSize + 1;
-    state = const AsyncValue.loading();
-    _fetch(snap).then(
-      (List<AppointmentWithPatient> data) {
+
+    Future.delayed(const Duration(milliseconds: 150), () async {
+      if (gen != _generation) return;
+      _offset = 0; // Re-assert — loadMore may have modified it during the delay
+      state = const AsyncValue.loading();
+      try {
+        final List<AppointmentWithPatient> data = await _fetch(snap);
         if (gen != _generation) return;
         state = AsyncValue.data(data);
-      },
-      onError: (Object err, StackTrace stack) {
+      } catch (err, stack) {
         if (gen != _generation) return;
         state = AsyncValue.error(err, stack);
-      },
-    );
+      }
+    });
   }
+
+  /// Refreshes the list while preserving all current filter settings.
+  ///
+  /// Unlike [ref.invalidate], this does NOT re-run [build] — filters
+  /// (date range, doctor, status, type, search query) are kept intact.
+  void refresh() => _reload();
 
   /// Appends the next page of results to the current list.
   Future<void> loadMore() async {
@@ -190,6 +230,33 @@ class AllAppointmentsNotifier
   void setDoctorFilter(String? id) { doctorId = id; _reload(); }
   void setClinicFilter(String? c) { clinic = c; _reload(); }
   void setStatusFilter(String? s) { status = s; _reload(); }
+  void setTypeFilter(String? t) { type = t; _reload(); }
+  void setSortAscending(bool asc) { _ascending = asc; _reload(); }
+  bool get isAscending => _ascending;
+
+  void setFilters({
+    required DateTime? from,
+    required DateTime? to,
+    required String? docId,
+    required String? clinicLoc,
+    required String? statusFilter,
+    required String? typeFilter,
+  }) {
+    dateFrom = from;
+    dateTo = to;
+    doctorId = docId;
+
+    final user = ref.read(currentUserProvider).value;
+    if (user?.role == UserRole.receptionist) {
+      clinic = ref.read(activeBranchProvider).dbValue;
+    } else {
+      clinic = clinicLoc;
+    }
+
+    status = statusFilter;
+    type = typeFilter;
+    _reload();
+  }
 
   void searchPatient(String query) {
     _patientQuery = query;
@@ -200,8 +267,16 @@ class AllAppointmentsNotifier
     dateFrom = null;
     dateTo = null;
     doctorId = null;
-    clinic = null;
+
+    final user = ref.read(currentUserProvider).value;
+    if (user?.role == UserRole.receptionist) {
+      clinic = ref.read(activeBranchProvider).dbValue;
+    } else {
+      clinic = null;
+    }
+
     status = null;
+    type = null;
     _patientQuery = '';
     _reload();
   }

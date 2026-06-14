@@ -4,7 +4,6 @@ import 'package:go_router/go_router.dart';
 import 'package:spine_clinic_app/core/constants/app_colors.dart';
 import 'package:spine_clinic_app/core/constants/app_sizes.dart';
 import 'package:spine_clinic_app/core/constants/app_strings.dart';
-import 'package:spine_clinic_app/core/constants/app_text_styles.dart';
 import 'package:spine_clinic_app/core/errors/app_exception.dart';
 import 'package:spine_clinic_app/core/network/app_routes.dart';
 import 'package:spine_clinic_app/features/auth/domain/staff.dart';
@@ -12,9 +11,16 @@ import 'package:spine_clinic_app/features/auth/domain/user_role.dart';
 import 'package:spine_clinic_app/features/auth/presentation/auth_providers.dart';
 import 'package:spine_clinic_app/features/staff/presentation/staff_management_controller.dart';
 import 'package:spine_clinic_app/shared/widgets/app_badge.dart';
+import 'package:spine_clinic_app/shared/widgets/app_bottom_sheet.dart';
+import 'package:spine_clinic_app/shared/widgets/app_search_bar.dart';
 import 'package:spine_clinic_app/shared/widgets/data_list_tile.dart';
 import 'package:spine_clinic_app/shared/widgets/empty_state.dart';
 import 'package:spine_clinic_app/shared/widgets/error_view.dart';
+import 'package:spine_clinic_app/shared/widgets/filter_chip.dart';
+import 'package:spine_clinic_app/shared/widgets/section_header.dart';
+import 'package:spine_clinic_app/shared/widgets/sort_filter_bar.dart';
+import 'package:spine_clinic_app/shared/widgets/sort_options_sheet.dart';
+import 'package:spine_clinic_app/shared/widgets/active_filter_chips_row.dart';
 
 /// Screen listing all non-doctor staff members.
 /// Enforces Super Admin role-based protection on mount.
@@ -61,11 +67,181 @@ class StaffListScreen extends ConsumerWidget {
   }
 }
 
-class _StaffListScaffold extends ConsumerWidget {
+enum StaffSortOption {
+  nameAsc,
+  nameDesc,
+  roleAsc;
+
+  String get displayLabel => switch (this) {
+    StaffSortOption.nameAsc => 'Name (A → Z)',
+    StaffSortOption.nameDesc => 'Name (Z → A)',
+    StaffSortOption.roleAsc => 'Role (A → Z)',
+  };
+
+  String get buttonLabel => switch (this) {
+    StaffSortOption.nameAsc => 'Name A→Z',
+    StaffSortOption.nameDesc => 'Name Z→A',
+    StaffSortOption.roleAsc => 'Role',
+  };
+}
+
+class _StaffListScaffold extends ConsumerStatefulWidget {
   const _StaffListScaffold();
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<_StaffListScaffold> createState() => _StaffListScaffoldState();
+}
+
+class _StaffListScaffoldState extends ConsumerState<_StaffListScaffold> {
+  StaffSortOption _sortOption = StaffSortOption.nameAsc;
+  String _searchQuery = '';
+  bool? _activeStatusFilter; // null = all, true = active, false = inactive
+
+  Future<void> _showSortSheet() async {
+    final selected = await SortOptionsSheet.show<StaffSortOption>(
+      context: context,
+      title: 'Sort Options',
+      options: StaffSortOption.values
+          .map((o) => SortOption(
+                value: o,
+                label: o.displayLabel,
+                buttonLabel: o.buttonLabel,
+              ))
+          .toList(),
+      selected: _sortOption,
+    );
+    if (selected != null && mounted) {
+      setState(() => _sortOption = selected);
+    }
+  }
+
+  List<Staff> _sorted(List<Staff> staff) {
+    final list = List<Staff>.from(staff);
+    switch (_sortOption) {
+      case StaffSortOption.nameAsc:
+        list.sort((a, b) => a.fullName.toLowerCase().compareTo(b.fullName.toLowerCase()));
+      case StaffSortOption.nameDesc:
+        list.sort((a, b) => b.fullName.toLowerCase().compareTo(a.fullName.toLowerCase()));
+      case StaffSortOption.roleAsc:
+        list.sort((a, b) => a.role.dbValue.compareTo(b.role.dbValue));
+    }
+    return list;
+  }
+
+  void _showFilterSheet() {
+    final currentFilter = ref.read(staffFilterProvider);
+    AppBottomSheet.show(
+      context: context,
+      title: 'Filters',
+      builder: (ctx, scrollCtrl) => SingleChildScrollView(
+        controller: scrollCtrl,
+        padding: const EdgeInsets.symmetric(horizontal: AppSizes.p20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            const SectionHeader(title: 'Role'),
+            const SizedBox(height: AppSizes.p8),
+            Wrap(
+              spacing: AppSizes.p8,
+              runSpacing: AppSizes.p8,
+              children: [
+                AppFilterChip(
+                  label: AppStrings.all,
+                  isActive: currentFilter == 'All',
+                  onTap: () {
+                    ref.read(staffFilterProvider.notifier).setFilter('All');
+                    Navigator.of(ctx).pop();
+                  },
+                ),
+                AppFilterChip(
+                  label: AppStrings.superAdmin,
+                  isActive: currentFilter == 'super_admin',
+                  onTap: () {
+                    ref.read(staffFilterProvider.notifier).setFilter('super_admin');
+                    Navigator.of(ctx).pop();
+                  },
+                ),
+                AppFilterChip(
+                  label: AppStrings.receptionist,
+                  isActive: currentFilter == 'receptionist',
+                  onTap: () {
+                    ref.read(staffFilterProvider.notifier).setFilter('receptionist');
+                    Navigator.of(ctx).pop();
+                  },
+                ),
+                AppFilterChip(
+                  label: AppStrings.doctor,
+                  isActive: currentFilter == 'doctor',
+                  onTap: () {
+                    ref.read(staffFilterProvider.notifier).setFilter('doctor');
+                    Navigator.of(ctx).pop();
+                  },
+                ),
+              ],
+            ),
+            const SizedBox(height: AppSizes.p16),
+            const SectionHeader(title: 'Status'),
+            const SizedBox(height: AppSizes.p8),
+            Wrap(
+              spacing: AppSizes.p8,
+              runSpacing: AppSizes.p8,
+              children: [
+                AppFilterChip(
+                  label: 'All',
+                  isActive: _activeStatusFilter == null,
+                  onTap: () {
+                    setState(() => _activeStatusFilter = null);
+                    Navigator.of(ctx).pop();
+                  },
+                ),
+                AppFilterChip(
+                  label: 'Active',
+                  isActive: _activeStatusFilter == true,
+                  onTap: () {
+                    setState(() => _activeStatusFilter = true);
+                    Navigator.of(ctx).pop();
+                  },
+                ),
+                AppFilterChip(
+                  label: 'Inactive',
+                  isActive: _activeStatusFilter == false,
+                  onTap: () {
+                    setState(() => _activeStatusFilter = false);
+                    Navigator.of(ctx).pop();
+                  },
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  List<ActiveFilterChip> get _activeChips {
+    final chips = <ActiveFilterChip>[];
+    final roleFilter = ref.watch(staffFilterProvider);
+    if (roleFilter != 'All') {
+      chips.add(ActiveFilterChip(
+        label: roleFilter == 'super_admin'
+            ? AppStrings.superAdmin
+            : roleFilter == 'receptionist'
+                ? AppStrings.receptionist
+                : AppStrings.doctor,
+        onRemove: () => ref.read(staffFilterProvider.notifier).setFilter('All'),
+      ));
+    }
+    if (_activeStatusFilter != null) {
+      chips.add(ActiveFilterChip(
+        label: _activeStatusFilter! ? 'Active' : 'Inactive',
+        onRemove: () => setState(() => _activeStatusFilter = null),
+      ));
+    }
+    return chips;
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final filteredStaffAsync = ref.watch(filteredStaffProvider);
 
     return Scaffold(
@@ -83,7 +259,28 @@ class _StaffListScaffold extends ConsumerWidget {
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const _FilterChips(),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(
+              AppSizes.p16, AppSizes.p12, AppSizes.p16, AppSizes.p4,
+            ),
+            child: AppSearchBar(
+              hintText: AppStrings.searchPatients,
+              onChanged: (query) => setState(() => _searchQuery = query),
+            ),
+          ),
+          SortFilterBar(
+            sortLabel: 'Sort: ${_sortOption.buttonLabel}',
+            onSortTap: _showSortSheet,
+            activeFilterCount: _activeChips.length,
+            onFilterTap: _showFilterSheet,
+          ),
+          ActiveFilterChipsRow(
+            chips: _activeChips,
+            onClearAll: () {
+              ref.read(staffFilterProvider.notifier).setFilter('All');
+              setState(() => _activeStatusFilter = null);
+            },
+          ),
           Expanded(
             child: RefreshIndicator(
               onRefresh: () => ref.read(staffListProvider.notifier).refreshStaff(),
@@ -91,7 +288,20 @@ class _StaffListScaffold extends ConsumerWidget {
               backgroundColor: AppColors.surface,
               child: filteredStaffAsync.when(
                 data: (staffList) {
-                  if (staffList.isEmpty) {
+                  List<Staff> display = _sorted(staffList);
+                  if (_searchQuery.isNotEmpty) {
+                    final q = _searchQuery.toLowerCase();
+                    display = display.where((s) =>
+                      s.fullName.toLowerCase().contains(q) ||
+                      s.email.toLowerCase().contains(q)
+                    ).toList();
+                  }
+                  if (_activeStatusFilter != null) {
+                    display = display
+                        .where((s) => s.isActive == _activeStatusFilter)
+                        .toList();
+                  }
+                  if (display.isEmpty) {
                     return const SingleChildScrollView(
                       physics: AlwaysScrollableScrollPhysics(),
                       child: Center(
@@ -108,9 +318,9 @@ class _StaffListScaffold extends ConsumerWidget {
 
                   return ListView.builder(
                     physics: const AlwaysScrollableScrollPhysics(),
-                    itemCount: staffList.length,
+                    itemCount: display.length,
                     itemBuilder: (context, index) {
-                      final staff = staffList[index];
+                      final staff = display[index];
                       return _StaffRow(staff: staff);
                     },
                   );
@@ -132,59 +342,6 @@ class _StaffListScaffold extends ConsumerWidget {
         backgroundColor: AppColors.primary,
         foregroundColor: AppColors.textOnPrimary,
         child: const Icon(Icons.add_rounded),
-      ),
-    );
-  }
-}
-
-class _FilterChips extends ConsumerWidget {
-  const _FilterChips();
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final selectedFilter = ref.watch(staffFilterProvider);
-
-    final filters = [
-      {'label': AppStrings.all, 'value': 'All'},
-      {'label': AppStrings.superAdmin, 'value': 'super_admin'},
-      {'label': AppStrings.receptionist, 'value': 'receptionist'},
-      {'label': AppStrings.doctor, 'value': 'doctor'},
-    ];
-
-    return Container(
-      color: AppColors.surface,
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppSizes.p16,
-        vertical: AppSizes.p12,
-      ),
-      child: Row(
-        children: filters.map((f) {
-          final isSelected = selectedFilter == f['value'];
-          return Padding(
-            padding: const EdgeInsets.only(right: AppSizes.p8),
-            child: ChoiceChip(
-              label: Text(f['label']!),
-              selected: isSelected,
-              selectedColor: AppColors.primaryLight,
-              labelStyle: AppTextStyles.captionMedium.copyWith(
-                color: isSelected ? AppColors.primary : AppColors.textSecondary,
-              ),
-              shape: const RoundedRectangleBorder(
-                borderRadius: BorderRadius.all(Radius.circular(AppSizes.r6)),
-              ),
-              side: BorderSide(
-                color: isSelected ? AppColors.primary : AppColors.border,
-                width: AppSizes.borderWidth,
-              ),
-              showCheckmark: false,
-              onSelected: (val) {
-                if (val) {
-                  ref.read(staffFilterProvider.notifier).setFilter(f['value']!);
-                }
-              },
-            ),
-          );
-        }).toList(),
       ),
     );
   }

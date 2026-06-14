@@ -15,7 +15,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$Patient {
 
- String get id;@JsonKey(name: 'full_name') String get fullName;@JsonKey(name: 'phone_number') String get phoneNumber; String? get program; ClinicLocation get clinic;@JsonKey(name: 'package_balance') int get packageBalance;@JsonKey(name: 'created_by') String? get createdBy;@JsonKey(name: 'created_at') DateTime get createdAt;
+ String get id;@JsonKey(name: 'full_name') String get fullName;@JsonKey(name: 'phone_number') String get phoneNumber; String? get program; ClinicLocation get clinic;@JsonKey(name: 'package_balance') int get packageBalance;@JsonKey(name: 'created_by') String? get createdBy;@JsonKey(name: 'created_at') DateTime get createdAt;@JsonKey(includeFromJson: false, includeToJson: false) DateTime? get lastAppointmentDate;
 /// Create a copy of Patient
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -28,16 +28,16 @@ $PatientCopyWith<Patient> get copyWith => _$PatientCopyWithImpl<Patient>(this as
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is Patient&&(identical(other.id, id) || other.id == id)&&(identical(other.fullName, fullName) || other.fullName == fullName)&&(identical(other.phoneNumber, phoneNumber) || other.phoneNumber == phoneNumber)&&(identical(other.program, program) || other.program == program)&&(identical(other.clinic, clinic) || other.clinic == clinic)&&(identical(other.packageBalance, packageBalance) || other.packageBalance == packageBalance)&&(identical(other.createdBy, createdBy) || other.createdBy == createdBy)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is Patient&&(identical(other.id, id) || other.id == id)&&(identical(other.fullName, fullName) || other.fullName == fullName)&&(identical(other.phoneNumber, phoneNumber) || other.phoneNumber == phoneNumber)&&(identical(other.program, program) || other.program == program)&&(identical(other.clinic, clinic) || other.clinic == clinic)&&(identical(other.packageBalance, packageBalance) || other.packageBalance == packageBalance)&&(identical(other.createdBy, createdBy) || other.createdBy == createdBy)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.lastAppointmentDate, lastAppointmentDate) || other.lastAppointmentDate == lastAppointmentDate));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,fullName,phoneNumber,program,clinic,packageBalance,createdBy,createdAt);
+int get hashCode => Object.hash(runtimeType,id,fullName,phoneNumber,program,clinic,packageBalance,createdBy,createdAt,lastAppointmentDate);
 
 @override
 String toString() {
-  return 'Patient(id: $id, fullName: $fullName, phoneNumber: $phoneNumber, program: $program, clinic: $clinic, packageBalance: $packageBalance, createdBy: $createdBy, createdAt: $createdAt)';
+  return 'Patient(id: $id, fullName: $fullName, phoneNumber: $phoneNumber, program: $program, clinic: $clinic, packageBalance: $packageBalance, createdBy: $createdBy, createdAt: $createdAt, lastAppointmentDate: $lastAppointmentDate)';
 }
 
 
@@ -48,7 +48,7 @@ abstract mixin class $PatientCopyWith<$Res>  {
   factory $PatientCopyWith(Patient value, $Res Function(Patient) _then) = _$PatientCopyWithImpl;
 @useResult
 $Res call({
- String id,@JsonKey(name: 'full_name') String fullName,@JsonKey(name: 'phone_number') String phoneNumber, String? program, ClinicLocation clinic,@JsonKey(name: 'package_balance') int packageBalance,@JsonKey(name: 'created_by') String? createdBy,@JsonKey(name: 'created_at') DateTime createdAt
+ String id,@JsonKey(name: 'full_name') String fullName,@JsonKey(name: 'phone_number') String phoneNumber, String? program, ClinicLocation clinic,@JsonKey(name: 'package_balance') int packageBalance,@JsonKey(name: 'created_by') String? createdBy,@JsonKey(name: 'created_at') DateTime createdAt,@JsonKey(includeFromJson: false, includeToJson: false) DateTime? lastAppointmentDate
 });
 
 
@@ -65,7 +65,7 @@ class _$PatientCopyWithImpl<$Res>
 
 /// Create a copy of Patient
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? fullName = null,Object? phoneNumber = null,Object? program = freezed,Object? clinic = null,Object? packageBalance = null,Object? createdBy = freezed,Object? createdAt = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? fullName = null,Object? phoneNumber = null,Object? program = freezed,Object? clinic = null,Object? packageBalance = null,Object? createdBy = freezed,Object? createdAt = null,Object? lastAppointmentDate = freezed,}) {
   return _then(_self.copyWith(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,fullName: null == fullName ? _self.fullName : fullName // ignore: cast_nullable_to_non_nullable
@@ -75,7 +75,8 @@ as String?,clinic: null == clinic ? _self.clinic : clinic // ignore: cast_nullab
 as ClinicLocation,packageBalance: null == packageBalance ? _self.packageBalance : packageBalance // ignore: cast_nullable_to_non_nullable
 as int,createdBy: freezed == createdBy ? _self.createdBy : createdBy // ignore: cast_nullable_to_non_nullable
 as String?,createdAt: null == createdAt ? _self.createdAt : createdAt // ignore: cast_nullable_to_non_nullable
-as DateTime,
+as DateTime,lastAppointmentDate: freezed == lastAppointmentDate ? _self.lastAppointmentDate : lastAppointmentDate // ignore: cast_nullable_to_non_nullable
+as DateTime?,
   ));
 }
 
@@ -160,10 +161,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id, @JsonKey(name: 'full_name')  String fullName, @JsonKey(name: 'phone_number')  String phoneNumber,  String? program,  ClinicLocation clinic, @JsonKey(name: 'package_balance')  int packageBalance, @JsonKey(name: 'created_by')  String? createdBy, @JsonKey(name: 'created_at')  DateTime createdAt)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id, @JsonKey(name: 'full_name')  String fullName, @JsonKey(name: 'phone_number')  String phoneNumber,  String? program,  ClinicLocation clinic, @JsonKey(name: 'package_balance')  int packageBalance, @JsonKey(name: 'created_by')  String? createdBy, @JsonKey(name: 'created_at')  DateTime createdAt, @JsonKey(includeFromJson: false, includeToJson: false)  DateTime? lastAppointmentDate)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _Patient() when $default != null:
-return $default(_that.id,_that.fullName,_that.phoneNumber,_that.program,_that.clinic,_that.packageBalance,_that.createdBy,_that.createdAt);case _:
+return $default(_that.id,_that.fullName,_that.phoneNumber,_that.program,_that.clinic,_that.packageBalance,_that.createdBy,_that.createdAt,_that.lastAppointmentDate);case _:
   return orElse();
 
 }
@@ -181,10 +182,10 @@ return $default(_that.id,_that.fullName,_that.phoneNumber,_that.program,_that.cl
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id, @JsonKey(name: 'full_name')  String fullName, @JsonKey(name: 'phone_number')  String phoneNumber,  String? program,  ClinicLocation clinic, @JsonKey(name: 'package_balance')  int packageBalance, @JsonKey(name: 'created_by')  String? createdBy, @JsonKey(name: 'created_at')  DateTime createdAt)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id, @JsonKey(name: 'full_name')  String fullName, @JsonKey(name: 'phone_number')  String phoneNumber,  String? program,  ClinicLocation clinic, @JsonKey(name: 'package_balance')  int packageBalance, @JsonKey(name: 'created_by')  String? createdBy, @JsonKey(name: 'created_at')  DateTime createdAt, @JsonKey(includeFromJson: false, includeToJson: false)  DateTime? lastAppointmentDate)  $default,) {final _that = this;
 switch (_that) {
 case _Patient():
-return $default(_that.id,_that.fullName,_that.phoneNumber,_that.program,_that.clinic,_that.packageBalance,_that.createdBy,_that.createdAt);case _:
+return $default(_that.id,_that.fullName,_that.phoneNumber,_that.program,_that.clinic,_that.packageBalance,_that.createdBy,_that.createdAt,_that.lastAppointmentDate);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -201,10 +202,10 @@ return $default(_that.id,_that.fullName,_that.phoneNumber,_that.program,_that.cl
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id, @JsonKey(name: 'full_name')  String fullName, @JsonKey(name: 'phone_number')  String phoneNumber,  String? program,  ClinicLocation clinic, @JsonKey(name: 'package_balance')  int packageBalance, @JsonKey(name: 'created_by')  String? createdBy, @JsonKey(name: 'created_at')  DateTime createdAt)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id, @JsonKey(name: 'full_name')  String fullName, @JsonKey(name: 'phone_number')  String phoneNumber,  String? program,  ClinicLocation clinic, @JsonKey(name: 'package_balance')  int packageBalance, @JsonKey(name: 'created_by')  String? createdBy, @JsonKey(name: 'created_at')  DateTime createdAt, @JsonKey(includeFromJson: false, includeToJson: false)  DateTime? lastAppointmentDate)?  $default,) {final _that = this;
 switch (_that) {
 case _Patient() when $default != null:
-return $default(_that.id,_that.fullName,_that.phoneNumber,_that.program,_that.clinic,_that.packageBalance,_that.createdBy,_that.createdAt);case _:
+return $default(_that.id,_that.fullName,_that.phoneNumber,_that.program,_that.clinic,_that.packageBalance,_that.createdBy,_that.createdAt,_that.lastAppointmentDate);case _:
   return null;
 
 }
@@ -216,7 +217,7 @@ return $default(_that.id,_that.fullName,_that.phoneNumber,_that.program,_that.cl
 @JsonSerializable()
 
 class _Patient implements Patient {
-  const _Patient({required this.id, @JsonKey(name: 'full_name') required this.fullName, @JsonKey(name: 'phone_number') required this.phoneNumber, this.program, required this.clinic, @JsonKey(name: 'package_balance') this.packageBalance = 0, @JsonKey(name: 'created_by') this.createdBy, @JsonKey(name: 'created_at') required this.createdAt});
+  const _Patient({required this.id, @JsonKey(name: 'full_name') required this.fullName, @JsonKey(name: 'phone_number') required this.phoneNumber, this.program, required this.clinic, @JsonKey(name: 'package_balance') this.packageBalance = 0, @JsonKey(name: 'created_by') this.createdBy, @JsonKey(name: 'created_at') required this.createdAt, @JsonKey(includeFromJson: false, includeToJson: false) this.lastAppointmentDate});
   factory _Patient.fromJson(Map<String, dynamic> json) => _$PatientFromJson(json);
 
 @override final  String id;
@@ -227,6 +228,7 @@ class _Patient implements Patient {
 @override@JsonKey(name: 'package_balance') final  int packageBalance;
 @override@JsonKey(name: 'created_by') final  String? createdBy;
 @override@JsonKey(name: 'created_at') final  DateTime createdAt;
+@override@JsonKey(includeFromJson: false, includeToJson: false) final  DateTime? lastAppointmentDate;
 
 /// Create a copy of Patient
 /// with the given fields replaced by the non-null parameter values.
@@ -241,16 +243,16 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _Patient&&(identical(other.id, id) || other.id == id)&&(identical(other.fullName, fullName) || other.fullName == fullName)&&(identical(other.phoneNumber, phoneNumber) || other.phoneNumber == phoneNumber)&&(identical(other.program, program) || other.program == program)&&(identical(other.clinic, clinic) || other.clinic == clinic)&&(identical(other.packageBalance, packageBalance) || other.packageBalance == packageBalance)&&(identical(other.createdBy, createdBy) || other.createdBy == createdBy)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _Patient&&(identical(other.id, id) || other.id == id)&&(identical(other.fullName, fullName) || other.fullName == fullName)&&(identical(other.phoneNumber, phoneNumber) || other.phoneNumber == phoneNumber)&&(identical(other.program, program) || other.program == program)&&(identical(other.clinic, clinic) || other.clinic == clinic)&&(identical(other.packageBalance, packageBalance) || other.packageBalance == packageBalance)&&(identical(other.createdBy, createdBy) || other.createdBy == createdBy)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.lastAppointmentDate, lastAppointmentDate) || other.lastAppointmentDate == lastAppointmentDate));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,fullName,phoneNumber,program,clinic,packageBalance,createdBy,createdAt);
+int get hashCode => Object.hash(runtimeType,id,fullName,phoneNumber,program,clinic,packageBalance,createdBy,createdAt,lastAppointmentDate);
 
 @override
 String toString() {
-  return 'Patient(id: $id, fullName: $fullName, phoneNumber: $phoneNumber, program: $program, clinic: $clinic, packageBalance: $packageBalance, createdBy: $createdBy, createdAt: $createdAt)';
+  return 'Patient(id: $id, fullName: $fullName, phoneNumber: $phoneNumber, program: $program, clinic: $clinic, packageBalance: $packageBalance, createdBy: $createdBy, createdAt: $createdAt, lastAppointmentDate: $lastAppointmentDate)';
 }
 
 
@@ -261,7 +263,7 @@ abstract mixin class _$PatientCopyWith<$Res> implements $PatientCopyWith<$Res> {
   factory _$PatientCopyWith(_Patient value, $Res Function(_Patient) _then) = __$PatientCopyWithImpl;
 @override @useResult
 $Res call({
- String id,@JsonKey(name: 'full_name') String fullName,@JsonKey(name: 'phone_number') String phoneNumber, String? program, ClinicLocation clinic,@JsonKey(name: 'package_balance') int packageBalance,@JsonKey(name: 'created_by') String? createdBy,@JsonKey(name: 'created_at') DateTime createdAt
+ String id,@JsonKey(name: 'full_name') String fullName,@JsonKey(name: 'phone_number') String phoneNumber, String? program, ClinicLocation clinic,@JsonKey(name: 'package_balance') int packageBalance,@JsonKey(name: 'created_by') String? createdBy,@JsonKey(name: 'created_at') DateTime createdAt,@JsonKey(includeFromJson: false, includeToJson: false) DateTime? lastAppointmentDate
 });
 
 
@@ -278,7 +280,7 @@ class __$PatientCopyWithImpl<$Res>
 
 /// Create a copy of Patient
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? fullName = null,Object? phoneNumber = null,Object? program = freezed,Object? clinic = null,Object? packageBalance = null,Object? createdBy = freezed,Object? createdAt = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? fullName = null,Object? phoneNumber = null,Object? program = freezed,Object? clinic = null,Object? packageBalance = null,Object? createdBy = freezed,Object? createdAt = null,Object? lastAppointmentDate = freezed,}) {
   return _then(_Patient(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,fullName: null == fullName ? _self.fullName : fullName // ignore: cast_nullable_to_non_nullable
@@ -288,7 +290,8 @@ as String?,clinic: null == clinic ? _self.clinic : clinic // ignore: cast_nullab
 as ClinicLocation,packageBalance: null == packageBalance ? _self.packageBalance : packageBalance // ignore: cast_nullable_to_non_nullable
 as int,createdBy: freezed == createdBy ? _self.createdBy : createdBy // ignore: cast_nullable_to_non_nullable
 as String?,createdAt: null == createdAt ? _self.createdAt : createdAt // ignore: cast_nullable_to_non_nullable
-as DateTime,
+as DateTime,lastAppointmentDate: freezed == lastAppointmentDate ? _self.lastAppointmentDate : lastAppointmentDate // ignore: cast_nullable_to_non_nullable
+as DateTime?,
   ));
 }
 

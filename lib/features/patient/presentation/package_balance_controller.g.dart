@@ -37,7 +37,7 @@ final class PackageBalanceControllerProvider
 }
 
 String _$packageBalanceControllerHash() =>
-    r'b31df24878cdba7615df8253a3f768583ead1bb7';
+    r'448ca63b87d964c44edc1dc231c6c893ba4f6376';
 
 /// Presentation controller managing the state of manual package balance edits.
 

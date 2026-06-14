@@ -1,6 +1,7 @@
 import 'package:spine_clinic_app/core/errors/app_exception.dart';
 import 'package:spine_clinic_app/core/errors/result.dart';
 import 'package:spine_clinic_app/core/network/supabase_service.dart';
+import 'package:spine_clinic_app/core/utils/patient_helpers.dart';
 import 'package:spine_clinic_app/features/auth/domain/staff.dart';
 import 'package:spine_clinic_app/features/auth/domain/user_role.dart';
 import 'package:spine_clinic_app/features/patient/domain/patient.dart';
@@ -49,7 +50,10 @@ class StaffRepositoryImpl implements StaffRepository {
   @override
   Future<Result<List<Patient>>> getAssignedPatients({required String doctorId, String? query}) async {
     try {
-      var builder = _service.from('patients').select('*, patient_doctors!inner()').eq('patient_doctors.doctor_id', doctorId);
+      var builder = _service
+          .from('patients')
+          .select('*, patient_doctors!inner(), appointments(scheduled_at, status)')
+          .eq('patient_doctors.doctor_id', doctorId);
       if (query != null && query.trim().isNotEmpty) {
         for (final token in query.trim().split(RegExp(r'\s+'))) {
           if (token.isNotEmpty) {
@@ -58,7 +62,7 @@ class StaffRepositoryImpl implements StaffRepository {
         }
       }
       final rows = await _service.guardQuery(() => builder.order('full_name'));
-      return Result.success(rows.map(Patient.fromJson).toList());
+      return Result.success(rows.map(_buildPatientWithLastVisit).toList());
     } on AppException catch (e) {
       return Result.failure(e);
     } on Exception catch (e) {
@@ -78,7 +82,10 @@ class StaffRepositoryImpl implements StaffRepository {
       final absentIds = replacements.map((r) => r['absent_doctor_id'] as String).toList();
       if (absentIds.isEmpty) return const Result.success([]);
 
-      var builder = _service.from('patients').select('*, patient_doctors!inner()').inFilter('patient_doctors.doctor_id', absentIds);
+      var builder = _service
+          .from('patients')
+          .select('*, patient_doctors!inner(), appointments(scheduled_at, status)')
+          .inFilter('patient_doctors.doctor_id', absentIds);
       if (query != null && query.trim().isNotEmpty) {
         for (final token in query.trim().split(RegExp(r'\s+'))) {
           if (token.isNotEmpty) {
@@ -87,7 +94,7 @@ class StaffRepositoryImpl implements StaffRepository {
         }
       }
       final rows = await _service.guardQuery(() => builder.order('full_name'));
-      return Result.success(rows.map(Patient.fromJson).toList());
+      return Result.success(rows.map(_buildPatientWithLastVisit).toList());
     } on AppException catch (e) {
       return Result.failure(e);
     } on Exception catch (e) {
@@ -154,6 +161,21 @@ class StaffRepositoryImpl implements StaffRepository {
     } on Exception catch (e) {
       return Result.failure(AppException.fromSupabaseException(e));
     }
+  }
+
+  /// Builds a [Patient] from a row that includes embedded appointments.
+  ///
+  /// The DB's [last_appointment_date] column is always replaced by
+  /// [computeLastAppointmentDate] for consistency with every other screen.
+  Patient _buildPatientWithLastVisit(Map<String, dynamic> row) {
+    final Patient patient = Patient.fromJson(row);
+    final dynamic appts = row['appointments'];
+    if (appts is! List) return patient;
+    final List<Map<String, dynamic>> apptRows = appts
+        .whereType<Map<String, dynamic>>()
+        .toList();
+    final DateTime? computed = computeLastAppointmentDate(apptRows);
+    return patient.copyWith(lastAppointmentDate: computed);
   }
 
   @override

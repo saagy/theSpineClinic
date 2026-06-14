@@ -3,6 +3,7 @@ library;
 import 'package:spine_clinic_app/core/errors/app_exception.dart';
 import 'package:spine_clinic_app/core/errors/result.dart';
 import 'package:spine_clinic_app/core/network/supabase_service.dart';
+import 'package:spine_clinic_app/core/utils/patient_helpers.dart';
 import 'package:spine_clinic_app/features/patient/domain/clinic_location.dart';
 import 'package:spine_clinic_app/features/patient/domain/patient.dart';
 import 'package:spine_clinic_app/features/patient/domain/patient_repository.dart';
@@ -24,12 +25,12 @@ class PatientRepositoryImpl implements PatientRepository {
       if (trimmed.isEmpty) return const Result.success([]);
       final List<String> tokens = trimmed.split(RegExp(r'\s+'));
       final List<Map<String, dynamic>> rows = await _service.guardQuery(() {
-        final base = _service.from(_table).select();
+        final base = _service.from(_table).select('*, appointments(scheduled_at, status)');
         final filtered = tokens.where((t) => t.isNotEmpty).fold(base, (q, token) => q.or('full_name.ilike.%$token%,phone_number.ilike.%$token%'));
         final withClinic = clinic != null ? filtered.eq('clinic', clinic.dbValue) : filtered;
         return withClinic.order('full_name').limit(_searchLimit);
       });
-      return Result.success(rows.map(Patient.fromJson).toList());
+      return Result.success(rows.map(_parsePatientRowWithLastAppt).toList());
     } on AppException catch (e) {
       return Result.failure(e);
     } catch (e) {
@@ -40,8 +41,8 @@ class PatientRepositoryImpl implements PatientRepository {
   @override
   Future<Result<Patient>> getPatientById(String id) async {
     try {
-      final Map<String, dynamic> row = await _service.guardQuery(() => _service.from(_table).select().eq('id', id).single());
-      return Result.success(Patient.fromJson(row));
+      final Map<String, dynamic> row = await _service.guardQuery(() => _service.from(_table).select('*, appointments(scheduled_at, status)').eq('id', id).single());
+      return Result.success(_parsePatientRowWithLastAppt(row));
     } on AppException catch (e) {
       return Result.failure(e);
     } catch (e) {
@@ -153,8 +154,8 @@ class PatientRepositoryImpl implements PatientRepository {
     try {
       final List<Map<String, dynamic>> rows = await _service.guardQuery(() {
         final base = doctorId != null
-            ? _service.from(_table).select('*, patient_doctors!inner()').eq('patient_doctors.doctor_id', doctorId)
-            : _service.from(_table).select();
+            ? _service.from(_table).select('*, patient_doctors!inner(), appointments(scheduled_at, status)').eq('patient_doctors.doctor_id', doctorId)
+            : _service.from(_table).select('*, appointments(scheduled_at, status)');
         final withClinic = clinic != null ? base.eq('clinic', clinic.dbValue) : base;
         if (query != null && query.trim().isNotEmpty) {
           final tokens = query.trim().split(RegExp(r'\s+')).where((t) => t.isNotEmpty);
@@ -163,7 +164,7 @@ class PatientRepositoryImpl implements PatientRepository {
         }
         return withClinic.order('full_name').range(offset, offset + limit - 1);
       });
-      return Result.success(rows.map(Patient.fromJson).toList());
+      return Result.success(rows.map(_parsePatientRowWithLastAppt).toList());
     } on AppException catch (e) {
       return Result.failure(e);
     } catch (e) {
@@ -195,5 +196,24 @@ class PatientRepositoryImpl implements PatientRepository {
     } catch (e) {
       return Result.failure(AppException.fromSupabaseException(e));
     }
+  }
+  /// Builds a [Patient] from a row that includes embedded appointments.
+  ///
+  /// The DB's `last_appointment_date` column is **always** replaced by the
+  /// result of [computeLastAppointmentDate] so every screen shares one
+  /// consistent derivation. If the embedded `appointments` key is absent
+  /// (e.g. a future query path that forgets to join) we conservatively
+  /// preserve whatever the DB column held.
+  Patient _parsePatientRowWithLastAppt(Map<String, dynamic> row) {
+    final dynamic appts = row['appointments'];
+    final Patient patient = Patient.fromJson(row);
+
+    if (appts is! List) return patient; // No join done — keep DB value
+
+    final List<Map<String, dynamic>> apptRows = appts
+        .whereType<Map<String, dynamic>>()
+        .toList();
+    final DateTime? computed = computeLastAppointmentDate(apptRows);
+    return patient.copyWith(lastAppointmentDate: computed);
   }
 }

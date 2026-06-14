@@ -40,7 +40,7 @@ final class MyScheduleControllerProvider
 }
 
 String _$myScheduleControllerHash() =>
-    r'46fa06286777ac85465bb1c6123af5693a7782c5';
+    r'd32666e763487b1a4fdb090e2f3f4758a0feb7ac';
 
 /// Manages the doctor's calendar schedule, resolving active doctor context,
 /// querying database data, and applying correct horizon filtering.

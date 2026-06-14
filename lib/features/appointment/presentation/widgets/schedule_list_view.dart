@@ -87,6 +87,7 @@ class ScheduleListView extends StatelessWidget {
   Widget _buildTodayView(BuildContext context, List<DoctorScheduleItem> items) {
     return ListView.builder(
       physics: const AlwaysScrollableScrollPhysics(),
+      padding: const EdgeInsets.symmetric(horizontal: AppSizes.p16, vertical: AppSizes.p8),
       itemCount: items.length,
       itemBuilder: (context, index) {
         return _buildRow(context, items[index]);
@@ -106,6 +107,7 @@ class ScheduleListView extends StatelessWidget {
 
     return ListView.builder(
       physics: const AlwaysScrollableScrollPhysics(),
+      padding: const EdgeInsets.symmetric(horizontal: AppSizes.p16, vertical: AppSizes.p8),
       itemCount: sortedDates.length,
       itemBuilder: (context, index) {
         final date = sortedDates[index];
@@ -116,11 +118,11 @@ class ScheduleListView extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Padding(
-              padding: const EdgeInsets.fromLTRB(AppSizes.p16, AppSizes.p16, AppSizes.p16, AppSizes.p8),
+              padding: const EdgeInsets.only(top: AppSizes.p20, bottom: AppSizes.p8),
               child: Text(
                 dateHeader,
-                style: AppTextStyles.bodyBold.copyWith(
-                  color: AppColors.primary,
+                style: AppTextStyles.headingSmall.copyWith(
+                  color: AppColors.textPrimary,
                 ),
               ),
             ),
@@ -163,18 +165,16 @@ class ScheduleListView extends StatelessWidget {
   Widget _buildSkeleton() {
     return ListView.builder(
       physics: const NeverScrollableScrollPhysics(),
+      padding: const EdgeInsets.symmetric(horizontal: AppSizes.p16, vertical: AppSizes.p8),
       itemCount: 5,
       itemBuilder: (context, index) {
         return Padding(
-          padding: const EdgeInsets.symmetric(
-            horizontal: AppSizes.p12,
-            vertical: AppSizes.p8,
-          ),
+          padding: const EdgeInsets.only(bottom: AppSizes.p12),
           child: Container(
-            height: 56,
+            height: 72,
             decoration: BoxDecoration(
               color: AppColors.border.withAlpha(50),
-              borderRadius: BorderRadius.circular(AppSizes.r8),
+              borderRadius: BorderRadius.circular(AppSizes.r16),
             ),
           ),
         );

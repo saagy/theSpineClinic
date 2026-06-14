@@ -10,6 +10,8 @@ import 'package:spine_clinic_app/core/errors/app_exception.dart';
 import 'package:spine_clinic_app/core/network/app_routes.dart';
 import 'package:spine_clinic_app/core/utils/formatters.dart';
 import 'package:spine_clinic_app/features/admin/presentation/branch_providers.dart';
+import 'package:spine_clinic_app/features/auth/presentation/auth_providers.dart';
+import 'package:spine_clinic_app/features/auth/domain/user_role.dart';
 import 'package:spine_clinic_app/features/appointment/domain/appointment.dart';
 import 'package:spine_clinic_app/features/appointment/presentation/appointment_providers.dart';
 import 'package:spine_clinic_app/features/appointment/presentation/widgets/appointment_actions_trailing.dart';
@@ -87,6 +89,8 @@ class HomeScreen extends ConsumerWidget {
   Widget _buildDateHeader(BuildContext context, WidgetRef ref, int count) {
     final String dateStr = DateFormat('E MMM dd').format(DateTime.now());
     final activeBranch = ref.watch(activeBranchProvider);
+    final user = ref.watch(currentUserProvider).value;
+    final isReceptionist = user?.role == UserRole.receptionist;
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(AppSizes.p24, AppSizes.p24, AppSizes.p24, AppSizes.p16),
@@ -111,36 +115,38 @@ class HomeScreen extends ConsumerWidget {
               ),
             ],
           ),
-          const SizedBox(height: AppSizes.p12),
-          Row(
-            children: ClinicLocation.values.map((branch) {
-              final isSelected = activeBranch == branch;
-              return Padding(
-                padding: const EdgeInsets.only(right: AppSizes.p8),
-                child: ChoiceChip(
-                  label: Text(branch.displayLabel),
-                  selected: isSelected,
-                  selectedColor: AppColors.primaryLight,
-                  labelStyle: AppTextStyles.captionMedium.copyWith(
-                    color: isSelected ? AppColors.primary : AppColors.textSecondary,
+          if (!isReceptionist) ...[
+            const SizedBox(height: AppSizes.p12),
+            Row(
+              children: ClinicLocation.values.map((branch) {
+                final isSelected = activeBranch == branch;
+                return Padding(
+                  padding: const EdgeInsets.only(right: AppSizes.p8),
+                  child: ChoiceChip(
+                    label: Text(branch.displayLabel),
+                    selected: isSelected,
+                    selectedColor: AppColors.primaryLight,
+                    labelStyle: AppTextStyles.captionMedium.copyWith(
+                      color: isSelected ? AppColors.primary : AppColors.textSecondary,
+                    ),
+                    shape: const RoundedRectangleBorder(
+                      borderRadius: BorderRadius.all(Radius.circular(AppSizes.r6)),
+                    ),
+                    side: BorderSide(
+                      color: isSelected ? AppColors.primary : AppColors.border,
+                      width: AppSizes.borderWidth,
+                    ),
+                    showCheckmark: false,
+                    onSelected: (val) {
+                      if (val) {
+                        ref.read(activeBranchProvider.notifier).setBranch(branch);
+                      }
+                    },
                   ),
-                  shape: const RoundedRectangleBorder(
-                    borderRadius: BorderRadius.all(Radius.circular(AppSizes.r6)),
-                  ),
-                  side: BorderSide(
-                    color: isSelected ? AppColors.primary : AppColors.border,
-                    width: AppSizes.borderWidth,
-                  ),
-                  showCheckmark: false,
-                  onSelected: (val) {
-                    if (val) {
-                      ref.read(activeBranchProvider.notifier).setBranch(branch);
-                    }
-                  },
-                ),
-              );
-            }).toList(),
-          ),
+                );
+              }).toList(),
+            ),
+          ],
         ],
       ),
     );

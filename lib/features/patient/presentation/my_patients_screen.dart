@@ -6,13 +6,18 @@ import 'package:spine_clinic_app/core/constants/app_sizes.dart';
 import 'package:spine_clinic_app/core/constants/app_strings.dart';
 import 'package:spine_clinic_app/core/constants/app_text_styles.dart';
 import 'package:spine_clinic_app/core/errors/app_exception.dart';
+import 'package:spine_clinic_app/features/patient/domain/clinic_location.dart';
 import 'package:spine_clinic_app/features/patient/domain/patient.dart';
 import 'package:spine_clinic_app/features/staff/presentation/staff_providers.dart';
-import 'package:spine_clinic_app/shared/widgets/app_badge.dart';
+import 'package:spine_clinic_app/shared/widgets/app_bottom_sheet.dart';
 import 'package:spine_clinic_app/shared/widgets/app_search_bar.dart';
-import 'package:spine_clinic_app/shared/widgets/data_list_tile.dart';
 import 'package:spine_clinic_app/shared/widgets/empty_state.dart';
 import 'package:spine_clinic_app/shared/widgets/error_view.dart';
+import 'package:spine_clinic_app/shared/widgets/patient_list_tile.dart';
+import 'package:spine_clinic_app/shared/widgets/sort_filter_bar.dart';
+import 'package:spine_clinic_app/shared/widgets/sort_options_sheet.dart';
+import 'package:spine_clinic_app/shared/widgets/unified_filter_sheet.dart';
+import 'package:spine_clinic_app/shared/widgets/active_filter_chips_row.dart';
 
 /// Screen displaying the list of patients permanently assigned to the doctor.
 class MyPatientsScreen extends ConsumerStatefulWidget {
@@ -23,12 +28,114 @@ class MyPatientsScreen extends ConsumerStatefulWidget {
   ConsumerState<MyPatientsScreen> createState() => _MyPatientsScreenState();
 }
 
+enum MyPatientSortOption {
+  nameAsc,
+  nameDesc,
+  lastVisitNewest,
+  lastVisitOldest;
+
+  String get displayLabel => switch (this) {
+    MyPatientSortOption.nameAsc => 'Name (A → Z)',
+    MyPatientSortOption.nameDesc => 'Name (Z → A)',
+    MyPatientSortOption.lastVisitNewest => 'Last Visit (Newest)',
+    MyPatientSortOption.lastVisitOldest => 'Last Visit (Oldest)',
+  };
+
+  String get buttonLabel => switch (this) {
+    MyPatientSortOption.nameAsc => 'Name A→Z',
+    MyPatientSortOption.nameDesc => 'Name Z→A',
+    MyPatientSortOption.lastVisitNewest => 'Last Visit ↓',
+    MyPatientSortOption.lastVisitOldest => 'Last Visit ↑',
+  };
+}
+
 class _MyPatientsScreenState extends ConsumerState<MyPatientsScreen> {
   String _currentQuery = '';
+  MyPatientSortOption _sortOption = MyPatientSortOption.nameAsc;
+  ClinicLocation? _branchFilter;
 
   void _onSearchChanged(String query) {
     setState(() => _currentQuery = query);
     ref.read(myPatientsControllerProvider.notifier).search(query);
+  }
+
+  Future<void> _showSortSheet() async {
+    final selected = await SortOptionsSheet.show<MyPatientSortOption>(
+      context: context,
+      title: 'Sort Options',
+      options: MyPatientSortOption.values
+          .map((o) => SortOption(
+                value: o,
+                label: o.displayLabel,
+                buttonLabel: o.buttonLabel,
+              ))
+          .toList(),
+      selected: _sortOption,
+    );
+    if (selected != null && mounted) {
+      setState(() => _sortOption = selected);
+    }
+  }
+
+  List<Patient> _sorted(List<Patient> patients) {
+    final list = List<Patient>.from(patients);
+    switch (_sortOption) {
+      case MyPatientSortOption.nameAsc:
+        list.sort((a, b) => a.fullName.toLowerCase().compareTo(b.fullName.toLowerCase()));
+      case MyPatientSortOption.nameDesc:
+        list.sort((a, b) => b.fullName.toLowerCase().compareTo(a.fullName.toLowerCase()));
+      case MyPatientSortOption.lastVisitNewest:
+        list.sort((a, b) {
+          if (a.lastAppointmentDate == null && b.lastAppointmentDate == null) return 0;
+          if (a.lastAppointmentDate == null) return 1;
+          if (b.lastAppointmentDate == null) return -1;
+          return b.lastAppointmentDate!.compareTo(a.lastAppointmentDate!);
+        });
+      case MyPatientSortOption.lastVisitOldest:
+        list.sort((a, b) {
+          if (a.lastAppointmentDate == null && b.lastAppointmentDate == null) return 0;
+          if (a.lastAppointmentDate == null) return 1;
+          if (b.lastAppointmentDate == null) return -1;
+          return a.lastAppointmentDate!.compareTo(b.lastAppointmentDate!);
+        });
+    }
+    return list;
+  }
+
+  void _showFilterSheet() {
+    AppBottomSheet.show(
+      context: context,
+      title: 'Filters',
+      builder: (ctx, scrollCtrl) => UnifiedFilterSheet(
+        initialDoctorId: null,
+        initialClinic: _branchFilter,
+        showDoctorFilter: false,
+        showBranchFilter: true,
+        scrollController: scrollCtrl,
+        onReset: () {
+          setState(() => _branchFilter = null);
+          Navigator.of(ctx).pop();
+        },
+        onApplied: (String? doctorId, ClinicLocation? clinic) {
+          setState(() => _branchFilter = clinic);
+        },
+      ),
+    );
+  }
+
+  List<Patient> _filtered(List<Patient> patients) {
+    if (_branchFilter == null) return patients;
+    return patients.where((p) => p.clinic == _branchFilter).toList();
+  }
+
+  List<ActiveFilterChip> get _activeChips {
+    if (_branchFilter == null) return const [];
+    return [
+      ActiveFilterChip(
+        label: _branchFilter!.displayLabel,
+        onRemove: () => setState(() => _branchFilter = null),
+      ),
+    ];
   }
 
   @override
@@ -46,12 +153,22 @@ class _MyPatientsScreenState extends ConsumerState<MyPatientsScreen> {
                 AppSizes.p16,
                 AppSizes.p16,
                 AppSizes.p16,
-                AppSizes.p8,
+                AppSizes.p4,
               ),
               child: AppSearchBar(
                 hintText: AppStrings.searchPatients,
                 onChanged: _onSearchChanged,
               ),
+            ),
+            SortFilterBar(
+              sortLabel: 'Sort: ${_sortOption.buttonLabel}',
+              onSortTap: _showSortSheet,
+              activeFilterCount: _activeChips.length,
+              onFilterTap: _showFilterSheet,
+            ),
+            ActiveFilterChipsRow(
+              chips: _activeChips,
+              onClearAll: () => setState(() => _branchFilter = null),
             ),
             assignedPatients.when(
               data: (patients) => Padding(
@@ -85,7 +202,8 @@ class _MyPatientsScreenState extends ConsumerState<MyPatientsScreen> {
                       .search(_currentQuery),
                 ),
                 data: (List<Patient> patients) {
-                  if (patients.isEmpty) {
+                  final displayPatients = _sorted(_filtered(patients));
+                  if (displayPatients.isEmpty) {
                     return EmptyState(
                       message: _currentQuery.isEmpty
                           ? AppStrings.noAssignedPatientsYet
@@ -97,17 +215,14 @@ class _MyPatientsScreenState extends ConsumerState<MyPatientsScreen> {
                   }
 
                   return ListView.builder(
-                    itemCount: patients.length,
+                    itemCount: displayPatients.length,
                     itemBuilder: (context, index) {
-                      final Patient patient = patients[index];
-                      return DataListTile(
-                        title: patient.fullName,
-                        subtitle: patient.phoneNumber,
-                        trailing: AppBadge(
-                          label: patient.clinic.displayLabel,
-                          textColor: AppColors.info,
-                          backgroundColor: AppColors.infoBg,
-                        ),
+                      final Patient patient = displayPatients[index];
+                      return PatientListTile(
+                        name: patient.fullName,
+                        phone: patient.phoneNumber,
+                        branchLabel: patient.clinic.displayLabel,
+                        lastVisitDate: patient.lastAppointmentDate,
                         onTap: () => context.push('/patient/${patient.id}'),
                       );
                     },

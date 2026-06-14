@@ -37,7 +37,7 @@ class SectionCard extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         color: AppColors.surface, // Pure white background
-        borderRadius: const BorderRadius.all(Radius.circular(AppSizes.r8)), // Max standard container radius
+        borderRadius: const BorderRadius.all(Radius.circular(AppSizes.r16)), // Softer card radius
         border: Border.all(
           color: AppColors.border, // Slate 200 crisp lines
           width: AppSizes.borderWidth,
@@ -74,12 +74,6 @@ class SectionCard extends StatelessWidget {
               ),
             ),
             const SizedBox(height: AppSizes.p12),
-            // Minimalist horizontal grid line divider
-            const Divider(
-              height: AppSizes.borderWidth,
-              thickness: AppSizes.borderWidth,
-              color: AppColors.border,
-            ),
           ],
           // Card body content padding alignment
           Padding(

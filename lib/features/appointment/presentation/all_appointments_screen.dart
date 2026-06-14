@@ -20,13 +20,22 @@ import 'package:spine_clinic_app/core/network/app_routes.dart';
 import 'package:spine_clinic_app/core/utils/formatters.dart';
 import 'package:spine_clinic_app/features/appointment/domain/appointment_repository.dart';
 import 'package:spine_clinic_app/features/appointment/domain/appointment_status.dart';
+import 'package:spine_clinic_app/features/appointment/domain/appointment_type.dart';
 import 'package:spine_clinic_app/features/appointment/presentation/all_appointments_providers.dart';
-import 'package:spine_clinic_app/features/appointment/presentation/widgets/all_appointments_filter_bar.dart';
+import 'package:spine_clinic_app/features/appointment/presentation/widgets/appointment_actions_trailing.dart';
+import 'package:spine_clinic_app/features/appointment/presentation/widgets/appointment_filter_content.dart';
+import 'package:spine_clinic_app/shared/widgets/app_search_bar.dart';
+import 'package:spine_clinic_app/shared/widgets/sort_filter_bar.dart';
+import 'package:spine_clinic_app/shared/widgets/sort_options_sheet.dart';
+import 'package:spine_clinic_app/shared/widgets/active_filter_chips_row.dart';
+import 'package:spine_clinic_app/features/staff/presentation/staff_providers.dart';
+import 'package:spine_clinic_app/features/patient/domain/clinic_location.dart';
 import 'package:spine_clinic_app/features/auth/domain/staff.dart';
 import 'package:spine_clinic_app/features/auth/domain/user_role.dart';
 import 'package:spine_clinic_app/features/auth/presentation/auth_providers.dart';
-import 'package:spine_clinic_app/features/patient/domain/clinic_location.dart';
-import 'package:spine_clinic_app/features/staff/presentation/staff_providers.dart';
+import 'package:flutter_animate/flutter_animate.dart';
+import 'package:intl/intl.dart';
+import 'package:spine_clinic_app/shared/widgets/app_bottom_sheet.dart';
 import 'package:spine_clinic_app/shared/widgets/data_list_tile.dart';
 import 'package:spine_clinic_app/shared/widgets/empty_state.dart';
 import 'package:spine_clinic_app/shared/widgets/error_view.dart';
@@ -38,6 +47,21 @@ class AllAppointmentsScreen extends ConsumerStatefulWidget {
 
   @override
   ConsumerState<AllAppointmentsScreen> createState() => _AllAppointmentsScreenState();
+}
+
+enum AppointmentSortOption {
+  dateNewest,
+  dateOldest;
+
+  String get displayLabel => switch (this) {
+    AppointmentSortOption.dateNewest => 'Date (Newest)',
+    AppointmentSortOption.dateOldest => 'Date (Oldest)',
+  };
+
+  String get buttonLabel => switch (this) {
+    AppointmentSortOption.dateNewest => 'Date ↓',
+    AppointmentSortOption.dateOldest => 'Date ↑',
+  };
 }
 
 class _AllAppointmentsScreenState extends ConsumerState<AllAppointmentsScreen> {
@@ -61,6 +85,118 @@ class _AllAppointmentsScreenState extends ConsumerState<AllAppointmentsScreen> {
     }
   }
 
+  Future<void> _showSortSheet() async {
+    final notifier = ref.read(allAppointmentsProvider.notifier);
+    final currentAscending = notifier.isAscending;
+    // Map notifier state to UI enum
+    AppointmentSortOption currentSort;
+    if (currentAscending) {
+      currentSort = AppointmentSortOption.dateOldest;
+    } else {
+      currentSort = AppointmentSortOption.dateNewest;
+    }
+
+    final selected = await SortOptionsSheet.show<AppointmentSortOption>(
+      context: context,
+      title: 'Sort Options',
+      options: AppointmentSortOption.values
+          .map((o) => SortOption(
+                value: o,
+                label: o.displayLabel,
+                buttonLabel: o.buttonLabel,
+              ))
+          .toList(),
+      selected: currentSort,
+    );
+    if (selected != null && mounted) {
+      notifier.setSortAscending(
+        selected == AppointmentSortOption.dateOldest,
+      );
+    }
+  }
+
+  String get _sortButtonLabel {
+    return ref.read(allAppointmentsProvider.notifier).isAscending
+        ? 'Date ↑'
+        : 'Date ↓';
+  }
+
+  List<ActiveFilterChip> get _activeChips {
+    final chips = <ActiveFilterChip>[];
+    final n = ref.read(allAppointmentsProvider.notifier);
+    final user = ref.watch(currentUserProvider).value;
+    final bool isReceptionist = user?.role == UserRole.receptionist;
+
+    // Date range — single combined chip
+    final bool hasDateFrom = n.dateFrom != null;
+    final bool hasDateTo = n.dateTo != null;
+    if (hasDateFrom || hasDateTo) {
+      String label;
+      if (hasDateFrom && hasDateTo) {
+        final displayTo = n.dateTo!.subtract(const Duration(days: 1));
+        label = '${Formatters.formatDateShort(n.dateFrom!)} – ${Formatters.formatDateShort(displayTo)}';
+      } else if (hasDateFrom) {
+        label = 'From ${Formatters.formatDateShort(n.dateFrom!)}';
+      } else {
+        final displayTo = n.dateTo!.subtract(const Duration(days: 1));
+        label = 'To ${Formatters.formatDateShort(displayTo)}';
+      }
+      chips.add(ActiveFilterChip(
+        label: label,
+        onRemove: () {
+          n.setDateFrom(null);
+          n.setDateTo(null);
+        },
+      ));
+    }
+    // Doctor
+    if (n.doctorId != null) {
+      final doctors = ref.watch(activeDoctorsProvider).value ?? [];
+      final doctor = doctors.cast<Staff?>().firstWhere(
+            (d) => d!.id == n.doctorId,
+            orElse: () => null,
+          );
+      chips.add(ActiveFilterChip(
+        label: doctor?.fullName ?? 'Doctor',
+        onRemove: () => n.setDoctorFilter(null),
+      ));
+    }
+    // Clinic — hidden for receptionists (branch is enforced, not a choice)
+    if (n.clinic != null && !isReceptionist) {
+      final clinic = ClinicLocation.values.cast<ClinicLocation?>().firstWhere(
+            (c) => c!.dbValue == n.clinic,
+            orElse: () => null,
+          );
+      chips.add(ActiveFilterChip(
+        label: clinic?.displayLabel ?? n.clinic!,
+        onRemove: () => n.setClinicFilter(null),
+      ));
+    }
+    // Status
+    if (n.status != null) {
+      final status = AppointmentStatus.values.cast<AppointmentStatus?>().firstWhere(
+            (s) => s!.dbValue == n.status,
+            orElse: () => null,
+          );
+      chips.add(ActiveFilterChip(
+        label: status?.displayLabel ?? n.status!,
+        onRemove: () => n.setStatusFilter(null),
+      ));
+    }
+    // Type
+    if (n.type != null) {
+      final type = AppointmentType.values.cast<AppointmentType?>().firstWhere(
+            (t) => t!.dbValue == n.type,
+            orElse: () => null,
+          );
+      chips.add(ActiveFilterChip(
+        label: type?.displayLabel ?? n.type!,
+        onRemove: () => n.setTypeFilter(null),
+      ));
+    }
+    return chips;
+  }
+
   @override
   Widget build(BuildContext context) {
     final Staff? user = ref.watch(currentUserProvider).value;
@@ -75,7 +211,6 @@ class _AllAppointmentsScreenState extends ConsumerState<AllAppointmentsScreen> {
 
     final AsyncValue<List<AppointmentWithPatient>> appointmentsAsync =
         ref.watch(allAppointmentsProvider);
-    final List<Staff> doctors = ref.watch(activeDoctorsProvider).value ?? [];
     final AllAppointmentsNotifier notifier = ref.read(allAppointmentsProvider.notifier);
 
     return Scaffold(
@@ -88,19 +223,24 @@ class _AllAppointmentsScreenState extends ConsumerState<AllAppointmentsScreen> {
       ),
       body: Column(
         children: [
-          AllAppointmentsFilterBar(
-            dateFrom: notifier.dateFrom,
-            dateTo: notifier.dateTo,
-            selectedDoctorId: notifier.doctorId,
-            branchFilter: _parseClinic(notifier.clinic),
-            statusFilter: _parseStatus(notifier.status),
-            doctors: doctors,
-            onSearchChanged: notifier.searchPatient,
-            onPickDate: (bool isFrom) => _pickDate(notifier, isFrom),
-            onDoctorChanged: notifier.setDoctorFilter,
-            onBranchChanged: (ClinicLocation? c) => notifier.setClinicFilter(c?.dbValue),
-            onStatusChanged: (AppointmentStatus? s) => notifier.setStatusFilter(s?.dbValue),
-            onClear: notifier.clearAll,
+          Padding(
+            padding: const EdgeInsets.fromLTRB(
+              AppSizes.p16, AppSizes.p12, AppSizes.p16, AppSizes.p4,
+            ),
+            child: AppSearchBar(
+              hintText: AppStrings.searchByPatientNameHint,
+              onChanged: notifier.searchPatient,
+            ),
+          ),
+          SortFilterBar(
+            sortLabel: 'Sort: $_sortButtonLabel',
+            onSortTap: _showSortSheet,
+            activeFilterCount: _activeChips.length,
+            onFilterTap: () => _openFilterSheet(context),
+          ),
+          ActiveFilterChipsRow(
+            chips: _activeChips,
+            onClearAll: () => ref.read(allAppointmentsProvider.notifier).clearAll(),
           ),
           Expanded(child: _buildBody(appointmentsAsync)),
         ],
@@ -123,11 +263,18 @@ class _AllAppointmentsScreenState extends ConsumerState<AllAppointmentsScreen> {
           );
         }
         final bool loadingMore = ref.watch(isLoadingMoreProvider);
+        final List<_ListItem> listItems = _buildListItems(items);
+
         return ListView.builder(
           controller: _scrollCtrl,
-          itemCount: items.length + (loadingMore ? 1 : 0),
+          padding: const EdgeInsets.only(
+            left: AppSizes.p16,
+            right: AppSizes.p16,
+            bottom: AppSizes.p32,
+          ),
+          itemCount: listItems.length + (loadingMore ? 1 : 0),
           itemBuilder: (_, int index) {
-            if (index == items.length) {
+            if (index == listItems.length) {
               return const Padding(
                 padding: EdgeInsets.symmetric(vertical: AppSizes.p16),
                 child: Center(
@@ -142,54 +289,97 @@ class _AllAppointmentsScreenState extends ConsumerState<AllAppointmentsScreen> {
                 ),
               );
             }
-            final AppointmentWithPatient item = items[index];
+            final _ListItem listItem = listItems[index];
+            if (listItem is _HeaderItem) {
+              return Padding(
+                padding: const EdgeInsets.fromLTRB(AppSizes.p8, AppSizes.p20, AppSizes.p8, AppSizes.p8),
+                child: Text(
+                  listItem.title,
+                  style: AppTextStyles.captionBold.copyWith(
+                    color: AppColors.textSecondary,
+                  ),
+                ),
+              );
+            }
+            final AppointmentWithPatient item = (listItem as _AppointmentItem).item;
             return DataListTile(
+              key: ValueKey(item.appointment.id),
               title: item.patient.fullName,
               subtitle: '${item.appointment.type.displayLabel} · '
-                  '${item.appointment.status.displayLabel} · '
-                  '${Formatters.formatDateMedium(item.appointment.scheduledAt.toLocal())}',
+                  '${Formatters.formatTime(item.appointment.scheduledAt.toLocal())}',
+              leading: CircleAvatar(
+                radius: AppSizes.avatarTile / 2,
+                backgroundColor: AppColors.primary,
+                child: const Icon(
+                  Icons.person,
+                  color: AppColors.textOnPrimary,
+                  size: AppSizes.avatarTile * 0.5,
+                ),
+              ),
+              trailing: AppointmentActionsTrailing(appointment: item.appointment),
               onTap: () => context.push(
                 AppRoutes.appointmentDetail.replaceAll(':id', item.appointment.id),
               ),
-            );
+            ).animate().fadeIn(
+                  duration: 250.ms,
+                  delay: (index * 30).ms,
+                );
           },
         );
       },
     );
   }
 
-  Future<void> _pickDate(AllAppointmentsNotifier notifier, bool isFrom) async {
-    final DateTime initial = isFrom
-        ? (notifier.dateFrom ?? DateTime.now().subtract(const Duration(days: 30)))
-        : (notifier.dateTo ?? DateTime.now());
-    final DateTime? picked = await showDatePicker(
-      context: context,
-      initialDate: initial,
-      firstDate: DateTime(2020),
-      lastDate: DateTime.now().add(const Duration(days: 365)),
-    );
-    if (picked != null) {
-      if (isFrom) {
-        notifier.setDateFrom(picked);
-      } else {
-        notifier.setDateTo(picked.add(const Duration(days: 1)));
+  List<_ListItem> _buildListItems(List<AppointmentWithPatient> items) {
+    final List<_ListItem> listItems = [];
+    String? lastHeader;
+
+    for (final item in items) {
+      final date = item.appointment.scheduledAt.toLocal();
+      final header = _getGroupHeader(date);
+      if (header != lastHeader) {
+        listItems.add(_HeaderItem(header));
+        lastHeader = header;
       }
+      listItems.add(_AppointmentItem(item));
     }
+    return listItems;
   }
 
-  ClinicLocation? _parseClinic(String? dbValue) {
-    if (dbValue == null) return null;
-    return ClinicLocation.values.cast<ClinicLocation?>().firstWhere(
-          (c) => c!.dbValue == dbValue,
-          orElse: () => null,
-        );
+  String _getGroupHeader(DateTime date) {
+    final DateTime localDate = date.toLocal();
+    final DateTime now = DateTime.now();
+    final DateTime today = DateTime(now.year, now.month, now.day);
+    final DateTime comparisonDate = DateTime(localDate.year, localDate.month, localDate.day);
+
+    final int difference = today.difference(comparisonDate).inDays;
+
+    if (difference == 0) return 'Today';
+    if (difference == 1) return 'Yesterday';
+    if (difference == -1) return 'Tomorrow';
+    // Everything else: absolute day name + abbreviated month + day
+    return DateFormat('EEEE, MMM d').format(localDate);
   }
 
-  AppointmentStatus? _parseStatus(String? dbValue) {
-    if (dbValue == null) return null;
-    return AppointmentStatus.values.cast<AppointmentStatus?>().firstWhere(
-          (s) => s!.dbValue == dbValue,
-          orElse: () => null,
-        );
+  void _openFilterSheet(BuildContext context) {
+    AppBottomSheet.show(
+      context: context,
+      title: 'Advanced Filters',
+      builder: (context, scrollController) => AppointmentFilterContent(
+        scrollController: scrollController,
+      ),
+    );
   }
+}
+
+sealed class _ListItem {}
+
+class _HeaderItem extends _ListItem {
+  _HeaderItem(this.title);
+  final String title;
+}
+
+class _AppointmentItem extends _ListItem {
+  _AppointmentItem(this.item);
+  final AppointmentWithPatient item;
 }

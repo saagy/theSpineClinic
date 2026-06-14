@@ -80,9 +80,11 @@ abstract class AppointmentRepository {
     String? doctorId,
     String? clinic,
     String? status,
+    String? type,
     String? patientQuery,
     int offset = 0,
     int limit = 30,
+    bool ascending = false,
   });
 
   /// Returns the total count of appointments matching the given optional filters.
@@ -94,6 +96,7 @@ abstract class AppointmentRepository {
     String? doctorId,
     String? clinic,
     String? status,
+    String? type,
     String? patientQuery,
   });
 }

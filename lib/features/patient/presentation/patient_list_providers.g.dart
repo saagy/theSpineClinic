@@ -42,7 +42,7 @@ final class PatientListProvider
   PatientList create() => PatientList();
 }
 
-String _$patientListHash() => r'33d1a7a13c7c7e042bb23614e4abce040cac1ae7';
+String _$patientListHash() => r'e5a833bea0902a8edaf72d950882ab415df70e9e';
 
 /// Manages the patient list with filters and pagination.
 ///

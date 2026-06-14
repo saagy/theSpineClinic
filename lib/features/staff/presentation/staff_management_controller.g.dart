@@ -200,7 +200,7 @@ final class StaffFormControllerProvider
 }
 
 String _$staffFormControllerHash() =>
-    r'eccfe3d5ec04e064613a8a10f1c2b7e1614b5539';
+    r'd863eecb040b90967ab7f762ea128adb4065d7ab';
 
 /// Controller managing staff account registration and modifications.
 

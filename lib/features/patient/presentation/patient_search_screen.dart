@@ -25,8 +25,8 @@ import 'package:spine_clinic_app/features/patient/presentation/patient_providers
 import 'package:spine_clinic_app/features/patient/presentation/widgets/patient_balance_chip.dart';
 import 'package:spine_clinic_app/features/patient/presentation/widgets/patient_search_filters.dart';
 import 'package:spine_clinic_app/shared/widgets/app_search_bar.dart';
-import 'package:spine_clinic_app/shared/widgets/data_list_tile.dart';
 import 'package:spine_clinic_app/shared/widgets/empty_state.dart';
+import 'package:spine_clinic_app/shared/widgets/patient_list_tile.dart';
 
 /// Search screen for finding patients by name or phone number.
 class PatientSearchScreen extends ConsumerStatefulWidget {
@@ -148,10 +148,11 @@ class _PatientSearchScreenState extends ConsumerState<PatientSearchScreen> {
                   itemCount: patients.length,
                   itemBuilder: (_, int index) {
                     final Patient patient = patients[index];
-                    return DataListTile(
-                      title: patient.fullName,
-                      subtitle:
-                        '${patient.phoneNumber} · ${patient.clinic.displayLabel}',
+                    return PatientListTile(
+                      name: patient.fullName,
+                      phone: patient.phoneNumber,
+                      branchLabel: patient.clinic.displayLabel,
+                      lastVisitDate: patient.lastAppointmentDate,
                       trailing: PatientBalanceChip(
                         balance: patient.packageBalance,
                       ),
@@ -170,6 +171,7 @@ class _PatientSearchScreenState extends ConsumerState<PatientSearchScreen> {
         ? FloatingActionButton(
             onPressed: () => context.push(AppRoutes.newPatient),
             backgroundColor: AppColors.primary,
+            shape: const CircleBorder(),
             child: const Icon(Icons.add, color: Colors.white),
           )
         : null,

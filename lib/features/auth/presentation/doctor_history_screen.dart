@@ -18,12 +18,18 @@ import 'package:spine_clinic_app/features/appointment/domain/appointment_reposit
 import 'package:spine_clinic_app/features/appointment/domain/appointment_type.dart';
 import 'package:spine_clinic_app/features/appointment/presentation/appointment_providers.dart';
 import 'package:spine_clinic_app/features/auth/presentation/auth_providers.dart';
-import 'package:spine_clinic_app/features/auth/presentation/widgets/history_filter_bar.dart';
 import 'package:spine_clinic_app/features/patient/domain/clinic_location.dart';
 import 'package:spine_clinic_app/shared/widgets/app_back_button.dart';
+import 'package:spine_clinic_app/shared/widgets/app_bottom_sheet.dart';
 import 'package:spine_clinic_app/shared/widgets/app_search_bar.dart';
 import 'package:spine_clinic_app/shared/widgets/data_list_tile.dart';
 import 'package:spine_clinic_app/shared/widgets/empty_state.dart';
+import 'package:spine_clinic_app/shared/widgets/filter_chip.dart';
+import 'package:spine_clinic_app/shared/widgets/section_header.dart';
+import 'package:spine_clinic_app/shared/widgets/sort_filter_bar.dart';
+import 'package:spine_clinic_app/shared/widgets/sort_options_sheet.dart';
+import 'package:spine_clinic_app/shared/widgets/unified_filter_sheet.dart';
+import 'package:spine_clinic_app/shared/widgets/active_filter_chips_row.dart';
 
 /// Full-screen history view for a doctor's appointments.
 class DoctorHistoryScreen extends ConsumerStatefulWidget {
@@ -32,6 +38,27 @@ class DoctorHistoryScreen extends ConsumerStatefulWidget {
 
   @override
   ConsumerState<DoctorHistoryScreen> createState() => _DoctorHistoryScreenState();
+}
+
+enum HistorySortOption {
+  dateNewest,
+  dateOldest,
+  patientNameAsc,
+  patientNameDesc;
+
+  String get displayLabel => switch (this) {
+    HistorySortOption.dateNewest => 'Date (Newest)',
+    HistorySortOption.dateOldest => 'Date (Oldest)',
+    HistorySortOption.patientNameAsc => 'Patient Name (A → Z)',
+    HistorySortOption.patientNameDesc => 'Patient Name (Z → A)',
+  };
+
+  String get buttonLabel => switch (this) {
+    HistorySortOption.dateNewest => 'Date ↓',
+    HistorySortOption.dateOldest => 'Date ↑',
+    HistorySortOption.patientNameAsc => 'Name A→Z',
+    HistorySortOption.patientNameDesc => 'Name Z→A',
+  };
 }
 
 class _DoctorHistoryScreenState extends ConsumerState<DoctorHistoryScreen> {
@@ -46,6 +73,7 @@ class _DoctorHistoryScreenState extends ConsumerState<DoctorHistoryScreen> {
   AppointmentType? _typeFilter;
   ClinicLocation? _branchFilter;
   int _visibleCount = 30;
+  HistorySortOption _sortOption = HistorySortOption.dateNewest;
 
   @override
   void initState() {
@@ -120,28 +148,198 @@ class _DoctorHistoryScreenState extends ConsumerState<DoctorHistoryScreen> {
     });
   }
 
+  Future<void> _showSortSheet() async {
+    final selected = await SortOptionsSheet.show<HistorySortOption>(
+      context: context,
+      title: 'Sort Options',
+      options: HistorySortOption.values
+          .map((o) => SortOption(
+                value: o,
+                label: o.displayLabel,
+                buttonLabel: o.buttonLabel,
+              ))
+          .toList(),
+      selected: _sortOption,
+    );
+    if (selected != null && mounted) {
+      setState(() => _sortOption = selected);
+    }
+  }
+
+  List<DoctorScheduleItem> _sorted(List<DoctorScheduleItem> items) {
+    final list = List<DoctorScheduleItem>.from(items);
+    switch (_sortOption) {
+      case HistorySortOption.dateNewest:
+        list.sort((a, b) => b.appointment.scheduledAt.compareTo(a.appointment.scheduledAt));
+      case HistorySortOption.dateOldest:
+        list.sort((a, b) => a.appointment.scheduledAt.compareTo(b.appointment.scheduledAt));
+      case HistorySortOption.patientNameAsc:
+        list.sort((a, b) => a.patient.fullName.toLowerCase().compareTo(b.patient.fullName.toLowerCase()));
+      case HistorySortOption.patientNameDesc:
+        list.sort((a, b) => b.patient.fullName.toLowerCase().compareTo(a.patient.fullName.toLowerCase()));
+    }
+    return list;
+  }
+
+  List<ActiveFilterChip> get _activeChips {
+    final chips = <ActiveFilterChip>[];
+    if (_dateFrom != null) {
+      chips.add(ActiveFilterChip(
+        label: 'From ${Formatters.formatDateShort(_dateFrom!)}',
+        onRemove: () { setState(() => _dateFrom = null); _applyFilters(); },
+      ));
+    }
+    if (_dateTo != null) {
+      chips.add(ActiveFilterChip(
+        label: 'To ${Formatters.formatDateShort(_dateTo!)}',
+        onRemove: () { setState(() => _dateTo = null); _applyFilters(); },
+      ));
+    }
+    if (_typeFilter != null) {
+      chips.add(ActiveFilterChip(
+        label: _typeFilter!.displayLabel,
+        onRemove: () { setState(() => _typeFilter = null); _applyFilters(); },
+      ));
+    }
+    if (_branchFilter != null) {
+      chips.add(ActiveFilterChip(
+        label: _branchFilter!.displayLabel,
+        onRemove: () { setState(() => _branchFilter = null); _applyFilters(); },
+      ));
+    }
+    return chips;
+  }
+
+  void _showFilterSheet() {
+    // Capture current filter state at open time.
+    DateTime? sheetDateFrom = _dateFrom;
+    DateTime? sheetDateTo = _dateTo;
+    AppointmentType? sheetType = _typeFilter;
+    ClinicLocation? sheetBranch = _branchFilter;
+
+    Future<void> pickSheetDate(bool isFrom) async {
+      final picked = await showDatePicker(
+        context: context,
+        initialDate: isFrom
+            ? (sheetDateFrom ?? DateTime.now().subtract(const Duration(days: 30)))
+            : (sheetDateTo ?? DateTime.now()),
+        firstDate: DateTime(2020),
+        lastDate: DateTime.now().add(const Duration(days: 365)),
+      );
+      if (picked != null) {
+        if (isFrom) {
+          sheetDateFrom = picked;
+        } else {
+          sheetDateTo = picked;
+        }
+      }
+    }
+
+    AppBottomSheet.show(
+      context: context,
+      title: 'Filters',
+      builder: (ctx, scrollCtrl) => StatefulBuilder(
+        builder: (ctx, setSheetState) {
+          Widget buildDateChips() {
+            return Row(
+              children: [
+                Expanded(
+                  child: AppFilterChip(
+                    label: sheetDateFrom != null
+                        ? Formatters.formatDateShort(sheetDateFrom!)
+                        : AppStrings.fromDate,
+                    isActive: sheetDateFrom != null,
+                    onTap: () async {
+                      await pickSheetDate(true);
+                      setSheetState(() {});
+                    },
+                  ),
+                ),
+                const SizedBox(width: AppSizes.p8),
+                Expanded(
+                  child: AppFilterChip(
+                    label: sheetDateTo != null
+                        ? Formatters.formatDateShort(sheetDateTo!)
+                        : AppStrings.toDate,
+                    isActive: sheetDateTo != null,
+                    onTap: () async {
+                      await pickSheetDate(false);
+                      setSheetState(() {});
+                    },
+                  ),
+                ),
+              ],
+            );
+          }
+
+          Widget buildTypeChips() {
+            return Wrap(
+              spacing: AppSizes.p8,
+              runSpacing: AppSizes.p8,
+              children: [
+                AppFilterChip(
+                  label: 'All',
+                  isActive: sheetType == null,
+                  onTap: () => setSheetState(() => sheetType = null),
+                ),
+                ...AppointmentType.values.map(
+                  (t) => AppFilterChip(
+                    label: t.displayLabel,
+                    isActive: sheetType == t,
+                    onTap: () => setSheetState(() => sheetType = t),
+                  ),
+                ),
+              ],
+            );
+          }
+
+          return UnifiedFilterSheet(
+            initialDoctorId: null,
+            initialClinic: sheetBranch,
+            showDoctorFilter: false,
+            showBranchFilter: true,
+            scrollController: scrollCtrl,
+            additionalFilters: [
+              const SectionHeader(title: 'Date Range'),
+              const SizedBox(height: AppSizes.p8),
+              buildDateChips(),
+              const SizedBox(height: AppSizes.p16),
+              const SectionHeader(title: 'Session Type'),
+              const SizedBox(height: AppSizes.p8),
+              buildTypeChips(),
+            ],
+            onReset: () {
+              sheetDateFrom = null;
+              sheetDateTo = null;
+              sheetType = null;
+              sheetBranch = null;
+              setState(() {
+                _dateFrom = null;
+                _dateTo = null;
+                _typeFilter = null;
+                _branchFilter = null;
+              });
+              _applyFilters();
+              Navigator.of(ctx).pop();
+            },
+            onApplied: (String? doctorId, ClinicLocation? clinic) {
+              setState(() {
+                _dateFrom = sheetDateFrom;
+                _dateTo = sheetDateTo;
+                _typeFilter = sheetType;
+                _branchFilter = clinic;
+              });
+              _applyFilters();
+            },
+          );
+        },
+      ),
+    );
+  }
+
   void _onSearchChanged(String query) {
     _searchQuery = query;
     _applyFilters();
-  }
-
-  Future<void> _pickDate(bool isFrom) async {
-    final picked = await showDatePicker(
-      context: context,
-      initialDate: isFrom ? (_dateFrom ?? DateTime.now().subtract(const Duration(days: 30))) : (_dateTo ?? DateTime.now()),
-      firstDate: DateTime(2020),
-      lastDate: DateTime.now().add(const Duration(days: 365)),
-    );
-    if (picked != null) {
-      setState(() {
-        if (isFrom) {
-          _dateFrom = picked;
-        } else {
-          _dateTo = picked;
-        }
-      });
-      _applyFilters();
-    }
   }
 
   @override
@@ -164,21 +362,15 @@ class _DoctorHistoryScreenState extends ConsumerState<DoctorHistoryScreen> {
               onChanged: _onSearchChanged,
             ),
           ),
-          HistoryFilterBar(
-            dateFrom: _dateFrom,
-            dateTo: _dateTo,
-            typeFilter: _typeFilter,
-            branchFilter: _branchFilter,
-            onPickDate: _pickDate,
-            onTypeChanged: (type) {
-              setState(() => _typeFilter = type);
-              _applyFilters();
-            },
-            onBranchChanged: (branch) {
-              setState(() => _branchFilter = branch);
-              _applyFilters();
-            },
-            onClear: () {
+          SortFilterBar(
+            sortLabel: 'Sort: ${_sortOption.buttonLabel}',
+            onSortTap: _showSortSheet,
+            activeFilterCount: _activeChips.length,
+            onFilterTap: _showFilterSheet,
+          ),
+          ActiveFilterChipsRow(
+            chips: _activeChips,
+            onClearAll: () {
               setState(() {
                 _dateFrom = null;
                 _dateTo = null;
@@ -204,20 +396,24 @@ class _DoctorHistoryScreenState extends ConsumerState<DoctorHistoryScreen> {
                       )
                     : _filteredItems.isEmpty
                         ? const EmptyState(message: AppStrings.noHistoricAppointments, icon: Icons.history_rounded)
-                        : ListView.builder(
-                            controller: _scrollCtrl,
-                            itemCount: _filteredItems.length.clamp(0, _visibleCount),
-                            itemBuilder: (_, index) {
-                              final item = _filteredItems[index];
-                              return DataListTile(
-                                title: item.patient.fullName,
-                                subtitle: '${item.appointment.type.displayLabel} · ${Formatters.formatDateMedium(item.appointment.scheduledAt.toLocal())}',
-                                onTap: () => context.push(
-                                  AppRoutes.appointmentDetail.replaceAll(':id', item.appointment.id),
-                                ),
-                              );
-                            },
-                          ),
+                        : (() {
+                            final sorted = _sorted(_filteredItems);
+                            final displayCount = sorted.length.clamp(0, _visibleCount);
+                            return ListView.builder(
+                              controller: _scrollCtrl,
+                              itemCount: displayCount,
+                              itemBuilder: (_, index) {
+                                final item = sorted[index];
+                                return DataListTile(
+                                  title: item.patient.fullName,
+                                  subtitle: '${item.appointment.type.displayLabel} · ${Formatters.formatDateMedium(item.appointment.scheduledAt.toLocal())}',
+                                  onTap: () => context.push(
+                                    AppRoutes.appointmentDetail.replaceAll(':id', item.appointment.id),
+                                  ),
+                                );
+                              },
+                            );
+                          })(),
           ),
         ],
       ),

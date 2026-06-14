@@ -1,47 +1,48 @@
-/// A person-list row with circular initials avatar, name, subtitle,
-/// and trailing badge.
+/// A unified patient list tile card with a person avatar icon, name, and combined
+/// phone/location subtitle.
 ///
-/// Every patient, doctor, or staff member row uses this component.
-/// It enforces the Medics design pattern: teal CircleAvatar, bold
-/// name, muted gray subtitle, and an optional right-side status badge.
+/// Enforces the Medics design pattern: teal CircleAvatar with Icons.person, bold
+/// name, and combined phone and branch location subtitle.
 ///
 /// Rule 1 — under 200 lines.
 library;
 
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:spine_clinic_app/core/constants/app_colors.dart';
 import 'package:spine_clinic_app/core/constants/app_sizes.dart';
 import 'package:spine_clinic_app/core/constants/app_text_styles.dart';
 
-/// A standardised person list tile with initials avatar.
+/// A standardized patient card list tile with person avatar, name, right-aligned branch,
+/// and phone/last-visit subtitle.
 class PatientListTile extends StatelessWidget {
   /// Creates a [PatientListTile].
   const PatientListTile({
     super.key,
     required this.name,
-    this.subtitle,
-    this.initials,
+    required this.phone,
+    required this.branchLabel,
+    required this.lastVisitDate,
     this.trailing,
     this.onTap,
     this.avatarSize,
-    this.statusBadge,
+    this.margin,
   });
 
-  /// The person's full name (displayed in bold).
+  /// The patient's full name.
   final String name;
 
-  /// Optional secondary line (e.g. phone, branch, last visit).
-  final String? subtitle;
+  /// The patient's phone number.
+  final String phone;
 
-  /// Two-character initials for the avatar. Auto-derived from [name]
-  /// if not provided.
-  final String? initials;
+  /// The branch/clinic location label.
+  final String branchLabel;
 
-  /// Optional widget on the right side (badge, icon, timestamp).
+  /// The patient's last visit/appointment date.
+  final DateTime? lastVisitDate;
+
+  /// Optional additional trailing widget (displayed on the far right).
   final Widget? trailing;
-
-  /// Optional [StatusBadge] or similar widget shown inline after the name.
-  final Widget? statusBadge;
 
   /// Called when the tile is tapped.
   final VoidCallback? onTap;
@@ -49,98 +50,117 @@ class PatientListTile extends StatelessWidget {
   /// Avatar diameter. Defaults to [AppSizes.avatarTile] (46px).
   final double? avatarSize;
 
+  /// Optional external margin spacing around the tile card.
+  final EdgeInsetsGeometry? margin;
+
   @override
   Widget build(BuildContext context) {
-    final String displayInitials = initials ?? _deriveInitials(name);
+    final String lastVisitText = lastVisitDate != null
+        ? DateFormat('MMM d').format(lastVisitDate!.toLocal())
+        : '--';
 
-    return Material(
-      color: AppColors.transparent,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: AppSizes.borderRadiusCard,
-        splashColor: AppColors.primaryLight,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(
-            horizontal: AppSizes.p16,
-            vertical: AppSizes.p14,
-          ),
-          child: Row(
-            children: [
-              // ── Avatar ──
-              CircleAvatar(
-                radius: (avatarSize ?? AppSizes.avatarTile) / 2,
-                backgroundColor: AppColors.primary,
-                child: Text(
-                  displayInitials,
-                  style: AppTextStyles.bodyBold.copyWith(
-                    color: AppColors.textOnPrimary,
+    return Container(
+      margin: margin ?? const EdgeInsets.only(bottom: AppSizes.p12),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: const BorderRadius.all(Radius.circular(AppSizes.r16)),
+        border: Border.all(
+          color: AppColors.border,
+          width: AppSizes.borderWidth,
+        ),
+        boxShadow: const [AppColors.cardShadow],
+      ),
+      child: ClipRRect(
+        borderRadius: const BorderRadius.all(Radius.circular(AppSizes.r16)),
+        child: Material(
+          color: AppColors.surface,
+          child: InkWell(
+            onTap: onTap,
+            splashColor: AppColors.primaryLight,
+            borderRadius: const BorderRadius.all(Radius.circular(AppSizes.r16)),
+            child: Padding(
+              padding: const EdgeInsets.all(AppSizes.p16),
+              child: Row(
+                children: [
+                  // ── Avatar ──
+                  CircleAvatar(
+                    radius: (avatarSize ?? AppSizes.avatarTile) / 2,
+                    backgroundColor: AppColors.primary,
+                    child: Icon(
+                      Icons.person,
+                      color: AppColors.textOnPrimary,
+                      size: (avatarSize ?? AppSizes.avatarTile) * 0.5,
+                    ),
                   ),
-                ),
-              ),
-              const SizedBox(width: AppSizes.p12),
+                  const SizedBox(width: AppSizes.p12),
 
-              // ── Text content ──
-              Expanded(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
+                  // ── Text content ──
+                  Expanded(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Flexible(
-                          child: Text(
-                            name,
-                            style: AppTextStyles.bodyBold,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Expanded(
+                              child: Text(
+                                name,
+                                style: AppTextStyles.headingSmall.copyWith(
+                                  color: AppColors.textPrimary,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                            const SizedBox(width: AppSizes.p8),
+                            Text(
+                              branchLabel,
+                              style: AppTextStyles.caption.copyWith(
+                                color: AppColors.textSecondary,
+                              ),
+                            ),
+                          ],
                         ),
-                        if (statusBadge != null) ...[
-                          const SizedBox(width: AppSizes.p8),
-                          statusBadge!,
-                        ],
+                        const SizedBox(height: AppSizes.p4),
+                        Text.rich(
+                          TextSpan(
+                            children: [
+                              const WidgetSpan(
+                                child: Icon(
+                                  Icons.phone,
+                                  size: 14.0,
+                                  color: AppColors.textSecondary,
+                                ),
+                                alignment: PlaceholderAlignment.middle,
+                              ),
+                              const WidgetSpan(child: SizedBox(width: AppSizes.p4)),
+                              TextSpan(text: phone),
+                              const TextSpan(text: '   •   '),
+                              TextSpan(text: 'Last $lastVisitText'),
+                            ],
+                          ),
+                          style: AppTextStyles.caption.copyWith(
+                            color: AppColors.textSecondary,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
                       ],
                     ),
-                    if (subtitle != null) ...[
-                      const SizedBox(height: AppSizes.p2),
-                      Text(
-                        subtitle!,
-                        style: AppTextStyles.bodySecondary,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ],
-                  ],
-                ),
-              ),
+                  ),
 
-              // ── Trailing ──
-              if (trailing != null) ...[
-                const SizedBox(width: AppSizes.p8),
-                trailing!,
-              ],
-            ],
+                  // ── Trailing ──
+                  if (trailing != null) ...[
+                    const SizedBox(width: AppSizes.p12),
+                    trailing!,
+                  ],
+                ],
+              ),
+            ),
           ),
         ),
       ),
     );
-  }
-
-  /// Derives up to two initials from a name string.
-  String _deriveInitials(String name) {
-    final List<String> parts = name.trim().split(RegExp(r'\s+'));
-    if (parts.isEmpty) return '?';
-    if (parts.length == 1) {
-      return parts.first.isNotEmpty
-          ? parts.first[0].toUpperCase()
-          : '?';
-    }
-    final String first = parts.first.isNotEmpty
-        ? parts.first[0].toUpperCase()
-        : '';
-    final String last = parts.last.isNotEmpty
-        ? parts.last[0].toUpperCase()
-        : '';
-    return '$first$last';
   }
 }

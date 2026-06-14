@@ -176,9 +176,11 @@ class AppointmentRepositoryImpl implements AppointmentRepository {
     String? doctorId,
     String? clinic,
     String? status,
+    String? type,
     String? patientQuery,
     int offset = 0,
     int limit = 30,
+    bool ascending = false,
   }) {
     return _run(() async {
       final List<String>? doctorIds = await _resolveDoctorIds(doctorId);
@@ -190,11 +192,12 @@ class AppointmentRepositoryImpl implements AppointmentRepository {
         dateTo: dateTo,
         status: status,
         clinic: clinic,
+        type: type,
         patientQuery: patientQuery,
       );
 
       final List<Map<String, dynamic>> rows = await builder
-          .order('scheduled_at', ascending: false)
+          .order('scheduled_at', ascending: ascending)
           .range(offset, offset + limit - 1);
       return rows
           .where((r) => r['patient'] != null)
@@ -213,6 +216,7 @@ class AppointmentRepositoryImpl implements AppointmentRepository {
     String? doctorId,
     String? clinic,
     String? status,
+    String? type,
     String? patientQuery,
   }) {
     return _run(() async {
@@ -225,6 +229,7 @@ class AppointmentRepositoryImpl implements AppointmentRepository {
         dateTo: dateTo,
         status: status,
         clinic: clinic,
+        type: type,
         patientQuery: patientQuery,
       );
 
@@ -254,6 +259,7 @@ class AppointmentRepositoryImpl implements AppointmentRepository {
     DateTime? dateTo,
     String? status,
     String? clinic,
+    String? type,
     String? patientQuery,
   }) {
     var builder = _service.from(_appointmentsTable).select('*, patient:patients!inner(*)');
@@ -261,6 +267,7 @@ class AppointmentRepositoryImpl implements AppointmentRepository {
     if (dateTo != null) builder = builder.lt('scheduled_at', dateTo.toUtc().toIso8601String());
     if (status != null) builder = builder.eq('status', status);
     if (clinic != null) builder = builder.eq('patient.clinic', clinic);
+    if (type != null) builder = builder.eq('type', type);
     if (doctorIds != null) builder = builder.inFilter('id', doctorIds);
 
     if (patientQuery != null && patientQuery.trim().isNotEmpty) {
