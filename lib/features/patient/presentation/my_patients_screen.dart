@@ -216,6 +216,7 @@ class _MyPatientsScreenState extends ConsumerState<MyPatientsScreen> {
                   }
 
                   return ListView.builder(
+                    padding: const EdgeInsets.symmetric(horizontal: AppSizes.p16),
                     itemCount: displayPatients.length,
                     itemBuilder: (context, index) {
                       final Patient patient = displayPatients[index];

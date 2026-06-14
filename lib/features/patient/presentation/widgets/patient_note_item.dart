@@ -12,7 +12,7 @@ import 'package:spine_clinic_app/features/auth/domain/user_role.dart';
 import 'package:spine_clinic_app/features/auth/presentation/auth_providers.dart';
 import 'package:spine_clinic_app/features/medical_records/domain/patient_note.dart';
 import 'package:spine_clinic_app/features/medical_records/presentation/medical_records_providers.dart';
-import 'package:spine_clinic_app/features/patient/presentation/widgets/add_standalone_note_dialog.dart';
+import 'package:spine_clinic_app/features/patient/presentation/widgets/add_note_sheet.dart';
 import 'package:spine_clinic_app/shared/widgets/app_badge.dart';
 import 'package:spine_clinic_app/shared/widgets/app_snackbar.dart';
 import 'package:spine_clinic_app/shared/widgets/confirmation_dialog.dart';
@@ -42,7 +42,7 @@ class PatientNoteItem extends ConsumerWidget {
       color: AppColors.surface,
       child: InkWell(
         borderRadius: const BorderRadius.all(Radius.circular(AppSizes.r8)),
-        onTap: () => _showEditNoteDialog(context, ref),
+        onTap: () => _showEditNoteSheet(context),
         onLongPress: () => _confirmDeleteNote(context, ref),
         child: Padding(
           padding: const EdgeInsets.all(AppSizes.p16),
@@ -64,8 +64,8 @@ class PatientNoteItem extends ConsumerWidget {
                         style: AppTextStyles.bodyBold.copyWith(color: AppColors.textPrimary),
                       );
                     },
-                    loading: () => const Text(AppStrings.loadingAuthor, style: AppTextStyles.bodySecondary),
-                    error: (_, __) => const Text(AppStrings.unknownAuthor, style: AppTextStyles.bodySecondary),
+                    loading: () => Text(AppStrings.loadingAuthor, style: AppTextStyles.bodySecondary),
+                    error: (_, __) => Text(AppStrings.unknownAuthor, style: AppTextStyles.bodySecondary),
                   ),
                   Row(
                     mainAxisSize: MainAxisSize.min,
@@ -103,22 +103,18 @@ class PatientNoteItem extends ConsumerWidget {
     );
   }
 
-  void _showEditNoteDialog(BuildContext context, WidgetRef ref) {
-    showDialog<void>(
+  void _showEditNoteSheet(BuildContext context) {
+    showModalBottomSheet(
       context: context,
-      builder: (BuildContext ctx) {
-        return AddStandaloneNoteDialog(
-          initialText: note.noteText,
-          onSave: (String noteText) {
-            ref
-                .read(patientNotesNotifierProvider(note.patientId).notifier)
-                .updateExistingNote(
-                  noteId: note.id,
-                  noteText: noteText,
-                );
-          },
-        );
-      },
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (_) => AddNoteSheet(
+        patientId: note.patientId,
+        initialText: note.noteText,
+        noteId: note.id,
+      ),
     );
   }
 
@@ -178,8 +174,8 @@ class _AppointmentLinkIndicator extends ConsumerWidget {
               backgroundColor: AppColors.infoBg,
             );
           },
-          loading: () => const Text(AppStrings.loadingDetails, style: AppTextStyles.caption),
-          error: (_, __) => const Text(AppStrings.linkedAppointmentLabel, style: AppTextStyles.caption),
+          loading: () => Text(AppStrings.loadingDetails, style: AppTextStyles.caption),
+          error: (_, __) => Text(AppStrings.linkedAppointmentLabel, style: AppTextStyles.caption),
         ),
       ],
     );

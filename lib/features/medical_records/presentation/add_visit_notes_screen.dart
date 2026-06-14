@@ -29,7 +29,7 @@ class AddVisitNotesScreen extends ConsumerWidget {
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
-        title: const Text(AppStrings.addVisitNotes, style: AppTextStyles.headingSmall),
+        title: Text(AppStrings.addVisitNotes, style: AppTextStyles.headingSmall),
         backgroundColor: AppColors.surface,
         surfaceTintColor: AppColors.transparent,
         leading: const AppBackButton(),

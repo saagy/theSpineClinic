@@ -23,6 +23,8 @@ class DataListTile extends StatelessWidget {
     this.onTap,
     this.transparent = false,
     this.margin,
+    this.titleStyle,
+    this.subtitleStyle,
   });
 
   /// The primary textual descriptor of this row cell.
@@ -46,6 +48,12 @@ class DataListTile extends StatelessWidget {
   /// Optional custom margin spacing around the tile card.
   final EdgeInsetsGeometry? margin;
 
+  /// Optional style override for the title text.
+  final TextStyle? titleStyle;
+
+  /// Optional style override for the subtitle text.
+  final TextStyle? subtitleStyle;
+
   @override
   Widget build(BuildContext context) {
     final Widget cellContent = Padding(
@@ -64,9 +72,10 @@ class DataListTile extends StatelessWidget {
               children: [
                 Text(
                   title,
-                  style: AppTextStyles.bodyBold.copyWith(
-                    color: AppColors.textPrimary,
-                  ),
+                  style: titleStyle ??
+                      AppTextStyles.bodyBold.copyWith(
+                        color: AppColors.textPrimary,
+                      ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
@@ -74,9 +83,10 @@ class DataListTile extends StatelessWidget {
                   const SizedBox(height: AppSizes.p2),
                   Text(
                     subtitle!,
-                    style: AppTextStyles.caption.copyWith(
-                      color: AppColors.textSecondary,
-                    ),
+                    style: subtitleStyle ??
+                        AppTextStyles.caption.copyWith(
+                          color: AppColors.textSecondary,
+                        ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),

@@ -15,6 +15,8 @@ import 'package:spine_clinic_app/core/constants/app_strings.dart';
 import 'package:spine_clinic_app/core/constants/app_text_styles.dart';
 import 'package:spine_clinic_app/core/errors/app_exception.dart';
 import 'package:spine_clinic_app/core/utils/formatters.dart';
+import 'package:spine_clinic_app/features/appointment/domain/appointment.dart';
+import 'package:spine_clinic_app/features/appointment/domain/appointment_status.dart';
 import 'package:spine_clinic_app/features/appointment/presentation/appointment_detail_controller.dart';
 import 'package:spine_clinic_app/features/appointment/presentation/widgets/appointment_action_buttons.dart';
 import 'package:spine_clinic_app/features/appointment/presentation/widgets/appointment_detail_header.dart';
@@ -70,10 +72,9 @@ class AppointmentDetailScreen extends ConsumerWidget {
   }
 }
 
-/// Data-state body rendering all appointment detail sections.
+/// Data-state body with three cards and pinned bottom actions.
 class _AppointmentDetailBody extends ConsumerWidget {
   const _AppointmentDetailBody({required this.state});
-
   final AppointmentDetailState state;
 
   @override
@@ -86,79 +87,97 @@ class _AppointmentDetailBody extends ConsumerWidget {
       );
     }
 
-    return SingleChildScrollView(
-      physics: const AlwaysScrollableScrollPhysics(),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          // Header: patient name, clinic badge, status badge
-          AppointmentDetailHeader(
-            appointment: state.appointment,
-            patient: state.patient,
-          ),
+    final bool hasActions = state.appointment.status == AppointmentStatus.scheduled ||
+        state.appointment.status == AppointmentStatus.checkedIn ||
+        state.appointment.status == AppointmentStatus.cancelled;
 
-          // Details card: date, time, type, use package
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: AppSizes.p24),
-            child: SectionCard(
-              child: Column(
-                children: [
-                  InfoRow(
-                    label: AppStrings.date,
-                    value: Formatters.formatDateMedium(
-                      state.appointment.scheduledAt,
-                    ),
+    return Column(
+      children: [
+        Expanded(
+          child: SingleChildScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                AppointmentDetailHeader(
+                  appointment: state.appointment,
+                  patient: state.patient,
+                ),
+                const SizedBox(height: AppSizes.p16),
+                // ── Card 1: Schedule ──
+                _ScheduleCard(appointment: state.appointment),
+                const SizedBox(height: AppSizes.p16),
+                // ── Card 2: Care Team ──
+                AppointmentDoctorsSection(
+                  activeDoctors: state.activeDoctors,
+                  inactiveDoctors: state.inactiveDoctors,
+                ),
+                const SizedBox(height: AppSizes.p16),
+                // ── Card 3: Clinical Notes ──
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: AppSizes.p24),
+                  child: AppointmentNotesCard(
+                    appointmentId: state.appointment.id,
+                    patientId: state.appointment.patientId,
                   ),
-                  InfoRow(
-                    label: AppStrings.time,
-                    value: Formatters.formatTime(
-                      state.appointment.scheduledAt,
-                    ),
-                  ),
-                  InfoRow(
-                    label: AppStrings.type,
-                    value: state.appointment.type.displayLabel,
-                  ),
-                  InfoRow(
-                    label: AppStrings.usePackage,
-                    value: state.appointment.usePackage
-                        ? AppStrings.yes
-                        : AppStrings.no,
-                  ),
-                ],
+                ),
+                const SizedBox(height: AppSizes.p16),
+              ],
+            ),
+          ),
+        ),
+        // ── Pinned bottom actions ──
+        if (hasActions)
+          SafeArea(
+            child: Container(
+              padding: const EdgeInsets.fromLTRB(
+                  AppSizes.p24, AppSizes.p12, AppSizes.p24, AppSizes.p12),
+              decoration: const BoxDecoration(
+                color: AppColors.surface,
+                border: Border(
+                    top: BorderSide(color: AppColors.border, width: 0.5)),
+              ),
+              child: AppointmentActionButtons(
+                appointment: state.appointment,
+                userRole: userRole,
               ),
             ),
           ),
+      ],
+    );
+  }
+}
 
-          const SizedBox(height: AppSizes.p16),
+/// Card 1: Date, Time, Type, and Package Usage.
+class _ScheduleCard extends StatelessWidget {
+  const _ScheduleCard({required this.appointment});
+  final Appointment appointment;
 
-          // Doctors section: active + inactive audit trail
-          AppointmentDoctorsSection(
-            activeDoctors: state.activeDoctors,
-            inactiveDoctors: state.inactiveDoctors,
-          ),
-
-          const SizedBox(height: AppSizes.p16),
-
-          // Notes Section Card
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: AppSizes.p24),
-            child: AppointmentNotesCard(
-              appointmentId: state.appointment.id,
-              patientId: state.appointment.patientId,
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: AppSizes.p24),
+      child: SectionCard(
+        child: Column(
+          children: [
+            InfoRow(
+              label: AppStrings.date,
+              value: Formatters.formatDateMedium(appointment.scheduledAt),
             ),
-          ),
-
-          const SizedBox(height: AppSizes.p16),
-
-          // Role-guarded action buttons
-          AppointmentActionButtons(
-            appointment: state.appointment,
-            userRole: userRole,
-          ),
-
-          const SizedBox(height: AppSizes.p32),
-        ],
+            InfoRow(
+              label: AppStrings.time,
+              value: Formatters.formatTime(appointment.scheduledAt),
+            ),
+            InfoRow(
+              label: AppStrings.type,
+              value: appointment.type.displayLabel,
+            ),
+            InfoRow(
+              label: AppStrings.usePackage,
+              value: appointment.usePackage ? AppStrings.yes : AppStrings.no,
+            ),
+          ],
+        ),
       ),
     );
   }

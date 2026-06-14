@@ -46,9 +46,8 @@ class AppointmentDetailHeader extends StatelessWidget {
             child: Text(
               patient.fullName,
               style: AppTextStyles.headingLarge.copyWith(
-                color: AppColors.primary,
-                decoration: TextDecoration.underline,
-                decorationColor: AppColors.primary,
+                color: AppColors.textPrimary,
+                fontWeight: FontWeight.w600,
               ),
             ),
           ),

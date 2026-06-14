@@ -4,7 +4,6 @@ library;
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
-import 'package:spine_clinic_app/core/constants/app_strings.dart';
 import 'package:spine_clinic_app/core/network/app_routes.dart';
 import 'package:spine_clinic_app/features/auth/domain/staff.dart';
 import 'package:spine_clinic_app/features/auth/domain/user_role.dart';
@@ -15,8 +14,8 @@ import 'package:spine_clinic_app/features/auth/presentation/doctor_register_scre
 import 'package:spine_clinic_app/features/auth/presentation/login_screen.dart';
 import 'package:spine_clinic_app/features/auth/presentation/receptionist_profile_screen.dart';
 import 'package:spine_clinic_app/features/auth/presentation/splash_screen.dart';
-import 'package:spine_clinic_app/features/appointment/presentation/home_screen.dart';
 import 'package:spine_clinic_app/features/appointment/presentation/new_appointment_screen.dart';
+import 'package:spine_clinic_app/features/appointment/presentation/receptionist_appointments_screen.dart';
 import 'package:spine_clinic_app/features/appointment/presentation/appointment_detail_screen.dart';
 import 'package:spine_clinic_app/features/patient/domain/patient.dart';
 import 'package:spine_clinic_app/features/patient/presentation/edit_patient_screen.dart';
@@ -26,7 +25,7 @@ import 'package:spine_clinic_app/features/patient/presentation/patient_detail_sc
 import 'package:spine_clinic_app/features/patient/presentation/patient_list_screen.dart';
 import 'package:spine_clinic_app/features/patient/presentation/patient_search_screen.dart';
 import 'package:spine_clinic_app/features/payments/presentation/record_payment_screen.dart';
-import 'package:spine_clinic_app/features/appointment/presentation/my_schedule_screen.dart';
+import 'package:spine_clinic_app/features/appointment/presentation/doctor_schedule_screen.dart';
 import 'package:spine_clinic_app/features/replacements/presentation/replacement_patients_screen.dart';
 import 'package:spine_clinic_app/shared/widgets/app_shell.dart';
 import 'package:spine_clinic_app/features/medical_records/presentation/add_visit_notes_screen.dart';
@@ -38,7 +37,6 @@ import 'package:spine_clinic_app/features/admin/presentation/admin_hub_screen.da
 import 'package:spine_clinic_app/features/admin/presentation/analytics_screen.dart';
 import 'package:spine_clinic_app/features/admin/presentation/doctor_applications_screen.dart';
 import 'package:spine_clinic_app/features/admin/presentation/clinic_settings_screen.dart';
-import 'package:spine_clinic_app/features/appointment/presentation/appointments_shell.dart';
 
 part 'router.g.dart';
 
@@ -163,7 +161,10 @@ List<RouteBase> _buildRoutes(Ref ref) {
     GoRoute(
       path: AppRoutes.newAppointment,
       builder: (_, GoRouterState state) {
-        final String? patientId = state.uri.queryParameters['patientId'];
+        final String? patientId = state.uri.queryParameters['patientId'] ??
+            (state.extra is Patient
+                ? (state.extra as Patient).id
+                : (state.extra is String ? state.extra as String : null));
         return NewAppointmentScreen(preselectedPatientId: patientId);
       },
     ),
@@ -222,7 +223,6 @@ List<RouteBase> _buildRoutes(Ref ref) {
         final int activeIndex = _resolveActiveIndex(role, state.matchedLocation);
 
         return AppShell(
-          title: AppStrings.appName,
           userRole: role,
           currentTabIndex: activeIndex,
           onTabSelected: (int index) => _onTabSelected(context, role, index),
@@ -240,7 +240,7 @@ List<RouteBase> _buildRoutes(Ref ref) {
       routes: [
         GoRoute(
           path: AppRoutes.home,
-          builder: (_, __) => const HomeScreen(),
+          builder: (_, __) => const ReceptionistAppointmentsScreen(),
         ),
         GoRoute(
           path: AppRoutes.adminHub,
@@ -248,7 +248,7 @@ List<RouteBase> _buildRoutes(Ref ref) {
         ),
         GoRoute(
           path: AppRoutes.schedule,
-          builder: (_, __) => const MyScheduleScreen(),
+          builder: (_, __) => const DoctorScheduleScreen(),
         ),
         GoRoute(
           path: AppRoutes.myPatients,
@@ -264,7 +264,7 @@ List<RouteBase> _buildRoutes(Ref ref) {
         ),
         GoRoute(
           path: AppRoutes.allAppointments,
-          builder: (_, __) => const AppointmentsShell(),
+          builder: (_, __) => const ReceptionistAppointmentsScreen(),
         ),
         GoRoute(
           path: AppRoutes.receptionistProfile,

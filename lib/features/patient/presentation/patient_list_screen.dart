@@ -217,6 +217,8 @@ class _PatientListScreenState extends ConsumerState<PatientListScreen> {
                     child: ListView.builder(
                       controller: _scrollCtrl,
                       padding: const EdgeInsets.only(
+                        left: AppSizes.p16,
+                        right: AppSizes.p16,
                         top: AppSizes.p4,
                         bottom: AppSizes.p48,
                       ),

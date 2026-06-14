@@ -48,7 +48,7 @@ class ManageReplacementScreen extends ConsumerWidget {
       return Scaffold(
         backgroundColor: AppColors.background,
         appBar: AppBar(
-          title: const Text(
+          title: Text(
             AppStrings.manageReplacement,
             style: AppTextStyles.headingSmall,
           ),
@@ -69,7 +69,7 @@ class ManageReplacementScreen extends ConsumerWidget {
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
-        title: const Text(
+        title: Text(
           AppStrings.manageReplacement,
           style: AppTextStyles.headingSmall,
         ),

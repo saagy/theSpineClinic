@@ -145,6 +145,7 @@ class _PatientSearchScreenState extends ConsumerState<PatientSearchScreen> {
                   );
                 }
                 return ListView.builder(
+                  padding: const EdgeInsets.symmetric(horizontal: AppSizes.p16),
                   itemCount: patients.length,
                   itemBuilder: (_, int index) {
                     final Patient patient = patients[index];

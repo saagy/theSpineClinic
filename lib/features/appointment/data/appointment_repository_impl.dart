@@ -48,6 +48,56 @@ class AppointmentRepositoryImpl implements AppointmentRepository {
   }
 
   @override
+  Future<Result<List<AppointmentWithPatient>>> getTodayAppointmentsWithPatients(
+    ClinicLocation clinic,
+  ) {
+    return _run(() async {
+      final DateTime localNow = DateTime.now();
+      final DateTime todayStart =
+          DateTime(localNow.year, localNow.month, localNow.day).toUtc();
+      final DateTime tomorrowStart = todayStart.add(const Duration(days: 1));
+
+      final List<Map<String, dynamic>> rows = await _service
+          .from(_appointmentsTable)
+          .select('*, patient:patients!inner(*)')
+          .eq('patient.clinic', clinic.dbValue)
+          .gte('scheduled_at', todayStart.toIso8601String())
+          .lt('scheduled_at', tomorrowStart.toIso8601String())
+          .order('scheduled_at', ascending: true);
+      return rows.map(_toAppointmentWithPatient).toList();
+    });
+  }
+
+  @override
+  Future<Result<List<AppointmentWithPatient>>> getUpcomingAppointmentsWithPatients(
+    ClinicLocation clinic,
+  ) {
+    return _run(() async {
+      final DateTime localNow = DateTime.now();
+      final DateTime tomorrowStart = DateTime(
+            localNow.year,
+            localNow.month,
+            localNow.day,
+          ).add(const Duration(days: 1)).toUtc();
+
+      final List<Map<String, dynamic>> rows = await _service
+          .from(_appointmentsTable)
+          .select('*, patient:patients!inner(*)')
+          .eq('patient.clinic', clinic.dbValue)
+          .gte('scheduled_at', tomorrowStart.toIso8601String())
+          .order('scheduled_at', ascending: true);
+      return rows.map(_toAppointmentWithPatient).toList();
+    });
+  }
+
+  AppointmentWithPatient _toAppointmentWithPatient(Map<String, dynamic> row) {
+    return AppointmentWithPatient(
+      appointment: Appointment.fromJson(row),
+      patient: Patient.fromJson(row['patient'] as Map<String, dynamic>),
+    );
+  }
+
+  @override
   Future<Result<void>> updateAppointmentStatus(String appointmentId, AppointmentStatus status) {
     return _run(() => _service.from(_appointmentsTable).update({'status': status.dbValue}).eq('id', appointmentId));
   }

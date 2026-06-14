@@ -16,7 +16,7 @@ import 'package:spine_clinic_app/features/appointment/domain/appointment_reposit
 import 'package:spine_clinic_app/features/appointment/domain/appointment_status.dart';
 import 'package:spine_clinic_app/features/appointment/presentation/all_appointments_providers.dart';
 import 'package:spine_clinic_app/features/appointment/presentation/appointment_providers.dart';
-import 'package:spine_clinic_app/features/appointment/presentation/my_schedule_controller.dart';
+import 'package:spine_clinic_app/features/appointment/presentation/doctor_schedule_providers.dart';
 import 'package:spine_clinic_app/features/auth/domain/staff.dart';
 import 'package:spine_clinic_app/features/auth/presentation/auth_providers.dart';
 import 'package:spine_clinic_app/features/patient/domain/patient.dart';
@@ -159,7 +159,7 @@ class AppointmentDetailController extends _$AppointmentDetailController {
       ref.invalidate(patientAppointmentsProvider(patientId));
       ref.invalidate(patientDetailProvider(patientId));
     }
-    ref.invalidate(myScheduleControllerProvider);
+    ref.invalidate(doctorScheduleProvider);
     ref.invalidate(patientListProvider);
   }
 }

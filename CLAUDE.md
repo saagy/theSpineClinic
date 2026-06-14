@@ -48,6 +48,46 @@
     and show it only in the detail screen.
 23. **Explicit Height and Scrolling Containment:** Never wrap infinite or dynamic-length lists (`ListView.builder`) inside an unconstrained vertical container or an unbounded `Column` that risks layout crashes. Always combine with explicit structural primitives (`Expanded`, `SliverList`, or `Flexible`) and ensure list views utilize native iOS/Android bounce physics (`AlwaysScrollableScrollPhysics`).
 24. **No Arbitrary Hardcoded Spacing Tweaks:** All spacing adjustments between stacked elements must use uniform `SizedBox(height: AppSizes.spacingMedium)` or corresponding padding tokens from the design tokens file. Never inject inline magic numbers (e.g., `SizedBox(height: 13.5)`) to "force" an element into place.
+
+25. **Defensive State Construction — copyWith Only:** Never construct a state
+    object directly for a mutation (e.g. `state = MyState(loading: true)`).
+    Always mutate via `state.copyWith(loading: true)` so every field you don't
+    explicitly name retains its current value. Constructor defaults are only
+    valid for the *initial* state inside `build()`. A direct constructor call
+    that omits `todayLoading` will silently reset it to the default — this bug
+    has shipped 4 times across 3 screens. The `copyWith` method must be defined
+    on every state class. Every `Notifier` that mutates `state` must use it.
+
+26. **Async Provider Resilience:** When a `Notifier.build()` depends on data
+    from an async provider (e.g. `currentUserProvider`), you MUST `ref.watch`
+    that provider inside `build()` so the notifier re-evaluates when the
+    dependency resolves. Never call `ref.read(someAsyncProvider).value` from
+    inside `build()` or a method called by `build()` — if the async provider
+    hasn't resolved yet, `.value` returns `null`, your load function exits
+    silently, and the screen spins forever with no retry. Use the pattern:
+    ```
+    @override
+    MyState build() {
+      final user = ref.watch(currentUserProvider).value;
+      if (user != null && !_started) {
+        _started = true;
+        Future.microtask(() => _load(user));
+      }
+      return MyState(doctor: user);
+    }
+    ```
+
+27. **Status Callback Wiring:** Every screen that uses `ReceptionistAppointmentCard`
+    with `showMenu: true` (the default) MUST pass an `onStatusChanged` callback
+    that refreshes that screen's data source. The callback chain must be
+    unbroken: Screen → tab widget → day list → every card. A missing callback
+    means status changes disappear until the user manually pulls to refresh.
+    Pattern:
+    ```dart
+    // Screen
+    onStatusChanged: () => ref.read(myProvider.notifier).refresh()
+    // Widget accepts VoidCallback? onStatusChanged and forwards to card
+    ```
 ## 2. Data Flow Contract
 
 Every feature must follow this exact flow. No shortcuts.

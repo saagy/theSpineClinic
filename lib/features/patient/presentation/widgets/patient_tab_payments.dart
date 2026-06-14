@@ -9,14 +9,10 @@ import 'package:spine_clinic_app/core/utils/formatters.dart';
 import 'package:spine_clinic_app/features/auth/domain/user_role.dart';
 import 'package:spine_clinic_app/features/auth/presentation/auth_providers.dart';
 import 'package:spine_clinic_app/features/patient/domain/patient.dart';
+import 'package:spine_clinic_app/features/patient/presentation/widgets/collect_payment_sheet.dart';
 import 'package:spine_clinic_app/features/patient/presentation/widgets/package_balance_edit_dialog.dart';
-import 'package:spine_clinic_app/features/patient/presentation/widgets/quick_payment_sheet.dart';
-import 'package:spine_clinic_app/features/payments/domain/payment_record.dart';
 import 'package:spine_clinic_app/features/payments/presentation/record_payment_controller.dart';
-import 'package:spine_clinic_app/shared/widgets/app_button.dart';
-import 'package:spine_clinic_app/shared/widgets/app_snackbar.dart';
-import 'package:spine_clinic_app/shared/widgets/confirmation_dialog.dart';
-import 'package:spine_clinic_app/shared/widgets/data_list_tile.dart';
+import 'package:spine_clinic_app/features/patient/presentation/widgets/payment_row.dart';
 import 'package:spine_clinic_app/shared/widgets/error_view.dart';
 import 'package:spine_clinic_app/shared/widgets/section_card.dart';
 
@@ -75,7 +71,7 @@ class PatientTabPayments extends ConsumerWidget {
                       )
                     : Column(
                         children: payments.map((pmt) {
-                          return _PaymentRow(
+                          return PaymentRow(
                             payment: pmt,
                             isAdmin: isAdmin,
                             patientId: patient.id,
@@ -106,131 +102,97 @@ class _PaymentSummaryHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SectionCard(
-      title: AppStrings.paymentSummary,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(AppStrings.totalPaid, style: AppTextStyles.bodySecondary),
-              Text(
-                totalPaid.toCurrencyString(),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        // ── Prominent balance container ──
+        Container(
+          padding: const EdgeInsets.all(AppSizes.p20),
+          decoration: BoxDecoration(
+            color: AppColors.successBg,
+            borderRadius: const BorderRadius.all(Radius.circular(AppSizes.r16)),
+          ),
+          child: Column(children: [
+            Text(AppStrings.totalPaid,
+                style: AppTextStyles.captionMedium.copyWith(color: AppColors.success)),
+            const SizedBox(height: AppSizes.p4),
+            Text(totalPaid.toCurrencyString(),
                 style: AppTextStyles.headingLarge.copyWith(
-                  color: AppColors.success,
+                    color: AppColors.success, fontWeight: FontWeight.w800)),
+            ],
+          ),
+        ),
+        if (!isDoctor) ...[
+          const SizedBox(height: AppSizes.p16),
+          Row(
+            children: [
+              Expanded(
+                child: _ActionButton(
+                  label: 'Record Payment',
+                  filled: true,
+                  onTap: () => showModalBottomSheet(
+                    context: context,
+                    isScrollControlled: true,
+                    shape: const RoundedRectangleBorder(
+                      borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+                    ),
+                    builder: (_) => CollectPaymentSheet(patient: patient),
+                  ),
+                ),
+              ),
+              const SizedBox(width: AppSizes.p12),
+              Expanded(
+                child: _ActionButton(
+                  label: AppStrings.editPackageBalance,
+                  filled: false,
+                  onTap: () => showDialog<void>(
+                    context: context,
+                    builder: (_) =>
+                        PackageBalanceEditDialog(patient: patient),
+                  ),
                 ),
               ),
             ],
           ),
-          if (!isDoctor) ...[
-            const SizedBox(height: AppSizes.p16),
-            Row(
-              children: [
-                Expanded(
-                  child: AppButton(
-                    labelText: AppStrings.quickPayment,
-                    onPressed: () {
-                      showModalBottomSheet<void>(
-                        context: context,
-                        isScrollControlled: true,
-                        shape: const RoundedRectangleBorder(
-                          borderRadius: BorderRadius.vertical(
-                            top: Radius.circular(AppSizes.r12),
-                          ),
-                        ),
-                        builder: (_) => QuickPaymentSheet(patientId: patient.id),
-                      );
-                    },
-                  ),
-                ),
-                const SizedBox(width: AppSizes.p8),
-                Expanded(
-                  child: AppButton(
-                    labelText: AppStrings.editPackageBalance,
-                    variant: AppButtonVariant.secondary,
-                    onPressed: () {
-                      showDialog<void>(
-                        context: context,
-                        builder: (_) => PackageBalanceEditDialog(patient: patient),
-                      );
-                    },
-                  ),
-                ),
-              ],
-            ),
-          ],
         ],
-      ),
+      ],
     );
   }
 }
 
-class _PaymentRow extends ConsumerWidget {
-  const _PaymentRow({
-    required this.payment,
-    required this.isAdmin,
-    required this.patientId,
-  });
-
-  final PaymentRecord payment;
-  final bool isAdmin;
-  final String patientId;
-
+class _ActionButton extends StatelessWidget {
+  const _ActionButton({required this.label, required this.filled, required this.onTap});
+  final String label;
+  final bool filled;
+  final VoidCallback onTap;
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    return DataListTile(
-      title: payment.reason,
-      subtitle: payment.recordedAt.toDateTimeString(),
-      trailing: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(
-            payment.amount.toCurrencyString(),
-            style: AppTextStyles.bodyBold.copyWith(color: AppColors.textPrimary),
-          ),
-          if (isAdmin) ...[
-            const SizedBox(width: AppSizes.p4),
-            GestureDetector(
-              onTap: () => _confirmDelete(context, ref),
-              child: const Icon(Icons.delete_outline_rounded,
-                  size: AppSizes.iconSmall, color: AppColors.error),
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: 48,
+      child: filled
+          ? ElevatedButton(
+              onPressed: onTap,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primary,
+                foregroundColor: AppColors.textOnPrimary,
+                shape: RoundedRectangleBorder(
+                    borderRadius:
+                        const BorderRadius.all(Radius.circular(AppSizes.r12))),
+                elevation: 0,
+              ),
+              child: Text(label, style: AppTextStyles.bodyBold),
+            )
+          : OutlinedButton(
+              onPressed: onTap,
+              style: OutlinedButton.styleFrom(
+                foregroundColor: AppColors.textPrimary,
+                side: const BorderSide(color: AppColors.border),
+                shape: RoundedRectangleBorder(
+                    borderRadius:
+                        const BorderRadius.all(Radius.circular(AppSizes.r12))),
+              ),
+              child: Text(label, style: AppTextStyles.bodyMedium),
             ),
-          ],
-        ],
-      ),
-      transparent: true,
     );
-  }
-
-  Future<void> _confirmDelete(BuildContext context, WidgetRef ref) async {
-    final confirm = await showDialog<bool>(
-      context: context,
-      builder: (_) => const ConfirmationDialog(
-        title: AppStrings.deletePayment,
-        message: AppStrings.confirmDeletePayment,
-        confirmLabel: AppStrings.delete,
-        cancelLabel: AppStrings.cancel,
-        isDestructive: true,
-      ),
-    );
-    if (confirm == true && context.mounted) {
-      final repo = ref.read(paymentRepositoryProvider);
-      final result = await repo.deletePayment(payment.id);
-      if (context.mounted) {
-        result.when(
-          success: (_) {
-            AppSnackbar.show(context,
-                message: AppStrings.paymentDeleted,
-                variant: AppSnackbarVariant.success);
-            ref.invalidate(patientPaymentsProvider(patientId));
-          },
-          failure: (error) {
-            AppSnackbar.show(context,
-                message: error.message, variant: AppSnackbarVariant.error);
-          },
-        );
-      }
-    }
   }
 }

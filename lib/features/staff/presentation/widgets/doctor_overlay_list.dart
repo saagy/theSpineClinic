@@ -36,8 +36,8 @@ class DoctorOverlayList extends ConsumerWidget {
         }).toList();
 
         if (filtered.isEmpty) {
-          return const Padding(
-            padding: EdgeInsets.all(AppSizes.p16),
+          return Padding(
+            padding: const EdgeInsets.all(AppSizes.p16),
             child: Text(AppStrings.noMatchingDoctorsFound,
                 style: AppTextStyles.bodySecondary),
           );

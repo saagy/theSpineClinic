@@ -24,6 +24,18 @@ abstract class AppointmentRepository {
   /// Today is calculated in UTC bounds from 00:00:00 to 23:59:59.
   Future<Result<List<Appointment>>> getAppointmentsForToday(ClinicLocation clinic);
 
+  /// Fetches today's appointments with patient data joined, for the receptionist
+  /// dashboard. Results are ordered by [scheduledAt] ascending.
+  Future<Result<List<AppointmentWithPatient>>> getTodayAppointmentsWithPatients(
+    ClinicLocation clinic,
+  );
+
+  /// Fetches all future appointments (tomorrow onward) with patient data joined,
+  /// ordered by date ascending then time ascending.
+  Future<Result<List<AppointmentWithPatient>>> getUpcomingAppointmentsWithPatients(
+    ClinicLocation clinic,
+  );
+
   /// Updates the status column of an appointment.
   ///
   /// Package deductions/refunds are handled automatically by the database trigger,

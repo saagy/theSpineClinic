@@ -7,7 +7,7 @@ import 'package:spine_clinic_app/core/errors/app_exception.dart';
 import 'package:spine_clinic_app/features/medical_records/domain/patient_note.dart';
 import 'package:spine_clinic_app/features/medical_records/presentation/medical_records_providers.dart';
 import 'package:spine_clinic_app/features/patient/domain/patient.dart';
-import 'package:spine_clinic_app/features/patient/presentation/widgets/add_standalone_note_dialog.dart';
+import 'package:spine_clinic_app/features/patient/presentation/widgets/add_note_sheet.dart';
 import 'package:spine_clinic_app/features/patient/presentation/widgets/patient_note_item.dart';
 import 'package:spine_clinic_app/shared/widgets/empty_state.dart';
 import 'package:spine_clinic_app/shared/widgets/error_view.dart';
@@ -50,10 +50,10 @@ class PatientTabRecords extends ConsumerWidget {
         Padding(
           padding: const EdgeInsets.all(AppSizes.p16),
           child: ElevatedButton.icon(
-            onPressed: () => _showAddNoteDialog(context, ref),
+            onPressed: () => _showAddNoteSheet(context),
             icon: const Icon(Icons.add, color: AppColors.textOnPrimary),
             label: Text(
-              'Add Standalone Note',
+              'Add Note',
               style: AppTextStyles.bodyBold.copyWith(color: AppColors.textOnPrimary),
             ),
             style: ElevatedButton.styleFrom(
@@ -100,18 +100,14 @@ class PatientTabRecords extends ConsumerWidget {
     );
   }
 
-  void _showAddNoteDialog(BuildContext context, WidgetRef ref) {
-    showDialog<void>(
+  void _showAddNoteSheet(BuildContext context) {
+    showModalBottomSheet(
       context: context,
-      builder: (BuildContext context) {
-        return AddStandaloneNoteDialog(
-          onSave: (String noteText) {
-            ref
-                .read(patientNotesNotifierProvider(patient.id).notifier)
-                .addNote(noteText: noteText);
-          },
-        );
-      },
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (_) => AddNoteSheet(patientId: patient.id),
     );
   }
 }

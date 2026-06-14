@@ -35,6 +35,7 @@ import 'package:spine_clinic_app/features/auth/domain/user_role.dart';
 import 'package:spine_clinic_app/features/auth/presentation/auth_providers.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:intl/intl.dart';
+import 'package:spine_clinic_app/shared/widgets/app_avatar.dart';
 import 'package:spine_clinic_app/shared/widgets/app_bottom_sheet.dart';
 import 'package:spine_clinic_app/shared/widgets/data_list_tile.dart';
 import 'package:spine_clinic_app/shared/widgets/empty_state.dart';
@@ -307,14 +308,9 @@ class _AllAppointmentsScreenState extends ConsumerState<AllAppointmentsScreen> {
               title: item.patient.fullName,
               subtitle: '${item.appointment.type.displayLabel} · '
                   '${Formatters.formatTime(item.appointment.scheduledAt.toLocal())}',
-              leading: CircleAvatar(
+              leading: AppAvatar(
+                name: item.patient.fullName,
                 radius: AppSizes.avatarTile / 2,
-                backgroundColor: AppColors.primary,
-                child: const Icon(
-                  Icons.person,
-                  color: AppColors.textOnPrimary,
-                  size: AppSizes.avatarTile * 0.5,
-                ),
               ),
               trailing: AppointmentActionsTrailing(appointment: item.appointment),
               onTap: () => context.push(

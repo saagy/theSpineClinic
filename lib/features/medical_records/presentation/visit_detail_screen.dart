@@ -30,7 +30,7 @@ class VisitDetailScreen extends ConsumerWidget {
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
-        title: const Text(AppStrings.visitDetails, style: AppTextStyles.headingSmall),
+        title: Text(AppStrings.visitDetails, style: AppTextStyles.headingSmall),
         backgroundColor: AppColors.surface,
         surfaceTintColor: AppColors.transparent,
         leading: const AppBackButton(),
@@ -127,7 +127,7 @@ class VisitDetailScreen extends ConsumerWidget {
     return SectionCard(
       title: AppStrings.attendingStaff,
       child: state.activeDoctors.isEmpty
-          ? const Text(AppStrings.noStaffAssignedToSession, style: AppTextStyles.caption)
+          ? Text(AppStrings.noStaffAssignedToSession, style: AppTextStyles.caption)
           : Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: state.activeDoctors.map((docDetail) {

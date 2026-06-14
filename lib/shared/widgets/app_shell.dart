@@ -9,6 +9,7 @@ library;
 import 'package:flutter/material.dart';
 import 'package:spine_clinic_app/core/constants/app_colors.dart';
 import 'package:spine_clinic_app/core/constants/app_sizes.dart';
+import 'package:spine_clinic_app/core/constants/app_strings.dart';
 import 'package:spine_clinic_app/core/constants/app_text_styles.dart';
 import 'package:spine_clinic_app/shared/widgets/app_bottom_nav.dart';
 import 'package:spine_clinic_app/shared/widgets/loading_overlay.dart';
@@ -23,7 +24,6 @@ class AppShell extends StatelessWidget {
     required this.currentTabIndex,
     required this.onTabSelected,
     required this.userRole,
-    required this.title,
     this.isGlobalLoading = false,
     this.actions,
   });
@@ -39,9 +39,6 @@ class AppShell extends StatelessWidget {
 
   /// The logged-in staff role (super_admin, receptionist, doctor).
   final String userRole;
-
-  /// Text string displayed in the app header.
-  final String title;
 
   /// When true, activates a root blocking loader over the entire shell.
   final bool isGlobalLoading;
@@ -68,7 +65,7 @@ class AppShell extends StatelessWidget {
     );
   }
 
-  /// Constructs a flat, borderless, Stripe-styled AppBar.
+  /// Constructs a branded AppBar with logomark, bold wordmark, and tagline.
   PreferredSizeWidget _buildAppBar() {
     return PreferredSize(
       preferredSize: const Size.fromHeight(AppSizes.appBarHeight),
@@ -83,15 +80,39 @@ class AppShell extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: AppSizes.p20),
             child: Row(
               children: [
-                // Title pinned left
-                Expanded(
-                  child: Text(
-                    title,
-                    style: AppTextStyles.headingSmall,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
+                // ── Brand: logomark + wordmark + tagline ──
+                Container(
+                  width: AppSizes.iconDefault + 4,
+                  height: AppSizes.iconDefault + 4,
+                  decoration: BoxDecoration(
+                    color: AppColors.primary,
+                    borderRadius: const BorderRadius.all(Radius.circular(AppSizes.r8)),
+                  ),
+                  child: const Icon(
+                    Icons.spa_rounded,
+                    color: AppColors.textOnPrimary,
+                    size: AppSizes.iconDefault,
                   ),
                 ),
+                const SizedBox(width: AppSizes.p12),
+                Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      AppStrings.appName,
+                      style: AppTextStyles.brand,
+                    ),
+                    Text(
+                      AppStrings.appTagline,
+                      style: AppTextStyles.caption.copyWith(
+                        color: AppColors.textMuted,
+                      ),
+                    ),
+                  ],
+                ),
+
+                const Spacer(),
 
                 // Trailing action icons
                 if (actions != null && actions!.isNotEmpty)

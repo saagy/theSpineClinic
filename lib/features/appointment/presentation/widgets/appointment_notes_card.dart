@@ -5,7 +5,7 @@ import 'package:spine_clinic_app/core/constants/app_sizes.dart';
 import 'package:spine_clinic_app/core/constants/app_text_styles.dart';
 import 'package:spine_clinic_app/features/medical_records/domain/patient_note.dart';
 import 'package:spine_clinic_app/features/medical_records/presentation/medical_records_providers.dart';
-import 'package:spine_clinic_app/features/patient/presentation/widgets/add_standalone_note_dialog.dart';
+import 'package:spine_clinic_app/features/patient/presentation/widgets/add_note_sheet.dart';
 import 'package:spine_clinic_app/shared/widgets/section_card.dart';
 
 /// Card component showing visit notes for an appointment with a button to edit/add notes.
@@ -55,7 +55,7 @@ class AppointmentNotesCard extends ConsumerWidget {
                 const SizedBox(height: AppSizes.p16),
               ],
               ElevatedButton.icon(
-                onPressed: () => _showNoteDialog(context, ref, note),
+                onPressed: () => _showNoteSheet(context, note),
                 icon: const Icon(Icons.add, color: AppColors.textOnPrimary),
                 label: Text(
                   note != null ? 'Edit Note' : 'Add Note',
@@ -76,22 +76,19 @@ class AppointmentNotesCard extends ConsumerWidget {
     );
   }
 
-  void _showNoteDialog(BuildContext context, WidgetRef ref, PatientNote? note) {
-    showDialog<void>(
+  void _showNoteSheet(BuildContext context, PatientNote? note) {
+    showModalBottomSheet(
       context: context,
-      builder: (BuildContext context) {
-        return AddStandaloneNoteDialog(
-          initialText: note?.noteText,
-          onSave: (String noteText) {
-            ref
-                .read(appointmentNoteProvider(appointmentId).notifier)
-                .saveNote(
-                  noteText: noteText,
-                  patientId: patientId,
-                );
-          },
-        );
-      },
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (_) => AddNoteSheet(
+        patientId: patientId,
+        initialText: note?.noteText,
+        noteId: note?.id,
+        appointmentId: appointmentId,
+      ),
     );
   }
 }

@@ -54,7 +54,7 @@ class _TrendChartState extends State<TrendChart> {
         ],
       ),
       child: trends.isEmpty
-          ? const SizedBox(
+          ? SizedBox(
               height: AppSizes.chartContainerHeight,
               child: Center(child: Text(AppStrings.noTrendData, style: AppTextStyles.bodySecondary)),
             )

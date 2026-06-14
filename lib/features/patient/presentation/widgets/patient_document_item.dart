@@ -7,8 +7,6 @@ import 'package:spine_clinic_app/core/constants/app_sizes.dart';
 import 'package:spine_clinic_app/core/constants/app_strings.dart';
 import 'package:spine_clinic_app/core/constants/app_text_styles.dart';
 import 'package:spine_clinic_app/core/utils/file_opener_helper.dart';
-import 'package:spine_clinic_app/features/auth/domain/user_role.dart';
-import 'package:spine_clinic_app/features/auth/presentation/auth_providers.dart';
 import 'package:spine_clinic_app/features/patient/data/patient_documents_repository.dart';
 import 'package:spine_clinic_app/features/patient/domain/patient_document.dart';
 import 'package:spine_clinic_app/features/patient/presentation/patient_documents_providers.dart';
@@ -77,8 +75,6 @@ class PatientDocumentItem extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final user = ref.watch(currentUserProvider).value;
-    final isDoctor = user?.role == UserRole.doctor;
     final String ext = p.extension(doc.fileName).toLowerCase();
     final bool isImage = ext == '.png' || ext == '.jpg' || ext == '.jpeg';
     final String dateStr = doc.uploadedAt.toIso8601String().split('T')[0];
@@ -91,11 +87,10 @@ class PatientDocumentItem extends ConsumerWidget {
           tooltip: AppStrings.openTooltip,
           onPressed: () => _handleOpen(context),
         ),
-        if (!isDoctor)
-          IconButton(
-            icon: const Icon(Icons.delete_outline_rounded, color: AppColors.error),
-            onPressed: () => _handleDelete(context, ref),
-          ),
+        IconButton(
+          icon: const Icon(Icons.delete_outline_rounded, color: AppColors.error),
+          onPressed: () => _handleDelete(context, ref),
+        ),
       ],
     );
 
