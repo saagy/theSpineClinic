@@ -150,6 +150,8 @@ class PatientRepositoryImpl implements PatientRepository {
     ClinicLocation? clinic,
     int offset = 0,
     int limit = 30,
+    String orderBy = 'full_name',
+    bool ascending = true,
   }) async {
     try {
       final List<Map<String, dynamic>> rows = await _service.guardQuery(() {
@@ -160,9 +162,9 @@ class PatientRepositoryImpl implements PatientRepository {
         if (query != null && query.trim().isNotEmpty) {
           final tokens = query.trim().split(RegExp(r'\s+')).where((t) => t.isNotEmpty);
           final built = tokens.fold(withClinic, (q, t) => q.or('full_name.ilike.%$t%,phone_number.ilike.%$t%'));
-          return built.order('full_name').range(offset, offset + limit - 1);
+          return built.order(orderBy, ascending: ascending).range(offset, offset + limit - 1);
         }
-        return withClinic.order('full_name').range(offset, offset + limit - 1);
+        return withClinic.order(orderBy, ascending: ascending).range(offset, offset + limit - 1);
       });
       return Result.success(rows.map(_parsePatientRowWithLastAppt).toList());
     } on AppException catch (e) {

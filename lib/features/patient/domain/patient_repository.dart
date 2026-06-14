@@ -59,12 +59,16 @@ abstract class PatientRepository {
   ///
   /// [query] searches by name or phone. [doctorId] filters by assigned doctor.
   /// [clinic] filters by clinic location. [offset] and [limit] control pagination.
+  /// [orderBy] specifies the column to sort by (defaults to `full_name`).
+  /// [ascending] controls sort direction (defaults to `true`).
   Future<Result<List<Patient>>> getAllPatients({
     String? query,
     String? doctorId,
     ClinicLocation? clinic,
     int offset = 0,
     int limit = 30,
+    String orderBy = 'full_name',
+    bool ascending = true,
   });
 
   /// Counts total patients matching the given filters (for pagination).

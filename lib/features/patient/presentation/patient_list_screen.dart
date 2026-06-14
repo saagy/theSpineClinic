@@ -72,7 +72,6 @@ enum PatientSortOption {
 
 class _PatientListScreenState extends ConsumerState<PatientListScreen> {
   final ScrollController _scrollCtrl = ScrollController();
-  PatientSortOption _sortOption = PatientSortOption.nameAsc;
 
   @override
   void initState() {
@@ -101,7 +100,26 @@ class _PatientListScreenState extends ConsumerState<PatientListScreen> {
     await ref.read(patientListProvider.notifier).refresh();
   }
 
+  PatientSortOption get _currentSort {
+    final n = ref.read(patientListProvider.notifier);
+    if (n.orderBy == 'last_appointment_date') {
+      return n.isAscending
+          ? PatientSortOption.lastVisitOldest
+          : PatientSortOption.lastVisitNewest;
+    }
+    if (n.orderBy == 'created_at') {
+      return PatientSortOption.dateAddedNewest;
+    }
+    // full_name (default)
+    return n.isAscending
+        ? PatientSortOption.nameAsc
+        : PatientSortOption.nameDesc;
+  }
+
+  String get _sortButtonLabel => _currentSort.buttonLabel;
+
   Future<void> _showSortSheet() async {
+    final currentSort = _currentSort;
     final selected = await SortOptionsSheet.show<PatientSortOption>(
       context: context,
       title: 'Sort Options',
@@ -112,38 +130,18 @@ class _PatientListScreenState extends ConsumerState<PatientListScreen> {
                 buttonLabel: o.buttonLabel,
               ))
           .toList(),
-      selected: _sortOption,
+      selected: currentSort,
     );
     if (selected != null && mounted) {
-      setState(() => _sortOption = selected);
+      final (String orderBy, bool ascending) = switch (selected) {
+        PatientSortOption.nameAsc => ('full_name', true),
+        PatientSortOption.nameDesc => ('full_name', false),
+        PatientSortOption.lastVisitNewest => ('last_appointment_date', false),
+        PatientSortOption.lastVisitOldest => ('last_appointment_date', true),
+        PatientSortOption.dateAddedNewest => ('created_at', false),
+      };
+      ref.read(patientListProvider.notifier).setSort(orderBy, ascending);
     }
-  }
-
-  List<Patient> _sorted(Iterable<Patient> patients) {
-    final list = List<Patient>.from(patients);
-    switch (_sortOption) {
-      case PatientSortOption.nameAsc:
-        list.sort((a, b) => a.fullName.toLowerCase().compareTo(b.fullName.toLowerCase()));
-      case PatientSortOption.nameDesc:
-        list.sort((a, b) => b.fullName.toLowerCase().compareTo(a.fullName.toLowerCase()));
-      case PatientSortOption.lastVisitNewest:
-        list.sort((a, b) {
-          if (a.lastAppointmentDate == null && b.lastAppointmentDate == null) return 0;
-          if (a.lastAppointmentDate == null) return 1;
-          if (b.lastAppointmentDate == null) return -1;
-          return b.lastAppointmentDate!.compareTo(a.lastAppointmentDate!);
-        });
-      case PatientSortOption.lastVisitOldest:
-        list.sort((a, b) {
-          if (a.lastAppointmentDate == null && b.lastAppointmentDate == null) return 0;
-          if (a.lastAppointmentDate == null) return 1;
-          if (b.lastAppointmentDate == null) return -1;
-          return a.lastAppointmentDate!.compareTo(b.lastAppointmentDate!);
-        });
-      case PatientSortOption.dateAddedNewest:
-        list.sort((a, b) => b.createdAt.compareTo(a.createdAt));
-    }
-    return list;
   }
 
   @override
@@ -171,7 +169,7 @@ class _PatientListScreenState extends ConsumerState<PatientListScreen> {
 
             // ── Sort + Filter buttons row ──
             SortFilterBar(
-              sortLabel: 'Sort: ${_sortOption.buttonLabel}',
+              sortLabel: 'Sort: $_sortButtonLabel',
               onSortTap: _showSortSheet,
               activeFilterCount: _activeChips.length,
               onFilterTap: _showPatientFilterSheet,
@@ -213,8 +211,6 @@ class _PatientListScreenState extends ConsumerState<PatientListScreen> {
                     );
                   }
 
-                  final sorted = _sorted(patients);
-
                   return RefreshIndicator(
                     onRefresh: _onRefresh,
                     color: AppColors.primary,
@@ -224,12 +220,12 @@ class _PatientListScreenState extends ConsumerState<PatientListScreen> {
                         top: AppSizes.p4,
                         bottom: AppSizes.p48,
                       ),
-                      itemCount: sorted.length + 1,
+                      itemCount: patients.length + 1,
                       itemBuilder: (_, int index) {
-                        if (index == sorted.length) {
+                        if (index == patients.length) {
                           return _buildLoadMore();
                         }
-                        final Patient p = sorted[index];
+                        final Patient p = patients[index];
                         return PatientListTile(
                           name: p.fullName,
                           phone: p.phoneNumber,

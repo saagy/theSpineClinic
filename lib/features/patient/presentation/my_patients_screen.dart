@@ -118,6 +118,7 @@ class _MyPatientsScreenState extends ConsumerState<MyPatientsScreen> {
         },
         onApplied: (String? doctorId, ClinicLocation? clinic) {
           setState(() => _branchFilter = clinic);
+          Navigator.of(ctx).pop();
         },
       ),
     );

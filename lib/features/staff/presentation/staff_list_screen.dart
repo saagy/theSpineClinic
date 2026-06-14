@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:spine_clinic_app/core/constants/app_colors.dart';
 import 'package:spine_clinic_app/core/constants/app_sizes.dart';
 import 'package:spine_clinic_app/core/constants/app_strings.dart';
+import 'package:spine_clinic_app/core/constants/app_text_styles.dart';
 import 'package:spine_clinic_app/core/errors/app_exception.dart';
 import 'package:spine_clinic_app/core/network/app_routes.dart';
 import 'package:spine_clinic_app/features/auth/domain/staff.dart';
@@ -17,6 +18,7 @@ import 'package:spine_clinic_app/shared/widgets/data_list_tile.dart';
 import 'package:spine_clinic_app/shared/widgets/empty_state.dart';
 import 'package:spine_clinic_app/shared/widgets/error_view.dart';
 import 'package:spine_clinic_app/shared/widgets/filter_chip.dart';
+import 'package:spine_clinic_app/shared/widgets/primary_button.dart';
 import 'package:spine_clinic_app/shared/widgets/section_header.dart';
 import 'package:spine_clinic_app/shared/widgets/sort_filter_bar.dart';
 import 'package:spine_clinic_app/shared/widgets/sort_options_sheet.dart';
@@ -129,91 +131,146 @@ class _StaffListScaffoldState extends ConsumerState<_StaffListScaffold> {
   }
 
   void _showFilterSheet() {
-    final currentFilter = ref.read(staffFilterProvider);
+    final currentRoleFilter = ref.read(staffFilterProvider);
+    String localRole = currentRoleFilter;
+    bool? localStatus = _activeStatusFilter;
+
     AppBottomSheet.show(
       context: context,
       title: 'Filters',
-      builder: (ctx, scrollCtrl) => SingleChildScrollView(
-        controller: scrollCtrl,
-        padding: const EdgeInsets.symmetric(horizontal: AppSizes.p20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            const SectionHeader(title: 'Role'),
-            const SizedBox(height: AppSizes.p8),
-            Wrap(
-              spacing: AppSizes.p8,
-              runSpacing: AppSizes.p8,
-              children: [
-                AppFilterChip(
-                  label: AppStrings.all,
-                  isActive: currentFilter == 'All',
-                  onTap: () {
-                    ref.read(staffFilterProvider.notifier).setFilter('All');
-                    Navigator.of(ctx).pop();
-                  },
+      builder: (ctx, scrollCtrl) => StatefulBuilder(
+        builder: (context, setSheetState) {
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Expanded(
+                child: SingleChildScrollView(
+                  controller: scrollCtrl,
+                  padding: const EdgeInsets.symmetric(horizontal: AppSizes.p20),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      const SectionHeader(title: 'Role'),
+                      const SizedBox(height: AppSizes.p8),
+                      Wrap(
+                        spacing: AppSizes.p8,
+                        runSpacing: AppSizes.p8,
+                        children: [
+                          AppFilterChip(
+                            label: AppStrings.all,
+                            isActive: localRole == 'All',
+                            onTap: () {
+                              localRole = 'All';
+                              setSheetState(() {});
+                            },
+                          ),
+                          AppFilterChip(
+                            label: AppStrings.superAdmin,
+                            isActive: localRole == 'super_admin',
+                            onTap: () {
+                              localRole = 'super_admin';
+                              setSheetState(() {});
+                            },
+                          ),
+                          AppFilterChip(
+                            label: AppStrings.receptionist,
+                            isActive: localRole == 'receptionist',
+                            onTap: () {
+                              localRole = 'receptionist';
+                              setSheetState(() {});
+                            },
+                          ),
+                          AppFilterChip(
+                            label: AppStrings.doctor,
+                            isActive: localRole == 'doctor',
+                            onTap: () {
+                              localRole = 'doctor';
+                              setSheetState(() {});
+                            },
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: AppSizes.p16),
+                      const SectionHeader(title: 'Status'),
+                      const SizedBox(height: AppSizes.p8),
+                      Wrap(
+                        spacing: AppSizes.p8,
+                        runSpacing: AppSizes.p8,
+                        children: [
+                          AppFilterChip(
+                            label: 'All',
+                            isActive: localStatus == null,
+                            onTap: () {
+                              localStatus = null;
+                              setSheetState(() {});
+                            },
+                          ),
+                          AppFilterChip(
+                            label: 'Active',
+                            isActive: localStatus == true,
+                            onTap: () {
+                              localStatus = true;
+                              setSheetState(() {});
+                            },
+                          ),
+                          AppFilterChip(
+                            label: 'Inactive',
+                            isActive: localStatus == false,
+                            onTap: () {
+                              localStatus = false;
+                              setSheetState(() {});
+                            },
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
                 ),
-                AppFilterChip(
-                  label: AppStrings.superAdmin,
-                  isActive: currentFilter == 'super_admin',
-                  onTap: () {
-                    ref.read(staffFilterProvider.notifier).setFilter('super_admin');
-                    Navigator.of(ctx).pop();
-                  },
+              ),
+              // ── Pinned Reset + Apply row ──
+              Padding(
+                padding: const EdgeInsets.fromLTRB(
+                  AppSizes.p20, AppSizes.p8, AppSizes.p20, AppSizes.p16,
                 ),
-                AppFilterChip(
-                  label: AppStrings.receptionist,
-                  isActive: currentFilter == 'receptionist',
-                  onTap: () {
-                    ref.read(staffFilterProvider.notifier).setFilter('receptionist');
-                    Navigator.of(ctx).pop();
-                  },
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton(
+                        onPressed: () {
+                          ref.read(staffFilterProvider.notifier).setFilter('All');
+                          setState(() => _activeStatusFilter = null);
+                          Navigator.of(ctx).pop();
+                        },
+                        style: OutlinedButton.styleFrom(
+                          side: const BorderSide(color: AppColors.border),
+                          padding: const EdgeInsets.symmetric(vertical: AppSizes.p14),
+                          shape: const StadiumBorder(),
+                        ),
+                        child: Text(
+                          'Reset',
+                          style: AppTextStyles.bodyMedium.copyWith(
+                            color: AppColors.textSecondary,
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: AppSizes.p12),
+                    Expanded(
+                      child: PrimaryButton(
+                        label: AppStrings.applyFilters,
+                        onPressed: () {
+                          ref.read(staffFilterProvider.notifier).setFilter(localRole);
+                          setState(() => _activeStatusFilter = localStatus);
+                          Navigator.of(ctx).pop();
+                        },
+                      ),
+                    ),
+                  ],
                 ),
-                AppFilterChip(
-                  label: AppStrings.doctor,
-                  isActive: currentFilter == 'doctor',
-                  onTap: () {
-                    ref.read(staffFilterProvider.notifier).setFilter('doctor');
-                    Navigator.of(ctx).pop();
-                  },
-                ),
-              ],
-            ),
-            const SizedBox(height: AppSizes.p16),
-            const SectionHeader(title: 'Status'),
-            const SizedBox(height: AppSizes.p8),
-            Wrap(
-              spacing: AppSizes.p8,
-              runSpacing: AppSizes.p8,
-              children: [
-                AppFilterChip(
-                  label: 'All',
-                  isActive: _activeStatusFilter == null,
-                  onTap: () {
-                    setState(() => _activeStatusFilter = null);
-                    Navigator.of(ctx).pop();
-                  },
-                ),
-                AppFilterChip(
-                  label: 'Active',
-                  isActive: _activeStatusFilter == true,
-                  onTap: () {
-                    setState(() => _activeStatusFilter = true);
-                    Navigator.of(ctx).pop();
-                  },
-                ),
-                AppFilterChip(
-                  label: 'Inactive',
-                  isActive: _activeStatusFilter == false,
-                  onTap: () {
-                    setState(() => _activeStatusFilter = false);
-                    Navigator.of(ctx).pop();
-                  },
-                ),
-              ],
-            ),
-          ],
-        ),
+              ),
+            ],
+          );
+        },
       ),
     );
   }

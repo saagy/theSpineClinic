@@ -27,12 +27,21 @@ class PatientList extends _$PatientList {
   String? _doctorId;
   ClinicLocation? _clinicFilter;
   int _offset = 0;
+  String _orderBy = 'full_name';
+  bool _ascending = true;
 
   /// The currently active clinic/branch filter, or null for all branches.
   ClinicLocation? get currentClinicFilter => _clinicFilter;
 
   /// The currently active doctor filter, or null for all doctors.
   String? get currentDoctorFilter => _doctorId;
+
+  /// The current sort column (e.g. `full_name`, `last_appointment_date`, `created_at`).
+  String get orderBy => _orderBy;
+
+  /// Whether the current sort is ascending.
+  bool get isAscending => _ascending;
+
   static const int _pageSize = 30;
 
   bool get hasMore => (state.value?.length ?? 0) < _totalCount;
@@ -51,6 +60,8 @@ class PatientList extends _$PatientList {
       clinic: _clinicFilter,
       offset: _offset,
       limit: _pageSize,
+      orderBy: _orderBy,
+      ascending: _ascending,
     );
 
     // Also get total count on first page load
@@ -111,6 +122,25 @@ class PatientList extends _$PatientList {
   /// Applies clinic filter.
   void setClinicFilter(ClinicLocation? clinic) {
     _clinicFilter = clinic;
+    _offset = 0;
+    _totalCount = 0;
+    state = const AsyncValue.loading();
+    _fetch().then(
+      (data) {
+        if (!ref.mounted) return;
+        state = AsyncValue.data(data);
+      },
+      onError: (err, stack) {
+        if (!ref.mounted) return;
+        state = AsyncValue.error(err, stack);
+      },
+    );
+  }
+
+  /// Applies server-side sort by the given column and direction.
+  void setSort(String orderBy, bool ascending) {
+    _orderBy = orderBy;
+    _ascending = ascending;
     _offset = 0;
     _totalCount = 0;
     state = const AsyncValue.loading();
