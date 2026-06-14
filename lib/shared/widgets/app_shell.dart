@@ -76,17 +76,11 @@ class AppShell extends StatelessWidget {
         height: AppSizes.appBarHeight,
         decoration: const BoxDecoration(
           color: AppColors.surface,
-          border: Border(
-            bottom: BorderSide(
-              color: AppColors.border,
-              width: AppSizes.borderWidth,
-            ),
-          ),
         ),
         child: SafeArea(
           bottom: false,
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: AppSizes.p16),
+            padding: const EdgeInsets.symmetric(horizontal: AppSizes.p20),
             child: Row(
               children: [
                 // Title pinned left

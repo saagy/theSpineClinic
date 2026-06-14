@@ -1,7 +1,8 @@
-/// Custom empty state placeholder widget matching the Spine Clinic styling tokens.
+/// Custom empty state placeholder widget matching the Medics design tokens.
 ///
-/// Renders a centered icon and descriptive text when list queries or searches
-/// return zero active records. Touch-neutral.
+/// Renders a large teal-tinted icon and warm, human-friendly descriptive
+/// text when list queries or searches return zero active records.
+/// Touch-neutral.
 ///
 /// Rule 1 — keep files under 200 lines.
 library;
@@ -11,13 +12,15 @@ import 'package:spine_clinic_app/core/constants/app_colors.dart';
 import 'package:spine_clinic_app/core/constants/app_sizes.dart';
 import 'package:spine_clinic_app/core/constants/app_text_styles.dart';
 
-/// A centered layout placeholder for empty data states styled with design tokens.
+/// A centered layout placeholder for empty data states styled with
+/// Medics design tokens.
 class EmptyState extends StatelessWidget {
   /// Creates an [EmptyState].
   const EmptyState({
     super.key,
     required this.message,
     this.icon = Icons.inbox_rounded,
+    this.secondaryMessage,
   });
 
   /// The descriptive string explaining why the view is blank.
@@ -26,33 +29,52 @@ class EmptyState extends StatelessWidget {
   /// The line-art icon indicating an empty data bucket state.
   final IconData icon;
 
+  /// Optional secondary message below the primary one.
+  final String? secondaryMessage;
+
   @override
   Widget build(BuildContext context) {
     return Center(
       child: Padding(
-        padding: const EdgeInsets.symmetric(
-          horizontal: AppSizes.p24, // Standard phone margin horizontal padding
-        ),
+        padding: const EdgeInsets.symmetric(horizontal: AppSizes.p32),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           crossAxisAlignment: CrossAxisAlignment.center,
-          mainAxisSize: MainAxisSize.min, // Fits compact within vertical scroll space
+          mainAxisSize: MainAxisSize.min,
           children: [
-            // Enlarged line-art icon asset colored in AppColors.textMuted
-            Icon(
-              icon,
-              size: 48.0,
-              color: AppColors.textMuted,
+            // Large teal-tinted icon in a soft circle background
+            Container(
+              width: 80,
+              height: 80,
+              decoration: BoxDecoration(
+                color: AppColors.primaryLight,
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                icon,
+                size: 40,
+                color: AppColors.primary,
+              ),
             ),
-            const SizedBox(height: AppSizes.p16), // 16px grid separation spacing
-            // Typographically muted description string text
+            const SizedBox(height: AppSizes.p20),
+            // Primary empty message
             Text(
               message,
-              style: AppTextStyles.body.copyWith(
+              style: AppTextStyles.bodyLarge.copyWith(
                 color: AppColors.textSecondary,
               ),
               textAlign: TextAlign.center,
             ),
+            if (secondaryMessage != null) ...[
+              const SizedBox(height: AppSizes.p8),
+              Text(
+                secondaryMessage!,
+                style: AppTextStyles.caption.copyWith(
+                  color: AppColors.textMuted,
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ],
           ],
         ),
       ),

@@ -33,6 +33,8 @@ dependencies:
   path: ^1.9.1
   shared_preferences: ^2.5.5
   open_filex: ^4.7.0
+  google_fonts: ^6.2.1
+  flutter_animate: ^4.5.2
 
 dev_dependencies:
   flutter_test:
@@ -51,3 +53,15 @@ flutter:
 
   assets:
     - .env
+
+  fonts:
+    - family: Inter
+      fonts:
+        - asset: assets/fonts/Inter-VariableFont_opsz,wght.ttf
+          weight: 400
+        - asset: assets/fonts/Inter-VariableFont_opsz,wght.ttf
+          weight: 500
+        - asset: assets/fonts/Inter-VariableFont_opsz,wght.ttf
+          weight: 600
+        - asset: assets/fonts/Inter-VariableFont_opsz,wght.ttf
+          weight: 700

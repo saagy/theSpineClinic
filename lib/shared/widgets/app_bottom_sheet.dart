@@ -51,7 +51,7 @@ class AppBottomSheet extends StatelessWidget {
       decoration: const BoxDecoration(
         color: AppColors.surface, // Pure white background
         borderRadius: BorderRadius.vertical(
-          top: Radius.circular(AppSizes.r12), // Elegant top-rounded radius
+          top: Radius.circular(AppSizes.r16), // Modern softer top radius
         ),
       ),
       child: SafeArea(

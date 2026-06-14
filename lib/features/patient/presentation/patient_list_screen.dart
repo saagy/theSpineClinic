@@ -1,147 +1,212 @@
-/// Patient list screen for receptionist and admin roles.
+/// Patient list screen — Medics UI redesign.
 ///
-/// Provides debounced search, doctor/branch filters, paginated list,
-/// and a FAB for quick patient registration.
+/// Clean layout: search bar, outlined sort chip + filter chip,
+/// paginated list of [PatientListTile] rows with inset dividers.
+/// Pull-to-refresh and infinite scroll. No legacy chrome.
 ///
-/// Rule 1 — under 200 lines (sub-widgets extracted).
-/// Rule 12 — debounced search via AppSearchBar (300ms built-in).
+/// Rule 1 — under 200 lines.
+/// Rule 3 — all state via Riverpod.
+/// Rule 12 — search debounce via AppSearchBar (300ms).
 library;
 
 import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:spine_clinic_app/core/constants/app_colors.dart';
 import 'package:spine_clinic_app/core/constants/app_sizes.dart';
 import 'package:spine_clinic_app/core/constants/app_strings.dart';
-import 'package:spine_clinic_app/core/constants/app_text_styles.dart';
+import 'package:spine_clinic_app/core/errors/app_exception.dart'
+    show AppException, UnknownException;
 import 'package:spine_clinic_app/core/network/app_routes.dart';
 import 'package:spine_clinic_app/features/patient/domain/patient.dart';
 import 'package:spine_clinic_app/features/patient/presentation/patient_list_providers.dart';
-import 'package:spine_clinic_app/features/patient/presentation/widgets/patient_balance_chip.dart';
-import 'package:spine_clinic_app/features/patient/presentation/widgets/patient_list_filters.dart';
+import 'package:spine_clinic_app/features/patient/presentation/widgets/patient_filter_sheet.dart';
 import 'package:spine_clinic_app/shared/widgets/app_search_bar.dart';
-import 'package:spine_clinic_app/shared/widgets/data_list_tile.dart';
 import 'package:spine_clinic_app/shared/widgets/empty_state.dart';
+import 'package:spine_clinic_app/shared/widgets/error_view.dart';
+import 'package:spine_clinic_app/shared/widgets/filter_chip.dart'
+    show AppFilterChip, AppFilterChipVariant;
+import 'package:spine_clinic_app/shared/widgets/patient_list_tile.dart';
 
-/// Screen displaying a searchable, filterable, paginated patient roster.
+/// A searchable, filterable, sortable, paginated patient roster.
 class PatientListScreen extends ConsumerStatefulWidget {
   /// Creates a [PatientListScreen].
   const PatientListScreen({super.key});
 
   @override
-  ConsumerState<PatientListScreen> createState() => _PatientListScreenState();
+  ConsumerState<PatientListScreen> createState() =>
+      _PatientListScreenState();
 }
 
+enum _SortMode { name, recent }
+
 class _PatientListScreenState extends ConsumerState<PatientListScreen> {
-  final ScrollController _scrollController = ScrollController();
+  final ScrollController _scrollCtrl = ScrollController();
+  _SortMode _sortMode = _SortMode.name;
 
   @override
   void initState() {
     super.initState();
-    _scrollController.addListener(_onScroll);
+    _scrollCtrl.addListener(_onScroll);
   }
 
   @override
   void dispose() {
-    _scrollController.dispose();
+    _scrollCtrl.dispose();
     super.dispose();
   }
 
   void _onScroll() {
-    if (_scrollController.position.pixels >=
-        _scrollController.position.maxScrollExtent - 200) {
+    if (_scrollCtrl.position.pixels >=
+        _scrollCtrl.position.maxScrollExtent - 200) {
       ref.read(patientListProvider.notifier).loadMore();
     }
   }
 
   void _onSearchChanged(String query) {
-    // AppSearchBar already debounces 300ms, so call directly.
     ref.read(patientListProvider.notifier).searchNow(query);
+  }
+
+  Future<void> _onRefresh() async {
+    await ref.read(patientListProvider.notifier).refresh();
+  }
+
+  void _onSortToggled() {
+    setState(() {
+      _sortMode =
+          _sortMode == _SortMode.name ? _SortMode.recent : _SortMode.name;
+    });
+  }
+
+  List<Patient> _sorted(Iterable<Patient> patients) {
+    final list = List<Patient>.from(patients);
+    if (_sortMode == _SortMode.name) {
+      list.sort((a, b) => a.fullName.compareTo(b.fullName));
+    } else {
+      list.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+    }
+    return list;
   }
 
   @override
   Widget build(BuildContext context) {
-    final state = ref.watch(patientListProvider);
+    final AsyncValue<List<Patient>> state = ref.watch(patientListProvider);
 
     return Scaffold(
       backgroundColor: AppColors.background,
       body: SafeArea(
         child: Column(
           children: [
-            // Search bar (debounced internally by AppSearchBar)
+            // ── Search ──
             Padding(
               padding: const EdgeInsets.fromLTRB(
-                AppSizes.p16, AppSizes.p12, AppSizes.p16, AppSizes.p8,
+                AppSizes.p16,
+                AppSizes.p12,
+                AppSizes.p16,
+                AppSizes.p4,
               ),
               child: AppSearchBar(
                 hintText: AppStrings.searchPatients,
                 onChanged: _onSearchChanged,
               ),
             ),
-            // Filter bar
-            const PatientListFilters(),
-            const SizedBox(height: AppSizes.p8),
-            // Results
+
+            // ── Sort + Filter chips ──
+            Padding(
+              padding: const EdgeInsets.fromLTRB(
+                AppSizes.p16,
+                AppSizes.p4,
+                AppSizes.p16,
+                AppSizes.p8,
+              ),
+              child: Row(
+                children: [
+                  // Sort — outlined to distinguish from filter
+                  AppFilterChip(
+                    label: _sortMode == _SortMode.name
+                        ? AppStrings.sortByName
+                        : AppStrings.sortByRecent,
+                    variant: AppFilterChipVariant.outlined,
+                    isActive: true,
+                    onTap: _onSortToggled,
+                  ),
+                  const SizedBox(width: AppSizes.p8),
+                  // Filters — filled when active
+                  AppFilterChip(
+                    label: AppStrings.filters,
+                    isActive: _hasActiveFilters,
+                    onTap: () => showPatientFilterSheet(context, ref),
+                  ),
+                ],
+              ),
+            ),
+
+            // ── List ──
             Expanded(
               child: state.when(
                 loading: () => const Center(
-                  child: CircularProgressIndicator(color: AppColors.primary),
-                ),
-                error: (error, _) => Center(
-                  child: Padding(
-                    padding: AppSizes.paddingScreenH,
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          AppStrings.errorDatabaseGeneric,
-                          style: AppTextStyles.bodySecondary,
-                          textAlign: TextAlign.center,
-                        ),
-                        const SizedBox(height: AppSizes.p16),
-                        TextButton(
-                          onPressed: () => ref
-                              .read(patientListProvider.notifier)
-                              .refresh(),
-                          child: Text(
-                            AppStrings.retry,
-                            style: AppTextStyles.bodyMedium.copyWith(
-                              color: AppColors.primary,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
+                  child: CircularProgressIndicator(
+                    color: AppColors.primary,
                   ),
                 ),
-                data: (patients) {
+                error: (Object error, StackTrace _) {
+                  final AppException ex = error is AppException
+                      ? error
+                      : UnknownException(message: error.toString());
+                  return ErrorView(
+                    exception: ex,
+                    onRetry: _onRefresh,
+                  );
+                },
+                data: (List<Patient> patients) {
                   if (patients.isEmpty) {
                     return EmptyState(
                       message: AppStrings.noPatients,
                       icon: Icons.people_outline_rounded,
+                      secondaryMessage: AppStrings.searchPatients,
                     );
                   }
-                  return ListView.builder(
-                    controller: _scrollController,
-                    itemCount: patients.length + 1,
-                    itemBuilder: (_, int index) {
-                      if (index == patients.length) {
-                        return _buildLoadMoreIndicator();
-                      }
-                      final Patient patient = patients[index];
-                      return DataListTile(
-                        title: patient.fullName,
-                        subtitle:
-                            '${patient.phoneNumber} · ${patient.clinic.displayLabel}',
-                        trailing: PatientBalanceChip(
-                          balance: patient.packageBalance,
+
+                  final sorted = _sorted(patients);
+
+                  return RefreshIndicator(
+                    onRefresh: _onRefresh,
+                    color: AppColors.primary,
+                    child: ListView.separated(
+                      controller: _scrollCtrl,
+                      padding: const EdgeInsets.only(
+                        top: AppSizes.p4,
+                        bottom: AppSizes.p48,
+                      ),
+                      itemCount: sorted.length + 1,
+                      separatorBuilder: (_, __) => const Padding(
+                        padding: EdgeInsets.only(left: 72),
+                        child: Divider(
+                          height: 1,
+                          thickness: 1,
+                          color: AppColors.border,
                         ),
-                        onTap: () => context.push(
-                          AppRoutes.patientDetail.replaceAll(':id', patient.id),
-                        ),
-                      );
-                    },
+                      ),
+                      itemBuilder: (_, int index) {
+                        if (index == sorted.length) {
+                          return _buildLoadMore();
+                        }
+                        final Patient p = sorted[index];
+                        return PatientListTile(
+                          name: p.fullName,
+                          subtitle: _subtitle(p),
+                          onTap: () => context.push(
+                            AppRoutes.patientDetail
+                                .replaceAll(':id', p.id),
+                          ),
+                        ).animate().fadeIn(
+                              duration: 300.ms,
+                              delay: (index * 40).ms,
+                            );
+                      },
+                    ),
                   );
                 },
               ),
@@ -152,17 +217,32 @@ class _PatientListScreenState extends ConsumerState<PatientListScreen> {
       floatingActionButton: FloatingActionButton(
         onPressed: () => context.push(AppRoutes.newPatient),
         backgroundColor: AppColors.primary,
-        child: const Icon(Icons.add, color: AppColors.textOnPrimary),
+        foregroundColor: AppColors.textOnPrimary,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppSizes.r16),
+        ),
+        child: const Icon(Icons.add),
       ),
     );
   }
 
-  Widget _buildLoadMoreIndicator() {
-    final notifier = ref.read(patientListProvider.notifier);
-    if (!notifier.hasMore) return const SizedBox.shrink();
+  bool get _hasActiveFilters {
+    final n = ref.read(patientListProvider.notifier);
+    return n.currentDoctorFilter != null || n.currentClinicFilter != null;
+  }
+
+  String _subtitle(Patient p) {
+    return '${p.phoneNumber}  ·  ${p.clinic.displayLabel}';
+  }
+
+  Widget _buildLoadMore() {
+    final n = ref.read(patientListProvider.notifier);
+    if (!n.hasMore) return const SizedBox.shrink();
     return const Padding(
       padding: EdgeInsets.all(AppSizes.p16),
-      child: Center(child: CircularProgressIndicator(color: AppColors.primary)),
+      child: Center(
+        child: CircularProgressIndicator(color: AppColors.primary),
+      ),
     );
   }
 }

@@ -46,7 +46,7 @@ class ConfirmationDialog extends StatelessWidget {
       backgroundColor: AppColors.surface, // Pure white background
       surfaceTintColor: AppColors.transparent, // Disable Material 3 overlay tinting
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.all(Radius.circular(AppSizes.r8)), // Max standard card radius
+        borderRadius: BorderRadius.all(Radius.circular(AppSizes.r16)), // Modern card radius
       ),
       insetPadding: const EdgeInsets.symmetric(
         horizontal: AppSizes.p24, // Symmetrical screen edge margins

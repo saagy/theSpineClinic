@@ -30,6 +30,9 @@ class PatientList extends _$PatientList {
 
   /// The currently active clinic/branch filter, or null for all branches.
   ClinicLocation? get currentClinicFilter => _clinicFilter;
+
+  /// The currently active doctor filter, or null for all doctors.
+  String? get currentDoctorFilter => _doctorId;
   static const int _pageSize = 30;
 
   bool get hasMore => (state.value?.length ?? 0) < _totalCount;

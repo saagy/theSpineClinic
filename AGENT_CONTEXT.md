@@ -439,20 +439,32 @@ CREATE TRIGGER trigger_appointment_package_deduction
 
 ---
 
-## 11. The 12 Inviolable Code Rules
+## Inviolable Code & UI Rules
 
-1. No file longer than 200 lines. Split it immediately if it grows past that.
-2. No Supabase calls inside widgets. All data access in repository classes only.
-3. All state via Riverpod. Never use setState except trivial local UI animations.
-4. Every async repository function returns Result<T> not raw Future<T>.
-5. No dynamic types. No var where type is ambiguous. Zero use of 'dynamic'.
-6. Every user action that writes data must check role from currentUserProvider.
-7. No hardcoded strings. All text via AppStrings constants class.
-8. No hardcoded colors or sizes. All via AppColors and AppSizes constants.
-9. Every screen must handle four states: loading, error, empty, and data.
-10. Run flutter analyze and confirm zero errors before marking any task done.
-11. Phone-only app. No hover states, no MouseRegion widgets, no desktop/web interaction patterns. Touch only.
-12. DEBOUNCED FILTERS. Any interactive text search or filter query hitting a Repository or Supabase must use a minimum 300ms debounce pattern via Riverpod or an explicit debouncer mechanism. Never trigger database hits on every single keystroke.
+1. **Strict File Length Limit:** No file longer than 200 lines. Split components or files immediately if they grow past this threshold.
+2. **Encapsulated Data Access:** No Supabase or database engine calls directly inside widgets. All data access must reside exclusively inside repository classes.
+3. **Unified State Management:** Manage all application state via Riverpod. Never use `setState` except for trivial, localized UI micro-animations.
+4. **Type-Safe Async Architecture:** Every asynchronous repository function must return a `Result<T>` wrapper rather than a raw `Future<T>`.
+5. **Strict Static Typing:** No dynamic types. Never use `var` where the type is ambiguous. Zero usage of the `dynamic` keyword.
+6. **Role-Based Security Verification:** Every user action that writes or modifies data must explicitly verify roles and permissions via the `currentUserProvider`.
+7. **Zero Hardcoded Strings:** All localized text, labels, and system messages must be sourced via the `AppStrings` constants class.
+8. **Semantic Size Mapping:** No hardcoded layout sizing parameters. Dimensions must map completely to layout configurations inside the `AppSizes` token file.
+9. **Mandatory UI States:** Every functional screen layout must explicitly handle and display four foundational structural states: `loading`, `error`, `empty`, and `data`.
+10. **Zero-Tolerance Analysis:** Run `flutter analyze` and confirm zero warnings or errors before marking any individual task as complete.
+11. **Mobile-Touch Focus:** Phone-only design paradigm. No hover states, no `MouseRegion` widgets, and no desktop/web-first interaction patterns. Ensure all touch targets use `InkWell` or `GestureDetector` optimized for immediate touch feedback.
+12. **Debounced Network Queries:** Any interactive text search input or real-time filter execution hitting a Repository or Supabase must utilize a minimum 300ms debounce pattern via Riverpod or an explicit debouncer mechanism. Never trigger database operations on individual keystrokes.
+13. **Modern Component Spacing:** Zero usage of raw `Divider()` lines between list components. Every list item row must be configured as a distinct Material 3 container/card element styled with uniform `BorderRadius.circular(16)`. Every row or card target must enforce a minimum internal layout padding of `EdgeInsets.all(16)` for physical touch comfort.
+14. **Clean Mobile Control Layouts:** Never stack more than two filter inputs or dropdown controls vertically directly on a main screen surface. If a feature demands deeper control variables (e.g., Doctor, Status, Date Ranges), implement a horizontal scrolling row of Material 3 `ChoiceChip` components for primary selectors, alongside a trailing button that opens a structured `showModalBottomSheet`.
+15. **Context-Driven Theme Tokens:** Zero usage of absolute color constants from `AppColors` directly within styling or visual component declarations. All component coloring parameters must be mapped dynamically from the active runtime theme context (e.g., `Theme.of(context).colorScheme.surfaceContainer` or `Theme.of(context).colorScheme.onSurface`) to ensure instant system theme compliance.
+16. **Design System Compliance:** Zero usage of raw color values or hardcoded
+    hex codes in any widget. All colors must come from the active theme via
+    Theme.of(context). All spacing must reference AppSizes tokens. All text
+    styles must reference AppTextStyles.
+
+17. **Component Reuse Mandate:** Before building any new visual element, check
+    shared/widgets/ first. If a suitable component exists, use it. If a new
+    pattern is needed, build it in shared/widgets/ first, then use it. Never
+    build one-off styled containers inline inside screens.
 
 ---
 

@@ -292,7 +292,15 @@ abstract final class AppStrings {
   static const String filterByDoctor = 'Filter by Doctor';
   static const String filterByBranch = 'Filter by Branch';
   static const String allDoctors = 'All Doctors';
+  static const String searchDoctors = 'Search doctors...';
+  static const String noDoctorsMatch = 'No matching doctors';
   static const String allBranches = 'All Branches';
+  static const String filters = 'Filters';
+  static const String sort = 'Sort';
+  static const String sortByName = 'Name';
+  static const String sortByRecent = 'Recent';
+  static const String applyFilters = 'Apply';
+  static const String branch = 'Branch';
   static const String loadMore = 'Load More';
   static const String registerNewPatient = 'Register New Patient';
   static const String patientRegisteredSuccess = 'Patient registered successfully.';

@@ -1,14 +1,13 @@
 /// Centralised typography tokens for the Spine Clinic application.
 ///
-/// **Design rationale — data-density over decoration:**
-/// Only four size tiers (20 / 16 / 14 / 12 px) are used.
-/// Visual hierarchy is achieved through **font-weight** (w400–w700)
-/// and **colour** ([AppColors.textPrimary] vs [textSecondary] vs
-/// [textMuted]) rather than large size jumps. This keeps tables,
-/// list views, and forms vertically compact.
+/// **Design rationale — bold hierarchy, generous scale:**
+/// Five size tiers (24 / 20 / 16 / 14 / 12 px) with strong weight
+/// contrast. Large bold titles paired with muted gray subtitles create
+/// clear visual hierarchy. Inter font throughout for clean, modern
+/// rendering at all sizes.
 ///
 /// Font family: **Inter** — a variable-weight sans-serif optimised
-/// for UI and tabular data at small sizes.
+/// for UI readability and tabular data.
 ///
 /// Rule 8 — no hardcoded text styles outside this file.
 library;
@@ -22,54 +21,61 @@ abstract final class AppTextStyles {
   /// Base font family applied to every style.
   static const String _fontFamily = 'Inter';
 
-  // ──────────────────── Tier 1 — Headings (20 px) ────────────
+  // ──────────────── Headings ────────────────
 
-  /// Page titles, modal titles.
+  /// Screen titles, page headers — 24px bold.
   static const TextStyle headingLarge = TextStyle(
     fontFamily: _fontFamily,
-    fontSize: 20,
+    fontSize: 24,
     fontWeight: FontWeight.w700,
-    height: 1.3,
+    height: 1.2,
     color: AppColors.textPrimary,
   );
 
-  // ──────────────────── Tier 2 — Sub-headings (16 px) ────────
+  /// Card headers, dialog titles — 20px bold.
+  static const TextStyle headingMedium = TextStyle(
+    fontFamily: _fontFamily,
+    fontSize: 20,
+    fontWeight: FontWeight.w700,
+    height: 1.25,
+    color: AppColors.textPrimary,
+  );
 
-  /// Section headers, card titles, form group labels.
+  /// Section headers, form group labels — 16px semibold.
   static const TextStyle headingSmall = TextStyle(
     fontFamily: _fontFamily,
     fontSize: 16,
     fontWeight: FontWeight.w600,
-    height: 1.35,
+    height: 1.3,
     color: AppColors.textPrimary,
   );
 
-  // ──────────────────── Tier 3 — Body (14 px) ────────────────
+  // ──────────────── Body ────────────────
 
-  /// Default body copy. Used for paragraphs, table cells, form values.
+  /// Default body copy — 14px regular.
   static const TextStyle body = TextStyle(
     fontFamily: _fontFamily,
     fontSize: 14,
     fontWeight: FontWeight.w400,
-    height: 1.45,
+    height: 1.5,
     color: AppColors.textPrimary,
   );
 
-  /// Bold body — inline emphasis, row labels, field names.
+  /// Bold body — inline emphasis, row labels, patient names.
   static const TextStyle bodyBold = TextStyle(
     fontFamily: _fontFamily,
     fontSize: 14,
     fontWeight: FontWeight.w600,
-    height: 1.45,
+    height: 1.5,
     color: AppColors.textPrimary,
   );
 
-  /// Medium-weight body — buttons, nav items.
+  /// Medium-weight body — buttons, nav items, interactive text.
   static const TextStyle bodyMedium = TextStyle(
     fontFamily: _fontFamily,
     fontSize: 14,
     fontWeight: FontWeight.w500,
-    height: 1.45,
+    height: 1.5,
     color: AppColors.textPrimary,
   );
 
@@ -78,13 +84,22 @@ abstract final class AppTextStyles {
     fontFamily: _fontFamily,
     fontSize: 14,
     fontWeight: FontWeight.w400,
-    height: 1.45,
+    height: 1.5,
     color: AppColors.textSecondary,
   );
 
-  // ──────────────────── Tier 4 — Captions (12 px) ────────────
+  /// Larger body for intro text and empty states — 16px regular.
+  static const TextStyle bodyLarge = TextStyle(
+    fontFamily: _fontFamily,
+    fontSize: 16,
+    fontWeight: FontWeight.w400,
+    height: 1.5,
+    color: AppColors.textSecondary,
+  );
 
-  /// Timestamps, badges, table column headers, chip labels.
+  // ──────────────── Captions ────────────────
+
+  /// Timestamps, metadata labels — 12px regular.
   static const TextStyle caption = TextStyle(
     fontFamily: _fontFamily,
     fontSize: 12,
@@ -93,7 +108,7 @@ abstract final class AppTextStyles {
     color: AppColors.textMuted,
   );
 
-  /// Medium-weight caption — column headers, tab labels.
+  /// Medium-weight caption — column headers, tab labels, chip text.
   static const TextStyle captionMedium = TextStyle(
     fontFamily: _fontFamily,
     fontSize: 12,
@@ -102,7 +117,7 @@ abstract final class AppTextStyles {
     color: AppColors.textSecondary,
   );
 
-  /// Bold caption — active tab, highlighted badge text.
+  /// Bold caption — active tabs, badge text, highlighted chips.
   static const TextStyle captionBold = TextStyle(
     fontFamily: _fontFamily,
     fontSize: 12,
@@ -111,13 +126,13 @@ abstract final class AppTextStyles {
     color: AppColors.textPrimary,
   );
 
-  // ──────────────────── Special Purpose ────────────────────
+  // ──────────────── Special Purpose ────────────────
 
-  /// Button label — medium weight body on primary-coloured background.
+  /// Button label — semibold 16px on primary-coloured background.
   static const TextStyle button = TextStyle(
     fontFamily: _fontFamily,
-    fontSize: 14,
-    fontWeight: FontWeight.w500,
+    fontSize: 16,
+    fontWeight: FontWeight.w600,
     height: 1.0,
     color: AppColors.textOnPrimary,
   );
@@ -127,7 +142,7 @@ abstract final class AppTextStyles {
     fontFamily: _fontFamily,
     fontSize: 14,
     fontWeight: FontWeight.w500,
-    height: 1.45,
+    height: 1.4,
     color: AppColors.textPrimary,
     fontFeatures: [FontFeature.tabularFigures()],
   );
@@ -135,7 +150,7 @@ abstract final class AppTextStyles {
   /// Large numeric display — KPI cards, summary stats.
   static const TextStyle numberLarge = TextStyle(
     fontFamily: _fontFamily,
-    fontSize: 20,
+    fontSize: 24,
     fontWeight: FontWeight.w700,
     height: 1.2,
     color: AppColors.textPrimary,

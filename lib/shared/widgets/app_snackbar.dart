@@ -67,7 +67,7 @@ abstract final class AppSnackbar {
       content: Container(
         decoration: BoxDecoration(
           color: backgroundColor,
-          borderRadius: const BorderRadius.all(Radius.circular(AppSizes.r6)),
+          borderRadius: AppSizes.borderRadiusCard,
           border: border,
           boxShadow: const [AppColors.cardShadow],
         ),

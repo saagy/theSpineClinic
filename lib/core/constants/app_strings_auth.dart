@@ -8,6 +8,8 @@ library;
 abstract final class AppStringsAuth {
   // ──────────────────── Auth Flow ────────────────────
 
+  static const String welcomeBack = 'Yeay! Welcome Back';
+  static const String signInToContinue = 'Sign in to continue';
   static const String signIn = 'Sign In';
   static const String signOut = 'Sign Out';
   static const String password = 'Password';

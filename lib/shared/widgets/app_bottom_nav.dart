@@ -48,15 +48,16 @@ class AppBottomNav extends StatelessWidget {
     final List<_TabItem> tabs = _resolveTabsForRole(userRole);
 
     return Container(
-      height: AppSizes.appBarHeight, // Locked to standard 56px height
+      height: AppSizes.bottomNavHeight,
       decoration: const BoxDecoration(
-        color: AppColors.surface, // Pure white background
-        border: Border(
-          top: BorderSide(
-            color: AppColors.border, // Slate 200 thin top divider border
-            width: AppSizes.borderWidth,
+        color: AppColors.surface,
+        boxShadow: [
+          BoxShadow(
+            color: Color(0x05000000),
+            blurRadius: 4,
+            offset: Offset(0, -1),
           ),
-        ),
+        ],
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceAround,

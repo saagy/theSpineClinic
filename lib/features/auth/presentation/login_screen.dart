@@ -1,16 +1,14 @@
-/// Production login screen for all staff roles.
+/// Production login screen — Medics UI Kit inspired.
 ///
-/// After successful authentication, the router's redirect engine
-/// automatically navigates the user to their role-appropriate home.
-/// If `is_active == false`, the notifier emits an error with code
-/// `'auth/account-inactive'` which is caught here and surfaced via
-/// [AppSnackbar].
+/// A clean, centered layout with a small medical mark, warm welcome
+/// copy, and smooth fade+slide entrance. No legacy chrome, no clutter.
 ///
 /// Rule 1 — under 200 lines.
 /// Rule 3 — all state via Riverpod.
 library;
 
 import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -23,10 +21,10 @@ import 'package:spine_clinic_app/core/errors/app_exception.dart';
 import 'package:spine_clinic_app/core/network/app_routes.dart';
 import 'package:spine_clinic_app/features/auth/presentation/auth_providers.dart';
 import 'package:spine_clinic_app/features/auth/presentation/widgets/auth_validators.dart';
-import 'package:spine_clinic_app/shared/widgets/app_button.dart';
 import 'package:spine_clinic_app/shared/widgets/app_snackbar.dart';
-import 'package:spine_clinic_app/shared/widgets/app_text_field.dart';
+import 'package:spine_clinic_app/shared/widgets/app_text_input.dart';
 import 'package:spine_clinic_app/shared/widgets/loading_overlay.dart';
+import 'package:spine_clinic_app/shared/widgets/primary_button.dart';
 
 /// Single login screen used by all staff roles.
 class LoginScreen extends ConsumerStatefulWidget {
@@ -52,9 +50,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   Future<void> _handleLogin() async {
     if (!_formKey.currentState!.validate()) return;
 
-    // Clear any stale error state before initiating the new login attempt.
-    // This prevents the UI from flashing a previous error when correct
-    // credentials are entered.
     ref.read(currentUserProvider.notifier).clearError();
 
     await ref.read(currentUserProvider.notifier).login(
@@ -66,7 +61,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     ref.listen(currentUserProvider, (_, AsyncValue next) {
-      // Only show snackbar for fresh errors — skip stale/cleared states.
       if (next.hasError && next.error is AppException) {
         final AppException error = next.error! as AppException;
         final String message = error.code == 'auth/account-inactive'
@@ -89,81 +83,114 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         child: SafeArea(
           child: Center(
             child: SingleChildScrollView(
-              padding: AppSizes.paddingScreenH,
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppSizes.p32,
+              ),
               child: Form(
                 key: _formKey,
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    // ── Clinic header ──
-                    const SizedBox(height: AppSizes.p32),
-                    const Icon(
-                      Icons.local_hospital_rounded,
-                      size: 48,
-                      color: AppColors.primary,
+                child: _buildContent(isLoading)
+                    .animate()
+                    .fadeIn(duration: 600.ms)
+                    .slideY(
+                      begin: 0.06,
+                      end: 0,
+                      duration: 600.ms,
+                      curve: Curves.easeOut,
                     ),
-                    const SizedBox(height: AppSizes.p12),
-                    Text(
-                      AppStrings.appName,
-                      style: AppTextStyles.headingLarge,
-                      textAlign: TextAlign.center,
-                    ),
-                    const SizedBox(height: AppSizes.p4),
-                    Text(
-                      AppStrings.appTagline,
-                      style: AppTextStyles.bodySecondary,
-                      textAlign: TextAlign.center,
-                    ),
-                    const SizedBox(height: AppSizes.p40),
-
-                    // ── Email field ──
-                    AppTextField(
-                      controller: _emailCtrl,
-                      labelText: AppStrings.email,
-                      keyboardType: TextInputType.emailAddress,
-                      validator: AuthValidators.email,
-                      enabled: !isLoading,
-                    ),
-                    const SizedBox(height: AppSizes.p16),
-
-                    // ── Password field ──
-                    AppTextField(
-                      controller: _passwordCtrl,
-                      labelText: AppStringsAuth.password,
-                      obscureText: true,
-                      validator: AuthValidators.required,
-                      enabled: !isLoading,
-                    ),
-                    const SizedBox(height: AppSizes.p24),
-
-                    // ── Login button ──
-                    AppButton(
-                      labelText: AppStringsAuth.signIn,
-                      onPressed: isLoading ? null : _handleLogin,
-                      isLoading: isLoading,
-                    ),
-                    const SizedBox(height: AppSizes.p24),
-
-                    // ── Register link ──
-                    GestureDetector(
-                      onTap: () => context.go(AppRoutes.register),
-                      child: Text(
-                        AppStringsAuth.registerAsDoctor,
-                        style: AppTextStyles.bodyMedium.copyWith(
-                          color: AppColors.primary,
-                        ),
-                        textAlign: TextAlign.center,
-                      ),
-                    ),
-                    const SizedBox(height: AppSizes.p32),
-                  ],
-                ),
               ),
             ),
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildContent(bool isLoading) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        const SizedBox(height: AppSizes.p36),
+
+        // ── Small medical mark ──
+        const Icon(
+          Icons.medical_services_outlined,
+          size: 28,
+          color: AppColors.primary,
+        ),
+        const SizedBox(height: AppSizes.p12),
+
+        // ── Clinic wordmark ──
+        Text(
+          AppStrings.appName,
+          style: AppTextStyles.headingSmall.copyWith(
+            color: AppColors.primary,
+            letterSpacing: 0.5,
+          ),
+          textAlign: TextAlign.center,
+        ),
+        const SizedBox(height: AppSizes.p16),
+
+        // ── Welcome copy ──
+        Text(
+          AppStringsAuth.welcomeBack,
+          style: AppTextStyles.headingLarge,
+          textAlign: TextAlign.center,
+        ),
+        const SizedBox(height: AppSizes.p6),
+        Text(
+          AppStringsAuth.signInToContinue,
+          style: AppTextStyles.bodyLarge,
+          textAlign: TextAlign.center,
+        ),
+        const SizedBox(height: AppSizes.p36),
+
+        // ── Email ──
+        AppTextInput(
+          controller: _emailCtrl,
+          labelText: AppStrings.email,
+          prefixIcon: Icons.email_outlined,
+          keyboardType: TextInputType.emailAddress,
+          validator: AuthValidators.email,
+          enabled: !isLoading,
+          textInputAction: TextInputAction.next,
+        ),
+        const SizedBox(height: AppSizes.p16),
+
+        // ── Password ──
+        AppTextInput(
+          controller: _passwordCtrl,
+          labelText: AppStringsAuth.password,
+          prefixIcon: Icons.lock_outlined,
+          obscureText: true,
+          validator: AuthValidators.required,
+          enabled: !isLoading,
+          textInputAction: TextInputAction.done,
+          onSubmitted: isLoading ? null : (_) => _handleLogin(),
+        ),
+        const SizedBox(height: AppSizes.p24),
+
+        // ── Sign in ──
+        PrimaryButton(
+          label: AppStringsAuth.signIn,
+          onPressed: isLoading ? null : _handleLogin,
+          isLoading: isLoading,
+        ),
+        const SizedBox(height: AppSizes.p20),
+
+        // ── Register link ──
+        GestureDetector(
+          onTap: () => context.go(AppRoutes.register),
+          child: Text(
+            AppStringsAuth.registerAsDoctor,
+            style: AppTextStyles.bodyMedium.copyWith(
+              color: AppColors.primary,
+            ),
+            textAlign: TextAlign.center,
+          ),
+        ),
+        const SizedBox(height: AppSizes.p36),
+      ],
     );
   }
 }
