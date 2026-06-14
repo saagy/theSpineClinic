@@ -1,130 +1,97 @@
-/// Custom role-driven navigation bar widget matching the Spine Clinic access matrix.
+/// Floating capsule island navigation bar powered by [GNav].
 ///
-/// Dynamically resolves and renders tab options based on the user's role:
-/// doctor, receptionist, or super_admin. Touch-only design.
+/// Detached from screen edges with rounded corners, soft shadow, and
+/// smooth pill-style active tab indicator. Role-driven tabs.
 ///
-/// Rule 1 — keep files under 200 lines.
+/// Rule 1 — under 200 lines.
 library;
 
 import 'package:flutter/material.dart';
-import 'package:spine_clinic_app/core/constants/app_colors.dart';
-import 'package:spine_clinic_app/core/constants/app_sizes.dart';
+import 'package:google_nav_bar/google_nav_bar.dart';
 import 'package:spine_clinic_app/core/constants/app_strings.dart';
-import 'package:spine_clinic_app/core/constants/app_text_styles.dart';
 
-/// Representation of a single navigation tab item.
-class _TabItem {
-  const _TabItem({
-    required this.icon,
-    required this.label,
-  });
-
-  final IconData icon;
-  final String label;
-}
-
-/// A role-driven, high-density bottom navigation bar styled with design tokens.
+/// A floating capsule bottom navigation bar using the google_nav_bar package.
 class AppBottomNav extends StatelessWidget {
-  /// Creates an [AppBottomNav].
   const AppBottomNav({
     super.key,
     required this.currentTabIndex,
     required this.onTabSelected,
     required this.userRole,
   });
-
-  /// The currently selected tab index.
   final int currentTabIndex;
-
-  /// Callback triggered when a tab is tapped.
   final ValueSetter<int> onTabSelected;
-
-  /// The role string of the logged-in user profile (super_admin, receptionist, doctor).
   final String userRole;
+
+  static const Color _activeColor = Color(0xFF085041);
+  static const Color _activeBg = Color(0xFFE1F5EE);
 
   @override
   Widget build(BuildContext context) {
-    // Resolve the navigation tab list dynamically based on userRole
-    final List<_TabItem> tabs = _resolveTabsForRole(userRole);
+    final tabs = _resolveTabs(userRole);
 
     return Container(
-      height: AppSizes.bottomNavHeight,
-      decoration: const BoxDecoration(
-        color: AppColors.surface,
+      margin: const EdgeInsets.only(left: 24, right: 24, bottom: 20),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: const BorderRadius.all(Radius.circular(30)),
         boxShadow: [
           BoxShadow(
-            color: Color(0x05000000),
-            blurRadius: 4,
-            offset: Offset(0, -1),
+            blurRadius: 20,
+            color: Colors.black.withValues(alpha: 0.06),
+            offset: const Offset(0, 4),
           ),
         ],
       ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: List.generate(tabs.length, (index) {
-          final _TabItem tab = tabs[index];
-          final bool isSelected = index == currentTabIndex;
-
-          final Color itemColor = isSelected ? AppColors.primary : AppColors.textSecondary;
-
-          return Expanded(
-            child: GestureDetector(
-              behavior: HitTestBehavior.opaque,
-              onTap: () => onTabSelected(index),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.center,
-                mainAxisSize: MainAxisSize.max,
-                children: [
-                  Icon(
-                    tab.icon,
-                    color: itemColor,
-                    size: AppSizes.iconLarge,
-                  ),
-                  const SizedBox(height: AppSizes.p2), // Ultra-tight spacing grid Nudge
-                  Text(
-                    tab.label,
-                    style: AppTextStyles.captionMedium.copyWith(
-                      color: itemColor,
-                      fontSize: AppSizes.fontSizeSm2, // Specialized extra-small text layout layer
-                    ),
-                    textAlign: TextAlign.center,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ],
-              ),
-            ),
-          );
-        }),
+      child: GNav(
+        selectedIndex: currentTabIndex,
+        onTabChange: onTabSelected,
+        rippleColor: Colors.grey[300]!,
+        hoverColor: Colors.grey[100]!,
+        gap: 8,
+        activeColor: _activeColor,
+        iconSize: 22,
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+        duration: const Duration(milliseconds: 300),
+        tabBackgroundColor: _activeBg,
+        color: Colors.grey,
+        tabBorderRadius: 30,
+        tabs: tabs
+            .map((t) => GButton(icon: t.icon, text: t.label))
+            .toList(),
       ),
     );
   }
 
-  List<_TabItem> _resolveTabsForRole(String role) {
+  List<_Tab> _resolveTabs(String role) {
     switch (role) {
       case 'doctor':
         return const [
-          _TabItem(icon: Icons.calendar_today_rounded, label: AppStrings.navMySchedule),
-          _TabItem(icon: Icons.people_alt_rounded, label: AppStrings.navMyPatients),
-          _TabItem(icon: Icons.person_rounded, label: AppStrings.profile),
-        ];
-      case 'receptionist':
-        return const [
-          _TabItem(icon: Icons.event_note_rounded, label: AppStrings.navAppts),
-          _TabItem(icon: Icons.people_alt_rounded, label: AppStrings.patients),
-          _TabItem(icon: Icons.person_rounded, label: AppStrings.profile),
+          _Tab(icon: Icons.calendar_today_outlined, label: AppStrings.navMySchedule),
+          _Tab(icon: Icons.people_outline, label: AppStrings.navMyPatients),
+          _Tab(icon: Icons.person_outline, label: AppStrings.profile),
         ];
       case 'super_admin':
+        return const [
+          _Tab(icon: Icons.analytics_outlined, label: AppStrings.navAnalytics),
+          _Tab(icon: Icons.calendar_today_outlined, label: AppStrings.navAppts),
+          _Tab(icon: Icons.calendar_today_outlined, label: AppStrings.navMySchedule),
+          _Tab(icon: Icons.people_outline, label: AppStrings.patients),
+          _Tab(icon: Icons.settings_outlined, label: AppStrings.navAdmin),
+        ];
+      case 'receptionist':
       default:
         return const [
-          _TabItem(icon: Icons.analytics_rounded, label: AppStrings.navAnalytics),
-          _TabItem(icon: Icons.event_note_rounded, label: AppStrings.navAppts),
-          _TabItem(icon: Icons.calendar_today_rounded, label: AppStrings.navMySchedule),
-          _TabItem(icon: Icons.people_alt_rounded, label: AppStrings.patients),
-          _TabItem(icon: Icons.settings_applications_rounded, label: AppStrings.navAdmin),
+          _Tab(icon: Icons.calendar_today_outlined, label: AppStrings.navAppts),
+          _Tab(icon: Icons.people_outline, label: AppStrings.patients),
+          _Tab(icon: Icons.person_outline, label: AppStrings.profile),
         ];
     }
   }
+}
+
+class _Tab {
+  const _Tab({required this.icon, required this.label});
+  final IconData icon;
+  final String label;
 }

@@ -1,9 +1,10 @@
-/// Master scaffold shell that wraps all feature screens.
+/// Master scaffold shell with branded AppBar and floating capsule navigation.
 ///
-/// Controls the top AppBar, bottom role-driven navigation bar, and
-/// intercepts background system events via a global loading overlay.
+/// Uses a Stack so the GNav island floats detached from screen edges over
+/// scrolling content. A bottom inset on the child ensures list items clear
+/// the floating bar.
 ///
-/// Rule 1 — keep files under 200 lines.
+/// Rule 1 — under 200 lines.
 library;
 
 import 'package:flutter/material.dart';
@@ -14,10 +15,11 @@ import 'package:spine_clinic_app/core/constants/app_text_styles.dart';
 import 'package:spine_clinic_app/shared/widgets/app_bottom_nav.dart';
 import 'package:spine_clinic_app/shared/widgets/loading_overlay.dart';
 
-/// The root application shell providing a consistent AppBar, bottom
-/// navigation, and global loading state across every feature screen.
+/// Floating nav island total height: ~50 content + 20 padding + 20 margin ≈ 92.
+const double _kNavClearance = 96;
+
+/// Root application shell with branded AppBar and floating capsule bottom nav.
 class AppShell extends StatelessWidget {
-  /// Creates an [AppShell].
   const AppShell({
     super.key,
     required this.child,
@@ -27,101 +29,82 @@ class AppShell extends StatelessWidget {
     this.isGlobalLoading = false,
     this.actions,
   });
-
-  /// The active inner screen content pushed by the router.
   final Widget child;
-
-  /// Tracking active bottom navigation highlighting coordinates.
   final int currentTabIndex;
-
-  /// Navigation routing bridge callback passed down to the sub-nav bar.
   final ValueSetter<int> onTabSelected;
-
-  /// The logged-in staff role (super_admin, receptionist, doctor).
   final String userRole;
-
-  /// When true, activates a root blocking loader over the entire shell.
   final bool isGlobalLoading;
-
-  /// Optional trailing header action icons (e.g., profile, logout).
   final List<Widget>? actions;
 
   @override
   Widget build(BuildContext context) {
-    // LoadingOverlay wraps the ENTIRE scaffold so that when active,
-    // it blocks interaction with the AppBar, body, AND BottomNav.
     return LoadingOverlay(
       isLoading: isGlobalLoading,
       child: Scaffold(
         backgroundColor: AppColors.background,
         appBar: _buildAppBar(),
-        body: child,
-        bottomNavigationBar: AppBottomNav(
-          currentTabIndex: currentTabIndex,
-          onTabSelected: onTabSelected,
-          userRole: userRole,
+        body: Stack(
+          children: [
+            // Content with bottom clearance so lists scroll past the island
+            Padding(
+              padding: const EdgeInsets.only(bottom: _kNavClearance),
+              child: child,
+            ),
+            // Floating capsule nav
+            Positioned(
+              left: 0,
+              right: 0,
+              bottom: 0,
+              child: AppBottomNav(
+                currentTabIndex: currentTabIndex,
+                onTabSelected: onTabSelected,
+                userRole: userRole,
+              ),
+            ),
+          ],
         ),
       ),
     );
   }
 
-  /// Constructs a branded AppBar with logomark, bold wordmark, and tagline.
   PreferredSizeWidget _buildAppBar() {
     return PreferredSize(
       preferredSize: const Size.fromHeight(AppSizes.appBarHeight),
       child: Container(
         height: AppSizes.appBarHeight,
-        decoration: const BoxDecoration(
-          color: AppColors.surface,
-        ),
+        decoration: const BoxDecoration(color: AppColors.surface),
         child: SafeArea(
           bottom: false,
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: AppSizes.p20),
-            child: Row(
-              children: [
-                // ── Brand: logomark + wordmark + tagline ──
-                Container(
-                  width: AppSizes.iconDefault + 4,
-                  height: AppSizes.iconDefault + 4,
-                  decoration: BoxDecoration(
-                    color: AppColors.primary,
-                    borderRadius: const BorderRadius.all(Radius.circular(AppSizes.r8)),
-                  ),
-                  child: const Icon(
-                    Icons.spa_rounded,
+            child: Row(children: [
+              Container(
+                width: AppSizes.iconDefault + 4,
+                height: AppSizes.iconDefault + 4,
+                decoration: BoxDecoration(
+                  color: AppColors.primary,
+                  borderRadius:
+                      const BorderRadius.all(Radius.circular(AppSizes.r8)),
+                ),
+                child: const Icon(Icons.spa_rounded,
                     color: AppColors.textOnPrimary,
-                    size: AppSizes.iconDefault,
-                  ),
-                ),
-                const SizedBox(width: AppSizes.p12),
-                Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      AppStrings.appName,
-                      style: AppTextStyles.brand,
-                    ),
-                    Text(
-                      AppStrings.appTagline,
-                      style: AppTextStyles.caption.copyWith(
-                        color: AppColors.textMuted,
-                      ),
-                    ),
-                  ],
-                ),
-
-                const Spacer(),
-
-                // Trailing action icons
-                if (actions != null && actions!.isNotEmpty)
-                  Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: actions!,
-                  ),
-              ],
-            ),
+                    size: AppSizes.iconDefault),
+              ),
+              const SizedBox(width: AppSizes.p12),
+              Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(AppStrings.appName, style: AppTextStyles.brand),
+                  Text(AppStrings.appTagline,
+                      style: AppTextStyles.caption
+                          .copyWith(color: AppColors.textMuted)),
+                ],
+              ),
+              const Spacer(),
+              if (actions != null && actions!.isNotEmpty)
+                Row(mainAxisSize: MainAxisSize.min, children: actions!),
+            ]),
           ),
         ),
       ),
