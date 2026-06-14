@@ -71,7 +71,8 @@ class DoctorScheduleState {
     final now = DateTime.now();
     // Strip time components — compare calendar dates, not instants.
     final today = DateTime(now.year, now.month, now.day);
-    final weekStart = today.subtract(Duration(days: now.weekday % 7));
+    // Week starts on Saturday: (weekday + 1) % 7 gives 0 for Saturday.
+    final weekStart = today.subtract(Duration(days: (now.weekday + 1) % 7));
     for (int i = 0; i < 7; i++) {
       counts[i] = 0;
     }

@@ -13,6 +13,7 @@ import 'package:spine_clinic_app/core/constants/app_sizes.dart';
 import 'package:spine_clinic_app/core/constants/app_strings.dart';
 import 'package:spine_clinic_app/core/constants/app_text_styles.dart';
 import 'package:spine_clinic_app/features/appointment/presentation/appointment_providers.dart';
+import 'package:spine_clinic_app/shared/widgets/app_avatar.dart';
 import 'package:spine_clinic_app/shared/widgets/section_card.dart';
 
 /// Displays the active and inactive doctor assignments for an appointment.
@@ -66,10 +67,9 @@ class AppointmentDoctorsSection extends StatelessWidget {
       padding: const EdgeInsets.symmetric(vertical: AppSizes.p6),
       child: Row(
         children: [
-          Icon(
-            Icons.person_rounded,
-            size: AppSizes.iconDefault,
-            color: AppColors.primary,
+          AppAvatar(
+            name: detail.doctor.fullName,
+            radius: 18,
           ),
           const SizedBox(width: AppSizes.p8),
           Expanded(

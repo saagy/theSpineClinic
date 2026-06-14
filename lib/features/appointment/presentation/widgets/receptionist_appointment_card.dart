@@ -1,6 +1,7 @@
 /// Hybrid appointment card with status-based background styling.
 ///
-/// Layout: [65px time] | avatar | patient info (expanded) | ··· menu.
+/// Layout: [80px date/time] | avatar | patient info (expanded) | ··· menu.
+/// When [showDate] is true the left column stacks "MMM d" over "hh:mm a".
 /// Status is communicated via container background, border, and timing
 /// colour — no text badges. Cancelled appointments get strikethrough
 /// and a muted gray avatar.
@@ -10,6 +11,7 @@ library;
 
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
 
 import 'package:spine_clinic_app/core/constants/app_colors.dart';
 import 'package:spine_clinic_app/core/constants/app_sizes.dart';
@@ -19,54 +21,9 @@ import 'package:spine_clinic_app/core/utils/formatters.dart';
 import 'package:spine_clinic_app/features/appointment/domain/appointment_repository.dart';
 import 'package:spine_clinic_app/features/appointment/domain/appointment_status.dart';
 import 'package:spine_clinic_app/features/appointment/presentation/widgets/appointment_actions_trailing.dart';
+import 'package:spine_clinic_app/features/appointment/presentation/widgets/appointment_status_style.dart';
 import 'package:spine_clinic_app/features/appointment/presentation/widgets/status_indicator.dart';
 import 'package:spine_clinic_app/shared/widgets/app_avatar.dart';
-
-/// Status-driven colour tokens for the hybrid card.
-class _StatusStyle {
-  const _StatusStyle({
-    required this.bg,
-    required this.border,
-    required this.timeColor,
-    required this.avatarBg,
-    required this.nameDecoration,
-    required this.nameColor,
-  });
-
-  final Color bg;
-  final Color border;
-  final Color timeColor;
-  final Color avatarBg;
-  final TextDecoration? nameDecoration;
-  final Color nameColor;
-
-  static _StatusStyle forStatus(AppointmentStatus s) => switch (s) {
-    AppointmentStatus.checkedIn => const _StatusStyle(
-        bg: Color(0xFFF0FAF6),
-        border: Color(0xFF9FE1CB),
-        timeColor: Color(0xFF085041),
-        avatarBg: AppColors.primary,
-        nameDecoration: null,
-        nameColor: AppColors.textPrimary,
-      ),
-    AppointmentStatus.cancelled => const _StatusStyle(
-        bg: AppColors.surface,
-        border: AppColors.border,
-        timeColor: AppColors.textMuted,
-        avatarBg: AppColors.textMuted,
-        nameDecoration: TextDecoration.lineThrough,
-        nameColor: AppColors.textMuted,
-      ),
-    _ => const _StatusStyle(
-        bg: AppColors.surface,
-        border: AppColors.border,
-        timeColor: AppColors.textPrimary,
-        avatarBg: AppColors.primary,
-        nameDecoration: null,
-        nameColor: AppColors.textPrimary,
-      ),
-  };
-}
 
 /// A single appointment card used across receptionist and doctor screens.
 class ReceptionistAppointmentCard extends StatelessWidget {
@@ -77,6 +34,7 @@ class ReceptionistAppointmentCard extends StatelessWidget {
     this.faded = false,
     this.showMenu = true,
     this.onStatusChanged,
+    this.showDate = false,
   });
 
   final AppointmentWithPatient item;
@@ -84,12 +42,17 @@ class ReceptionistAppointmentCard extends StatelessWidget {
   final bool showMenu;
   final VoidCallback? onStatusChanged;
 
-  static const double _timeWidth = 65;
+  /// When true, the left column stacks a short date ("Jun 6") over the time
+  /// ("09:00 AM"). Used in patient history views where every card may fall
+  /// on a different date. Defaults to false (time-only).
+  final bool showDate;
+
+  static const double _timeWidth = 80;
 
   @override
   Widget build(BuildContext context) {
     final AppointmentStatus status = item.appointment.status;
-    final _StatusStyle style = _StatusStyle.forStatus(status);
+    final AppointmentStatusStyle style = AppointmentStatusStyle.forStatus(status);
     final bool isCancelled = status == AppointmentStatus.cancelled;
     // Cancelled always fades regardless of the caller's flag.
     final bool applyFade = faded || isCancelled;
@@ -112,17 +75,39 @@ class ReceptionistAppointmentCard extends StatelessWidget {
             padding: const EdgeInsets.symmetric(
                 horizontal: AppSizes.p16, vertical: AppSizes.p12),
             child: Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                // ── Time column ──
+                // ── Date / Time column (80 px) ──
                 SizedBox(
                   width: _timeWidth,
-                  child: Text(
-                    Formatters.formatTime(
-                        item.appointment.scheduledAt.toLocal()),
-                    style: AppTextStyles.bodyBold.copyWith(
-                      color: style.timeColor,
-                    ),
-                  ),
+                  child: showDate
+                      ? Column(
+                          mainAxisSize: MainAxisSize.min,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              DateFormat('MMM d').format(item.appointment.scheduledAt.toLocal()),
+                              maxLines: 1,
+                              softWrap: false,
+                              overflow: TextOverflow.visible,
+                              style: AppTextStyles.caption.copyWith(color: style.timeColor),
+                            ),
+                            Text(
+                              DateFormat('hh:mm a').format(item.appointment.scheduledAt.toLocal()),
+                              maxLines: 1,
+                              softWrap: false,
+                              overflow: TextOverflow.visible,
+                              style: AppTextStyles.bodyBold.copyWith(color: style.timeColor),
+                            ),
+                          ],
+                        )
+                      : Text(
+                          Formatters.formatTime(item.appointment.scheduledAt.toLocal()),
+                          maxLines: 1,
+                          softWrap: false,
+                          overflow: TextOverflow.visible,
+                          style: AppTextStyles.bodyBold.copyWith(color: style.timeColor),
+                        ),
                 ),
                 const SizedBox(width: AppSizes.p12),
                 // ── Avatar ──

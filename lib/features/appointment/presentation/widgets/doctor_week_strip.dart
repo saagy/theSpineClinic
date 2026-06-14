@@ -1,4 +1,4 @@
-/// 7-day horizontal week strip: Sun–Sat with date numbers, current-day
+/// 7-day horizontal week strip: Sat–Fri with date numbers, current-day
 /// highlight, and appointment dots beneath days that have appointments.
 ///
 /// Rule 1 — under 200 lines.
@@ -11,7 +11,7 @@ import 'package:spine_clinic_app/core/constants/app_colors.dart';
 import 'package:spine_clinic_app/core/constants/app_sizes.dart';
 import 'package:spine_clinic_app/core/constants/app_text_styles.dart';
 
-/// A horizontal row of 7 day buttons (Sun–Sat) showing abbreviated day name,
+/// A horizontal row of 7 day buttons (Sat–Fri) showing abbreviated day name,
 /// date number, and an appointment dot when the day has appointments.
 class DoctorWeekStrip extends StatelessWidget {
   /// Creates a [DoctorWeekStrip].
@@ -22,7 +22,7 @@ class DoctorWeekStrip extends StatelessWidget {
     required this.onDateSelected,
   });
 
-  /// Map of day index (0=Sun, 6=Sat) to non-cancelled appointment count.
+  /// Map of day index (0=Sat, 6=Fri) to non-cancelled appointment count.
   final Map<int, int> dayCounts;
 
   /// The currently selected date.
@@ -34,7 +34,8 @@ class DoctorWeekStrip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final now = DateTime.now();
-    final weekStart = now.subtract(Duration(days: now.weekday % 7));
+    // Week starts on Saturday: (weekday + 1) % 7 gives 0 for Saturday.
+    final weekStart = now.subtract(Duration(days: (now.weekday + 1) % 7));
 
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: AppSizes.p12),

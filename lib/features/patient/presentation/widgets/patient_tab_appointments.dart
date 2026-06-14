@@ -6,11 +6,12 @@ import 'package:spine_clinic_app/core/constants/app_strings.dart';
 import 'package:go_router/go_router.dart';
 import 'package:spine_clinic_app/core/network/app_routes.dart';
 import 'package:spine_clinic_app/core/errors/app_exception.dart';
+import 'package:spine_clinic_app/features/appointment/domain/appointment_repository.dart';
+import 'package:spine_clinic_app/features/appointment/presentation/appointment_providers.dart';
+import 'package:spine_clinic_app/features/appointment/presentation/widgets/receptionist_appointment_card.dart';
 import 'package:spine_clinic_app/features/auth/domain/user_role.dart';
 import 'package:spine_clinic_app/features/auth/presentation/auth_providers.dart';
 import 'package:spine_clinic_app/features/patient/domain/patient.dart';
-import 'package:spine_clinic_app/features/patient/presentation/widgets/patient_appointment_row.dart';
-import 'package:spine_clinic_app/features/appointment/presentation/appointment_providers.dart';
 import 'package:spine_clinic_app/shared/widgets/app_button.dart';
 import 'package:spine_clinic_app/shared/widgets/empty_state.dart';
 import 'package:spine_clinic_app/shared/widgets/error_view.dart';
@@ -62,10 +63,20 @@ class PatientTabAppointments extends ConsumerWidget {
                 backgroundColor: AppColors.surface,
                 child: ListView.builder(
                   physics: const AlwaysScrollableScrollPhysics(),
+                  padding: const EdgeInsets.only(bottom: AppSizes.p16),
                   itemCount: appointments.length,
                   itemBuilder: (context, index) {
                     final appointment = appointments[index];
-                    return PatientAppointmentRow(appointment: appointment);
+                    final item = AppointmentWithPatient(
+                      appointment: appointment, patient: patient,
+                    );
+                    return ReceptionistAppointmentCard(
+                      item: item,
+                      showMenu: true,
+                      showDate: true,
+                      onStatusChanged: () =>
+                          ref.invalidate(patientAppointmentsProvider(patient.id)),
+                    );
                   },
                 ),
               );

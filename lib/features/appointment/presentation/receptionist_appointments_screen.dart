@@ -1,7 +1,8 @@
-/// Receptionist appointments dashboard with Today / Upcoming tabs.
+/// Receptionist appointments dashboard with Today / Upcoming / All tabs.
 ///
 /// Today tab: stats strip, search bar, and appointments grouped by status.
 /// Upcoming tab: future appointments grouped by date.
+/// All tab: full appointment archive with search, sort, and filter controls.
 ///
 /// Rule 1 — under 200 lines.
 library;
@@ -14,7 +15,9 @@ import 'package:spine_clinic_app/core/constants/app_colors.dart';
 import 'package:spine_clinic_app/core/constants/app_sizes.dart';
 import 'package:spine_clinic_app/core/constants/app_text_styles.dart';
 import 'package:spine_clinic_app/features/admin/presentation/branch_providers.dart';
+import 'package:spine_clinic_app/features/appointment/presentation/all_appointments_providers.dart';
 import 'package:spine_clinic_app/features/appointment/presentation/receptionist_appointments_providers.dart';
+import 'package:spine_clinic_app/features/appointment/presentation/widgets/receptionist_all_tab.dart';
 import 'package:spine_clinic_app/features/appointment/presentation/widgets/receptionist_today_tab.dart';
 import 'package:spine_clinic_app/features/appointment/presentation/widgets/receptionist_upcoming_tab.dart';
 import 'package:spine_clinic_app/features/patient/domain/clinic_location.dart';
@@ -37,7 +40,7 @@ class _ReceptionistAppointmentsScreenState
   @override
   void initState() {
     super.initState();
-    _tabCtrl = TabController(length: 2, vsync: this);
+    _tabCtrl = TabController(length: 3, vsync: this);
     _tabCtrl.addListener(_onTabChanged);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ref.read(receptionistAppointmentsProvider.notifier).loadToday();
@@ -45,11 +48,17 @@ class _ReceptionistAppointmentsScreenState
   }
 
   bool _upcomingFetched = false;
+  bool _allFetched = false;
 
   void _onTabChanged() {
     if (_tabCtrl.index == 1 && !_upcomingFetched) {
       _upcomingFetched = true;
       ref.read(receptionistAppointmentsProvider.notifier).loadUpcoming();
+    }
+    if (_tabCtrl.index == 2 && !_allFetched) {
+      _allFetched = true;
+      // allAppointmentsProvider auto-fetches on first read; trigger a refresh.
+      ref.read(allAppointmentsProvider.notifier).refresh();
     }
   }
 
@@ -89,6 +98,10 @@ class _ReceptionistAppointmentsScreenState
                     onStatusChanged: () =>
                         ref.read(receptionistAppointmentsProvider.notifier).loadUpcoming(),
                   ),
+                  ReceptionistAllTab(
+                    onStatusChanged: () =>
+                        ref.read(allAppointmentsProvider.notifier).refresh(),
+                  ),
                 ],
               ),
             ),
@@ -123,7 +136,7 @@ class _Header extends StatelessWidget {
   }
 }
 
-/// Material tab strip: "Today" (default) and "Upcoming".
+/// Material tab strip: "Today", "Upcoming", and "All".
 class _TabStrip extends StatelessWidget {
   const _TabStrip({required this.controller});
   final TabController controller;
@@ -140,7 +153,7 @@ class _TabStrip extends StatelessWidget {
         unselectedLabelStyle: AppTextStyles.bodyMedium,
         indicatorColor: AppColors.primary,
         indicatorWeight: 2,
-        tabs: const [Tab(text: 'Today'), Tab(text: 'Upcoming')],
+        tabs: const [Tab(text: 'Today'), Tab(text: 'Upcoming'), Tab(text: 'All')],
       ),
     );
   }

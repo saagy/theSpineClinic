@@ -8,12 +8,14 @@ library;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import 'package:spine_clinic_app/core/constants/app_colors.dart';
 import 'package:spine_clinic_app/core/constants/app_sizes.dart';
 import 'package:spine_clinic_app/core/constants/app_strings.dart';
 import 'package:spine_clinic_app/core/constants/app_text_styles.dart';
 import 'package:spine_clinic_app/core/errors/app_exception.dart';
+import 'package:spine_clinic_app/core/network/app_routes.dart';
 import 'package:spine_clinic_app/features/auth/domain/user_role.dart';
 import 'package:spine_clinic_app/features/auth/presentation/auth_providers.dart';
 import 'package:spine_clinic_app/features/patient/domain/patient.dart';
@@ -107,6 +109,16 @@ class _PatientProfile extends StatelessWidget {
           foregroundColor: AppColors.textPrimary,
           elevation: 0,
           leading: const AppBackButton(),
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.edit_outlined, color: AppColors.primary),
+              tooltip: AppStrings.editPatient,
+              onPressed: () => context.push(
+                AppRoutes.editPatient.replaceAll(':id', patient.id),
+                extra: patient,
+              ),
+            ),
+          ],
         ),
         body: Column(
           children: [
@@ -124,7 +136,7 @@ class _PatientProfile extends StatelessWidget {
   }
 }
 
-/// Pill-indicator TabBar (not thick underline).
+/// Pill-indicator TabBar with right-edge fade for smooth overflow.
 class _PillTabBar extends StatelessWidget {
   const _PillTabBar({required this.tabs});
   final List<Tab> tabs;
@@ -132,21 +144,41 @@ class _PillTabBar extends StatelessWidget {
   Widget build(BuildContext context) {
     return Material(
       color: AppColors.surface,
-      child: TabBar(
-        labelColor: AppColors.textOnPrimary,
-        unselectedLabelColor: AppColors.textSecondary,
-        labelStyle: AppTextStyles.captionBold,
-        unselectedLabelStyle: AppTextStyles.captionMedium,
-        indicator: BoxDecoration(
-          color: AppColors.primary,
-          borderRadius: const BorderRadius.all(Radius.circular(AppSizes.r24)),
-        ),
-        indicatorSize: TabBarIndicatorSize.tab,
-        dividerColor: AppColors.transparent,
-        isScrollable: true,
-        padding: const EdgeInsets.symmetric(
-            horizontal: AppSizes.p16, vertical: AppSizes.p4),
-        tabs: tabs,
+      child: Stack(
+        children: [
+          TabBar(
+            labelColor: AppColors.textOnPrimary,
+            unselectedLabelColor: AppColors.textSecondary,
+            labelStyle: AppTextStyles.captionBold,
+            unselectedLabelStyle: AppTextStyles.captionMedium,
+            indicator: BoxDecoration(
+              color: AppColors.primary,
+              borderRadius: const BorderRadius.all(Radius.circular(AppSizes.r24)),
+            ),
+            indicatorSize: TabBarIndicatorSize.tab,
+            dividerColor: AppColors.transparent,
+            isScrollable: true,
+            padding: const EdgeInsets.fromLTRB(
+                AppSizes.p16, AppSizes.p4, AppSizes.p32, AppSizes.p4),
+            tabs: tabs,
+          ),
+          // Right-edge fade for natural overflow appearance
+          Positioned(
+            right: 0, top: 0, bottom: 0,
+            child: IgnorePointer(
+              child: Container(
+                width: AppSizes.p24,
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.centerRight,
+                    end: Alignment.centerLeft,
+                    colors: [AppColors.surface, AppColors.surface.withAlpha(0)],
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

@@ -1,13 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 import 'package:spine_clinic_app/core/constants/app_sizes.dart';
 import 'package:spine_clinic_app/core/constants/app_strings.dart';
-import 'package:spine_clinic_app/core/network/app_routes.dart';
 
 import 'package:spine_clinic_app/features/patient/domain/patient.dart';
 import 'package:spine_clinic_app/features/patient/presentation/patient_providers.dart';
-import 'package:spine_clinic_app/shared/widgets/app_button.dart';
 import 'package:spine_clinic_app/shared/widgets/app_chip.dart';
 import 'package:spine_clinic_app/shared/widgets/info_row.dart';
 import 'package:spine_clinic_app/shared/widgets/section_card.dart';
@@ -65,16 +62,6 @@ class PatientTabInfo extends ConsumerWidget {
               ),
               error: (_, __) => const Text(AppStrings.errorLoadingAssignedDoctors),
             ),
-          ),
-          const SizedBox(height: AppSizes.p24),
-          AppButton(
-            labelText: AppStrings.editPatient,
-            onPressed: () {
-              context.push(
-                AppRoutes.editPatient.replaceAll(':id', patient.id),
-                extra: patient,
-              );
-            },
           ),
         ],
       ),

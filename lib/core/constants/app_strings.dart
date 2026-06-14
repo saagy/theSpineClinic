@@ -219,6 +219,7 @@ abstract final class AppStrings {
 
   // Appointment Recovery Strings
   static const String revertToScheduled = 'Revert to Scheduled';
+  static const String undoCheckIn = 'Undo Check-In';
   static const String restoreToScheduled = 'Restore to Scheduled';
   static const String confirmRevert = 'Are you sure you want to revert this appointment to scheduled?';
   static const String confirmRestore = 'Are you sure you want to restore this appointment to scheduled?';
