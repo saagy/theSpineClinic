@@ -11,6 +11,8 @@
   <link rel="icon" type="image/png" href="favicon.png"/>
   <title>Spine Clinic</title>
   <link rel="manifest" href="manifest.json">
+  <!-- BUILD_ID injected at deploy time so the page knows it changed -->
+  <meta name="build-id" content="BUILD_PLACEHOLDER">
   <style>
     body { margin:0; background:#F8FAFC; }
     #loading { display:flex; align-items:center; justify-content:center;
@@ -29,6 +31,57 @@
       var ld = document.getElementById('loading');
       if (ld) ld.style.display = 'none';
     });
+  </script>
+
+  <!-- ── Service Worker: block Flutter's self-destructing SW, register ours ── -->
+  <script>
+    (function() {
+      if (!('serviceWorker' in navigator)) return;
+
+      // ── Block Flutter's deprecated SW registration ─────────────
+      var _orig = navigator.serviceWorker.register;
+      navigator.serviceWorker.register = function(url, opts) {
+        if (typeof url === 'string' && url.indexOf('flutter_service_worker') !== -1) {
+          console.debug('[SW] Blocked Flutter service worker — using custom sw.js instead.');
+          return Promise.resolve({ installing: null, waiting: null, active: null, scope: '/' });
+        }
+        return _orig.call(this, url, opts);
+      };
+
+      // ── Register our proper caching SW ─────────────────────────
+      window.addEventListener('load', function() {
+        navigator.serviceWorker.register('/sw.js', { scope: '/' }).then(function(reg) {
+          console.debug('[SW] Registered sw.js, scope:', reg.scope);
+
+          // Relay skipWaiting to new waiting workers
+          reg.addEventListener('updatefound', function() {
+            var w = reg.installing;
+            if (!w) return;
+            w.addEventListener('statechange', function() {
+              if (w.state === 'installed' && navigator.serviceWorker.controller) {
+                w.postMessage({ type: 'SKIP_WAITING' });
+              }
+            });
+          });
+
+          // If a waiting worker already exists, activate it
+          if (reg.waiting) {
+            reg.waiting.postMessage({ type: 'SKIP_WAITING' });
+          }
+        }).catch(function(e) {
+          console.debug('[SW] Registration failed:', e);
+        });
+
+        // ── Reload when a genuinely new SW version activates ──────
+        var hadController = !!navigator.serviceWorker.controller;
+        navigator.serviceWorker.addEventListener('controllerchange', function() {
+          if (hadController) {
+            console.debug('[SW] New version activated — reloading.');
+            window.location.reload();
+          }
+        });
+      });
+    })();
   </script>
 </head>
 <body>

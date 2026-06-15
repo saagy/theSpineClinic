@@ -118,6 +118,27 @@ class _PatientListScreenState extends ConsumerState<PatientListScreen> {
 
   String get _sortButtonLabel => _currentSort.buttonLabel;
 
+  /// Sort patients client-side when sorting by last visit date
+  /// (the column doesn't exist in the DB — same pattern as MyPatientsScreen).
+  List<Patient> _sorted(List<Patient> patients) {
+    final sort = _currentSort;
+    if (sort != PatientSortOption.lastVisitNewest &&
+        sort != PatientSortOption.lastVisitOldest) {
+      return patients;
+    }
+    final list = List<Patient>.from(patients);
+    final bool newest = sort == PatientSortOption.lastVisitNewest;
+    list.sort((a, b) {
+      if (a.lastAppointmentDate == null && b.lastAppointmentDate == null) return 0;
+      if (a.lastAppointmentDate == null) return 1;
+      if (b.lastAppointmentDate == null) return -1;
+      return newest
+          ? b.lastAppointmentDate!.compareTo(a.lastAppointmentDate!)
+          : a.lastAppointmentDate!.compareTo(b.lastAppointmentDate!);
+    });
+    return list;
+  }
+
   Future<void> _showSortSheet() async {
     final currentSort = _currentSort;
     final selected = await SortOptionsSheet.show<PatientSortOption>(
@@ -202,7 +223,8 @@ class _PatientListScreenState extends ConsumerState<PatientListScreen> {
                     onRetry: _onRefresh,
                   );
                 },
-                data: (List<Patient> patients) {
+                data: (List<Patient> rawPatients) {
+                  final patients = _sorted(rawPatients);
                   if (patients.isEmpty) {
                     return EmptyState(
                       message: AppStrings.noPatients,

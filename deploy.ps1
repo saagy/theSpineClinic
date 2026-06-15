@@ -9,7 +9,7 @@ Write-Host "============================================" -ForegroundColor Cyan
 Write-Host ""
 
 # ── 1. Load .env ──────────────────────────────────────────────
-Write-Host "[1/3] Loading .env..." -ForegroundColor Yellow
+Write-Host "[1/4] Loading .env..." -ForegroundColor Yellow
 
 if (-not (Test-Path ".env")) {
     Write-Host "ERROR: .env file not found in $PSScriptRoot" -ForegroundColor Red
@@ -47,7 +47,7 @@ Write-Host "  ANON_KEY:     $($supabaseKey.Substring(0, [Math]::Min(20, $supabas
 
 # ── 2. Build Flutter web ──────────────────────────────────────
 Write-Host ""
-Write-Host "[2/3] Building Flutter web (release)..." -ForegroundColor Yellow
+Write-Host "[2/4] Building Flutter web (release)..." -ForegroundColor Yellow
 
 $buildArgs = @(
     "build", "web", "--release",
@@ -65,9 +65,29 @@ if ($LASTEXITCODE -ne 0) {
 }
 Write-Host "  Build complete: build\web\" -ForegroundColor Green
 
-# ── 3. Deploy to Firebase ─────────────────────────────────────
+# ── 3. Inject build ID so sw.js changes on every deploy ───────────
+# A new byte-for-byte sw.js triggers the browser SW update flow:
+# install → skipWaiting → activate → controllerchange → reload.
+$buildId = (Get-Date -Format "yyyyMMddHHmmss")
+Write-Host "  Build ID: $buildId" -ForegroundColor Gray
+
+$swPath = Join-Path $PSScriptRoot "build\web\sw.js"
+if (Test-Path $swPath) {
+    $swContent = Get-Content $swPath -Raw
+    $swContent = $swContent -replace "BUILD_ID_PLACEHOLDER", $buildId
+    Set-Content $swPath $swContent -NoNewline
+}
+
+$indexPath = Join-Path $PSScriptRoot "build\web\index.html"
+if (Test-Path $indexPath) {
+    $indexContent = Get-Content $indexPath -Raw
+    $indexContent = $indexContent -replace "BUILD_PLACEHOLDER", $buildId
+    Set-Content $indexPath $indexContent -NoNewline
+}
+
+# ── 4. Deploy to Firebase ─────────────────────────────────────
 Write-Host ""
-Write-Host "[3/3] Deploying to Firebase Hosting..." -ForegroundColor Yellow
+Write-Host "[4/4] Deploying to Firebase Hosting..." -ForegroundColor Yellow
 
 & firebase deploy --only hosting
 if ($LASTEXITCODE -ne 0) {
@@ -86,5 +106,5 @@ Write-Host "  Deploy complete!" -ForegroundColor Green
 Write-Host "  https://spine-clinic-app.web.app" -ForegroundColor Cyan
 Write-Host "============================================" -ForegroundColor Green
 Write-Host ""
-Write-Host "IMPORTANT: Hard-refresh in browser (Ctrl+Shift+R) to clear cache." -ForegroundColor Yellow
+Write-Host "The SW auto-update flow will reload any open tabs within seconds." -ForegroundColor Green
 Read-Host "Press Enter to exit"

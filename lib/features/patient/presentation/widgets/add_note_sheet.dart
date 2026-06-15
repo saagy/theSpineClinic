@@ -57,7 +57,16 @@ class _AddNoteSheetState extends ConsumerState<AddNoteSheet> {
     if (text.isEmpty) return;
     setState(() => _saving = true);
     try {
-      if (widget.isEditing) {
+      // When an appointmentId is available, delegate to the
+      // appointment-scoped notifier which is always mounted because
+      // AppointmentNotesCard watches it. Using patientNotesNotifierProvider
+      // here fails silently — ref.read creates no listener, so ref.mounted
+      // returns false inside the notifier and the save is skipped.
+      if (widget.appointmentId != null) {
+        await ref
+            .read(appointmentNoteProvider(widget.appointmentId!).notifier)
+            .saveNote(noteText: text, patientId: widget.patientId);
+      } else if (widget.isEditing) {
         await ref
             .read(patientNotesNotifierProvider(widget.patientId).notifier)
             .updateExistingNote(noteId: widget.noteId!, noteText: text);

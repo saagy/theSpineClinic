@@ -54,13 +54,18 @@ class PatientList extends _$PatientList {
 
   Future<List<Patient>> _fetch() async {
     final repo = ref.read(patientRepositoryProvider);
+    // last_appointment_date is not a real DB column — it's computed
+    // client-side from embedded appointments. Map to a valid column
+    // for the SQL ORDER BY so the query doesn't error.
+    final String sqlOrderBy =
+        _orderBy == 'last_appointment_date' ? 'full_name' : _orderBy;
     final Result<List<Patient>> result = await repo.getAllPatients(
       query: _currentQuery.isEmpty ? null : _currentQuery,
       doctorId: _doctorId,
       clinic: _clinicFilter,
       offset: _offset,
       limit: _pageSize,
-      orderBy: _orderBy,
+      orderBy: sqlOrderBy,
       ascending: _ascending,
     );
 
