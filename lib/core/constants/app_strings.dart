@@ -94,6 +94,14 @@ abstract final class AppStrings {
   static const String noStaff = 'No staff members found.';
   static const String noReplacements = 'No replacements for today.';
   static const String noDocuments = 'No documents uploaded.';
+  static const String noDocumentsYet = 'No documents uploaded yet';
+  static const String addDocument = 'Add Document';
+  static const String documentUploaded = 'Document uploaded.';
+  static const String openingDocument = 'Opening document…';
+  static const String documentDeleted = 'Document deleted successfully.';
+  static const String deleteDocumentTitle = 'Delete Document';
+  static const String confirmDeleteDocument =
+      'Are you sure you want to permanently delete this document?';
 
   // Patient
   static const String registerPatient = 'Register Patient';
@@ -120,6 +128,9 @@ abstract final class AppStrings {
   static const String usePackage = 'Use Package';
   static const String notes = 'Notes';
   static const String checkIn = 'Check In';
+  static const String statusScheduled = 'Scheduled';
+  static const String statusCheckedIn = 'Checked In';
+  static const String statusCancelled = 'Cancelled';
   static const String markComplete = 'Mark Complete';
   static const String originalDoctors = 'Original Doctors';
   static const String coveringDr = 'Covering Dr.';

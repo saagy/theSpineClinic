@@ -28,10 +28,15 @@ class AppBottomNav extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final tabs = _resolveTabs(userRole);
+    final bool isAdmin = userRole == 'super_admin';
+    // Admin needs tighter margins to fit 5 tabs on narrow screens.
+    final double hMargin = isAdmin ? 12 : 24;
+    final double hPadding = isAdmin ? 10 : 16;
+    final double gap = isAdmin ? 4 : 8;
 
     return Container(
-      margin: const EdgeInsets.only(left: 24, right: 24, bottom: 20),
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      margin: EdgeInsets.only(left: hMargin, right: hMargin, bottom: 20),
+      padding: EdgeInsets.symmetric(horizontal: hPadding, vertical: 10),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: const BorderRadius.all(Radius.circular(30)),
@@ -48,10 +53,10 @@ class AppBottomNav extends StatelessWidget {
         onTabChange: onTabSelected,
         rippleColor: Colors.grey[300]!,
         hoverColor: Colors.grey[100]!,
-        gap: 8,
+        gap: gap,
         activeColor: _activeColor,
-        iconSize: 22,
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+        iconSize: isAdmin ? 20 : 22,
+        padding: EdgeInsets.symmetric(horizontal: hPadding, vertical: 10),
         duration: const Duration(milliseconds: 300),
         tabBackgroundColor: _activeBg,
         color: Colors.grey,

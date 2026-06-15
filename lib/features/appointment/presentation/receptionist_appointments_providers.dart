@@ -1,6 +1,7 @@
 /// Riverpod providers for the receptionist appointments screen.
 ///
 /// Manages today's and upcoming appointments with real-time status updates.
+/// Supports admin branch override via [adminBranchFilterProvider].
 ///
 /// Rule 3 — all state via Riverpod.
 /// Rule 4 — repository calls return [Result<T>].
@@ -15,6 +16,8 @@ import 'package:spine_clinic_app/features/appointment/domain/appointment.dart';
 import 'package:spine_clinic_app/features/appointment/domain/appointment_repository.dart';
 import 'package:spine_clinic_app/features/appointment/domain/appointment_status.dart';
 import 'package:spine_clinic_app/features/appointment/presentation/appointment_providers.dart';
+import 'package:spine_clinic_app/features/auth/domain/user_role.dart';
+import 'package:spine_clinic_app/features/auth/presentation/auth_providers.dart';
 import 'package:spine_clinic_app/features/patient/domain/clinic_location.dart';
 
 /// Holds the combined state for the receptionist appointments dashboard.
@@ -77,7 +80,23 @@ class ReceptionistAppointmentsNotifier
   AppointmentRepository get _repo =>
       ref.read(appointmentRepositoryProvider);
 
-  ClinicLocation get _clinic => ref.read(activeBranchProvider);
+  /// Returns the effective clinic filter.
+  ///
+  /// For admin users, respects [adminBranchFilterProvider]:
+  /// - `null` → "All Branches" (no clinic filter)
+  /// - a dbValue string → filters to that specific branch
+  /// For non-admin users, uses the active branch as-is.
+  ClinicLocation? get _clinic {
+    final user = ref.read(currentUserProvider).value;
+    if (user?.role == UserRole.superAdmin) {
+      final String? override = ref.read(adminBranchFilterProvider);
+      if (override == null) return null; // All Branches
+      // Map dbValue back to enum
+      if (override == 'tagamoa') return ClinicLocation.tagamoa;
+      if (override == 'masr_elgedida') return ClinicLocation.masrElgedida;
+    }
+    return ref.read(activeBranchProvider);
+  }
 
   /// Loads today's appointments from the repository.
   Future<void> loadToday() async {

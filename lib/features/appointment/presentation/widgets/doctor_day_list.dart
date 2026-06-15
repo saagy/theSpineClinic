@@ -21,10 +21,12 @@ class DoctorDayList extends StatelessWidget {
     super.key,
     required this.state,
     this.onStatusChanged,
+    this.onRefresh,
   });
 
   final DoctorScheduleState state;
   final VoidCallback? onStatusChanged;
+  final Future<void> Function()? onRefresh;
 
   @override
   Widget build(BuildContext context) {
@@ -33,9 +35,10 @@ class DoctorDayList extends StatelessWidget {
       return const Center(child: Text('No appointments'));
     }
 
-    return ListView.builder(
+    final list = ListView.builder(
+      physics: const AlwaysScrollableScrollPhysics(),
       padding: const EdgeInsets.only(bottom: AppSizes.p32),
-      itemCount: items.length + 1, // +1 for header
+      itemCount: items.length + 1,
       itemBuilder: (_, index) {
         if (index == 0) return _DateHeader(state: state, count: items.length);
         final item = items[index - 1];
@@ -48,6 +51,15 @@ class DoctorDayList extends StatelessWidget {
         );
       },
     );
+
+    if (onRefresh != null) {
+      return RefreshIndicator(
+        color: AppColors.primary,
+        onRefresh: onRefresh!,
+        child: list,
+      );
+    }
+    return list;
   }
 
   Widget _buildCard(DoctorScheduleItem item) {

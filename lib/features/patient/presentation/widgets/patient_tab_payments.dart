@@ -167,32 +167,35 @@ class _ActionButton extends StatelessWidget {
   final VoidCallback onTap;
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      height: 48,
-      child: filled
-          ? ElevatedButton(
-              onPressed: onTap,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primary,
-                foregroundColor: AppColors.textOnPrimary,
-                shape: RoundedRectangleBorder(
-                    borderRadius:
-                        const BorderRadius.all(Radius.circular(AppSizes.r12))),
-                elevation: 0,
-              ),
-              child: Text(label, style: AppTextStyles.bodyBold),
-            )
-          : OutlinedButton(
-              onPressed: onTap,
-              style: OutlinedButton.styleFrom(
-                foregroundColor: AppColors.textPrimary,
-                side: const BorderSide(color: AppColors.border),
-                shape: RoundedRectangleBorder(
-                    borderRadius:
-                        const BorderRadius.all(Radius.circular(AppSizes.r12))),
-              ),
-              child: Text(label, style: AppTextStyles.bodyMedium),
+    return filled
+        ? ElevatedButton(
+            onPressed: onTap,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.primary,
+              foregroundColor: AppColors.textOnPrimary,
+              minimumSize: const Size.fromHeight(AppSizes.buttonHeight),
+              padding: const EdgeInsets.symmetric(
+                  horizontal: AppSizes.p24, vertical: AppSizes.p14),
+              shape: RoundedRectangleBorder(
+                  borderRadius:
+                      const BorderRadius.all(Radius.circular(AppSizes.r12))),
+              elevation: 0,
             ),
-    );
+            child: Text(label, style: AppTextStyles.bodyBold),
+          )
+        : OutlinedButton(
+            onPressed: onTap,
+            style: OutlinedButton.styleFrom(
+              foregroundColor: AppColors.textPrimary,
+              minimumSize: const Size.fromHeight(AppSizes.buttonHeight),
+              padding: const EdgeInsets.symmetric(
+                  horizontal: AppSizes.p24, vertical: AppSizes.p14),
+              side: const BorderSide(color: AppColors.border),
+              shape: RoundedRectangleBorder(
+                  borderRadius:
+                      const BorderRadius.all(Radius.circular(AppSizes.r12))),
+            ),
+            child: Text(label, style: AppTextStyles.bodyMedium),
+          );
   }
 }

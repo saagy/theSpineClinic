@@ -215,20 +215,28 @@ class _MyPatientsScreenState extends ConsumerState<MyPatientsScreen> {
                     );
                   }
 
-                  return ListView.builder(
-                    padding: const EdgeInsets.symmetric(horizontal: AppSizes.p16),
-                    itemCount: displayPatients.length,
-                    itemBuilder: (context, index) {
-                      final Patient patient = displayPatients[index];
-                      return PatientListTile(
-                        name: patient.fullName,
-                        phone: patient.phoneNumber,
-                        branchLabel: patient.clinic.displayLabel,
-                        lastVisitDate: patient.lastAppointmentDate,
-                        onTap: () => context.push('/patient/${patient.id}'),
-                      );
+                  return RefreshIndicator(
+                    color: AppColors.primary,
+                    onRefresh: () async =>
+                        ref.invalidate(myPatientsControllerProvider),
+                    child: ListView.builder(
+                      physics: const AlwaysScrollableScrollPhysics(),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: AppSizes.p16),
+                      itemCount: displayPatients.length,
+                      itemBuilder: (context, index) {
+                        final Patient patient = displayPatients[index];
+                        return PatientListTile(
+                          name: patient.fullName,
+                          phone: patient.phoneNumber,
+                          branchLabel: patient.clinic.displayLabel,
+                          lastVisitDate: patient.lastAppointmentDate,
+                          onTap: () =>
+                              context.push('/patient/${patient.id}'),
+                        );
                     },
-                  );
+                  ),
+                  ); // RefreshIndicator close
                 },
               ),
             ),

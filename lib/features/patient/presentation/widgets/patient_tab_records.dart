@@ -58,7 +58,9 @@ class PatientTabRecords extends ConsumerWidget {
             ),
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.primary,
-              padding: const EdgeInsets.symmetric(vertical: AppSizes.p12),
+              minimumSize: const Size.fromHeight(AppSizes.buttonHeight),
+              padding: const EdgeInsets.symmetric(
+                  horizontal: AppSizes.p24, vertical: AppSizes.p14),
               shape: const RoundedRectangleBorder(
                 borderRadius: BorderRadius.all(Radius.circular(AppSizes.r6)),
               ),
@@ -85,13 +87,22 @@ class PatientTabRecords extends ConsumerWidget {
                 );
               }
 
-              return ListView.builder(
-                itemCount: notes.length,
-                padding: const EdgeInsets.only(bottom: AppSizes.p16),
-                itemBuilder: (context, index) {
-                  final PatientNote note = notes[index];
-                  return PatientNoteItem(note: note);
+              return RefreshIndicator(
+                color: AppColors.primary,
+                onRefresh: () async {
+                  ref.invalidate(patientNotesNotifierProvider(patient.id));
+                  await ref.read(
+                      patientNotesNotifierProvider(patient.id).future);
                 },
+                child: ListView.builder(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  itemCount: notes.length,
+                  padding: const EdgeInsets.only(bottom: AppSizes.p16),
+                  itemBuilder: (context, index) {
+                    final PatientNote note = notes[index];
+                    return PatientNoteItem(note: note);
+                  },
+                ),
               );
             },
           ),

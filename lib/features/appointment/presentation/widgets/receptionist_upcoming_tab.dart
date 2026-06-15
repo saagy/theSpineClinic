@@ -20,10 +20,12 @@ class ReceptionistUpcomingTab extends StatelessWidget {
     super.key,
     required this.state,
     this.onStatusChanged,
+    this.onRefresh,
   });
 
   final ReceptionistAppointmentsState state;
   final VoidCallback? onStatusChanged;
+  final Future<void> Function()? onRefresh;
 
   @override
   Widget build(BuildContext context) {
@@ -43,11 +45,21 @@ class ReceptionistUpcomingTab extends StatelessWidget {
 
     final grouped = _groupByDate(state.upcoming);
 
-    return ListView.builder(
+    final list = ListView.builder(
+      physics: const AlwaysScrollableScrollPhysics(),
       padding: const EdgeInsets.only(top: AppSizes.p8, bottom: AppSizes.p32),
       itemCount: grouped.length,
       itemBuilder: (_, i) => grouped[i],
     );
+
+    if (onRefresh != null) {
+      return RefreshIndicator(
+        color: AppColors.primary,
+        onRefresh: onRefresh!,
+        child: list,
+      );
+    }
+    return list;
   }
 
   List<Widget> _groupByDate(List<AppointmentWithPatient> items) {

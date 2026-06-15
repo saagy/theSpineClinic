@@ -1,11 +1,13 @@
 /// Micro status indicator — compact, borderless text or micro-pill.
 ///
 /// Rule 1 — under 200 lines.
+/// Rule 7 — all labels via [AppStrings].
 library;
 
 import 'package:flutter/material.dart';
 import 'package:spine_clinic_app/core/constants/app_colors.dart';
 import 'package:spine_clinic_app/core/constants/app_sizes.dart';
+import 'package:spine_clinic_app/core/constants/app_strings.dart';
 import 'package:spine_clinic_app/core/constants/app_text_styles.dart';
 import 'package:spine_clinic_app/features/appointment/domain/appointment_status.dart';
 
@@ -30,20 +32,24 @@ class StatusIndicator extends StatelessWidget {
             children: [
               const Icon(Icons.check, size: 12, color: Color(0xFF085041)),
               const SizedBox(width: AppSizes.p2),
-              Text('Checked In',
-                  style: AppTextStyles.captionBold.copyWith(
-                    fontSize: 11,
-                    color: const Color(0xFF085041),
-                  )),
+              Flexible(
+                child: Text(AppStrings.statusCheckedIn,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: AppTextStyles.captionBold.copyWith(
+                      fontSize: 11,
+                      color: const Color(0xFF085041),
+                    )),
+              ),
             ],
           ),
         ),
-      AppointmentStatus.cancelled => Text('Cancelled',
+      AppointmentStatus.cancelled => Text(AppStrings.statusCancelled,
           style: AppTextStyles.captionBold.copyWith(
             fontSize: 11,
             color: AppColors.error,
           )),
-      _ => Text('Scheduled',
+      _ => Text(AppStrings.statusScheduled,
           style: AppTextStyles.captionBold.copyWith(
             fontSize: 11,
             color: AppColors.textMuted,

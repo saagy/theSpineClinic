@@ -65,6 +65,7 @@ class _Content extends StatelessWidget {
           child: DoctorDayList(
             state: state,
             onStatusChanged: onStatusChanged,
+            onRefresh: () async => onStatusChanged.call(),
           ),
         ),
       ],

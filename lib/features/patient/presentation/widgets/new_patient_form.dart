@@ -183,6 +183,7 @@ class _NewPatientFormState extends ConsumerState<NewPatientForm> {
           AppButton(
             labelText: AppStrings.save,
             onPressed: isSaving ? null : _handleSave,
+            debounceMs: 1000,
           ),
           const SizedBox(height: AppSizes.p8),
           AppButton(

@@ -17,6 +17,7 @@ import 'package:spine_clinic_app/features/patient/presentation/patient_providers
 import 'package:spine_clinic_app/features/payments/presentation/record_payment_controller.dart';
 import 'package:spine_clinic_app/shared/widgets/app_snackbar.dart';
 import 'package:spine_clinic_app/shared/widgets/confirmation_dialog.dart';
+import 'package:spine_clinic_app/shared/widgets/debounced_button.dart';
 
 /// Bottom sheet for collecting a payment with reason selection and
 /// optional package balance increment.
@@ -167,23 +168,9 @@ class _CollectPaymentSheetState extends ConsumerState<CollectPaymentSheet> {
                 enabled: !_submitting, decoration: _dec('Package amount', 'e.g. 5')),
           ],
           const SizedBox(height: AppSizes.p16),
-          SizedBox(
-            height: 48,
-            child: ElevatedButton(
-              onPressed: _submitting ? null : _submit,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primary,
-                foregroundColor: AppColors.textOnPrimary,
-                shape: const RoundedRectangleBorder(
-                    borderRadius: BorderRadius.all(Radius.circular(AppSizes.r12))),
-                elevation: 0,
-              ),
-              child: _submitting
-                  ? const SizedBox(width: 20, height: 20,
-                      child: CircularProgressIndicator(
-                          strokeWidth: 2, color: AppColors.textOnPrimary))
-                  : Text('Confirm Payment', style: AppTextStyles.bodyBold),
-            ),
+          DebouncedElevatedButton(
+            label: 'Confirm Payment',
+            onPressed: _submit,
           ),
         ],
       ),

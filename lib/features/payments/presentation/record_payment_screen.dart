@@ -226,6 +226,7 @@ class _RecordPaymentFormState extends ConsumerState<_RecordPaymentForm> {
                       labelText: AppStrings.save,
                       isLoading: controllerState.isLoading,
                       onPressed: () => _submit(patient),
+                      debounceMs: 1000,
                     ),
                   ],
                 ),

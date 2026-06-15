@@ -9,21 +9,19 @@ library;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 
 import 'package:spine_clinic_app/core/constants/app_colors.dart';
 import 'package:spine_clinic_app/core/constants/app_sizes.dart';
 import 'package:spine_clinic_app/core/constants/app_strings.dart';
 import 'package:spine_clinic_app/core/constants/app_text_styles.dart';
 import 'package:spine_clinic_app/core/errors/app_exception.dart';
-import 'package:spine_clinic_app/core/network/app_routes.dart';
 import 'package:spine_clinic_app/core/utils/formatters.dart';
 import 'package:spine_clinic_app/features/appointment/domain/appointment_repository.dart';
 import 'package:spine_clinic_app/features/appointment/domain/appointment_status.dart';
 import 'package:spine_clinic_app/features/appointment/domain/appointment_type.dart';
 import 'package:spine_clinic_app/features/appointment/presentation/all_appointments_providers.dart';
-import 'package:spine_clinic_app/features/appointment/presentation/widgets/appointment_actions_trailing.dart';
 import 'package:spine_clinic_app/features/appointment/presentation/widgets/appointment_filter_content.dart';
+import 'package:spine_clinic_app/features/appointment/presentation/widgets/receptionist_appointment_card.dart';
 import 'package:spine_clinic_app/shared/widgets/app_search_bar.dart';
 import 'package:spine_clinic_app/shared/widgets/sort_filter_bar.dart';
 import 'package:spine_clinic_app/shared/widgets/sort_options_sheet.dart';
@@ -35,9 +33,7 @@ import 'package:spine_clinic_app/features/auth/domain/user_role.dart';
 import 'package:spine_clinic_app/features/auth/presentation/auth_providers.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:intl/intl.dart';
-import 'package:spine_clinic_app/shared/widgets/app_avatar.dart';
 import 'package:spine_clinic_app/shared/widgets/app_bottom_sheet.dart';
-import 'package:spine_clinic_app/shared/widgets/data_list_tile.dart';
 import 'package:spine_clinic_app/shared/widgets/empty_state.dart';
 import 'package:spine_clinic_app/shared/widgets/error_view.dart';
 
@@ -268,11 +264,7 @@ class _AllAppointmentsScreenState extends ConsumerState<AllAppointmentsScreen> {
 
         return ListView.builder(
           controller: _scrollCtrl,
-          padding: const EdgeInsets.only(
-            left: AppSizes.p16,
-            right: AppSizes.p16,
-            bottom: AppSizes.p32,
-          ),
+          padding: const EdgeInsets.only(bottom: AppSizes.p32),
           itemCount: listItems.length + (loadingMore ? 1 : 0),
           itemBuilder: (_, int index) {
             if (index == listItems.length) {
@@ -303,19 +295,9 @@ class _AllAppointmentsScreenState extends ConsumerState<AllAppointmentsScreen> {
               );
             }
             final AppointmentWithPatient item = (listItem as _AppointmentItem).item;
-            return DataListTile(
+            return ReceptionistAppointmentCard(
               key: ValueKey(item.appointment.id),
-              title: item.patient.fullName,
-              subtitle: '${item.appointment.type.displayLabel} · '
-                  '${Formatters.formatTime(item.appointment.scheduledAt.toLocal())}',
-              leading: AppAvatar(
-                name: item.patient.fullName,
-                radius: AppSizes.avatarTile / 2,
-              ),
-              trailing: AppointmentActionsTrailing(appointment: item.appointment),
-              onTap: () => context.push(
-                AppRoutes.appointmentDetail.replaceAll(':id', item.appointment.id),
-              ),
+              item: item,
             ).animate().fadeIn(
                   duration: 250.ms,
                   delay: (index * 30).ms,

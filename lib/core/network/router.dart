@@ -111,172 +111,176 @@ bool _isAdminRoute(String location) =>
 String _homeRouteForRole(UserRole role) => switch (role) {
       UserRole.doctor => AppRoutes.schedule,
       UserRole.receptionist => AppRoutes.allAppointments,
-      UserRole.superAdmin => AppRoutes.allAppointments,
+      UserRole.superAdmin => AppRoutes.schedule,
     };
 
 List<RouteBase> _buildRoutes(Ref ref) {
   return [
     GoRoute(
       path: AppRoutes.splash,
-      builder: (_, __) => const SplashScreen(),
+      pageBuilder: (_, __) => const NoTransitionPage(child: SplashScreen()),
     ),
     GoRoute(
       path: AppRoutes.login,
-      builder: (_, __) => const LoginScreen(),
+      pageBuilder: (_, __) => const NoTransitionPage(child: LoginScreen()),
     ),
     GoRoute(
       path: AppRoutes.register,
-      builder: (_, __) => const DoctorRegisterScreen(),
+      pageBuilder: (_, __) => const NoTransitionPage(child: DoctorRegisterScreen()),
     ),
     GoRoute(
       path: AppRoutes.search,
-      builder: (_, __) => const PatientSearchScreen(),
+      pageBuilder: (_, __) => const NoTransitionPage(child: PatientSearchScreen()),
     ),
     GoRoute(
       path: AppRoutes.patientDetail,
-      builder: (_, GoRouterState state) {
+      pageBuilder: (_, GoRouterState state) {
         final String patientId = state.pathParameters['id'] ?? '';
-        return PatientDetailScreen(patientId: patientId);
+        return NoTransitionPage(child: PatientDetailScreen(patientId: patientId));
       },
     ),
     GoRoute(
       path: AppRoutes.editPatient,
-      builder: (_, GoRouterState state) {
+      pageBuilder: (_, GoRouterState state) {
         final String patientId = state.pathParameters['id'] ?? '';
         final Patient? patient = state.extra as Patient?;
-        return EditPatientScreen(patientId: patientId, patient: patient);
+        return NoTransitionPage(child: EditPatientScreen(patientId: patientId, patient: patient));
       },
     ),
     GoRoute(
       path: AppRoutes.recordPayment,
-      builder: (_, GoRouterState state) {
+      pageBuilder: (_, GoRouterState state) {
         final String patientId = state.pathParameters['id'] ?? '';
-        return RecordPaymentScreen(patientId: patientId);
+        return NoTransitionPage(child: RecordPaymentScreen(patientId: patientId));
       },
     ),
     GoRoute(
       path: AppRoutes.newPatient,
-      builder: (_, __) => const NewPatientScreen(),
+      pageBuilder: (_, __) => const NoTransitionPage(child: NewPatientScreen()),
     ),
     GoRoute(
       path: AppRoutes.newAppointment,
-      builder: (_, GoRouterState state) {
+      pageBuilder: (_, GoRouterState state) {
         final String? patientId = state.uri.queryParameters['patientId'] ??
             (state.extra is Patient
                 ? (state.extra as Patient).id
                 : (state.extra is String ? state.extra as String : null));
-        return NewAppointmentScreen(preselectedPatientId: patientId);
+        return NoTransitionPage(child: NewAppointmentScreen(preselectedPatientId: patientId));
       },
     ),
     GoRoute(
       path: AppRoutes.appointmentDetail,
-      builder: (_, GoRouterState state) {
+      pageBuilder: (_, GoRouterState state) {
         final String appointmentId = state.pathParameters['id'] ?? '';
-        return AppointmentDetailScreen(appointmentId: appointmentId);
+        return NoTransitionPage(child: AppointmentDetailScreen(appointmentId: appointmentId));
       },
     ),
     GoRoute(
       path: AppRoutes.addVisitNotes,
-      builder: (_, GoRouterState state) {
+      pageBuilder: (_, GoRouterState state) {
         final String appointmentId = state.pathParameters['id'] ?? '';
-        return AddVisitNotesScreen(appointmentId: appointmentId);
+        return NoTransitionPage(child: AddVisitNotesScreen(appointmentId: appointmentId));
       },
     ),
     GoRoute(
       path: AppRoutes.visitDetail,
-      builder: (_, GoRouterState state) {
+      pageBuilder: (_, GoRouterState state) {
         final String appointmentId = state.pathParameters['id'] ?? '';
-        return VisitDetailScreen(appointmentId: appointmentId);
+        return NoTransitionPage(child: VisitDetailScreen(appointmentId: appointmentId));
       },
     ),
     GoRoute(
       path: AppRoutes.doctorHistory,
-      builder: (_, __) => const DoctorHistoryScreen(),
+      pageBuilder: (_, __) => const NoTransitionPage(child: DoctorHistoryScreen()),
     ),
     GoRoute(
       path: AppRoutes.manageReplacement,
-      builder: (_, __) => const ManageReplacementScreen(),
+      pageBuilder: (_, __) => const NoTransitionPage(child: ManageReplacementScreen()),
     ),
     GoRoute(
       path: AppRoutes.staffList,
-      builder: (_, __) => const StaffListScreen(),
+      pageBuilder: (_, __) => const NoTransitionPage(child: StaffListScreen()),
     ),
     GoRoute(
       path: AppRoutes.staffForm,
-      builder: (_, GoRouterState state) {
+      pageBuilder: (_, GoRouterState state) {
         final Staff? staff = state.extra as Staff?;
-        return StaffFormScreen(staff: staff);
+        return NoTransitionPage(child: StaffFormScreen(staff: staff));
       },
     ),
     GoRoute(
       path: AppRoutes.doctorApplications,
-      builder: (_, __) => const DoctorApplicationsScreen(),
+      pageBuilder: (_, __) => const NoTransitionPage(child: DoctorApplicationsScreen()),
     ),
     GoRoute(
       path: AppRoutes.clinicSettings,
-      builder: (_, __) => const ClinicSettingsScreen(),
+      pageBuilder: (_, __) => const NoTransitionPage(child: ClinicSettingsScreen()),
     ),
     ShellRoute(
-      builder: (BuildContext context, GoRouterState state, Widget child) {
+      pageBuilder: (BuildContext context, GoRouterState state, Widget child) {
         final Staff? user = ref.read(currentUserProvider).value;
         final String role = user?.role.dbValue ?? 'receptionist';
         final int activeIndex = _resolveActiveIndex(role, state.matchedLocation);
 
-        return AppShell(
-          userRole: role,
-          currentTabIndex: activeIndex,
-          onTabSelected: (int index) => _onTabSelected(context, role, index),
-          actions: state.matchedLocation == AppRoutes.allAppointments
-              ? [
-                  IconButton(
-                    icon: const Icon(Icons.search_rounded),
-                    onPressed: () => context.push(AppRoutes.search),
-                  ),
-                ]
-              : null,
-          child: child,
+        return NoTransitionPage(
+          child: AppShell(
+            userRole: role,
+            currentTabIndex: activeIndex,
+            onTabSelected: (int index) => _onTabSelected(context, role, index),
+            child: child,
+          ),
         );
       },
       routes: [
         GoRoute(
           path: AppRoutes.home,
-          builder: (_, __) => const ReceptionistAppointmentsScreen(),
+          pageBuilder: (_, __) =>
+              const NoTransitionPage(child: ReceptionistAppointmentsScreen()),
         ),
         GoRoute(
           path: AppRoutes.adminHub,
-          builder: (_, __) => const AdminHubScreen(),
+          pageBuilder: (_, __) =>
+              const NoTransitionPage(child: AdminHubScreen()),
         ),
         GoRoute(
           path: AppRoutes.schedule,
-          builder: (_, __) => const DoctorScheduleScreen(),
+          pageBuilder: (_, __) =>
+              const NoTransitionPage(child: DoctorScheduleScreen()),
         ),
         GoRoute(
           path: AppRoutes.myPatients,
-          builder: (_, __) => const MyPatientsScreen(),
+          pageBuilder: (_, __) =>
+              const NoTransitionPage(child: MyPatientsScreen()),
         ),
         GoRoute(
           path: AppRoutes.replacements,
-          builder: (_, __) => const ReplacementPatientsScreen(),
+          pageBuilder: (_, __) =>
+              const NoTransitionPage(child: ReplacementPatientsScreen()),
         ),
         GoRoute(
           path: AppRoutes.patientList,
-          builder: (_, __) => const PatientListScreen(),
+          pageBuilder: (_, __) =>
+              const NoTransitionPage(child: PatientListScreen()),
         ),
         GoRoute(
           path: AppRoutes.allAppointments,
-          builder: (_, __) => const ReceptionistAppointmentsScreen(),
+          pageBuilder: (_, __) =>
+              const NoTransitionPage(child: ReceptionistAppointmentsScreen()),
         ),
         GoRoute(
           path: AppRoutes.receptionistProfile,
-          builder: (_, __) => const ReceptionistProfileScreen(),
+          pageBuilder: (_, __) =>
+              const NoTransitionPage(child: ReceptionistProfileScreen()),
         ),
         GoRoute(
           path: AppRoutes.doctorProfile,
-          builder: (_, __) => const DoctorProfileScreen(),
+          pageBuilder: (_, __) =>
+              const NoTransitionPage(child: DoctorProfileScreen()),
         ),
         GoRoute(
           path: AppRoutes.reports,
-          builder: (_, __) => const AnalyticsScreen(),
+          pageBuilder: (_, __) =>
+              const NoTransitionPage(child: AnalyticsScreen()),
         ),
       ],
     ),

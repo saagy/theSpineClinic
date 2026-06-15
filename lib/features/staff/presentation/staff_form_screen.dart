@@ -156,6 +156,7 @@ class _StaffFormScreenState extends ConsumerState<StaffFormScreen> {
                       labelText: AppStrings.save,
                       isLoading: formState.isLoading,
                       onPressed: () => _submit(isSelf),
+                      debounceMs: 1000,
                     ),
                   ],
                 ),

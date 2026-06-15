@@ -1,19 +1,21 @@
 /// Hybrid appointment card with status-based background styling.
 ///
-/// Layout: [80px date/time] | avatar | patient info (expanded) | ··· menu.
-/// When [showDate] is true the left column stacks "MMM d" over "hh:mm a".
-/// Status is communicated via container background, border, and timing
-/// colour — no text badges. Cancelled appointments get strikethrough
-/// and a muted gray avatar.
+/// Fluid three-section layout — no hardcoded widths or heights:
+///   LEADING  = time + avatar in a min-width Row
+///   MIDDLE   = name + type in Expanded
+///   TRAILING = status + menu in a min-width Row
 ///
-/// Rule 1 — under 200 lines.
+/// Status is communicated via container background, border, and timing
+/// colour. Cancelled appointments get strikethrough and a muted avatar.
+///
+/// Rule 1  — under 200 lines.
+/// Rule 13 — min 16 px internal padding.
 library;
 
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
-import 'package:spine_clinic_app/core/constants/app_colors.dart';
 import 'package:spine_clinic_app/core/constants/app_sizes.dart';
 import 'package:spine_clinic_app/core/constants/app_text_styles.dart';
 import 'package:spine_clinic_app/core/network/app_routes.dart';
@@ -27,7 +29,6 @@ import 'package:spine_clinic_app/shared/widgets/app_avatar.dart';
 
 /// A single appointment card used across receptionist and doctor screens.
 class ReceptionistAppointmentCard extends StatelessWidget {
-  /// Creates a [ReceptionistAppointmentCard].
   const ReceptionistAppointmentCard({
     super.key,
     required this.item,
@@ -42,82 +43,91 @@ class ReceptionistAppointmentCard extends StatelessWidget {
   final bool showMenu;
   final VoidCallback? onStatusChanged;
 
-  /// When true, the left column stacks a short date ("Jun 6") over the time
-  /// ("09:00 AM"). Used in patient history views where every card may fall
-  /// on a different date. Defaults to false (time-only).
+  /// When true the leading section stacks "MMM d" over "hh:mm a".
+  /// Defaults to false (time-only).
   final bool showDate;
 
-  static const double _timeWidth = 80;
+  static const double _avatarRadius = 18;
 
   @override
   Widget build(BuildContext context) {
     final AppointmentStatus status = item.appointment.status;
     final AppointmentStatusStyle style = AppointmentStatusStyle.forStatus(status);
     final bool isCancelled = status == AppointmentStatus.cancelled;
-    // Cancelled always fades regardless of the caller's flag.
     final bool applyFade = faded || isCancelled;
+
+    // ── Time widget: single line or date-over-time column ──
+    final Widget timeWidget = showDate
+        ? Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                DateFormat('MMM d')
+                    .format(item.appointment.scheduledAt.toLocal()),
+                maxLines: 1,
+                softWrap: false,
+                style: AppTextStyles.caption
+                    .copyWith(color: style.timeColor, fontSize: 12),
+              ),
+              Text(
+                DateFormat('hh:mm a')
+                    .format(item.appointment.scheduledAt.toLocal()),
+                maxLines: 1,
+                softWrap: false,
+                style: AppTextStyles.captionBold
+                    .copyWith(color: style.timeColor, fontSize: 13),
+              ),
+            ],
+          )
+        : Text(
+            Formatters.formatTime(
+                item.appointment.scheduledAt.toLocal()),
+            maxLines: 1,
+            softWrap: false,
+            style: AppTextStyles.captionBold
+                .copyWith(color: style.timeColor, fontSize: 13),
+          );
 
     final Widget card = Container(
       decoration: BoxDecoration(
         color: style.bg,
-        borderRadius: const BorderRadius.all(Radius.circular(AppSizes.r16)),
+        borderRadius:
+            const BorderRadius.all(Radius.circular(AppSizes.r16)),
         border: Border.all(color: style.border, width: 0.5),
       ),
       child: Material(
-        color: AppColors.transparent,
-        borderRadius: const BorderRadius.all(Radius.circular(AppSizes.r16)),
+        color: Colors.transparent,
+        borderRadius:
+            const BorderRadius.all(Radius.circular(AppSizes.r16)),
         child: InkWell(
-          borderRadius: const BorderRadius.all(Radius.circular(AppSizes.r16)),
+          borderRadius:
+              const BorderRadius.all(Radius.circular(AppSizes.r16)),
           onTap: () => context.push(
-            AppRoutes.appointmentDetail.replaceAll(':id', item.appointment.id),
+            AppRoutes.appointmentDetail
+                .replaceAll(':id', item.appointment.id),
           ),
+          // Rule 13 — minimum 16 px internal padding.
           child: Padding(
-            padding: const EdgeInsets.symmetric(
-                horizontal: AppSizes.p16, vertical: AppSizes.p12),
+            padding: const EdgeInsets.all(AppSizes.p16),
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                // ── Date / Time column (80 px) ──
-                SizedBox(
-                  width: _timeWidth,
-                  child: showDate
-                      ? Column(
-                          mainAxisSize: MainAxisSize.min,
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              DateFormat('MMM d').format(item.appointment.scheduledAt.toLocal()),
-                              maxLines: 1,
-                              softWrap: false,
-                              overflow: TextOverflow.visible,
-                              style: AppTextStyles.caption.copyWith(color: style.timeColor),
-                            ),
-                            Text(
-                              DateFormat('hh:mm a').format(item.appointment.scheduledAt.toLocal()),
-                              maxLines: 1,
-                              softWrap: false,
-                              overflow: TextOverflow.visible,
-                              style: AppTextStyles.bodyBold.copyWith(color: style.timeColor),
-                            ),
-                          ],
-                        )
-                      : Text(
-                          Formatters.formatTime(item.appointment.scheduledAt.toLocal()),
-                          maxLines: 1,
-                          softWrap: false,
-                          overflow: TextOverflow.visible,
-                          style: AppTextStyles.bodyBold.copyWith(color: style.timeColor),
-                        ),
+                // ── LEADING: Time + Avatar (min-size Row, never overlaps) ──
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    timeWidget,
+                    const SizedBox(width: AppSizes.p8),
+                    AppAvatar(
+                      name: item.patient.fullName,
+                      radius: _avatarRadius,
+                      color: style.avatarBg,
+                    ),
+                  ],
                 ),
-                const SizedBox(width: AppSizes.p12),
-                // ── Avatar ──
-                AppAvatar(
-                  name: item.patient.fullName,
-                  radius: AppSizes.avatarTile / 2,
-                  color: style.avatarBg,
-                ),
-                const SizedBox(width: AppSizes.p12),
-                // ── Patient info ──
+                const SizedBox(width: AppSizes.p8),
+                // ── MIDDLE: Patient Info (Expanded, fills remaining space) ──
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -129,28 +139,39 @@ class ReceptionistAppointmentCard extends StatelessWidget {
                           color: style.nameColor,
                           decoration: style.nameDecoration,
                         ),
-                        maxLines: 1,
+                        maxLines: 2,
+                        softWrap: true,
                         overflow: TextOverflow.ellipsis,
                       ),
                       const SizedBox(height: AppSizes.p2),
                       Text(
                         item.appointment.type.displayLabel,
                         style: AppTextStyles.caption.copyWith(
-                          color: AppColors.textSecondary,
+                          color: Theme.of(context)
+                              .colorScheme
+                              .onSurfaceVariant,
                         ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ],
                   ),
                 ),
-                // ── Status micro-indicator ──
+                // ── TRAILING: Status + Menu (min-size Row, never overflows) ──
                 if (showMenu) ...[
-                  const SizedBox(width: AppSizes.p12),
-                  StatusIndicator(status: item.appointment.status),
-                  const SizedBox(width: AppSizes.p12),
-                  AppointmentActionsTrailing(
-                    appointment: item.appointment,
-                    onStatusChanged: onStatusChanged,
-                    showBadge: false,
+                  const SizedBox(width: AppSizes.p8),
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      StatusIndicator(
+                          status: item.appointment.status),
+                      const SizedBox(width: AppSizes.p4),
+                      AppointmentActionsTrailing(
+                        appointment: item.appointment,
+                        onStatusChanged: onStatusChanged,
+                        showBadge: false,
+                      ),
+                    ],
                   ),
                 ],
               ],
@@ -162,7 +183,9 @@ class ReceptionistAppointmentCard extends StatelessWidget {
 
     final Widget padded = Padding(
       padding: const EdgeInsets.symmetric(horizontal: AppSizes.p16),
-      child: applyFade ? Opacity(opacity: 0.45, child: card) : card,
+      child: applyFade
+          ? Opacity(opacity: 0.45, child: card)
+          : card,
     );
     return padded;
   }

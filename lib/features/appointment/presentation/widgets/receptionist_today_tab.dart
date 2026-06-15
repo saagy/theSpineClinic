@@ -55,35 +55,40 @@ class ReceptionistTodayTab extends StatelessWidget {
     final scheduled = _byStatus(filtered, AppointmentStatus.scheduled);
     final cancelled = _byStatus(filtered, AppointmentStatus.cancelled);
 
-    return ListView(
-      padding: const EdgeInsets.only(bottom: AppSizes.p32),
-      children: [
-        _StatsStrip(state: state),
-        _SearchField(onChanged: onSearchChanged),
-        if (checkedIn.isNotEmpty) ...[
-          _SectionHeader(title: 'Checked In', count: checkedIn.length),
-          ...checkedIn.map((a) => ReceptionistAppointmentCard(
-                item: a, faded: true, onStatusChanged: onStatusChanged,
-              )),
+    return RefreshIndicator(
+      color: AppColors.primary,
+      onRefresh: () async => onRefresh.call(),
+      child: ListView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: const EdgeInsets.only(bottom: AppSizes.p32),
+        children: [
+          _StatsStrip(state: state),
+          _SearchField(onChanged: onSearchChanged),
+          if (checkedIn.isNotEmpty) ...[
+            _SectionHeader(title: 'Checked In', count: checkedIn.length),
+            ...checkedIn.map((a) => ReceptionistAppointmentCard(
+                  item: a, faded: true, onStatusChanged: onStatusChanged,
+                )),
+          ],
+          if (scheduled.isNotEmpty) ...[
+            _SectionHeader(title: 'Scheduled', count: scheduled.length),
+            ...scheduled.map((a) => ReceptionistAppointmentCard(
+                  item: a, onStatusChanged: onStatusChanged,
+                )),
+          ],
+          if (cancelled.isNotEmpty) ...[
+            _SectionHeader(title: 'Cancelled', count: cancelled.length),
+            ...cancelled.map((a) => ReceptionistAppointmentCard(
+                  item: a, onStatusChanged: onStatusChanged,
+                )),
+          ],
+          if (filtered.isEmpty)
+            const Padding(
+              padding: EdgeInsets.only(top: AppSizes.p48),
+              child: Center(child: Text('No appointments today')),
+            ),
         ],
-        if (scheduled.isNotEmpty) ...[
-          _SectionHeader(title: 'Scheduled', count: scheduled.length),
-          ...scheduled.map((a) => ReceptionistAppointmentCard(
-                item: a, onStatusChanged: onStatusChanged,
-              )),
-        ],
-        if (cancelled.isNotEmpty) ...[
-          _SectionHeader(title: 'Cancelled', count: cancelled.length),
-          ...cancelled.map((a) => ReceptionistAppointmentCard(
-                item: a, onStatusChanged: onStatusChanged,
-              )),
-        ],
-        if (filtered.isEmpty)
-          const Padding(
-            padding: EdgeInsets.only(top: AppSizes.p48),
-            child: Center(child: Text('No appointments today')),
-          ),
-      ],
+      ),
     );
   }
 

@@ -22,18 +22,21 @@ abstract class AppointmentRepository {
   /// Fetches all active appointments for today, sorted by schedule time ascending.
   ///
   /// Today is calculated in UTC bounds from 00:00:00 to 23:59:59.
-  Future<Result<List<Appointment>>> getAppointmentsForToday(ClinicLocation clinic);
+  /// When [clinic] is null, all branches are included (admin override).
+  Future<Result<List<Appointment>>> getAppointmentsForToday(ClinicLocation? clinic);
 
   /// Fetches today's appointments with patient data joined, for the receptionist
   /// dashboard. Results are ordered by [scheduledAt] ascending.
+  /// When [clinic] is null, all branches are included (admin override).
   Future<Result<List<AppointmentWithPatient>>> getTodayAppointmentsWithPatients(
-    ClinicLocation clinic,
+    ClinicLocation? clinic,
   );
 
   /// Fetches all future appointments (tomorrow onward) with patient data joined,
   /// ordered by date ascending then time ascending.
+  /// When [clinic] is null, all branches are included (admin override).
   Future<Result<List<AppointmentWithPatient>>> getUpcomingAppointmentsWithPatients(
-    ClinicLocation clinic,
+    ClinicLocation? clinic,
   );
 
   /// Updates the status column of an appointment.

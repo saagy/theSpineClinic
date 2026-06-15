@@ -214,7 +214,7 @@ class _NewAppointmentFormState extends ConsumerState<NewAppointmentForm> {
               BookingSlotsPreview(slots: _computedSlots, timeOfDay: _selectedTime),
             ],
             const SizedBox(height: AppSizes.p32),
-            AppButton(labelText: AppStrings.save, onPressed: isSubmissionBlocked ? null : _submitForm),
+            AppButton(labelText: AppStrings.save, onPressed: isSubmissionBlocked ? null : _submitForm, debounceMs: 1000),
           ],
         ),
       ),

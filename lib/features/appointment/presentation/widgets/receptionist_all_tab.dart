@@ -109,24 +109,42 @@ class _ReceptionistAllTabState extends ConsumerState<ReceptionistAllTab> {
         if (items.isEmpty) return const EmptyState(message: AppStrings.noAppointmentsFound, icon: Icons.event_busy_rounded);
         final bool loadingMore = ref.watch(isLoadingMoreProvider);
         final list = _buildList(items);
-        return ListView.builder(
-          controller: _scrollCtrl,
-          padding: const EdgeInsets.only(left: AppSizes.p16, right: AppSizes.p16, bottom: AppSizes.p32),
-          itemCount: list.length + (loadingMore ? 1 : 0),
-          itemBuilder: (_, i) {
-            if (i == list.length) {
-              return const Padding(padding: EdgeInsets.symmetric(vertical: AppSizes.p16),
-                child: Center(child: SizedBox(width: AppSizes.iconDefault, height: AppSizes.iconDefault,
-                  child: CircularProgressIndicator(strokeWidth: AppSizes.strokeWidthThin, color: AppColors.primary))));
-            }
-            final item = list[i];
-            if (item is _HeaderItem) {
-              return Padding(padding: const EdgeInsets.fromLTRB(AppSizes.p8, AppSizes.p20, AppSizes.p8, AppSizes.p8),
-                child: Text(item.title, style: AppTextStyles.captionBold.copyWith(color: AppColors.textSecondary)));
-            }
-            final a = (item as _ApptItem).item;
-            return ReceptionistAppointmentCard(item: a, showMenu: true, onStatusChanged: widget.onStatusChanged);
-          },
+        return RefreshIndicator(
+          color: AppColors.primary,
+          onRefresh: () async =>
+              ref.read(allAppointmentsProvider.notifier).refresh(),
+          child: ListView.builder(
+            physics: const AlwaysScrollableScrollPhysics(),
+            controller: _scrollCtrl,
+            padding: const EdgeInsets.only(
+                left: AppSizes.p16, right: AppSizes.p16, bottom: AppSizes.p32),
+            itemCount: list.length + (loadingMore ? 1 : 0),
+            itemBuilder: (_, i) {
+              if (i == list.length) {
+                return const Padding(
+                    padding: EdgeInsets.symmetric(vertical: AppSizes.p16),
+                    child: Center(
+                        child: SizedBox(
+                            width: AppSizes.iconDefault,
+                            height: AppSizes.iconDefault,
+                            child: CircularProgressIndicator(
+                                strokeWidth: AppSizes.strokeWidthThin,
+                                color: AppColors.primary))));
+              }
+              final item = list[i];
+              if (item is _HeaderItem) {
+                return Padding(
+                    padding: const EdgeInsets.fromLTRB(
+                        AppSizes.p8, AppSizes.p20, AppSizes.p8, AppSizes.p8),
+                    child: Text(item.title,
+                        style: AppTextStyles.captionBold
+                            .copyWith(color: AppColors.textSecondary)));
+              }
+              final a = (item as _ApptItem).item;
+              return ReceptionistAppointmentCard(
+                  item: a, showMenu: true, onStatusChanged: widget.onStatusChanged);
+            },
+          ),
         );
       },
     );

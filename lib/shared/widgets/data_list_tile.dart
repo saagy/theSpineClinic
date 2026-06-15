@@ -25,7 +25,15 @@ class DataListTile extends StatelessWidget {
     this.margin,
     this.titleStyle,
     this.subtitleStyle,
+    this.titleMaxLines,
+    this.subtitleMaxLines,
   });
+
+  /// Max lines for the title text. Defaults to 1. Set to `null` for unlimited.
+  final int? titleMaxLines;
+
+  /// Max lines for the subtitle text. Defaults to 1. Set to `null` for unlimited.
+  final int? subtitleMaxLines;
 
   /// The primary textual descriptor of this row cell.
   final String title;
@@ -76,8 +84,11 @@ class DataListTile extends StatelessWidget {
                       AppTextStyles.bodyBold.copyWith(
                         color: AppColors.textPrimary,
                       ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
+                  maxLines: titleMaxLines ?? 1,
+                  softWrap: true,
+                  overflow: titleMaxLines == null
+                      ? null
+                      : TextOverflow.ellipsis,
                 ),
                 if (subtitle != null) ...[
                   const SizedBox(height: AppSizes.p2),
@@ -87,8 +98,11 @@ class DataListTile extends StatelessWidget {
                         AppTextStyles.caption.copyWith(
                           color: AppColors.textSecondary,
                         ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
+                    maxLines: subtitleMaxLines ?? 1,
+                    softWrap: true,
+                    overflow: subtitleMaxLines == null
+                        ? null
+                        : TextOverflow.ellipsis,
                   ),
                 ],
               ],

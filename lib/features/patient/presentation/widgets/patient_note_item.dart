@@ -19,7 +19,9 @@ import 'package:spine_clinic_app/shared/widgets/confirmation_dialog.dart';
 
 /// Renders a single [PatientNote] in a chronological notes feed card.
 ///
-/// Supports tap-to-edit and long-press-to-delete for any staff with view access.
+/// Doctors and admins have full CRUD over all notes (Rule 6). Other staff
+/// can only modify their own notes. Tap to edit, long-press or tap the
+/// delete icon to remove.
 class PatientNoteItem extends ConsumerWidget {
   /// Creates a [PatientNoteItem].
   const PatientNoteItem({super.key, required this.note});
@@ -32,6 +34,13 @@ class PatientNoteItem extends ConsumerWidget {
     final AsyncValue<Staff> staffAsync = ref.watch(staffProfileProvider(note.createdBy));
     final String dateStr = Formatters.formatDateMedium(note.createdAt);
 
+    // Rule 6: Doctors and admins can modify any note; others only their own.
+    final Staff? currentUser = ref.watch(currentUserProvider).value;
+    final bool canModify = currentUser != null &&
+        (currentUser.role == UserRole.doctor ||
+         currentUser.role == UserRole.superAdmin ||
+         currentUser.id == note.createdBy);
+
     return Card(
       elevation: 0,
       margin: const EdgeInsets.symmetric(horizontal: AppSizes.p16, vertical: AppSizes.p8),
@@ -42,8 +51,8 @@ class PatientNoteItem extends ConsumerWidget {
       color: AppColors.surface,
       child: InkWell(
         borderRadius: const BorderRadius.all(Radius.circular(AppSizes.r8)),
-        onTap: () => _showEditNoteSheet(context),
-        onLongPress: () => _confirmDeleteNote(context, ref),
+        onTap: canModify ? () => _showEditNoteSheet(context) : null,
+        onLongPress: canModify ? () => _confirmDeleteNote(context, ref) : null,
         child: Padding(
           padding: const EdgeInsets.all(AppSizes.p16),
           child: Column(
@@ -52,20 +61,27 @@ class PatientNoteItem extends ConsumerWidget {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  staffAsync.when(
-                    data: (staff) {
-                      final String roleName = switch (staff.role) {
-                        UserRole.superAdmin => AppStrings.adminRoleLabel,
-                        UserRole.receptionist => AppStrings.receptionistRoleLabel,
-                        UserRole.doctor => AppStrings.doctorRoleLabel,
-                      };
-                      return Text(
-                        '${staff.fullName} ($roleName)',
-                        style: AppTextStyles.bodyBold.copyWith(color: AppColors.textPrimary),
-                      );
-                    },
-                    loading: () => Text(AppStrings.loadingAuthor, style: AppTextStyles.bodySecondary),
-                    error: (_, __) => Text(AppStrings.unknownAuthor, style: AppTextStyles.bodySecondary),
+                  // Author name with role badge — constrained so long names
+                  // don't push the delete icon off screen.
+                  Expanded(
+                    child: staffAsync.when(
+                      data: (staff) {
+                        final String roleName = switch (staff.role) {
+                          UserRole.superAdmin => AppStrings.adminRoleLabel,
+                          UserRole.receptionist => AppStrings.receptionistRoleLabel,
+                          UserRole.doctor => AppStrings.doctorRoleLabel,
+                        };
+                        return Text(
+                          '${staff.fullName} ($roleName)',
+                          style: AppTextStyles.bodyBold.copyWith(color: AppColors.textPrimary),
+                          softWrap: true,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        );
+                      },
+                      loading: () => Text(AppStrings.loadingAuthor, style: AppTextStyles.bodySecondary),
+                      error: (_, __) => Text(AppStrings.unknownAuthor, style: AppTextStyles.bodySecondary),
+                    ),
                   ),
                   Row(
                     mainAxisSize: MainAxisSize.min,
@@ -74,15 +90,17 @@ class PatientNoteItem extends ConsumerWidget {
                         dateStr,
                         style: AppTextStyles.caption.copyWith(color: AppColors.textMuted),
                       ),
-                      const SizedBox(width: AppSizes.p8),
-                      GestureDetector(
-                        onTap: () => _confirmDeleteNote(context, ref),
-                        child: const Icon(
-                          Icons.delete_outline_rounded,
-                          size: AppSizes.iconSmall,
-                          color: AppColors.error,
+                      if (canModify) ...[
+                        const SizedBox(width: AppSizes.p8),
+                        GestureDetector(
+                          onTap: () => _confirmDeleteNote(context, ref),
+                          child: const Icon(
+                            Icons.delete_outline_rounded,
+                            size: AppSizes.iconSmall,
+                            color: AppColors.error,
+                          ),
                         ),
-                      ),
+                      ],
                     ],
                   ),
                 ],

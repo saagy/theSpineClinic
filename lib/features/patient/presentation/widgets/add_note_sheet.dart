@@ -10,6 +10,7 @@ import 'package:spine_clinic_app/core/constants/app_colors.dart';
 import 'package:spine_clinic_app/core/constants/app_sizes.dart';
 import 'package:spine_clinic_app/core/constants/app_text_styles.dart';
 import 'package:spine_clinic_app/features/medical_records/presentation/medical_records_providers.dart';
+import 'package:spine_clinic_app/shared/widgets/debounced_button.dart';
 
 /// Bottom sheet for adding or editing a patient note.
 class AddNoteSheet extends ConsumerStatefulWidget {
@@ -100,41 +101,34 @@ class _AddNoteSheetState extends ConsumerState<AddNoteSheet> {
           Text(widget.isEditing ? 'Edit Note' : 'Add Note',
               style: AppTextStyles.headingSmall),
           const SizedBox(height: AppSizes.p16),
-          TextField(
-            controller: _ctrl,
-            focusNode: _focus,
-            maxLines: null,
-            keyboardType: TextInputType.multiline,
-            enabled: !_saving,
-            style: AppTextStyles.body,
-            decoration: const InputDecoration(
-              hintText: 'Type your note here...',
-              hintStyle: TextStyle(color: AppColors.textMuted),
-              isDense: true,
-              contentPadding: EdgeInsets.all(AppSizes.p12),
-              border: OutlineInputBorder(),
+          // Constrain the text field height so it doesn't stretch/glitch
+          // when the iOS keyboard first appears (Task #4).
+          ConstrainedBox(
+            constraints: BoxConstraints(
+              maxHeight: MediaQuery.of(context).size.height * 0.4,
+            ),
+            child: TextField(
+              controller: _ctrl,
+              focusNode: _focus,
+              maxLines: null,
+              expands: true,
+              textAlignVertical: TextAlignVertical.top,
+              keyboardType: TextInputType.multiline,
+              enabled: !_saving,
+              style: AppTextStyles.body,
+              decoration: const InputDecoration(
+                hintText: 'Type your note here...',
+                hintStyle: TextStyle(color: AppColors.textMuted),
+                isDense: true,
+                contentPadding: EdgeInsets.all(AppSizes.p12),
+                border: OutlineInputBorder(),
+              ),
             ),
           ),
           const SizedBox(height: AppSizes.p20),
-          SizedBox(
-            height: 48,
-            child: ElevatedButton(
-              onPressed: _saving ? null : _save,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primary,
-                foregroundColor: AppColors.textOnPrimary,
-                shape: const RoundedRectangleBorder(
-                    borderRadius:
-                        BorderRadius.all(Radius.circular(AppSizes.r12))),
-                elevation: 0,
-              ),
-              child: _saving
-                  ? const SizedBox(
-                      width: 20, height: 20,
-                      child: CircularProgressIndicator(
-                          strokeWidth: 2, color: AppColors.textOnPrimary))
-                  : Text('Save Note', style: AppTextStyles.bodyBold),
-            ),
+          DebouncedElevatedButton(
+            label: 'Save Note',
+            onPressed: _save,
           ),
         ],
       ),

@@ -192,6 +192,7 @@ class _PackageFormSheetState extends State<PackageFormSheet> {
                     labelText: isEdit ? AppStrings.save : AppStrings.add,
                     onPressed: _submit,
                     variant: AppButtonVariant.primary,
+                    debounceMs: 1000,
                   ),
                 ),
               ],

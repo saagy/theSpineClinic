@@ -33,6 +33,7 @@ class PaymentRow extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     return DataListTile(
       title: payment.reason,
+      titleMaxLines: null,
       subtitle: payment.recordedAt.toDateTimeString(),
       trailing: Row(
         mainAxisSize: MainAxisSize.min,

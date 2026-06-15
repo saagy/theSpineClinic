@@ -206,7 +206,7 @@ class _EditPatientFormState extends ConsumerState<EditPatientForm> {
                           ),
                   ),
                   const SizedBox(height: AppSizes.p32),
-                  AppButton(labelText: AppStrings.save, onPressed: isSaving ? null : _submit),
+                  AppButton(labelText: AppStrings.save, onPressed: isSaving ? null : _submit, debounceMs: 1000),
                 ],
               ),
             ),

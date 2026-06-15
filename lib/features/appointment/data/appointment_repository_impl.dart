@@ -31,15 +31,18 @@ class AppointmentRepositoryImpl implements AppointmentRepository {
   }
 
   @override
-  Future<Result<List<Appointment>>> getAppointmentsForToday(ClinicLocation clinic) {
+  Future<Result<List<Appointment>>> getAppointmentsForToday(ClinicLocation? clinic) {
     return _run(() async {
       final DateTime localNow = DateTime.now();
       final DateTime todayStart = DateTime(localNow.year, localNow.month, localNow.day).toUtc();
       final DateTime tomorrowStart = todayStart.add(const Duration(days: 1));
 
-      final List<Map<String, dynamic>> rows = await _service.from(_appointmentsTable)
-          .select('*, patient:patients!inner(clinic)')
-          .eq('patient.clinic', clinic.dbValue)
+      var query = _service.from(_appointmentsTable)
+          .select('*, patient:patients!inner(clinic)');
+      if (clinic != null) {
+        query = query.eq('patient.clinic', clinic.dbValue);
+      }
+      final List<Map<String, dynamic>> rows = await query
           .gte('scheduled_at', todayStart.toIso8601String())
           .lt('scheduled_at', tomorrowStart.toIso8601String())
           .order('scheduled_at', ascending: true);
@@ -49,7 +52,7 @@ class AppointmentRepositoryImpl implements AppointmentRepository {
 
   @override
   Future<Result<List<AppointmentWithPatient>>> getTodayAppointmentsWithPatients(
-    ClinicLocation clinic,
+    ClinicLocation? clinic,
   ) {
     return _run(() async {
       final DateTime localNow = DateTime.now();
@@ -57,10 +60,13 @@ class AppointmentRepositoryImpl implements AppointmentRepository {
           DateTime(localNow.year, localNow.month, localNow.day).toUtc();
       final DateTime tomorrowStart = todayStart.add(const Duration(days: 1));
 
-      final List<Map<String, dynamic>> rows = await _service
+      var query = _service
           .from(_appointmentsTable)
-          .select('*, patient:patients!inner(*)')
-          .eq('patient.clinic', clinic.dbValue)
+          .select('*, patient:patients!inner(*)');
+      if (clinic != null) {
+        query = query.eq('patient.clinic', clinic.dbValue);
+      }
+      final List<Map<String, dynamic>> rows = await query
           .gte('scheduled_at', todayStart.toIso8601String())
           .lt('scheduled_at', tomorrowStart.toIso8601String())
           .order('scheduled_at', ascending: true);
@@ -70,7 +76,7 @@ class AppointmentRepositoryImpl implements AppointmentRepository {
 
   @override
   Future<Result<List<AppointmentWithPatient>>> getUpcomingAppointmentsWithPatients(
-    ClinicLocation clinic,
+    ClinicLocation? clinic,
   ) {
     return _run(() async {
       final DateTime localNow = DateTime.now();
@@ -80,10 +86,13 @@ class AppointmentRepositoryImpl implements AppointmentRepository {
             localNow.day,
           ).add(const Duration(days: 1)).toUtc();
 
-      final List<Map<String, dynamic>> rows = await _service
+      var query = _service
           .from(_appointmentsTable)
-          .select('*, patient:patients!inner(*)')
-          .eq('patient.clinic', clinic.dbValue)
+          .select('*, patient:patients!inner(*)');
+      if (clinic != null) {
+        query = query.eq('patient.clinic', clinic.dbValue);
+      }
+      final List<Map<String, dynamic>> rows = await query
           .gte('scheduled_at', tomorrowStart.toIso8601String())
           .order('scheduled_at', ascending: true);
       return rows.map(_toAppointmentWithPatient).toList();
@@ -152,9 +161,12 @@ class AppointmentRepositoryImpl implements AppointmentRepository {
   Future<Result<int>> getFutureScheduledAppointmentsCount(String patientId) {
     return _run(() async {
       final String nowIso = DateTime.now().toUtc().toIso8601String();
-      final List<Map<String, dynamic>> rows = await _service.from(_appointmentsTable).select('id')
+      final List<Map<String, dynamic>> rows = await _service
+          .from(_appointmentsTable)
+          .select('id')
           .eq('patient_id', patientId)
           .eq('status', 'scheduled')
+          .eq('use_package', true)
           .gte('scheduled_at', nowIso);
       return rows.length;
     });

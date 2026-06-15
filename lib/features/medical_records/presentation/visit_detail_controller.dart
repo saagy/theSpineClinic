@@ -58,18 +58,24 @@ class VisitDetailController extends _$VisitDetailController {
     // 5. Fetch linked note from patient_notes
     final PatientNote? note = await ref.watch(appointmentNoteProvider(appointmentId).future);
 
-    // 6. Evaluate notes editing access (Rule 6)
+    // 6. Evaluate notes editing access (Rule 6).
+    // Super admins can always edit. Doctors can edit if they are the
+    // attending doctor AND the appointment is checked-in or completed.
     final Staff? currentUser = ref.watch(currentUserProvider).value;
     bool canEditNotes = false;
 
-    if (currentUser != null && currentUser.role == UserRole.doctor) {
-      final bool isAttendingDoctor =
-          activeDoctors.any((d) => d.doctor.id == currentUser.id);
-      final bool isCorrectStatus =
-          appointment.status == AppointmentStatus.checkedIn ||
-              appointment.status == AppointmentStatus.completed;
+    if (currentUser != null) {
+      if (currentUser.role == UserRole.superAdmin) {
+        canEditNotes = true;
+      } else if (currentUser.role == UserRole.doctor) {
+        final bool isAttendingDoctor =
+            activeDoctors.any((d) => d.doctor.id == currentUser.id);
+        final bool isCorrectStatus =
+            appointment.status == AppointmentStatus.checkedIn ||
+                appointment.status == AppointmentStatus.completed;
 
-      canEditNotes = isAttendingDoctor && isCorrectStatus;
+        canEditNotes = isAttendingDoctor && isCorrectStatus;
+      }
     }
 
     return (

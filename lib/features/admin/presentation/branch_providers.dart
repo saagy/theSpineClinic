@@ -1,3 +1,4 @@
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:spine_clinic_app/core/utils/local_settings_service.dart';
@@ -34,3 +35,21 @@ class ActiveBranch extends _$ActiveBranch {
     await service.setActiveBranch(location);
   }
 }
+
+/// Notifier for [adminBranchFilterProvider].
+class AdminBranchFilterNotifier extends Notifier<String?> {
+  @override
+  String? build() => null;
+
+  void set(String? value) => state = value;
+}
+
+/// Admin branch override for the appointments dashboard.
+///
+/// `null` means "All Branches" (no clinic filter). When set to a specific
+/// `dbValue` string, only that branch's appointments are shown. Used by
+/// [_BranchDropdown] in the receptionist appointments screen header.
+final adminBranchFilterProvider =
+    NotifierProvider<AdminBranchFilterNotifier, String?>(
+  AdminBranchFilterNotifier.new,
+);

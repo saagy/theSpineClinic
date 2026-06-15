@@ -4,6 +4,9 @@
 /// Upcoming tab: future appointments grouped by date.
 /// All tab: full appointment archive with search, sort, and filter controls.
 ///
+/// Admin users see a branch selector dropdown in the header to toggle between
+/// "All Branches" and individual clinic locations.
+///
 /// Rule 1 — under 200 lines.
 library;
 
@@ -20,6 +23,8 @@ import 'package:spine_clinic_app/features/appointment/presentation/receptionist_
 import 'package:spine_clinic_app/features/appointment/presentation/widgets/receptionist_all_tab.dart';
 import 'package:spine_clinic_app/features/appointment/presentation/widgets/receptionist_today_tab.dart';
 import 'package:spine_clinic_app/features/appointment/presentation/widgets/receptionist_upcoming_tab.dart';
+import 'package:spine_clinic_app/features/auth/domain/user_role.dart';
+import 'package:spine_clinic_app/features/auth/presentation/auth_providers.dart';
 import 'package:spine_clinic_app/features/patient/domain/clinic_location.dart';
 
 /// Main receptionist dashboard with Today / Upcoming tabs.
@@ -57,7 +62,6 @@ class _ReceptionistAppointmentsScreenState
     }
     if (_tabCtrl.index == 2 && !_allFetched) {
       _allFetched = true;
-      // allAppointmentsProvider auto-fetches on first read; trigger a refresh.
       ref.read(allAppointmentsProvider.notifier).refresh();
     }
   }
@@ -72,13 +76,15 @@ class _ReceptionistAppointmentsScreenState
   Widget build(BuildContext context) {
     final state = ref.watch(receptionistAppointmentsProvider);
     final clinic = ref.watch(activeBranchProvider);
+    final user = ref.watch(currentUserProvider).value;
+    final isAdmin = user?.role == UserRole.superAdmin;
 
     return Scaffold(
       backgroundColor: AppColors.background,
       body: SafeArea(
         child: Column(
           children: [
-            _Header(clinic: clinic),
+            _Header(clinic: clinic, isAdmin: isAdmin),
             _TabStrip(controller: _tabCtrl),
             Expanded(
               child: TabBarView(
@@ -97,6 +103,9 @@ class _ReceptionistAppointmentsScreenState
                     state: state,
                     onStatusChanged: () =>
                         ref.read(receptionistAppointmentsProvider.notifier).loadUpcoming(),
+                    onRefresh: () async => ref
+                        .read(receptionistAppointmentsProvider.notifier)
+                        .loadUpcoming(),
                   ),
                   ReceptionistAllTab(
                     onStatusChanged: () =>
@@ -112,10 +121,16 @@ class _ReceptionistAppointmentsScreenState
   }
 }
 
-/// Header row: clinic name (left) + formatted today's date (right).
+/// Header row: clinic name (or branch selector for admins) + date.
 class _Header extends StatelessWidget {
-  const _Header({required this.clinic});
+  const _Header({required this.clinic, required this.isAdmin});
   final ClinicLocation clinic;
+  final bool isAdmin;
+
+  static const Map<String, ClinicLocation> _dbToEnum = {
+    'tagamoa': ClinicLocation.tagamoa,
+    'masr_elgedida': ClinicLocation.masrElgedida,
+  };
 
   @override
   Widget build(BuildContext context) {
@@ -125,13 +140,85 @@ class _Header extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(clinic.displayLabel,
-              style: AppTextStyles.headingMedium
-                  .copyWith(color: AppColors.textPrimary)),
+          if (isAdmin)
+            _BranchDropdown(clinic: clinic)
+          else
+            Text(clinic.displayLabel,
+                style: AppTextStyles.headingMedium
+                    .copyWith(color: AppColors.textPrimary)),
           Text(DateFormat('E, MMM d').format(DateTime.now()),
               style: AppTextStyles.bodySecondary),
         ],
       ),
+    );
+  }
+}
+
+/// Branch selector dropdown for admin users.
+///
+/// Lets admins toggle between "All Branches" (null clinic filter) and
+/// each individual clinic. Selection updates the all-appointments filter
+/// and the active branch for Today/Upcoming tabs.
+class _BranchDropdown extends ConsumerWidget {
+  const _BranchDropdown({required this.clinic});
+  final ClinicLocation clinic;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final adminBranch = ref.watch(adminBranchFilterProvider);
+    final String display = adminBranch == null
+        ? 'All Branches'
+        : _Header._dbToEnum[adminBranch]?.displayLabel ?? clinic.displayLabel;
+
+    return PopupMenuButton<String>(
+      offset: const Offset(0, 40),
+      padding: EdgeInsets.zero,
+      color: AppColors.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.all(Radius.circular(AppSizes.r12)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(display,
+              style: AppTextStyles.headingMedium
+                  .copyWith(color: AppColors.textPrimary)),
+          const SizedBox(width: AppSizes.p4),
+          const Icon(Icons.arrow_drop_down_rounded,
+              color: AppColors.textSecondary),
+        ],
+      ),
+      onSelected: (String value) {
+        if (value == '__all__') {
+          ref.read(adminBranchFilterProvider.notifier).set(null);
+          ref.read(allAppointmentsProvider.notifier).setClinicFilter(null);
+        } else {
+          final branch = _Header._dbToEnum[value];
+          if (branch != null) {
+            ref.read(adminBranchFilterProvider.notifier).set(value);
+            ref.read(allAppointmentsProvider.notifier).setClinicFilter(value);
+            // Update active branch so Today/Upcoming tabs re-fetch.
+            ref.read(activeBranchProvider.notifier).setBranch(branch);
+          }
+        }
+        // Refresh Today and Upcoming tabs for the selected branch.
+        ref.read(receptionistAppointmentsProvider.notifier).loadToday();
+        ref.read(receptionistAppointmentsProvider.notifier).loadUpcoming();
+      },
+      itemBuilder: (_) => [
+        PopupMenuItem<String>(
+          value: '__all__',
+          child: Text('All Branches',
+              style: AppTextStyles.bodyMedium.copyWith(
+                  color: AppColors.textPrimary)),
+        ),
+        ...ClinicLocation.values.map((loc) => PopupMenuItem<String>(
+              value: loc.dbValue,
+              child: Text(loc.displayLabel,
+                  style: AppTextStyles.bodyMedium.copyWith(
+                      color: AppColors.textPrimary)),
+            )),
+      ],
     );
   }
 }

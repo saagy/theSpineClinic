@@ -14,58 +14,78 @@ import 'package:spine_clinic_app/shared/widgets/app_snackbar.dart';
 import 'package:spine_clinic_app/shared/widgets/confirmation_dialog.dart';
 import 'package:spine_clinic_app/shared/widgets/data_list_tile.dart';
 
-/// Renders a single document item. Shows image thumbnail or PDF icon with download/delete actions.
-class PatientDocumentItem extends ConsumerWidget {
+/// Renders a single document item. Shows image thumbnail or PDF icon
+/// with open/delete actions. Open and delete track their own loading
+/// state so the UI never appears stuck.
+class PatientDocumentItem extends ConsumerStatefulWidget {
   /// Creates a [PatientDocumentItem].
   const PatientDocumentItem({super.key, required this.doc});
   final PatientDocument doc;
 
-  Future<void> _handleOpen(BuildContext context) async {
-    AppSnackbar.show(
-      context,
-      message: 'Opening document...',
-      variant: AppSnackbarVariant.info,
-    );
+  @override
+  ConsumerState<PatientDocumentItem> createState() =>
+      _PatientDocumentItemState();
+}
+
+class _PatientDocumentItemState extends ConsumerState<PatientDocumentItem> {
+  bool _isOpening = false;
+  bool _isDeleting = false;
+
+  Future<void> _handleOpen() async {
+    if (_isOpening) return;
+    setState(() => _isOpening = true);
     try {
-      await FileOpenerHelper.openFile(doc.fileUrl, doc.fileName);
+      await FileOpenerHelper.openFile(
+          widget.doc.fileUrl, widget.doc.fileName);
     } catch (e) {
-      if (context.mounted) {
+      if (mounted) {
         AppSnackbar.show(
           context,
-          message: 'Could not open document: $e',
+          message: '$e',
           variant: AppSnackbarVariant.error,
         );
       }
+    } finally {
+      if (mounted) setState(() => _isOpening = false);
     }
   }
 
-  Future<void> _handleDelete(BuildContext context, WidgetRef ref) async {
+  Future<void> _handleDelete(WidgetRef ref) async {
+    if (_isDeleting) return;
     final confirm = await showDialog<bool>(
       context: context,
-      builder: (ctx) => const ConfirmationDialog(
-        title: 'Delete Document',
-        message: 'Are you sure you want to permanently delete this document?',
-        confirmLabel: 'Delete',
-        cancelLabel: 'Cancel',
+      builder: (ctx) => ConfirmationDialog(
+        title: AppStrings.deleteDocumentTitle,
+        message: AppStrings.confirmDeleteDocument,
+        confirmLabel: AppStrings.delete,
+        cancelLabel: AppStrings.cancel,
         isDestructive: true,
       ),
     );
-    if (confirm != true) return;
+    if (confirm != true || !mounted) return;
+
+    setState(() => _isDeleting = true);
     final result = await ref
-        .read(patientDocumentsNotifierProvider(doc.patientId).notifier)
-        .deleteDocument(doc);
-    if (!context.mounted) return;
+        .read(patientDocumentsNotifierProvider(widget.doc.patientId).notifier)
+        .deleteDocument(widget.doc);
+    if (!mounted) return;
+    setState(() => _isDeleting = false);
     result.when(
-      success: (_) => AppSnackbar.show(context, message: 'Document deleted successfully.', variant: AppSnackbarVariant.success),
-      failure: (error) => AppSnackbar.show(context, message: AppStrings.fromKey(error.userMessageKey), variant: AppSnackbarVariant.error),
+      success: (_) => AppSnackbar.show(context,
+          message: AppStrings.documentDeleted,
+          variant: AppSnackbarVariant.success),
+      failure: (error) => AppSnackbar.show(context,
+          message: AppStrings.fromKey(error.userMessageKey),
+          variant: AppSnackbarVariant.error),
     );
   }
 
   Future<Uint8List> _loadImageBytes(WidgetRef ref) async {
-    final PatientDocumentsRepository repo = ref.read(patientDocumentsRepositoryProvider);
+    final PatientDocumentsRepository repo =
+        ref.read(patientDocumentsRepositoryProvider);
     final result = await repo.downloadDocumentBytes(
-      fileUrl: doc.fileUrl,
-      fileName: doc.fileName,
+      fileUrl: widget.doc.fileUrl,
+      fileName: widget.doc.fileName,
     );
     return result.when(
       success: (bytes) => bytes,
@@ -74,29 +94,49 @@ class PatientDocumentItem extends ConsumerWidget {
   }
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final String ext = p.extension(doc.fileName).toLowerCase();
+  Widget build(BuildContext context) {
+    final String ext = p.extension(widget.doc.fileName).toLowerCase();
     final bool isImage = ext == '.png' || ext == '.jpg' || ext == '.jpeg';
-    final String dateStr = doc.uploadedAt.toIso8601String().split('T')[0];
+    final String dateStr = widget.doc.uploadedAt.toIso8601String().split('T')[0];
+
+    final Widget openButton = _isOpening
+        ? const SizedBox(
+            width: AppSizes.iconDefault,
+            height: AppSizes.iconDefault,
+            child: CircularProgressIndicator(
+                strokeWidth: AppSizes.strokeWidthThin,
+                color: AppColors.primary),
+          )
+        : IconButton(
+            icon: const Icon(Icons.open_in_new_rounded,
+                color: AppColors.primary),
+            tooltip: AppStrings.openTooltip,
+            onPressed: _isDeleting ? null : _handleOpen,
+          );
+
+    final Widget deleteButton = _isDeleting
+        ? const SizedBox(
+            width: AppSizes.iconDefault,
+            height: AppSizes.iconDefault,
+            child: CircularProgressIndicator(
+                strokeWidth: AppSizes.strokeWidthThin,
+                color: AppColors.error),
+          )
+        : IconButton(
+            icon: const Icon(Icons.delete_outline_rounded,
+                color: AppColors.error),
+            onPressed: _isOpening ? null : () => _handleDelete(ref),
+          );
 
     final trailingButtons = Row(
       mainAxisSize: MainAxisSize.min,
-      children: [
-        IconButton(
-          icon: const Icon(Icons.open_in_new_rounded, color: AppColors.primary),
-          tooltip: AppStrings.openTooltip,
-          onPressed: () => _handleOpen(context),
-        ),
-        IconButton(
-          icon: const Icon(Icons.delete_outline_rounded, color: AppColors.error),
-          onPressed: () => _handleDelete(context, ref),
-        ),
-      ],
+      children: [openButton, deleteButton],
     );
 
     if (isImage) {
       return Container(
-        margin: const EdgeInsets.symmetric(horizontal: AppSizes.p16, vertical: AppSizes.p8),
+        margin: const EdgeInsets.symmetric(
+            horizontal: AppSizes.p16, vertical: AppSizes.p8),
         padding: const EdgeInsets.all(AppSizes.p12),
         decoration: BoxDecoration(
           color: AppColors.surface,
@@ -107,7 +147,8 @@ class PatientDocumentItem extends ConsumerWidget {
         child: Row(
           children: [
             ClipRRect(
-              borderRadius: const BorderRadius.all(Radius.circular(AppSizes.r4)),
+              borderRadius:
+                  const BorderRadius.all(Radius.circular(AppSizes.r4)),
               child: Container(
                 width: 80,
                 height: 80,
@@ -115,13 +156,25 @@ class PatientDocumentItem extends ConsumerWidget {
                 child: FutureBuilder<Uint8List>(
                   future: _loadImageBytes(ref),
                   builder: (context, snapshot) {
-                    if (snapshot.connectionState == ConnectionState.waiting) {
-                      return const Center(child: SizedBox(width: AppSizes.thumbnailDefault, height: AppSizes.thumbnailDefault, child: CircularProgressIndicator(strokeWidth: AppSizes.strokeWidthThin)));
+                    if (snapshot.connectionState ==
+                        ConnectionState.waiting) {
+                      return const Center(
+                          child: SizedBox(
+                              width: AppSizes.thumbnailDefault,
+                              height: AppSizes.thumbnailDefault,
+                              child: CircularProgressIndicator(
+                                  strokeWidth:
+                                      AppSizes.strokeWidthThin)));
                     }
                     if (snapshot.hasError) {
-                      return Container(color: AppColors.errorBg, child: const Icon(Icons.broken_image_outlined, color: AppColors.error, size: AppSizes.iconLarge));
+                      return Container(
+                          color: AppColors.errorBg,
+                          child: const Icon(Icons.broken_image_outlined,
+                              color: AppColors.error,
+                              size: AppSizes.iconLarge));
                     }
-                    return Image.memory(snapshot.data!, fit: BoxFit.cover, cacheWidth: 150);
+                    return Image.memory(snapshot.data!,
+                        fit: BoxFit.cover, cacheWidth: 150);
                   },
                 ),
               ),
@@ -131,7 +184,11 @@ class PatientDocumentItem extends ConsumerWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(doc.fileName, style: AppTextStyles.bodyBold.copyWith(color: AppColors.textPrimary), maxLines: 2, overflow: TextOverflow.ellipsis),
+                  Text(widget.doc.fileName,
+                      style: AppTextStyles.bodyBold
+                          .copyWith(color: AppColors.textPrimary),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis),
                   const SizedBox(height: AppSizes.p4),
                   Text(dateStr, style: AppTextStyles.bodySecondary),
                 ],
@@ -144,11 +201,13 @@ class PatientDocumentItem extends ConsumerWidget {
     }
 
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: AppSizes.p16, vertical: AppSizes.p4),
+      padding: const EdgeInsets.symmetric(
+          horizontal: AppSizes.p16, vertical: AppSizes.p4),
       child: DataListTile(
-        title: doc.fileName,
+        title: widget.doc.fileName,
         subtitle: dateStr,
-        leading: const Icon(Icons.picture_as_pdf_outlined, color: AppColors.error),
+        leading: const Icon(Icons.picture_as_pdf_outlined,
+            color: AppColors.error),
         trailing: trailingButtons,
       ),
     );

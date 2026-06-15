@@ -135,6 +135,7 @@ class _NotesFormState extends ConsumerState<NotesForm> {
           labelText: 'Save Notes',
           onPressed: _isSaving ? null : _handleSave,
           isLoading: _isSaving && !canComplete,
+          debounceMs: 1000,
         ),
         if (canComplete) ...[
           const SizedBox(height: AppSizes.p12),
@@ -143,6 +144,7 @@ class _NotesFormState extends ConsumerState<NotesForm> {
             onPressed: _isSaving ? null : _handleComplete,
             isLoading: _isSaving && canComplete,
             variant: AppButtonVariant.secondary,
+            debounceMs: 1000,
           ),
         ],
       ],

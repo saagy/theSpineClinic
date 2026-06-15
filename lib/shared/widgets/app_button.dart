@@ -7,6 +7,7 @@
 /// Rule 1 — keep files under 200 lines.
 library;
 
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:spine_clinic_app/core/constants/app_colors.dart';
 import 'package:spine_clinic_app/core/constants/app_sizes.dart';
@@ -31,6 +32,10 @@ enum AppButtonVariant {
 }
 
 /// A highly-polished button component built with Spine Clinic design tokens.
+///
+/// Set [debounceMs] to a positive value (e.g. 1000) to lock the button
+/// after every tap — prevents double-submission race conditions on
+/// high-consequence mutations (booking, payment, save, upload).
 class AppButton extends StatefulWidget {
   /// Creates an [AppButton].
   const AppButton({
@@ -40,6 +45,7 @@ class AppButton extends StatefulWidget {
     this.isLoading = false,
     this.variant = AppButtonVariant.primary,
     this.fullWidth = true,
+    this.debounceMs = 0,
   });
 
   /// The text label displayed inside the button.
@@ -57,12 +63,18 @@ class AppButton extends StatefulWidget {
   /// If true, stretches the button to fill horizontal parent space.
   final bool fullWidth;
 
+  /// Milliseconds the button stays locked after each tap.
+  /// Set to 1000 on save / submit / pay / book buttons.
+  final int debounceMs;
+
   @override
   State<AppButton> createState() => _AppButtonState();
 }
 
 class _AppButtonState extends State<AppButton> with SingleTickerProviderStateMixin {
   late final AnimationController _animationController;
+  bool _coolingDown = false;
+  Timer? _timer;
 
   @override
   void initState() {
@@ -79,30 +91,44 @@ class _AppButtonState extends State<AppButton> with SingleTickerProviderStateMix
   @override
   void dispose() {
     _animationController.dispose();
+    _timer?.cancel();
     super.dispose();
   }
 
   void _onTapDown(TapDownDetails _) {
-    if (widget.onPressed != null && !widget.isLoading) {
+    if (widget.onPressed != null && !widget.isLoading && !_coolingDown) {
       _animationController.reverse();
     }
   }
 
   void _onTapUp(TapUpDetails _) {
-    if (widget.onPressed != null && !widget.isLoading) {
+    if (widget.onPressed != null && !widget.isLoading && !_coolingDown) {
       _animationController.forward();
     }
   }
 
   void _onTapCancel() {
-    if (widget.onPressed != null && !widget.isLoading) {
+    if (widget.onPressed != null && !widget.isLoading && !_coolingDown) {
       _animationController.forward();
+    }
+  }
+
+  void _handleTap() {
+    if (widget.onPressed == null || widget.isLoading || _coolingDown) return;
+    widget.onPressed!();
+    if (widget.debounceMs > 0) {
+      setState(() => _coolingDown = true);
+      _timer?.cancel();
+      _timer = Timer(Duration(milliseconds: widget.debounceMs), () {
+        if (mounted) setState(() => _coolingDown = false);
+      });
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final bool isDisabled = widget.onPressed == null || widget.isLoading;
+    final bool isDisabled =
+        widget.onPressed == null || widget.isLoading || _coolingDown;
 
     // Resolve visual assets from design tokens
     final Color backgroundColor;
@@ -154,7 +180,8 @@ class _AppButtonState extends State<AppButton> with SingleTickerProviderStateMix
       }
     }
 
-    final Widget content = widget.isLoading
+    final bool showSpinner = widget.isLoading || _coolingDown;
+    final Widget content = showSpinner
         ? Center(
             child: SizedBox(
               height: AppSizes.iconSmall,
@@ -193,7 +220,7 @@ class _AppButtonState extends State<AppButton> with SingleTickerProviderStateMix
         onTapDown: _onTapDown,
         onTapUp: _onTapUp,
         onTapCancel: _onTapCancel,
-        onTap: isDisabled ? null : widget.onPressed,
+        onTap: isDisabled ? null : _handleTap,
         child: widget.fullWidth
             ? SizedBox(width: double.infinity, child: buttonDecoration)
             : buttonDecoration,

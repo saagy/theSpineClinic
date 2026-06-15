@@ -87,7 +87,10 @@ class _QuickActionsSheet extends ConsumerWidget {
             );
           }),
       _Action(icon: Icons.attach_file_rounded, label: 'Add Document',
-          onTap: () => _showDocumentSheet(context, ref)),
+          onTap: () {
+            Navigator.pop(context);
+            _pickAndUpload(ref, context);
+          }),
     ]);
 
     return SafeArea(
@@ -107,69 +110,29 @@ class _QuickActionsSheet extends ConsumerWidget {
     );
   }
 
-  void _showDocumentSheet(BuildContext outerCtx, WidgetRef ref) {
-    final nav = Navigator.of(outerCtx);
-    showModalBottomSheet(
-      context: outerCtx,
-      isDismissible: false,
-      enableDrag: false,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (ctx) => SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(AppSizes.p24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text('Add Document', style: AppTextStyles.headingSmall),
-              const SizedBox(height: AppSizes.p16),
-              _docTile(Icons.camera_alt_rounded, 'Take Photo', () async {
-                await _doUpload(ref, ctx, FileType.image);
-                if (ctx.mounted) { Navigator.pop(ctx); nav.pop(); }
-              }),
-              _docTile(Icons.photo_library_rounded, 'Upload from Gallery', () async {
-                await _doUpload(ref, ctx, FileType.image);
-                if (ctx.mounted) { Navigator.pop(ctx); nav.pop(); }
-              }),
-              _docTile(Icons.folder_open_rounded, 'Browse Files', () async {
-                await _doUpload(ref, ctx, FileType.custom,
-                    allowed: ['pdf', 'png', 'jpg', 'jpeg']);
-                if (ctx.mounted) { Navigator.pop(ctx); nav.pop(); }
-              }),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Future<void> _doUpload(WidgetRef ref, BuildContext ctx, FileType type,
-      {List<String>? allowed}) async {
+  /// Triggers the native file picker directly — no intermediate bottom sheet,
+  /// avoiding iOS native file handler event-bubbling conflicts.
+  Future<void> _pickAndUpload(WidgetRef ref, BuildContext outerCtx) async {
     final result = await FilePicker.platform.pickFiles(
-      type: type, allowedExtensions: allowed, allowMultiple: false,
+      type: FileType.custom,
+      allowedExtensions: ['pdf', 'png', 'jpg', 'jpeg'],
+      allowMultiple: false,
     );
     if (result == null || result.files.isEmpty) return;
     final file = result.files.first;
-    if (!ctx.mounted) return;
+    if (!outerCtx.mounted) return;
     final uploadResult = await ref
         .read(patientDocumentsNotifierProvider(patient.id).notifier)
-        .uploadDocument(fileName: file.name, filePath: file.path, fileBytes: file.bytes);
-    if (!ctx.mounted) return;
+        .uploadDocument(
+            fileName: file.name, filePath: file.path, fileBytes: file.bytes);
+    if (!outerCtx.mounted) return;
     uploadResult.when(
-      success: (_) => AppSnackbar.show(ctx,
-          message: 'Document uploaded.', variant: AppSnackbarVariant.success),
-      failure: (error) => AppSnackbar.show(ctx,
-          message: 'Upload failed: ${error.message}', variant: AppSnackbarVariant.error),
-    );
-  }
-
-  Widget _docTile(IconData icon, String label, VoidCallback onTap) {
-    return ListTile(
-      leading: Icon(icon, color: AppColors.primary),
-      title: Text(label),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppSizes.r12)),
-      onTap: onTap,
+      success: (_) => AppSnackbar.show(outerCtx,
+          message: 'Document uploaded.',
+          variant: AppSnackbarVariant.success),
+      failure: (error) => AppSnackbar.show(outerCtx,
+          message: 'Upload failed: ${error.message}',
+          variant: AppSnackbarVariant.error),
     );
   }
 }

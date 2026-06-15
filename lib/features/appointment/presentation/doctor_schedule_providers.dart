@@ -89,14 +89,15 @@ class DoctorScheduleState {
 
 /// Manages the doctor's schedule: fetches all items, tracks selected day.
 class DoctorScheduleNotifier extends Notifier<DoctorScheduleState> {
-  bool _started = false;
+  String? _lastUserId;
 
   @override
   DoctorScheduleState build() {
-    // Watch the auth provider so build() re-runs when the user resolves.
+    // Watch the auth provider so build() re-runs when the user changes.
+    // When switching accounts, _lastUserId differs so we reload automatically.
     final user = ref.watch(currentUserProvider).value;
-    if (user != null && !_started) {
-      _started = true;
+    if (user != null && _lastUserId != user.id) {
+      _lastUserId = user.id;
       // Schedule the fetch after build completes so we don't mutate
       // state during the build phase.
       Future.microtask(() => _load(user));
