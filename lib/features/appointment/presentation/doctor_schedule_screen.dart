@@ -5,6 +5,7 @@
 library;
 
 import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:spine_clinic_app/core/constants/app_colors.dart';
@@ -14,6 +15,7 @@ import 'package:spine_clinic_app/features/appointment/presentation/doctor_schedu
 import 'package:spine_clinic_app/features/auth/domain/staff.dart';
 import 'package:spine_clinic_app/features/appointment/presentation/widgets/doctor_day_list.dart';
 import 'package:spine_clinic_app/features/appointment/presentation/widgets/doctor_week_strip.dart';
+import 'package:spine_clinic_app/shared/widgets/skeleton_loader.dart';
 
 /// The doctor's daily schedule view.
 class DoctorScheduleScreen extends ConsumerWidget {
@@ -28,14 +30,14 @@ class DoctorScheduleScreen extends ConsumerWidget {
       backgroundColor: AppColors.background,
       body: SafeArea(
         child: state.loading
-            ? const Center(child: CircularProgressIndicator(color: AppColors.primary))
+            ? const SkeletonTileList(count: 5)
             : state.error != null
                 ? _ErrorView(error: state.error!, onRetry: notifier.refresh)
                 : _Content(
                     state: state,
                     onDateSelected: notifier.selectDate,
                     onStatusChanged: notifier.refresh,
-                  ),
+                  ).animate().fadeIn(duration: 350.ms),
       ),
     );
   }

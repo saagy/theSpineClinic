@@ -8,6 +8,7 @@
 library;
 
 import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:spine_clinic_app/core/constants/app_colors.dart';
 import 'package:spine_clinic_app/core/constants/app_sizes.dart';
@@ -26,6 +27,7 @@ import 'package:spine_clinic_app/shared/widgets/empty_state.dart';
 import 'package:spine_clinic_app/shared/widgets/error_view.dart';
 import 'package:spine_clinic_app/shared/widgets/info_row.dart';
 import 'package:spine_clinic_app/shared/widgets/section_card.dart';
+import 'package:spine_clinic_app/shared/widgets/skeleton_loader.dart';
 import 'package:spine_clinic_app/features/appointment/presentation/widgets/appointment_notes_card.dart';
 import 'package:spine_clinic_app/shared/widgets/app_back_button.dart';
 
@@ -54,8 +56,9 @@ class AppointmentDetailScreen extends ConsumerWidget {
         leading: const AppBackButton(),
       ),
       body: detailAsync.when(
-        loading: () => const Center(
-          child: CircularProgressIndicator(color: AppColors.primary),
+        loading: () => const Padding(
+          padding: EdgeInsets.all(AppSizes.p16),
+          child: SkeletonTileList(count: 5),
         ),
         error: (Object error, StackTrace stack) => ErrorView(
           exception: error is AppException
@@ -102,7 +105,7 @@ class _AppointmentDetailBody extends ConsumerWidget {
                 AppointmentDetailHeader(
                   appointment: state.appointment,
                   patient: state.patient,
-                ),
+                ).animate().fadeIn(duration: 300.ms),
                 const SizedBox(height: AppSizes.p16),
                 // ── Card 1: Schedule ──
                 _ScheduleCard(appointment: state.appointment),

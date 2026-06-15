@@ -4,6 +4,7 @@
 /// Rule 1 — under 200 lines.
 library;
 import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 
 import 'package:spine_clinic_app/core/constants/app_colors.dart';
 import 'package:spine_clinic_app/core/constants/app_sizes.dart';
@@ -12,6 +13,7 @@ import 'package:spine_clinic_app/features/appointment/domain/appointment_reposit
 import 'package:spine_clinic_app/features/appointment/domain/appointment_status.dart';
 import 'package:spine_clinic_app/features/appointment/presentation/receptionist_appointments_providers.dart';
 import 'package:spine_clinic_app/features/appointment/presentation/widgets/receptionist_appointment_card.dart';
+import 'package:spine_clinic_app/shared/widgets/skeleton_loader.dart';
 
 /// The "Today" tab content with stats, search, and grouped appointment list.
 class ReceptionistTodayTab extends StatelessWidget {
@@ -34,8 +36,7 @@ class ReceptionistTodayTab extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (state.todayLoading) {
-      return const Center(
-          child: CircularProgressIndicator(color: AppColors.primary));
+      return const SkeletonTileList(count: 5);
     }
     if (state.todayError != null) {
       return Center(
@@ -65,22 +66,41 @@ class ReceptionistTodayTab extends StatelessWidget {
           _StatsStrip(state: state),
           _SearchField(onChanged: onSearchChanged),
           if (checkedIn.isNotEmpty) ...[
-            _SectionHeader(title: 'Checked In', count: checkedIn.length),
-            ...checkedIn.map((a) => ReceptionistAppointmentCard(
-                  item: a, faded: true, onStatusChanged: onStatusChanged,
-                )),
+            _SectionHeader(title: 'Checked In', count: checkedIn.length)
+                .animate()
+                .fadeIn(duration: 250.ms),
+            ...checkedIn.asMap().entries.map((entry) => ReceptionistAppointmentCard(
+                  item: entry.value,
+                  faded: true,
+                  onStatusChanged: onStatusChanged,
+                ).animate().fadeIn(
+                      duration: 250.ms,
+                      delay: ((entry.key + 1) * 30).ms,
+                    )),
           ],
           if (scheduled.isNotEmpty) ...[
-            _SectionHeader(title: 'Scheduled', count: scheduled.length),
-            ...scheduled.map((a) => ReceptionistAppointmentCard(
-                  item: a, onStatusChanged: onStatusChanged,
-                )),
+            _SectionHeader(title: 'Scheduled', count: scheduled.length)
+                .animate()
+                .fadeIn(duration: 250.ms),
+            ...scheduled.asMap().entries.map((entry) => ReceptionistAppointmentCard(
+                  item: entry.value,
+                  onStatusChanged: onStatusChanged,
+                ).animate().fadeIn(
+                      duration: 250.ms,
+                      delay: ((entry.key + 1) * 30).ms,
+                    )),
           ],
           if (cancelled.isNotEmpty) ...[
-            _SectionHeader(title: 'Cancelled', count: cancelled.length),
-            ...cancelled.map((a) => ReceptionistAppointmentCard(
-                  item: a, onStatusChanged: onStatusChanged,
-                )),
+            _SectionHeader(title: 'Cancelled', count: cancelled.length)
+                .animate()
+                .fadeIn(duration: 250.ms),
+            ...cancelled.asMap().entries.map((entry) => ReceptionistAppointmentCard(
+                  item: entry.value,
+                  onStatusChanged: onStatusChanged,
+                ).animate().fadeIn(
+                      duration: 250.ms,
+                      delay: ((entry.key + 1) * 30).ms,
+                    )),
           ],
           if (filtered.isEmpty)
             const Padding(

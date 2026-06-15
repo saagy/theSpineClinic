@@ -1,5 +1,6 @@
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:spine_clinic_app/core/constants/app_colors.dart';
 import 'package:spine_clinic_app/core/constants/app_sizes.dart';
@@ -13,6 +14,7 @@ import 'package:spine_clinic_app/features/patient/presentation/widgets/patient_d
 import 'package:spine_clinic_app/shared/widgets/app_snackbar.dart';
 import 'package:spine_clinic_app/shared/widgets/empty_state.dart';
 import 'package:spine_clinic_app/shared/widgets/error_view.dart';
+import 'package:spine_clinic_app/shared/widgets/skeleton_loader.dart';
 
 /// Documents tab for the patient detail screen.
 ///
@@ -98,9 +100,7 @@ class _PatientTabDocumentsState extends ConsumerState<PatientTabDocuments> {
         const Divider(height: 1, thickness: 1, color: AppColors.border),
         Expanded(
           child: documentsAsync.when(
-            loading: () => const Center(
-              child: CircularProgressIndicator(color: AppColors.primary),
-            ),
+            loading: () => const SkeletonTileList(count: 4),
             error: (err, stack) => ErrorView(
               exception: err is AppException
                   ? err
@@ -126,7 +126,9 @@ class _PatientTabDocumentsState extends ConsumerState<PatientTabDocuments> {
                       const EdgeInsets.symmetric(vertical: AppSizes.p8),
                   itemCount: docs.length,
                   itemBuilder: (context, index) {
-                    return PatientDocumentItem(doc: docs[index]);
+                    return PatientDocumentItem(doc: docs[index])
+                        .animate()
+                        .fadeIn(duration: 250.ms, delay: (index * 30).ms);
                   },
                 ),
               );

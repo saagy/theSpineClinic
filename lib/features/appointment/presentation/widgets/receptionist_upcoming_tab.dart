@@ -4,6 +4,7 @@
 library;
 
 import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:intl/intl.dart';
 
 import 'package:spine_clinic_app/core/constants/app_colors.dart';
@@ -12,6 +13,7 @@ import 'package:spine_clinic_app/core/constants/app_text_styles.dart';
 import 'package:spine_clinic_app/features/appointment/domain/appointment_repository.dart';
 import 'package:spine_clinic_app/features/appointment/presentation/receptionist_appointments_providers.dart';
 import 'package:spine_clinic_app/features/appointment/presentation/widgets/receptionist_appointment_card.dart';
+import 'package:spine_clinic_app/shared/widgets/skeleton_loader.dart';
 
 /// The "Upcoming" tab content with date-grouped future appointments.
 class ReceptionistUpcomingTab extends StatelessWidget {
@@ -30,8 +32,7 @@ class ReceptionistUpcomingTab extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (state.upcomingLoading) {
-      return const Center(
-          child: CircularProgressIndicator(color: AppColors.primary));
+      return const SkeletonTileList(count: 5);
     }
     if (state.upcomingError != null) {
       return Center(
@@ -88,7 +89,7 @@ class ReceptionistUpcomingTab extends StatelessWidget {
       }
       result.add(ReceptionistAppointmentCard(
         item: item, onStatusChanged: onStatusChanged,
-      ));
+      ).animate().fadeIn(duration: 250.ms, delay: (result.length * 30).ms));
     }
     return result;
   }

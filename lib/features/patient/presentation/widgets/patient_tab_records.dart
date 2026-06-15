@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:spine_clinic_app/core/constants/app_colors.dart';
 import 'package:spine_clinic_app/core/constants/app_sizes.dart';
@@ -11,6 +12,7 @@ import 'package:spine_clinic_app/features/patient/presentation/widgets/add_note_
 import 'package:spine_clinic_app/features/patient/presentation/widgets/patient_note_item.dart';
 import 'package:spine_clinic_app/shared/widgets/empty_state.dart';
 import 'package:spine_clinic_app/shared/widgets/error_view.dart';
+import 'package:spine_clinic_app/shared/widgets/skeleton_loader.dart';
 
 /// Renders a chronological feed of patient notes and allows adding standalone notes.
 class PatientTabRecords extends ConsumerWidget {
@@ -69,9 +71,7 @@ class PatientTabRecords extends ConsumerWidget {
         ),
         Expanded(
           child: notesAsync.when(
-            loading: () => const Center(
-              child: CircularProgressIndicator(color: AppColors.primary),
-            ),
+            loading: () => const SkeletonTileList(count: 4),
             error: (Object err, StackTrace stack) => ErrorView(
               exception: err is AppException
                   ? err
@@ -100,7 +100,9 @@ class PatientTabRecords extends ConsumerWidget {
                   padding: const EdgeInsets.only(bottom: AppSizes.p16),
                   itemBuilder: (context, index) {
                     final PatientNote note = notes[index];
-                    return PatientNoteItem(note: note);
+                    return PatientNoteItem(note: note)
+                        .animate()
+                        .fadeIn(duration: 250.ms, delay: (index * 30).ms);
                   },
                 ),
               );

@@ -5,6 +5,7 @@
 library;
 
 import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
@@ -23,6 +24,7 @@ import 'package:spine_clinic_app/shared/widgets/app_bottom_sheet.dart';
 import 'package:spine_clinic_app/shared/widgets/app_search_bar.dart';
 import 'package:spine_clinic_app/shared/widgets/empty_state.dart';
 import 'package:spine_clinic_app/shared/widgets/error_view.dart';
+import 'package:spine_clinic_app/shared/widgets/skeleton_loader.dart';
 import 'package:spine_clinic_app/shared/widgets/sort_filter_bar.dart';
 import 'package:spine_clinic_app/shared/widgets/sort_options_sheet.dart';
 
@@ -102,7 +104,10 @@ class _ReceptionistAllTabState extends ConsumerState<ReceptionistAllTab> {
 
   Widget _body(AsyncValue<List<AppointmentWithPatient>> async) {
     return async.when(
-      loading: () => const Center(child: CircularProgressIndicator(color: AppColors.primary)),
+      loading: () => const Padding(
+        padding: EdgeInsets.symmetric(horizontal: AppSizes.p16),
+        child: SkeletonTileList(count: 6),
+      ),
       error: (e, _) => ErrorView(exception: UnknownException(message: '$e'),
         onRetry: () => ref.read(allAppointmentsProvider.notifier).clearAll()),
       data: (items) {
@@ -142,7 +147,11 @@ class _ReceptionistAllTabState extends ConsumerState<ReceptionistAllTab> {
               }
               final a = (item as _ApptItem).item;
               return ReceptionistAppointmentCard(
-                  item: a, showMenu: true, onStatusChanged: widget.onStatusChanged);
+                      item: a,
+                      showMenu: true,
+                      onStatusChanged: widget.onStatusChanged)
+                  .animate()
+                  .fadeIn(duration: 250.ms, delay: (i * 30).ms);
             },
           ),
         );

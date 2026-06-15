@@ -1,5 +1,8 @@
 /// FAB that opens a role-filtered quick-actions bottom sheet.
 ///
+/// The FAB itself is a ConsumerStatefulWidget so file-picking and upload
+/// survive sheet dismissal — the sheet merely signals which action was picked.
+///
 /// Rule 1 — under 200 lines.
 library;
 
@@ -9,110 +12,73 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:spine_clinic_app/core/constants/app_colors.dart';
 import 'package:spine_clinic_app/core/constants/app_sizes.dart';
-import 'package:spine_clinic_app/core/constants/app_text_styles.dart';
+import 'package:spine_clinic_app/core/constants/app_strings.dart';
 import 'package:spine_clinic_app/core/network/app_routes.dart';
 import 'package:spine_clinic_app/features/patient/domain/patient.dart';
 import 'package:spine_clinic_app/features/patient/presentation/patient_documents_providers.dart';
 import 'package:spine_clinic_app/features/patient/presentation/widgets/add_note_sheet.dart';
 import 'package:spine_clinic_app/features/patient/presentation/widgets/collect_payment_sheet.dart';
+import 'package:spine_clinic_app/features/patient/presentation/widgets/quick_actions_sheet.dart';
 import 'package:spine_clinic_app/shared/widgets/app_snackbar.dart';
 
-class PatientQuickActionsFab extends StatelessWidget {
+/// FAB that surfaces a role-filtered quick-actions menu.
+///
+/// Handles document uploads directly so the async work survives bottom-sheet
+/// disposal (the sheet's context is gone the moment [Navigator.pop] runs).
+class PatientQuickActionsFab extends ConsumerStatefulWidget {
   const PatientQuickActionsFab({
-    super.key, required this.patient, required this.isDoctor,
+    super.key,
+    required this.patient,
+    required this.isDoctor,
   });
   final Patient patient;
   final bool isDoctor;
 
   @override
-  Widget build(BuildContext context) {
-    return FloatingActionButton(
-      shape: const CircleBorder(),
-      backgroundColor: AppColors.primary,
-      foregroundColor: AppColors.textOnPrimary,
-      onPressed: () => showModalBottomSheet(
-        context: context,
-        shape: const RoundedRectangleBorder(
-          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-        ),
-        builder: (_) => _QuickActionsSheet(patient: patient, isDoctor: isDoctor),
-      ),
-      child: const Icon(Icons.add_rounded),
-    );
-  }
+  ConsumerState<PatientQuickActionsFab> createState() =>
+      _PatientQuickActionsFabState();
 }
 
-class _QuickActionsSheet extends ConsumerWidget {
-  const _QuickActionsSheet({required this.patient, required this.isDoctor});
-  final Patient patient;
-  final bool isDoctor;
+class _PatientQuickActionsFabState extends ConsumerState<PatientQuickActionsFab> {
+  bool _isUploading = false;
 
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final actions = <_Action>[];
+  // ── Sheet action callbacks ──────────────────────────────────────────
 
-    if (!isDoctor) {
-      actions.addAll([
-        _Action(icon: Icons.calendar_today_rounded, label: 'Book Appointment',
-            onTap: () {
-              Navigator.pop(context);
-              context.push(AppRoutes.newAppointment, extra: patient);
-            }),
-        _Action(icon: Icons.payment_rounded, label: 'Collect Payment',
-            onTap: () {
-              Navigator.pop(context);
-              showModalBottomSheet(
-                context: context,
-                isScrollControlled: true,
-                shape: const RoundedRectangleBorder(
-                  borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-                ),
-                builder: (_) => CollectPaymentSheet(patient: patient),
-              );
-            }),
-      ]);
-    }
+  void _onBookAppointment() {
+    Navigator.pop(context);
+    context.push(AppRoutes.newAppointment, extra: widget.patient);
+  }
 
-    actions.addAll([
-      _Action(icon: Icons.note_add_rounded, label: 'Add Note',
-          onTap: () {
-            Navigator.pop(context);
-            showModalBottomSheet(
-              context: context,
-              isScrollControlled: true,
-              shape: const RoundedRectangleBorder(
-                borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-              ),
-              builder: (_) => AddNoteSheet(patientId: patient.id),
-            );
-          }),
-      _Action(icon: Icons.attach_file_rounded, label: 'Add Document',
-          onTap: () {
-            Navigator.pop(context);
-            _pickAndUpload(ref, context);
-          }),
-    ]);
-
-    return SafeArea(
-      child: Padding(
-        padding: const EdgeInsets.all(AppSizes.p24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text('Quick Actions', style: AppTextStyles.headingSmall),
-            const SizedBox(height: AppSizes.p20),
-            ...actions.map((a) => _ActionTile(
-                  icon: a.icon, label: a.label, onTap: a.onTap,
-                )),
-          ],
-        ),
+  void _onCollectPayment() {
+    Navigator.pop(context);
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
+      builder: (_) => CollectPaymentSheet(patient: widget.patient),
     );
   }
 
-  /// Triggers the native file picker directly — no intermediate bottom sheet,
-  /// avoiding iOS native file handler event-bubbling conflicts.
-  Future<void> _pickAndUpload(WidgetRef ref, BuildContext outerCtx) async {
+  void _onAddNote() {
+    Navigator.pop(context);
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (_) => AddNoteSheet(patientId: widget.patient.id),
+    );
+  }
+
+  /// Dismisses the quick-actions sheet first, then triggers the native file
+  /// picker. The upload runs inside this stateful widget so [ref] and [mounted]
+  /// remain valid even after the sheet is gone.
+  Future<void> _onAddDocument() async {
+    Navigator.pop(context);
+
     final result = await FilePicker.platform.pickFiles(
       type: FileType.custom,
       allowedExtensions: ['pdf', 'png', 'jpg', 'jpeg'],
@@ -120,35 +86,62 @@ class _QuickActionsSheet extends ConsumerWidget {
     );
     if (result == null || result.files.isEmpty) return;
     final file = result.files.first;
-    if (!outerCtx.mounted) return;
+    if (!mounted) return;
+
+    setState(() => _isUploading = true);
+
     final uploadResult = await ref
-        .read(patientDocumentsNotifierProvider(patient.id).notifier)
+        .read(patientDocumentsNotifierProvider(widget.patient.id).notifier)
         .uploadDocument(
             fileName: file.name, filePath: file.path, fileBytes: file.bytes);
-    if (!outerCtx.mounted) return;
+
+    if (!mounted) return;
+    setState(() => _isUploading = false);
+
     uploadResult.when(
-      success: (_) => AppSnackbar.show(outerCtx,
-          message: 'Document uploaded.',
+      success: (_) => AppSnackbar.show(context,
+          message: AppStrings.documentUploaded,
           variant: AppSnackbarVariant.success),
-      failure: (error) => AppSnackbar.show(outerCtx,
-          message: 'Upload failed: ${error.message}',
+      failure: (error) => AppSnackbar.show(context,
+          message: AppStrings.fromKey(error.userMessageKey),
           variant: AppSnackbarVariant.error),
     );
   }
-}
 
-class _Action { const _Action({required this.icon, required this.label, required this.onTap}); final IconData icon; final String label; final VoidCallback onTap; }
+  // ── Build ───────────────────────────────────────────────────────────
 
-class _ActionTile extends StatelessWidget {
-  const _ActionTile({required this.icon, required this.label, required this.onTap});
-  final IconData icon; final String label; final VoidCallback onTap;
   @override
   Widget build(BuildContext context) {
-    return ListTile(
-      leading: Icon(icon, color: AppColors.primary),
-      title: Text(label, style: AppTextStyles.bodyMedium),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppSizes.r12)),
-      onTap: onTap,
+    return FloatingActionButton(
+      shape: const CircleBorder(),
+      backgroundColor:
+          _isUploading ? AppColors.primary.withAlpha(180) : AppColors.primary,
+      foregroundColor: AppColors.textOnPrimary,
+      onPressed: _isUploading
+          ? null
+          : () => showModalBottomSheet(
+                context: context,
+                shape: const RoundedRectangleBorder(
+                  borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+                ),
+                builder: (_) => QuickActionsSheet(
+                  isDoctor: widget.isDoctor,
+                  onBookAppointment: _onBookAppointment,
+                  onCollectPayment: _onCollectPayment,
+                  onAddNote: _onAddNote,
+                  onAddDocument: _onAddDocument,
+                ),
+              ),
+      child: _isUploading
+          ? const SizedBox(
+              width: AppSizes.iconDefault,
+              height: AppSizes.iconDefault,
+              child: CircularProgressIndicator(
+                strokeWidth: 2.5,
+                color: AppColors.textOnPrimary,
+              ),
+            )
+          : const Icon(Icons.add_rounded),
     );
   }
 }

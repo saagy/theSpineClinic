@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:spine_clinic_app/core/constants/app_colors.dart';
 import 'package:spine_clinic_app/core/constants/app_sizes.dart';
@@ -15,6 +16,7 @@ import 'package:spine_clinic_app/features/payments/presentation/record_payment_c
 import 'package:spine_clinic_app/features/patient/presentation/widgets/payment_row.dart';
 import 'package:spine_clinic_app/shared/widgets/error_view.dart';
 import 'package:spine_clinic_app/shared/widgets/section_card.dart';
+import 'package:spine_clinic_app/shared/widgets/skeleton_loader.dart';
 
 /// Renders payment records and summary details for a patient.
 class PatientTabPayments extends ConsumerWidget {
@@ -28,16 +30,15 @@ class PatientTabPayments extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final user = ref.watch(currentUserProvider).value;
     final isDoctor = user?.role == UserRole.doctor;
-    final isAdmin = user?.role == UserRole.superAdmin;
+    final isAdmin = user?.role == UserRole.superAdmin ||
+        user?.role == UserRole.receptionist;
 
     final asyncPayments = ref.watch(patientPaymentsProvider(patient.id));
 
     return asyncPayments.when(
-      loading: () => const Center(
-        child: Padding(
-          padding: EdgeInsets.all(AppSizes.p24),
-          child: CircularProgressIndicator(color: AppColors.primary),
-        ),
+      loading: () => const Padding(
+        padding: EdgeInsets.all(AppSizes.p16),
+        child: SkeletonTileList(count: 4),
       ),
       error: (error, _) => ErrorView(
         exception: error is AppException
@@ -70,17 +71,22 @@ class PatientTabPayments extends ConsumerWidget {
                         ),
                       )
                     : Column(
-                        children: payments.map((pmt) {
+                        children: payments.asMap().entries.map((entry) {
+                          final int idx = entry.key;
+                          final pmt = entry.value;
                           return PaymentRow(
                             payment: pmt,
                             isAdmin: isAdmin,
                             patientId: patient.id,
-                          );
+                          ).animate().fadeIn(
+                                duration: 250.ms,
+                                delay: (idx * 30).ms,
+                              );
                         }).toList(),
                       ),
               ),
             ],
-          ),
+          ).animate().fadeIn(duration: 350.ms),
         );
       },
     );

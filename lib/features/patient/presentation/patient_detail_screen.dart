@@ -7,13 +7,12 @@
 library;
 
 import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:spine_clinic_app/core/constants/app_colors.dart';
-import 'package:spine_clinic_app/core/constants/app_sizes.dart';
 import 'package:spine_clinic_app/core/constants/app_strings.dart';
-import 'package:spine_clinic_app/core/constants/app_text_styles.dart';
 import 'package:spine_clinic_app/core/errors/app_exception.dart';
 import 'package:spine_clinic_app/core/network/app_routes.dart';
 import 'package:spine_clinic_app/features/auth/domain/user_role.dart';
@@ -21,7 +20,9 @@ import 'package:spine_clinic_app/features/auth/presentation/auth_providers.dart'
 import 'package:spine_clinic_app/features/patient/domain/patient.dart';
 import 'package:spine_clinic_app/features/patient/presentation/patient_providers.dart';
 import 'package:spine_clinic_app/features/patient/presentation/widgets/patient_profile_header.dart';
+import 'package:spine_clinic_app/features/patient/presentation/widgets/patient_profile_skeleton.dart';
 import 'package:spine_clinic_app/features/patient/presentation/widgets/patient_quick_actions.dart';
+import 'package:spine_clinic_app/features/patient/presentation/widgets/pill_tab_bar.dart';
 import 'package:spine_clinic_app/features/patient/presentation/widgets/patient_tab_appointments.dart';
 import 'package:spine_clinic_app/features/patient/presentation/widgets/patient_tab_documents.dart';
 import 'package:spine_clinic_app/features/patient/presentation/widgets/patient_tab_info.dart';
@@ -44,8 +45,7 @@ class PatientDetailScreen extends ConsumerWidget {
     return asyncPatient.when(
       loading: () => const Scaffold(
         backgroundColor: AppColors.background,
-        body:
-            Center(child: CircularProgressIndicator(color: AppColors.primary)),
+        body: PatientProfileSkeleton(),
       ),
       error: (error, _) => _ErrorScaffold(
         error: error,
@@ -123,62 +123,17 @@ class _PatientProfile extends StatelessWidget {
         body: Column(
           children: [
             PatientProfileHeader(patient: patient),
-            _PillTabBar(tabs: tabs),
+            PillTabBar(tabs: tabs),
             Expanded(child: TabBarView(children: views)),
           ],
-        ),
+        )
+            .animate()
+            .fadeIn(duration: 400.ms)
+            .slideY(begin: 0.04, end: 0, duration: 400.ms, curve: Curves.easeOut),
         floatingActionButton: PatientQuickActionsFab(
           patient: patient,
           isDoctor: isDoctor,
         ),
-      ),
-    );
-  }
-}
-
-/// Pill-indicator TabBar with right-edge fade for smooth overflow.
-class _PillTabBar extends StatelessWidget {
-  const _PillTabBar({required this.tabs});
-  final List<Tab> tabs;
-  @override
-  Widget build(BuildContext context) {
-    return Material(
-      color: AppColors.surface,
-      child: Stack(
-        children: [
-          TabBar(
-            labelColor: AppColors.textOnPrimary,
-            unselectedLabelColor: AppColors.textSecondary,
-            labelStyle: AppTextStyles.captionBold,
-            unselectedLabelStyle: AppTextStyles.captionMedium,
-            indicator: BoxDecoration(
-              color: AppColors.primary,
-              borderRadius: const BorderRadius.all(Radius.circular(AppSizes.r24)),
-            ),
-            indicatorSize: TabBarIndicatorSize.tab,
-            dividerColor: AppColors.transparent,
-            isScrollable: true,
-            padding: const EdgeInsets.fromLTRB(
-                AppSizes.p16, AppSizes.p4, AppSizes.p32, AppSizes.p4),
-            tabs: tabs,
-          ),
-          // Right-edge fade for natural overflow appearance
-          Positioned(
-            right: 0, top: 0, bottom: 0,
-            child: IgnorePointer(
-              child: Container(
-                width: AppSizes.p24,
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.centerRight,
-                    end: Alignment.centerLeft,
-                    colors: [AppColors.surface, AppColors.surface.withAlpha(0)],
-                  ),
-                ),
-              ),
-            ),
-          ),
-        ],
       ),
     );
   }

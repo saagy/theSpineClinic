@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:spine_clinic_app/core/constants/app_colors.dart';
@@ -14,6 +15,7 @@ import 'package:spine_clinic_app/shared/widgets/app_search_bar.dart';
 import 'package:spine_clinic_app/shared/widgets/empty_state.dart';
 import 'package:spine_clinic_app/shared/widgets/error_view.dart';
 import 'package:spine_clinic_app/shared/widgets/patient_list_tile.dart';
+import 'package:spine_clinic_app/shared/widgets/skeleton_loader.dart';
 import 'package:spine_clinic_app/shared/widgets/sort_filter_bar.dart';
 import 'package:spine_clinic_app/shared/widgets/sort_options_sheet.dart';
 import 'package:spine_clinic_app/shared/widgets/unified_filter_sheet.dart';
@@ -189,10 +191,9 @@ class _MyPatientsScreenState extends ConsumerState<MyPatientsScreen> {
             ),
             Expanded(
               child: assignedPatients.when(
-                loading: () => const Center(
-                  child: CircularProgressIndicator(
-                    color: AppColors.primary,
-                  ),
+                loading: () => const Padding(
+                  padding: EdgeInsets.symmetric(horizontal: AppSizes.p16),
+                  child: SkeletonTileList(count: 6),
                 ),
                 error: (error, _) => ErrorView(
                   exception: error is AppException
@@ -233,7 +234,10 @@ class _MyPatientsScreenState extends ConsumerState<MyPatientsScreen> {
                           lastVisitDate: patient.lastAppointmentDate,
                           onTap: () =>
                               context.push('/patient/${patient.id}'),
-                        );
+                        ).animate().fadeIn(
+                              duration: 300.ms,
+                              delay: (index * 40).ms,
+                            );
                     },
                   ),
                   ); // RefreshIndicator close

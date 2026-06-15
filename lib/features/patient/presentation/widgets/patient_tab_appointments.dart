@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:spine_clinic_app/core/constants/app_colors.dart';
 import 'package:spine_clinic_app/core/constants/app_sizes.dart';
@@ -15,6 +16,7 @@ import 'package:spine_clinic_app/features/patient/domain/patient.dart';
 import 'package:spine_clinic_app/shared/widgets/app_button.dart';
 import 'package:spine_clinic_app/shared/widgets/empty_state.dart';
 import 'package:spine_clinic_app/shared/widgets/error_view.dart';
+import 'package:spine_clinic_app/shared/widgets/skeleton_loader.dart';
 
 /// Renders a chronological list of appointments for a patient.
 class PatientTabAppointments extends ConsumerWidget {
@@ -76,14 +78,15 @@ class PatientTabAppointments extends ConsumerWidget {
                       showDate: true,
                       onStatusChanged: () =>
                           ref.invalidate(patientAppointmentsProvider(patient.id)),
-                    );
+                    ).animate().fadeIn(
+                          duration: 250.ms,
+                          delay: (index * 30).ms,
+                        );
                   },
                 ),
               );
             },
-            loading: () => const Center(
-              child: CircularProgressIndicator(color: AppColors.primary),
-            ),
+            loading: () => const SkeletonTileList(count: 4),
             error: (error, _) {
               return ErrorView(
                 exception: error is AppException
