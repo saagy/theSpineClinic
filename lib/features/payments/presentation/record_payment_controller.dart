@@ -60,6 +60,7 @@ class RecordPaymentController extends _$RecordPaymentController {
     required String patientId,
     required double amount,
     required String reason,
+    int sessionsAdded = 0,
   }) async {
     state = const AsyncValue.loading();
     final repo = ref.read(paymentRepositoryProvider);
@@ -72,6 +73,7 @@ class RecordPaymentController extends _$RecordPaymentController {
       reason: reason,
       recordedBy: currentUser?.id,
       recordedAt: DateTime.now(),
+      sessionsAdded: sessionsAdded,
     );
 
     final Result<void> result = await repo.recordPayment(payment);

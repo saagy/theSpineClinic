@@ -32,6 +32,7 @@ abstract class PaymentRecord with _$PaymentRecord {
     required String reason,
     @JsonKey(name: 'recorded_by') String? recordedBy,
     @JsonKey(name: 'recorded_at') required DateTime recordedAt,
+    @JsonKey(name: 'sessions_added') @Default(0) int sessionsAdded,
   }) = _PaymentRecord;
 
   /// Deserialises from a Supabase JSON row.

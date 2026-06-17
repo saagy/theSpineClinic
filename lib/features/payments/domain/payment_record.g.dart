@@ -14,6 +14,7 @@ _PaymentRecord _$PaymentRecordFromJson(Map<String, dynamic> json) =>
       reason: json['reason'] as String,
       recordedBy: json['recorded_by'] as String?,
       recordedAt: DateTime.parse(json['recorded_at'] as String),
+      sessionsAdded: (json['sessions_added'] as num?)?.toInt() ?? 0,
     );
 
 Map<String, dynamic> _$PaymentRecordToJson(_PaymentRecord instance) =>
@@ -24,4 +25,5 @@ Map<String, dynamic> _$PaymentRecordToJson(_PaymentRecord instance) =>
       'reason': instance.reason,
       'recorded_by': instance.recordedBy,
       'recorded_at': instance.recordedAt.toIso8601String(),
+      'sessions_added': instance.sessionsAdded,
     };

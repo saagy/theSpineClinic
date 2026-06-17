@@ -12,6 +12,7 @@ import 'package:spine_clinic_app/core/constants/app_text_styles.dart';
 import 'package:spine_clinic_app/core/utils/formatters.dart';
 import 'package:spine_clinic_app/features/payments/domain/payment_record.dart';
 import 'package:spine_clinic_app/features/payments/presentation/record_payment_controller.dart';
+import 'package:spine_clinic_app/features/patient/presentation/patient_providers.dart';
 import 'package:spine_clinic_app/shared/widgets/app_snackbar.dart';
 import 'package:spine_clinic_app/shared/widgets/confirmation_dialog.dart';
 import 'package:spine_clinic_app/shared/widgets/data_list_tile.dart';
@@ -38,6 +39,26 @@ class PaymentRow extends ConsumerWidget {
       trailing: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
+          if (payment.sessionsAdded > 0) ...[
+            Container(
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppSizes.p8,
+                vertical: AppSizes.p2,
+              ),
+              decoration: BoxDecoration(
+                color: AppColors.primaryLight,
+                borderRadius: const BorderRadius.all(Radius.circular(AppSizes.r6)),
+              ),
+              child: Text(
+                '+${payment.sessionsAdded} sessions',
+                style: AppTextStyles.caption.copyWith(
+                  color: AppColors.primary,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+            const SizedBox(width: AppSizes.p8),
+          ],
           Text(
             payment.amount.toCurrencyString(),
             style: AppTextStyles.bodyBold.copyWith(color: AppColors.textPrimary),
@@ -77,6 +98,7 @@ class PaymentRow extends ConsumerWidget {
                 message: AppStrings.paymentDeleted,
                 variant: AppSnackbarVariant.success);
             ref.invalidate(patientPaymentsProvider(patientId));
+            ref.invalidate(patientDetailProvider(patientId));
           },
           failure: (error) {
             AppSnackbar.show(context,

@@ -25,7 +25,13 @@ class EditPatientScreen extends ConsumerWidget {
         : ref.watch(patientDetailProvider(patientId));
     final assignedAsync = ref.watch(patientAssignedDoctorsProvider(patientId));
 
-    if (patientAsync.hasError || assignedAsync.hasError) {
+    final bool isInitialLoading = (patientAsync.isLoading && !patientAsync.hasValue) ||
+        (assignedAsync.isLoading && !assignedAsync.hasValue);
+
+    final bool isInitialError = (patientAsync.hasError && !patientAsync.hasValue) ||
+        (assignedAsync.hasError && !assignedAsync.hasValue);
+
+    if (isInitialError) {
       final error = patientAsync.error ?? assignedAsync.error;
       final exception = error is AppException ? error : UnknownException(message: error?.toString() ?? '');
       return Scaffold(
@@ -40,7 +46,7 @@ class EditPatientScreen extends ConsumerWidget {
       );
     }
 
-    if (patientAsync.isLoading || assignedAsync.isLoading) {
+    if (isInitialLoading) {
       return Scaffold(
         appBar: AppBar(title: const Text(AppStrings.editPatient)),
         body: const Center(child: CircularProgressIndicator()),

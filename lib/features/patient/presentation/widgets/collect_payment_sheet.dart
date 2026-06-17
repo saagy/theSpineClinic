@@ -85,19 +85,16 @@ class _CollectPaymentSheetState extends ConsumerState<CollectPaymentSheet> {
     if (confirm != true || !mounted) return;
     setState(() => _submitting = true);
     final result = await ref.read(recordPaymentControllerProvider.notifier)
-        .submitPayment(patientId: widget.patient.id, amount: amount, reason: reason);
+        .submitPayment(
+          patientId: widget.patient.id,
+          amount: amount,
+          reason: reason,
+          sessionsAdded: packageDelta ?? 0,
+        );
     if (!mounted) return;
     if (result is Failure) {
       setState(() => _submitting = false);
       return _err(result.exception.message);
-    }
-    if (packageDelta != null) {
-      final patient = ref.read(patientDetailProvider(widget.patient.id)).value;
-      if (patient != null) {
-        await ref.read(patientRepositoryProvider).updatePatient(
-          patient.copyWith(packageBalance: patient.packageBalance + packageDelta),
-        );
-      }
     }
     ref.invalidate(patientDetailProvider(widget.patient.id));
     ref.invalidate(patientPaymentsProvider(widget.patient.id));

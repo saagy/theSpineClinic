@@ -51,6 +51,29 @@ class EditAppointmentScreen extends ConsumerWidget {
 
     final detailAsync = ref.watch(appointmentDetailControllerProvider(appointmentId));
 
+    final Widget body;
+    if (detailAsync.isLoading && !detailAsync.hasValue) {
+      body = const Padding(
+        padding: EdgeInsets.all(AppSizes.p16),
+        child: SkeletonTileList(count: 5),
+      );
+    } else if (detailAsync.hasError && !detailAsync.hasValue) {
+      final error = detailAsync.error!;
+      body = ErrorView(
+        exception: error is AppException
+            ? error
+            : AppException.fromSupabaseException(error),
+        onRetry: () => ref.invalidate(appointmentDetailControllerProvider(appointmentId)),
+      );
+    } else {
+      final state = detailAsync.value!;
+      body = _EditAppointmentFormBody(
+        appointment: state.appointment,
+        patient: state.patient,
+        initialDoctors: state.activeDoctors.map((d) => d.doctor).toList(),
+      );
+    }
+
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
@@ -60,23 +83,7 @@ class EditAppointmentScreen extends ConsumerWidget {
         elevation: 0,
         leading: const AppBackButton(),
       ),
-      body: detailAsync.when(
-        loading: () => const Padding(
-          padding: EdgeInsets.all(AppSizes.p16),
-          child: SkeletonTileList(count: 5),
-        ),
-        error: (error, stack) => ErrorView(
-          exception: error is AppException
-              ? error
-              : AppException.fromSupabaseException(error),
-          onRetry: () => ref.invalidate(appointmentDetailControllerProvider(appointmentId)),
-        ),
-        data: (state) => _EditAppointmentFormBody(
-          appointment: state.appointment,
-          patient: state.patient,
-          initialDoctors: state.activeDoctors.map((d) => d.doctor).toList(),
-        ),
-      ),
+      body: body,
     );
   }
 }
