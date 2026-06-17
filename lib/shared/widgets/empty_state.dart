@@ -11,6 +11,7 @@ import 'package:flutter/material.dart';
 import 'package:spine_clinic_app/core/constants/app_colors.dart';
 import 'package:spine_clinic_app/core/constants/app_sizes.dart';
 import 'package:spine_clinic_app/core/constants/app_text_styles.dart';
+import 'package:spine_clinic_app/shared/widgets/app_button.dart';
 
 /// A centered layout placeholder for empty data states styled with
 /// Medics design tokens.
@@ -21,6 +22,8 @@ class EmptyState extends StatelessWidget {
     required this.message,
     this.icon = Icons.inbox_rounded,
     this.secondaryMessage,
+    this.actionLabel,
+    this.onActionPressed,
   });
 
   /// The descriptive string explaining why the view is blank.
@@ -31,6 +34,12 @@ class EmptyState extends StatelessWidget {
 
   /// Optional secondary message below the primary one.
   final String? secondaryMessage;
+
+  /// Optional label for the action button.
+  final String? actionLabel;
+
+  /// Optional callback when action button is pressed.
+  final VoidCallback? onActionPressed;
 
   @override
   Widget build(BuildContext context) {
@@ -73,6 +82,14 @@ class EmptyState extends StatelessWidget {
                   color: AppColors.textMuted,
                 ),
                 textAlign: TextAlign.center,
+              ),
+            ],
+            if (actionLabel != null && onActionPressed != null) ...[
+              const SizedBox(height: AppSizes.p20),
+              AppButton(
+                labelText: actionLabel!,
+                onPressed: onActionPressed,
+                fullWidth: false,
               ),
             ],
           ],

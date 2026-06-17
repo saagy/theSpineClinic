@@ -12,6 +12,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:spine_clinic_app/core/constants/app_colors.dart';
+import 'package:spine_clinic_app/core/constants/app_sizes.dart';
 import 'package:spine_clinic_app/core/constants/app_strings.dart';
 import 'package:spine_clinic_app/core/errors/app_exception.dart';
 import 'package:spine_clinic_app/core/network/app_routes.dart';
@@ -110,19 +111,30 @@ class _PatientProfile extends StatelessWidget {
           elevation: 0,
           leading: const AppBackButton(),
           actions: [
-            IconButton(
-              icon: const Icon(Icons.edit_outlined, color: AppColors.primary),
-              tooltip: AppStrings.editPatient,
-              onPressed: () => context.push(
-                AppRoutes.editPatient.replaceAll(':id', patient.id),
-                extra: patient,
+            Padding(
+              padding: const EdgeInsets.only(right: AppSizes.p16),
+              child: TextButton.icon(
+                style: TextButton.styleFrom(
+                  backgroundColor: AppColors.primary.withAlpha(25),
+                  foregroundColor: AppColors.primary,
+                  padding: const EdgeInsets.symmetric(horizontal: AppSizes.p12),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(AppSizes.r12),
+                  ),
+                ),
+                icon: const Icon(Icons.edit_outlined, size: 18),
+                label: const Text('Edit', style: TextStyle(fontWeight: FontWeight.bold)),
+                onPressed: () => context.push(
+                  AppRoutes.editPatient.replaceAll(':id', patient.id),
+                  extra: patient,
+                ),
               ),
             ),
           ],
         ),
         body: Column(
           children: [
-            PatientProfileHeader(patient: patient),
+            PatientProfileHeader(patient: patient, isDoctor: isDoctor),
             PillTabBar(tabs: tabs),
             Expanded(child: TabBarView(children: views)),
           ],

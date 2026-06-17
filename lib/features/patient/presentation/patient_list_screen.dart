@@ -35,6 +35,8 @@ import 'package:spine_clinic_app/shared/widgets/active_filter_chips_row.dart';
 import 'package:spine_clinic_app/features/staff/presentation/staff_providers.dart';
 
 import 'package:spine_clinic_app/shared/widgets/patient_list_tile.dart';
+import 'package:spine_clinic_app/shared/widgets/skeleton_loader.dart';
+import 'package:spine_clinic_app/features/patient/presentation/widgets/patient_search_filters.dart';
 
 /// A searchable, filterable, sortable, paginated patient roster.
 class PatientListScreen extends ConsumerStatefulWidget {
@@ -168,6 +170,7 @@ class _PatientListScreenState extends ConsumerState<PatientListScreen> {
   @override
   Widget build(BuildContext context) {
     final AsyncValue<List<Patient>> state = ref.watch(patientListProvider);
+    final clinicFilter = ref.watch(patientListProvider.notifier).currentClinicFilter;
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -187,6 +190,15 @@ class _PatientListScreenState extends ConsumerState<PatientListScreen> {
                 onChanged: _onSearchChanged,
               ),
             ),
+
+            // ── Branch Filter Chips ──
+            PatientSearchFilters(
+              selectedClinic: clinicFilter,
+              onClinicSelected: (clinic) {
+                ref.read(patientListProvider.notifier).setClinicFilter(clinic);
+              },
+            ),
+            const SizedBox(height: AppSizes.p4),
 
             // ── Sort + Filter buttons row ──
             SortFilterBar(
@@ -209,10 +221,9 @@ class _PatientListScreenState extends ConsumerState<PatientListScreen> {
             // ── List ──
             Expanded(
               child: state.when(
-                loading: () => const Center(
-                  child: CircularProgressIndicator(
-                    color: AppColors.primary,
-                  ),
+                loading: () => const Padding(
+                  padding: EdgeInsets.all(AppSizes.p16),
+                  child: SkeletonTileList(count: 8),
                 ),
                 error: (Object error, StackTrace _) {
                   final AppException ex = error is AppException
@@ -226,10 +237,22 @@ class _PatientListScreenState extends ConsumerState<PatientListScreen> {
                 data: (List<Patient> rawPatients) {
                   final patients = _sorted(rawPatients);
                   if (patients.isEmpty) {
+                    final notifier = ref.read(patientListProvider.notifier);
+                    final query = notifier.currentQuery;
+                    final hasClinicFilter = notifier.currentClinicFilter != null;
+
                     return EmptyState(
                       message: AppStrings.noPatients,
                       icon: Icons.people_outline_rounded,
-                      secondaryMessage: AppStrings.searchPatients,
+                      secondaryMessage: query.isNotEmpty
+                          ? 'No results for "$query"'
+                          : AppStrings.searchPatients,
+                      actionLabel: (query.isNotEmpty && hasClinicFilter)
+                          ? 'Search in all branches'
+                          : null,
+                      onActionPressed: (query.isNotEmpty && hasClinicFilter)
+                          ? () => ref.read(patientListProvider.notifier).setClinicFilter(null)
+                          : null,
                     );
                   }
 
@@ -321,12 +344,6 @@ class _PatientListScreenState extends ConsumerState<PatientListScreen> {
       chips.add(ActiveFilterChip(
         label: doctor?.fullName ?? 'Doctor',
         onRemove: () => n.setDoctorFilter(null),
-      ));
-    }
-    if (n.currentClinicFilter != null) {
-      chips.add(ActiveFilterChip(
-        label: n.currentClinicFilter!.displayLabel,
-        onRemove: () => n.setClinicFilter(null),
       ));
     }
     return chips;

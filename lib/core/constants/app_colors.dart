@@ -82,6 +82,12 @@ abstract final class AppColors {
   /// Sky 50 — informational badge / chip background.
   static const Color infoBg = Color(0xFFF0F9FF);
 
+  /// Slate 600 — neutral / scheduled status foreground.
+  static const Color neutral = Color(0xFF475569);
+
+  /// Slate 50 — neutral / scheduled status badge background.
+  static const Color neutralBg = Color(0xFFF1F5F9);
+
   // ──────────────── Elevation / Shadow ────────────────
 
   /// Soft, barely-visible card shadow that lifts surfaces off white

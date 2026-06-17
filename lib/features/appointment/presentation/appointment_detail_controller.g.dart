@@ -60,7 +60,7 @@ final class AppointmentDetailControllerProvider
 }
 
 String _$appointmentDetailControllerHash() =>
-    r'2a02f7b324f536bf84731ba72ac56eba80989d8c';
+    r'9af35045322d22b6c0e00f6661dbc80e3128a94f';
 
 /// Controller managing a single appointment's detail view and mutations.
 

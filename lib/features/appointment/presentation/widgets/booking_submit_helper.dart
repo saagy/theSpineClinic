@@ -9,22 +9,17 @@ import 'package:spine_clinic_app/features/appointment/domain/appointment_reposit
 import 'package:spine_clinic_app/features/appointment/domain/appointment_status.dart';
 import 'package:spine_clinic_app/features/appointment/domain/appointment_type.dart';
 import 'package:spine_clinic_app/features/auth/domain/staff.dart';
-import 'package:spine_clinic_app/features/medical_records/data/patient_notes_repository.dart';
 
 /// Encapsulates the loop/transaction creation of appointments and assignment of doctors.
 abstract final class BookingSubmitHelper {
   /// Walks through the list of slots, creates each appointment, and attaches
   /// each doctor to the created appointment.
-  ///
-  /// When [notes] is non-empty, the note is persisted through [notesRepo].
   static Future<Result<void>> executeBooking({
     required AppointmentRepository repo,
-    required PatientNotesRepository notesRepo,
     required String patientId,
     required AppointmentType type,
     required List<DateTime> slots,
     required TimeOfDay time,
-    required String? notes,
     required String? creatorId,
     required List<Staff> doctors,
     required bool usePackage,
@@ -78,14 +73,6 @@ abstract final class BookingSubmitHelper {
               );
             }
 
-            if (notes != null && notes.trim().isNotEmpty) {
-              await notesRepo.createNote(
-                patientId: patientId,
-                noteText: notes.trim(),
-                createdBy: creatorId ?? '',
-                appointmentId: newAppointmentId,
-              );
-            }
           },
           failure: (err) {
             errorResult = Result.failure(err);

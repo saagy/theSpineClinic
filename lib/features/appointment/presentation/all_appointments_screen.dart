@@ -285,7 +285,7 @@ class _AllAppointmentsScreenState extends ConsumerState<AllAppointmentsScreen> {
             final _ListItem listItem = listItems[index];
             if (listItem is _HeaderItem) {
               return Padding(
-                padding: const EdgeInsets.fromLTRB(AppSizes.p8, AppSizes.p20, AppSizes.p8, AppSizes.p8),
+                padding: const EdgeInsets.fromLTRB(AppSizes.p20, AppSizes.p16, AppSizes.p20, AppSizes.p8),
                 child: Text(
                   listItem.title,
                   style: AppTextStyles.captionBold.copyWith(

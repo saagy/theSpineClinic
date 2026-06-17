@@ -147,7 +147,7 @@ final class DoctorApplicationsActionProvider
 }
 
 String _$doctorApplicationsActionHash() =>
-    r'964d10fe24c83e8cd37cb94bc9a698486e6f125e';
+    r'fa2c812cd4431a40229643cef2414c615b08c548';
 
 /// Controller managing approval and rejection actions for doctor applications.
 

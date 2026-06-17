@@ -8,6 +8,7 @@
 library;
 
 import 'package:flutter/foundation.dart';
+import 'package:supabase_flutter/supabase_flutter.dart' show Supabase, UserAttributes;
 import 'package:spine_clinic_app/core/errors/app_exception.dart';
 import 'package:spine_clinic_app/core/errors/result.dart';
 import 'package:spine_clinic_app/core/network/supabase_service.dart';
@@ -209,18 +210,22 @@ class AuthRepositoryImpl implements AuthRepository {
       );
 
       if (newPassword != null && newPassword.isNotEmpty) {
-        if (staff.userId == null) {
-          return const Result.failure(AuthException(
-            code: 'auth/no-user-id',
-            message: 'Cannot update password: no associated user ID.',
-          ));
+        // Self password change — use Supabase Auth API directly.
+        // The RPC requires super_admin; the Auth API lets any
+        // authenticated user change their own password.
+        if (staff.userId == _service.currentUserId) {
+          await Supabase.instance.client.auth.updateUser(
+            UserAttributes(password: newPassword),
+          );
+        } else {
+          // Admin-initiated password change for another user — uses RPC.
+          await _service.guardQuery(
+            () => _service.rpc('update_user_password', params: {
+              'target_user_id': staff.userId,
+              'new_password': newPassword,
+            }),
+          );
         }
-        await _service.guardQuery(
-          () => _service.rpc('update_user_password', params: {
-            'target_user_id': staff.userId,
-            'new_password': newPassword,
-          }),
-        );
       }
 
       return const Result.success(null);

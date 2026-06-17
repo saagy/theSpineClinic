@@ -43,7 +43,7 @@ enum AppointmentStatus {
 
   /// Text color for UI badges.
   Color get textColor => switch (this) {
-    AppointmentStatus.scheduled => AppColors.info,
+    AppointmentStatus.scheduled => AppColors.neutral,
     AppointmentStatus.checkedIn => AppColors.success,
     AppointmentStatus.completed => AppColors.success,
     AppointmentStatus.cancelled || AppointmentStatus.noShow => AppColors.error,
@@ -51,7 +51,7 @@ enum AppointmentStatus {
 
   /// Background color for UI badges.
   Color get backgroundColor => switch (this) {
-    AppointmentStatus.scheduled => AppColors.infoBg,
+    AppointmentStatus.scheduled => AppColors.neutralBg,
     AppointmentStatus.checkedIn => AppColors.successBg,
     AppointmentStatus.completed => AppColors.successBg,
     AppointmentStatus.cancelled || AppointmentStatus.noShow => AppColors.errorBg,

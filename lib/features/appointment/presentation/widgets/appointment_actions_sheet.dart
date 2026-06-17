@@ -108,17 +108,20 @@ class _AppointmentActionsSheetState extends ConsumerState<AppointmentActionsShee
                 AppButton(
                   labelText: AppStrings.checkInPatient,
                   onPressed: () => _updateStatus(AppointmentStatus.checkedIn),
+                  debounceMs: 1000,
                 ),
                 const SizedBox(height: AppSizes.p12),
                 AppButton(
                   labelText: AppStrings.cancelAppointment,
                   variant: AppButtonVariant.danger,
                   onPressed: () => _updateStatus(AppointmentStatus.cancelled),
+                  debounceMs: 1000,
                 ),
               ] else if (appointment.status == AppointmentStatus.checkedIn) ...[
                 AppButton(
                   labelText: AppStrings.markAsCompleted,
                   onPressed: () => _updateStatus(AppointmentStatus.completed),
+                  debounceMs: 1000,
                 ),
               ] else ...[
                 Container(

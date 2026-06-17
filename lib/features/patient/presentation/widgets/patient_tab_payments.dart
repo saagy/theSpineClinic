@@ -11,7 +11,6 @@ import 'package:spine_clinic_app/features/auth/domain/user_role.dart';
 import 'package:spine_clinic_app/features/auth/presentation/auth_providers.dart';
 import 'package:spine_clinic_app/features/patient/domain/patient.dart';
 import 'package:spine_clinic_app/features/patient/presentation/widgets/collect_payment_sheet.dart';
-import 'package:spine_clinic_app/features/patient/presentation/widgets/package_balance_edit_dialog.dart';
 import 'package:spine_clinic_app/features/payments/presentation/record_payment_controller.dart';
 import 'package:spine_clinic_app/features/patient/presentation/widgets/payment_row.dart';
 import 'package:spine_clinic_app/shared/widgets/error_view.dart';
@@ -130,35 +129,20 @@ class _PaymentSummaryHeader extends StatelessWidget {
         ),
         if (!isDoctor) ...[
           const SizedBox(height: AppSizes.p16),
-          Row(
-            children: [
-              Expanded(
-                child: _ActionButton(
-                  label: 'Record Payment',
-                  filled: true,
-                  onTap: () => showModalBottomSheet(
-                    context: context,
-                    isScrollControlled: true,
-                    shape: const RoundedRectangleBorder(
-                      borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-                    ),
-                    builder: (_) => CollectPaymentSheet(patient: patient),
-                  ),
+          SizedBox(
+            width: double.infinity,
+            child: _ActionButton(
+              label: 'Record Payment',
+              filled: true,
+              onTap: () => showModalBottomSheet(
+                context: context,
+                isScrollControlled: true,
+                shape: const RoundedRectangleBorder(
+                  borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
                 ),
+                builder: (_) => CollectPaymentSheet(patient: patient),
               ),
-              const SizedBox(width: AppSizes.p12),
-              Expanded(
-                child: _ActionButton(
-                  label: AppStrings.editPackageBalance,
-                  filled: false,
-                  onTap: () => showDialog<void>(
-                    context: context,
-                    builder: (_) =>
-                        PackageBalanceEditDialog(patient: patient),
-                  ),
-                ),
-              ),
-            ],
+            ),
           ),
         ],
       ],
@@ -187,7 +171,7 @@ class _ActionButton extends StatelessWidget {
                       const BorderRadius.all(Radius.circular(AppSizes.r12))),
               elevation: 0,
             ),
-            child: Text(label, style: AppTextStyles.bodyBold),
+            child: Text(label, style: AppTextStyles.button),
           )
         : OutlinedButton(
             onPressed: onTap,

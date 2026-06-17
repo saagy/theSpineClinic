@@ -83,7 +83,7 @@ class PatientFormFields extends StatelessWidget {
         FormBuilderTextField(
           name: 'program',
           enabled: enabled,
-          decoration: _buildDecoration(labelText: AppStrings.program, hintText: 'Enter program details'),
+          decoration: _buildDecoration(labelText: '${AppStrings.program} (optional)', hintText: 'Enter program details'),
         ),
         const SizedBox(height: AppSizes.p16),
 

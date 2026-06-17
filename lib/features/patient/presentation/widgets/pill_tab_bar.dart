@@ -32,16 +32,17 @@ class PillTabBar extends StatelessWidget {
               unselectedLabelColor: AppColors.textSecondary,
               labelStyle: AppTextStyles.captionBold,
               unselectedLabelStyle: AppTextStyles.captionMedium,
-              indicator: BoxDecoration(
+              indicator: const BoxDecoration(
                 color: AppColors.primary,
                 borderRadius:
-                    const BorderRadius.all(Radius.circular(AppSizes.r24)),
+                    BorderRadius.all(Radius.circular(AppSizes.r24)),
               ),
               indicatorSize: TabBarIndicatorSize.tab,
               dividerColor: AppColors.transparent,
-              isScrollable: false,
-              padding: const EdgeInsets.symmetric(
-                  horizontal: AppSizes.p16, vertical: AppSizes.p4),
+              isScrollable: true,
+              tabAlignment: TabAlignment.start,
+              padding: const EdgeInsets.only(
+                  left: AppSizes.p16, right: AppSizes.p16, bottom: AppSizes.p4),
               tabs: tabs,
             );
           }
@@ -53,14 +54,15 @@ class PillTabBar extends StatelessWidget {
                 unselectedLabelColor: AppColors.textSecondary,
                 labelStyle: AppTextStyles.captionBold,
                 unselectedLabelStyle: AppTextStyles.captionMedium,
-                indicator: BoxDecoration(
+                indicator: const BoxDecoration(
                   color: AppColors.primary,
                   borderRadius:
-                      const BorderRadius.all(Radius.circular(AppSizes.r24)),
+                      BorderRadius.all(Radius.circular(AppSizes.r24)),
                 ),
                 indicatorSize: TabBarIndicatorSize.tab,
                 dividerColor: AppColors.transparent,
                 isScrollable: true,
+                tabAlignment: TabAlignment.start,
                 padding: const EdgeInsets.fromLTRB(
                     AppSizes.p16, AppSizes.p4, AppSizes.p32, AppSizes.p4),
                 tabs: tabs,

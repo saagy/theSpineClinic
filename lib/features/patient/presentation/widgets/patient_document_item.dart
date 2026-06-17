@@ -1,4 +1,5 @@
 import 'dart:typed_data';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path/path.dart' as p;
@@ -10,6 +11,9 @@ import 'package:spine_clinic_app/core/utils/file_opener_helper.dart';
 import 'package:spine_clinic_app/features/patient/data/patient_documents_repository.dart';
 import 'package:spine_clinic_app/features/patient/domain/patient_document.dart';
 import 'package:spine_clinic_app/features/patient/presentation/patient_documents_providers.dart';
+import 'package:spine_clinic_app/shared/widgets/app_file_viewer.dart';
+import 'package:spine_clinic_app/shared/widgets/app_file_viewer_stub.dart'
+    if (dart.library.html) 'package:spine_clinic_app/shared/widgets/app_file_viewer_web.dart';
 import 'package:spine_clinic_app/shared/widgets/app_snackbar.dart';
 import 'package:spine_clinic_app/shared/widgets/confirmation_dialog.dart';
 import 'package:spine_clinic_app/shared/widgets/data_list_tile.dart';
@@ -35,15 +39,29 @@ class _PatientDocumentItemState extends ConsumerState<PatientDocumentItem> {
     if (_isOpening) return;
     setState(() => _isOpening = true);
     try {
-      await FileOpenerHelper.openFile(
-          widget.doc.fileUrl, widget.doc.fileName);
+      if (kIsWeb) {
+        final String? signedUrl =
+            await generateSignedUrlForWeb(widget.doc.fileUrl);
+        if (signedUrl == null) {
+          throw Exception('Could not open this file.');
+        }
+        if (!mounted) return;
+        final String ext = p.extension(widget.doc.fileName).toLowerCase();
+        showAppFileViewer(
+          context,
+          signedUrl: signedUrl,
+          fileName: widget.doc.fileName,
+          isImage: ext == '.png' || ext == '.jpg' || ext == '.jpeg',
+          isPdf: ext == '.pdf',
+        );
+      } else {
+        await FileOpenerHelper.openFile(
+            widget.doc.fileUrl, widget.doc.fileName);
+      }
     } catch (e) {
       if (mounted) {
-        AppSnackbar.show(
-          context,
-          message: '$e',
-          variant: AppSnackbarVariant.error,
-        );
+        AppSnackbar.show(context, message: '$e',
+            variant: AppSnackbarVariant.error);
       }
     } finally {
       if (mounted) setState(() => _isOpening = false);

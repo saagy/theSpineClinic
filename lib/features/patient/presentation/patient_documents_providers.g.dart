@@ -115,7 +115,7 @@ final class PatientDocumentsNotifierNotifierProvider
 }
 
 String _$patientDocumentsNotifierNotifierHash() =>
-    r'162fa9c82020731d37a5ae3161c31d1957ddb168';
+    r'661f441e7f361e0239be2219b179cb2046d37cf1';
 
 /// Family AsyncNotifier managing the document list state for a patient.
 

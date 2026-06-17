@@ -13,7 +13,9 @@ import 'package:spine_clinic_app/core/constants/app_strings.dart';
 import 'package:spine_clinic_app/core/constants/app_text_styles.dart';
 import 'package:spine_clinic_app/core/errors/app_exception.dart';
 import 'package:spine_clinic_app/features/admin/presentation/branch_providers.dart';
+import 'package:spine_clinic_app/features/auth/domain/staff.dart';
 import 'package:spine_clinic_app/features/auth/presentation/auth_providers.dart';
+import 'package:spine_clinic_app/features/auth/presentation/edit_profile_sheet.dart';
 import 'package:spine_clinic_app/features/patient/domain/clinic_location.dart';
 import 'package:spine_clinic_app/shared/widgets/app_button.dart';
 import 'package:spine_clinic_app/shared/widgets/confirmation_dialog.dart';
@@ -78,6 +80,12 @@ class ReceptionistProfileScreen extends ConsumerWidget {
                         ],
                         const SizedBox(height: AppSizes.p12),
                         const InfoRow.fixedLabel(label: AppStrings.role, value: AppStrings.receptionistRoleLabel),
+                        const SizedBox(height: AppSizes.p16),
+                        AppButton(
+                          labelText: AppStrings.editProfile,
+                          variant: AppButtonVariant.secondary,
+                          onPressed: () => _showEditProfileSheet(context, user),
+                        ),
                       ],
                     ),
                   ),
@@ -150,6 +158,17 @@ class ReceptionistProfileScreen extends ConsumerWidget {
           ),
         );
       },
+    );
+  }
+
+  void _showEditProfileSheet(BuildContext context, Staff user) {
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(AppSizes.r12)),
+      ),
+      builder: (_) => EditProfileSheet(staff: user),
     );
   }
 

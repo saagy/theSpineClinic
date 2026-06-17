@@ -145,6 +145,14 @@ abstract final class AppStrings {
   static const String doctors = 'Doctors';
   static const String yes = 'Yes';
   static const String no = 'No';
+  static const String editAppointment = 'Edit Appointment';
+  static const String deleteAppointment = 'Delete Appointment';
+  static const String appointmentDeleted = 'Appointment deleted successfully.';
+  static const String appointmentUpdated = 'Appointment updated successfully.';
+  static const String deleteAppointmentWarning = 'This will permanently remove the appointment record and doctor assignments. This action cannot be undone.';
+  static const String usePackageChangeWarning = 'Cannot change package deduction. This option can only be edited for "Scheduled" appointments, not for checked-in or completed sessions.';
+  static const String cannotDeleteCheckedInOrCompleted = 'Cannot delete a checked-in or completed appointment. Please cancel the appointment first to trigger any package refunds.';
+
 
   // Replacement
   static const String initiateReplacement = 'Initiate Replacement';
@@ -326,6 +334,7 @@ abstract final class AppStrings {
   static const String deleteNote = 'Delete Note';
   static const String confirmDeleteNote = 'Are you sure you want to delete this note?';
   static const String noteDeleted = 'Note deleted successfully.';
+  static const String cannotSaveEmptyNote = 'Note text cannot be empty. If you want to remove the note, please delete it instead.';
 
   // Payment CRUD
   static const String deletePayment = 'Delete Payment';

@@ -43,6 +43,9 @@ abstract final class AppRoutes {
   /// Appointment detail screen (protected, full-screen without shell).
   static const String appointmentDetail = '/appointment/:id';
 
+  /// Edit appointment screen (protected, full-screen without shell).
+  static const String editAppointment = '/appointment/:id/edit';
+
   /// Add/edit visit notes screen (protected, full-screen without shell).
   static const String addVisitNotes = '/appointment/:id/notes';
 

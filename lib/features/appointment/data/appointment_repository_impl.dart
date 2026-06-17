@@ -350,4 +350,102 @@ class AppointmentRepositoryImpl implements AppointmentRepository {
         .replaceAll('%', r'\%')
         .replaceAll('_', r'\_');
   }
+
+  @override
+  Future<Result<void>> updateAppointment(Appointment appointment) {
+    return _run(() => _service
+        .from(_appointmentsTable)
+        .update({
+          'scheduled_at': appointment.scheduledAt.toIso8601String(),
+          'type': appointment.type.dbValue,
+          'use_package': appointment.usePackage,
+        })
+        .eq('id', appointment.id));
+  }
+
+  @override
+  Future<Result<void>> deleteAppointment(String appointmentId) {
+    return _run(() => _service
+        .from(_appointmentsTable)
+        .delete()
+        .eq('id', appointmentId));
+  }
+
+  @override
+  Future<Result<void>> updateAppointmentDoctors(
+    String appointmentId,
+    List<String> doctorIds,
+    String? editorId,
+  ) {
+    return _run(() async {
+      // 1. Fetch all doctor assignments (active and inactive) for this appointment
+      final List<Map<String, dynamic>> allRows = await _service
+          .from(_appointmentDoctorsTable)
+          .select()
+          .eq('appointment_id', appointmentId);
+      
+      final List<String> currentActiveDoctorIds = allRows
+          .where((row) => row['is_active'] as bool == true)
+          .map((row) => row['doctor_id'] as String)
+          .toList();
+
+      final List<String> currentInactiveDoctorIds = allRows
+          .where((row) => row['is_active'] as bool == false)
+          .map((row) => row['doctor_id'] as String)
+          .toList();
+
+      // 2. Identify doctor IDs to deactivate: in current active but not in new doctorIds
+      final List<String> toDeactivate = currentActiveDoctorIds
+          .where((id) => !doctorIds.contains(id))
+          .toList();
+
+      // 3. Identify doctor IDs to reactivate: in new doctorIds and in current inactive
+      final List<String> toReactivate = doctorIds
+          .where((id) => currentInactiveDoctorIds.contains(id))
+          .toList();
+
+      // 4. Identify doctor IDs to insert: in new doctorIds but not in active or inactive lists
+      final List<String> toInsert = doctorIds
+          .where((id) => !currentActiveDoctorIds.contains(id) && !currentInactiveDoctorIds.contains(id))
+          .toList();
+
+      // 5. Perform deactivations (set is_active = false)
+      if (toDeactivate.isNotEmpty) {
+        await _service
+            .from(_appointmentDoctorsTable)
+            .update({'is_active': false})
+            .eq('appointment_id', appointmentId)
+            .inFilter('doctor_id', toDeactivate);
+      }
+
+      // 6. Perform reactivations (set is_active = true and update added audit info)
+      if (toReactivate.isNotEmpty) {
+        await _service
+            .from(_appointmentDoctorsTable)
+            .update({
+              'is_active': true,
+              'added_by': editorId,
+              'added_at': DateTime.now().toUtc().toIso8601String(),
+            })
+            .eq('appointment_id', appointmentId)
+            .inFilter('doctor_id', toReactivate);
+      }
+
+      // 7. Perform insertions (insert new rows with is_active = true)
+      if (toInsert.isNotEmpty) {
+        final List<Map<String, dynamic>> rowsToInsert = toInsert.map((doctorId) {
+          return {
+            'appointment_id': appointmentId,
+            'doctor_id': doctorId,
+            'is_replacement': false,
+            'is_active': true,
+            'added_by': editorId,
+            'added_at': DateTime.now().toUtc().toIso8601String(),
+          };
+        }).toList();
+
+        await _service.from(_appointmentDoctorsTable).insert(rowsToInsert);
+      }
+    });
+  }
 }

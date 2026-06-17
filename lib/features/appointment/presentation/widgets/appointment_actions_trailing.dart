@@ -270,7 +270,7 @@ class _AppointmentActionsTrailingState
       if (!mounted) return;
       result.when(
         success: (_) {
-          widget.onStatusChanged?.call();
+          _invalidateCaches();
           AppSnackbar.show(context,
               message: AppStrings.statusUpdateSuccess,
               variant: AppSnackbarVariant.success);
@@ -297,7 +297,7 @@ class _AppointmentActionsTrailingState
       if (!mounted) return;
       result.when(
         success: (_) {
-          widget.onStatusChanged?.call();
+          _invalidateCaches();
           AppSnackbar.show(context,
               message: AppStrings.statusUpdateSuccess,
               variant: AppSnackbarVariant.success);
@@ -314,10 +314,13 @@ class _AppointmentActionsTrailingState
   }
 
   void _invalidateCaches() {
+    final String pid = widget.appointment.patientId;
     ref.invalidate(todayAppointmentsProvider);
     ref.read(allAppointmentsProvider.notifier).refresh();
-    ref.invalidate(patientAppointmentsProvider(widget.appointment.patientId));
-    ref.invalidate(patientDetailProvider(widget.appointment.patientId));
+    ref.invalidate(patientAppointmentsProvider(pid));
+    ref.invalidate(patientDetailProvider(pid));
+    ref.invalidate(futureScheduledAppointmentsCountProvider(pid));
+    ref.invalidate(availablePackageBalanceProvider(pid));
     ref.invalidate(doctorScheduleProvider);
     ref.invalidate(patientListProvider);
     widget.onStatusChanged?.call();

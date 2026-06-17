@@ -16,6 +16,7 @@ import 'package:spine_clinic_app/features/appointment/domain/appointment_reposit
 import 'package:spine_clinic_app/features/appointment/domain/appointment_status.dart';
 import 'package:spine_clinic_app/features/appointment/presentation/all_appointments_providers.dart';
 import 'package:spine_clinic_app/features/appointment/presentation/appointment_providers.dart';
+import 'package:spine_clinic_app/features/appointment/presentation/receptionist_appointments_providers.dart';
 import 'package:spine_clinic_app/features/appointment/presentation/doctor_schedule_providers.dart';
 import 'package:spine_clinic_app/features/auth/domain/staff.dart';
 import 'package:spine_clinic_app/features/auth/presentation/auth_providers.dart';
@@ -158,8 +159,14 @@ class AppointmentDetailController extends _$AppointmentDetailController {
     if (patientId != null) {
       ref.invalidate(patientAppointmentsProvider(patientId));
       ref.invalidate(patientDetailProvider(patientId));
+      ref.invalidate(futureScheduledAppointmentsCountProvider(patientId));
+      ref.invalidate(availablePackageBalanceProvider(patientId));
     }
     ref.invalidate(doctorScheduleProvider);
     ref.invalidate(patientListProvider);
+
+    // Refresh the receptionist dashboard queues immediately
+    ref.read(receptionistAppointmentsProvider.notifier).loadToday();
+    ref.read(receptionistAppointmentsProvider.notifier).loadUpcoming();
   }
 }

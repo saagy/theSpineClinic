@@ -106,7 +106,7 @@ final class CurrentUserProvider
   CurrentUser create() => CurrentUser();
 }
 
-String _$currentUserHash() => r'6e808c979b4fb60bda9eae380fd340553cba379d';
+String _$currentUserHash() => r'5d55231c7cad5febd44846a5c7718111d9e1c20c';
 
 /// Reactive authentication state holding the current [Staff] profile.
 ///

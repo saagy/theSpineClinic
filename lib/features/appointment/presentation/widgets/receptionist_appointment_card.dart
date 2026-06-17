@@ -1,17 +1,14 @@
-/// Hybrid appointment card with status-based background styling.
+/// Appointment card with stacked time, auto-scaling name, and premium
+/// dot+text status indicator.
 ///
-/// Fluid three-section layout — no hardcoded widths or heights:
-///   LEADING  = time + avatar in a min-width Row
-///   MIDDLE   = name + type in Expanded
-///   TRAILING = status + menu in a min-width Row
+///   LEADING  = stacked hh:mm / AM:PM + avatar
+///   MIDDLE   = AutoSizeText name / session type + status dot
+///   TRAILING = three-dot menu (vertically centred)
 ///
-/// Status is communicated via container background, border, and timing
-/// colour. Cancelled appointments get strikethrough and a muted avatar.
-///
-/// Rule 1  — under 200 lines.
-/// Rule 13 — min 16 px internal padding.
+/// Rule 1  — under 200 lines.  Rule 13 — min 16 px internal padding.
 library;
 
+import 'package:auto_size_text/auto_size_text.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
@@ -19,12 +16,10 @@ import 'package:intl/intl.dart';
 import 'package:spine_clinic_app/core/constants/app_sizes.dart';
 import 'package:spine_clinic_app/core/constants/app_text_styles.dart';
 import 'package:spine_clinic_app/core/network/app_routes.dart';
-import 'package:spine_clinic_app/core/utils/formatters.dart';
 import 'package:spine_clinic_app/features/appointment/domain/appointment_repository.dart';
 import 'package:spine_clinic_app/features/appointment/domain/appointment_status.dart';
 import 'package:spine_clinic_app/features/appointment/presentation/widgets/appointment_actions_trailing.dart';
 import 'package:spine_clinic_app/features/appointment/presentation/widgets/appointment_status_style.dart';
-import 'package:spine_clinic_app/features/appointment/presentation/widgets/status_indicator.dart';
 import 'package:spine_clinic_app/shared/widgets/app_avatar.dart';
 
 /// A single appointment card used across receptionist and doctor screens.
@@ -56,38 +51,20 @@ class ReceptionistAppointmentCard extends StatelessWidget {
     final bool isCancelled = status == AppointmentStatus.cancelled;
     final bool applyFade = faded || isCancelled;
 
-    // ── Time widget: single line or date-over-time column ──
-    final Widget timeWidget = showDate
-        ? Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                DateFormat('MMM d')
-                    .format(item.appointment.scheduledAt.toLocal()),
-                maxLines: 1,
-                softWrap: false,
-                style: AppTextStyles.caption
-                    .copyWith(color: style.timeColor, fontSize: 12),
-              ),
-              Text(
-                DateFormat('hh:mm a')
-                    .format(item.appointment.scheduledAt.toLocal()),
-                maxLines: 1,
-                softWrap: false,
-                style: AppTextStyles.captionBold
-                    .copyWith(color: style.timeColor, fontSize: 13),
-              ),
-            ],
-          )
-        : Text(
-            Formatters.formatTime(
-                item.appointment.scheduledAt.toLocal()),
-            maxLines: 1,
-            softWrap: false,
-            style: AppTextStyles.captionBold
-                .copyWith(color: style.timeColor, fontSize: 13),
-          );
+    final DateTime t = item.appointment.scheduledAt.toLocal();
+    final Widget timeWidget = Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        if (showDate)
+          Text(DateFormat('MMM d').format(t), maxLines: 1, softWrap: false,
+              style: AppTextStyles.caption.copyWith(color: style.timeColor, fontSize: 11)),
+        Text(DateFormat('hh:mm').format(t), maxLines: 1, softWrap: false,
+            style: AppTextStyles.captionBold.copyWith(color: style.timeColor, fontSize: 13)),
+        Text(DateFormat('a').format(t), maxLines: 1, softWrap: false,
+            style: AppTextStyles.caption.copyWith(color: style.timeColor, fontSize: 10)),
+      ],
+    );
 
     final Widget card = Container(
       decoration: BoxDecoration(
@@ -113,7 +90,7 @@ class ReceptionistAppointmentCard extends StatelessWidget {
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                // ── LEADING: Time + Avatar (min-size Row, never overlaps) ──
+                // Leading: Time + Avatar
                 Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
@@ -127,51 +104,53 @@ class ReceptionistAppointmentCard extends StatelessWidget {
                   ],
                 ),
                 const SizedBox(width: AppSizes.p8),
-                // ── MIDDLE: Patient Info (Expanded, fills remaining space) ──
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Text(
+                      AutoSizeText(
                         item.patient.fullName,
                         style: AppTextStyles.bodyBold.copyWith(
                           color: style.nameColor,
                           decoration: style.nameDecoration,
                         ),
-                        maxLines: 2,
-                        softWrap: true,
+                        maxLines: 1,
+                        minFontSize: 11,
                         overflow: TextOverflow.ellipsis,
                       ),
                       const SizedBox(height: AppSizes.p2),
-                      Text(
-                        item.appointment.type.displayLabel,
-                        style: AppTextStyles.caption.copyWith(
-                          color: Theme.of(context)
-                              .colorScheme
-                              .onSurfaceVariant,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Flexible(
+                            child: Text(
+                              item.appointment.type.displayLabel,
+                              style: AppTextStyles.caption.copyWith(
+                                color: Theme.of(context)
+                                    .colorScheme.onSurfaceVariant,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          const SizedBox(width: AppSizes.p6),
+                          _StatusDot(
+                            color: status.textColor,
+                            label: status.displayLabel,
+                          ),
+                        ],
                       ),
                     ],
                   ),
                 ),
-                // ── TRAILING: Status + Menu (min-size Row, never overflows) ──
                 if (showMenu) ...[
                   const SizedBox(width: AppSizes.p8),
-                  Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      StatusIndicator(
-                          status: item.appointment.status),
-                      const SizedBox(width: AppSizes.p4),
-                      AppointmentActionsTrailing(
-                        appointment: item.appointment,
-                        onStatusChanged: onStatusChanged,
-                        showBadge: false,
-                      ),
-                    ],
+                  AppointmentActionsTrailing(
+                    appointment: item.appointment,
+                    onStatusChanged: onStatusChanged,
+                    showBadge: false,
                   ),
                 ],
               ],
@@ -181,12 +160,32 @@ class ReceptionistAppointmentCard extends StatelessWidget {
       ),
     );
 
+    // Vertical spacing between cards: 6 px top + 6 px bottom = 12 px gap.
     final Widget padded = Padding(
-      padding: const EdgeInsets.symmetric(horizontal: AppSizes.p16),
+      padding: const EdgeInsets.symmetric(
+          horizontal: AppSizes.p16, vertical: AppSizes.p6),
       child: applyFade
           ? Opacity(opacity: 0.45, child: card)
           : card,
     );
     return padded;
+  }
+}
+
+/// Colour-coded dot + coloured text — no background pill.
+class _StatusDot extends StatelessWidget {
+  const _StatusDot({required this.color, required this.label});
+  final Color color;
+  final String label;
+  @override
+  Widget build(BuildContext context) {
+    return Row(mainAxisSize: MainAxisSize.min, children: [
+      Container(width: AppSizes.p6, height: AppSizes.p6,
+          decoration: BoxDecoration(color: color, shape: BoxShape.circle)),
+      const SizedBox(width: AppSizes.p4),
+      Text(label,
+          style: AppTextStyles.caption.copyWith(
+              color: color, fontSize: 11, fontWeight: FontWeight.w600)),
+    ]);
   }
 }

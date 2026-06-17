@@ -8,6 +8,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:spine_clinic_app/core/constants/app_colors.dart';
 import 'package:spine_clinic_app/core/constants/app_sizes.dart';
+import 'package:spine_clinic_app/core/constants/app_strings.dart';
 import 'package:spine_clinic_app/core/constants/app_text_styles.dart';
 import 'package:spine_clinic_app/features/medical_records/presentation/medical_records_providers.dart';
 import 'package:spine_clinic_app/shared/widgets/debounced_button.dart';
@@ -54,7 +55,15 @@ class _AddNoteSheetState extends ConsumerState<AddNoteSheet> {
 
   Future<void> _save() async {
     final text = _ctrl.text.trim();
-    if (text.isEmpty) return;
+    if (text.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(AppStrings.cannotSaveEmptyNote),
+          backgroundColor: AppColors.error,
+        ),
+      );
+      return;
+    }
     setState(() => _saving = true);
     try {
       // When an appointmentId is available, delegate to the

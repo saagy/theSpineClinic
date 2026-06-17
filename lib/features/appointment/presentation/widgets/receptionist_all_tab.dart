@@ -121,8 +121,7 @@ class _ReceptionistAllTabState extends ConsumerState<ReceptionistAllTab> {
           child: ListView.builder(
             physics: const AlwaysScrollableScrollPhysics(),
             controller: _scrollCtrl,
-            padding: const EdgeInsets.only(
-                left: AppSizes.p16, right: AppSizes.p16, bottom: AppSizes.p32),
+            padding: const EdgeInsets.only(bottom: AppSizes.p32),
             itemCount: list.length + (loadingMore ? 1 : 0),
             itemBuilder: (_, i) {
               if (i == list.length) {
@@ -140,7 +139,7 @@ class _ReceptionistAllTabState extends ConsumerState<ReceptionistAllTab> {
               if (item is _HeaderItem) {
                 return Padding(
                     padding: const EdgeInsets.fromLTRB(
-                        AppSizes.p8, AppSizes.p20, AppSizes.p8, AppSizes.p8),
+                        AppSizes.p20, AppSizes.p16, AppSizes.p20, AppSizes.p8),
                     child: Text(item.title,
                         style: AppTextStyles.captionBold
                             .copyWith(color: AppColors.textSecondary)));

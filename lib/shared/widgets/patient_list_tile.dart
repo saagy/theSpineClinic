@@ -4,6 +4,7 @@
 /// Rule 1 — under 200 lines.
 library;
 
+import 'package:auto_size_text/auto_size_text.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:spine_clinic_app/core/constants/app_colors.dart';
@@ -97,12 +98,13 @@ class PatientListTile extends StatelessWidget {
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             Expanded(
-                              child: Text(
+                              child: AutoSizeText(
                                 name,
                                 style: AppTextStyles.cardTitle.copyWith(
                                   color: AppColors.textPrimary,
                                 ),
                                 maxLines: 1,
+                                minFontSize: 12,
                                 overflow: TextOverflow.ellipsis,
                               ),
                             ),

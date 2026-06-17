@@ -15,6 +15,7 @@ import 'package:spine_clinic_app/core/constants/app_text_styles.dart';
 import 'package:spine_clinic_app/core/errors/app_exception.dart';
 import 'package:spine_clinic_app/core/network/app_routes.dart';
 import 'package:spine_clinic_app/features/auth/domain/staff.dart';
+import 'package:spine_clinic_app/features/auth/domain/user_role.dart';
 import 'package:spine_clinic_app/features/auth/presentation/auth_providers.dart';
 import 'package:spine_clinic_app/features/auth/presentation/edit_profile_sheet.dart';
 import 'package:spine_clinic_app/features/auth/presentation/widgets/recent_appointments_preview.dart';
@@ -78,7 +79,10 @@ class DoctorProfileScreen extends ConsumerWidget {
                           InfoRow.fixedLabel(label: AppStrings.phone, value: user.phone!),
                         ],
                         const SizedBox(height: AppSizes.p12),
-                        const InfoRow.fixedLabel(label: AppStrings.role, value: AppStrings.doctorRoleLabel),
+                        InfoRow.fixedLabel(
+                          label: AppStrings.role,
+                          value: _roleLabel(user.role),
+                        ),
                         const SizedBox(height: AppSizes.p16),
                         AppButton(
                           labelText: AppStrings.editProfile,
@@ -139,3 +143,9 @@ class DoctorProfileScreen extends ConsumerWidget {
     }
   }
 }
+
+String _roleLabel(UserRole role) => switch (role) {
+  UserRole.superAdmin => AppStrings.adminRoleLabel,
+  UserRole.receptionist => AppStrings.receptionistRoleLabel,
+  UserRole.doctor => AppStrings.doctorRoleLabel,
+};

@@ -114,6 +114,20 @@ abstract class AppointmentRepository {
     String? type,
     String? patientQuery,
   });
+
+  /// Updates appointment details (scheduled_at, type, use_package).
+  Future<Result<void>> updateAppointment(Appointment appointment);
+
+  /// Hard-deletes an appointment by its ID.
+  Future<Result<void>> deleteAppointment(String appointmentId);
+
+  /// Updates doctor assignments for an appointment.
+  /// Deactivates existing active assignments and inserts new ones.
+  Future<Result<void>> updateAppointmentDoctors(
+    String appointmentId,
+    List<String> doctorIds,
+    String? editorId,
+  );
 }
 
 /// Helper domain model wrapping a doctor's active appointment assignment

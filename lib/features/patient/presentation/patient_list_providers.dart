@@ -15,6 +15,9 @@ import 'package:spine_clinic_app/core/errors/result.dart';
 import 'package:spine_clinic_app/features/patient/domain/clinic_location.dart';
 import 'package:spine_clinic_app/features/patient/domain/patient.dart';
 import 'package:spine_clinic_app/features/patient/presentation/patient_providers.dart';
+import 'package:spine_clinic_app/features/auth/presentation/auth_providers.dart';
+import 'package:spine_clinic_app/features/admin/presentation/branch_providers.dart';
+import 'package:spine_clinic_app/features/auth/domain/user_role.dart';
 
 part 'patient_list_providers.g.dart';
 
@@ -29,9 +32,13 @@ class PatientList extends _$PatientList {
   int _offset = 0;
   String _orderBy = 'full_name';
   bool _ascending = true;
+  bool _hasInitializedClinic = false;
 
   /// The currently active clinic/branch filter, or null for all branches.
   ClinicLocation? get currentClinicFilter => _clinicFilter;
+
+  /// The current search query.
+  String get currentQuery => _currentQuery;
 
   /// The currently active doctor filter, or null for all doctors.
   String? get currentDoctorFilter => _doctorId;
@@ -49,6 +56,22 @@ class PatientList extends _$PatientList {
 
   @override
   Future<List<Patient>> build() async {
+    ref.listen(activeBranchProvider, (previous, next) {
+      if (next != previous) {
+        setClinicFilter(next);
+      }
+    });
+
+    if (!_hasInitializedClinic) {
+      final user = ref.read(currentUserProvider).value;
+      if (user != null && user.role == UserRole.receptionist) {
+        _clinicFilter = ref.read(activeBranchProvider);
+      } else {
+        _clinicFilter = null;
+      }
+      _hasInitializedClinic = true;
+    }
+
     return _fetch();
   }
 

@@ -15,8 +15,6 @@ import 'package:spine_clinic_app/core/constants/app_sizes.dart';
 import 'package:spine_clinic_app/core/constants/app_strings.dart';
 import 'package:spine_clinic_app/core/constants/app_text_styles.dart';
 import 'package:spine_clinic_app/core/errors/app_exception.dart';
-import 'package:spine_clinic_app/core/utils/formatters.dart';
-import 'package:spine_clinic_app/features/appointment/domain/appointment.dart';
 import 'package:spine_clinic_app/features/appointment/domain/appointment_status.dart';
 import 'package:spine_clinic_app/features/appointment/presentation/appointment_detail_controller.dart';
 import 'package:spine_clinic_app/features/appointment/presentation/widgets/appointment_action_buttons.dart';
@@ -25,10 +23,13 @@ import 'package:spine_clinic_app/features/appointment/presentation/widgets/appoi
 import 'package:spine_clinic_app/features/auth/presentation/auth_providers.dart';
 import 'package:spine_clinic_app/shared/widgets/empty_state.dart';
 import 'package:spine_clinic_app/shared/widgets/error_view.dart';
-import 'package:spine_clinic_app/shared/widgets/info_row.dart';
-import 'package:spine_clinic_app/shared/widgets/section_card.dart';
 import 'package:spine_clinic_app/shared/widgets/skeleton_loader.dart';
 import 'package:spine_clinic_app/features/appointment/presentation/widgets/appointment_notes_card.dart';
+import 'package:go_router/go_router.dart';
+import 'package:spine_clinic_app/core/network/app_routes.dart';
+import 'package:spine_clinic_app/features/auth/domain/user_role.dart';
+import 'package:spine_clinic_app/features/appointment/presentation/widgets/delete_appointment_button.dart';
+import 'package:spine_clinic_app/features/appointment/presentation/widgets/appointment_schedule_card.dart';
 import 'package:spine_clinic_app/shared/widgets/app_back_button.dart';
 
 /// Screen displaying the full detail view for a single appointment.
@@ -43,6 +44,9 @@ class AppointmentDetailScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final AsyncValue<AppointmentDetailState> detailAsync =
         ref.watch(appointmentDetailControllerProvider(appointmentId));
+    final detailState = detailAsync.value;
+    final user = ref.watch(currentUserProvider).value;
+    final bool showEdit = detailState != null && user != null;
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -54,6 +58,27 @@ class AppointmentDetailScreen extends ConsumerWidget {
         backgroundColor: AppColors.surface,
         surfaceTintColor: AppColors.transparent,
         leading: const AppBackButton(),
+        actions: [
+          if (showEdit)
+            Padding(
+              padding: const EdgeInsets.only(right: AppSizes.p16),
+              child: TextButton.icon(
+                style: TextButton.styleFrom(
+                  backgroundColor: AppColors.primary.withAlpha(25),
+                  foregroundColor: AppColors.primary,
+                  padding: const EdgeInsets.symmetric(horizontal: AppSizes.p12),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(AppSizes.r12),
+                  ),
+                ),
+                icon: const Icon(Icons.edit_outlined, size: 18),
+                label: const Text('Edit', style: TextStyle(fontWeight: FontWeight.bold)),
+                onPressed: () => context.push(
+                  AppRoutes.editAppointment.replaceAll(':id', appointmentId),
+                ),
+              ),
+            ),
+        ],
       ),
       body: detailAsync.when(
         loading: () => const Padding(
@@ -108,7 +133,7 @@ class _AppointmentDetailBody extends ConsumerWidget {
                 ).animate().fadeIn(duration: 300.ms),
                 const SizedBox(height: AppSizes.p16),
                 // ── Card 1: Schedule ──
-                _ScheduleCard(appointment: state.appointment),
+                AppointmentScheduleCard(appointment: state.appointment),
                 const SizedBox(height: AppSizes.p16),
                 // ── Card 2: Care Team ──
                 AppointmentDoctorsSection(
@@ -124,7 +149,14 @@ class _AppointmentDetailBody extends ConsumerWidget {
                     patientId: state.appointment.patientId,
                   ),
                 ),
-                const SizedBox(height: AppSizes.p16),
+                if (userRole != UserRole.doctor) ...[
+                  const SizedBox(height: AppSizes.p24),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: AppSizes.p24),
+                    child: DeleteAppointmentButton(appointment: state.appointment),
+                  ),
+                ],
+                const SizedBox(height: AppSizes.p24),
               ],
             ),
           ),
@@ -151,37 +183,4 @@ class _AppointmentDetailBody extends ConsumerWidget {
   }
 }
 
-/// Card 1: Date, Time, Type, and Package Usage.
-class _ScheduleCard extends StatelessWidget {
-  const _ScheduleCard({required this.appointment});
-  final Appointment appointment;
 
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: AppSizes.p24),
-      child: SectionCard(
-        child: Column(
-          children: [
-            InfoRow(
-              label: AppStrings.date,
-              value: Formatters.formatDateMedium(appointment.scheduledAt),
-            ),
-            InfoRow(
-              label: AppStrings.time,
-              value: Formatters.formatTime(appointment.scheduledAt),
-            ),
-            InfoRow(
-              label: AppStrings.type,
-              value: appointment.type.displayLabel,
-            ),
-            InfoRow(
-              label: AppStrings.usePackage,
-              value: appointment.usePackage ? AppStrings.yes : AppStrings.no,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}

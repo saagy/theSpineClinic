@@ -32,7 +32,9 @@ class DoctorScheduleState {
   final Object? error;
   final Staff? doctor;
 
-  /// Items for the selected date, sorted: active by time asc, cancelled last.
+  /// Items for the selected date in strict chronological order.
+  /// Cancelled appointments stay in their original time slots (faded)
+  /// so the now-indicator calculates position correctly.
   List<DoctorScheduleItem> get itemsForSelectedDay {
     if (selectedDate == null) return [];
     final day = DateTime(selectedDate!.year, selectedDate!.month, selectedDate!.day);
@@ -41,19 +43,10 @@ class DoctorScheduleState {
     final matching = allItems.where((item) {
       final d = item.appointment.scheduledAt.toLocal();
       return !d.isBefore(day) && d.isBefore(nextDay);
-    }).toList();
-
-    final active = matching
-        .where((i) => i.appointment.status != AppointmentStatus.cancelled)
-        .toList()
+    }).toList()
       ..sort((a, b) => a.appointment.scheduledAt.compareTo(b.appointment.scheduledAt));
 
-    final cancelled = matching
-        .where((i) => i.appointment.status == AppointmentStatus.cancelled)
-        .toList()
-      ..sort((a, b) => a.appointment.scheduledAt.compareTo(b.appointment.scheduledAt));
-
-    return [...active, ...cancelled];
+    return matching;
   }
 
   /// Whether today is the selected date.
@@ -93,16 +86,17 @@ class DoctorScheduleNotifier extends Notifier<DoctorScheduleState> {
 
   @override
   DoctorScheduleState build() {
-    // Watch the auth provider so build() re-runs when the user changes.
-    // When switching accounts, _lastUserId differs so we reload automatically.
     final user = ref.watch(currentUserProvider).value;
     if (user != null && _lastUserId != user.id) {
       _lastUserId = user.id;
-      // Schedule the fetch after build completes so we don't mutate
-      // state during the build phase.
       Future.microtask(() => _load(user));
+      return DoctorScheduleState(doctor: user);
     }
-    return DoctorScheduleState(doctor: user);
+    // Rebuild for same user (e.g. profile edit) — preserve existing
+    // state so loading / allItems / error are not reset to defaults.
+    return user != null
+        ? state.copyWith(doctor: user)
+        : DoctorScheduleState(loading: false);
   }
 
   Future<void> _load(Staff user) async {

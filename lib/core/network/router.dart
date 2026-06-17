@@ -17,6 +17,7 @@ import 'package:spine_clinic_app/features/auth/presentation/splash_screen.dart';
 import 'package:spine_clinic_app/features/appointment/presentation/new_appointment_screen.dart';
 import 'package:spine_clinic_app/features/appointment/presentation/receptionist_appointments_screen.dart';
 import 'package:spine_clinic_app/features/appointment/presentation/appointment_detail_screen.dart';
+import 'package:spine_clinic_app/features/appointment/presentation/edit_appointment_screen.dart';
 import 'package:spine_clinic_app/features/patient/domain/patient.dart';
 import 'package:spine_clinic_app/features/patient/presentation/edit_patient_screen.dart';
 import 'package:spine_clinic_app/features/patient/presentation/my_patients_screen.dart';
@@ -173,6 +174,13 @@ List<RouteBase> _buildRoutes(Ref ref) {
       pageBuilder: (_, GoRouterState state) {
         final String appointmentId = state.pathParameters['id'] ?? '';
         return NoTransitionPage(child: AppointmentDetailScreen(appointmentId: appointmentId));
+      },
+    ),
+    GoRoute(
+      path: AppRoutes.editAppointment,
+      pageBuilder: (_, GoRouterState state) {
+        final String appointmentId = state.pathParameters['id'] ?? '';
+        return NoTransitionPage(child: EditAppointmentScreen(appointmentId: appointmentId));
       },
     ),
     GoRoute(
