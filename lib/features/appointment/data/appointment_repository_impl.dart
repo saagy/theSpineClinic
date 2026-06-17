@@ -5,6 +5,7 @@ import 'package:spine_clinic_app/features/appointment/domain/appointment.dart';
 import 'package:spine_clinic_app/features/appointment/domain/appointment_doctor.dart';
 import 'package:spine_clinic_app/features/appointment/domain/appointment_repository.dart';
 import 'package:spine_clinic_app/features/appointment/domain/appointment_status.dart';
+import 'package:spine_clinic_app/features/appointment/domain/appointment_type.dart';
 import 'package:spine_clinic_app/features/auth/domain/staff.dart';
 import 'package:spine_clinic_app/features/patient/domain/patient.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' show PostgrestFilterBuilder;
@@ -155,6 +156,100 @@ class AppointmentRepositoryImpl implements AppointmentRepository {
       final List<Map<String, dynamic>> rows = await _service.from(_appointmentsTable).select().eq('patient_id', patientId).order('scheduled_at', ascending: true);
       return rows.map(Appointment.fromJson).toList();
     });
+  }
+
+  @override
+  Future<Result<List<Appointment>>> getAppointmentsForPatientPaginated({
+    required String patientId,
+    int offset = 0,
+    int limit = 30,
+    Set<AppointmentStatus>? statusFilter,
+    Set<AppointmentType>? typeFilter,
+    DateTime? dateFrom,
+    DateTime? dateTo,
+    String? doctorId,
+    bool? usePackageFilter,
+    bool ascending = false,
+  }) {
+    return _run(() async {
+      final List<String>? doctorIds = await _resolveDoctorIds(doctorId);
+      if (doctorIds != null && doctorIds.isEmpty) return <Appointment>[];
+
+      final builder = _applyPatientFilters(
+        patientId: patientId,
+        doctorIds: doctorIds,
+        statusFilter: statusFilter,
+        typeFilter: typeFilter,
+        dateFrom: dateFrom,
+        dateTo: dateTo,
+        usePackageFilter: usePackageFilter,
+      );
+
+      final List<Map<String, dynamic>> rows = await builder
+          .order('scheduled_at', ascending: ascending)
+          .range(offset, offset + limit - 1);
+      return rows.map(Appointment.fromJson).toList();
+    });
+  }
+
+  @override
+  Future<Result<int>> countAppointmentsForPatient({
+    required String patientId,
+    Set<AppointmentStatus>? statusFilter,
+    Set<AppointmentType>? typeFilter,
+    DateTime? dateFrom,
+    DateTime? dateTo,
+    String? doctorId,
+    bool? usePackageFilter,
+  }) {
+    return _run(() async {
+      final List<String>? doctorIds = await _resolveDoctorIds(doctorId);
+      if (doctorIds != null && doctorIds.isEmpty) return 0;
+
+      final builder = _applyPatientFilters(
+        patientId: patientId,
+        doctorIds: doctorIds,
+        statusFilter: statusFilter,
+        typeFilter: typeFilter,
+        dateFrom: dateFrom,
+        dateTo: dateTo,
+        usePackageFilter: usePackageFilter,
+      );
+
+      final List<Map<String, dynamic>> rows = await builder;
+      return rows.length;
+    });
+  }
+
+  PostgrestFilterBuilder _applyPatientFilters({
+    required String patientId,
+    required List<String>? doctorIds,
+    Set<AppointmentStatus>? statusFilter,
+    Set<AppointmentType>? typeFilter,
+    DateTime? dateFrom,
+    DateTime? dateTo,
+    bool? usePackageFilter,
+  }) {
+    var builder = _service.from(_appointmentsTable).select().eq('patient_id', patientId);
+    if (dateFrom != null) {
+      builder = builder.gte('scheduled_at', dateFrom.toUtc().toIso8601String());
+    }
+    if (dateTo != null) {
+      builder = builder.lt('scheduled_at', dateTo.toUtc().toIso8601String());
+    }
+    if (statusFilter != null && statusFilter.isNotEmpty) {
+      builder = builder.inFilter('status', statusFilter.map((s) => s.dbValue).toList());
+    }
+    if (typeFilter != null && typeFilter.isNotEmpty) {
+      builder = builder.inFilter('type', typeFilter.map((t) => t.dbValue).toList());
+    }
+    if (usePackageFilter != null) {
+      builder = builder.eq('use_package', usePackageFilter);
+    }
+    if (doctorIds != null) {
+      builder = builder.inFilter('id', doctorIds);
+    }
+    return builder;
   }
 
   @override

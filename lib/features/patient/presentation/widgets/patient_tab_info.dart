@@ -21,49 +21,62 @@ class PatientTabInfo extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final assignedDoctorsAsync = ref.watch(patientAssignedDoctorsProvider(patient.id));
 
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(AppSizes.p16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          SectionCard(
-            title: AppStrings.patientDetails,
-            child: Column(
-              children: [
-                InfoRow(label: AppStrings.fullName, value: patient.fullName),
-                InfoRow(label: AppStrings.phone, value: patient.phoneNumber),
-                InfoRow(label: AppStrings.program, value: patient.program ?? 'None'),
-                InfoRow(label: AppStrings.clinic, value: patient.clinic.displayLabel),
-              ],
-            ),
-          ),
-          const SizedBox(height: AppSizes.p16),
-          SectionCard(
-            title: AppStrings.assignedDoctors,
-            child: assignedDoctorsAsync.when(
-              data: (doctors) {
-                if (doctors.isEmpty) {
-                  return const Text(AppStrings.noDoctorsAssigned);
-                }
-                return Wrap(
-                  spacing: AppSizes.p8,
-                  runSpacing: AppSizes.p8,
-                  children: doctors
-                      .map((doc) => AppChip(label: doc.fullName))
-                      .toList(),
-                );
-              },
-              loading: () => const Center(
-                child: SizedBox(
-                  width: AppSizes.thumbnailDefault,
-                  height: AppSizes.thumbnailDefault,
-                  child: CircularProgressIndicator(strokeWidth: AppSizes.strokeWidthThin),
-                ),
+    return RefreshIndicator(
+      onRefresh: () async {
+        ref.invalidate(patientDetailProvider(patient.id));
+        ref.invalidate(patientAssignedDoctorsProvider(patient.id));
+        try {
+          await ref.read(patientDetailProvider(patient.id).future);
+          await ref.read(patientAssignedDoctorsProvider(patient.id).future);
+        } catch (_) {
+          // Keep the refresh indicator happy if request fails
+        }
+      },
+      child: SingleChildScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: const EdgeInsets.all(AppSizes.p16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            SectionCard(
+              title: AppStrings.patientDetails,
+              child: Column(
+                children: [
+                  InfoRow(label: AppStrings.fullName, value: patient.fullName),
+                  InfoRow(label: AppStrings.phone, value: patient.phoneNumber),
+                  InfoRow(label: AppStrings.program, value: patient.program ?? 'None'),
+                  InfoRow(label: AppStrings.clinic, value: patient.clinic.displayLabel),
+                ],
               ),
-              error: (_, __) => const Text(AppStrings.errorLoadingAssignedDoctors),
             ),
-          ),
-        ],
+            const SizedBox(height: AppSizes.p16),
+            SectionCard(
+              title: AppStrings.assignedDoctors,
+              child: assignedDoctorsAsync.when(
+                data: (doctors) {
+                  if (doctors.isEmpty) {
+                    return const Text(AppStrings.noDoctorsAssigned);
+                  }
+                  return Wrap(
+                    spacing: AppSizes.p8,
+                    runSpacing: AppSizes.p8,
+                    children: doctors
+                        .map((doc) => AppChip(label: doc.fullName))
+                        .toList(),
+                  );
+                },
+                loading: () => const Center(
+                  child: SizedBox(
+                    width: AppSizes.thumbnailDefault,
+                    height: AppSizes.thumbnailDefault,
+                    child: CircularProgressIndicator(strokeWidth: AppSizes.strokeWidthThin),
+                  ),
+                ),
+                error: (_, __) => const Text(AppStrings.errorLoadingAssignedDoctors),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

@@ -33,13 +33,17 @@ class PaymentRow extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return DataListTile(
-      title: payment.reason,
-      titleMaxLines: null,
-      subtitle: payment.recordedAt.toDateTimeString(),
-      trailing: Row(
-        mainAxisSize: MainAxisSize.min,
+      titleWidget: Wrap(
+        crossAxisAlignment: WrapCrossAlignment.center,
+        spacing: AppSizes.p8,
         children: [
-          if (payment.sessionsAdded > 0) ...[
+          Text(
+            payment.reason,
+            style: AppTextStyles.bodyBold.copyWith(
+              color: AppColors.textPrimary,
+            ),
+          ),
+          if (payment.sessionsAdded > 0)
             Container(
               padding: const EdgeInsets.symmetric(
                 horizontal: AppSizes.p8,
@@ -57,8 +61,12 @@ class PaymentRow extends ConsumerWidget {
                 ),
               ),
             ),
-            const SizedBox(width: AppSizes.p8),
-          ],
+        ],
+      ),
+      subtitle: payment.recordedAt.toDateTimeString(),
+      trailing: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
           Text(
             payment.amount.toCurrencyString(),
             style: AppTextStyles.bodyBold.copyWith(color: AppColors.textPrimary),

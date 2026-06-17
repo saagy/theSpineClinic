@@ -5,7 +5,6 @@
 library;
 
 import 'package:flutter/material.dart';
-import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
@@ -27,6 +26,7 @@ import 'package:spine_clinic_app/shared/widgets/error_view.dart';
 import 'package:spine_clinic_app/shared/widgets/skeleton_loader.dart';
 import 'package:spine_clinic_app/shared/widgets/sort_filter_bar.dart';
 import 'package:spine_clinic_app/shared/widgets/sort_options_sheet.dart';
+import 'package:spine_clinic_app/shared/widgets/animated_list_item.dart';
 
 /// The "All" tab for the receptionist dashboard. Mirrors the standalone
 /// [AllAppointmentsScreen] but embeds as a tab and uses [ReceptionistAppointmentCard]
@@ -42,6 +42,7 @@ class ReceptionistAllTab extends ConsumerStatefulWidget {
 
 class _ReceptionistAllTabState extends ConsumerState<ReceptionistAllTab> {
   final ScrollController _scrollCtrl = ScrollController();
+  final Set<int> _animatedIndices = <int>{};
 
   @override
   void initState() {
@@ -89,6 +90,9 @@ class _ReceptionistAllTabState extends ConsumerState<ReceptionistAllTab> {
   @override
   Widget build(BuildContext context) {
     final async = ref.watch(allAppointmentsProvider);
+    if (async.isLoading && async.value == null) {
+      _animatedIndices.clear();
+    }
     final n = ref.read(allAppointmentsProvider.notifier);
     return Column(children: [
       Padding(
@@ -98,6 +102,17 @@ class _ReceptionistAllTabState extends ConsumerState<ReceptionistAllTab> {
       SortFilterBar(sortLabel: 'Sort: $_sortLabel', onSortTap: _showSortSheet,
         activeFilterCount: _chips.length, onFilterTap: () => _openFilterSheet(context)),
       ActiveFilterChipsRow(chips: _chips, onClearAll: () => ref.read(allAppointmentsProvider.notifier).clearAll()),
+      if (async.value != null && !async.isLoading)
+        Padding(
+          padding: const EdgeInsets.fromLTRB(AppSizes.p20, AppSizes.p8, AppSizes.p20, AppSizes.p4),
+          child: Align(
+            alignment: Alignment.centerLeft,
+            child: Text(
+              'Total Appointments: ${ref.read(allAppointmentsProvider.notifier).totalCount}',
+              style: AppTextStyles.captionBold.copyWith(color: AppColors.textSecondary),
+            ),
+          ),
+        ),
       Expanded(child: _body(async)),
     ]);
   }
@@ -145,12 +160,15 @@ class _ReceptionistAllTabState extends ConsumerState<ReceptionistAllTab> {
                             .copyWith(color: AppColors.textSecondary)));
               }
               final a = (item as _ApptItem).item;
-              return ReceptionistAppointmentCard(
-                      item: a,
-                      showMenu: true,
-                      onStatusChanged: widget.onStatusChanged)
-                  .animate()
-                  .fadeIn(duration: 250.ms, delay: (i * 30).ms);
+              return AnimatedListItem(
+                index: i,
+                animatedIndices: _animatedIndices,
+                child: ReceptionistAppointmentCard(
+                  item: a,
+                  showMenu: true,
+                  onStatusChanged: widget.onStatusChanged,
+                ),
+              );
             },
           ),
         );

@@ -10,13 +10,13 @@
 library;
 
 import 'package:flutter/material.dart';
-import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:spine_clinic_app/core/constants/app_colors.dart';
 import 'package:spine_clinic_app/core/constants/app_sizes.dart';
 import 'package:spine_clinic_app/core/constants/app_strings.dart';
+import 'package:spine_clinic_app/core/constants/app_text_styles.dart';
 import 'package:spine_clinic_app/core/errors/app_exception.dart'
     show AppException, UnknownException;
 import 'package:spine_clinic_app/core/network/app_routes.dart';
@@ -37,6 +37,7 @@ import 'package:spine_clinic_app/features/staff/presentation/staff_providers.dar
 import 'package:spine_clinic_app/shared/widgets/patient_list_tile.dart';
 import 'package:spine_clinic_app/shared/widgets/skeleton_loader.dart';
 import 'package:spine_clinic_app/features/patient/presentation/widgets/patient_search_filters.dart';
+import 'package:spine_clinic_app/shared/widgets/animated_list_item.dart';
 
 /// A searchable, filterable, sortable, paginated patient roster.
 class PatientListScreen extends ConsumerStatefulWidget {
@@ -74,6 +75,7 @@ enum PatientSortOption {
 
 class _PatientListScreenState extends ConsumerState<PatientListScreen> {
   final ScrollController _scrollCtrl = ScrollController();
+  final Set<int> _animatedIndices = <int>{};
 
   @override
   void initState() {
@@ -170,6 +172,9 @@ class _PatientListScreenState extends ConsumerState<PatientListScreen> {
   @override
   Widget build(BuildContext context) {
     final AsyncValue<List<Patient>> state = ref.watch(patientListProvider);
+    if (state.isLoading && state.value == null) {
+      _animatedIndices.clear();
+    }
     final clinicFilter = ref.watch(patientListProvider.notifier).currentClinicFilter;
 
     return Scaffold(
@@ -217,6 +222,19 @@ class _PatientListScreenState extends ConsumerState<PatientListScreen> {
                   ..setClinicFilter(null);
               },
             ),
+
+            // ── Count Badge ──
+            if (state.value != null && !state.isLoading)
+              Padding(
+                padding: const EdgeInsets.fromLTRB(AppSizes.p20, AppSizes.p8, AppSizes.p20, AppSizes.p4),
+                child: Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    'Total Patients: ${ref.watch(patientListProvider.notifier).totalCount}',
+                    style: AppTextStyles.captionBold.copyWith(color: AppColors.textSecondary),
+                  ),
+                ),
+              ),
 
             // ── List ──
             Expanded(
@@ -273,19 +291,20 @@ class _PatientListScreenState extends ConsumerState<PatientListScreen> {
                           return _buildLoadMore();
                         }
                         final Patient p = patients[index];
-                        return PatientListTile(
-                          name: p.fullName,
-                          phone: p.phoneNumber,
-                          branchLabel: p.clinic.displayLabel,
-                          lastVisitDate: p.lastAppointmentDate,
-                          onTap: () => context.push(
-                            AppRoutes.patientDetail
-                                .replaceAll(':id', p.id),
+                        return AnimatedListItem(
+                          index: index,
+                          animatedIndices: _animatedIndices,
+                          child: PatientListTile(
+                            name: p.fullName,
+                            phone: p.phoneNumber,
+                            branchLabel: p.clinic.displayLabel,
+                            lastVisitDate: p.lastAppointmentDate,
+                            onTap: () => context.push(
+                              AppRoutes.patientDetail
+                                  .replaceAll(':id', p.id),
+                            ),
                           ),
-                        ).animate().fadeIn(
-                              duration: 300.ms,
-                              delay: (index * 40).ms,
-                            );
+                        );
                       },
                     ),
                   );

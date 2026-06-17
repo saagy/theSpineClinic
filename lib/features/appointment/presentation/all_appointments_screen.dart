@@ -31,11 +31,12 @@ import 'package:spine_clinic_app/features/patient/domain/clinic_location.dart';
 import 'package:spine_clinic_app/features/auth/domain/staff.dart';
 import 'package:spine_clinic_app/features/auth/domain/user_role.dart';
 import 'package:spine_clinic_app/features/auth/presentation/auth_providers.dart';
-import 'package:flutter_animate/flutter_animate.dart';
+// all_appointments_screen.dart imports
 import 'package:intl/intl.dart';
 import 'package:spine_clinic_app/shared/widgets/app_bottom_sheet.dart';
 import 'package:spine_clinic_app/shared/widgets/empty_state.dart';
 import 'package:spine_clinic_app/shared/widgets/error_view.dart';
+import 'package:spine_clinic_app/shared/widgets/animated_list_item.dart';
 
 /// Full-screen management view of all appointments with infinite-scroll pagination.
 class AllAppointmentsScreen extends ConsumerStatefulWidget {
@@ -63,6 +64,7 @@ enum AppointmentSortOption {
 
 class _AllAppointmentsScreenState extends ConsumerState<AllAppointmentsScreen> {
   final ScrollController _scrollCtrl = ScrollController();
+  final Set<int> _animatedIndices = <int>{};
 
   @override
   void initState() {
@@ -208,6 +210,9 @@ class _AllAppointmentsScreenState extends ConsumerState<AllAppointmentsScreen> {
 
     final AsyncValue<List<AppointmentWithPatient>> appointmentsAsync =
         ref.watch(allAppointmentsProvider);
+    if (appointmentsAsync.isLoading && appointmentsAsync.value == null) {
+      _animatedIndices.clear();
+    }
     final AllAppointmentsNotifier notifier = ref.read(allAppointmentsProvider.notifier);
 
     return Scaffold(
@@ -239,6 +244,17 @@ class _AllAppointmentsScreenState extends ConsumerState<AllAppointmentsScreen> {
             chips: _activeChips,
             onClearAll: () => ref.read(allAppointmentsProvider.notifier).clearAll(),
           ),
+          if (appointmentsAsync.value != null && !appointmentsAsync.isLoading)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(AppSizes.p20, AppSizes.p8, AppSizes.p20, AppSizes.p4),
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  'Total Appointments: ${ref.watch(allAppointmentsProvider.notifier).totalCount}',
+                  style: AppTextStyles.captionBold.copyWith(color: AppColors.textSecondary),
+                ),
+              ),
+            ),
           Expanded(child: _buildBody(appointmentsAsync)),
         ],
       ),
@@ -262,47 +278,57 @@ class _AllAppointmentsScreenState extends ConsumerState<AllAppointmentsScreen> {
         final bool loadingMore = ref.watch(isLoadingMoreProvider);
         final List<_ListItem> listItems = _buildListItems(items);
 
-        return ListView.builder(
-          controller: _scrollCtrl,
-          padding: const EdgeInsets.only(bottom: AppSizes.p32),
-          itemCount: listItems.length + (loadingMore ? 1 : 0),
-          itemBuilder: (_, int index) {
-            if (index == listItems.length) {
-              return const Padding(
-                padding: EdgeInsets.symmetric(vertical: AppSizes.p16),
-                child: Center(
-                  child: SizedBox(
-                    width: AppSizes.iconDefault,
-                    height: AppSizes.iconDefault,
-                    child: CircularProgressIndicator(
-                      strokeWidth: AppSizes.strokeWidthThin,
-                      color: AppColors.primary,
+        return RefreshIndicator(
+          onRefresh: () async {
+            ref.read(allAppointmentsProvider.notifier).refresh();
+            try {
+              await ref.read(allAppointmentsProvider.future);
+            } catch (_) {}
+          },
+          child: ListView.builder(
+            physics: const AlwaysScrollableScrollPhysics(),
+            controller: _scrollCtrl,
+            padding: const EdgeInsets.only(bottom: AppSizes.p32),
+            itemCount: listItems.length + (loadingMore ? 1 : 0),
+            itemBuilder: (_, int index) {
+              if (index == listItems.length) {
+                return const Padding(
+                  padding: EdgeInsets.symmetric(vertical: AppSizes.p16),
+                  child: Center(
+                    child: SizedBox(
+                      width: AppSizes.iconDefault,
+                      height: AppSizes.iconDefault,
+                      child: CircularProgressIndicator(
+                        strokeWidth: AppSizes.strokeWidthThin,
+                        color: AppColors.primary,
+                      ),
                     ),
                   ),
-                ),
-              );
-            }
-            final _ListItem listItem = listItems[index];
-            if (listItem is _HeaderItem) {
-              return Padding(
-                padding: const EdgeInsets.fromLTRB(AppSizes.p20, AppSizes.p16, AppSizes.p20, AppSizes.p8),
-                child: Text(
-                  listItem.title,
-                  style: AppTextStyles.captionBold.copyWith(
-                    color: AppColors.textSecondary,
-                  ),
-                ),
-              );
-            }
-            final AppointmentWithPatient item = (listItem as _AppointmentItem).item;
-            return ReceptionistAppointmentCard(
-              key: ValueKey(item.appointment.id),
-              item: item,
-            ).animate().fadeIn(
-                  duration: 250.ms,
-                  delay: (index * 30).ms,
                 );
-          },
+              }
+              final _ListItem listItem = listItems[index];
+              if (listItem is _HeaderItem) {
+                return Padding(
+                  padding: const EdgeInsets.fromLTRB(AppSizes.p20, AppSizes.p16, AppSizes.p20, AppSizes.p8),
+                  child: Text(
+                    listItem.title,
+                    style: AppTextStyles.captionBold.copyWith(
+                      color: AppColors.textSecondary,
+                    ),
+                  ),
+                );
+              }
+              final AppointmentWithPatient item = (listItem as _AppointmentItem).item;
+              return AnimatedListItem(
+                index: index,
+                animatedIndices: _animatedIndices,
+                child: ReceptionistAppointmentCard(
+                  key: ValueKey(item.appointment.id),
+                  item: item,
+                ),
+              );
+            },
+          ),
         );
       },
     );

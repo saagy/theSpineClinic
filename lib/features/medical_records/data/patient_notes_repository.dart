@@ -14,6 +14,23 @@ abstract class PatientNotesRepository {
   /// Fetches notes for a specific patient, ordered by created_at DESC.
   Future<Result<List<PatientNote>>> getNotesForPatient(String patientId);
 
+  /// Fetches notes for a specific patient, paginated, sorted, and filtered by date.
+  Future<Result<List<PatientNote>>> getNotesForPatientPaginated({
+    required String patientId,
+    int offset = 0,
+    int limit = 30,
+    DateTime? dateFrom,
+    DateTime? dateTo,
+    bool ascending = false,
+  });
+
+  /// Counts the notes matching date filters for a patient.
+  Future<Result<int>> countNotesForPatient({
+    required String patientId,
+    DateTime? dateFrom,
+    DateTime? dateTo,
+  });
+
   /// Inserts a new note.
   Future<Result<PatientNote>> createNote({
     required String patientId,
@@ -54,6 +71,45 @@ class PatientNotesRepositoryImpl implements PatientNotesRepository {
       return Result.failure(error);
     } on Exception catch (error) {
       return Result.failure(AppException.fromSupabaseException(error));
+    }
+  }
+
+  @override
+  Future<Result<List<PatientNote>>> getNotesForPatientPaginated({
+    required String patientId,
+    int offset = 0,
+    int limit = 30,
+    DateTime? dateFrom,
+    DateTime? dateTo,
+    bool ascending = false,
+  }) async {
+    try {
+      var query = _service.from('patient_notes').select().eq('patient_id', patientId);
+      if (dateFrom != null) query = query.gte('created_at', dateFrom.toUtc().toIso8601String());
+      if (dateTo != null) query = query.lt('created_at', dateTo.toUtc().toIso8601String());
+      final List<Map<String, dynamic>> rows = await _service.guardQuery(
+        () => query.order('created_at', ascending: ascending).range(offset, offset + limit - 1),
+      );
+      return Result.success(rows.map(PatientNote.fromJson).toList());
+    } on Exception catch (e) {
+      return Result.failure(e is AppException ? e : AppException.fromSupabaseException(e));
+    }
+  }
+
+  @override
+  Future<Result<int>> countNotesForPatient({
+    required String patientId,
+    DateTime? dateFrom,
+    DateTime? dateTo,
+  }) async {
+    try {
+      var query = _service.from('patient_notes').select().eq('patient_id', patientId);
+      if (dateFrom != null) query = query.gte('created_at', dateFrom.toUtc().toIso8601String());
+      if (dateTo != null) query = query.lt('created_at', dateTo.toUtc().toIso8601String());
+      final List<Map<String, dynamic>> rows = await _service.guardQuery(() => query);
+      return Result.success(rows.length);
+    } on Exception catch (e) {
+      return Result.failure(e is AppException ? e : AppException.fromSupabaseException(e));
     }
   }
 

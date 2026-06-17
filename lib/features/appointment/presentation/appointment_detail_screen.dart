@@ -122,42 +122,54 @@ class _AppointmentDetailBody extends ConsumerWidget {
     return Column(
       children: [
         Expanded(
-          child: SingleChildScrollView(
-            physics: const AlwaysScrollableScrollPhysics(),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                AppointmentDetailHeader(
-                  appointment: state.appointment,
-                  patient: state.patient,
-                ).animate().fadeIn(duration: 300.ms),
-                const SizedBox(height: AppSizes.p16),
-                // ── Card 1: Schedule ──
-                AppointmentScheduleCard(appointment: state.appointment),
-                const SizedBox(height: AppSizes.p16),
-                // ── Card 2: Care Team ──
-                AppointmentDoctorsSection(
-                  activeDoctors: state.activeDoctors,
-                  inactiveDoctors: state.inactiveDoctors,
-                ),
-                const SizedBox(height: AppSizes.p16),
-                // ── Card 3: Clinical Notes ──
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: AppSizes.p24),
-                  child: AppointmentNotesCard(
-                    appointmentId: state.appointment.id,
-                    patientId: state.appointment.patientId,
+          child: RefreshIndicator(
+            onRefresh: () async {
+              ref.invalidate(appointmentDetailControllerProvider(state.appointment.id));
+              try {
+                await ref.read(
+                  appointmentDetailControllerProvider(state.appointment.id).future,
+                );
+              } catch (_) {
+                // Ignore errors for refresh UI completion
+              }
+            },
+            child: SingleChildScrollView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  AppointmentDetailHeader(
+                    appointment: state.appointment,
+                    patient: state.patient,
+                  ).animate().fadeIn(duration: 300.ms),
+                  const SizedBox(height: AppSizes.p16),
+                  // ── Card 1: Schedule ──
+                  AppointmentScheduleCard(appointment: state.appointment),
+                  const SizedBox(height: AppSizes.p16),
+                  // ── Card 2: Care Team ──
+                  AppointmentDoctorsSection(
+                    activeDoctors: state.activeDoctors,
+                    inactiveDoctors: state.inactiveDoctors,
                   ),
-                ),
-                if (userRole != UserRole.doctor) ...[
-                  const SizedBox(height: AppSizes.p24),
+                  const SizedBox(height: AppSizes.p16),
+                  // ── Card 3: Clinical Notes ──
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: AppSizes.p24),
-                    child: DeleteAppointmentButton(appointment: state.appointment),
+                    child: AppointmentNotesCard(
+                      appointmentId: state.appointment.id,
+                      patientId: state.appointment.patientId,
+                    ),
                   ),
+                  if (userRole != UserRole.doctor) ...[
+                    const SizedBox(height: AppSizes.p24),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: AppSizes.p24),
+                      child: DeleteAppointmentButton(appointment: state.appointment),
+                    ),
+                  ],
+                  const SizedBox(height: AppSizes.p24),
                 ],
-                const SizedBox(height: AppSizes.p24),
-              ],
+              ),
             ),
           ),
         ),

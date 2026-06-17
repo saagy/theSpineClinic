@@ -79,13 +79,13 @@ class _ErrorScaffold extends StatelessWidget {
   }
 }
 
-class _PatientProfile extends StatelessWidget {
+class _PatientProfile extends ConsumerWidget {
   const _PatientProfile({required this.patient, required this.isDoctor});
   final Patient patient;
   final bool isDoctor;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final tabs = <Tab>[
       const Tab(text: 'Info'),
       const Tab(text: 'Appointments'),

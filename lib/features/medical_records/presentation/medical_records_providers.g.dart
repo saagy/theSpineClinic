@@ -192,7 +192,7 @@ final class AppointmentNoteProvider
   }
 }
 
-String _$appointmentNoteHash() => r'91bcaf81da4a5e8353b9b5772052309138c79a70';
+String _$appointmentNoteHash() => r'81b0ae246647828a1dcdc3ba6ecff7238e699b54';
 
 /// Manages the note linked to a specific appointment.
 
@@ -297,7 +297,7 @@ final class PatientNotesNotifierNotifierProvider
 }
 
 String _$patientNotesNotifierNotifierHash() =>
-    r'41a88cd00e5b1df655c9bcf89bc3d0b59712f709';
+    r'5af6a5b97ae33f9eacfccbe7f66522bec2824111';
 
 /// Family notifier managing the patient notes list state.
 

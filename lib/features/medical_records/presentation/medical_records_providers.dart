@@ -19,6 +19,7 @@ import 'package:spine_clinic_app/features/auth/domain/staff.dart';
 import 'package:spine_clinic_app/features/auth/presentation/auth_providers.dart';
 import 'package:spine_clinic_app/features/medical_records/data/patient_notes_repository.dart';
 import 'package:spine_clinic_app/features/medical_records/domain/patient_note.dart';
+import 'package:spine_clinic_app/features/medical_records/presentation/patient_notes_list_notifier.dart';
 
 part 'medical_records_providers.g.dart';
 
@@ -110,6 +111,7 @@ class AppointmentNote extends _$AppointmentNote {
         state = AsyncValue.data(newNote);
         // Invalidate the patient notes notifier since the list has changed
         ref.invalidate(patientNotesNotifierProvider(patientId));
+        ref.invalidate(patientNotesListProvider(patientId));
       },
       failure: (AppException exception) {
         state = AsyncValue.error(exception, StackTrace.current);
@@ -197,6 +199,7 @@ class PatientNotesNotifierNotifier extends _$PatientNotesNotifierNotifier {
         if (appointmentId != null) {
           ref.invalidate(appointmentNoteProvider(appointmentId));
         }
+        ref.invalidate(patientNotesListProvider(patientId));
         final Result<List<PatientNote>> notesResult = await repo.getNotesForPatient(patientId);
         if (!ref.mounted) return;
         state = notesResult.when(
@@ -226,6 +229,7 @@ class PatientNotesNotifierNotifier extends _$PatientNotesNotifierNotifier {
         if (updatedNote.appointmentId != null) {
           ref.invalidate(appointmentNoteProvider(updatedNote.appointmentId!));
         }
+        ref.invalidate(patientNotesListProvider(patientId));
         final Result<List<PatientNote>> notesResult = await repo.getNotesForPatient(patientId);
         if (!ref.mounted) return;
         state = notesResult.when(

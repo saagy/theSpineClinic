@@ -513,4 +513,9 @@ abstract final class AppStrings {
   static const String packagesSold = 'Packages Sold';
   static const String packagesSoldValue = 'Packages Sold Value';
   static const String sessionsCompleted = 'Sessions Completed';
+
+  // Package usage filter labels
+  static const String packageFilterAll = 'All';
+  static const String packageFilterPackage = 'Package';
+  static const String packageFilterNoPackage = 'No Package';
 }

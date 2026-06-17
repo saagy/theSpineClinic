@@ -1,66 +1,31 @@
-/// Paginated history screen for a doctor's past and present appointments.
-///
-/// Features debounced search by patient name, date-range filter,
-/// appointment-type filter, and infinite‑scroll pagination.
-library;
-
 import 'package:flutter/material.dart';
-import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
-import 'package:intl/intl.dart';
-
 import 'package:spine_clinic_app/core/constants/app_colors.dart';
 import 'package:spine_clinic_app/core/constants/app_sizes.dart';
 import 'package:spine_clinic_app/core/constants/app_strings.dart';
 import 'package:spine_clinic_app/core/constants/app_text_styles.dart';
-import 'package:spine_clinic_app/core/network/app_routes.dart';
-import 'package:spine_clinic_app/core/utils/formatters.dart';
 import 'package:spine_clinic_app/features/appointment/domain/appointment_repository.dart';
 import 'package:spine_clinic_app/features/appointment/domain/appointment_type.dart';
 import 'package:spine_clinic_app/features/appointment/presentation/appointment_providers.dart';
-import 'package:spine_clinic_app/features/appointment/presentation/widgets/appointment_actions_trailing.dart';
+import 'package:spine_clinic_app/features/auth/domain/history_sort_option.dart';
 import 'package:spine_clinic_app/features/auth/presentation/auth_providers.dart';
 import 'package:spine_clinic_app/features/patient/domain/clinic_location.dart';
-import 'package:spine_clinic_app/shared/widgets/app_avatar.dart';
 import 'package:spine_clinic_app/shared/widgets/app_back_button.dart';
 import 'package:spine_clinic_app/shared/widgets/app_bottom_sheet.dart';
 import 'package:spine_clinic_app/shared/widgets/app_search_bar.dart';
-import 'package:spine_clinic_app/shared/widgets/data_list_tile.dart';
 import 'package:spine_clinic_app/shared/widgets/empty_state.dart';
 import 'package:spine_clinic_app/shared/widgets/sort_filter_bar.dart';
 import 'package:spine_clinic_app/shared/widgets/sort_options_sheet.dart';
 import 'package:spine_clinic_app/shared/widgets/active_filter_chips_row.dart';
 import 'widgets/history_filter_content.dart';
+import 'widgets/doctor_history_list_view.dart';
 
 /// Full-screen history view for a doctor's appointments.
 class DoctorHistoryScreen extends ConsumerStatefulWidget {
-  /// Creates a [DoctorHistoryScreen].
   const DoctorHistoryScreen({super.key});
 
   @override
   ConsumerState<DoctorHistoryScreen> createState() => _DoctorHistoryScreenState();
-}
-
-enum HistorySortOption {
-  dateNewest,
-  dateOldest,
-  patientNameAsc,
-  patientNameDesc;
-
-  String get displayLabel => switch (this) {
-    HistorySortOption.dateNewest => 'Date (Newest)',
-    HistorySortOption.dateOldest => 'Date (Oldest)',
-    HistorySortOption.patientNameAsc => 'Patient Name (A → Z)',
-    HistorySortOption.patientNameDesc => 'Patient Name (Z → A)',
-  };
-
-  String get buttonLabel => switch (this) {
-    HistorySortOption.dateNewest => 'Date ↓',
-    HistorySortOption.dateOldest => 'Date ↑',
-    HistorySortOption.patientNameAsc => 'Name A→Z',
-    HistorySortOption.patientNameDesc => 'Name Z→A',
-  };
 }
 
 class _DoctorHistoryScreenState extends ConsumerState<DoctorHistoryScreen> {
@@ -103,47 +68,29 @@ class _DoctorHistoryScreenState extends ConsumerState<DoctorHistoryScreen> {
 
     final repo = ref.read(appointmentRepositoryProvider);
     final result = await repo.getDoctorSchedule(user.id);
-
     if (!mounted) return;
 
     result.when(
-      success: (items) {
-        setState(() {
-          _allItems = items;
-          _isLoading = false;
-          _applyFilters();
-        });
-      },
-      failure: (_) {
-        setState(() { _isLoading = false; _hasError = true; });
-      },
+      success: (items) => setState(() {
+        _allItems = items;
+        _isLoading = false;
+        _applyFilters();
+      }),
+      failure: (_) => setState(() { _isLoading = false; _hasError = true; }),
     );
   }
 
   void _applyFilters() {
-    List<DoctorScheduleItem> result = List<DoctorScheduleItem>.from(_allItems);
-
-    if (_searchQuery.isNotEmpty) {
-      final q = _searchQuery.toLowerCase();
-      result = result.where((i) => i.patient.fullName.toLowerCase().contains(q)).toList();
-    }
-    if (_dateFrom != null) {
-      final DateTime from = _dateFrom!;
-      result = result.where((i) => !i.appointment.scheduledAt.isBefore(from)).toList();
-    }
-    if (_dateTo != null) {
-      final DateTime end = _dateTo!.add(const Duration(days: 1));
-      result = result.where((i) => i.appointment.scheduledAt.isBefore(end)).toList();
-    }
-    if (_typeFilter != null) {
-      final AppointmentType type = _typeFilter!;
-      result = result.where((i) => i.appointment.type == type).toList();
-    }
-    if (_branchFilter != null) {
-      final ClinicLocation branch = _branchFilter!;
-      result = result.where((i) => i.patient.clinic == branch).toList();
-    }
-
+    final q = _searchQuery.toLowerCase();
+    final end = _dateTo?.add(const Duration(days: 1));
+    final result = _allItems.where((i) {
+      if (q.isNotEmpty && !i.patient.fullName.toLowerCase().contains(q)) return false;
+      if (_dateFrom != null && i.appointment.scheduledAt.isBefore(_dateFrom!)) return false;
+      if (end != null && !i.appointment.scheduledAt.isBefore(end)) return false;
+      if (_typeFilter != null && i.appointment.type != _typeFilter) return false;
+      if (_branchFilter != null && i.patient.clinic != _branchFilter) return false;
+      return true;
+    }).toList();
     setState(() {
       _filteredItems = result;
       _visibleCount = 30.clamp(0, result.length);
@@ -155,69 +102,38 @@ class _DoctorHistoryScreenState extends ConsumerState<DoctorHistoryScreen> {
       context: context,
       title: 'Sort Options',
       options: HistorySortOption.values
-          .map((o) => SortOption(
-                value: o,
-                label: o.displayLabel,
-                buttonLabel: o.buttonLabel,
-              ))
+          .map((o) => SortOption(value: o, label: o.displayLabel, buttonLabel: o.buttonLabel))
           .toList(),
       selected: _sortOption,
     );
-    if (selected != null && mounted) {
-      setState(() => _sortOption = selected);
-    }
+    if (selected != null && mounted) setState(() => _sortOption = selected);
   }
 
   List<DoctorScheduleItem> _sorted(List<DoctorScheduleItem> items) {
-    final list = List<DoctorScheduleItem>.from(items);
-    switch (_sortOption) {
-      case HistorySortOption.dateNewest:
-        list.sort((a, b) => b.appointment.scheduledAt.compareTo(a.appointment.scheduledAt));
-      case HistorySortOption.dateOldest:
-        list.sort((a, b) => a.appointment.scheduledAt.compareTo(b.appointment.scheduledAt));
-      case HistorySortOption.patientNameAsc:
-        list.sort((a, b) => a.patient.fullName.toLowerCase().compareTo(b.patient.fullName.toLowerCase()));
-      case HistorySortOption.patientNameDesc:
-        list.sort((a, b) => b.patient.fullName.toLowerCase().compareTo(a.patient.fullName.toLowerCase()));
-    }
-    return list;
+    return List<DoctorScheduleItem>.from(items)..sort((a, b) {
+      return switch (_sortOption) {
+        HistorySortOption.dateNewest => b.appointment.scheduledAt.compareTo(a.appointment.scheduledAt),
+        HistorySortOption.dateOldest => a.appointment.scheduledAt.compareTo(b.appointment.scheduledAt),
+        HistorySortOption.patientNameAsc => a.patient.fullName.toLowerCase().compareTo(b.patient.fullName.toLowerCase()),
+        HistorySortOption.patientNameDesc => b.patient.fullName.toLowerCase().compareTo(a.patient.fullName.toLowerCase()),
+      };
+    });
   }
 
   List<ActiveFilterChip> get _activeChips {
-    final chips = <ActiveFilterChip>[];
-    // Date range — single combined chip (matching All Appointments pattern)
-    final bool hasDateFrom = _dateFrom != null;
-    final bool hasDateTo = _dateTo != null;
-    if (hasDateFrom || hasDateTo) {
-      String label;
-      if (hasDateFrom && hasDateTo) {
-        label = '${Formatters.formatDateShort(_dateFrom!)} – ${Formatters.formatDateShort(_dateTo!)}';
-      } else if (hasDateFrom) {
-        label = 'From ${Formatters.formatDateShort(_dateFrom!)}';
-      } else {
-        label = 'To ${Formatters.formatDateShort(_dateTo!)}';
-      }
-      chips.add(ActiveFilterChip(
-        label: label,
-        onRemove: () {
-          setState(() { _dateFrom = null; _dateTo = null; });
-          _applyFilters();
-        },
-      ));
-    }
-    if (_typeFilter != null) {
-      chips.add(ActiveFilterChip(
-        label: _typeFilter!.displayLabel,
-        onRemove: () { setState(() => _typeFilter = null); _applyFilters(); },
-      ));
-    }
-    if (_branchFilter != null) {
-      chips.add(ActiveFilterChip(
-        label: _branchFilter!.displayLabel,
-        onRemove: () { setState(() => _branchFilter = null); _applyFilters(); },
-      ));
-    }
-    return chips;
+    return [
+      if (_dateFrom != null || _dateTo != null)
+        ActiveFilterChip(
+          label: _dateFrom != null && _dateTo != null
+              ? '${_dateFrom!.month}/${_dateFrom!.day} – ${_dateTo!.month}/${_dateTo!.day}'
+              : _dateFrom != null ? 'From ${_dateFrom!.month}/${_dateFrom!.day}' : 'To ${_dateTo!.month}/${_dateTo!.day}',
+          onRemove: () => setState(() { _dateFrom = null; _dateTo = null; _applyFilters(); }),
+        ),
+      if (_typeFilter != null)
+        ActiveFilterChip(label: _typeFilter!.displayLabel, onRemove: () => setState(() { _typeFilter = null; _applyFilters(); })),
+      if (_branchFilter != null)
+        ActiveFilterChip(label: _branchFilter!.displayLabel, onRemove: () => setState(() { _branchFilter = null; _applyFilters(); })),
+    ];
   }
 
   void _showFilterSheet() {
@@ -244,41 +160,6 @@ class _DoctorHistoryScreenState extends ConsumerState<DoctorHistoryScreen> {
     );
   }
 
-  void _onSearchChanged(String query) {
-    _searchQuery = query;
-    _applyFilters();
-  }
-
-  List<_ListItem> _buildListItems(List<DoctorScheduleItem> items) {
-    final List<_ListItem> listItems = [];
-    String? lastHeader;
-
-    for (final item in items) {
-      final date = item.appointment.scheduledAt.toLocal();
-      final header = _getGroupHeader(date);
-      if (header != lastHeader) {
-        listItems.add(_HeaderItem(header));
-        lastHeader = header;
-      }
-      listItems.add(_HistoryItem(item));
-    }
-    return listItems;
-  }
-
-  String _getGroupHeader(DateTime date) {
-    final DateTime localDate = date.toLocal();
-    final DateTime now = DateTime.now();
-    final DateTime today = DateTime(now.year, now.month, now.day);
-    final DateTime comparisonDate = DateTime(localDate.year, localDate.month, localDate.day);
-
-    final int difference = today.difference(comparisonDate).inDays;
-
-    if (difference == 0) return 'Today';
-    if (difference == 1) return 'Yesterday';
-    if (difference == -1) return 'Tomorrow';
-    return DateFormat('EEEE, MMM d').format(localDate);
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -296,7 +177,7 @@ class _DoctorHistoryScreenState extends ConsumerState<DoctorHistoryScreen> {
             padding: const EdgeInsets.fromLTRB(AppSizes.p16, AppSizes.p12, AppSizes.p16, AppSizes.p4),
             child: AppSearchBar(
               hintText: AppStrings.searchByPatientNameHint,
-              onChanged: _onSearchChanged,
+              onChanged: (q) => setState(() { _searchQuery = q; _applyFilters(); }),
             ),
           ),
           SortFilterBar(
@@ -307,15 +188,13 @@ class _DoctorHistoryScreenState extends ConsumerState<DoctorHistoryScreen> {
           ),
           ActiveFilterChipsRow(
             chips: _activeChips,
-            onClearAll: () {
-              setState(() {
-                _dateFrom = null;
-                _dateTo = null;
-                _typeFilter = null;
-                _branchFilter = null;
-              });
+            onClearAll: () => setState(() {
+              _dateFrom = null;
+              _dateTo = null;
+              _typeFilter = null;
+              _branchFilter = null;
               _applyFilters();
-            },
+            }),
           ),
           Expanded(
             child: _isLoading
@@ -327,75 +206,20 @@ class _DoctorHistoryScreenState extends ConsumerState<DoctorHistoryScreen> {
                           children: [
                             Text(AppStrings.errorDatabaseGeneric, style: AppTextStyles.bodySecondary),
                             const SizedBox(height: AppSizes.p16),
-                            TextButton(onPressed: _loadData, child: Text(AppStrings.retry)),
+                            TextButton(onPressed: _loadData, child: const Text(AppStrings.retry)),
                           ],
                         ),
                       )
                     : _filteredItems.isEmpty
                         ? const EmptyState(message: AppStrings.noHistoricAppointments, icon: Icons.history_rounded)
-                        : (() {
-                            final sorted = _sorted(_filteredItems);
-                            final cappedData = sorted.take(_visibleCount).toList();
-                            final List<_ListItem> displayItems = _buildListItems(cappedData);
-                            return ListView.builder(
-                              controller: _scrollCtrl,
-                              padding: const EdgeInsets.only(
-                                left: AppSizes.p16,
-                                right: AppSizes.p16,
-                                bottom: AppSizes.p32,
-                              ),
-                              itemCount: displayItems.length,
-                              itemBuilder: (_, int index) {
-                                final _ListItem listItem = displayItems[index];
-                                if (listItem is _HeaderItem) {
-                                  return Padding(
-                                    padding: const EdgeInsets.fromLTRB(
-                                      AppSizes.p8, AppSizes.p20, AppSizes.p8, AppSizes.p8,
-                                    ),
-                                    child: Text(
-                                      listItem.title,
-                                      style: AppTextStyles.captionBold.copyWith(
-                                        color: AppColors.textSecondary,
-                                      ),
-                                    ),
-                                  );
-                                }
-                                final DoctorScheduleItem item = (listItem as _HistoryItem).item;
-                                return DataListTile(
-                                  key: ValueKey(item.appointment.id),
-                                  title: item.patient.fullName,
-                                  subtitle: '${item.appointment.type.displayLabel} · '
-                                      '${Formatters.formatTime(item.appointment.scheduledAt.toLocal())}',
-                                  leading: AppAvatar(
-                                    name: item.patient.fullName,
-                                    radius: AppSizes.avatarTile / 2,
-                                  ),
-                                  trailing: AppointmentActionsTrailing(appointment: item.appointment),
-                                  onTap: () => context.push(
-                                    AppRoutes.appointmentDetail.replaceAll(':id', item.appointment.id),
-                                  ),
-                                ).animate().fadeIn(
-                                      duration: 250.ms,
-                                      delay: (index * 30).ms,
-                                    );
-                              },
-                            );
-                          })(),
+                        : DoctorHistoryListView(
+                            items: _sorted(_filteredItems).take(_visibleCount).toList(),
+                            scrollController: _scrollCtrl,
+                            onRefresh: _loadData,
+                          ),
           ),
         ],
       ),
     );
   }
-}
-
-sealed class _ListItem {}
-
-class _HeaderItem extends _ListItem {
-  _HeaderItem(this.title);
-  final String title;
-}
-
-class _HistoryItem extends _ListItem {
-  _HistoryItem(this.item);
-  final DoctorScheduleItem item;
 }

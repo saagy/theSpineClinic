@@ -54,6 +54,9 @@ class PatientList extends _$PatientList {
   bool get hasMore => (state.value?.length ?? 0) < _totalCount;
   int _totalCount = 0;
 
+  /// The total count of patients matching the current query/filters.
+  int get totalCount => _totalCount;
+
   @override
   Future<List<Patient>> build() async {
     ref.listen(activeBranchProvider, (previous, next) {

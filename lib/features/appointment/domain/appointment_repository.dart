@@ -8,6 +8,7 @@ import 'package:spine_clinic_app/core/errors/result.dart';
 import 'package:spine_clinic_app/features/appointment/domain/appointment.dart';
 import 'package:spine_clinic_app/features/appointment/domain/appointment_doctor.dart';
 import 'package:spine_clinic_app/features/appointment/domain/appointment_status.dart';
+import 'package:spine_clinic_app/features/appointment/domain/appointment_type.dart';
 import 'package:spine_clinic_app/features/auth/domain/staff.dart';
 
 import 'package:spine_clinic_app/features/patient/domain/patient.dart';
@@ -66,6 +67,31 @@ abstract class AppointmentRepository {
 
   /// Resolves the list of all appointments for a patient.
   Future<Result<List<Appointment>>> getAppointmentsForPatient(String patientId);
+
+  /// Resolves the list of appointments for a patient, paginated, sorted, and filtered.
+  Future<Result<List<Appointment>>> getAppointmentsForPatientPaginated({
+    required String patientId,
+    int offset = 0,
+    int limit = 30,
+    Set<AppointmentStatus>? statusFilter,
+    Set<AppointmentType>? typeFilter,
+    DateTime? dateFrom,
+    DateTime? dateTo,
+    String? doctorId,
+    bool? usePackageFilter,
+    bool ascending = false,
+  });
+
+  /// Resolves the count of appointments for a patient, filtered.
+  Future<Result<int>> countAppointmentsForPatient({
+    required String patientId,
+    Set<AppointmentStatus>? statusFilter,
+    Set<AppointmentType>? typeFilter,
+    DateTime? dateFrom,
+    DateTime? dateTo,
+    String? doctorId,
+    bool? usePackageFilter,
+  });
 
   /// Resolves the aggregate count of all future scheduled appointments for a patient.
   Future<Result<int>> getFutureScheduledAppointmentsCount(String patientId);

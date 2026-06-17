@@ -183,14 +183,15 @@ class PatientRepositoryImpl implements PatientRepository {
     try {
       final List<Map<String, dynamic>> rows = await _service.guardQuery(() {
         final base = doctorId != null
-            ? _service.from(_table).select('*, patient_doctors!inner()').eq('patient_doctors.doctor_id', doctorId)
-            : _service.from(_table).select();
+            ? _service.from(_table).select('id, patient_doctors!inner(doctor_id)').eq('patient_doctors.doctor_id', doctorId)
+            : _service.from(_table).select('id');
         final withClinic = clinic != null ? base.eq('clinic', clinic.dbValue) : base;
         if (query != null && query.trim().isNotEmpty) {
           final tokens = query.trim().split(RegExp(r'\s+')).where((t) => t.isNotEmpty);
-          return tokens.fold(withClinic, (q, t) => q.or('full_name.ilike.%$t%,phone_number.ilike.%$t%')).select('id');
+          final dynamic queryBuilder = withClinic;
+          return tokens.fold<dynamic>(queryBuilder, (q, t) => q.or('full_name.ilike.%$t%,phone_number.ilike.%$t%'));
         }
-        return withClinic.select('id');
+        return withClinic;
       });
       return Result.success(rows.length);
     } on AppException catch (e) {

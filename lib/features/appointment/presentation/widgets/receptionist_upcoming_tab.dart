@@ -4,7 +4,6 @@
 library;
 
 import 'package:flutter/material.dart';
-import 'package:flutter_animate/flutter_animate.dart';
 import 'package:intl/intl.dart';
 
 import 'package:spine_clinic_app/core/constants/app_colors.dart';
@@ -15,8 +14,10 @@ import 'package:spine_clinic_app/features/appointment/presentation/receptionist_
 import 'package:spine_clinic_app/features/appointment/presentation/widgets/receptionist_appointment_card.dart';
 import 'package:spine_clinic_app/shared/widgets/skeleton_loader.dart';
 
+import 'package:spine_clinic_app/shared/widgets/animated_list_item.dart';
+
 /// The "Upcoming" tab content with date-grouped future appointments.
-class ReceptionistUpcomingTab extends StatelessWidget {
+class ReceptionistUpcomingTab extends StatefulWidget {
   /// Creates a [ReceptionistUpcomingTab].
   const ReceptionistUpcomingTab({
     super.key,
@@ -30,21 +31,37 @@ class ReceptionistUpcomingTab extends StatelessWidget {
   final Future<void> Function()? onRefresh;
 
   @override
+  State<ReceptionistUpcomingTab> createState() => _ReceptionistUpcomingTabState();
+}
+
+class _ReceptionistUpcomingTabState extends State<ReceptionistUpcomingTab> {
+  final Set<int> _animatedIndices = <int>{};
+
+  @override
+  void didUpdateWidget(ReceptionistUpcomingTab oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.state.upcomingLoading && !oldWidget.state.upcomingLoading) {
+      _animatedIndices.clear();
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
-    if (state.upcomingLoading) {
+    if (widget.state.upcomingLoading) {
+      _animatedIndices.clear();
       return const SkeletonTileList(count: 5);
     }
-    if (state.upcomingError != null) {
+    if (widget.state.upcomingError != null) {
       return Center(
-        child: Text('${state.upcomingError}',
+        child: Text('${widget.state.upcomingError}',
             style: AppTextStyles.bodySecondary),
       );
     }
-    if (state.upcoming.isEmpty) {
+    if (widget.state.upcoming.isEmpty) {
       return const Center(child: Text('No upcoming appointments'));
     }
 
-    final grouped = _groupByDate(state.upcoming);
+    final grouped = _groupByDate(widget.state.upcoming);
 
     final list = ListView.builder(
       physics: const AlwaysScrollableScrollPhysics(),
@@ -53,10 +70,10 @@ class ReceptionistUpcomingTab extends StatelessWidget {
       itemBuilder: (_, i) => grouped[i],
     );
 
-    if (onRefresh != null) {
+    if (widget.onRefresh != null) {
       return RefreshIndicator(
         color: AppColors.primary,
-        onRefresh: onRefresh!,
+        onRefresh: widget.onRefresh!,
         child: list,
       );
     }
@@ -66,6 +83,7 @@ class ReceptionistUpcomingTab extends StatelessWidget {
   List<Widget> _groupByDate(List<AppointmentWithPatient> items) {
     final List<Widget> result = [];
     String? lastKey;
+    int animIdx = 0;
 
     for (final item in items) {
       final date = item.appointment.scheduledAt.toLocal();
@@ -77,19 +95,28 @@ class ReceptionistUpcomingTab extends StatelessWidget {
           final d = a.appointment.scheduledAt.toLocal();
           return DateFormat('yyyy-MM-dd').format(d) == key;
         }).length;
-        result.add(Padding(
-          padding: const EdgeInsets.fromLTRB(
-              AppSizes.p20, AppSizes.p16, AppSizes.p20, AppSizes.p8),
-          child: Text(
-            '$formatted · $count appointment${count == 1 ? '' : 's'}',
-            style: AppTextStyles.captionBold
-                .copyWith(color: AppColors.textSecondary),
+        result.add(AnimatedListItem(
+          index: animIdx++,
+          animatedIndices: _animatedIndices,
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(
+                AppSizes.p20, AppSizes.p16, AppSizes.p20, AppSizes.p8),
+            child: Text(
+              '$formatted · $count appointment${count == 1 ? '' : 's'}',
+              style: AppTextStyles.captionBold
+                  .copyWith(color: AppColors.textSecondary),
+            ),
           ),
         ));
       }
-      result.add(ReceptionistAppointmentCard(
-        item: item, onStatusChanged: onStatusChanged,
-      ).animate().fadeIn(duration: 250.ms, delay: (result.length * 30).ms));
+      result.add(AnimatedListItem(
+        index: animIdx++,
+        animatedIndices: _animatedIndices,
+        child: ReceptionistAppointmentCard(
+          item: item,
+          onStatusChanged: widget.onStatusChanged,
+        ),
+      ));
     }
     return result;
   }

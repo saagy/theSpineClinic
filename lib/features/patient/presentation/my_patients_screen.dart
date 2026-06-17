@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:spine_clinic_app/core/constants/app_colors.dart';
@@ -20,6 +19,7 @@ import 'package:spine_clinic_app/shared/widgets/sort_filter_bar.dart';
 import 'package:spine_clinic_app/shared/widgets/sort_options_sheet.dart';
 import 'package:spine_clinic_app/shared/widgets/unified_filter_sheet.dart';
 import 'package:spine_clinic_app/shared/widgets/active_filter_chips_row.dart';
+import 'package:spine_clinic_app/shared/widgets/animated_list_item.dart';
 
 /// Screen displaying the list of patients permanently assigned to the doctor.
 class MyPatientsScreen extends ConsumerStatefulWidget {
@@ -55,9 +55,13 @@ class _MyPatientsScreenState extends ConsumerState<MyPatientsScreen> {
   String _currentQuery = '';
   MyPatientSortOption _sortOption = MyPatientSortOption.nameAsc;
   ClinicLocation? _branchFilter;
+  final Set<int> _animatedIndices = <int>{};
 
   void _onSearchChanged(String query) {
-    setState(() => _currentQuery = query);
+    setState(() {
+      _currentQuery = query;
+      _animatedIndices.clear();
+    });
     ref.read(myPatientsControllerProvider.notifier).search(query);
   }
 
@@ -75,7 +79,10 @@ class _MyPatientsScreenState extends ConsumerState<MyPatientsScreen> {
       selected: _sortOption,
     );
     if (selected != null && mounted) {
-      setState(() => _sortOption = selected);
+      setState(() {
+        _sortOption = selected;
+        _animatedIndices.clear();
+      });
     }
   }
 
@@ -115,11 +122,17 @@ class _MyPatientsScreenState extends ConsumerState<MyPatientsScreen> {
         showBranchFilter: true,
         scrollController: scrollCtrl,
         onReset: () {
-          setState(() => _branchFilter = null);
+          setState(() {
+            _branchFilter = null;
+            _animatedIndices.clear();
+          });
           Navigator.of(ctx).pop();
         },
         onApplied: (String? doctorId, ClinicLocation? clinic) {
-          setState(() => _branchFilter = clinic);
+          setState(() {
+            _branchFilter = clinic;
+            _animatedIndices.clear();
+          });
           Navigator.of(ctx).pop();
         },
       ),
@@ -144,6 +157,9 @@ class _MyPatientsScreenState extends ConsumerState<MyPatientsScreen> {
   @override
   Widget build(BuildContext context) {
     final AsyncValue<List<Patient>> assignedPatients = ref.watch(myPatientsControllerProvider);
+    if (assignedPatients.isLoading && assignedPatients.value == null) {
+      _animatedIndices.clear();
+    }
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -171,7 +187,10 @@ class _MyPatientsScreenState extends ConsumerState<MyPatientsScreen> {
             ),
             ActiveFilterChipsRow(
               chips: _activeChips,
-              onClearAll: () => setState(() => _branchFilter = null),
+              onClearAll: () => setState(() {
+                _branchFilter = null;
+                _animatedIndices.clear();
+              }),
             ),
             assignedPatients.when(
               data: (patients) => Padding(
@@ -227,17 +246,18 @@ class _MyPatientsScreenState extends ConsumerState<MyPatientsScreen> {
                       itemCount: displayPatients.length,
                       itemBuilder: (context, index) {
                         final Patient patient = displayPatients[index];
-                        return PatientListTile(
-                          name: patient.fullName,
-                          phone: patient.phoneNumber,
-                          branchLabel: patient.clinic.displayLabel,
-                          lastVisitDate: patient.lastAppointmentDate,
-                          onTap: () =>
-                              context.push('/patient/${patient.id}'),
-                        ).animate().fadeIn(
-                              duration: 300.ms,
-                              delay: (index * 40).ms,
-                            );
+                        return AnimatedListItem(
+                          index: index,
+                          animatedIndices: _animatedIndices,
+                          child: PatientListTile(
+                            name: patient.fullName,
+                            phone: patient.phoneNumber,
+                            branchLabel: patient.clinic.displayLabel,
+                            lastVisitDate: patient.lastAppointmentDate,
+                            onTap: () =>
+                                context.push('/patient/${patient.id}'),
+                          ),
+                        );
                     },
                   ),
                   ); // RefreshIndicator close

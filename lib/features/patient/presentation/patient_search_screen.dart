@@ -27,6 +27,7 @@ import 'package:spine_clinic_app/features/patient/presentation/widgets/patient_s
 import 'package:spine_clinic_app/shared/widgets/app_search_bar.dart';
 import 'package:spine_clinic_app/shared/widgets/empty_state.dart';
 import 'package:spine_clinic_app/shared/widgets/patient_list_tile.dart';
+import 'package:spine_clinic_app/shared/widgets/animated_list_item.dart';
 
 /// Search screen for finding patients by name or phone number.
 class PatientSearchScreen extends ConsumerStatefulWidget {
@@ -41,9 +42,11 @@ class PatientSearchScreen extends ConsumerStatefulWidget {
 class _PatientSearchScreenState extends ConsumerState<PatientSearchScreen> {
   ClinicLocation? _selectedClinic;
   String _currentQuery = '';
+  final Set<int> _animatedIndices = <int>{};
 
   void _onSearchChanged(String query) {
     _currentQuery = query;
+    _animatedIndices.clear();
     ref.read(patientSearchProvider.notifier).search(
       query,
       clinic: _selectedClinic,
@@ -51,7 +54,10 @@ class _PatientSearchScreenState extends ConsumerState<PatientSearchScreen> {
   }
 
   void _onClinicSelected(ClinicLocation? clinic) {
-    setState(() => _selectedClinic = clinic);
+    setState(() {
+      _selectedClinic = clinic;
+      _animatedIndices.clear();
+    });
     // Re-run search with updated clinic filter if query exists.
     if (_currentQuery.isNotEmpty) {
       ref.read(patientSearchProvider.notifier).search(
@@ -65,6 +71,9 @@ class _PatientSearchScreenState extends ConsumerState<PatientSearchScreen> {
   Widget build(BuildContext context) {
     final AsyncValue<List<Patient>> asyncPatients =
         ref.watch(patientSearchProvider);
+    if (asyncPatients.isLoading && asyncPatients.value == null) {
+      _animatedIndices.clear();
+    }
     final user = ref.watch(currentUserProvider).value;
     final showFab = user != null && user.role != UserRole.doctor;
 
@@ -97,6 +106,17 @@ class _PatientSearchScreenState extends ConsumerState<PatientSearchScreen> {
             selectedClinic: _selectedClinic,
             onClinicSelected: _onClinicSelected,
           ),
+          if (asyncPatients.value != null && !asyncPatients.isLoading && asyncPatients.value!.isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(AppSizes.p20, AppSizes.p8, AppSizes.p20, AppSizes.p4),
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  'Search Results: ${asyncPatients.value!.length}',
+                  style: AppTextStyles.captionBold.copyWith(color: AppColors.textSecondary),
+                ),
+              ),
+            ),
           const SizedBox(height: AppSizes.p8),
 
           // ── Results ──
@@ -144,24 +164,42 @@ class _PatientSearchScreenState extends ConsumerState<PatientSearchScreen> {
                       : Icons.person_off_rounded,
                   );
                 }
-                return ListView.builder(
-                  padding: const EdgeInsets.symmetric(horizontal: AppSizes.p16),
-                  itemCount: patients.length,
-                  itemBuilder: (_, int index) {
-                    final Patient patient = patients[index];
-                    return PatientListTile(
-                      name: patient.fullName,
-                      phone: patient.phoneNumber,
-                      branchLabel: patient.clinic.displayLabel,
-                      lastVisitDate: patient.lastAppointmentDate,
-                      trailing: PatientBalanceChip(
-                        balance: patient.packageBalance,
-                      ),
-                      onTap: () {
-                        context.push('/patient/${patient.id}');
-                      },
-                    );
+                return RefreshIndicator(
+                  onRefresh: () async {
+                    if (_currentQuery.isNotEmpty) {
+                      ref.read(patientSearchProvider.notifier).search(
+                        _currentQuery,
+                        clinic: _selectedClinic,
+                      );
+                      try {
+                        await ref.read(patientSearchProvider.future);
+                      } catch (_) {}
+                    }
                   },
+                  child: ListView.builder(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    padding: const EdgeInsets.symmetric(horizontal: AppSizes.p16),
+                    itemCount: patients.length,
+                    itemBuilder: (_, int index) {
+                      final Patient patient = patients[index];
+                      return AnimatedListItem(
+                        index: index,
+                        animatedIndices: _animatedIndices,
+                        child: PatientListTile(
+                          name: patient.fullName,
+                          phone: patient.phoneNumber,
+                          branchLabel: patient.clinic.displayLabel,
+                          lastVisitDate: patient.lastAppointmentDate,
+                          trailing: PatientBalanceChip(
+                            balance: patient.packageBalance,
+                          ),
+                          onTap: () {
+                            context.push('/patient/${patient.id}');
+                          },
+                        ),
+                      );
+                    },
+                  ),
                 );
               },
             ),

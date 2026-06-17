@@ -81,6 +81,9 @@ class AllAppointmentsNotifier
   bool _loadingMore = false;
   static const int _pageSize = 30;
 
+  /// The total count of appointments matching the current filters.
+  int get totalCount => _totalCount;
+
   /// Whether more pages are available to load.
   bool get hasMore => (state.value?.length ?? 0) < _totalCount;
 

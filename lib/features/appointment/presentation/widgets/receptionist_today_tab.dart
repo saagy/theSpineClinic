@@ -4,7 +4,6 @@
 /// Rule 1 — under 200 lines.
 library;
 import 'package:flutter/material.dart';
-import 'package:flutter_animate/flutter_animate.dart';
 
 import 'package:spine_clinic_app/core/constants/app_colors.dart';
 import 'package:spine_clinic_app/core/constants/app_sizes.dart';
@@ -15,8 +14,10 @@ import 'package:spine_clinic_app/features/appointment/presentation/receptionist_
 import 'package:spine_clinic_app/features/appointment/presentation/widgets/receptionist_appointment_card.dart';
 import 'package:spine_clinic_app/shared/widgets/skeleton_loader.dart';
 
+import 'package:spine_clinic_app/shared/widgets/animated_list_item.dart';
+
 /// The "Today" tab content with stats, search, and grouped appointment list.
-class ReceptionistTodayTab extends StatelessWidget {
+class ReceptionistTodayTab extends StatefulWidget {
   /// Creates a [ReceptionistTodayTab].
   const ReceptionistTodayTab({
     super.key,
@@ -34,73 +35,103 @@ class ReceptionistTodayTab extends StatelessWidget {
   final VoidCallback onStatusChanged;
 
   @override
+  State<ReceptionistTodayTab> createState() => _ReceptionistTodayTabState();
+}
+
+class _ReceptionistTodayTabState extends State<ReceptionistTodayTab> {
+  final Set<int> _animatedIndices = <int>{};
+
+  @override
+  void didUpdateWidget(ReceptionistTodayTab oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.state.todayLoading && !oldWidget.state.todayLoading) {
+      _animatedIndices.clear();
+    }
+    if (widget.searchQuery != oldWidget.searchQuery) {
+      _animatedIndices.clear();
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
-    if (state.todayLoading) {
+    if (widget.state.todayLoading) {
+      _animatedIndices.clear();
       return const SkeletonTileList(count: 5);
     }
-    if (state.todayError != null) {
+    if (widget.state.todayError != null) {
       return Center(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text('${state.todayError}', style: AppTextStyles.bodySecondary),
+            Text('${widget.state.todayError}', style: AppTextStyles.bodySecondary),
             const SizedBox(height: AppSizes.p16),
-            TextButton(onPressed: onRefresh, child: const Text('Retry')),
+            TextButton(onPressed: widget.onRefresh, child: const Text('Retry')),
           ],
         ),
       );
     }
 
-    final filtered = _filter(state.today);
+    final filtered = _filter(widget.state.today);
     final checkedIn = _byStatus(filtered, AppointmentStatus.checkedIn);
     final scheduled = _byStatus(filtered, AppointmentStatus.scheduled);
     final cancelled = _byStatus(filtered, AppointmentStatus.cancelled);
 
+    int animIdx = 0;
+
     return RefreshIndicator(
       color: AppColors.primary,
-      onRefresh: () async => onRefresh.call(),
+      onRefresh: () async => widget.onRefresh.call(),
       child: ListView(
         physics: const AlwaysScrollableScrollPhysics(),
         padding: const EdgeInsets.only(bottom: AppSizes.p32),
         children: [
-          _StatsStrip(state: state),
-          _SearchField(onChanged: onSearchChanged),
+          _StatsStrip(state: widget.state),
+          _SearchField(onChanged: widget.onSearchChanged),
           if (checkedIn.isNotEmpty) ...[
-            _SectionHeader(title: 'Checked In', count: checkedIn.length)
-                .animate()
-                .fadeIn(duration: 250.ms),
-            ...checkedIn.asMap().entries.map((entry) => ReceptionistAppointmentCard(
-                  item: entry.value,
-                  faded: true,
-                  onStatusChanged: onStatusChanged,
-                ).animate().fadeIn(
-                      duration: 250.ms,
-                      delay: ((entry.key + 1) * 30).ms,
-                    )),
+            AnimatedListItem(
+              index: animIdx++,
+              animatedIndices: _animatedIndices,
+              child: _SectionHeader(title: 'Checked In', count: checkedIn.length),
+            ),
+            ...checkedIn.map((item) => AnimatedListItem(
+                  index: animIdx++,
+                  animatedIndices: _animatedIndices,
+                  child: ReceptionistAppointmentCard(
+                    item: item,
+                    faded: true,
+                    onStatusChanged: widget.onStatusChanged,
+                  ),
+                )),
           ],
           if (scheduled.isNotEmpty) ...[
-            _SectionHeader(title: 'Scheduled', count: scheduled.length)
-                .animate()
-                .fadeIn(duration: 250.ms),
-            ...scheduled.asMap().entries.map((entry) => ReceptionistAppointmentCard(
-                  item: entry.value,
-                  onStatusChanged: onStatusChanged,
-                ).animate().fadeIn(
-                      duration: 250.ms,
-                      delay: ((entry.key + 1) * 30).ms,
-                    )),
+            AnimatedListItem(
+              index: animIdx++,
+              animatedIndices: _animatedIndices,
+              child: _SectionHeader(title: 'Scheduled', count: scheduled.length),
+            ),
+            ...scheduled.map((item) => AnimatedListItem(
+                  index: animIdx++,
+                  animatedIndices: _animatedIndices,
+                  child: ReceptionistAppointmentCard(
+                    item: item,
+                    onStatusChanged: widget.onStatusChanged,
+                  ),
+                )),
           ],
           if (cancelled.isNotEmpty) ...[
-            _SectionHeader(title: 'Cancelled', count: cancelled.length)
-                .animate()
-                .fadeIn(duration: 250.ms),
-            ...cancelled.asMap().entries.map((entry) => ReceptionistAppointmentCard(
-                  item: entry.value,
-                  onStatusChanged: onStatusChanged,
-                ).animate().fadeIn(
-                      duration: 250.ms,
-                      delay: ((entry.key + 1) * 30).ms,
-                    )),
+            AnimatedListItem(
+              index: animIdx++,
+              animatedIndices: _animatedIndices,
+              child: _SectionHeader(title: 'Cancelled', count: cancelled.length),
+            ),
+            ...cancelled.map((item) => AnimatedListItem(
+                  index: animIdx++,
+                  animatedIndices: _animatedIndices,
+                  child: ReceptionistAppointmentCard(
+                    item: item,
+                    onStatusChanged: widget.onStatusChanged,
+                  ),
+                )),
           ],
           if (filtered.isEmpty)
             const Padding(
@@ -113,8 +144,8 @@ class ReceptionistTodayTab extends StatelessWidget {
   }
 
   List<AppointmentWithPatient> _filter(List<AppointmentWithPatient> items) {
-    if (searchQuery.isEmpty) return items;
-    final q = searchQuery.toLowerCase();
+    if (widget.searchQuery.isEmpty) return items;
+    final q = widget.searchQuery.toLowerCase();
     return items.where((a) => a.patient.fullName.toLowerCase().contains(q)).toList();
   }
 

@@ -16,7 +16,8 @@ class DataListTile extends StatelessWidget {
   /// Creates a [DataListTile].
   const DataListTile({
     super.key,
-    required this.title,
+    this.title = '',
+    this.titleWidget,
     this.subtitle,
     this.leading,
     this.trailing,
@@ -37,6 +38,9 @@ class DataListTile extends StatelessWidget {
 
   /// The primary textual descriptor of this row cell.
   final String title;
+
+  /// Optional custom widget to render in place of the title text.
+  final Widget? titleWidget;
 
   /// Optional secondary label rendered below the title.
   final String? subtitle;
@@ -78,18 +82,19 @@ class DataListTile extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
               children: [
-                Text(
-                  title,
-                  style: titleStyle ??
-                      AppTextStyles.bodyBold.copyWith(
-                        color: AppColors.textPrimary,
-                      ),
-                  maxLines: titleMaxLines ?? 1,
-                  softWrap: true,
-                  overflow: titleMaxLines == null
-                      ? null
-                      : TextOverflow.ellipsis,
-                ),
+                titleWidget ??
+                    Text(
+                      title,
+                      style: titleStyle ??
+                          AppTextStyles.bodyBold.copyWith(
+                            color: AppColors.textPrimary,
+                          ),
+                      maxLines: titleMaxLines ?? 1,
+                      softWrap: true,
+                      overflow: titleMaxLines == null
+                          ? null
+                          : TextOverflow.ellipsis,
+                    ),
                 if (subtitle != null) ...[
                   const SizedBox(height: AppSizes.p2),
                   Text(
