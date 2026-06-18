@@ -33,6 +33,7 @@ class PatientTabInfo extends ConsumerWidget {
         }
       },
       child: SingleChildScrollView(
+        keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
         physics: const AlwaysScrollableScrollPhysics(),
         padding: const EdgeInsets.all(AppSizes.p16),
         child: Column(

@@ -183,6 +183,7 @@ class _EditAppointmentFormBodyState extends ConsumerState<_EditAppointmentFormBo
       child: Form(
         key: _formKey,
         child: SingleChildScrollView(
+          keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
           padding: const EdgeInsets.all(AppSizes.p16),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,

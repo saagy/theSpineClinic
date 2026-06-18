@@ -14,6 +14,7 @@ _Staff _$StaffFromJson(Map<String, dynamic> json) => _Staff(
   phone: json['phone'] as String?,
   role: $enumDecode(_$UserRoleEnumMap, json['role']),
   isActive: json['is_active'] as bool? ?? true,
+  branch: $enumDecodeNullable(_$ClinicLocationEnumMap, json['branch']),
   createdAt: DateTime.parse(json['created_at'] as String),
 );
 
@@ -25,6 +26,7 @@ Map<String, dynamic> _$StaffToJson(_Staff instance) => <String, dynamic>{
   'phone': instance.phone,
   'role': _$UserRoleEnumMap[instance.role]!,
   'is_active': instance.isActive,
+  'branch': _$ClinicLocationEnumMap[instance.branch],
   'created_at': instance.createdAt.toIso8601String(),
 };
 
@@ -32,4 +34,9 @@ const _$UserRoleEnumMap = {
   UserRole.superAdmin: 'super_admin',
   UserRole.receptionist: 'receptionist',
   UserRole.doctor: 'doctor',
+};
+
+const _$ClinicLocationEnumMap = {
+  ClinicLocation.tagamoa: 'tagamoa',
+  ClinicLocation.masrElgedida: 'masr_elgedida',
 };

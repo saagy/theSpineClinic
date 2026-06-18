@@ -19,6 +19,7 @@ abstract final class AppStrings {
   static const String errorDatabaseGeneric = 'A database error occurred. Try again.';
   static const String errorDatabasePermissionDenied = 'You do not have permission.';
   static const String errorDatabaseReferenceNotFound = 'Referenced record not found.';
+  static const String errorDatabaseRecordNotFound = 'The requested record was deleted or does not exist.';
   static const String errorDatabaseDuplicateRecord = 'Record already exists.';
   static const String errorDatabaseRequiredFieldMissing = 'Required field is missing.';
   static const String errorDatabaseValidationFailed = 'Data validation failed.';
@@ -38,6 +39,7 @@ abstract final class AppStrings {
     'error_database_generic': errorDatabaseGeneric,
     'error_database_permission_denied': errorDatabasePermissionDenied,
     'error_database_reference_not_found': errorDatabaseReferenceNotFound,
+    'error_database_record_not_found': errorDatabaseRecordNotFound,
     'error_database_duplicate_record': errorDatabaseDuplicateRecord,
     'error_database_required_field_missing': errorDatabaseRequiredFieldMissing,
     'error_database_validation_failed': errorDatabaseValidationFailed,

@@ -133,13 +133,7 @@ List<RouteBase> _buildRoutes(Ref ref) {
       path: AppRoutes.search,
       pageBuilder: (_, __) => const NoTransitionPage(child: PatientSearchScreen()),
     ),
-    GoRoute(
-      path: AppRoutes.patientDetail,
-      pageBuilder: (_, GoRouterState state) {
-        final String patientId = state.pathParameters['id'] ?? '';
-        return NoTransitionPage(child: PatientDetailScreen(patientId: patientId));
-      },
-    ),
+
     GoRoute(
       path: AppRoutes.editPatient,
       pageBuilder: (_, GoRouterState state) {
@@ -169,13 +163,7 @@ List<RouteBase> _buildRoutes(Ref ref) {
         return NoTransitionPage(child: NewAppointmentScreen(preselectedPatientId: patientId));
       },
     ),
-    GoRoute(
-      path: AppRoutes.appointmentDetail,
-      pageBuilder: (_, GoRouterState state) {
-        final String appointmentId = state.pathParameters['id'] ?? '';
-        return NoTransitionPage(child: AppointmentDetailScreen(appointmentId: appointmentId));
-      },
-    ),
+
     GoRoute(
       path: AppRoutes.editAppointment,
       pageBuilder: (_, GoRouterState state) {
@@ -190,13 +178,7 @@ List<RouteBase> _buildRoutes(Ref ref) {
         return NoTransitionPage(child: AddVisitNotesScreen(appointmentId: appointmentId));
       },
     ),
-    GoRoute(
-      path: AppRoutes.visitDetail,
-      pageBuilder: (_, GoRouterState state) {
-        final String appointmentId = state.pathParameters['id'] ?? '';
-        return NoTransitionPage(child: VisitDetailScreen(appointmentId: appointmentId));
-      },
-    ),
+
     GoRoute(
       path: AppRoutes.doctorHistory,
       pageBuilder: (_, __) => const NoTransitionPage(child: DoctorHistoryScreen()),
@@ -290,6 +272,27 @@ List<RouteBase> _buildRoutes(Ref ref) {
           pageBuilder: (_, __) =>
               const NoTransitionPage(child: AnalyticsScreen()),
         ),
+        GoRoute(
+          path: AppRoutes.patientDetail,
+          pageBuilder: (_, GoRouterState state) {
+            final String patientId = state.pathParameters['id'] ?? '';
+            return NoTransitionPage(child: PatientDetailScreen(patientId: patientId));
+          },
+        ),
+        GoRoute(
+          path: AppRoutes.appointmentDetail,
+          pageBuilder: (_, GoRouterState state) {
+            final String appointmentId = state.pathParameters['id'] ?? '';
+            return NoTransitionPage(child: AppointmentDetailScreen(appointmentId: appointmentId));
+          },
+        ),
+        GoRoute(
+          path: AppRoutes.visitDetail,
+          pageBuilder: (_, GoRouterState state) {
+            final String appointmentId = state.pathParameters['id'] ?? '';
+            return NoTransitionPage(child: VisitDetailScreen(appointmentId: appointmentId));
+          },
+        ),
       ],
     ),
   ];
@@ -299,19 +302,19 @@ int _resolveActiveIndex(String role, String location) {
   switch (role) {
     case 'doctor':
       if (location == AppRoutes.doctorProfile) return 2;
-      if (location == AppRoutes.myPatients) return 1;
+      if (location == AppRoutes.myPatients || location.startsWith('/patient')) return 1;
       return 0; // my schedule
     case 'super_admin':
-      if (location == AppRoutes.adminHub) return 4;
-      if (location == AppRoutes.patientList) return 3;
+      if (location == AppRoutes.adminHub || location.startsWith('/admin')) return 4;
+      if (location == AppRoutes.patientList || location.startsWith('/patient')) return 3;
       if (location == AppRoutes.schedule) return 2;
-      if (location == AppRoutes.allAppointments) return 1;
+      if (location == AppRoutes.allAppointments || location.startsWith('/appointment') || location.startsWith('/visit')) return 1;
       if (location == AppRoutes.reports) return 0;
       return 0;
     case 'receptionist':
     default:
       if (location == AppRoutes.receptionistProfile) return 2;
-      if (location == AppRoutes.patientList) return 1;
+      if (location == AppRoutes.patientList || location.startsWith('/patient')) return 1;
       return 0; // appts (allAppointments)
   }
 }

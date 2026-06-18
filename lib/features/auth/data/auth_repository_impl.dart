@@ -206,6 +206,8 @@ class AuthRepositoryImpl implements AuthRepository {
         () => _service.from(_staffTable).update({
           'full_name': staff.fullName,
           'email': staff.email,
+          'phone': staff.phone,
+          'branch': staff.branch?.dbValue,
         }).eq('id', staff.id),
       );
 

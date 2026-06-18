@@ -30,6 +30,7 @@ class _EditProfileSheetState extends ConsumerState<EditProfileSheet> {
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
   late final TextEditingController _nameCtrl;
   late final TextEditingController _emailCtrl;
+  late final TextEditingController _phoneCtrl;
   final TextEditingController _passwordCtrl = TextEditingController();
   final TextEditingController _confirmPasswordCtrl = TextEditingController();
   bool _isSubmitting = false;
@@ -39,12 +40,14 @@ class _EditProfileSheetState extends ConsumerState<EditProfileSheet> {
     super.initState();
     _nameCtrl = TextEditingController(text: widget.staff.fullName);
     _emailCtrl = TextEditingController(text: widget.staff.email);
+    _phoneCtrl = TextEditingController(text: widget.staff.phone ?? '');
   }
 
   @override
   void dispose() {
     _nameCtrl.dispose();
     _emailCtrl.dispose();
+    _phoneCtrl.dispose();
     _passwordCtrl.dispose();
     _confirmPasswordCtrl.dispose();
     super.dispose();
@@ -76,6 +79,7 @@ class _EditProfileSheetState extends ConsumerState<EditProfileSheet> {
       final updated = widget.staff.copyWith(
         fullName: _nameCtrl.text.trim(),
         email: _emailCtrl.text.trim(),
+        phone: _phoneCtrl.text.trim().isEmpty ? null : _phoneCtrl.text.trim(),
       );
 
       final updateResult = await repo.updateStaffProfile(
@@ -143,6 +147,13 @@ class _EditProfileSheetState extends ConsumerState<EditProfileSheet> {
                 if (!v.contains('@')) return AppStrings.emailInvalid;
                 return null;
               },
+            ),
+            const SizedBox(height: AppSizes.p16),
+            TextFormField(
+              controller: _phoneCtrl,
+              enabled: !_isSubmitting,
+              keyboardType: TextInputType.phone,
+              decoration: _decoration(AppStrings.phone),
             ),
             const SizedBox(height: AppSizes.p20),
             Text(AppStrings.changePasswordOptional,

@@ -54,6 +54,7 @@ class NewPatientScreen extends ConsumerWidget {
       body: LoadingOverlay(
         isLoading: isSaving,
         child: const SingleChildScrollView(
+          keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
           padding: EdgeInsets.all(AppSizes.p16),
           child: NewPatientForm(),
         ),

@@ -46,6 +46,7 @@ class NewAppointmentScreen extends ConsumerWidget {
         elevation: 0,
       ),
       body: SingleChildScrollView(
+        keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
         padding: const EdgeInsets.all(AppSizes.p16),
         child: NewAppointmentForm(preselectedPatientId: preselectedPatientId),
       ),

@@ -111,6 +111,20 @@ class _PatientProfile extends ConsumerWidget {
           elevation: 0,
           leading: const AppBackButton(),
           actions: [
+            IconButton(
+              icon: const Icon(Icons.home_rounded, color: AppColors.primary),
+              tooltip: 'Home',
+              onPressed: () {
+                final role = ref.read(currentUserProvider).value?.role;
+                if (role == UserRole.doctor) {
+                  context.go(AppRoutes.schedule);
+                } else if (role == UserRole.superAdmin) {
+                  context.go(AppRoutes.schedule);
+                } else {
+                  context.go(AppRoutes.allAppointments);
+                }
+              },
+            ),
             Padding(
               padding: const EdgeInsets.only(right: AppSizes.p16),
               child: TextButton.icon(

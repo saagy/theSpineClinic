@@ -162,6 +162,7 @@ class _EditPatientFormState extends ConsumerState<EditPatientForm> {
         body: LoadingOverlay(
           isLoading: isSaving,
           child: SingleChildScrollView(
+            keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
             padding: const EdgeInsets.all(AppSizes.p16),
             child: Form(
               key: _formKey,
@@ -193,12 +194,14 @@ class _EditPatientFormState extends ConsumerState<EditPatientForm> {
                         : AppDoctorMultiSelectField(
                             initialValue: _selectedDoctors,
                             onSavedDoctors: (doctors) => setState(() {
+                              final copy = List<Staff>.from(doctors);
                               _selectedDoctors.clear();
-                              _selectedDoctors.addAll(doctors);
+                              _selectedDoctors.addAll(copy);
                             }),
                             onChanged: (doctors) => setState(() {
+                              final copy = List<Staff>.from(doctors);
                               _selectedDoctors.clear();
-                              _selectedDoctors.addAll(doctors);
+                              _selectedDoctors.addAll(copy);
                             }),
                             validator: (val) => (val == null || val.isEmpty)
                                 ? AppStringsAuth.validationDoctorRequired

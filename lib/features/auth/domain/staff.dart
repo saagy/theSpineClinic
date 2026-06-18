@@ -7,6 +7,7 @@ library;
 import 'package:freezed_annotation/freezed_annotation.dart';
 
 import 'package:spine_clinic_app/features/auth/domain/user_role.dart';
+import 'package:spine_clinic_app/features/patient/domain/clinic_location.dart';
 
 part 'staff.freezed.dart';
 part 'staff.g.dart';
@@ -36,6 +37,9 @@ abstract class Staff with _$Staff {
 
     /// Whether the account has been approved by an admin.
     @JsonKey(name: 'is_active') @Default(true) bool isActive,
+
+    /// The primary clinic location/branch for this staff member (synced preference).
+    @JsonKey(name: 'branch') ClinicLocation? branch,
 
     /// Row creation timestamp.
     @JsonKey(name: 'created_at') required DateTime createdAt,

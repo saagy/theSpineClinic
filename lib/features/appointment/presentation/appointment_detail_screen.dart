@@ -59,6 +59,20 @@ class AppointmentDetailScreen extends ConsumerWidget {
         surfaceTintColor: AppColors.transparent,
         leading: const AppBackButton(),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.home_rounded, color: AppColors.primary),
+            tooltip: 'Home',
+            onPressed: () {
+              final role = ref.read(currentUserProvider).value?.role;
+              if (role == UserRole.doctor) {
+                context.go(AppRoutes.schedule);
+              } else if (role == UserRole.superAdmin) {
+                context.go(AppRoutes.schedule);
+              } else {
+                context.go(AppRoutes.allAppointments);
+              }
+            },
+          ),
           if (showEdit)
             Padding(
               padding: const EdgeInsets.only(right: AppSizes.p16),

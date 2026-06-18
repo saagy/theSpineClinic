@@ -106,7 +106,7 @@ class SupabaseService {
     String fn, {
     Map<String, dynamic>? params,
   }) async {
-    return _client.rpc(fn, params: params);
+    return guardQuery(() => _client.rpc<T>(fn, params: params));
   }
 
   /// Executes an arbitrary async Supabase operation and normalises

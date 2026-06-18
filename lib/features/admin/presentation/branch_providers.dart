@@ -3,6 +3,8 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:spine_clinic_app/core/utils/local_settings_service.dart';
 import 'package:spine_clinic_app/features/patient/domain/clinic_location.dart';
+import 'package:spine_clinic_app/features/auth/domain/staff.dart';
+import 'package:spine_clinic_app/features/auth/presentation/auth_providers.dart';
 
 part 'branch_providers.g.dart';
 
@@ -24,6 +26,11 @@ LocalSettingsService localSettingsService(Ref ref) {
 class ActiveBranch extends _$ActiveBranch {
   @override
   ClinicLocation build() {
+    final Staff? user = ref.watch(currentUserProvider).value;
+    if (user != null && user.branch != null) {
+      return user.branch!;
+    }
+
     final LocalSettingsService service = ref.watch(localSettingsServiceProvider);
     return service.getActiveBranch();
   }
@@ -31,8 +38,17 @@ class ActiveBranch extends _$ActiveBranch {
   /// Synchronously switches the active branch selection and commits it to disk.
   Future<void> setBranch(ClinicLocation location) async {
     state = location;
+    
     final LocalSettingsService service = ref.read(localSettingsServiceProvider);
     await service.setActiveBranch(location);
+
+    final Staff? user = ref.read(currentUserProvider).value;
+    if (user != null) {
+      final Staff updated = user.copyWith(branch: location);
+      await ref.read(authRepositoryProvider).updateStaffProfile(
+        staff: updated,
+      );
+    }
   }
 }
 

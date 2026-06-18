@@ -45,6 +45,11 @@ sealed class AppException implements Exception {
     }
 
     if (error is supabase.PostgrestException) {
+      if (error.code == 'PGRST116') {
+        return NotFoundException(
+          message: error.message,
+        );
+      }
       return DatabaseException._fromPostgrest(error);
     }
 
@@ -232,6 +237,15 @@ class NetworkException extends AppException {
     required super.code,
     required super.message,
     super.userMessageKey = 'error_network_generic',
+  });
+}
+
+/// Exception for missing or deleted records.
+class NotFoundException extends AppException {
+  const NotFoundException({
+    required super.message,
+    super.code = 'db/not-found',
+    super.userMessageKey = 'error_database_record_not_found',
   });
 }
 

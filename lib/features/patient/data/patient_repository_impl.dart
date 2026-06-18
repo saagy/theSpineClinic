@@ -53,14 +53,18 @@ class PatientRepositoryImpl implements PatientRepository {
   @override
   Future<Result<Patient>> createPatient(Patient patient, List<String> assignedDoctorIds) async {
     try {
-      final Map<String, dynamic> patientJson = patient.toJson();
-      if (patient.id.isEmpty) patientJson.remove('id');
-      final Map<String, dynamic> row = await _service.guardQuery(() => _service.from(_table).insert(patientJson).select().single());
-      final Patient createdPatient = Patient.fromJson(row);
-      for (final String doctorId in assignedDoctorIds) {
-        await _service.guardQuery(() => _service.from(_doctorsTable).insert({'patient_id': createdPatient.id, 'doctor_id': doctorId}));
-      }
-      return Result.success(createdPatient);
+      final Map<String, dynamic> row = await _service.guardQuery(() => _service.rpc(
+        'create_patient_with_doctors',
+        params: {
+          'p_name': patient.fullName,
+          'p_phone': patient.phoneNumber,
+          'p_program': patient.program,
+          'p_clinic': patient.clinic.dbValue,
+          'p_created_by': patient.createdBy,
+          'p_doctor_ids': assignedDoctorIds,
+        },
+      ));
+      return Result.success(Patient.fromJson(row));
     } on AppException catch (e) {
       return Result.failure(e);
     } catch (e) {
@@ -86,17 +90,13 @@ class PatientRepositoryImpl implements PatientRepository {
   @override
   Future<Result<void>> updatePatientDoctors(String patientId, List<String> currentDoctorIds) async {
     try {
-      final List<Map<String, dynamic>> rows = await _service.guardQuery(() => _service.from(_doctorsTable).select('doctor_id').eq('patient_id', patientId));
-      final Set<String> existingDoctorIds = rows.map((row) => row['doctor_id'] as String).toSet();
-      final Set<String> targetDoctorIds = currentDoctorIds.toSet();
-      final Set<String> toDelete = existingDoctorIds.difference(targetDoctorIds);
-      final Set<String> toInsert = targetDoctorIds.difference(existingDoctorIds);
-      for (final String doctorId in toDelete) {
-        await _service.guardQuery(() => _service.from(_doctorsTable).delete().eq('patient_id', patientId).eq('doctor_id', doctorId));
-      }
-      for (final String doctorId in toInsert) {
-        await _service.guardQuery(() => _service.from(_doctorsTable).insert({'patient_id': patientId, 'doctor_id': doctorId}));
-      }
+      await _service.guardQuery(() => _service.rpc(
+        'update_patient_doctors',
+        params: {
+          'p_patient_id': patientId,
+          'p_doctor_ids': currentDoctorIds,
+        },
+      ));
       return const Result.success(null);
     } on AppException catch (e) {
       return Result.failure(e);
