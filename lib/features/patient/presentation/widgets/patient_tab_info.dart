@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:spine_clinic_app/core/constants/app_colors.dart';
 import 'package:spine_clinic_app/core/constants/app_sizes.dart';
 import 'package:spine_clinic_app/core/constants/app_strings.dart';
+import 'package:spine_clinic_app/core/constants/app_text_styles.dart';
 
+import 'package:spine_clinic_app/features/auth/domain/staff.dart';
 import 'package:spine_clinic_app/features/patient/domain/patient.dart';
 import 'package:spine_clinic_app/features/patient/presentation/patient_providers.dart';
-import 'package:spine_clinic_app/shared/widgets/app_chip.dart';
+import 'package:spine_clinic_app/shared/widgets/app_avatar.dart';
 import 'package:spine_clinic_app/shared/widgets/info_row.dart';
 import 'package:spine_clinic_app/shared/widgets/section_card.dart';
 
@@ -58,16 +61,8 @@ class PatientTabInfo extends ConsumerWidget {
                   if (doctors.isEmpty) {
                     return const Text(AppStrings.noDoctorsAssigned);
                   }
-                  return Wrap(
-                    spacing: AppSizes.p8,
-                    runSpacing: AppSizes.p8,
-                    children: doctors
-                        .map((doc) => AppChip(
-                              label: doc.isActive
-                                  ? doc.fullName
-                                  : '${doc.fullName} (Inactive)',
-                            ))
-                        .toList(),
+                  return Column(
+                    children: doctors.map((doc) => _buildDoctorRow(doc)).toList(),
                   );
                 },
                 loading: () => const Center(
@@ -85,4 +80,43 @@ class PatientTabInfo extends ConsumerWidget {
       ),
     );
   }
+}
+
+/// Builds a single doctor row with avatar, name, and optional inactive badge.
+///
+/// Mirrors the visual design of [AppointmentDoctorsSection._buildActiveDoctorRow]
+/// for consistency across Patient Detail and Appointment Detail screens.
+Widget _buildDoctorRow(Staff doc) {
+  return Padding(
+    padding: const EdgeInsets.symmetric(vertical: AppSizes.p6),
+    child: Row(
+      children: [
+        AppAvatar(name: doc.fullName, radius: 18),
+        const SizedBox(width: AppSizes.p8),
+        Expanded(
+          child: Row(
+            children: [
+              Flexible(
+                child: Text(
+                  doc.fullName,
+                  style: AppTextStyles.bodyBold,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              if (!doc.isActive) ...[
+                const SizedBox(width: AppSizes.p6),
+                Text(
+                  AppStrings.inactive,
+                  style: AppTextStyles.caption.copyWith(
+                    color: AppColors.warning,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ),
+      ],
+    ),
+  );
 }

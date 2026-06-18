@@ -19,6 +19,7 @@ class DataListTile extends StatelessWidget {
     this.title = '',
     this.titleWidget,
     this.subtitle,
+    this.subtitleWidget,
     this.leading,
     this.trailing,
     this.onTap,
@@ -44,6 +45,10 @@ class DataListTile extends StatelessWidget {
 
   /// Optional secondary label rendered below the title.
   final String? subtitle;
+
+  /// Optional custom widget rendered in place of the subtitle text.
+  /// Takes precedence over [subtitle] when both are provided.
+  final Widget? subtitleWidget;
 
   /// Optional widget rendered on the leading edge (e.g. badge, icon).
   final Widget? leading;
@@ -95,7 +100,10 @@ class DataListTile extends StatelessWidget {
                           ? null
                           : TextOverflow.ellipsis,
                     ),
-                if (subtitle != null) ...[
+                if (subtitleWidget != null) ...[
+                  const SizedBox(height: AppSizes.p2),
+                  subtitleWidget!,
+                ] else if (subtitle != null) ...[
                   const SizedBox(height: AppSizes.p2),
                   Text(
                     subtitle!,

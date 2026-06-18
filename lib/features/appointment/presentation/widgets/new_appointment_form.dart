@@ -73,7 +73,7 @@ class _NewAppointmentFormState extends ConsumerState<NewAppointmentForm> {
     if (!mounted) return;
     result.when(
       success: (docs) => setState(() {
-        _assignedDoctors = docs;
+        _assignedDoctors = docs.where((s) => s.isActive).toList();
         _isLoadingDoctors = false;
         if (_selectedType == AppointmentType.checkUp) _autoSelectSuperAdmin();
       }),

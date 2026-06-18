@@ -145,10 +145,9 @@ class AppointmentRepositoryImpl implements AppointmentRepository {
       final List<Map<String, dynamic>> rows = await _service.from('patient_doctors')
           .select('staff:staff!doctor_id (*)')
           .eq('patient_id', patientId);
-      // Client-side filter: Supabase select() join syntax cannot filter the
-      // joined staff table in-chain, so we exclude inactive doctors here.
-      // This prevents inactive doctors from appearing in the appointment
-      // booking pre-fill list (NewAppointmentForm._fetchDoctors).
+      // Returns ALL assigned doctors regardless of active status.
+      // Consumers that need active-only filtering (e.g. appointment booking
+      // pre-fill) apply the filter at their own level.
       return rows
           .map((row) {
             final Map<String, dynamic>? staffJson =
@@ -156,7 +155,6 @@ class AppointmentRepositoryImpl implements AppointmentRepository {
             return staffJson != null ? Staff.fromJson(staffJson) : null;
           })
           .whereType<Staff>()
-          .where((staff) => staff.isActive)
           .toList();
     });
   }

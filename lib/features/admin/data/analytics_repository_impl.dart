@@ -123,7 +123,7 @@ class AnalyticsRepositoryImpl implements AnalyticsRepository {
       }
       final sorted = apptsPerDoc.entries.toList()..sort((a, b) => b.value.compareTo(a.value));
       final newStaffRows = await _service.guardQuery(() => _service
-          .from('staff').select('id').eq('role', 'doctor')
+          .from('staff').select('id').eq('role', 'doctor').eq('is_active', true)
           .gte('created_at', range.start.toIso8601String())
           .lte('created_at', range.end.toIso8601String()));
       return Result.success(StaffSummary(

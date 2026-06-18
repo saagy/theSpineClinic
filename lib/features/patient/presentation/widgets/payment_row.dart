@@ -10,6 +10,8 @@ import 'package:spine_clinic_app/core/constants/app_sizes.dart';
 import 'package:spine_clinic_app/core/constants/app_strings.dart';
 import 'package:spine_clinic_app/core/constants/app_text_styles.dart';
 import 'package:spine_clinic_app/core/utils/formatters.dart';
+import 'package:spine_clinic_app/features/auth/domain/staff.dart';
+import 'package:spine_clinic_app/features/auth/presentation/auth_providers.dart';
 import 'package:spine_clinic_app/features/payments/domain/payment_record.dart';
 import 'package:spine_clinic_app/features/payments/presentation/record_payment_controller.dart';
 import 'package:spine_clinic_app/features/patient/presentation/patient_providers.dart';
@@ -32,6 +34,10 @@ class PaymentRow extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final recordedByAsync = payment.recordedBy != null
+        ? ref.watch(staffProfileProvider(payment.recordedBy!))
+        : null;
+
     return DataListTile(
       titleWidget: Wrap(
         crossAxisAlignment: WrapCrossAlignment.center,
@@ -63,7 +69,7 @@ class PaymentRow extends ConsumerWidget {
             ),
         ],
       ),
-      subtitle: payment.recordedAt.toDateTimeString(),
+      subtitleWidget: _buildSubtitle(ref, recordedByAsync),
       trailing: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -82,6 +88,41 @@ class PaymentRow extends ConsumerWidget {
         ],
       ),
       transparent: true,
+    );
+  }
+
+  Widget _buildSubtitle(
+    WidgetRef ref,
+    AsyncValue<Staff>? recordedByAsync,
+  ) {
+    final dateStr = payment.recordedAt.toDateTimeString();
+    final recordedByWidget = recordedByAsync?.when(
+          data: (staff) {
+            final String name = staff.isActive
+                ? staff.fullName
+                : '${staff.fullName} (${AppStrings.inactive})';
+            return Text(
+              'Recorded by $name',
+              style: AppTextStyles.caption.copyWith(color: AppColors.textMuted),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            );
+          },
+          loading: () => const SizedBox.shrink(),
+          error: (_, __) => const SizedBox.shrink(),
+        ) ??
+        const SizedBox.shrink();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(
+          dateStr,
+          style: AppTextStyles.caption.copyWith(color: AppColors.textMuted),
+        ),
+        if (recordedByAsync != null) recordedByWidget,
+      ],
     );
   }
 
