@@ -142,11 +142,22 @@ class AppointmentRepositoryImpl implements AppointmentRepository {
   @override
   Future<Result<List<Staff>>> getAssignedDoctors(String patientId) {
     return _run(() async {
-      final List<Map<String, dynamic>> rows = await _service.from('patient_doctors').select('staff:staff!doctor_id (*)').eq('patient_id', patientId);
-      return rows.map((row) {
-        final Map<String, dynamic>? staffJson = row['staff'] as Map<String, dynamic>?;
-        return staffJson != null ? Staff.fromJson(staffJson) : null;
-      }).whereType<Staff>().toList();
+      final List<Map<String, dynamic>> rows = await _service.from('patient_doctors')
+          .select('staff:staff!doctor_id (*)')
+          .eq('patient_id', patientId);
+      // Client-side filter: Supabase select() join syntax cannot filter the
+      // joined staff table in-chain, so we exclude inactive doctors here.
+      // This prevents inactive doctors from appearing in the appointment
+      // booking pre-fill list (NewAppointmentForm._fetchDoctors).
+      return rows
+          .map((row) {
+            final Map<String, dynamic>? staffJson =
+                row['staff'] as Map<String, dynamic>?;
+            return staffJson != null ? Staff.fromJson(staffJson) : null;
+          })
+          .whereType<Staff>()
+          .where((staff) => staff.isActive)
+          .toList();
     });
   }
 

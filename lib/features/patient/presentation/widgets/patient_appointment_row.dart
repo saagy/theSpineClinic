@@ -33,10 +33,11 @@ class PatientAppointmentRow extends ConsumerWidget {
 
         return details.map((detail) {
           final String doctorName = detail.doctor.fullName;
+          final String inactiveSuffix = detail.doctor.isActive ? '' : ' (Inactive)';
           if (detail.assignment.isReplacement && detail.replacedDoctor != null) {
-            return '$doctorName (Covering ${detail.replacedDoctor!.fullName})';
+            return '$doctorName$inactiveSuffix (Covering ${detail.replacedDoctor!.fullName})';
           }
-          return doctorName;
+          return '$doctorName$inactiveSuffix';
         }).join(', ');
       },
       loading: () => 'Loading doctors...',

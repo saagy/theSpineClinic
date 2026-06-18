@@ -76,9 +76,26 @@ class AppointmentDoctorsSection extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  detail.doctor.fullName,
-                  style: AppTextStyles.bodyBold,
+                Row(
+                  children: [
+                    Flexible(
+                      child: Text(
+                        detail.doctor.fullName,
+                        style: AppTextStyles.bodyBold,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    if (!detail.doctor.isActive) ...[
+                      const SizedBox(width: AppSizes.p6),
+                      Text(
+                        AppStrings.inactive,
+                        style: AppTextStyles.caption.copyWith(
+                          color: AppColors.warning,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ],
                 ),
                 if (detail.assignment.isReplacement &&
                     detail.replacedDoctor != null)

@@ -15,6 +15,7 @@ import 'package:spine_clinic_app/core/errors/app_exception.dart';
 import 'package:spine_clinic_app/core/errors/result.dart';
 import 'package:spine_clinic_app/core/network/supabase_service.dart';
 import 'package:spine_clinic_app/features/auth/domain/staff.dart';
+import 'package:spine_clinic_app/features/auth/domain/user_role.dart';
 import 'package:spine_clinic_app/features/auth/presentation/auth_providers.dart';
 import 'package:spine_clinic_app/features/patient/domain/patient.dart';
 import 'package:spine_clinic_app/features/staff/data/staff_repository.dart';
@@ -36,6 +37,25 @@ Future<List<Staff>> activeDoctors(Ref ref) async {
   final Result<List<Staff>> result = await repo.getActiveDoctors();
   return result.when(
     success: (List<Staff> data) => data,
+    failure: (AppException exception) => throw exception,
+  );
+}
+
+/// Fetches all doctors and super admins regardless of active status.
+///
+/// Used by filter/search dropdowns (PatientListFilters, UnifiedFilterSheet)
+/// where users need to filter by historical records tied to deactivated staff.
+/// Inactive doctors are visually distinguished with an "(Inactive)" badge in
+/// the UI. Operational dropdowns (creating/editing) continue to use
+/// [activeDoctorsProvider] which strictly excludes inactive staff.
+@riverpod
+Future<List<Staff>> allDoctorsForFilter(Ref ref) async {
+  final StaffRepository repo = ref.read(staffRepositoryProvider);
+  final Result<List<Staff>> result = await repo.getAllStaff();
+  return result.when(
+    success: (List<Staff> data) => data
+        .where((s) => s.role == UserRole.doctor || s.role == UserRole.superAdmin)
+        .toList(),
     failure: (AppException exception) => throw exception,
   );
 }

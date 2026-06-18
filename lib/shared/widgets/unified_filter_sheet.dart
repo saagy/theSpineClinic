@@ -85,7 +85,9 @@ class _UnifiedFilterSheetState extends ConsumerState<UnifiedFilterSheet> {
   void _selectDoctor(Staff doctor) {
     setState(() {
       _selectedDoctorId = doctor.id;
-      _selectedDoctorName = doctor.fullName;
+      _selectedDoctorName = doctor.isActive
+          ? doctor.fullName
+          : '${doctor.fullName} (${AppStrings.inactive})';
       _searchCtrl.clear();
       _showResults = false;
     });
@@ -122,7 +124,7 @@ class _UnifiedFilterSheetState extends ConsumerState<UnifiedFilterSheet> {
 
   @override
   Widget build(BuildContext context) {
-    final doctorsAsync = ref.watch(activeDoctorsProvider);
+    final doctorsAsync = ref.watch(allDoctorsForFilterProvider);
 
     // Resolve initial doctor name when loaded.
     if (_selectedDoctorId != null && _selectedDoctorName.isEmpty) {

@@ -7,6 +7,7 @@ import 'package:spine_clinic_app/core/constants/app_text_styles.dart';
 import 'package:spine_clinic_app/features/auth/domain/staff.dart';
 import 'package:spine_clinic_app/features/staff/presentation/widgets/doctor_overlay_list.dart';
 import 'package:spine_clinic_app/shared/widgets/app_chip.dart';
+import 'package:spine_clinic_app/shared/widgets/app_snackbar.dart';
 
 /// Reusable searchable custom form field for doctor multi-selection.
 ///
@@ -188,6 +189,14 @@ class _AppDoctorMultiSelectFieldWidgetState
                   return AppChip(
                     label: doctor.fullName,
                     onDeleted: () {
+                      if (selected.length <= 1) {
+                        AppSnackbar.show(
+                          context,
+                          message: 'A patient must have at least one assigned doctor.',
+                          variant: AppSnackbarVariant.error,
+                        );
+                        return;
+                      }
                       final updated = selected.where((d) => d.id != doctor.id).toList();
                       widget.state.didChange(updated);
                       widget.onChanged?.call(updated);

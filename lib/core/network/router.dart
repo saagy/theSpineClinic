@@ -2,6 +2,7 @@
 library;
 
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:spine_clinic_app/core/network/app_routes.dart';
@@ -213,11 +214,13 @@ List<RouteBase> _buildRoutes(Ref ref) {
         final int activeIndex = _resolveActiveIndex(role, state.matchedLocation);
 
         return NoTransitionPage(
-          child: AppShell(
-            userRole: role,
-            currentTabIndex: activeIndex,
-            onTabSelected: (int index) => _onTabSelected(context, role, index),
-            child: child,
+          child: _SessionGuard(
+            child: AppShell(
+              userRole: role,
+              currentTabIndex: activeIndex,
+              onTabSelected: (int index) => _onTabSelected(context, role, index),
+              child: child,
+            ),
           ),
         );
       },
@@ -316,6 +319,37 @@ int _resolveActiveIndex(String role, String location) {
       if (location == AppRoutes.receptionistProfile) return 2;
       if (location == AppRoutes.patientList || location.startsWith('/patient')) return 1;
       return 0; // appts (allAppointments)
+  }
+}
+
+/// Watches [currentUserProvider] and force-redirects to login when the
+/// current user's account is deactivated mid-session.
+///
+/// The GoRouter redirect guard (line 88) already catches inactive users on
+/// navigation transitions. This widget catches the transition itself — when
+/// an admin deactivates an account and the provider rebuilds with
+/// `isActive == false`, we push the user to login immediately without
+/// waiting for the next navigation event.
+class _SessionGuard extends ConsumerWidget {
+  const _SessionGuard({required this.child});
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    ref.listen<AsyncValue<Staff?>>(currentUserProvider, (previous, next) {
+      final Staff? prevUser = previous?.value;
+      final Staff? nextUser = next.value;
+      // Only redirect when a previously-active user becomes inactive.
+      // Don't redirect during initial load (prevUser null) or when the
+      // user was already null/inactive.
+      if (prevUser != null &&
+          prevUser.isActive &&
+          nextUser != null &&
+          !nextUser.isActive) {
+        context.go(AppRoutes.login);
+      }
+    });
+    return child;
   }
 }
 

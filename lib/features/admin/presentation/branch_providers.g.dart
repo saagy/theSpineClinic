@@ -149,7 +149,7 @@ final class ActiveBranchProvider
   }
 }
 
-String _$activeBranchHash() => r'02299fe3f9f3ddad6792a1f6b72d4d99f53c65e2';
+String _$activeBranchHash() => r'40a969281b1bbc38fdbb161a4ea16abd4c4f77f4';
 
 /// Active branch state notifier. Synchronously exposes choices and persists updates.
 

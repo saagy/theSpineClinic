@@ -111,6 +111,7 @@ class _EditPatientFormState extends ConsumerState<EditPatientForm> {
     await ref.read(editPatientControllerProvider.notifier).submit(
       patient: updated,
       selectedDoctorIds: _selectedDoctors.map((d) => d.id).toList(),
+      initialDoctorIds: _initialDoctorIds,
     );
   }
 

@@ -255,6 +255,7 @@ abstract final class AppStrings {
   static const String password = 'Password';
   static const String confirmPassword = 'Confirm Password';
   static const String isActive = 'Is Active';
+  static const String inactive = 'Inactive';
   static const String changePassword = 'Change Password';
   static const String deactivateStaffConfirm = 'Deactivate this staff member? They will no longer be able to log in.';
   static const String selfDeactivationError = 'You cannot deactivate your own account.';

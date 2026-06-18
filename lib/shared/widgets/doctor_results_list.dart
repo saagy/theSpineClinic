@@ -92,11 +92,27 @@ class DoctorResultsList extends StatelessWidget {
                     ),
                     const SizedBox(width: AppSizes.p12),
                     Expanded(
-                      child: Text(
-                        d.fullName,
-                        style: AppTextStyles.body,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
+                      child: Row(
+                        children: [
+                          Flexible(
+                            child: Text(
+                              d.fullName,
+                              style: AppTextStyles.body,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          if (!d.isActive) ...[
+                            const SizedBox(width: AppSizes.p6),
+                            Text(
+                              AppStrings.inactive,
+                              style: AppTextStyles.caption.copyWith(
+                                color: AppColors.warning,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ],
+                        ],
                       ),
                     ),
                   ],

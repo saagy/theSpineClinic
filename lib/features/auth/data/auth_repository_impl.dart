@@ -34,8 +34,12 @@ class AuthRepositoryImpl implements AuthRepository {
     String email,
     String password,
   ) async {
+    // Track whether auth sign-in succeeded so we can clean up the session
+    // if the staff lookup fails (e.g. account is inactive).
+    bool authSucceeded = false;
     try {
       await _service.signInWithEmail(email: email, password: password);
+      authSucceeded = true;
 
       final String? userId = _service.currentUserId;
       if (userId == null) {
@@ -47,18 +51,37 @@ class AuthRepositoryImpl implements AuthRepository {
         );
       }
 
+      // Only return the staff profile if the account is active.
+      // Inactive / pending-approval accounts receive a clear error
+      // and their auth session is discarded below.
       final Map<String, dynamic> row = await _service.guardQuery(
         () => _service
             .from(_staffTable)
             .select()
             .eq('user_id', userId)
+            .eq('is_active', true)
             .single(),
       );
 
       return Result.success(Staff.fromJson(row));
     } on AppException catch (error) {
+      // If the auth call created a session but the staff lookup failed
+      // (inactive account, missing profile, etc.), discard the session
+      // so the user cannot use the token directly.
+      if (authSucceeded) {
+        try {
+          await _service.signOut();
+        } catch (_) {
+          // Best-effort — the session is short-lived regardless.
+        }
+      }
       return Result.failure(error);
     } on Exception catch (error) {
+      if (authSucceeded) {
+        try {
+          await _service.signOut();
+        } catch (_) {}
+      }
       return Result.failure(AppException.fromSupabaseException(error));
     }
   }
@@ -87,7 +110,8 @@ class AuthRepositoryImpl implements AuthRepository {
         () => _service
             .from(_staffTable)
             .select()
-            .eq('user_id', userId),
+            .eq('user_id', userId)
+            .eq('is_active', true),
       );
 
       if (rows.isEmpty) {

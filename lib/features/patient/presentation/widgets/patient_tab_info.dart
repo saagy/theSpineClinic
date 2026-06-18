@@ -62,7 +62,11 @@ class PatientTabInfo extends ConsumerWidget {
                     spacing: AppSizes.p8,
                     runSpacing: AppSizes.p8,
                     children: doctors
-                        .map((doc) => AppChip(label: doc.fullName))
+                        .map((doc) => AppChip(
+                              label: doc.isActive
+                                  ? doc.fullName
+                                  : '${doc.fullName} (Inactive)',
+                            ))
                         .toList(),
                   );
                 },

@@ -21,10 +21,13 @@ class EditPatientController extends _$EditPatientController {
   /// Submits the patient updates and assigned doctor junction changes.
   ///
   /// Invokes repository methods sequentially and invalidates detail caches on success.
+  /// Skips the doctor assignment RPC when [initialDoctorIds] matches
+  /// [selectedDoctorIds] to avoid an unnecessary delete+insert cycle.
   /// Returns `true` if update succeeds, `false` otherwise.
   Future<bool> submit({
     required Patient patient,
     required List<String> selectedDoctorIds,
+    required List<String> initialDoctorIds,
   }) async {
     state = const AsyncValue.loading();
     final repo = ref.read(patientRepositoryProvider);
@@ -75,16 +78,24 @@ class EditPatientController extends _$EditPatientController {
       return false;
     }
 
-    // 2. Update patient doctor assignments (only for admin/receptionist)
+    // 2. Update patient doctor assignments (only for admin/receptionist,
+    //    and only when the list has actually changed)
     if (currentUser.role != UserRole.doctor) {
-      final Result<void> doctorsResult = await repo.updatePatientDoctors(
-        patient.id,
-        selectedDoctorIds,
-      );
-      if (!ref.mounted) return false;
-      if (doctorsResult is Failure<void>) {
-        state = AsyncValue.error(doctorsResult.exception, StackTrace.current);
-        return false;
+      final currentSet = selectedDoctorIds.toSet();
+      final initialSet = initialDoctorIds.toSet();
+      final doctorsChanged = currentSet.length != initialSet.length ||
+          !currentSet.every(initialSet.contains);
+
+      if (doctorsChanged) {
+        final Result<void> doctorsResult = await repo.updatePatientDoctors(
+          patient.id,
+          selectedDoctorIds,
+        );
+        if (!ref.mounted) return false;
+        if (doctorsResult is Failure<void>) {
+          state = AsyncValue.error(doctorsResult.exception, StackTrace.current);
+          return false;
+        }
       }
     }
 

@@ -99,6 +99,69 @@ final class ActiveDoctorsProvider
 
 String _$activeDoctorsHash() => r'63a8cabbf18d26a853e0e31abf9a215b2536d74b';
 
+/// Fetches all doctors and super admins regardless of active status.
+///
+/// Used by filter/search dropdowns (PatientListFilters, UnifiedFilterSheet)
+/// where users need to filter by historical records tied to deactivated staff.
+/// Inactive doctors are visually distinguished with an "(Inactive)" badge in
+/// the UI. Operational dropdowns (creating/editing) continue to use
+/// [activeDoctorsProvider] which strictly excludes inactive staff.
+
+@ProviderFor(allDoctorsForFilter)
+final allDoctorsForFilterProvider = AllDoctorsForFilterProvider._();
+
+/// Fetches all doctors and super admins regardless of active status.
+///
+/// Used by filter/search dropdowns (PatientListFilters, UnifiedFilterSheet)
+/// where users need to filter by historical records tied to deactivated staff.
+/// Inactive doctors are visually distinguished with an "(Inactive)" badge in
+/// the UI. Operational dropdowns (creating/editing) continue to use
+/// [activeDoctorsProvider] which strictly excludes inactive staff.
+
+final class AllDoctorsForFilterProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<List<Staff>>,
+          List<Staff>,
+          FutureOr<List<Staff>>
+        >
+    with $FutureModifier<List<Staff>>, $FutureProvider<List<Staff>> {
+  /// Fetches all doctors and super admins regardless of active status.
+  ///
+  /// Used by filter/search dropdowns (PatientListFilters, UnifiedFilterSheet)
+  /// where users need to filter by historical records tied to deactivated staff.
+  /// Inactive doctors are visually distinguished with an "(Inactive)" badge in
+  /// the UI. Operational dropdowns (creating/editing) continue to use
+  /// [activeDoctorsProvider] which strictly excludes inactive staff.
+  AllDoctorsForFilterProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'allDoctorsForFilterProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$allDoctorsForFilterHash();
+
+  @$internal
+  @override
+  $FutureProviderElement<List<Staff>> $createElement(
+    $ProviderPointer pointer,
+  ) => $FutureProviderElement(pointer);
+
+  @override
+  FutureOr<List<Staff>> create(Ref ref) {
+    return allDoctorsForFilter(ref);
+  }
+}
+
+String _$allDoctorsForFilterHash() =>
+    r'0d283bfdef4ce1138bc4d02eb7ff55498076e93c';
+
 /// Controller managing the roster of patients assigned to the logged-in doctor.
 
 @ProviderFor(MyPatientsController)

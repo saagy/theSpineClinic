@@ -19,7 +19,7 @@ class PatientListFilters extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final doctorsAsync = ref.watch(activeDoctorsProvider);
+    final doctorsAsync = ref.watch(allDoctorsForFilterProvider);
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: AppSizes.p16),
@@ -128,9 +128,15 @@ class _SearchableDoctorFilterState extends ConsumerState<_SearchableDoctorFilter
                       },
                     ),
                     ...filtered.map((d) => _FilterItem(
-                      label: d.fullName,
+                      label: d.isActive
+                          ? d.fullName
+                          : '${d.fullName} (${AppStrings.inactive})',
                       onTap: () {
-                        setState(() { _selectedDoctorName = d.fullName; });
+                        setState(() {
+                          _selectedDoctorName = d.isActive
+                              ? d.fullName
+                              : '${d.fullName} (${AppStrings.inactive})';
+                        });
                         _searchCtrl.clear();
                         ref.read(patientListProvider.notifier).setDoctorFilter(d.id);
                         _hideOverlay();

@@ -149,6 +149,7 @@ class VisitDetailScreen extends ConsumerWidget {
               children: state.activeDoctors.map((docDetail) {
                 final bool isReplacement = docDetail.assignment.isReplacement;
                 final String? replacedDoctorName = docDetail.replacedDoctor?.fullName;
+                final bool isActive = docDetail.doctor.isActive;
                 return Padding(
                   padding: const EdgeInsets.symmetric(vertical: AppSizes.p4),
                   child: Row(
@@ -161,6 +162,14 @@ class VisitDetailScreen extends ConsumerWidget {
                             style: AppTextStyles.body,
                             children: [
                               TextSpan(text: docDetail.doctor.fullName, style: AppTextStyles.bodyMedium),
+                              if (!isActive)
+                                TextSpan(
+                                  text: ' (${AppStrings.inactive})',
+                                  style: AppTextStyles.caption.copyWith(
+                                    color: AppColors.warning,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
                               if (isReplacement && replacedDoctorName != null)
                                 TextSpan(
                                   text: ' (Covering $replacedDoctorName)',

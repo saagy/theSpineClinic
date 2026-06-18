@@ -71,8 +71,11 @@ class PatientNoteItem extends ConsumerWidget {
                           UserRole.receptionist => AppStrings.receptionistRoleLabel,
                           UserRole.doctor => AppStrings.doctorRoleLabel,
                         };
+                        final String name = staff.isActive
+                            ? '${staff.fullName} ($roleName)'
+                            : '${staff.fullName} ($roleName, ${AppStrings.inactive})';
                         return Text(
-                          '${staff.fullName} ($roleName)',
+                          name,
                           style: AppTextStyles.bodyBold.copyWith(color: AppColors.textPrimary),
                           softWrap: true,
                           maxLines: 1,
