@@ -193,7 +193,7 @@ class _StaffListScaffoldState extends ConsumerState<_StaffListScaffold> {
                     onTap: () { localStatus = true; setSheetState(() {}); },
                   ),
                   AppFilterChip(
-                    label: 'Inactive',
+                    label: AppStrings.deactivated,
                     isActive: localStatus == false,
                     onTap: () { localStatus = false; setSheetState(() {}); },
                   ),
@@ -231,7 +231,7 @@ class _StaffListScaffoldState extends ConsumerState<_StaffListScaffold> {
     }
     if (_activeStatusFilter != null) {
       chips.add(ActiveFilterChip(
-        label: _activeStatusFilter! ? 'Active' : 'Inactive',
+        label: _activeStatusFilter! ? AppStrings.active : AppStrings.deactivated,
         onRemove: () => setState(() => _activeStatusFilter = null),
       ));
     }
@@ -387,7 +387,7 @@ class _StaffRow extends StatelessWidget {
           ),
           const SizedBox(width: AppSizes.p8),
           AppBadge(
-            label: staff.isActive ? 'Active' : 'Inactive',
+            label: staff.isActive ? AppStrings.active : AppStrings.deactivated,
             textColor: staff.isActive ? AppColors.success : AppColors.error,
             backgroundColor: staff.isActive ? AppColors.successBg : AppColors.errorBg,
           ),

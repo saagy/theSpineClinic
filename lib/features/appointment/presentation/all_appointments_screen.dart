@@ -150,13 +150,13 @@ class _AllAppointmentsScreenState extends ConsumerState<AllAppointmentsScreen> {
     }
     // Doctor
     if (n.doctorId != null) {
-      final doctors = ref.watch(activeDoctorsProvider).value ?? [];
+      final doctors = ref.watch(allDoctorsForFilterProvider).value ?? [];
       final doctor = doctors.cast<Staff?>().firstWhere(
             (d) => d!.id == n.doctorId,
             orElse: () => null,
           );
       chips.add(ActiveFilterChip(
-        label: doctor?.fullName ?? 'Doctor',
+        label: doctor?.fullName ?? AppStrings.unknownDoctorFallback,
         onRemove: () => n.setDoctorFilter(null),
       ));
     }
@@ -264,10 +264,29 @@ class _AllAppointmentsScreenState extends ConsumerState<AllAppointmentsScreen> {
   Widget _buildBody(AsyncValue<List<AppointmentWithPatient>> async) {
     return async.when(
       loading: () => const Center(child: CircularProgressIndicator(color: AppColors.primary)),
-      error: (Object error, StackTrace _) => ErrorView(
-        exception: UnknownException(message: '$error'),
-        onRetry: () => ref.read(allAppointmentsProvider.notifier).clearAll(),
-      ),
+      error: (Object error, StackTrace _) {
+        final AppException ex = error is AppException
+            ? error
+            : UnknownException(message: '$error');
+        return RefreshIndicator(
+          color: Theme.of(context).colorScheme.primary,
+          onRefresh: () async =>
+              ref.read(allAppointmentsProvider.notifier).refresh(),
+          child: ListView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            children: [
+              SizedBox(
+                height: MediaQuery.of(context).size.height * 0.65,
+                child: ErrorView(
+                  exception: ex,
+                  onRetry: () =>
+                      ref.read(allAppointmentsProvider.notifier).refresh(),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
       data: (List<AppointmentWithPatient> items) {
         if (items.isEmpty) {
           return const EmptyState(

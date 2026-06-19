@@ -87,7 +87,7 @@ class _UnifiedFilterSheetState extends ConsumerState<UnifiedFilterSheet> {
       _selectedDoctorId = doctor.id;
       _selectedDoctorName = doctor.isActive
           ? doctor.fullName
-          : '${doctor.fullName} (${AppStrings.inactive})';
+          : '${doctor.fullName} (${AppStrings.deactivated})';
       _searchCtrl.clear();
       _showResults = false;
     });
@@ -118,8 +118,15 @@ class _UnifiedFilterSheetState extends ConsumerState<UnifiedFilterSheet> {
 
   List<Staff> _filter(List<Staff> doctors) {
     final q = _searchCtrl.text.toLowerCase();
-    if (q.isEmpty) return doctors;
-    return doctors.where((d) => d.fullName.toLowerCase().contains(q)).toList();
+    final filtered = q.isEmpty
+        ? doctors
+        : doctors.where((d) => d.fullName.toLowerCase().contains(q)).toList();
+    // Active doctors first, deactivated at the end.
+    filtered.sort((a, b) {
+      if (a.isActive == b.isActive) return a.fullName.compareTo(b.fullName);
+      return a.isActive ? -1 : 1;
+    });
+    return filtered;
   }
 
   @override

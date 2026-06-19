@@ -103,8 +103,8 @@ String _$activeDoctorsHash() => r'63a8cabbf18d26a853e0e31abf9a215b2536d74b';
 ///
 /// Used by filter/search dropdowns (PatientListFilters, UnifiedFilterSheet)
 /// where users need to filter by historical records tied to deactivated staff.
-/// Inactive doctors are visually distinguished with an "(Inactive)" badge in
-/// the UI. Operational dropdowns (creating/editing) continue to use
+/// Deactivated doctors are visually distinguished with a "(Deactivated)" badge
+/// in the UI. Operational dropdowns (creating/editing) continue to use
 /// [activeDoctorsProvider] which strictly excludes inactive staff.
 
 @ProviderFor(allDoctorsForFilter)
@@ -114,8 +114,8 @@ final allDoctorsForFilterProvider = AllDoctorsForFilterProvider._();
 ///
 /// Used by filter/search dropdowns (PatientListFilters, UnifiedFilterSheet)
 /// where users need to filter by historical records tied to deactivated staff.
-/// Inactive doctors are visually distinguished with an "(Inactive)" badge in
-/// the UI. Operational dropdowns (creating/editing) continue to use
+/// Deactivated doctors are visually distinguished with a "(Deactivated)" badge
+/// in the UI. Operational dropdowns (creating/editing) continue to use
 /// [activeDoctorsProvider] which strictly excludes inactive staff.
 
 final class AllDoctorsForFilterProvider
@@ -130,8 +130,8 @@ final class AllDoctorsForFilterProvider
   ///
   /// Used by filter/search dropdowns (PatientListFilters, UnifiedFilterSheet)
   /// where users need to filter by historical records tied to deactivated staff.
-  /// Inactive doctors are visually distinguished with an "(Inactive)" badge in
-  /// the UI. Operational dropdowns (creating/editing) continue to use
+  /// Deactivated doctors are visually distinguished with a "(Deactivated)" badge
+  /// in the UI. Operational dropdowns (creating/editing) continue to use
   /// [activeDoctorsProvider] which strictly excludes inactive staff.
   AllDoctorsForFilterProvider._()
     : super(

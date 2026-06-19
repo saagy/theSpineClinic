@@ -4,11 +4,14 @@
 /// text when list queries or searches return zero active records.
 /// Touch-neutral.
 ///
+/// All colours are resolved from [Theme.of(context).colorScheme] for
+/// automatic dark-mode compatibility.
+///
 /// Rule 1 — keep files under 200 lines.
+/// Rule 16 — zero hardcoded colours, all via theme.
 library;
 
 import 'package:flutter/material.dart';
-import 'package:spine_clinic_app/core/constants/app_colors.dart';
 import 'package:spine_clinic_app/core/constants/app_sizes.dart';
 import 'package:spine_clinic_app/core/constants/app_text_styles.dart';
 import 'package:spine_clinic_app/shared/widgets/app_button.dart';
@@ -43,6 +46,8 @@ class EmptyState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final ColorScheme cs = Theme.of(context).colorScheme;
+
     return Center(
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: AppSizes.p32),
@@ -56,13 +61,13 @@ class EmptyState extends StatelessWidget {
               width: 80,
               height: 80,
               decoration: BoxDecoration(
-                color: AppColors.primaryLight,
+                color: cs.surfaceContainerHighest,
                 shape: BoxShape.circle,
               ),
               child: Icon(
                 icon,
                 size: 40,
-                color: AppColors.primary,
+                color: cs.primary,
               ),
             ),
             const SizedBox(height: AppSizes.p20),
@@ -70,7 +75,7 @@ class EmptyState extends StatelessWidget {
             Text(
               message,
               style: AppTextStyles.bodyLarge.copyWith(
-                color: AppColors.textSecondary,
+                color: cs.onSurfaceVariant,
               ),
               textAlign: TextAlign.center,
             ),
@@ -79,7 +84,7 @@ class EmptyState extends StatelessWidget {
               Text(
                 secondaryMessage!,
                 style: AppTextStyles.caption.copyWith(
-                  color: AppColors.textMuted,
+                  color: cs.outline,
                 ),
                 textAlign: TextAlign.center,
               ),

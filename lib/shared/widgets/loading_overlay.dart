@@ -4,13 +4,16 @@
 /// modal loading indicator when asynchronous operations are in progress.
 /// Includes an escape hatch if the loading state persists.
 ///
+/// All colours are resolved from [Theme.of(context).colorScheme] for
+/// automatic dark-mode compatibility.
+///
 /// Rule 1 — keep files under 200 lines.
+/// Rule 16 — zero hardcoded colours, all via theme.
 library;
 
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:spine_clinic_app/core/constants/app_colors.dart';
 import 'package:spine_clinic_app/core/network/app_routes.dart';
 
 /// A full-screen blocking overlay spinner styled with Spine Clinic design tokens.
@@ -79,21 +82,22 @@ class _LoadingOverlayState extends State<LoadingOverlay> {
 
   @override
   Widget build(BuildContext context) {
+    final ColorScheme cs = Theme.of(context).colorScheme;
+
     return Stack(
       children: [
         widget.child,
         if (widget.isLoading)
-          // AbsorbPointer intercepts all gesture events, preventing interaction with child
           AbsorbPointer(
             absorbing: true,
             child: Container(
-              color: AppColors.overlayScrim, // ~0.4 opacity background barrier
+              color: cs.scrim.withAlpha(77), // ~30 % opacity scrim
               child: Center(
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const CircularProgressIndicator(
-                      valueColor: AlwaysStoppedAnimation<Color>(AppColors.primary),
+                    CircularProgressIndicator(
+                      valueColor: AlwaysStoppedAnimation<Color>(cs.primary),
                     ),
                     if (_showEscapeHatch) ...[
                       const SizedBox(height: 20),
@@ -101,7 +105,7 @@ class _LoadingOverlayState extends State<LoadingOverlay> {
                         padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
                         margin: const EdgeInsets.symmetric(horizontal: 32),
                         decoration: BoxDecoration(
-                          color: Colors.white,
+                          color: cs.surface,
                           borderRadius: BorderRadius.circular(16),
                           boxShadow: [
                             BoxShadow(
@@ -114,28 +118,28 @@ class _LoadingOverlayState extends State<LoadingOverlay> {
                         child: Column(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            const Text(
+                            Text(
                               'Taking longer than usual...',
                               style: TextStyle(
                                 fontSize: 15,
                                 fontWeight: FontWeight.bold,
-                                color: AppColors.textPrimary,
+                                color: cs.onSurface,
                               ),
                             ),
                             const SizedBox(height: 6),
-                            const Text(
+                            Text(
                               'Check your connection or cancel the request.',
                               style: TextStyle(
                                 fontSize: 13,
-                                color: AppColors.textSecondary,
+                                color: cs.onSurfaceVariant,
                               ),
                               textAlign: TextAlign.center,
                             ),
                             const SizedBox(height: 16),
                             TextButton.icon(
                               style: TextButton.styleFrom(
-                                backgroundColor: AppColors.error.withAlpha(25),
-                                foregroundColor: AppColors.error,
+                                backgroundColor: cs.error.withAlpha(25),
+                                foregroundColor: cs.error,
                                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(30),

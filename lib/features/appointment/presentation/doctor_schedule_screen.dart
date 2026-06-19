@@ -11,10 +11,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:spine_clinic_app/core/constants/app_colors.dart';
 import 'package:spine_clinic_app/core/constants/app_sizes.dart';
 import 'package:spine_clinic_app/core/constants/app_text_styles.dart';
+import 'package:spine_clinic_app/core/errors/app_exception.dart';
 import 'package:spine_clinic_app/features/appointment/presentation/doctor_schedule_providers.dart';
 import 'package:spine_clinic_app/features/auth/domain/staff.dart';
 import 'package:spine_clinic_app/features/appointment/presentation/widgets/doctor_day_list.dart';
 import 'package:spine_clinic_app/features/appointment/presentation/widgets/doctor_week_strip.dart';
+import 'package:spine_clinic_app/shared/widgets/error_view.dart';
 import 'package:spine_clinic_app/shared/widgets/skeleton_loader.dart';
 
 /// The doctor's daily schedule view.
@@ -117,13 +119,19 @@ class _ErrorView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Center(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
+    final AppException ex = error is AppException
+        ? error as AppException
+        : UnknownException(message: '$error');
+    return RefreshIndicator(
+      color: Theme.of(context).colorScheme.primary,
+      onRefresh: () async => onRetry(),
+      child: ListView(
+        physics: const AlwaysScrollableScrollPhysics(),
         children: [
-          Text('$error', style: AppTextStyles.bodySecondary),
-          const SizedBox(height: AppSizes.p16),
-          TextButton(onPressed: onRetry, child: const Text('Retry')),
+          SizedBox(
+            height: MediaQuery.of(context).size.height * 0.65,
+            child: ErrorView(exception: ex, onRetry: onRetry),
+          ),
         ],
       ),
     );

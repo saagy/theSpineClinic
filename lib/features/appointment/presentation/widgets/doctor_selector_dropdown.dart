@@ -84,9 +84,16 @@ class _DoctorSearchSheetState extends ConsumerState<_DoctorSearchSheet> {
   void dispose() { _searchCtrl.dispose(); super.dispose(); }
 
   List<Staff> _filter(List<Staff> docs) {
-    if (_query.isEmpty) return docs;
     final q = _query.toLowerCase();
-    return docs.where((d) => d.fullName.toLowerCase().contains(q)).toList();
+    final filtered = q.isEmpty
+        ? List<Staff>.from(docs)
+        : docs.where((d) => d.fullName.toLowerCase().contains(q)).toList();
+    // Active doctors first, deactivated at the end.
+    filtered.sort((a, b) {
+      if (a.isActive == b.isActive) return a.fullName.compareTo(b.fullName);
+      return a.isActive ? -1 : 1;
+    });
+    return filtered;
   }
 
   void _toggle(Staff doctor) {

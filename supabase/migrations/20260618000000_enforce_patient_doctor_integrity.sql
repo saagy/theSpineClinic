@@ -123,7 +123,8 @@ $$;
 
 -- ============================================================================
 -- 3. Atomic doctor assignment update RPC
---    Improved: validates that every doctor ID belongs to an active staff member.
+--    Improved: allows inactive doctor IDs (historical assignments) while
+--    requiring at least one active doctor. FK validation still runs.
 -- ============================================================================
 CREATE OR REPLACE FUNCTION public.update_patient_doctors(
   p_patient_id uuid,
@@ -135,6 +136,7 @@ AS $$
 DECLARE
   doc_id uuid;
   invalid_count integer;
+  active_count integer;
 BEGIN
   -- Validate caller permission (must be active receptionist or super admin)
   IF NOT EXISTS (
@@ -153,15 +155,26 @@ BEGIN
       USING ERRCODE = '22000';
   END IF;
 
-  -- Validate every doctor ID belongs to an active staff member
+  -- Validate every doctor ID references an existing staff row (FK check only).
+  -- Inactive doctors are allowed — they represent historical assignments
+  -- that the admin hasn't removed from the edit form yet.
   SELECT count(*) INTO invalid_count
   FROM unnest(p_doctor_ids) AS did
-  LEFT JOIN public.staff s ON s.id = did AND s.is_active = true
+  LEFT JOIN public.staff s ON s.id = did
   WHERE s.id IS NULL;
 
   IF invalid_count > 0 THEN
-    RAISE EXCEPTION 'All assigned doctors must be active staff members. Found % invalid or inactive doctor(s).',
-      invalid_count
+    RAISE EXCEPTION 'Found % doctor ID(s) that do not exist.', invalid_count
+      USING ERRCODE = '22000';
+  END IF;
+
+  -- At least one doctor in the final list must be active.
+  SELECT count(*) INTO active_count
+  FROM unnest(p_doctor_ids) AS did
+  JOIN public.staff s ON s.id = did AND s.is_active = true;
+
+  IF active_count = 0 THEN
+    RAISE EXCEPTION 'At least one active doctor is required.'
       USING ERRCODE = '22000';
   END IF;
 

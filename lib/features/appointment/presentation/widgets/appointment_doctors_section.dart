@@ -88,7 +88,7 @@ class AppointmentDoctorsSection extends StatelessWidget {
                     if (!detail.doctor.isActive) ...[
                       const SizedBox(width: AppSizes.p6),
                       Text(
-                        AppStrings.inactive,
+                        AppStrings.deactivated,
                         style: AppTextStyles.caption.copyWith(
                           color: AppColors.warning,
                           fontWeight: FontWeight.w600,

@@ -73,7 +73,7 @@ class PatientNoteItem extends ConsumerWidget {
                         };
                         final String name = staff.isActive
                             ? '${staff.fullName} ($roleName)'
-                            : '${staff.fullName} ($roleName, ${AppStrings.inactive})';
+                            : '${staff.fullName} ($roleName, ${AppStrings.deactivated})';
                         return Text(
                           name,
                           style: AppTextStyles.bodyBold.copyWith(color: AppColors.textPrimary),

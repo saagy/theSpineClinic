@@ -100,7 +100,7 @@ class PaymentRow extends ConsumerWidget {
           data: (staff) {
             final String name = staff.isActive
                 ? staff.fullName
-                : '${staff.fullName} (${AppStrings.inactive})';
+                : '${staff.fullName} (${AppStrings.deactivated})';
             return Text(
               'Recorded by $name',
               style: AppTextStyles.caption.copyWith(color: AppColors.textMuted),

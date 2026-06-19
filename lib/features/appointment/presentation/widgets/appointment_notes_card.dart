@@ -4,6 +4,7 @@ import 'package:spine_clinic_app/core/constants/app_colors.dart';
 import 'package:spine_clinic_app/core/constants/app_sizes.dart';
 import 'package:spine_clinic_app/core/constants/app_strings.dart';
 import 'package:spine_clinic_app/core/constants/app_text_styles.dart';
+import 'package:spine_clinic_app/core/errors/app_exception.dart';
 import 'package:spine_clinic_app/features/auth/domain/staff.dart';
 import 'package:spine_clinic_app/features/auth/domain/user_role.dart';
 import 'package:spine_clinic_app/features/auth/presentation/auth_providers.dart';
@@ -41,13 +42,18 @@ class AppointmentNotesCard extends ConsumerWidget {
           child: CircularProgressIndicator(color: AppColors.primary),
         ),
       ),
-      error: (error, stack) => SectionCard(
-        title: 'Visit Notes',
-        child: Text(
-          'Error loading notes: ${error.toString()}',
-          style: AppTextStyles.body.copyWith(color: AppColors.error),
-        ),
-      ),
+      error: (error, stack) {
+        final AppException ex = error is AppException
+            ? error
+            : UnknownException(message: '$error');
+        return SectionCard(
+          title: 'Visit Notes',
+          child: Text(
+            AppStrings.fromKey(ex.userMessageKey),
+            style: AppTextStyles.body.copyWith(color: AppColors.error),
+          ),
+        );
+      },
       data: (note) {
         final bool canModify = note != null && currentUser != null &&
             (currentUser.role == UserRole.doctor ||

@@ -4,11 +4,14 @@
 /// message, a large tinted alert icon in a soft circle, and an optional
 /// retry action.
 ///
+/// All colours are resolved from [Theme.of(context).colorScheme] for
+/// automatic dark-mode compatibility.
+///
 /// Rule 1 — keep files under 200 lines.
+/// Rule 16 — zero hardcoded colours, all via theme.
 library;
 
 import 'package:flutter/material.dart';
-import 'package:spine_clinic_app/core/constants/app_colors.dart';
 import 'package:spine_clinic_app/core/constants/app_sizes.dart';
 import 'package:spine_clinic_app/core/constants/app_strings.dart';
 import 'package:spine_clinic_app/core/constants/app_text_styles.dart';
@@ -32,6 +35,7 @@ class ErrorView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final ColorScheme cs = Theme.of(context).colorScheme;
     final String errorMessage = AppStrings.fromKey(exception.userMessageKey);
 
     return Center(
@@ -47,12 +51,12 @@ class ErrorView extends StatelessWidget {
               width: 80,
               height: 80,
               decoration: BoxDecoration(
-                color: AppColors.errorBg,
+                color: cs.errorContainer,
                 shape: BoxShape.circle,
               ),
-              child: const Icon(
+              child: Icon(
                 Icons.error_outline_rounded,
-                color: AppColors.error,
+                color: cs.error,
                 size: 40,
               ),
             ),

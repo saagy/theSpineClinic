@@ -4,6 +4,7 @@
 library;
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:spine_clinic_app/core/constants/app_strings.dart';
 import 'package:spine_clinic_app/core/utils/formatters.dart';
 import 'package:spine_clinic_app/features/appointment/domain/appointment_status.dart';
 import 'package:spine_clinic_app/features/appointment/domain/appointment_type.dart';
@@ -35,9 +36,9 @@ List<ActiveFilterChip> buildAllFilterChips(WidgetRef ref) {
     chips.add(ActiveFilterChip(label: label, onRemove: () { n.setDateFrom(null); n.setDateTo(null); }));
   }
   if (n.doctorId != null) {
-    final doctors = ref.watch(activeDoctorsProvider).value ?? [];
+    final doctors = ref.watch(allDoctorsForFilterProvider).value ?? [];
     final doctor = doctors.cast<Staff?>().firstWhere((d) => d!.id == n.doctorId, orElse: () => null);
-    chips.add(ActiveFilterChip(label: doctor?.fullName ?? 'Doctor', onRemove: () => n.setDoctorFilter(null)));
+    chips.add(ActiveFilterChip(label: doctor?.fullName ?? AppStrings.unknownDoctorFallback, onRemove: () => n.setDoctorFilter(null)));
   }
   if (n.clinic != null && !isReceptionist) {
     final c = ClinicLocation.values.cast<ClinicLocation?>().firstWhere((x) => x!.dbValue == n.clinic, orElse: () => null);

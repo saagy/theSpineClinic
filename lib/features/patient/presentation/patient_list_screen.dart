@@ -355,13 +355,13 @@ class _PatientListScreenState extends ConsumerState<PatientListScreen> {
     final chips = <ActiveFilterChip>[];
     final n = ref.read(patientListProvider.notifier);
     if (n.currentDoctorFilter != null) {
-      final doctors = ref.watch(activeDoctorsProvider).value ?? [];
+      final doctors = ref.watch(allDoctorsForFilterProvider).value ?? [];
       final doctor = doctors.cast<Staff?>().firstWhere(
             (d) => d!.id == n.currentDoctorFilter,
             orElse: () => null,
           );
       chips.add(ActiveFilterChip(
-        label: doctor?.fullName ?? 'Doctor',
+        label: doctor?.fullName ?? AppStrings.unknownDoctorFallback,
         onRemove: () => n.setDoctorFilter(null),
       ));
     }

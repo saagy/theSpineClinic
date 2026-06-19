@@ -7,13 +7,10 @@ import 'package:spine_clinic_app/core/constants/app_sizes.dart';
 import 'package:spine_clinic_app/core/constants/app_strings.dart';
 import 'package:spine_clinic_app/core/network/app_routes.dart';
 import 'package:spine_clinic_app/core/errors/app_exception.dart';
-import 'package:spine_clinic_app/core/utils/formatters.dart';
 import 'package:spine_clinic_app/features/appointment/domain/appointment_repository.dart';
 import 'package:spine_clinic_app/features/appointment/presentation/widgets/receptionist_appointment_card.dart';
 import 'package:spine_clinic_app/features/auth/domain/user_role.dart';
-import 'package:spine_clinic_app/features/auth/domain/staff.dart';
 import 'package:spine_clinic_app/features/auth/presentation/auth_providers.dart';
-import 'package:spine_clinic_app/features/staff/presentation/staff_providers.dart';
 import 'package:spine_clinic_app/features/patient/domain/patient.dart';
 import 'package:spine_clinic_app/features/patient/domain/patient_appointment_sort_option.dart';
 import 'package:spine_clinic_app/features/patient/presentation/patient_appointments_notifier.dart';
@@ -26,9 +23,9 @@ import 'package:spine_clinic_app/shared/widgets/sort_filter_bar.dart';
 import 'package:spine_clinic_app/shared/widgets/sort_options_sheet.dart';
 import 'package:spine_clinic_app/shared/widgets/active_filter_chips_row.dart';
 import 'package:spine_clinic_app/shared/widgets/animated_list_item.dart';
+import 'patient_appointment_chips_helper.dart';
 import 'patient_appointment_filter_content.dart';
 
-/// Renders a chronological list of appointments for a patient with pagination and sorting/filtering.
 class PatientTabAppointments extends ConsumerStatefulWidget {
   const PatientTabAppointments({super.key, required this.patient});
   final Patient patient;
@@ -40,25 +37,21 @@ class PatientTabAppointments extends ConsumerStatefulWidget {
 class _PatientTabAppointmentsState extends ConsumerState<PatientTabAppointments> {
   final ScrollController _scrollCtrl = ScrollController();
   final Set<int> _animatedIndices = <int>{};
-
   @override
   void initState() {
     super.initState();
     _scrollCtrl.addListener(_onScroll);
   }
-
   @override
   void dispose() {
     _scrollCtrl.dispose();
     super.dispose();
   }
-
   void _onScroll() {
     if (_scrollCtrl.position.pixels >= _scrollCtrl.position.maxScrollExtent - 200) {
       ref.read(patientAppointmentsProvider(widget.patient.id).notifier).loadMore();
     }
   }
-
   Future<void> _showSortSheet() async {
     final state = ref.read(patientAppointmentsProvider(widget.patient.id));
     final notifier = ref.read(patientAppointmentsProvider(widget.patient.id).notifier);
@@ -74,6 +67,24 @@ class _PatientTabAppointmentsState extends ConsumerState<PatientTabAppointments>
     if (selected != null && mounted) notifier.setSort(selected);
   }
 
+  Widget _buildErrorState(dynamic notifier) {
+    final String errorMessage = notifier.state.errorMessage ?? '';
+    final AppException ex = UnknownException(message: errorMessage);
+    return RefreshIndicator(
+      color: Theme.of(context).colorScheme.primary,
+      onRefresh: () async => notifier.refresh(),
+      child: ListView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        children: [
+          SizedBox(
+            height: MediaQuery.of(context).size.height * 0.65,
+            child: ErrorView(exception: ex, onRetry: notifier.refresh),
+          ),
+        ],
+      ),
+    );
+  }
+
   void _openFilterSheet() {
     AppBottomSheet.show(
       context: context,
@@ -85,38 +96,6 @@ class _PatientTabAppointmentsState extends ConsumerState<PatientTabAppointments>
     );
   }
 
-  List<ActiveFilterChip> _getActiveChips(dynamic state, dynamic notifier) {
-    final chips = <ActiveFilterChip>[];
-    if (state.dateFrom != null || state.dateTo != null) {
-      final label = state.dateFrom != null && state.dateTo != null
-          ? '${Formatters.formatDateShort(state.dateFrom!)} – ${Formatters.formatDateShort(state.dateTo!.subtract(const Duration(days: 1)))}'
-          : state.dateFrom != null
-              ? 'From ${Formatters.formatDateShort(state.dateFrom!)}'
-              : 'To ${Formatters.formatDateShort(state.dateTo!.subtract(const Duration(days: 1)))}';
-      chips.add(ActiveFilterChip(label: label, onRemove: () => notifier.setDateRange(null, null)));
-    }
-    if (state.statusFilter != null && state.statusFilter!.isNotEmpty) {
-      chips.add(ActiveFilterChip(label: 'Status (${state.statusFilter!.length})', onRemove: () => notifier.setStatusFilter(null)));
-    }
-    if (state.typeFilter != null && state.typeFilter!.isNotEmpty) {
-      chips.add(ActiveFilterChip(label: 'Type (${state.typeFilter!.length})', onRemove: () => notifier.setTypeFilter(null)));
-    }
-    if (state.doctorId != null) {
-      final doctors = ref.watch(activeDoctorsProvider).value ?? [];
-      final doctor = doctors.cast<Staff?>().firstWhere((d) => d!.id == state.doctorId, orElse: () => null);
-      chips.add(ActiveFilterChip(label: doctor?.fullName ?? 'Doctor', onRemove: () => notifier.setDoctorFilter(null)));
-    }
-    if (state.usePackageFilter != null) {
-      chips.add(ActiveFilterChip(
-        label: state.usePackageFilter!
-            ? AppStrings.packageFilterPackage
-            : AppStrings.packageFilterNoPackage,
-        onRemove: () => notifier.setUsePackageFilter(null),
-      ));
-    }
-    return chips;
-  }
-
   @override
   Widget build(BuildContext context) {
     final user = ref.watch(currentUserProvider).value;
@@ -126,7 +105,7 @@ class _PatientTabAppointmentsState extends ConsumerState<PatientTabAppointments>
       _animatedIndices.clear();
     }
     final notifier = ref.read(patientAppointmentsProvider(widget.patient.id).notifier);
-    final chips = _getActiveChips(state, notifier);
+    final chips = buildPatientAppointmentChips(ref, state, notifier);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -162,10 +141,7 @@ class _PatientTabAppointmentsState extends ConsumerState<PatientTabAppointments>
           child: state.isLoading
               ? const SkeletonTileList(count: 4)
               : state.errorMessage != null
-                  ? ErrorView(
-                      exception: UnknownException(message: state.errorMessage!),
-                      onRetry: notifier.refresh,
-                    )
+                  ? _buildErrorState(notifier)
                   : state.appointments.isEmpty
                       ? const EmptyState(message: AppStrings.noAppointments, icon: Icons.calendar_today_rounded)
                       : RefreshIndicator(

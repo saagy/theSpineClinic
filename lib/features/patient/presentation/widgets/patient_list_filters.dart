@@ -97,8 +97,13 @@ class _SearchableDoctorFilterState extends ConsumerState<_SearchableDoctorFilter
       builder: (ctx) {
         final query = _searchCtrl.text.toLowerCase();
         final filtered = query.isEmpty
-            ? widget.doctors
+            ? List<Staff>.from(widget.doctors)
             : widget.doctors.where((d) => d.fullName.toLowerCase().contains(query)).toList();
+        // Active doctors first, deactivated at the end.
+        filtered.sort((a, b) {
+          if (a.isActive == b.isActive) return a.fullName.compareTo(b.fullName);
+          return a.isActive ? -1 : 1;
+        });
 
         return Positioned(
           width: _layerLink.leaderSize?.width ?? AppSizes.navDrawerWidth,
@@ -130,12 +135,12 @@ class _SearchableDoctorFilterState extends ConsumerState<_SearchableDoctorFilter
                     ...filtered.map((d) => _FilterItem(
                       label: d.isActive
                           ? d.fullName
-                          : '${d.fullName} (${AppStrings.inactive})',
+                          : '${d.fullName} (${AppStrings.deactivated})',
                       onTap: () {
                         setState(() {
                           _selectedDoctorName = d.isActive
                               ? d.fullName
-                              : '${d.fullName} (${AppStrings.inactive})';
+                              : '${d.fullName} (${AppStrings.deactivated})';
                         });
                         _searchCtrl.clear();
                         ref.read(patientListProvider.notifier).setDoctorFilter(d.id);

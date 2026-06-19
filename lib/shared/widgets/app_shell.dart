@@ -1,22 +1,21 @@
 /// Master scaffold shell with branded AppBar and floating capsule navigation.
 ///
-/// Uses a Stack so the GNav island floats detached from screen edges over
-/// scrolling content. A bottom inset on the child ensures list items clear
-/// the floating bar.
+/// Uses [Scaffold.bottomNavigationBar] so that modal bottom sheets
+/// (e.g. quick-action FAB menus) render above the nav bar instead of
+/// being obscured by a Stack-positioned overlay.
 ///
 /// Rule 1 — under 200 lines.
 library;
 
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:spine_clinic_app/core/constants/app_colors.dart';
 import 'package:spine_clinic_app/core/constants/app_sizes.dart';
 import 'package:spine_clinic_app/core/constants/app_strings.dart';
 import 'package:spine_clinic_app/core/constants/app_text_styles.dart';
+import 'package:spine_clinic_app/core/network/app_routes.dart';
 import 'package:spine_clinic_app/shared/widgets/app_bottom_nav.dart';
 import 'package:spine_clinic_app/shared/widgets/loading_overlay.dart';
-
-/// Floating nav island total height: ~50 content + 20 padding + 20 margin ≈ 92.
-const double _kNavClearance = 96;
 
 /// Root application shell with branded AppBar and floating capsule bottom nav.
 class AppShell extends StatelessWidget {
@@ -43,25 +42,11 @@ class AppShell extends StatelessWidget {
       child: Scaffold(
         backgroundColor: AppColors.background,
         appBar: _buildAppBar(),
-        body: Stack(
-          children: [
-            // Content with bottom clearance so lists scroll past the island
-            Padding(
-              padding: const EdgeInsets.only(bottom: _kNavClearance),
-              child: child,
-            ),
-            // Floating capsule nav
-            Positioned(
-              left: 0,
-              right: 0,
-              bottom: 0,
-              child: AppBottomNav(
-                currentTabIndex: currentTabIndex,
-                onTabSelected: onTabSelected,
-                userRole: userRole,
-              ),
-            ),
-          ],
+        body: child,
+        bottomNavigationBar: AppBottomNav(
+          currentTabIndex: currentTabIndex,
+          onTabSelected: onTabSelected,
+          userRole: userRole,
         ),
       ),
     );
@@ -102,6 +87,7 @@ class AppShell extends StatelessWidget {
                 ],
               ),
               const Spacer(),
+              _HomeButton(userRole: userRole),
               if (actions != null && actions!.isNotEmpty)
                 Row(mainAxisSize: MainAxisSize.min, children: actions!),
             ]),
@@ -110,4 +96,24 @@ class AppShell extends StatelessWidget {
       ),
     );
   }
+}
+
+class _HomeButton extends StatelessWidget {
+  const _HomeButton({required this.userRole});
+  final String userRole;
+
+  @override
+  Widget build(BuildContext context) {
+    return IconButton(
+      icon: const Icon(Icons.home_rounded, color: AppColors.primary),
+      tooltip: 'Home',
+      onPressed: () => context.go(_homeRoute),
+    );
+  }
+
+  String get _homeRoute => switch (userRole) {
+    'doctor' => AppRoutes.schedule,
+    'super_admin' => AppRoutes.schedule,
+    _ => AppRoutes.allAppointments,
+  };
 }

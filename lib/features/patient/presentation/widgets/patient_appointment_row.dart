@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:spine_clinic_app/core/network/app_routes.dart';
+import 'package:spine_clinic_app/core/constants/app_strings.dart';
 import 'package:spine_clinic_app/core/utils/formatters.dart';
 import 'package:spine_clinic_app/features/appointment/domain/appointment.dart';
 import 'package:spine_clinic_app/features/appointment/presentation/appointment_providers.dart';
@@ -33,7 +34,7 @@ class PatientAppointmentRow extends ConsumerWidget {
 
         return details.map((detail) {
           final String doctorName = detail.doctor.fullName;
-          final String inactiveSuffix = detail.doctor.isActive ? '' : ' (Inactive)';
+          final String inactiveSuffix = detail.doctor.isActive ? '' : ' (${AppStrings.deactivated})';
           if (detail.assignment.isReplacement && detail.replacedDoctor != null) {
             return '$doctorName$inactiveSuffix (Covering ${detail.replacedDoctor!.fullName})';
           }

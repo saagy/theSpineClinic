@@ -14,8 +14,6 @@ import 'package:spine_clinic_app/shared/widgets/error_view.dart';
 import 'package:spine_clinic_app/shared/widgets/info_row.dart';
 import 'package:spine_clinic_app/shared/widgets/section_card.dart';
 import 'package:spine_clinic_app/shared/widgets/app_back_button.dart';
-import 'package:spine_clinic_app/features/auth/presentation/auth_providers.dart';
-import 'package:spine_clinic_app/features/auth/domain/user_role.dart';
 
 /// Pushed full-screen route for viewing completed clinical visit notes.
 class VisitDetailScreen extends ConsumerWidget {
@@ -37,20 +35,6 @@ class VisitDetailScreen extends ConsumerWidget {
         surfaceTintColor: AppColors.transparent,
         leading: const AppBackButton(),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.home_rounded, color: AppColors.primary),
-            tooltip: 'Home',
-            onPressed: () {
-              final role = ref.read(currentUserProvider).value?.role;
-              if (role == UserRole.doctor) {
-                context.go(AppRoutes.schedule);
-              } else if (role == UserRole.superAdmin) {
-                context.go(AppRoutes.schedule);
-              } else {
-                context.go(AppRoutes.allAppointments);
-              }
-            },
-          ),
           stateAsync.maybeWhen(
             data: (state) => state.canEditNotes
                 ? IconButton(
@@ -164,7 +148,7 @@ class VisitDetailScreen extends ConsumerWidget {
                               TextSpan(text: docDetail.doctor.fullName, style: AppTextStyles.bodyMedium),
                               if (!isActive)
                                 TextSpan(
-                                  text: ' (${AppStrings.inactive})',
+                                  text: ' (${AppStrings.deactivated})',
                                   style: AppTextStyles.caption.copyWith(
                                     color: AppColors.warning,
                                     fontWeight: FontWeight.w600,

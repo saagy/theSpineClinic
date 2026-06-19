@@ -9,9 +9,11 @@ import 'package:intl/intl.dart';
 import 'package:spine_clinic_app/core/constants/app_colors.dart';
 import 'package:spine_clinic_app/core/constants/app_sizes.dart';
 import 'package:spine_clinic_app/core/constants/app_text_styles.dart';
+import 'package:spine_clinic_app/core/errors/app_exception.dart';
 import 'package:spine_clinic_app/features/appointment/domain/appointment_repository.dart';
 import 'package:spine_clinic_app/features/appointment/presentation/receptionist_appointments_providers.dart';
 import 'package:spine_clinic_app/features/appointment/presentation/widgets/receptionist_appointment_card.dart';
+import 'package:spine_clinic_app/shared/widgets/error_view.dart';
 import 'package:spine_clinic_app/shared/widgets/skeleton_loader.dart';
 
 import 'package:spine_clinic_app/shared/widgets/animated_list_item.dart';
@@ -52,9 +54,23 @@ class _ReceptionistUpcomingTabState extends State<ReceptionistUpcomingTab> {
       return const SkeletonTileList(count: 5);
     }
     if (widget.state.upcomingError != null) {
-      return Center(
-        child: Text('${widget.state.upcomingError}',
-            style: AppTextStyles.bodySecondary),
+      final Object error = widget.state.upcomingError!;
+      final AppException ex = error is AppException
+          ? error
+          : UnknownException(message: '$error');
+      return RefreshIndicator(
+        color: Theme.of(context).colorScheme.primary,
+        onRefresh: () async => widget.onRefresh?.call(),
+        child: ListView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          children: [
+            SizedBox(
+              height: MediaQuery.of(context).size.height * 0.65,
+              child: ErrorView(exception: ex,
+                onRetry: widget.onRefresh != null ? () => widget.onRefresh!() : null),
+            ),
+          ],
+        ),
       );
     }
     if (widget.state.upcoming.isEmpty) {

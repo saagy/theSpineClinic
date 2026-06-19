@@ -44,8 +44,8 @@ Future<List<Staff>> activeDoctors(Ref ref) async {
 ///
 /// Used by filter/search dropdowns (PatientListFilters, UnifiedFilterSheet)
 /// where users need to filter by historical records tied to deactivated staff.
-/// Inactive doctors are visually distinguished with an "(Inactive)" badge in
-/// the UI. Operational dropdowns (creating/editing) continue to use
+/// Deactivated doctors are visually distinguished with a "(Deactivated)" badge
+/// in the UI. Operational dropdowns (creating/editing) continue to use
 /// [activeDoctorsProvider] which strictly excludes inactive staff.
 @riverpod
 Future<List<Staff>> allDoctorsForFilter(Ref ref) async {
