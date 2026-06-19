@@ -28,11 +28,9 @@ import 'package:spine_clinic_app/features/patient/presentation/patient_list_scre
 import 'package:spine_clinic_app/features/patient/presentation/patient_search_screen.dart';
 import 'package:spine_clinic_app/features/payments/presentation/record_payment_screen.dart';
 import 'package:spine_clinic_app/features/appointment/presentation/doctor_schedule_screen.dart';
-import 'package:spine_clinic_app/features/replacements/presentation/replacement_patients_screen.dart';
 import 'package:spine_clinic_app/shared/widgets/app_shell.dart';
 import 'package:spine_clinic_app/features/medical_records/presentation/add_visit_notes_screen.dart';
 import 'package:spine_clinic_app/features/medical_records/presentation/visit_detail_screen.dart';
-import 'package:spine_clinic_app/features/replacements/presentation/manage_replacement_screen.dart';
 import 'package:spine_clinic_app/features/staff/presentation/staff_form_screen.dart';
 import 'package:spine_clinic_app/features/staff/presentation/staff_list_screen.dart';
 import 'package:spine_clinic_app/features/admin/presentation/admin_hub_screen.dart';
@@ -185,10 +183,6 @@ List<RouteBase> _buildRoutes(Ref ref) {
       pageBuilder: (_, __) => const NoTransitionPage(child: DoctorHistoryScreen()),
     ),
     GoRoute(
-      path: AppRoutes.manageReplacement,
-      pageBuilder: (_, __) => const NoTransitionPage(child: ManageReplacementScreen()),
-    ),
-    GoRoute(
       path: AppRoutes.staffList,
       pageBuilder: (_, __) => const NoTransitionPage(child: StaffListScreen()),
     ),
@@ -244,11 +238,6 @@ List<RouteBase> _buildRoutes(Ref ref) {
           path: AppRoutes.myPatients,
           pageBuilder: (_, __) =>
               const NoTransitionPage(child: MyPatientsScreen()),
-        ),
-        GoRoute(
-          path: AppRoutes.replacements,
-          pageBuilder: (_, __) =>
-              const NoTransitionPage(child: ReplacementPatientsScreen()),
         ),
         GoRoute(
           path: AppRoutes.patientList,

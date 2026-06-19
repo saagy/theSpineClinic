@@ -434,10 +434,6 @@ abstract final class AppStrings {
   static const String unknownDoctorFallback = 'Doctor';
   static const String unknownFallback = 'Unknown';
 
-  // ── Replacements ──
-  static const String noReplacementPatientsToday = 'No replacement patients assigned to you today.';
-  static const String noReplacementPatientsForQuery = 'No replacement patients today';
-
   // ── My Patients ──
   static const String noAssignedPatientsYet = 'No patients assigned to you yet';
 

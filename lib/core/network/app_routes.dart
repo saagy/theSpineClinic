@@ -55,12 +55,6 @@ abstract final class AppRoutes {
   /// Doctor's assigned patients roster view.
   static const String myPatients = '/doctor/my-patients';
 
-  /// Doctor's coverage patients view.
-  static const String replacements = '/doctor/replacements';
-
-  /// Admin/receptionist doctor replacement management wizard.
-  static const String manageReplacement = '/admin/replacements/manage';
-
   /// All-appointments management screen (admin & receptionist).
   static const String allAppointments = '/appointments';
 

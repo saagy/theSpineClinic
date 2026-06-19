@@ -10,9 +10,11 @@ import 'package:spine_clinic_app/features/auth/domain/staff.dart';
 import 'package:spine_clinic_app/features/auth/domain/user_role.dart';
 import 'package:spine_clinic_app/features/auth/presentation/auth_providers.dart';
 import 'package:spine_clinic_app/features/staff/presentation/staff_management_controller.dart';
+import 'package:spine_clinic_app/features/staff/presentation/staff_providers.dart';
 import 'package:spine_clinic_app/features/staff/presentation/widgets/staff_form_fields.dart';
 import 'package:spine_clinic_app/shared/widgets/app_button.dart';
 import 'package:spine_clinic_app/shared/widgets/app_snackbar.dart';
+import 'package:spine_clinic_app/shared/widgets/confirmation_dialog.dart';
 import 'package:spine_clinic_app/shared/widgets/error_view.dart';
 import 'package:spine_clinic_app/shared/widgets/loading_overlay.dart';
 
@@ -40,6 +42,40 @@ class _StaffFormScreenState extends ConsumerState<StaffFormScreen> {
       final UserRole role = values['role'] as UserRole;
 
       final isEdit = widget.staff != null;
+      final bool newIsActive = isEdit
+          ? ((values['is_active'] as bool?) ?? widget.staff!.isActive)
+          : true;
+      final bool isDeactivating = isEdit && widget.staff!.isActive && !newIsActive;
+
+      // ── Soft warning before deactivating a doctor ──
+      if (isDeactivating &&
+          (widget.staff!.role == UserRole.doctor ||
+              widget.staff!.role == UserRole.superAdmin)) {
+        final repo = ref.read(staffRepositoryProvider);
+        final countResult = await repo.countUpcomingAppointments(widget.staff!.id);
+        final int upcomingCount = countResult.when(
+          success: (c) => c,
+          failure: (_) => 0, // Query failed — don't block
+        );
+        if (upcomingCount > 0) {
+          if (!mounted) return;
+          final confirmed = await showDialog<bool>(
+            context: context,
+            builder: (_) => ConfirmationDialog(
+              title: 'Deactivate Doctor?',
+              message: 'This doctor has $upcomingCount upcoming appointment(s). '
+                  'Deactivating will not cancel them, but the doctor will '
+                  'appear as inactive on historical records.\n\n'
+                  'Deactivate anyway?',
+              confirmLabel: 'Deactivate',
+              cancelLabel: 'Keep Active',
+              isDestructive: true,
+            ),
+          );
+          if (confirmed != true) return;
+        }
+      }
+
       final resultNotifier = ref.read(staffFormControllerProvider.notifier);
 
       final result = isEdit
@@ -49,7 +85,7 @@ class _StaffFormScreenState extends ConsumerState<StaffFormScreen> {
                 email: email,
                 phone: phone,
                 role: role,
-                isActive: (values['is_active'] as bool?) ?? widget.staff!.isActive,
+                isActive: newIsActive,
               ),
               newPassword: (values['change_password'] as bool? ?? false)
                   ? values['password'] as String

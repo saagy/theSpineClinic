@@ -121,21 +121,9 @@ class PatientRepositoryImpl implements PatientRepository {
       final List<String> apptDoctorIds = apptDocRows.map((r) => r['doctor_id'] as String).toList();
       if (apptDoctorIds.contains(doctorId)) return const Result.success(true);
 
-      // 3. Check replacements (covering doctors) for either permanent or appointment assignment
-      final List<Map<String, dynamic>> patientDocRows = await _service.guardQuery(() => _service.from(_doctorsTable).select('doctor_id').eq('patient_id', patientId));
-      final List<String> assignedDoctorIds = patientDocRows.map((r) => r['doctor_id'] as String).toList();
-
-      final List<String> potentialAbsentDoctorIds = [...assignedDoctorIds, ...apptDoctorIds];
-      if (potentialAbsentDoctorIds.isEmpty) return const Result.success(false);
-
-      final String todayStr = DateTime.now().toIso8601String().substring(0, 10);
-      final List<Map<String, dynamic>> replacementRows = await _service.guardQuery(() => _service
-          .from('doctor_replacements')
-          .select()
-          .eq('covering_doctor_id', doctorId)
-          .eq('replacement_date', todayStr)
-          .inFilter('absent_doctor_id', potentialAbsentDoctorIds));
-      return Result.success(replacementRows.isNotEmpty);
+      // 3. If neither permanent assignment nor active appointment assignment
+      //    was found, the doctor has no access to this patient.
+      return const Result.success(false);
     } on AppException catch (e) {
       return Result.failure(e);
     } catch (e) {
