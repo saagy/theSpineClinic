@@ -45,12 +45,12 @@ class _PatientQuickActionsFabState extends ConsumerState<PatientQuickActionsFab>
   // ── Sheet action callbacks ──────────────────────────────────────────
 
   void _onBookAppointment() {
-    Navigator.pop(context);
+    Navigator.of(context, rootNavigator: true).pop();
     context.push(AppRoutes.newAppointment, extra: widget.patient);
   }
 
   void _onCollectPayment() {
-    Navigator.pop(context);
+    Navigator.of(context, rootNavigator: true).pop();
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -62,7 +62,7 @@ class _PatientQuickActionsFabState extends ConsumerState<PatientQuickActionsFab>
   }
 
   void _onAddNote() {
-    Navigator.pop(context);
+    Navigator.of(context, rootNavigator: true).pop();
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -77,7 +77,7 @@ class _PatientQuickActionsFabState extends ConsumerState<PatientQuickActionsFab>
   /// picker. The upload runs inside this stateful widget so [ref] and [mounted]
   /// remain valid even after the sheet is gone.
   Future<void> _onAddDocument() async {
-    Navigator.pop(context);
+    Navigator.of(context, rootNavigator: true).pop();
 
     final result = await FilePicker.platform.pickFiles(
       type: FileType.custom,
@@ -121,6 +121,7 @@ class _PatientQuickActionsFabState extends ConsumerState<PatientQuickActionsFab>
           ? null
           : () => showModalBottomSheet(
                 context: context,
+                useRootNavigator: true,
                 shape: const RoundedRectangleBorder(
                   borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
                 ),
