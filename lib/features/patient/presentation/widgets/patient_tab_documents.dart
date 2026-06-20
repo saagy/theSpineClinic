@@ -7,6 +7,7 @@ import 'package:spine_clinic_app/core/constants/app_sizes.dart';
 import 'package:spine_clinic_app/core/constants/app_strings.dart';
 import 'package:spine_clinic_app/core/constants/app_text_styles.dart';
 import 'package:spine_clinic_app/core/errors/app_exception.dart';
+import 'package:spine_clinic_app/core/errors/result.dart';
 import 'package:spine_clinic_app/features/patient/domain/patient.dart';
 import 'package:spine_clinic_app/features/patient/domain/patient_document.dart';
 import 'package:spine_clinic_app/features/patient/presentation/patient_documents_providers.dart';
@@ -34,30 +35,46 @@ class _PatientTabDocumentsState extends ConsumerState<PatientTabDocuments> {
   bool _isUploadingLocal = false;
 
   /// Opens the native file picker directly — no intermediate bottom sheet.
+  ///
+  /// The wrap in `try`/`finally` (with `mounted` guards) ensures the
+  /// button always re-enables even if the future is interrupted or the
+  /// widget is disposed mid-upload. Upload outcomes are surfaced via
+  /// [AppSnackbar] so transient failures never replace the documents
+  /// list (the list AsyncNotifier is intentionally NOT mutated here).
   Future<void> _pickAndUpload() async {
-    final result = await FilePicker.platform.pickFiles(
+    final FilePickerResult? result = await FilePicker.platform.pickFiles(
       type: FileType.custom,
       allowedExtensions: ['pdf', 'png', 'jpg', 'jpeg'],
       allowMultiple: false,
     );
     if (result == null || result.files.isEmpty) return;
-    final file = result.files.first;
+    final PlatformFile file = result.files.first;
     if (!mounted) return;
     setState(() => _isUploadingLocal = true);
-    final uploadResult = await ref
-        .read(patientDocumentsNotifierProvider(widget.patient.id).notifier)
-        .uploadDocument(
-            fileName: file.name, filePath: file.path, fileBytes: file.bytes);
-    if (!mounted) return;
-    setState(() => _isUploadingLocal = false);
-    uploadResult.when(
-      success: (_) => AppSnackbar.show(context,
+    try {
+      final Result<PatientDocument> uploadResult = await ref
+          .read(patientDocumentsNotifierProvider(widget.patient.id).notifier)
+          .uploadDocument(
+            fileName: file.name,
+            filePath: file.path,
+            fileBytes: file.bytes,
+          );
+      if (!mounted) return;
+      uploadResult.when(
+        success: (_) => AppSnackbar.show(
+          context,
           message: AppStrings.documentUploaded,
-          variant: AppSnackbarVariant.success),
-      failure: (error) => AppSnackbar.show(context,
+          variant: AppSnackbarVariant.success,
+        ),
+        failure: (AppException error) => AppSnackbar.show(
+          context,
           message: AppStrings.fromKey(error.userMessageKey),
-          variant: AppSnackbarVariant.error),
-    );
+          variant: AppSnackbarVariant.error,
+        ),
+      );
+    } finally {
+      if (mounted) setState(() => _isUploadingLocal = false);
+    }
   }
 
   @override
@@ -68,6 +85,8 @@ class _PatientTabDocumentsState extends ConsumerState<PatientTabDocuments> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
+        if (_isUploadingLocal)
+          const LinearProgressIndicator(color: AppColors.primary),
         Padding(
           padding: const EdgeInsets.all(AppSizes.p16),
           child: SizedBox(

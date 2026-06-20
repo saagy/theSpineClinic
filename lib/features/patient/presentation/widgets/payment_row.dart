@@ -42,6 +42,7 @@ class PaymentRow extends ConsumerWidget {
       titleWidget: Wrap(
         crossAxisAlignment: WrapCrossAlignment.center,
         spacing: AppSizes.p8,
+        runSpacing: AppSizes.p4,
         children: [
           Text(
             payment.reason,
@@ -49,23 +50,17 @@ class PaymentRow extends ConsumerWidget {
               color: AppColors.textPrimary,
             ),
           ),
-          if (payment.sessionsAdded > 0)
-            Container(
-              padding: const EdgeInsets.symmetric(
-                horizontal: AppSizes.p8,
-                vertical: AppSizes.p2,
-              ),
-              decoration: BoxDecoration(
-                color: AppColors.primaryLight,
-                borderRadius: const BorderRadius.all(Radius.circular(AppSizes.r6)),
-              ),
-              child: Text(
-                '+${payment.sessionsAdded} sessions',
-                style: AppTextStyles.caption.copyWith(
-                  color: AppColors.primary,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
+          if (payment.sessionBalanceAdded > 0)
+            _BalanceTag(
+              label: '+${payment.sessionBalanceAdded} PT',
+              bg: AppColors.primaryLight,
+              fg: AppColors.primary,
+            ),
+          if (payment.tractionBalanceAdded > 0)
+            _BalanceTag(
+              label: '+${payment.tractionBalanceAdded} Tr',
+              bg: AppColors.warningBg,
+              fg: AppColors.warning,
             ),
         ],
       ),
@@ -156,5 +151,33 @@ class PaymentRow extends ConsumerWidget {
         );
       }
     }
+  }
+}
+
+class _BalanceTag extends StatelessWidget {
+  const _BalanceTag({required this.label, required this.bg, required this.fg});
+  final String label;
+  final Color bg;
+  final Color fg;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSizes.p8,
+        vertical: AppSizes.p2,
+      ),
+      decoration: BoxDecoration(
+        color: bg,
+        borderRadius: const BorderRadius.all(Radius.circular(AppSizes.r6)),
+      ),
+      child: Text(
+        label,
+        style: AppTextStyles.caption.copyWith(
+          color: fg,
+          fontWeight: FontWeight.bold,
+        ),
+      ),
+    );
   }
 }

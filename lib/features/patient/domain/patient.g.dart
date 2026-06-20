@@ -12,7 +12,8 @@ _Patient _$PatientFromJson(Map<String, dynamic> json) => _Patient(
   phoneNumber: json['phone_number'] as String,
   program: json['program'] as String?,
   clinic: $enumDecode(_$ClinicLocationEnumMap, json['clinic']),
-  packageBalance: (json['package_balance'] as num?)?.toInt() ?? 0,
+  sessionBalance: (json['session_balance'] as num?)?.toInt() ?? 0,
+  tractionBalance: (json['traction_balance'] as num?)?.toInt() ?? 0,
   createdBy: json['created_by'] as String?,
   createdAt: DateTime.parse(json['created_at'] as String),
 );
@@ -23,7 +24,8 @@ Map<String, dynamic> _$PatientToJson(_Patient instance) => <String, dynamic>{
   'phone_number': instance.phoneNumber,
   'program': instance.program,
   'clinic': _$ClinicLocationEnumMap[instance.clinic]!,
-  'package_balance': instance.packageBalance,
+  'session_balance': instance.sessionBalance,
+  'traction_balance': instance.tractionBalance,
   'created_by': instance.createdBy,
   'created_at': instance.createdAt.toIso8601String(),
 };

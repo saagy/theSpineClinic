@@ -20,7 +20,8 @@ abstract class Patient with _$Patient {
     @JsonKey(name: 'phone_number') required String phoneNumber,
     String? program,
     required ClinicLocation clinic,
-    @JsonKey(name: 'package_balance') @Default(0) int packageBalance,
+    @JsonKey(name: 'session_balance') @Default(0) int sessionBalance,
+    @JsonKey(name: 'traction_balance') @Default(0) int tractionBalance,
     @JsonKey(name: 'created_by') String? createdBy,
     @JsonKey(name: 'created_at') required DateTime createdAt,
     @JsonKey(includeFromJson: false, includeToJson: false) DateTime? lastAppointmentDate,
@@ -30,4 +31,3 @@ abstract class Patient with _$Patient {
   factory Patient.fromJson(Map<String, dynamic> json) =>
       _$PatientFromJson(json);
 }
-

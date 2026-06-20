@@ -32,7 +32,12 @@ abstract class PaymentRecord with _$PaymentRecord {
     required String reason,
     @JsonKey(name: 'recorded_by') String? recordedBy,
     @JsonKey(name: 'recorded_at') required DateTime recordedAt,
-    @JsonKey(name: 'sessions_added') @Default(0) int sessionsAdded,
+
+    /// Number of Normal PT sessions added to patient balance by this payment.
+    @JsonKey(name: 'session_balance_added') @Default(0) int sessionBalanceAdded,
+
+    /// Number of Spinal Traction sessions added to patient balance by this payment.
+    @JsonKey(name: 'traction_balance_added') @Default(0) int tractionBalanceAdded,
   }) = _PaymentRecord;
 
   /// Deserialises from a Supabase JSON row.

@@ -1,3 +1,10 @@
+/// A dialog allowing authorized staff to edit BOTH of a patient's
+/// package balances (PT sessions + traction sessions) in a single save.
+///
+/// Rule 1 — file is intentionally compact: one save callback updates
+/// both columns via a single repository call.
+library;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:spine_clinic_app/core/constants/app_colors.dart';
@@ -9,7 +16,7 @@ import 'package:spine_clinic_app/features/patient/domain/patient.dart';
 import 'package:spine_clinic_app/features/patient/presentation/package_balance_controller.dart';
 import 'package:spine_clinic_app/shared/widgets/app_snackbar.dart';
 
-/// A dialog allowing authorized staff to edit the package balance of a patient.
+/// Edit dialog for both PT and traction package balances.
 class PackageBalanceEditDialog extends StatefulWidget {
   /// Creates a [PackageBalanceEditDialog].
   const PackageBalanceEditDialog({
@@ -17,7 +24,7 @@ class PackageBalanceEditDialog extends StatefulWidget {
     required this.patient,
   });
 
-  /// The patient whose balance is being edited.
+  /// The patient whose balances are being edited.
   final Patient patient;
 
   @override
@@ -25,34 +32,39 @@ class PackageBalanceEditDialog extends StatefulWidget {
 }
 
 class _PackageBalanceEditDialogState extends State<PackageBalanceEditDialog> {
-  late final TextEditingController _controller;
+  late final TextEditingController _sessionCtrl;
+  late final TextEditingController _tractionCtrl;
   final _formKey = GlobalKey<FormState>();
 
   @override
   void initState() {
     super.initState();
-    _controller = TextEditingController(text: widget.patient.packageBalance.toString());
+    _sessionCtrl = TextEditingController(text: widget.patient.sessionBalance.toString());
+    _tractionCtrl = TextEditingController(text: widget.patient.tractionBalance.toString());
   }
 
   @override
   void dispose() {
-    _controller.dispose();
+    _sessionCtrl.dispose();
+    _tractionCtrl.dispose();
     super.dispose();
   }
 
-  InputDecoration _buildDecoration({required String labelText}) {
+  InputDecoration _buildDecoration({required String labelText, String? hintText}) {
     final OutlineInputBorder borderBase = OutlineInputBorder(
-      borderRadius: const BorderRadius.all(Radius.circular(AppSizes.r6)),
+      borderRadius: const BorderRadius.all(Radius.circular(AppSizes.r8)),
       borderSide: const BorderSide(color: AppColors.border, width: AppSizes.borderWidth),
     );
 
     return InputDecoration(
       labelText: labelText,
+      hintText: hintText,
       labelStyle: AppTextStyles.captionMedium.copyWith(color: AppColors.textSecondary),
       floatingLabelBehavior: FloatingLabelBehavior.always,
       isDense: true,
       filled: true,
       fillColor: AppColors.surface,
+      hintStyle: AppTextStyles.bodySecondary.copyWith(color: AppColors.textMuted),
       contentPadding: AppSizes.paddingCell,
       enabledBorder: borderBase,
       disabledBorder: borderBase,
@@ -78,36 +90,56 @@ class _PackageBalanceEditDialogState extends State<PackageBalanceEditDialog> {
 
         return AlertDialog(
           shape: const RoundedRectangleBorder(
-            borderRadius: BorderRadius.all(Radius.circular(AppSizes.r8)),
+            borderRadius: BorderRadius.all(Radius.circular(AppSizes.r16)),
           ),
           backgroundColor: AppColors.surface,
           title: Text(
             AppStrings.editPackageBalance,
             style: AppTextStyles.headingSmall.copyWith(color: AppColors.textPrimary),
           ),
-          content: Form(
-            key: _formKey,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                TextFormField(
-                  controller: _controller,
-                  keyboardType: const TextInputType.numberWithOptions(signed: true),
-                  enabled: !isLoading,
-                  decoration: _buildDecoration(labelText: AppStrings.packageBalance),
-                  style: AppTextStyles.body.copyWith(color: AppColors.textPrimary),
-                  validator: (String? value) {
-                    if (value == null || value.trim().isEmpty) {
-                      return AppStrings.balanceRequired;
-                    }
-                    if (int.tryParse(value) == null) {
-                      return AppStrings.balanceMustBeInteger;
-                    }
-                    return null;
-                  },
-                ),
-              ],
+          content: SizedBox(
+            width: 360,
+            child: Form(
+              key: _formKey,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    '${AppStrings.currentBalancePrefix}PT ${widget.patient.sessionBalance} · Tr ${widget.patient.tractionBalance}',
+                    style: AppTextStyles.caption.copyWith(color: AppColors.textMuted),
+                  ),
+                  const SizedBox(height: AppSizes.p12),
+                  TextFormField(
+                    controller: _sessionCtrl,
+                    keyboardType: const TextInputType.numberWithOptions(signed: true),
+                    enabled: !isLoading,
+                    decoration: _buildDecoration(
+                      labelText: AppStrings.sessionBalance,
+                      hintText: AppStrings.sessionBalanceHint,
+                    ),
+                    style: AppTextStyles.body.copyWith(color: AppColors.textPrimary),
+                    validator: _validateInt,
+                  ),
+                  const SizedBox(height: AppSizes.p16),
+                  TextFormField(
+                    controller: _tractionCtrl,
+                    keyboardType: const TextInputType.numberWithOptions(signed: true),
+                    enabled: !isLoading,
+                    decoration: _buildDecoration(
+                      labelText: AppStrings.tractionBalance,
+                      hintText: AppStrings.tractionBalanceHint,
+                    ),
+                    style: AppTextStyles.body.copyWith(color: AppColors.textPrimary),
+                    validator: _validateInt,
+                  ),
+                  const SizedBox(height: AppSizes.p12),
+                  Text(
+                    AppStrings.editReplacesExplanation,
+                    style: AppTextStyles.caption.copyWith(color: AppColors.textMuted),
+                  ),
+                ],
+              ),
             ),
           ),
           actions: [
@@ -123,19 +155,21 @@ class _PackageBalanceEditDialogState extends State<PackageBalanceEditDialog> {
                 backgroundColor: AppColors.primary,
                 foregroundColor: AppColors.textOnPrimary,
                 shape: const RoundedRectangleBorder(
-                  borderRadius: BorderRadius.all(Radius.circular(AppSizes.r6)),
+                  borderRadius: BorderRadius.all(Radius.circular(AppSizes.r999)),
                 ),
               ),
               onPressed: isLoading
                   ? null
                   : () async {
                       if (_formKey.currentState?.validate() ?? false) {
-                        final int newBalance = int.parse(_controller.text);
+                        final int newSession = int.parse(_sessionCtrl.text);
+                        final int newTraction = int.parse(_tractionCtrl.text);
                         final result = await ref
                             .read(packageBalanceControllerProvider.notifier)
-                            .updateBalance(
+                            .updateBalances(
                               patient: widget.patient,
-                              newBalance: newBalance,
+                              newSessionBalance: newSession,
+                              newTractionBalance: newTraction,
                             );
                         if (context.mounted) {
                           result.when(
@@ -176,5 +210,15 @@ class _PackageBalanceEditDialogState extends State<PackageBalanceEditDialog> {
         );
       },
     );
+  }
+
+  String? _validateInt(String? value) {
+    if (value == null || value.trim().isEmpty) {
+      return AppStrings.balanceRequired;
+    }
+    if (int.tryParse(value) == null) {
+      return AppStrings.balanceMustBeInteger;
+    }
+    return null;
   }
 }

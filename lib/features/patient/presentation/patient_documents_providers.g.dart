@@ -60,7 +60,7 @@ final class PatientDocumentsRepositoryProvider
 }
 
 String _$patientDocumentsRepositoryHash() =>
-    r'3b6e34db9072ce9df654e61755a7c7b7adb71df2';
+    r'0d30f3e2d4dc9f3b1d98161cf7bf1203e05999f7';
 
 /// Family AsyncNotifier managing the document list state for a patient.
 
@@ -115,7 +115,7 @@ final class PatientDocumentsNotifierNotifierProvider
 }
 
 String _$patientDocumentsNotifierNotifierHash() =>
-    r'661f441e7f361e0239be2219b179cb2046d37cf1';
+    r'dba349de128957598e42d92ed1fa7abe69f45d93';
 
 /// Family AsyncNotifier managing the document list state for a patient.
 

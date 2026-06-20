@@ -15,7 +15,9 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$PaymentRecord {
 
- String get id;@JsonKey(name: 'patient_id') String get patientId;@JsonKey(fromJson: _amountFromJson, toJson: _amountToJson) double get amount; String get reason;@JsonKey(name: 'recorded_by') String? get recordedBy;@JsonKey(name: 'recorded_at') DateTime get recordedAt;@JsonKey(name: 'sessions_added') int get sessionsAdded;
+ String get id;@JsonKey(name: 'patient_id') String get patientId;@JsonKey(fromJson: _amountFromJson, toJson: _amountToJson) double get amount; String get reason;@JsonKey(name: 'recorded_by') String? get recordedBy;@JsonKey(name: 'recorded_at') DateTime get recordedAt;/// Number of Normal PT sessions added to patient balance by this payment.
+@JsonKey(name: 'session_balance_added') int get sessionBalanceAdded;/// Number of Spinal Traction sessions added to patient balance by this payment.
+@JsonKey(name: 'traction_balance_added') int get tractionBalanceAdded;
 /// Create a copy of PaymentRecord
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -28,16 +30,16 @@ $PaymentRecordCopyWith<PaymentRecord> get copyWith => _$PaymentRecordCopyWithImp
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is PaymentRecord&&(identical(other.id, id) || other.id == id)&&(identical(other.patientId, patientId) || other.patientId == patientId)&&(identical(other.amount, amount) || other.amount == amount)&&(identical(other.reason, reason) || other.reason == reason)&&(identical(other.recordedBy, recordedBy) || other.recordedBy == recordedBy)&&(identical(other.recordedAt, recordedAt) || other.recordedAt == recordedAt)&&(identical(other.sessionsAdded, sessionsAdded) || other.sessionsAdded == sessionsAdded));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is PaymentRecord&&(identical(other.id, id) || other.id == id)&&(identical(other.patientId, patientId) || other.patientId == patientId)&&(identical(other.amount, amount) || other.amount == amount)&&(identical(other.reason, reason) || other.reason == reason)&&(identical(other.recordedBy, recordedBy) || other.recordedBy == recordedBy)&&(identical(other.recordedAt, recordedAt) || other.recordedAt == recordedAt)&&(identical(other.sessionBalanceAdded, sessionBalanceAdded) || other.sessionBalanceAdded == sessionBalanceAdded)&&(identical(other.tractionBalanceAdded, tractionBalanceAdded) || other.tractionBalanceAdded == tractionBalanceAdded));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,patientId,amount,reason,recordedBy,recordedAt,sessionsAdded);
+int get hashCode => Object.hash(runtimeType,id,patientId,amount,reason,recordedBy,recordedAt,sessionBalanceAdded,tractionBalanceAdded);
 
 @override
 String toString() {
-  return 'PaymentRecord(id: $id, patientId: $patientId, amount: $amount, reason: $reason, recordedBy: $recordedBy, recordedAt: $recordedAt, sessionsAdded: $sessionsAdded)';
+  return 'PaymentRecord(id: $id, patientId: $patientId, amount: $amount, reason: $reason, recordedBy: $recordedBy, recordedAt: $recordedAt, sessionBalanceAdded: $sessionBalanceAdded, tractionBalanceAdded: $tractionBalanceAdded)';
 }
 
 
@@ -48,7 +50,7 @@ abstract mixin class $PaymentRecordCopyWith<$Res>  {
   factory $PaymentRecordCopyWith(PaymentRecord value, $Res Function(PaymentRecord) _then) = _$PaymentRecordCopyWithImpl;
 @useResult
 $Res call({
- String id,@JsonKey(name: 'patient_id') String patientId,@JsonKey(fromJson: _amountFromJson, toJson: _amountToJson) double amount, String reason,@JsonKey(name: 'recorded_by') String? recordedBy,@JsonKey(name: 'recorded_at') DateTime recordedAt,@JsonKey(name: 'sessions_added') int sessionsAdded
+ String id,@JsonKey(name: 'patient_id') String patientId,@JsonKey(fromJson: _amountFromJson, toJson: _amountToJson) double amount, String reason,@JsonKey(name: 'recorded_by') String? recordedBy,@JsonKey(name: 'recorded_at') DateTime recordedAt,@JsonKey(name: 'session_balance_added') int sessionBalanceAdded,@JsonKey(name: 'traction_balance_added') int tractionBalanceAdded
 });
 
 
@@ -65,7 +67,7 @@ class _$PaymentRecordCopyWithImpl<$Res>
 
 /// Create a copy of PaymentRecord
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? patientId = null,Object? amount = null,Object? reason = null,Object? recordedBy = freezed,Object? recordedAt = null,Object? sessionsAdded = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? patientId = null,Object? amount = null,Object? reason = null,Object? recordedBy = freezed,Object? recordedAt = null,Object? sessionBalanceAdded = null,Object? tractionBalanceAdded = null,}) {
   return _then(_self.copyWith(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,patientId: null == patientId ? _self.patientId : patientId // ignore: cast_nullable_to_non_nullable
@@ -73,7 +75,8 @@ as String,amount: null == amount ? _self.amount : amount // ignore: cast_nullabl
 as double,reason: null == reason ? _self.reason : reason // ignore: cast_nullable_to_non_nullable
 as String,recordedBy: freezed == recordedBy ? _self.recordedBy : recordedBy // ignore: cast_nullable_to_non_nullable
 as String?,recordedAt: null == recordedAt ? _self.recordedAt : recordedAt // ignore: cast_nullable_to_non_nullable
-as DateTime,sessionsAdded: null == sessionsAdded ? _self.sessionsAdded : sessionsAdded // ignore: cast_nullable_to_non_nullable
+as DateTime,sessionBalanceAdded: null == sessionBalanceAdded ? _self.sessionBalanceAdded : sessionBalanceAdded // ignore: cast_nullable_to_non_nullable
+as int,tractionBalanceAdded: null == tractionBalanceAdded ? _self.tractionBalanceAdded : tractionBalanceAdded // ignore: cast_nullable_to_non_nullable
 as int,
   ));
 }
@@ -159,10 +162,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id, @JsonKey(name: 'patient_id')  String patientId, @JsonKey(fromJson: _amountFromJson, toJson: _amountToJson)  double amount,  String reason, @JsonKey(name: 'recorded_by')  String? recordedBy, @JsonKey(name: 'recorded_at')  DateTime recordedAt, @JsonKey(name: 'sessions_added')  int sessionsAdded)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id, @JsonKey(name: 'patient_id')  String patientId, @JsonKey(fromJson: _amountFromJson, toJson: _amountToJson)  double amount,  String reason, @JsonKey(name: 'recorded_by')  String? recordedBy, @JsonKey(name: 'recorded_at')  DateTime recordedAt, @JsonKey(name: 'session_balance_added')  int sessionBalanceAdded, @JsonKey(name: 'traction_balance_added')  int tractionBalanceAdded)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _PaymentRecord() when $default != null:
-return $default(_that.id,_that.patientId,_that.amount,_that.reason,_that.recordedBy,_that.recordedAt,_that.sessionsAdded);case _:
+return $default(_that.id,_that.patientId,_that.amount,_that.reason,_that.recordedBy,_that.recordedAt,_that.sessionBalanceAdded,_that.tractionBalanceAdded);case _:
   return orElse();
 
 }
@@ -180,10 +183,10 @@ return $default(_that.id,_that.patientId,_that.amount,_that.reason,_that.recorde
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id, @JsonKey(name: 'patient_id')  String patientId, @JsonKey(fromJson: _amountFromJson, toJson: _amountToJson)  double amount,  String reason, @JsonKey(name: 'recorded_by')  String? recordedBy, @JsonKey(name: 'recorded_at')  DateTime recordedAt, @JsonKey(name: 'sessions_added')  int sessionsAdded)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id, @JsonKey(name: 'patient_id')  String patientId, @JsonKey(fromJson: _amountFromJson, toJson: _amountToJson)  double amount,  String reason, @JsonKey(name: 'recorded_by')  String? recordedBy, @JsonKey(name: 'recorded_at')  DateTime recordedAt, @JsonKey(name: 'session_balance_added')  int sessionBalanceAdded, @JsonKey(name: 'traction_balance_added')  int tractionBalanceAdded)  $default,) {final _that = this;
 switch (_that) {
 case _PaymentRecord():
-return $default(_that.id,_that.patientId,_that.amount,_that.reason,_that.recordedBy,_that.recordedAt,_that.sessionsAdded);case _:
+return $default(_that.id,_that.patientId,_that.amount,_that.reason,_that.recordedBy,_that.recordedAt,_that.sessionBalanceAdded,_that.tractionBalanceAdded);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -200,10 +203,10 @@ return $default(_that.id,_that.patientId,_that.amount,_that.reason,_that.recorde
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id, @JsonKey(name: 'patient_id')  String patientId, @JsonKey(fromJson: _amountFromJson, toJson: _amountToJson)  double amount,  String reason, @JsonKey(name: 'recorded_by')  String? recordedBy, @JsonKey(name: 'recorded_at')  DateTime recordedAt, @JsonKey(name: 'sessions_added')  int sessionsAdded)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id, @JsonKey(name: 'patient_id')  String patientId, @JsonKey(fromJson: _amountFromJson, toJson: _amountToJson)  double amount,  String reason, @JsonKey(name: 'recorded_by')  String? recordedBy, @JsonKey(name: 'recorded_at')  DateTime recordedAt, @JsonKey(name: 'session_balance_added')  int sessionBalanceAdded, @JsonKey(name: 'traction_balance_added')  int tractionBalanceAdded)?  $default,) {final _that = this;
 switch (_that) {
 case _PaymentRecord() when $default != null:
-return $default(_that.id,_that.patientId,_that.amount,_that.reason,_that.recordedBy,_that.recordedAt,_that.sessionsAdded);case _:
+return $default(_that.id,_that.patientId,_that.amount,_that.reason,_that.recordedBy,_that.recordedAt,_that.sessionBalanceAdded,_that.tractionBalanceAdded);case _:
   return null;
 
 }
@@ -215,7 +218,7 @@ return $default(_that.id,_that.patientId,_that.amount,_that.reason,_that.recorde
 @JsonSerializable()
 
 class _PaymentRecord implements PaymentRecord {
-  const _PaymentRecord({required this.id, @JsonKey(name: 'patient_id') required this.patientId, @JsonKey(fromJson: _amountFromJson, toJson: _amountToJson) required this.amount, required this.reason, @JsonKey(name: 'recorded_by') this.recordedBy, @JsonKey(name: 'recorded_at') required this.recordedAt, @JsonKey(name: 'sessions_added') this.sessionsAdded = 0});
+  const _PaymentRecord({required this.id, @JsonKey(name: 'patient_id') required this.patientId, @JsonKey(fromJson: _amountFromJson, toJson: _amountToJson) required this.amount, required this.reason, @JsonKey(name: 'recorded_by') this.recordedBy, @JsonKey(name: 'recorded_at') required this.recordedAt, @JsonKey(name: 'session_balance_added') this.sessionBalanceAdded = 0, @JsonKey(name: 'traction_balance_added') this.tractionBalanceAdded = 0});
   factory _PaymentRecord.fromJson(Map<String, dynamic> json) => _$PaymentRecordFromJson(json);
 
 @override final  String id;
@@ -224,7 +227,10 @@ class _PaymentRecord implements PaymentRecord {
 @override final  String reason;
 @override@JsonKey(name: 'recorded_by') final  String? recordedBy;
 @override@JsonKey(name: 'recorded_at') final  DateTime recordedAt;
-@override@JsonKey(name: 'sessions_added') final  int sessionsAdded;
+/// Number of Normal PT sessions added to patient balance by this payment.
+@override@JsonKey(name: 'session_balance_added') final  int sessionBalanceAdded;
+/// Number of Spinal Traction sessions added to patient balance by this payment.
+@override@JsonKey(name: 'traction_balance_added') final  int tractionBalanceAdded;
 
 /// Create a copy of PaymentRecord
 /// with the given fields replaced by the non-null parameter values.
@@ -239,16 +245,16 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _PaymentRecord&&(identical(other.id, id) || other.id == id)&&(identical(other.patientId, patientId) || other.patientId == patientId)&&(identical(other.amount, amount) || other.amount == amount)&&(identical(other.reason, reason) || other.reason == reason)&&(identical(other.recordedBy, recordedBy) || other.recordedBy == recordedBy)&&(identical(other.recordedAt, recordedAt) || other.recordedAt == recordedAt)&&(identical(other.sessionsAdded, sessionsAdded) || other.sessionsAdded == sessionsAdded));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _PaymentRecord&&(identical(other.id, id) || other.id == id)&&(identical(other.patientId, patientId) || other.patientId == patientId)&&(identical(other.amount, amount) || other.amount == amount)&&(identical(other.reason, reason) || other.reason == reason)&&(identical(other.recordedBy, recordedBy) || other.recordedBy == recordedBy)&&(identical(other.recordedAt, recordedAt) || other.recordedAt == recordedAt)&&(identical(other.sessionBalanceAdded, sessionBalanceAdded) || other.sessionBalanceAdded == sessionBalanceAdded)&&(identical(other.tractionBalanceAdded, tractionBalanceAdded) || other.tractionBalanceAdded == tractionBalanceAdded));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,patientId,amount,reason,recordedBy,recordedAt,sessionsAdded);
+int get hashCode => Object.hash(runtimeType,id,patientId,amount,reason,recordedBy,recordedAt,sessionBalanceAdded,tractionBalanceAdded);
 
 @override
 String toString() {
-  return 'PaymentRecord(id: $id, patientId: $patientId, amount: $amount, reason: $reason, recordedBy: $recordedBy, recordedAt: $recordedAt, sessionsAdded: $sessionsAdded)';
+  return 'PaymentRecord(id: $id, patientId: $patientId, amount: $amount, reason: $reason, recordedBy: $recordedBy, recordedAt: $recordedAt, sessionBalanceAdded: $sessionBalanceAdded, tractionBalanceAdded: $tractionBalanceAdded)';
 }
 
 
@@ -259,7 +265,7 @@ abstract mixin class _$PaymentRecordCopyWith<$Res> implements $PaymentRecordCopy
   factory _$PaymentRecordCopyWith(_PaymentRecord value, $Res Function(_PaymentRecord) _then) = __$PaymentRecordCopyWithImpl;
 @override @useResult
 $Res call({
- String id,@JsonKey(name: 'patient_id') String patientId,@JsonKey(fromJson: _amountFromJson, toJson: _amountToJson) double amount, String reason,@JsonKey(name: 'recorded_by') String? recordedBy,@JsonKey(name: 'recorded_at') DateTime recordedAt,@JsonKey(name: 'sessions_added') int sessionsAdded
+ String id,@JsonKey(name: 'patient_id') String patientId,@JsonKey(fromJson: _amountFromJson, toJson: _amountToJson) double amount, String reason,@JsonKey(name: 'recorded_by') String? recordedBy,@JsonKey(name: 'recorded_at') DateTime recordedAt,@JsonKey(name: 'session_balance_added') int sessionBalanceAdded,@JsonKey(name: 'traction_balance_added') int tractionBalanceAdded
 });
 
 
@@ -276,7 +282,7 @@ class __$PaymentRecordCopyWithImpl<$Res>
 
 /// Create a copy of PaymentRecord
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? patientId = null,Object? amount = null,Object? reason = null,Object? recordedBy = freezed,Object? recordedAt = null,Object? sessionsAdded = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? patientId = null,Object? amount = null,Object? reason = null,Object? recordedBy = freezed,Object? recordedAt = null,Object? sessionBalanceAdded = null,Object? tractionBalanceAdded = null,}) {
   return _then(_PaymentRecord(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,patientId: null == patientId ? _self.patientId : patientId // ignore: cast_nullable_to_non_nullable
@@ -284,7 +290,8 @@ as String,amount: null == amount ? _self.amount : amount // ignore: cast_nullabl
 as double,reason: null == reason ? _self.reason : reason // ignore: cast_nullable_to_non_nullable
 as String,recordedBy: freezed == recordedBy ? _self.recordedBy : recordedBy // ignore: cast_nullable_to_non_nullable
 as String?,recordedAt: null == recordedAt ? _self.recordedAt : recordedAt // ignore: cast_nullable_to_non_nullable
-as DateTime,sessionsAdded: null == sessionsAdded ? _self.sessionsAdded : sessionsAdded // ignore: cast_nullable_to_non_nullable
+as DateTime,sessionBalanceAdded: null == sessionBalanceAdded ? _self.sessionBalanceAdded : sessionBalanceAdded // ignore: cast_nullable_to_non_nullable
+as int,tractionBalanceAdded: null == tractionBalanceAdded ? _self.tractionBalanceAdded : tractionBalanceAdded // ignore: cast_nullable_to_non_nullable
 as int,
   ));
 }

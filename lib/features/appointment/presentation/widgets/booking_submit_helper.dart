@@ -40,7 +40,8 @@ abstract final class BookingSubmitHelper {
           type: type,
           scheduledAt: scheduledAt,
           status: AppointmentStatus.scheduled,
-          usePackage: usePackage,
+          // Assessments never deduct — force this off as a safety net.
+          usePackage: type.affectsPackageBalance ? usePackage : false,
           createdBy: creatorId,
           createdAt: DateTime.now().toUtc(),
         );

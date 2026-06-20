@@ -51,6 +51,10 @@ class RecordPaymentController extends _$RecordPaymentController {
 
   /// Submits the recorded payment to the database.
   ///
+  /// The corresponding patient balance increments are applied atomically
+  /// by the Postgres `handle_payment_package_sync()` trigger so this
+  /// controller does not need to know about which bucket was credited.
+  ///
   /// After the async repository call completes, [ref.mounted] is
   /// checked before any state mutation or provider invalidation.
   /// If the notifier was disposed while waiting (e.g. the calling
@@ -60,7 +64,8 @@ class RecordPaymentController extends _$RecordPaymentController {
     required String patientId,
     required double amount,
     required String reason,
-    int sessionsAdded = 0,
+    int sessionBalanceAdded = 0,
+    int tractionBalanceAdded = 0,
   }) async {
     state = const AsyncValue.loading();
     final repo = ref.read(paymentRepositoryProvider);
@@ -73,15 +78,11 @@ class RecordPaymentController extends _$RecordPaymentController {
       reason: reason,
       recordedBy: currentUser?.id,
       recordedAt: DateTime.now(),
-      sessionsAdded: sessionsAdded,
+      sessionBalanceAdded: sessionBalanceAdded,
+      tractionBalanceAdded: tractionBalanceAdded,
     );
 
     final Result<void> result = await repo.recordPayment(payment);
-
-    // Guard: the notifier may have been disposed while we awaited
-    // the repository call (e.g. the sheet was dismissed).  When
-    // that happens we must not touch ref or state — just hand the
-    // raw result back to the caller.
     if (!ref.mounted) return result;
 
     state = result.when(

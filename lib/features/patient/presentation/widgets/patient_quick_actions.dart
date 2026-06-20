@@ -13,8 +13,11 @@ import 'package:go_router/go_router.dart';
 import 'package:spine_clinic_app/core/constants/app_colors.dart';
 import 'package:spine_clinic_app/core/constants/app_sizes.dart';
 import 'package:spine_clinic_app/core/constants/app_strings.dart';
+import 'package:spine_clinic_app/core/errors/app_exception.dart';
+import 'package:spine_clinic_app/core/errors/result.dart';
 import 'package:spine_clinic_app/core/network/app_routes.dart';
 import 'package:spine_clinic_app/features/patient/domain/patient.dart';
+import 'package:spine_clinic_app/features/patient/domain/patient_document.dart';
 import 'package:spine_clinic_app/features/patient/presentation/patient_documents_providers.dart';
 import 'package:spine_clinic_app/features/patient/presentation/widgets/add_note_sheet.dart';
 import 'package:spine_clinic_app/features/patient/presentation/widgets/collect_payment_sheet.dart';
@@ -76,36 +79,49 @@ class _PatientQuickActionsFabState extends ConsumerState<PatientQuickActionsFab>
   /// Dismisses the quick-actions sheet first, then triggers the native file
   /// picker. The upload runs inside this stateful widget so [ref] and [mounted]
   /// remain valid even after the sheet is gone.
+  ///
+  /// `try`/`finally` with `mounted` guards ensure the FAB always
+  /// re-enables, even if the future is interrupted or the widget is
+  /// disposed mid-upload. Upload outcomes flow through [AppSnackbar]
+  /// so transient failures never replace the documents list (the
+  /// list AsyncNotifier is intentionally NOT mutated here).
   Future<void> _onAddDocument() async {
     Navigator.of(context, rootNavigator: true).pop();
 
-    final result = await FilePicker.platform.pickFiles(
+    final FilePickerResult? result = await FilePicker.platform.pickFiles(
       type: FileType.custom,
       allowedExtensions: ['pdf', 'png', 'jpg', 'jpeg'],
       allowMultiple: false,
     );
     if (result == null || result.files.isEmpty) return;
-    final file = result.files.first;
+    final PlatformFile file = result.files.first;
     if (!mounted) return;
 
     setState(() => _isUploading = true);
-
-    final uploadResult = await ref
-        .read(patientDocumentsNotifierProvider(widget.patient.id).notifier)
-        .uploadDocument(
-            fileName: file.name, filePath: file.path, fileBytes: file.bytes);
-
-    if (!mounted) return;
-    setState(() => _isUploading = false);
-
-    uploadResult.when(
-      success: (_) => AppSnackbar.show(context,
+    try {
+      final Result<PatientDocument> uploadResult = await ref
+          .read(patientDocumentsNotifierProvider(widget.patient.id).notifier)
+          .uploadDocument(
+            fileName: file.name,
+            filePath: file.path,
+            fileBytes: file.bytes,
+          );
+      if (!mounted) return;
+      uploadResult.when(
+        success: (_) => AppSnackbar.show(
+          context,
           message: AppStrings.documentUploaded,
-          variant: AppSnackbarVariant.success),
-      failure: (error) => AppSnackbar.show(context,
+          variant: AppSnackbarVariant.success,
+        ),
+        failure: (AppException error) => AppSnackbar.show(
+          context,
           message: AppStrings.fromKey(error.userMessageKey),
-          variant: AppSnackbarVariant.error),
-    );
+          variant: AppSnackbarVariant.error,
+        ),
+      );
+    } finally {
+      if (mounted) setState(() => _isUploading = false);
+    }
   }
 
   // ── Build ───────────────────────────────────────────────────────────

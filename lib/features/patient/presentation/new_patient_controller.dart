@@ -40,7 +40,8 @@ class NewPatientController extends _$NewPatientController {
       phoneNumber: phoneNumber,
       program: program?.trim().isEmpty == true ? null : program,
       clinic: clinic,
-      packageBalance: 0,
+      sessionBalance: 0,
+      tractionBalance: 0,
       createdBy: currentUser?.id,
       createdAt: DateTime.now(),
     );

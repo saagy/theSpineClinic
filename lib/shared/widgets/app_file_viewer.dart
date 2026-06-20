@@ -1,23 +1,25 @@
-/// In-app viewer for images and PDFs — avoids Safari popup blocker and
-/// PWA standalone-mode issues by rendering content inside the app instead
-/// of calling `window.open`.
-///
-/// Images → [InteractiveViewer] + [Image.network]. PDFs → `<iframe>` on
-/// web, native opener fallback on mobile.
-library;
-
-import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
+
+import 'package:spine_clinic_app/core/constants/app_colors.dart';
 import 'package:spine_clinic_app/core/constants/app_sizes.dart';
 import 'package:spine_clinic_app/core/constants/app_text_styles.dart';
+import 'package:spine_clinic_app/shared/widgets/image_viewer_view.dart';
+import 'package:spine_clinic_app/shared/widgets/pdf_viewer_view.dart';
 
-import 'app_file_viewer_stub.dart'
-    if (dart.library.html) 'app_file_viewer_web.dart';
-
-/// Opens a full-screen dialog that displays [signedUrl] in-app.
+/// In-app viewer for images and PDFs.
+///
+/// Both formats render through Flutter-built widgets loaded from
+/// authenticated Supabase bytes (no signed URL, no iframe, no CORS):
+///
+/// * Images → [ImageViewerView] (InteractiveViewer + Image.memory)
+/// * PDFs → [PdfViewerView] (pdfrx → PDFium / WASM PDFium)
+///
+/// This avoids Safari/iOS PWA popup blockers (compared to opening a new
+/// tab) and lets Flutter own rendering so pinch / double-tap zoom and
+/// multi-page scroll behave identically on every platform.
 void showAppFileViewer(
   BuildContext context, {
-  required String signedUrl,
+  required String fileUrl,
   required String fileName,
   required bool isImage,
   required bool isPdf,
@@ -27,7 +29,7 @@ void showAppFileViewer(
     barrierDismissible: false,
     useSafeArea: false,
     builder: (_) => _AppFileViewerDialog(
-      signedUrl: signedUrl,
+      fileUrl: fileUrl,
       fileName: fileName,
       isImage: isImage,
       isPdf: isPdf,
@@ -40,13 +42,13 @@ void showAppFileViewer(
 /// Full-screen dialog rendering the file content.
 class _AppFileViewerDialog extends StatefulWidget {
   const _AppFileViewerDialog({
-    required this.signedUrl,
+    required this.fileUrl,
     required this.fileName,
     required this.isImage,
     required this.isPdf,
   });
 
-  final String signedUrl;
+  final String fileUrl;
   final String fileName;
   final bool isImage;
   final bool isPdf;
@@ -56,8 +58,6 @@ class _AppFileViewerDialog extends StatefulWidget {
 }
 
 class _AppFileViewerDialogState extends State<_AppFileViewerDialog> {
-  Object? _imageError;
-
   Widget _buildHeader() {
     final ColorScheme cs = Theme.of(context).colorScheme;
     return Container(
@@ -90,72 +90,16 @@ class _AppFileViewerDialogState extends State<_AppFileViewerDialog> {
   }
 
   Widget _buildImageContent() {
-    final ColorScheme cs = Theme.of(context).colorScheme;
-
-    if (_imageError != null) {
-      return Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(Icons.broken_image_outlined,
-                size: AppSizes.iconHero, color: cs.error),
-            const SizedBox(height: AppSizes.p16),
-            Text('Could not load image',
-                style: AppTextStyles.bodySecondary
-                    .copyWith(color: cs.error)),
-          ],
-        ),
-      );
-    }
-
-    return InteractiveViewer(
-      minScale: 0.5,
-      maxScale: 4.0,
-      child: Center(
-        child: Image.network(
-          widget.signedUrl,
-          fit: BoxFit.contain,
-          loadingBuilder: (context, child, ImageChunkEvent? progress) {
-            if (progress == null) return child;
-            return Center(
-              child: CircularProgressIndicator(
-                value: progress.expectedTotalBytes != null
-                    ? progress.cumulativeBytesLoaded /
-                        progress.expectedTotalBytes!
-                    : null,
-                color: cs.primary,
-              ),
-            );
-          },
-          errorBuilder: (context, error, stack) {
-            WidgetsBinding.instance.addPostFrameCallback((_) {
-              if (mounted) setState(() => _imageError = error);
-            });
-            return const SizedBox.shrink();
-          },
-        ),
-      ),
+    return ImageViewerView(
+      fileUrl: widget.fileUrl,
+      fileName: widget.fileName,
     );
   }
 
   Widget _buildPdfContent() {
-    if (kIsWeb) {
-      final String viewId =
-          'pdf-viewer-${widget.signedUrl.hashCode}';
-      return buildPdfContent(widget.signedUrl, viewId);
-    }
-    // On native this path should not be reached — files open via
-    // OpenFilex. Show a clear message just in case.
-    final ColorScheme cs = Theme.of(context).colorScheme;
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(AppSizes.p24),
-        child: Text(
-          'PDF files open in your device viewer.',
-          style: AppTextStyles.bodyLarge.copyWith(color: cs.onSurface),
-          textAlign: TextAlign.center,
-        ),
-      ),
+    return PdfViewerView(
+      fileUrl: widget.fileUrl,
+      fileName: widget.fileName,
     );
   }
 
@@ -166,11 +110,18 @@ class _AppFileViewerDialogState extends State<_AppFileViewerDialog> {
     if (widget.isPdf) {
       return _buildPdfContent();
     }
-    // Unknown / unsupported type
     final ColorScheme cs = Theme.of(context).colorScheme;
-    return Center(
-      child: Text('This file type is not supported for in-app viewing.',
-          style: AppTextStyles.bodySecondary.copyWith(color: cs.onSurface)),
+    return Container(
+      color: AppColors.background,
+      alignment: Alignment.center,
+      child: Padding(
+        padding: const EdgeInsets.all(AppSizes.p24),
+        child: Text(
+          'This file type is not supported for in-app viewing.',
+          style: AppTextStyles.bodySecondary.copyWith(color: cs.onSurface),
+          textAlign: TextAlign.center,
+        ),
+      ),
     );
   }
 

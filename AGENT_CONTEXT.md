@@ -80,7 +80,8 @@ full_name         text          not null
 phone_number      text          not null
 program           text          nullable
 clinic            clinic_location enum: 'tagamoa' | 'masr_elgedida', not null
-package_balance   integer       default 0 (can go negative, no constraint)
+session_balance   integer       default 0 (PT sessions; may go negative)
+traction_balance  integer       default 0 (traction sessions; may go negative)
 created_by        uuid          references staff(id) on delete set null, nullable
 created_at        timestamptz   default now()
 ```
@@ -107,7 +108,12 @@ uploaded_at       timestamptz   default now()
 ```
 id                uuid          PK, default gen_random_uuid()
 patient_id        uuid          references patients(id) on delete cascade
-type              appointment_type enum: 'session' | 'gehaz_shad_fakarat' | 'check_up'
+type              appointment_type enum:
+                                |- 'normal_pt_session'         (PT session)
+                                |- 'spinal_traction_session'   (traction session)
+                                |- 'initial_assessment'        (senior doctor, no deduction)
+                                |- 'reassessment'              (senior doctor, no deduction)
+                                |- (legacy 'check_up' values migrated to 'reassessment')
 scheduled_at      timestamptz   default now()
 status            appointment_status enum: 'scheduled' | 'checked_in' | 'completed'
                                 | 'cancelled' | 'no_show', default 'scheduled'
@@ -117,6 +123,10 @@ created_at        timestamptz   default now()
 
 NOTE: No doctor_id on this table.
       Doctors are linked via appointment_doctors table only.
+
+NOTE: Each appointment has exactly ONE type. A visit that comprises
+      multiple modalities (e.g. Reassessment + PT) is recorded as
+      multiple appointments on the same date with different types.
 ```
 
 ### appointment_doctors
@@ -153,12 +163,18 @@ CONSTRAINT: UNIQUE (absent_doctor_id, replacement_date)
 
 ### payment_records
 ```
-id                uuid          PK, default gen_random_uuid()
-patient_id        uuid          references patients(id) on delete cascade
-amount            numeric       not null
-reason            text          not null (free text, e.g. 'Package', 'Session')
-recorded_by       uuid          references staff(id) on delete set null, nullable
-recorded_at       timestamptz   default now()
+id                uuid              PK, default gen_random_uuid()
+patient_id        uuid              references patients(id) on delete cascade
+amount            numeric           not null
+reason            text              not null
+                                        Free text. Recommended values per type of sale:
+                                        - 'Package (<name>)' for combined / single-kind packages
+                                        - 'PT Session', 'Spinal Traction Session',
+                                          'Initial Assessment', 'Reassessment'
+recorded_by       uuid              references staff(id) on delete set null, nullable
+recorded_at       timestamptz       default now()
+session_balance_added  integer      default 0 (PT sessions credited when sold as a package)
+traction_balance_added integer      default 0 (traction sessions credited when sold as a package)
 ```
 
 ### patient_notes
@@ -176,7 +192,16 @@ updated_at        timestamptz   default now()
 ```
 id                uuid          PK, default gen_random_uuid()
 packages          jsonb         not null, default '[]'::jsonb
-                                format: [{name, session_count, price}, ...]
+                                format:
+                                [
+                                  {
+                                    "name": "Gold Combo",
+                                    "kind": "session" | "traction" | "combined",
+                                    "session_count": 8,     // PT sessions (for session/combined)
+                                    "tractions_count": 4,   // traction sessions (for traction/combined)
+                                    "price": 4800
+                                  }
+                                ]
 updated_by        uuid          references staff(id) on delete set null, nullable
 updated_at        timestamptz   default now()
 ```
@@ -280,15 +305,23 @@ and late record entries safely.
 
 ## 7. Package Balance Rules
 
-- package_balance lives on the patients row as an integer
-- It can go negative — no floor constraint
+- Two package balances live as integer columns on the patients row:
+    - `session_balance`   — counts PT sessions (debits on each completed 'normal_pt_session')
+    - `traction_balance`  — counts traction sessions (debits on each completed 'spinal_traction_session')
+- Both columns can go negative — no floor constraint
 - Deduction and refund are handled by a Postgres trigger (not Flutter code):
-    - **Deduction (-1)**: Fires when appointment status changes TO 'checked_in' OR 'completed' from a 'scheduled' state, AND use_package = true.
-    - **Refund (+1)**: Fires when appointment status changes TO 'cancelled' from a 'checked_in' or 'completed' state, AND the old use_package was true.
+    - **Deduction (-1)**: Fires when appointment status changes TO 'checked_in' OR 'completed' from a 'scheduled' state, AND use_package = true. Only fires for `normal_pt_session` and `spinal_traction_session` appointment types. Chooses bucket by type.
+    - **Refund (+1)**: Fires when appointment status changes TO 'cancelled' from a 'checked_in' or 'completed' state, AND the old use_package was true. Same per-type routing.
+- Assessments (`initial_assessment`, `reassessment`) **never deduct** any balance — they are billed independently.
 - Flutter does NOT manually deduct or refund balance — trust the trigger entirely
-- Receptionist can manually edit balance via PackageBalanceEditDialog
-  (direct update to patients.package_balance)
-- The UI shows a warning indicator when balance is 0 or negative
+- Receptionist can manually edit BOTH balances via PackageBalanceEditDialog
+  (single update to patients row over `session_balance` + `traction_balance`)
+- The UI shows a warning indicator per bucket when that bucket is ≤ 0
+- When a clinic package is sold, `recordPaymentController.submitPayment(...)` accepts
+  `sessionBalanceAdded` and `tractionBalanceAdded` parameters. It writes the
+  payment_records row with both values AND atomically increments both patient
+  balances via a follow-up `updatePatient()` call. The trigger is NOT used for
+  package sales — patient balances go UP on sale, not down.
 
 ---
 
@@ -413,21 +446,36 @@ CREATE OR REPLACE FUNCTION public.handle_package_deduction()
  RETURNS trigger
  LANGUAGE plpgsql
 AS $function$
+DECLARE
+  bucket text;
 BEGIN
-    -- Case A: Appointment updates to checked_in or completed from a scheduled state
-    IF (TG_OP = 'UPDATE') AND (OLD.status = 'scheduled') AND (NEW.status IN ('checked_in', 'completed')) AND (NEW.use_package = true) THEN
-        UPDATE public.patients 
-        SET package_balance = package_balance - 1 
-        WHERE id = NEW.patient_id;
-        
-    -- Case B: Receptionist cancels an already checked_in/completed session (Refund Balance)
-    ELSIF (TG_OP = 'UPDATE') AND (OLD.status IN ('checked_in', 'completed')) AND (NEW.status = 'cancelled') AND (OLD.use_package = true) THEN
-        UPDATE public.patients 
-        SET package_balance = package_balance + 1 
-        WHERE id = NEW.patient_id;
-    END IF;
-    
-    RETURN NEW;
+  -- Map appointment type to balance bucket. Assessments never decrement.
+  IF NEW.type = 'normal_pt_session'::public.appointment_type THEN
+    bucket := 'session_balance';
+  ELSIF NEW.type = 'spinal_traction_session'::public.appointment_type THEN
+    bucket := 'traction_balance';
+  ELSE
+    RETURN NEW; -- initial_assessment / reassessment: no auto-deduction
+  END IF;
+
+  -- Deduct (-1) on scheduled → checked_in/completed (when use_package = true)
+  IF TG_OP = 'UPDATE' AND OLD.status = 'scheduled'
+     AND NEW.status IN ('checked_in', 'completed')
+     AND NEW.use_package = true THEN
+    EXECUTE format(
+      'UPDATE public.patients SET %I = %I - 1 WHERE id = $1', bucket, bucket)
+      USING NEW.patient_id;
+
+  -- Refund (+1) when cancelling after check-in/completion
+  ELSIF TG_OP = 'UPDATE' AND OLD.status IN ('checked_in', 'completed')
+     AND NEW.status = 'cancelled'
+     AND OLD.use_package = true THEN
+    EXECUTE format(
+      'UPDATE public.patients SET %I = %I + 1 WHERE id = $1', bucket, bucket)
+      USING NEW.patient_id;
+  END IF;
+
+  RETURN NEW;
 END;
 $function$;
 

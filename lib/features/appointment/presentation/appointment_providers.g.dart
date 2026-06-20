@@ -474,17 +474,232 @@ final class FutureScheduledAppointmentsCountFamily extends $Family
   String toString() => r'futureScheduledAppointmentsCountProvider';
 }
 
-/// Family provider evaluating: Current Balance - Future Commitments.
+/// Family provider resolving the count of future scheduled appointments
+/// of a specific bucket (PT or Traction). Assessments always return 0
+/// because they have no balance impact.
+
+@ProviderFor(futureScheduledAppointmentsCountForType)
+final futureScheduledAppointmentsCountForTypeProvider =
+    FutureScheduledAppointmentsCountForTypeFamily._();
+
+/// Family provider resolving the count of future scheduled appointments
+/// of a specific bucket (PT or Traction). Assessments always return 0
+/// because they have no balance impact.
+
+final class FutureScheduledAppointmentsCountForTypeProvider
+    extends $FunctionalProvider<AsyncValue<int>, int, FutureOr<int>>
+    with $FutureModifier<int>, $FutureProvider<int> {
+  /// Family provider resolving the count of future scheduled appointments
+  /// of a specific bucket (PT or Traction). Assessments always return 0
+  /// because they have no balance impact.
+  FutureScheduledAppointmentsCountForTypeProvider._({
+    required FutureScheduledAppointmentsCountForTypeFamily super.from,
+    required ({String patientId, AppointmentType type}) super.argument,
+  }) : super(
+         retry: null,
+         name: r'futureScheduledAppointmentsCountForTypeProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
+
+  @override
+  String debugGetCreateSourceHash() =>
+      _$futureScheduledAppointmentsCountForTypeHash();
+
+  @override
+  String toString() {
+    return r'futureScheduledAppointmentsCountForTypeProvider'
+        ''
+        '($argument)';
+  }
+
+  @$internal
+  @override
+  $FutureProviderElement<int> $createElement($ProviderPointer pointer) =>
+      $FutureProviderElement(pointer);
+
+  @override
+  FutureOr<int> create(Ref ref) {
+    final argument =
+        this.argument as ({String patientId, AppointmentType type});
+    return futureScheduledAppointmentsCountForType(ref, argument);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is FutureScheduledAppointmentsCountForTypeProvider &&
+        other.argument == argument;
+  }
+
+  @override
+  int get hashCode {
+    return argument.hashCode;
+  }
+}
+
+String _$futureScheduledAppointmentsCountForTypeHash() =>
+    r'4aa6799c83159703a4880acbbc4c4760d18a9e8f';
+
+/// Family provider resolving the count of future scheduled appointments
+/// of a specific bucket (PT or Traction). Assessments always return 0
+/// because they have no balance impact.
+
+final class FutureScheduledAppointmentsCountForTypeFamily extends $Family
+    with
+        $FunctionalFamilyOverride<
+          FutureOr<int>,
+          ({String patientId, AppointmentType type})
+        > {
+  FutureScheduledAppointmentsCountForTypeFamily._()
+    : super(
+        retry: null,
+        name: r'futureScheduledAppointmentsCountForTypeProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
+  /// Family provider resolving the count of future scheduled appointments
+  /// of a specific bucket (PT or Traction). Assessments always return 0
+  /// because they have no balance impact.
+
+  FutureScheduledAppointmentsCountForTypeProvider call(
+    ({String patientId, AppointmentType type}) args,
+  ) => FutureScheduledAppointmentsCountForTypeProvider._(
+    argument: args,
+    from: this,
+  );
+
+  @override
+  String toString() => r'futureScheduledAppointmentsCountForTypeProvider';
+}
+
+/// Family provider evaluating: Current Balance - Future Commitments for a
+/// given appointment type's bucket.
+///
+/// Returns `null` when the appointment type is one of the assessments
+/// (no balance impact at all), so callers can render a "paid separately"
+/// surface instead of a numeric balance.
+
+@ProviderFor(availableBalanceForType)
+final availableBalanceForTypeProvider = AvailableBalanceForTypeFamily._();
+
+/// Family provider evaluating: Current Balance - Future Commitments for a
+/// given appointment type's bucket.
+///
+/// Returns `null` when the appointment type is one of the assessments
+/// (no balance impact at all), so callers can render a "paid separately"
+/// surface instead of a numeric balance.
+
+final class AvailableBalanceForTypeProvider
+    extends $FunctionalProvider<AsyncValue<int?>, int?, FutureOr<int?>>
+    with $FutureModifier<int?>, $FutureProvider<int?> {
+  /// Family provider evaluating: Current Balance - Future Commitments for a
+  /// given appointment type's bucket.
+  ///
+  /// Returns `null` when the appointment type is one of the assessments
+  /// (no balance impact at all), so callers can render a "paid separately"
+  /// surface instead of a numeric balance.
+  AvailableBalanceForTypeProvider._({
+    required AvailableBalanceForTypeFamily super.from,
+    required ({String patientId, AppointmentType type}) super.argument,
+  }) : super(
+         retry: null,
+         name: r'availableBalanceForTypeProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
+
+  @override
+  String debugGetCreateSourceHash() => _$availableBalanceForTypeHash();
+
+  @override
+  String toString() {
+    return r'availableBalanceForTypeProvider'
+        ''
+        '($argument)';
+  }
+
+  @$internal
+  @override
+  $FutureProviderElement<int?> $createElement($ProviderPointer pointer) =>
+      $FutureProviderElement(pointer);
+
+  @override
+  FutureOr<int?> create(Ref ref) {
+    final argument =
+        this.argument as ({String patientId, AppointmentType type});
+    return availableBalanceForType(ref, argument);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is AvailableBalanceForTypeProvider &&
+        other.argument == argument;
+  }
+
+  @override
+  int get hashCode {
+    return argument.hashCode;
+  }
+}
+
+String _$availableBalanceForTypeHash() =>
+    r'e91c0ba953fbffdf451230e6f4078c35879b4129';
+
+/// Family provider evaluating: Current Balance - Future Commitments for a
+/// given appointment type's bucket.
+///
+/// Returns `null` when the appointment type is one of the assessments
+/// (no balance impact at all), so callers can render a "paid separately"
+/// surface instead of a numeric balance.
+
+final class AvailableBalanceForTypeFamily extends $Family
+    with
+        $FunctionalFamilyOverride<
+          FutureOr<int?>,
+          ({String patientId, AppointmentType type})
+        > {
+  AvailableBalanceForTypeFamily._()
+    : super(
+        retry: null,
+        name: r'availableBalanceForTypeProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
+  /// Family provider evaluating: Current Balance - Future Commitments for a
+  /// given appointment type's bucket.
+  ///
+  /// Returns `null` when the appointment type is one of the assessments
+  /// (no balance impact at all), so callers can render a "paid separately"
+  /// surface instead of a numeric balance.
+
+  AvailableBalanceForTypeProvider call(
+    ({String patientId, AppointmentType type}) args,
+  ) => AvailableBalanceForTypeProvider._(argument: args, from: this);
+
+  @override
+  String toString() => r'availableBalanceForTypeProvider';
+}
+
+/// Backwards-compatible alias while call sites migrate. Defaults to the
+/// Normal PT bucket — new code should pass the appointment type explicitly.
 
 @ProviderFor(availablePackageBalance)
 final availablePackageBalanceProvider = AvailablePackageBalanceFamily._();
 
-/// Family provider evaluating: Current Balance - Future Commitments.
+/// Backwards-compatible alias while call sites migrate. Defaults to the
+/// Normal PT bucket — new code should pass the appointment type explicitly.
 
 final class AvailablePackageBalanceProvider
     extends $FunctionalProvider<AsyncValue<int>, int, FutureOr<int>>
     with $FutureModifier<int>, $FutureProvider<int> {
-  /// Family provider evaluating: Current Balance - Future Commitments.
+  /// Backwards-compatible alias while call sites migrate. Defaults to the
+  /// Normal PT bucket — new code should pass the appointment type explicitly.
   AvailablePackageBalanceProvider._({
     required AvailablePackageBalanceFamily super.from,
     required String super.argument,
@@ -530,9 +745,10 @@ final class AvailablePackageBalanceProvider
 }
 
 String _$availablePackageBalanceHash() =>
-    r'e2e9f5582516666254a19a08be00f5f74fa82218';
+    r'190ad463a9130076b9c23712b9b0ea39fa4e3486';
 
-/// Family provider evaluating: Current Balance - Future Commitments.
+/// Backwards-compatible alias while call sites migrate. Defaults to the
+/// Normal PT bucket — new code should pass the appointment type explicitly.
 
 final class AvailablePackageBalanceFamily extends $Family
     with $FunctionalFamilyOverride<FutureOr<int>, String> {
@@ -545,7 +761,8 @@ final class AvailablePackageBalanceFamily extends $Family
         isAutoDispose: true,
       );
 
-  /// Family provider evaluating: Current Balance - Future Commitments.
+  /// Backwards-compatible alias while call sites migrate. Defaults to the
+  /// Normal PT bucket — new code should pass the appointment type explicitly.
 
   AvailablePackageBalanceProvider call(String patientId) =>
       AvailablePackageBalanceProvider._(argument: patientId, from: this);

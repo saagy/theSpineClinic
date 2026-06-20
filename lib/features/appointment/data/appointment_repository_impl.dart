@@ -277,6 +277,28 @@ class AppointmentRepositoryImpl implements AppointmentRepository {
   }
 
   @override
+  Future<Result<int>> getFutureScheduledAppointmentsCountForType({
+    required String patientId,
+    required AppointmentType type,
+  }) {
+    if (!type.affectsPackageBalance) {
+      return Future.value(const Result.success(0));
+    }
+    return _run(() async {
+      final String nowIso = DateTime.now().toUtc().toIso8601String();
+      final List<Map<String, dynamic>> rows = await _service
+          .from(_appointmentsTable)
+          .select('id')
+          .eq('patient_id', patientId)
+          .eq('status', 'scheduled')
+          .eq('use_package', true)
+          .eq('type', type.dbValue)
+          .gte('scheduled_at', nowIso);
+      return rows.length;
+    });
+  }
+
+  @override
   Future<Result<Appointment>> getAppointmentById(String appointmentId) {
     return _run(() async {
       final Map<String, dynamic> row = await _service.from(_appointmentsTable).select().eq('id', appointmentId).single();

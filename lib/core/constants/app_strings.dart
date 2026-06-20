@@ -27,6 +27,10 @@ abstract final class AppStrings {
   static const String errorNetworkGeneric = 'Unable to reach server. Check connection.';
   static const String errorUnknown = 'An unexpected error occurred. Try again.';
 
+  // Document upload size guards
+  static const String errorDocImageTooLarge = 'Image is too large to upload. Maximum size is 25 MB.';
+  static const String errorDocPdfTooLarge = 'PDF is too large to upload. Maximum size is 10 MB.';
+
   static String fromKey(String key) => _keyMap[key] ?? errorUnknown;
 
   static const Map<String, String> _keyMap = {
@@ -46,6 +50,8 @@ abstract final class AppStrings {
     'error_database_query_failed': errorDatabaseQueryFailed,
     'error_network_generic': errorNetworkGeneric,
     'error_unknown': errorUnknown,
+    'error_doc_image_too_large': errorDocImageTooLarge,
+    'error_doc_pdf_too_large': errorDocPdfTooLarge,
   };
 
   // Form Labels & Search
@@ -114,6 +120,9 @@ abstract final class AppStrings {
   static const String clinicTagamoa = 'Tagamoa';
   static const String clinicMasrElgedida = 'Masr El-Gedida';
   static const String packageBalance = 'Package Balance';
+  static const String sessionBalance = 'PT Session Balance';
+  static const String tractionBalance = 'Spinal Traction Balance';
+  static const String packageBalances = 'Package Balances';
   static const String assignedDoctors = 'Assigned Doctors';
 
   // Appointment
@@ -122,6 +131,13 @@ abstract final class AppStrings {
   static const String session = 'Session';
   static const String gehazShadFakarat = 'Spinal Traction';
   static const String checkUp = 'Check-up';
+  static const String normalPtSession = 'Normal PT Session';
+  static const String spinalTractionSession = 'Spinal Traction Session';
+  static const String initialAssessment = 'Initial Assessment';
+  static const String reassessment = 'Reassessment';
+  static const String paidSeparately = 'Paid separately';
+  static const String assessmentPaidSeparatelyCaption =
+      'Assessments are billed independently — no package deduction.';
   static const String scheduled = 'Scheduled';
   static const String checkedIn = 'Checked In';
   static const String completed = 'Completed';
@@ -222,6 +238,10 @@ abstract final class AppStrings {
   static const String paymentReasonPackage = 'Package';
   static const String paymentReasonSession = 'Session';
   static const String paymentReasonGehaz = 'Gehaz';
+  static const String paymentReasonNormalPtSession = 'PT Session';
+  static const String paymentReasonSpinalTraction = 'Spinal Traction Session';
+  static const String paymentReasonInitialAssessment = 'Initial Assessment';
+  static const String paymentReasonReassessment = 'Reassessment';
   static const String paymentReasonOther = 'Other';
   static const String customReason = 'Custom Reason';
   static const String customReasonRequired = 'Custom reason is required';
@@ -229,14 +249,24 @@ abstract final class AppStrings {
   static const String selectPackage = 'Select Package';
   static const String patientDisplayName = 'Patient';
   static const String doctorAccessBlocked = 'Doctors are completely restricted from modifying payment databases.';
+  static const String sessionBalanceAddedField = 'PT Sessions Added';
+  static const String tractionBalanceAddedField = 'Traction Sessions Added';
+  static const String packageContentsLabelPrefix = 'Includes';
 
   // Package Balance Edit Strings
-  static const String editPackageBalance = 'Edit Package Balance';
+  static const String editPackageBalance = 'Edit Package Balances';
   static const String enterNewPackageBalance = 'Enter new package balance';
   static const String balanceRequired = 'Please enter a balance';
   static const String balanceMustBeInteger = 'Must be a valid integer';
-  static const String packageBalanceUpdatedSuccess = 'Package balance updated successfully.';
-  static const String editPackageBalanceAccessDenied = 'Only super admins and receptionists can edit package balance.';
+  static const String packageBalanceUpdatedSuccess = 'Package balances updated successfully.';
+  static const String editPackageBalanceAccessDenied = 'Only super admins and receptionists can edit package balances.';
+  static const String sessionBalanceHint = 'Sets the new total for PT sessions';
+  static const String tractionBalanceHint = 'Sets the new total for traction sessions';
+  static const String currentBalancePrefix = 'Current: ';
+  static const String addBalanceToggleTitle = 'Add to package balances';
+  static const String addBalanceBothZero = 'Leave any field empty to skip that bucket';
+  static const String editReplacesExplanation =
+      'Sets the new totals. Editing this way replaces the previous values.';
 
   // Appointment Recovery Strings
   static const String revertToScheduled = 'Revert to Scheduled';
@@ -288,10 +318,17 @@ abstract final class AppStrings {
   static const String editPackage = 'Edit Package';
   static const String packageName = 'Package Name';
   static const String sessionCount = 'Session Count';
+  static const String tractionsCount = 'Traction Count';
   static const String price = 'Price';
+  static const String packageKindSession = 'Session';
+  static const String packageKindTraction = 'Spinal Traction';
+  static const String packageKindCombined = 'Combined';
+  static const String packageKindLabel = 'Package Type';
   static const String nameRequired = 'Package name is required';
   static const String sessionCountRequired = 'Session count is required';
   static const String sessionCountPositive = 'Session count must be an integer greater than zero';
+  static const String tractionsCountPositive = 'Traction count must be an integer greater than zero';
+  static const String packageCountsAtLeastOne = 'At least one of PT sessions or traction count must be greater than zero';
   static const String priceRequired = 'Price is required';
   static const String pricePositive = 'Price must be greater than zero';
   static const String packageCreatedSuccess = 'Package added successfully.';
@@ -300,6 +337,8 @@ abstract final class AppStrings {
   static const String deletePackageConfirm = 'Are you sure you want to delete this package? This action cannot be undone.';
   static const String noPackages = 'No clinic packages configured yet.';
   static const String doctor = 'Doctor';
+  static const String packageSummarySessions = 'PT Package Sessions';
+  static const String packageSummaryTractions = 'Spinal Traction Package Sessions';
 
   // Profile / Settings
   static const String profile = 'Profile';
@@ -370,8 +409,9 @@ abstract final class AppStrings {
   // Quick Payment
   static const String fillAmountAndReason = 'Please fill in amount and reason.';
   static const String packageBalanceMustBeInteger = 'Package balance must be a valid integer.';
-  static const String addPackageBalanceOptional = 'Add Package Balance (optional)';
+  static const String addPackageBalanceOptional = 'Add Package Balances (optional)';
   static const String packageBalanceHint = 'E.g. 5 to add 5 sessions';
+  static const String zeroIsAllowed = 'Leave at 0 to skip';
 
   // Note / Appointment labels
   static const String loadingAuthor = 'Loading...';
@@ -459,8 +499,16 @@ abstract final class AppStrings {
   static const String noStaffAssignedToSession = 'No staff assigned to this session.';
 
   // ── Doctor Overlay ──
+  static const String selectDoctors = 'Select Doctors';
+  static const String searchDoctorsHint = 'Search doctors…';
+  static const String searchAndAssignDoctors = 'Search & Assign Doctors';
+  static const String typeDoctorName = 'Type doctor name...';
   static const String noMatchingDoctorsFound = 'No matching doctors found.';
   static const String errorLoadingDoctors = 'Error loading doctors.';
+  static const String atLeastOneDoctorRequired =
+      'At least one doctor is required.';
+  static const String unableToLoadDoctors =
+      'Unable to load doctors — tap refresh icon to retry';
 
   // ── Patient Tabs ──
   static const String usePackageBalance = 'Use Package Balance';

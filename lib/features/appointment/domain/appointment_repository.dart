@@ -96,6 +96,14 @@ abstract class AppointmentRepository {
   /// Resolves the aggregate count of all future scheduled appointments for a patient.
   Future<Result<int>> getFutureScheduledAppointmentsCount(String patientId);
 
+  /// Resolves the count of future scheduled appointments for a patient
+  /// that belong to a specific bucket (PT or Traction) — assessments are
+  /// never counted because they don't deduct any balance.
+  Future<Result<int>> getFutureScheduledAppointmentsCountForType({
+    required String patientId,
+    required AppointmentType type,
+  });
+
   /// Fetches a single appointment by its unique ID.
   Future<Result<Appointment>> getAppointmentById(String appointmentId);
 

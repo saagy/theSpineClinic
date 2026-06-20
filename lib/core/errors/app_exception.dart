@@ -60,6 +60,10 @@ sealed class AppException implements Exception {
       );
     }
 
+    if (error is supabase.StorageException) {
+      return StorageException._fromStorage(error);
+    }
+
     return UnknownException(
       message: error.toString(),
     );
@@ -256,4 +260,37 @@ class UnknownException extends AppException {
     super.code = 'unknown',
     super.userMessageKey = 'error_unknown',
   });
+}
+
+/// Failures originating from Supabase Storage (upload, download, RLS on
+/// `storage.objects`).
+class StorageException extends AppException {
+  const StorageException({
+    required super.code,
+    required super.message,
+    super.userMessageKey = 'error_unknown',
+  });
+
+  factory StorageException._fromStorage(supabase.StorageException error) {
+    final String raw = error.message.toLowerCase();
+    final String code;
+    final String userMessageKey;
+    if (raw.contains('row-level security') ||
+        raw.contains('permission') ||
+        raw.contains('not authorized')) {
+      code = 'storage/rls-violation';
+      userMessageKey = 'error_database_permission_denied';
+    } else if (raw.contains('not found') || raw.contains('404')) {
+      code = 'storage/not-found';
+      userMessageKey = 'error_database_record_not_found';
+    } else {
+      code = 'storage/error';
+      userMessageKey = 'error_unknown';
+    }
+    return StorageException(
+      code: code,
+      message: error.message,
+      userMessageKey: userMessageKey,
+    );
+  }
 }

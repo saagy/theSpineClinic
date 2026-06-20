@@ -133,7 +133,7 @@ class AdminRepositoryImpl implements AdminRepository {
     try {
       // ── Patient metrics ──
       final List<Map<String, dynamic>> patientRows = await _service.guardQuery(() {
-        final query = _service.from('patients').select('created_at, clinic, package_balance');
+        final query = _service.from('patients').select('created_at, clinic, session_balance, traction_balance');
         return clinic != null ? query.eq('clinic', clinic.dbValue) : query;
       });
 
@@ -145,7 +145,11 @@ class AdminRepositoryImpl implements AdminRepository {
         return d.isAfter(startDate) && d.isBefore(endDate);
       }).length;
       final int totalPackageBalances = patientRows.fold<int>(
-        0, (sum, row) => sum + ((row['package_balance'] as int?) ?? 0),
+        0,
+        (sum, row) =>
+            sum +
+            ((row['session_balance'] as int?) ?? 0) +
+            ((row['traction_balance'] as int?) ?? 0),
       );
 
       // ── Per-branch patient counts ──

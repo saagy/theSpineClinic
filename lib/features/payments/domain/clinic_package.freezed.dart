@@ -15,7 +15,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$ClinicPackage {
 
- String get name;@JsonKey(name: 'session_count') int get sessionCount;@JsonKey(fromJson: _priceFromJson, toJson: _priceToJson) double get price;
+ String get name;@JsonKey(name: 'kind') PackageKind get kind;@JsonKey(name: 'session_count') int get sessionCount;@JsonKey(name: 'tractions_count') int get tractionsCount;@JsonKey(fromJson: _priceFromJson, toJson: _priceToJson) double get price;
 /// Create a copy of ClinicPackage
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -28,16 +28,16 @@ $ClinicPackageCopyWith<ClinicPackage> get copyWith => _$ClinicPackageCopyWithImp
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is ClinicPackage&&(identical(other.name, name) || other.name == name)&&(identical(other.sessionCount, sessionCount) || other.sessionCount == sessionCount)&&(identical(other.price, price) || other.price == price));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is ClinicPackage&&(identical(other.name, name) || other.name == name)&&(identical(other.kind, kind) || other.kind == kind)&&(identical(other.sessionCount, sessionCount) || other.sessionCount == sessionCount)&&(identical(other.tractionsCount, tractionsCount) || other.tractionsCount == tractionsCount)&&(identical(other.price, price) || other.price == price));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,name,sessionCount,price);
+int get hashCode => Object.hash(runtimeType,name,kind,sessionCount,tractionsCount,price);
 
 @override
 String toString() {
-  return 'ClinicPackage(name: $name, sessionCount: $sessionCount, price: $price)';
+  return 'ClinicPackage(name: $name, kind: $kind, sessionCount: $sessionCount, tractionsCount: $tractionsCount, price: $price)';
 }
 
 
@@ -48,7 +48,7 @@ abstract mixin class $ClinicPackageCopyWith<$Res>  {
   factory $ClinicPackageCopyWith(ClinicPackage value, $Res Function(ClinicPackage) _then) = _$ClinicPackageCopyWithImpl;
 @useResult
 $Res call({
- String name,@JsonKey(name: 'session_count') int sessionCount,@JsonKey(fromJson: _priceFromJson, toJson: _priceToJson) double price
+ String name,@JsonKey(name: 'kind') PackageKind kind,@JsonKey(name: 'session_count') int sessionCount,@JsonKey(name: 'tractions_count') int tractionsCount,@JsonKey(fromJson: _priceFromJson, toJson: _priceToJson) double price
 });
 
 
@@ -65,10 +65,12 @@ class _$ClinicPackageCopyWithImpl<$Res>
 
 /// Create a copy of ClinicPackage
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? name = null,Object? sessionCount = null,Object? price = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? name = null,Object? kind = null,Object? sessionCount = null,Object? tractionsCount = null,Object? price = null,}) {
   return _then(_self.copyWith(
 name: null == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
-as String,sessionCount: null == sessionCount ? _self.sessionCount : sessionCount // ignore: cast_nullable_to_non_nullable
+as String,kind: null == kind ? _self.kind : kind // ignore: cast_nullable_to_non_nullable
+as PackageKind,sessionCount: null == sessionCount ? _self.sessionCount : sessionCount // ignore: cast_nullable_to_non_nullable
+as int,tractionsCount: null == tractionsCount ? _self.tractionsCount : tractionsCount // ignore: cast_nullable_to_non_nullable
 as int,price: null == price ? _self.price : price // ignore: cast_nullable_to_non_nullable
 as double,
   ));
@@ -155,10 +157,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String name, @JsonKey(name: 'session_count')  int sessionCount, @JsonKey(fromJson: _priceFromJson, toJson: _priceToJson)  double price)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String name, @JsonKey(name: 'kind')  PackageKind kind, @JsonKey(name: 'session_count')  int sessionCount, @JsonKey(name: 'tractions_count')  int tractionsCount, @JsonKey(fromJson: _priceFromJson, toJson: _priceToJson)  double price)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _ClinicPackage() when $default != null:
-return $default(_that.name,_that.sessionCount,_that.price);case _:
+return $default(_that.name,_that.kind,_that.sessionCount,_that.tractionsCount,_that.price);case _:
   return orElse();
 
 }
@@ -176,10 +178,10 @@ return $default(_that.name,_that.sessionCount,_that.price);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String name, @JsonKey(name: 'session_count')  int sessionCount, @JsonKey(fromJson: _priceFromJson, toJson: _priceToJson)  double price)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String name, @JsonKey(name: 'kind')  PackageKind kind, @JsonKey(name: 'session_count')  int sessionCount, @JsonKey(name: 'tractions_count')  int tractionsCount, @JsonKey(fromJson: _priceFromJson, toJson: _priceToJson)  double price)  $default,) {final _that = this;
 switch (_that) {
 case _ClinicPackage():
-return $default(_that.name,_that.sessionCount,_that.price);case _:
+return $default(_that.name,_that.kind,_that.sessionCount,_that.tractionsCount,_that.price);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -196,10 +198,10 @@ return $default(_that.name,_that.sessionCount,_that.price);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String name, @JsonKey(name: 'session_count')  int sessionCount, @JsonKey(fromJson: _priceFromJson, toJson: _priceToJson)  double price)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String name, @JsonKey(name: 'kind')  PackageKind kind, @JsonKey(name: 'session_count')  int sessionCount, @JsonKey(name: 'tractions_count')  int tractionsCount, @JsonKey(fromJson: _priceFromJson, toJson: _priceToJson)  double price)?  $default,) {final _that = this;
 switch (_that) {
 case _ClinicPackage() when $default != null:
-return $default(_that.name,_that.sessionCount,_that.price);case _:
+return $default(_that.name,_that.kind,_that.sessionCount,_that.tractionsCount,_that.price);case _:
   return null;
 
 }
@@ -211,11 +213,13 @@ return $default(_that.name,_that.sessionCount,_that.price);case _:
 @JsonSerializable()
 
 class _ClinicPackage implements ClinicPackage {
-  const _ClinicPackage({required this.name, @JsonKey(name: 'session_count') required this.sessionCount, @JsonKey(fromJson: _priceFromJson, toJson: _priceToJson) required this.price});
+  const _ClinicPackage({required this.name, @JsonKey(name: 'kind') this.kind = PackageKind.session, @JsonKey(name: 'session_count') this.sessionCount = 0, @JsonKey(name: 'tractions_count') this.tractionsCount = 0, @JsonKey(fromJson: _priceFromJson, toJson: _priceToJson) required this.price});
   factory _ClinicPackage.fromJson(Map<String, dynamic> json) => _$ClinicPackageFromJson(json);
 
 @override final  String name;
+@override@JsonKey(name: 'kind') final  PackageKind kind;
 @override@JsonKey(name: 'session_count') final  int sessionCount;
+@override@JsonKey(name: 'tractions_count') final  int tractionsCount;
 @override@JsonKey(fromJson: _priceFromJson, toJson: _priceToJson) final  double price;
 
 /// Create a copy of ClinicPackage
@@ -231,16 +235,16 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _ClinicPackage&&(identical(other.name, name) || other.name == name)&&(identical(other.sessionCount, sessionCount) || other.sessionCount == sessionCount)&&(identical(other.price, price) || other.price == price));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _ClinicPackage&&(identical(other.name, name) || other.name == name)&&(identical(other.kind, kind) || other.kind == kind)&&(identical(other.sessionCount, sessionCount) || other.sessionCount == sessionCount)&&(identical(other.tractionsCount, tractionsCount) || other.tractionsCount == tractionsCount)&&(identical(other.price, price) || other.price == price));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,name,sessionCount,price);
+int get hashCode => Object.hash(runtimeType,name,kind,sessionCount,tractionsCount,price);
 
 @override
 String toString() {
-  return 'ClinicPackage(name: $name, sessionCount: $sessionCount, price: $price)';
+  return 'ClinicPackage(name: $name, kind: $kind, sessionCount: $sessionCount, tractionsCount: $tractionsCount, price: $price)';
 }
 
 
@@ -251,7 +255,7 @@ abstract mixin class _$ClinicPackageCopyWith<$Res> implements $ClinicPackageCopy
   factory _$ClinicPackageCopyWith(_ClinicPackage value, $Res Function(_ClinicPackage) _then) = __$ClinicPackageCopyWithImpl;
 @override @useResult
 $Res call({
- String name,@JsonKey(name: 'session_count') int sessionCount,@JsonKey(fromJson: _priceFromJson, toJson: _priceToJson) double price
+ String name,@JsonKey(name: 'kind') PackageKind kind,@JsonKey(name: 'session_count') int sessionCount,@JsonKey(name: 'tractions_count') int tractionsCount,@JsonKey(fromJson: _priceFromJson, toJson: _priceToJson) double price
 });
 
 
@@ -268,10 +272,12 @@ class __$ClinicPackageCopyWithImpl<$Res>
 
 /// Create a copy of ClinicPackage
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? name = null,Object? sessionCount = null,Object? price = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? name = null,Object? kind = null,Object? sessionCount = null,Object? tractionsCount = null,Object? price = null,}) {
   return _then(_ClinicPackage(
 name: null == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
-as String,sessionCount: null == sessionCount ? _self.sessionCount : sessionCount // ignore: cast_nullable_to_non_nullable
+as String,kind: null == kind ? _self.kind : kind // ignore: cast_nullable_to_non_nullable
+as PackageKind,sessionCount: null == sessionCount ? _self.sessionCount : sessionCount // ignore: cast_nullable_to_non_nullable
+as int,tractionsCount: null == tractionsCount ? _self.tractionsCount : tractionsCount // ignore: cast_nullable_to_non_nullable
 as int,price: null == price ? _self.price : price // ignore: cast_nullable_to_non_nullable
 as double,
   ));

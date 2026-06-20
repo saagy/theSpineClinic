@@ -191,7 +191,8 @@ class _PatientSearchScreenState extends ConsumerState<PatientSearchScreen> {
                           branchLabel: patient.clinic.displayLabel,
                           lastVisitDate: patient.lastAppointmentDate,
                           trailing: PatientBalanceChip(
-                            balance: patient.packageBalance,
+                            sessionBalance: patient.sessionBalance,
+                            tractionBalance: patient.tractionBalance,
                           ),
                           onTap: () {
                             context.push('/patient/${patient.id}');

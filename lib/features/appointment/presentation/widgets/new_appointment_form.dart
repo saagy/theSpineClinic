@@ -41,7 +41,7 @@ class _NewAppointmentFormState extends ConsumerState<NewAppointmentForm> {
   final _formKey = GlobalKey<FormState>();
   final _doctorFieldKey = GlobalKey<FormFieldState<List<Staff>>>();
   late final TextEditingController _sessionsController;
-  AppointmentType _selectedType = AppointmentType.session;
+  AppointmentType _selectedType = AppointmentType.normalPtSession;
   bool _isRecurring = false, _isSubmitting = false, _usePackage = true;
   bool _isFetchingDoctors = false;
   bool _doctorFieldEnabled = true;
@@ -237,8 +237,13 @@ class _NewAppointmentFormState extends ConsumerState<NewAppointmentForm> {
                 preselectedPatient: patient,
                 onPatientTap: () => _openPatientSearch(context),
                 selectedType: _selectedType,
-                onTypeChanged: (type) =>
-                    setState(() => _selectedType = type),
+                onTypeChanged: (type) => setState(() {
+                  _selectedType = type;
+                  // Assessments never deduct packages: lock the toggle off.
+                  if (!type.affectsPackageBalance) {
+                    _usePackage = false;
+                  }
+                }),
                 isRecurring: _isRecurring,
                 onRecurringChanged: (v) =>
                     setState(() => _isRecurring = v),
@@ -307,23 +312,48 @@ class _NewAppointmentFormState extends ConsumerState<NewAppointmentForm> {
                 },
               ),
               const SizedBox(height: AppSizes.p16),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(AppStrings.usePackageBalance,
-                      style: AppTextStyles.body
-                          .copyWith(color: AppColors.textPrimary)),
-                  Switch(
-                    value: _usePackage,
-                    onChanged: (v) => setState(() => _usePackage = v),
-                    activeThumbColor: AppColors.primary,
+              if (_selectedType.affectsPackageBalance)
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(AppStrings.usePackageBalance,
+                        style: AppTextStyles.body
+                            .copyWith(color: AppColors.textPrimary)),
+                    Switch(
+                      value: _usePackage,
+                      onChanged: (v) => setState(() => _usePackage = v),
+                      activeThumbColor: AppColors.primary,
+                    ),
+                  ],
+                )
+              else
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: AppSizes.p12, vertical: AppSizes.p8),
+                  decoration: BoxDecoration(
+                    color: AppColors.infoBg,
+                    borderRadius: const BorderRadius.all(Radius.circular(AppSizes.r12)),
                   ),
-                ],
-              ),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.info_outline_rounded,
+                          size: AppSizes.iconSmall, color: AppColors.info),
+                      const SizedBox(width: AppSizes.p8),
+                      Expanded(
+                        child: Text(
+                          AppStrings.paidSeparately,
+                          style: AppTextStyles.bodySecondary.copyWith(
+                              color: AppColors.textPrimary),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               if (isPatientValid) ...[
                 const SizedBox(height: AppSizes.p24),
                 AppointmentBalanceDiagnostics(
                   patientId: _patientId!,
+                  appointmentType: _selectedType,
                   requestedCount: proposedCount,
                 ),
               ],

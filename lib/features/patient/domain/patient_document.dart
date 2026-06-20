@@ -23,6 +23,11 @@ abstract class PatientDocument with _$PatientDocument {
     /// Publicly accessible Supabase Storage URL.
     @JsonKey(name: 'file_url') required String fileUrl,
 
+    /// Optional 320×320 thumbnail JPEG URL, populated when the
+    /// uploaded document is an image. `null` for PDFs and for legacy
+    /// rows that pre-date the thumbnail column migration.
+    @JsonKey(name: 'thumbnail_url') String? thumbnailUrl,
+
     /// Raw name of the file (e.g. 'xray.pdf').
     @JsonKey(name: 'file_name') required String fileName,
 

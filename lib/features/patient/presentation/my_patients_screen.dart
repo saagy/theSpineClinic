@@ -20,6 +20,7 @@ import 'package:spine_clinic_app/shared/widgets/sort_options_sheet.dart';
 import 'package:spine_clinic_app/shared/widgets/unified_filter_sheet.dart';
 import 'package:spine_clinic_app/shared/widgets/active_filter_chips_row.dart';
 import 'package:spine_clinic_app/shared/widgets/animated_list_item.dart';
+import 'package:spine_clinic_app/features/patient/presentation/widgets/patient_search_filters.dart';
 
 /// Screen displaying the list of patients permanently assigned to the doctor.
 class MyPatientsScreen extends ConsumerStatefulWidget {
@@ -144,15 +145,7 @@ class _MyPatientsScreenState extends ConsumerState<MyPatientsScreen> {
     return patients.where((p) => p.clinic == _branchFilter).toList();
   }
 
-  List<ActiveFilterChip> get _activeChips {
-    if (_branchFilter == null) return const [];
-    return [
-      ActiveFilterChip(
-        label: _branchFilter!.displayLabel,
-        onRemove: () => setState(() => _branchFilter = null),
-      ),
-    ];
-  }
+  List<ActiveFilterChip> get _activeChips => const [];
 
   @override
   Widget build(BuildContext context) {
@@ -179,6 +172,14 @@ class _MyPatientsScreenState extends ConsumerState<MyPatientsScreen> {
                 onChanged: _onSearchChanged,
               ),
             ),
+            PatientSearchFilters(
+              selectedClinic: _branchFilter,
+              onClinicSelected: (clinic) => setState(() {
+                _branchFilter = clinic;
+                _animatedIndices.clear();
+              }),
+            ),
+            const SizedBox(height: AppSizes.p4),
             SortFilterBar(
               sortLabel: 'Sort: ${_sortOption.buttonLabel}',
               onSortTap: _showSortSheet,

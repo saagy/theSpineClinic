@@ -6,15 +6,19 @@ import 'package:spine_clinic_app/core/constants/app_sizes.dart';
 import 'package:spine_clinic_app/core/constants/app_strings.dart';
 import 'package:spine_clinic_app/core/constants/app_text_styles.dart';
 import 'package:spine_clinic_app/features/payments/domain/clinic_package.dart';
+import 'package:spine_clinic_app/features/payments/domain/package_kind.dart';
 import 'package:spine_clinic_app/shared/widgets/app_button.dart';
 
 /// Modal form sheet to add or edit a clinic package.
+///
+/// Top ChoiceChip sets the package kind. Count fields are shown only for the
+/// buckets that the chosen kind credits (Session / Traction / Combined).
 class PackageFormSheet extends StatefulWidget {
-  /// Creates a [PackageFormSheet] instance.
+  /// Creates a [PackageFormSheet].
   const PackageFormSheet({
-    super.key,
     this.package,
     required this.onSave,
+    super.key,
   });
 
   /// The clinic package being edited (null for creation mode).
@@ -29,6 +33,7 @@ class PackageFormSheet extends StatefulWidget {
 
 class _PackageFormSheetState extends State<PackageFormSheet> {
   final _formKey = GlobalKey<FormBuilderState>();
+  PackageKind _kind = PackageKind.session;
 
   InputDecoration _buildDecoration({required String labelText, String? hintText}) {
     final OutlineInputBorder borderBase = OutlineInputBorder(
@@ -64,13 +69,16 @@ class _PackageFormSheetState extends State<PackageFormSheet> {
   void _submit() {
     if (_formKey.currentState?.saveAndValidate() ?? false) {
       final values = _formKey.currentState!.value;
-      final name = values['name'] as String;
-      final sessionCount = int.parse(values['session_count'] as String);
-      final price = double.parse(values['price'] as String);
+      final String name = values['name'] as String;
+      final double price = double.parse(values['price'] as String);
+      final int sessionCount = int.tryParse((values['session_count'] as String?) ?? '0') ?? 0;
+      final int tractionsCount = int.tryParse((values['tractions_count'] as String?) ?? '0') ?? 0;
 
-      final newPackage = ClinicPackage(
+      final ClinicPackage newPackage = ClinicPackage(
         name: name,
+        kind: _kind,
         sessionCount: sessionCount,
+        tractionsCount: tractionsCount,
         price: price,
       );
 
@@ -78,12 +86,32 @@ class _PackageFormSheetState extends State<PackageFormSheet> {
     }
   }
 
+  String? _validateByKind(String? value) {
+    if (value == null || value.isEmpty) return AppStrings.sessionCountRequired;
+    final int? parsed = int.tryParse(value);
+    if (parsed == null || parsed < 0) return AppStrings.sessionCountPositive;
+    if (_kind != PackageKind.traction && parsed <= 0 && _kind == PackageKind.session) {
+      return AppStrings.sessionCountPositive;
+    }
+    if (_kind == PackageKind.traction && parsed <= 0) {
+      return AppStrings.tractionsCountPositive;
+    }
+    return null;
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.package != null) _kind = widget.package!.kind;
+  }
+
   @override
   Widget build(BuildContext context) {
-    final isEdit = widget.package != null;
+    final bool isEdit = widget.package != null;
+    final bool showSession = _kind != PackageKind.traction;
+    final bool showTraction = _kind != PackageKind.session;
 
     return Padding(
-      // Handles keyboard overlap naturally in sheet modals
       padding: EdgeInsets.only(
         left: AppSizes.p24,
         right: AppSizes.p24,
@@ -119,7 +147,7 @@ class _PackageFormSheetState extends State<PackageFormSheet> {
               textCapitalization: TextCapitalization.words,
               decoration: _buildDecoration(
                 labelText: AppStrings.packageName,
-                hintText: 'e.g. Silver Package',
+                hintText: 'e.g. Gold Combo',
               ),
               validator: FormBuilderValidators.compose([
                 FormBuilderValidators.required(errorText: AppStrings.nameRequired),
@@ -127,27 +155,71 @@ class _PackageFormSheetState extends State<PackageFormSheet> {
             ),
             const SizedBox(height: AppSizes.p16),
 
-            // ── Session Count Field ──
-            FormBuilderTextField(
-              name: 'session_count',
-              initialValue: widget.package?.sessionCount.toString(),
-              keyboardType: TextInputType.number,
-              decoration: _buildDecoration(
-                labelText: AppStrings.sessionCount,
-                hintText: 'e.g. 10',
-              ),
-              validator: FormBuilderValidators.compose([
-                FormBuilderValidators.required(errorText: AppStrings.sessionCountRequired),
-                (String? val) {
-                  if (val != null && val.isNotEmpty) {
-                    final int? parsed = int.tryParse(val);
-                    if (parsed == null || parsed <= 0) {
-                      return AppStrings.sessionCountPositive;
-                    }
-                  }
-                  return null;
-                },
-              ]),
+            // ── Kind selector ──
+            Text(
+              AppStrings.packageKindLabel,
+              style: AppTextStyles.captionMedium.copyWith(color: AppColors.textSecondary),
+            ),
+            const SizedBox(height: AppSizes.p8),
+            Wrap(
+              spacing: AppSizes.p8,
+              children: PackageKind.values.map((kind) {
+                final bool active = kind == _kind;
+                final String label = switch (kind) {
+                  PackageKind.session => AppStrings.packageKindSession,
+                  PackageKind.traction => AppStrings.packageKindTraction,
+                  PackageKind.combined => AppStrings.packageKindCombined,
+                };
+                return ChoiceChip(
+                  label: Text(label),
+                  selected: active,
+                  selectedColor: AppColors.primary,
+                  backgroundColor: AppColors.surface,
+                  labelStyle: AppTextStyles.captionMedium.copyWith(
+                    color: active ? AppColors.textOnPrimary : AppColors.textSecondary,
+                  ),
+                  onSelected: (_) => setState(() => _kind = kind),
+                );
+              }).toList(),
+            ),
+            const SizedBox(height: AppSizes.p16),
+
+            // ── Conditional count fields ──
+            Row(
+              children: [
+                if (showSession)
+                  Expanded(
+                    child: FormBuilderTextField(
+                      name: 'session_count',
+                      initialValue: widget.package?.sessionCount.toString() ?? '0',
+                      keyboardType: TextInputType.number,
+                      decoration: _buildDecoration(
+                        labelText: AppStrings.sessionCount,
+                        hintText: 'e.g. 10',
+                      ),
+                      validator: _validateByKind,
+                    ),
+                  ),
+                if (showSession && showTraction) const SizedBox(width: AppSizes.p12),
+                if (showTraction)
+                  Expanded(
+                    child: FormBuilderTextField(
+                      name: 'tractions_count',
+                      initialValue: widget.package?.tractionsCount.toString() ?? '0',
+                      keyboardType: TextInputType.number,
+                      decoration: _buildDecoration(
+                        labelText: AppStrings.tractionsCount,
+                        hintText: 'e.g. 4',
+                      ),
+                      validator: _validateByKind,
+                    ),
+                  ),
+              ],
+            ),
+            const SizedBox(height: AppSizes.p12),
+            Text(
+              AppStrings.packageCountsAtLeastOne,
+              style: AppTextStyles.caption.copyWith(color: AppColors.textMuted),
             ),
             const SizedBox(height: AppSizes.p16),
 
@@ -176,7 +248,6 @@ class _PackageFormSheetState extends State<PackageFormSheet> {
             ),
             const SizedBox(height: AppSizes.p24),
 
-            // ── Action Buttons ──
             Row(
               children: [
                 Expanded(

@@ -104,18 +104,26 @@ class _DebouncedElevatedButtonState extends State<DebouncedElevatedButton> {
                 color: AppColors.textOnPrimary,
               ),
             )
-          : Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                if (widget.icon != null) ...[
-                  Icon(widget.icon,
-                      size: AppSizes.iconSmall,
-                      color: AppColors.textOnPrimary),
-                  const SizedBox(width: AppSizes.p8),
+            : Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  if (widget.icon != null) ...[
+                    Icon(widget.icon,
+                        size: AppSizes.iconSmall,
+                        color: AppColors.textOnPrimary),
+                    const SizedBox(width: AppSizes.p8),
+                  ],
+                  // Strip the baked-in dark colour from bodyBold so the
+                  // ElevatedButton's foregroundColor (white on teal) always
+                  // wins — both light AND dark theme.
+                  Text(
+                    widget.label,
+                    style: AppTextStyles.bodyBold.copyWith(
+                      color: AppColors.textOnPrimary,
+                    ),
+                  ),
                 ],
-                Text(widget.label, style: AppTextStyles.bodyBold),
-              ],
-            ),
+              ),
     );
   }
 }

@@ -33,12 +33,20 @@ class AnalyticsRepositoryImpl implements AnalyticsRepository {
         byBranch[clinic] = (byBranch[clinic] ?? 0) + amt;
       }
       final patients = await _service.guardQuery(() {
-        var q = _service.from('patients').select('package_balance, clinic');
+        var q = _service.from('patients').select('session_balance, traction_balance, clinic');
         if (branchId != null) q = q.eq('clinic', branchId);
         return q;
       });
-      final negative = patients.where((r) => ((r['package_balance'] as int?) ?? 0) < 0).toList();
-      final double outstandingTotal = negative.fold<double>(0, (s, r) => s + ((r['package_balance'] as int?) ?? 0));
+      final negative = patients.where((r) {
+        final int s = (r['session_balance'] as int?) ?? 0;
+        final int t = (r['traction_balance'] as int?) ?? 0;
+        return (s + t) < 0;
+      }).toList();
+      final double outstandingTotal = negative.fold<double>(0, (s, r) {
+        final int sb = (r['session_balance'] as int?) ?? 0;
+        final int tb = (r['traction_balance'] as int?) ?? 0;
+        return s + (sb + tb).toDouble();
+      });
       final pkgRows = payments.where((r) => ((r['reason'] as String? ?? '').toLowerCase()).contains('package'));
       return Result.success(FinancialSummary(
         totalRevenue: total,

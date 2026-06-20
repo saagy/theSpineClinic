@@ -2,57 +2,90 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:spine_clinic_app/core/constants/app_colors.dart';
 import 'package:spine_clinic_app/core/constants/app_sizes.dart';
+import 'package:spine_clinic_app/core/constants/app_strings.dart';
 import 'package:spine_clinic_app/core/constants/app_text_styles.dart';
+import 'package:spine_clinic_app/features/appointment/domain/appointment_type.dart';
 import 'package:spine_clinic_app/features/appointment/presentation/appointment_providers.dart';
 import 'package:spine_clinic_app/features/patient/presentation/patient_providers.dart';
 
-/// A high-density live ledger preview card displaying package metrics and warnings.
+/// A live ledger preview card scoped to a single bucket (PT or Traction).
+///
+/// Renders an "assessments are paid separately" caption for assessment
+/// types. For session types it shows the bucket's current balance minus
+/// ONLY future-scheduled appointments of that same bucket.
 class AppointmentBalanceDiagnostics extends ConsumerWidget {
   /// Creates an [AppointmentBalanceDiagnostics].
   const AppointmentBalanceDiagnostics({
     super.key,
     required this.patientId,
+    required this.appointmentType,
     required this.requestedCount,
   });
 
   /// The patient ID.
   final String patientId;
 
-  /// Proposed package count (P).
+  /// The currently selected appointment type — drives the bucket.
+  final AppointmentType appointmentType;
+
+  /// Proposed count of bookings for this slot (per single booking).
   final int requestedCount;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final patientAsync = ref.watch(patientDetailProvider(patientId));
-    final commitmentsAsync = ref.watch(futureScheduledAppointmentsCountProvider(patientId));
-    final availableAsync = ref.watch(availablePackageBalanceProvider(patientId));
-
-    final bool isLoading = patientAsync.isLoading || commitmentsAsync.isLoading || availableAsync.isLoading;
-    final bool hasError = patientAsync.hasError || commitmentsAsync.hasError || availableAsync.hasError;
-
-    if (isLoading) {
+    if (!appointmentType.affectsPackageBalance) {
       return Container(
         padding: const EdgeInsets.all(AppSizes.p16),
         decoration: BoxDecoration(
-          color: AppColors.surface,
-          border: Border.all(color: AppColors.border),
-          borderRadius: const BorderRadius.all(Radius.circular(AppSizes.r6)),
+          color: AppColors.infoBg,
+          border: Border.all(color: AppColors.info, width: AppSizes.borderWidthMedium),
+          borderRadius: const BorderRadius.all(Radius.circular(AppSizes.r16)),
         ),
-        child: const Center(
-          child: CircularProgressIndicator(color: AppColors.primary),
+        child: Row(
+          children: [
+            const Icon(Icons.info_outline_rounded, color: AppColors.info),
+            const SizedBox(width: AppSizes.p12),
+            Expanded(
+              child: Text(
+                AppStrings.assessmentPaidSeparatelyCaption,
+                style: AppTextStyles.bodySecondary.copyWith(color: AppColors.textPrimary),
+              ),
+            ),
+          ],
         ),
       );
     }
 
+    final bool isPt = appointmentType == AppointmentType.normalPtSession;
+    final String bucketLabel = isPt ? 'PT Sessions' : 'Traction Sessions';
+
+    final patientAsync = ref.watch(patientDetailProvider(patientId));
+    final bucketBalanceAsync = ref.watch(
+      availableBalanceForTypeProvider((patientId: patientId, type: appointmentType)),
+    );
+    final futureForTypeAsync = ref.watch(
+      futureScheduledAppointmentsCountForTypeProvider(
+        (patientId: patientId, type: appointmentType),
+      ),
+    );
+
+    final bool isLoading = patientAsync.isLoading ||
+        bucketBalanceAsync.isLoading ||
+        futureForTypeAsync.isLoading;
+    final bool hasError = patientAsync.hasError ||
+        bucketBalanceAsync.hasError ||
+        futureForTypeAsync.hasError;
+
+    if (isLoading) {
+      return _wrapContainer(
+        AppColors.surface,
+        const Center(child: CircularProgressIndicator(color: AppColors.primary)),
+      );
+    }
     if (hasError) {
-      return Container(
-        padding: const EdgeInsets.all(AppSizes.p16),
-        decoration: BoxDecoration(
-          color: AppColors.surface,
-          border: Border.all(color: AppColors.border),
-          borderRadius: const BorderRadius.all(Radius.circular(AppSizes.r6)),
-        ),
-        child: Text(
+      return _wrapContainer(
+        AppColors.surface,
+        Text(
           'Error loading package metrics.',
           style: AppTextStyles.bodySecondary.copyWith(color: AppColors.error),
           textAlign: TextAlign.center,
@@ -60,9 +93,11 @@ class AppointmentBalanceDiagnostics extends ConsumerWidget {
       );
     }
 
-    final int currentBalance = patientAsync.value?.packageBalance ?? 0;
-    final int futureCommitments = commitmentsAsync.value ?? 0;
-    final int netAvailable = availableAsync.value ?? 0;
+    final int baseline = isPt
+        ? (patientAsync.value?.sessionBalance ?? 0)
+        : (patientAsync.value?.tractionBalance ?? 0);
+    final int futureCommitments = futureForTypeAsync.value ?? 0;
+    final int netAvailable = bucketBalanceAsync.value ?? baseline;
     final bool isDeficit = requestedCount > netAvailable;
     final int leftover = netAvailable - requestedCount;
 
@@ -75,7 +110,7 @@ class AppointmentBalanceDiagnostics extends ConsumerWidget {
       decoration: BoxDecoration(
         color: cardBgColor,
         border: Border.all(color: cardBorderColor, width: AppSizes.borderWidthMedium),
-        borderRadius: const BorderRadius.all(Radius.circular(AppSizes.r6)),
+        borderRadius: const BorderRadius.all(Radius.circular(AppSizes.r16)),
       ),
       padding: const EdgeInsets.all(AppSizes.p16),
       child: Column(
@@ -85,36 +120,44 @@ class AppointmentBalanceDiagnostics extends ConsumerWidget {
             children: [
               Icon(statusIcon, color: statusTextColor),
               const SizedBox(width: AppSizes.p8),
-              Text(
-                'Live Ledger Preview',
-                style: AppTextStyles.bodyBold.copyWith(color: statusTextColor),
+              Expanded(
+                child: Text(
+                  'Live Ledger Preview — $bucketLabel',
+                  style: AppTextStyles.bodyBold.copyWith(color: statusTextColor),
+                ),
               ),
             ],
           ),
           const SizedBox(height: AppSizes.p12),
-          _buildRow('Current Package Balance', '$currentBalance'),
-          _buildRow('Upcoming Booked Sessions', '-$futureCommitments'),
-          _buildRow('Net Available Balance', '$netAvailable', isBold: true),
-          const Divider(height: AppSizes.p16, thickness: 1, color: AppColors.border),
-          _buildRow(
-            'This Current Order Count',
-            '$requestedCount',
-            valueColor: requestedCount > 0 ? AppColors.warning : AppColors.textSecondary,
-            isBold: requestedCount > 0,
-          ),
+          _buildRow('Current Bucket', '$baseline'),
+          _buildRow('Upcoming in this bucket', '-$futureCommitments'),
+          _buildRow('Net Available', '$netAvailable', isBold: true),
+          _buildRow('This Order Count', '$requestedCount',
+              valueColor: requestedCount > 0 ? AppColors.warning : AppColors.textSecondary,
+              isBold: requestedCount > 0),
           const SizedBox(height: AppSizes.p8),
-          if (isDeficit)
-            Text(
-              'Package Deficit: ${requestedCount - netAvailable} session(s) overdrawn. Allocation is locked.',
-              style: AppTextStyles.bodyBold.copyWith(color: AppColors.error),
-            )
-          else
-            Text(
-              'Projected Leftover Balance: $leftover session(s).',
-              style: AppTextStyles.bodySecondary.copyWith(color: AppColors.textSecondary),
+          Text(
+            isDeficit
+                ? 'Package Deficit: ${requestedCount - netAvailable} session(s) overdrawn.'
+                : 'Projected Leftover Balance: $leftover session(s).',
+            style: AppTextStyles.bodySecondary.copyWith(
+              color: isDeficit ? AppColors.error : AppColors.textSecondary,
             ),
+          ),
         ],
       ),
+    );
+  }
+
+  Widget _wrapContainer(Color bg, Widget child) {
+    return Container(
+      padding: const EdgeInsets.all(AppSizes.p16),
+      decoration: BoxDecoration(
+        color: bg,
+        borderRadius: const BorderRadius.all(Radius.circular(AppSizes.r16)),
+        border: Border.all(color: AppColors.border),
+      ),
+      child: child,
     );
   }
 

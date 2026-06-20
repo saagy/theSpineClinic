@@ -37,6 +37,9 @@ dependencies:
   flutter_animate: ^4.5.2
   google_nav_bar: ^5.0.7
   auto_size_text: ^3.0.0
+  pdfrx: ^2.4.4
+  flutter_image_compress: ^2.4.0
+  image: ^4.9.1
 
 dev_dependencies:
   flutter_test:

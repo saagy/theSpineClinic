@@ -2,6 +2,7 @@
 library;
 
 import 'package:freezed_annotation/freezed_annotation.dart';
+import 'package:spine_clinic_app/features/payments/domain/package_kind.dart';
 
 part 'clinic_package.freezed.dart';
 part 'clinic_package.g.dart';
@@ -18,13 +19,20 @@ double _priceFromJson(Object? value) {
 
 Object _priceToJson(double value) => value;
 
-/// A package package configure in the clinic settings.
+/// A package configured in the clinic settings.
+///
+/// `sessionCount` represents the bundled Normal PT sessions.
+/// `tractionsCount` represents the bundled Spinal Traction sessions.
+/// Combined packages use both; pure Session / pure Traction packages
+/// leave the other at 0.
 @freezed
 abstract class ClinicPackage with _$ClinicPackage {
   /// Creates a [ClinicPackage].
   const factory ClinicPackage({
     required String name,
-    @JsonKey(name: 'session_count') required int sessionCount,
+    @JsonKey(name: 'kind') @Default(PackageKind.session) PackageKind kind,
+    @JsonKey(name: 'session_count') @Default(0) int sessionCount,
+    @JsonKey(name: 'tractions_count') @Default(0) int tractionsCount,
     @JsonKey(fromJson: _priceFromJson, toJson: _priceToJson) required double price,
   }) = _ClinicPackage;
 

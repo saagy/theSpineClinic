@@ -6,15 +6,19 @@ import 'package:spine_clinic_app/core/constants/app_sizes.dart';
 import 'package:spine_clinic_app/core/constants/app_strings.dart';
 import 'package:spine_clinic_app/core/constants/app_text_styles.dart';
 import 'package:spine_clinic_app/features/payments/domain/clinic_package.dart';
+import 'package:spine_clinic_app/shared/widgets/reason_chips_row.dart';
 
 /// Isolated layout fields for the RecordPaymentScreen form.
+///
+/// Renders one of four reason presets per row plus a "Package" path that
+/// auto-fills both PT + traction adders from the selected clinic package.
 class PaymentFormFields extends StatefulWidget {
   /// Creates a [PaymentFormFields].
   const PaymentFormFields({
-    super.key,
     required this.enabled,
     required this.packages,
     required this.formKey,
+    super.key,
   });
 
   /// Whether form inputs are enabled.
@@ -32,6 +36,11 @@ class PaymentFormFields extends StatefulWidget {
 
 class _PaymentFormFieldsState extends State<PaymentFormFields> {
   String? _selectedReasonType;
+  bool _addToPackage = false;
+
+  bool _isAssessment(String? reason) =>
+      reason == AppStrings.paymentReasonInitialAssessment ||
+      reason == AppStrings.paymentReasonReassessment;
 
   InputDecoration _buildDecoration({required String labelText, String? hintText}) {
     final OutlineInputBorder borderBase = OutlineInputBorder(
@@ -67,21 +76,61 @@ class _PaymentFormFieldsState extends State<PaymentFormFields> {
   void _handleReasonTypeChanged(String? type) {
     setState(() {
       _selectedReasonType = type;
+      // Toggle rule:
+      //   'Package'        → ON (clerks want to credit the patient's buckets
+      //                       immediately when selling a package)
+      //   assessments      → hidden entirely (handled in build())
+      //   any other reason → OFF (the receptionist has to opt in explicitly)
+      _addToPackage = !_isAssessment(type) && type == AppStrings.paymentReasonPackage;
     });
 
-    // Clear conflicting fields based on reason type.
-    if (type != 'Package') {
+    if (type != AppStrings.paymentReasonPackage) {
       widget.formKey.currentState?.fields['package']?.didChange(null);
     }
-    if (type != 'Other') {
+    if (type != AppStrings.paymentReasonOther) {
       widget.formKey.currentState?.fields['custom_reason']?.didChange(null);
+    }
+    if (_isAssessment(type)) {
+      widget.formKey.currentState?.fields['session_added']?.didChange('0');
+      widget.formKey.currentState?.fields['traction_added']?.didChange('0');
+    }
+    // Mirror the new toggle value into the form's stored payload so _submit
+    // sees the right boolean regardless of which reason the user picked.
+    widget.formKey.currentState?.fields['add_to_package']
+        ?.didChange(_addToPackage);
+  }
+
+  /// Decides which adders the current "Package" selection populates.
+  void _seedAddersFromPackage(ClinicPackage pkg) {
+    widget.formKey.currentState?.fields['amount']?.didChange(pkg.price.toString());
+    if (pkg.kind.creditsSessionBalance) {
+      widget.formKey.currentState?.fields['session_added']
+          ?.didChange(pkg.sessionCount.toString());
+    } else {
+      widget.formKey.currentState?.fields['session_added']?.didChange('0');
+    }
+    if (pkg.kind.creditsTractionBalance) {
+      widget.formKey.currentState?.fields['traction_added']
+          ?.didChange(pkg.tractionsCount.toString());
+    } else {
+      widget.formKey.currentState?.fields['traction_added']?.didChange('0');
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final bool isPackageActive = _selectedReasonType == 'Package';
-    final bool isOtherActive = _selectedReasonType == 'Other';
+    final bool isPackageActive = _selectedReasonType == AppStrings.paymentReasonPackage;
+    final bool isOtherActive = _selectedReasonType == AppStrings.paymentReasonOther;
+    final bool isAssessment = _isAssessment(_selectedReasonType);
+
+    const List<String> reasonPresets = [
+      AppStrings.paymentReasonPackage,
+      AppStrings.paymentReasonNormalPtSession,
+      AppStrings.paymentReasonSpinalTraction,
+      AppStrings.paymentReasonInitialAssessment,
+      AppStrings.paymentReasonReassessment,
+      AppStrings.paymentReasonOther,
+    ];
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -103,40 +152,14 @@ class _PaymentFormFieldsState extends State<PaymentFormFields> {
               ),
               child: Padding(
                 padding: const EdgeInsets.only(top: AppSizes.p8),
-                child: Wrap(
-                  spacing: AppSizes.p8,
-                  runSpacing: AppSizes.p4,
-                  children: [
-                    AppStrings.paymentReasonPackage,
-                    AppStrings.paymentReasonSession,
-                    AppStrings.paymentReasonGehaz,
-                    AppStrings.paymentReasonOther,
-                  ].map((type) {
-                    final bool selected = fieldState.value == type;
-                    return ChoiceChip(
-                      label: Text(type),
-                      selected: selected,
-                      selectedColor: AppColors.primary,
-                      backgroundColor: AppColors.surface,
-                      disabledColor: AppColors.background,
-                      labelStyle: AppTextStyles.captionMedium.copyWith(
-                        color: selected ? AppColors.textOnPrimary : AppColors.textSecondary,
-                      ),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(AppSizes.radiusPill),
-                        side: BorderSide(
-                          color: selected ? AppColors.primary : AppColors.border,
-                          width: AppSizes.borderWidth,
-                        ),
-                      ),
-                      onSelected: widget.enabled
-                          ? (bool val) {
-                              fieldState.didChange(type);
-                              _handleReasonTypeChanged(type);
-                            }
-                          : null,
-                    );
-                  }).toList(),
+                child: ReasonChipsRow(
+                  options: reasonPresets,
+                  selected: fieldState.value,
+                  enabled: widget.enabled,
+                  onChanged: (type) {
+                    fieldState.didChange(type);
+                    _handleReasonTypeChanged(type);
+                  },
                 ),
               ),
             );
@@ -144,7 +167,7 @@ class _PaymentFormFieldsState extends State<PaymentFormFields> {
         ),
         const SizedBox(height: AppSizes.p24),
 
-        // ── Dynamic Package Selection Dropdown ──
+        // ── Package Selection (dropdown only for "Package" reason) ──
         if (isPackageActive) ...[
           FormBuilderDropdown<ClinicPackage>(
             name: 'package',
@@ -163,15 +186,79 @@ class _PaymentFormFieldsState extends State<PaymentFormFields> {
                     ))
                 .toList(),
             onChanged: (ClinicPackage? pkg) {
-              if (pkg != null) {
-                widget.formKey.currentState?.fields['amount']?.didChange(pkg.price.toString());
-              }
+              if (pkg != null) _seedAddersFromPackage(pkg);
             },
           ),
-          const SizedBox(height: AppSizes.p24),
+          const SizedBox(height: AppSizes.p16),
         ],
 
-        // ── Custom Reason Field ──
+        // ── Add to package balances (hidden for assessments) ──
+        if (!isAssessment) ...[
+          FormBuilderField<bool>(
+            name: 'add_to_package',
+            initialValue: _addToPackage,
+            builder: (FormFieldState<bool?> fieldState) {
+              return SwitchListTile(
+                contentPadding: EdgeInsets.zero,
+                title: Text(
+                  AppStrings.addBalanceToggleTitle,
+                  style: AppTextStyles.body.copyWith(color: AppColors.textPrimary),
+                ),
+                subtitle: Text(
+                  AppStrings.addBalanceBothZero,
+                  style: AppTextStyles.caption.copyWith(color: AppColors.textMuted),
+                ),
+                value: fieldState.value ?? false,
+                onChanged: widget.enabled
+                    ? (bool v) {
+                        fieldState.didChange(v);
+                        setState(() => _addToPackage = v);
+                      }
+                    : null,
+              );
+            },
+          ),
+          const SizedBox(height: AppSizes.p4),
+          Text(
+            AppStrings.addBalanceBothZero,
+            style: AppTextStyles.caption.copyWith(color: AppColors.textMuted),
+          ),
+          const SizedBox(height: AppSizes.p8),
+          if (_addToPackage) ...[
+            Row(
+              children: [
+                Expanded(
+                  child: FormBuilderTextField(
+                    name: 'session_added',
+                    enabled: widget.enabled,
+                    keyboardType: TextInputType.number,
+                    decoration: _buildDecoration(
+                      labelText: AppStrings.sessionBalanceAddedField,
+                      hintText: 'Leave empty to skip',
+                    ),
+                    validator: _validateAddedInt,
+                  ),
+                ),
+                const SizedBox(width: AppSizes.p12),
+                Expanded(
+                  child: FormBuilderTextField(
+                    name: 'traction_added',
+                    enabled: widget.enabled,
+                    keyboardType: TextInputType.number,
+                    decoration: _buildDecoration(
+                      labelText: AppStrings.tractionBalanceAddedField,
+                      hintText: 'Leave empty to skip',
+                    ),
+                    validator: _validateAddedInt,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: AppSizes.p16),
+          ],
+        ],
+
+        // ── Custom Reason ──
         if (isOtherActive) ...[
           FormBuilderTextField(
             name: 'custom_reason',
@@ -213,5 +300,17 @@ class _PaymentFormFieldsState extends State<PaymentFormFields> {
         ),
       ],
     );
+  }
+
+  /// Empty fields mean "don't touch this bucket" — only reject when the
+  /// receptionist typed something invalid. Keeps the standard contract
+  /// for FormBuilder while matching the package UX rule.
+  String? _validateAddedInt(String? val) {
+    if (val == null || val.isEmpty) return null;
+    final int? parsed = int.tryParse(val);
+    if (parsed == null || parsed < 0) {
+      return AppStrings.amountMustBePositive;
+    }
+    return null;
   }
 }

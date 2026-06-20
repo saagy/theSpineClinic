@@ -17,13 +17,15 @@ class PackageBalanceController extends _$PackageBalanceController {
     // Initial state is idle.
   }
 
-  /// Updates a patient's package balance in the database.
+  /// Updates both of a patient's package balances (PT + traction) in one call.
   ///
   /// Checks role permissions before proceeding. Invalidates patient detail
-  /// and search providers on success.
-  Future<Result<void>> updateBalance({
+  /// and search providers on success. Either parameter may be `null` to
+  /// keep its current value.
+  Future<Result<void>> updateBalances({
     required Patient patient,
-    required int newBalance,
+    int? newSessionBalance,
+    int? newTractionBalance,
   }) async {
     state = const AsyncValue.loading();
 
@@ -37,7 +39,10 @@ class PackageBalanceController extends _$PackageBalanceController {
     }
 
     final repo = ref.read(patientRepositoryProvider);
-    final updatedPatient = patient.copyWith(packageBalance: newBalance);
+    final updatedPatient = patient.copyWith(
+      sessionBalance: newSessionBalance ?? patient.sessionBalance,
+      tractionBalance: newTractionBalance ?? patient.tractionBalance,
+    );
     final Result<void> result = await repo.updatePatient(updatedPatient);
     if (!ref.mounted) return result;
 

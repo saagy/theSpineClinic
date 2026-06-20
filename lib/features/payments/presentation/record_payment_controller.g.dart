@@ -221,7 +221,7 @@ final class RecordPaymentControllerProvider
 }
 
 String _$recordPaymentControllerHash() =>
-    r'533ab58d4f4e0c85bc73f080138e9b55016b693a';
+    r'bde764c323cfee0e4324bfbeafabc284779bfffd';
 
 /// Controller managing form submission state for the record payment screen.
 

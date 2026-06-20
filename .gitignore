@@ -44,7 +44,24 @@ app.*.map.json
 /android/app/profile
 /android/app/release
 
-.env
-.vercel
+# App-Specific & AI rules
+SKILL.md
+
+# Secrets, API Keys & Signing (CRITICAL)
+.env*
+key.properties
+*.jks
+*.keystore
+
+# Cloud & Hosting
+.vercel/
 .firebase/
+
+# Additional Flutter & Platform Build Artifacts
+.flutter-plugins
+windows/flutter/ephemeral/
+linux/flutter/ephemeral/
 android/build/
+
+# OS generated files
+Thumbs.db

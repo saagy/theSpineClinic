@@ -85,6 +85,8 @@ class _RecordPaymentFormState extends ConsumerState<_RecordPaymentForm> {
       final String reasonType = values['reason_type'] as String;
 
       String reason;
+      int sessionAdded = 0;
+      int tractionAdded = 0;
       if (reasonType == AppStrings.paymentReasonPackage) {
         final ClinicPackage pkg = values['package'] as ClinicPackage;
         reason = 'Package (${pkg.name})';
@@ -94,10 +96,26 @@ class _RecordPaymentFormState extends ConsumerState<_RecordPaymentForm> {
         reason = reasonType;
       }
 
+      // Add-balance applies to ALL non-assessment reasons, but only when
+      // the toggle is on. The trigger handles the actual patient row update.
+      // Empty fields silently map to 0 — "leave empty to skip" UX.
+      final bool addToPackage =
+          (values['add_to_package'] as bool?) ?? false;
+      if (addToPackage &&
+          reasonType != AppStrings.paymentReasonInitialAssessment &&
+          reasonType != AppStrings.paymentReasonReassessment) {
+        final String sText = (values['session_added'] as String? ?? '').trim();
+        final String tText = (values['traction_added'] as String? ?? '').trim();
+        sessionAdded = sText.isEmpty ? 0 : (int.tryParse(sText) ?? 0);
+        tractionAdded = tText.isEmpty ? 0 : (int.tryParse(tText) ?? 0);
+      }
+
       final result = await ref.read(recordPaymentControllerProvider.notifier).submitPayment(
             patientId: patient.id,
             amount: amount,
             reason: reason,
+            sessionBalanceAdded: sessionAdded,
+            tractionBalanceAdded: tractionAdded,
           );
 
       if (mounted) {

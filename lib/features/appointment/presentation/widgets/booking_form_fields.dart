@@ -7,6 +7,7 @@ library;
 import 'package:flutter/material.dart';
 import 'package:spine_clinic_app/core/constants/app_colors.dart';
 import 'package:spine_clinic_app/core/constants/app_sizes.dart';
+import 'package:spine_clinic_app/core/constants/app_strings.dart';
 import 'package:spine_clinic_app/core/constants/app_text_styles.dart';
 import 'package:spine_clinic_app/features/appointment/domain/appointment_type.dart';
 import 'package:spine_clinic_app/features/patient/domain/patient.dart';
@@ -56,39 +57,43 @@ class BookingFormFields extends StatelessWidget {
         _PatientSearchField(onTap: onPatientTap ?? () {}),
       const SizedBox(height: AppSizes.p16),
 
-      // ── Appointment type — pill chips ──
-      _SectionLabel('Appointment Type'),
+      // ── Appointment type — pill chips (horizontal scroll for long labels) ──
+      _SectionLabel(AppStrings.appointmentType),
       const SizedBox(height: AppSizes.p6),
-      Row(
-        children: AppointmentType.values.map((type) {
-          final bool active = selectedType == type;
-          return Expanded(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: AppSizes.p4),
-              child: GestureDetector(
-                onTap: () => onTypeChanged(type),
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 180),
-                  padding: const EdgeInsets.symmetric(
-                      vertical: AppSizes.p12),
-                  alignment: Alignment.center,
-                  decoration: BoxDecoration(
-                    color: active
-                        ? AppColors.primary
-                        : AppColors.primaryLight.withAlpha(100),
-                    borderRadius: const BorderRadius.all(
-                        Radius.circular(AppSizes.r24)),
-                  ),
-                  child: Text(type.displayLabel,
-                      style: AppTextStyles.bodyBold.copyWith(
-                          color: active
-                              ? AppColors.textOnPrimary
-                              : AppColors.textSecondary)),
+      SizedBox(
+        height: AppSizes.buttonHeightSmall,
+        child: ListView.separated(
+          scrollDirection: Axis.horizontal,
+          physics: const AlwaysScrollableScrollPhysics(),
+          itemCount: AppointmentType.values.length,
+          separatorBuilder: (_, __) => const SizedBox(width: AppSizes.p8),
+          itemBuilder: (_, index) {
+            final type = AppointmentType.values[index];
+            final bool active = selectedType == type;
+            return GestureDetector(
+              onTap: () => onTypeChanged(type),
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 180),
+                padding: const EdgeInsets.symmetric(
+                    horizontal: AppSizes.p16, vertical: AppSizes.p8),
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  color: active
+                      ? AppColors.primary
+                      : AppColors.primaryLight.withAlpha(100),
+                  borderRadius:
+                      const BorderRadius.all(Radius.circular(AppSizes.r999)),
                 ),
+                child: Text(type.displayLabel,
+                    style: AppTextStyles.bodyBold.copyWith(
+                        color: active
+                            ? AppColors.textOnPrimary
+                            : AppColors.textSecondary,
+                        fontSize: 13)),
               ),
-            ),
-          );
-        }).toList(),
+            );
+          },
+        ),
       ),
       const SizedBox(height: AppSizes.p16),
 

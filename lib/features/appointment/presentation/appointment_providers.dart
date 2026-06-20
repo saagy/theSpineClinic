@@ -17,6 +17,7 @@ import 'package:spine_clinic_app/features/appointment/data/appointment_repositor
 import 'package:spine_clinic_app/features/appointment/domain/appointment.dart';
 import 'package:spine_clinic_app/features/appointment/domain/appointment_doctor.dart';
 import 'package:spine_clinic_app/features/appointment/domain/appointment_repository.dart';
+import 'package:spine_clinic_app/features/appointment/domain/appointment_type.dart';
 import 'package:spine_clinic_app/features/auth/domain/staff.dart';
 import 'package:spine_clinic_app/features/auth/presentation/auth_providers.dart';
 import 'package:spine_clinic_app/features/patient/presentation/patient_providers.dart';
@@ -155,12 +156,64 @@ Future<int> futureScheduledAppointmentsCount(Ref ref, String patientId) async {
   }
 }
 
-/// Family provider evaluating: Current Balance - Future Commitments.
+/// Family provider resolving the count of future scheduled appointments
+/// of a specific bucket (PT or Traction). Assessments always return 0
+/// because they have no balance impact.
+@riverpod
+Future<int> futureScheduledAppointmentsCountForType(
+  Ref ref,
+  ({String patientId, AppointmentType type}) args,
+) async {
+  final AppointmentRepository repo = ref.read(appointmentRepositoryProvider);
+  final Result<int> result =
+      await repo.getFutureScheduledAppointmentsCountForType(
+    patientId: args.patientId,
+    type: args.type,
+  );
+
+  return result.when(
+    success: (data) => data,
+    failure: (_) => 0,
+  );
+}
+
+/// Family provider evaluating: Current Balance - Future Commitments for a
+/// given appointment type's bucket.
+///
+/// Returns `null` when the appointment type is one of the assessments
+/// (no balance impact at all), so callers can render a "paid separately"
+/// surface instead of a numeric balance.
+@riverpod
+Future<int?> availableBalanceForType(Ref ref, ({String patientId, AppointmentType type}) args) async {
+  if (!args.type.affectsPackageBalance) return null;
+  final patient = await ref.watch(patientDetailProvider(args.patientId).future);
+  final repo = ref.read(appointmentRepositoryProvider);
+  final Result<int> commitmentsResult = await repo.getFutureScheduledAppointmentsCountForType(
+    patientId: args.patientId,
+    type: args.type,
+  );
+  final int futureCommitments = commitmentsResult.when(
+    success: (data) => data,
+    failure: (err) => 0,
+  );
+  final int baseline = switch (args.type) {
+    AppointmentType.normalPtSession => patient.sessionBalance,
+    AppointmentType.spinalTractionSession => patient.tractionBalance,
+    AppointmentType.initialAssessment => 0,
+    AppointmentType.reassessment => 0,
+  };
+  return baseline - futureCommitments;
+}
+
+/// Backwards-compatible alias while call sites migrate. Defaults to the
+/// Normal PT bucket — new code should pass the appointment type explicitly.
 @riverpod
 Future<int> availablePackageBalance(Ref ref, String patientId) async {
-  final patient = await ref.watch(patientDetailProvider(patientId).future);
-  final futureCommitments = await ref.watch(futureScheduledAppointmentsCountProvider(patientId).future);
-  return patient.packageBalance - futureCommitments;
+  final int? value = await ref.watch(availableBalanceForTypeProvider((
+    patientId: patientId,
+    type: AppointmentType.normalPtSession,
+  )).future);
+  return value ?? 0;
 }
 
 /// Family provider resolving a single appointment by ID.

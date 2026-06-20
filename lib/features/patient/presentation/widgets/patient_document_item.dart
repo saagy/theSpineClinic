@@ -1,5 +1,4 @@
 import 'dart:typed_data';
-import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path/path.dart' as p;
@@ -12,8 +11,6 @@ import 'package:spine_clinic_app/features/patient/data/patient_documents_reposit
 import 'package:spine_clinic_app/features/patient/domain/patient_document.dart';
 import 'package:spine_clinic_app/features/patient/presentation/patient_documents_providers.dart';
 import 'package:spine_clinic_app/shared/widgets/app_file_viewer.dart';
-import 'package:spine_clinic_app/shared/widgets/app_file_viewer_stub.dart'
-    if (dart.library.html) 'package:spine_clinic_app/shared/widgets/app_file_viewer_web.dart';
 import 'package:spine_clinic_app/shared/widgets/app_snackbar.dart';
 import 'package:spine_clinic_app/shared/widgets/confirmation_dialog.dart';
 import 'package:spine_clinic_app/shared/widgets/data_list_tile.dart';
@@ -39,20 +36,17 @@ class _PatientDocumentItemState extends ConsumerState<PatientDocumentItem> {
     if (_isOpening) return;
     setState(() => _isOpening = true);
     try {
-      if (kIsWeb) {
-        final String? signedUrl =
-            await generateSignedUrlForWeb(widget.doc.fileUrl);
-        if (signedUrl == null) {
-          throw Exception('Could not open this file.');
-        }
-        if (!mounted) return;
-        final String ext = p.extension(widget.doc.fileName).toLowerCase();
+      final String ext = p.extension(widget.doc.fileName).toLowerCase();
+      final bool isPdf = ext == '.pdf';
+      final bool isImage =
+          ext == '.png' || ext == '.jpg' || ext == '.jpeg';
+      if (isPdf || isImage) {
         showAppFileViewer(
           context,
-          signedUrl: signedUrl,
+          fileUrl: widget.doc.fileUrl,
           fileName: widget.doc.fileName,
-          isImage: ext == '.png' || ext == '.jpg' || ext == '.jpeg',
-          isPdf: ext == '.pdf',
+          isImage: isImage,
+          isPdf: isPdf,
         );
       } else {
         await FileOpenerHelper.openFile(

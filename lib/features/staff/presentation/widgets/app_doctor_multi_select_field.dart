@@ -1,8 +1,8 @@
-import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:spine_clinic_app/core/constants/app_colors.dart';
 import 'package:spine_clinic_app/core/constants/app_sizes.dart';
+import 'package:spine_clinic_app/core/constants/app_strings.dart';
 import 'package:spine_clinic_app/core/constants/app_text_styles.dart';
 import 'package:spine_clinic_app/features/auth/domain/staff.dart';
 import 'package:spine_clinic_app/features/staff/presentation/staff_providers.dart';
@@ -55,12 +55,10 @@ class _AppDoctorMultiSelectFieldWidget extends ConsumerStatefulWidget {
 class _AppDoctorMultiSelectFieldWidgetState
     extends ConsumerState<_AppDoctorMultiSelectFieldWidget> {
   final TextEditingController _searchCtrl = TextEditingController();
-  Timer? _debounce;
 
   @override
   void dispose() {
     _searchCtrl.dispose();
-    _debounce?.cancel();
     super.dispose();
   }
 
@@ -111,8 +109,8 @@ class _AppDoctorMultiSelectFieldWidgetState
           },
           decoration: InputDecoration(
             isDense: true,
-            labelText: 'Search & Assign Doctors',
-            hintText: 'Type doctor name...',
+            labelText: AppStrings.searchAndAssignDoctors,
+            hintText: AppStrings.typeDoctorName,
             suffixIcon: isLoading
                 ? const SizedBox(
                     width: AppSizes.iconDefault,
@@ -148,7 +146,7 @@ class _AppDoctorMultiSelectFieldWidgetState
           Padding(
             padding: const EdgeInsets.only(top: AppSizes.p6),
             child: Text(
-              'Unable to load doctors — tap refresh icon to retry',
+              AppStrings.unableToLoadDoctors,
               style: AppTextStyles.caption.copyWith(color: AppColors.error),
             ),
           ),
