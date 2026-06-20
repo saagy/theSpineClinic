@@ -8,6 +8,7 @@ import 'package:spine_clinic_app/core/constants/app_text_styles.dart';
 import 'package:spine_clinic_app/features/auth/domain/staff.dart';
 import 'package:spine_clinic_app/features/patient/domain/patient.dart';
 import 'package:spine_clinic_app/features/patient/presentation/patient_providers.dart';
+import 'package:spine_clinic_app/features/patient/presentation/widgets/delete_patient_button.dart';
 import 'package:spine_clinic_app/shared/widgets/app_avatar.dart';
 import 'package:spine_clinic_app/shared/widgets/info_row.dart';
 import 'package:spine_clinic_app/shared/widgets/section_card.dart';
@@ -75,6 +76,7 @@ class PatientTabInfo extends ConsumerWidget {
                 error: (_, __) => const Text(AppStrings.errorLoadingAssignedDoctors),
               ),
             ),
+            DeletePatientButton(patient: patient),
           ],
         ),
       ),

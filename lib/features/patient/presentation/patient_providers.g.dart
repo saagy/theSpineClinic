@@ -208,6 +208,89 @@ abstract class _$PatientSearch extends $AsyncNotifier<List<Patient>> {
   }
 }
 
+/// Checks whether a patient has zero related records across
+/// appointments, payments, notes, and documents.
+
+@ProviderFor(patientIsEmpty)
+final patientIsEmptyProvider = PatientIsEmptyFamily._();
+
+/// Checks whether a patient has zero related records across
+/// appointments, payments, notes, and documents.
+
+final class PatientIsEmptyProvider
+    extends $FunctionalProvider<AsyncValue<bool>, bool, FutureOr<bool>>
+    with $FutureModifier<bool>, $FutureProvider<bool> {
+  /// Checks whether a patient has zero related records across
+  /// appointments, payments, notes, and documents.
+  PatientIsEmptyProvider._({
+    required PatientIsEmptyFamily super.from,
+    required String super.argument,
+  }) : super(
+         retry: null,
+         name: r'patientIsEmptyProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
+
+  @override
+  String debugGetCreateSourceHash() => _$patientIsEmptyHash();
+
+  @override
+  String toString() {
+    return r'patientIsEmptyProvider'
+        ''
+        '($argument)';
+  }
+
+  @$internal
+  @override
+  $FutureProviderElement<bool> $createElement($ProviderPointer pointer) =>
+      $FutureProviderElement(pointer);
+
+  @override
+  FutureOr<bool> create(Ref ref) {
+    final argument = this.argument as String;
+    return patientIsEmpty(ref, argument);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is PatientIsEmptyProvider && other.argument == argument;
+  }
+
+  @override
+  int get hashCode {
+    return argument.hashCode;
+  }
+}
+
+String _$patientIsEmptyHash() => r'17d955867c786d903d2dbb4d30d913305261930c';
+
+/// Checks whether a patient has zero related records across
+/// appointments, payments, notes, and documents.
+
+final class PatientIsEmptyFamily extends $Family
+    with $FunctionalFamilyOverride<FutureOr<bool>, String> {
+  PatientIsEmptyFamily._()
+    : super(
+        retry: null,
+        name: r'patientIsEmptyProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
+  /// Checks whether a patient has zero related records across
+  /// appointments, payments, notes, and documents.
+
+  PatientIsEmptyProvider call(String patientId) =>
+      PatientIsEmptyProvider._(argument: patientId, from: this);
+
+  @override
+  String toString() => r'patientIsEmptyProvider';
+}
+
 /// Fetches active doctors assigned to a patient.
 
 @ProviderFor(patientAssignedDoctors)

@@ -11,30 +11,12 @@ import 'package:spine_clinic_app/features/appointment/presentation/edit_appointm
 import 'package:spine_clinic_app/shared/widgets/app_snackbar.dart';
 import 'package:spine_clinic_app/shared/widgets/confirmation_dialog.dart';
 
-/// Button to delete an appointment with status guards and confirmation dialog.
+/// Button to delete an appointment. Only visible for deletable statuses.
 class DeleteAppointmentButton extends ConsumerWidget {
   const DeleteAppointmentButton({super.key, required this.appointment});
   final Appointment appointment;
 
   Future<void> _onPressed(BuildContext context, WidgetRef ref) async {
-    final status = appointment.status;
-    if (status == AppointmentStatus.checkedIn || status == AppointmentStatus.completed) {
-      showDialog<void>(
-        context: context,
-        builder: (ctx) => AlertDialog(
-          title: const Text('Cannot Delete'),
-          content: const Text(AppStrings.cannotDeleteCheckedInOrCompleted),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(ctx).pop(),
-              child: const Text(AppStrings.close),
-            ),
-          ],
-        ),
-      );
-      return;
-    }
-
     final confirm = await showDialog<bool>(
       context: context,
       builder: (_) => const ConfirmationDialog(
@@ -58,7 +40,6 @@ class DeleteAppointmentButton extends ConsumerWidget {
           message: AppStrings.appointmentDeleted,
           variant: AppSnackbarVariant.success,
         );
-        // Pop back to appointments list screen
         context.pop();
       },
       failure: (e) {
@@ -73,6 +54,11 @@ class DeleteAppointmentButton extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final status = appointment.status;
+    if (status == AppointmentStatus.checkedIn || status == AppointmentStatus.completed) {
+      return const SizedBox.shrink();
+    }
+
     final editState = ref.watch(editAppointmentControllerProvider);
     final isLoading = editState.isLoading;
 

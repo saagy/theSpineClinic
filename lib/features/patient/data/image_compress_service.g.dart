@@ -9,15 +9,15 @@ part of 'image_compress_service.dart';
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // ignore_for_file: type=lint, type=warning
 /// Singleton provider for the service — kept alive for the app lifetime
-/// because the `image` package's decoder caches native image libraries
-/// per-thread and recreating on every upload is wasteful.
+/// because `flutter_image_compress` briefly caches native channels and
+/// recreating on every upload is wasteful.
 
 @ProviderFor(imageCompressService)
 final imageCompressServiceProvider = ImageCompressServiceProvider._();
 
 /// Singleton provider for the service — kept alive for the app lifetime
-/// because the `image` package's decoder caches native image libraries
-/// per-thread and recreating on every upload is wasteful.
+/// because `flutter_image_compress` briefly caches native channels and
+/// recreating on every upload is wasteful.
 
 final class ImageCompressServiceProvider
     extends
@@ -28,8 +28,8 @@ final class ImageCompressServiceProvider
         >
     with $Provider<ImageCompressService> {
   /// Singleton provider for the service — kept alive for the app lifetime
-  /// because the `image` package's decoder caches native image libraries
-  /// per-thread and recreating on every upload is wasteful.
+  /// because `flutter_image_compress` briefly caches native channels and
+  /// recreating on every upload is wasteful.
   ImageCompressServiceProvider._()
     : super(
         from: null,

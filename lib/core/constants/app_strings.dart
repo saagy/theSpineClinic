@@ -28,8 +28,10 @@ abstract final class AppStrings {
   static const String errorUnknown = 'An unexpected error occurred. Try again.';
 
   // Document upload size guards
-  static const String errorDocImageTooLarge = 'Image is too large to upload. Maximum size is 25 MB.';
+  static const String errorDocImageTooLarge = 'Image is too large to upload. Maximum size is 10 MB.';
   static const String errorDocPdfTooLarge = 'PDF is too large to upload. Maximum size is 10 MB.';
+  static const String errorAttachmentPartialFail =
+      'Patient was saved but some attachments failed to upload. Open the patient to retry them.';
 
   static String fromKey(String key) => _keyMap[key] ?? errorUnknown;
 
@@ -52,6 +54,7 @@ abstract final class AppStrings {
     'error_unknown': errorUnknown,
     'error_doc_image_too_large': errorDocImageTooLarge,
     'error_doc_pdf_too_large': errorDocPdfTooLarge,
+    'error_attachment_partial_fail': errorAttachmentPartialFail,
   };
 
   // Form Labels & Search
@@ -169,7 +172,9 @@ abstract final class AppStrings {
   static const String appointmentUpdated = 'Appointment updated successfully.';
   static const String deleteAppointmentWarning = 'This will permanently remove the appointment record and doctor assignments. This action cannot be undone.';
   static const String usePackageChangeWarning = 'Cannot change package deduction. This option can only be edited for "Scheduled" appointments, not for checked-in or completed sessions.';
-  static const String cannotDeleteCheckedInOrCompleted = 'Cannot delete a checked-in or completed appointment. Please cancel the appointment first to trigger any package refunds.';
+  static const String deletePatient = 'Delete Patient';
+  static const String deletePatientWarning = 'This will permanently remove this patient record. This action cannot be undone.';
+  static const String patientDeleted = 'Patient deleted successfully.';
 
 
   // Replacement

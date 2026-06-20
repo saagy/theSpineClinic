@@ -82,6 +82,18 @@ class PatientSearch extends _$PatientSearch {
   }
 }
 
+/// Checks whether a patient has zero related records across
+/// appointments, payments, notes, and documents.
+@riverpod
+Future<bool> patientIsEmpty(Ref ref, String patientId) async {
+  final repo = ref.read(patientRepositoryProvider);
+  final result = await repo.isPatientEmpty(patientId);
+  return result.when(
+    success: (bool data) => data,
+    failure: (AppException exception) => throw exception,
+  );
+}
+
 /// Fetches active doctors assigned to a patient.
 @riverpod
 Future<List<Staff>> patientAssignedDoctors(Ref ref, String patientId) async {

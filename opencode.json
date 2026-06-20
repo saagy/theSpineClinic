@@ -3,7 +3,25 @@
   "plugin": [
     ["opencode-morph-fast-apply", {}],
     ["opencode-goal-plugin", {}]
-    ],
+  ],
+  "provider": {
+    "nvidia": {
+      "name": "NVIDIA NIM",
+      "baseURL": "https://integrate.api.nvidia.com/v1",
+      "apiKey": "YOUR_NEW_NVIDIA_KEY",
+      "models": {
+        "minimaxai/minimax-m3": {
+          "name": "MiniMax M3 (NVIDIA)"
+        },
+        "zai-org/glm-5.1": {
+          "name": "GLM-5.1 (NVIDIA)"
+        },
+        "moonshotai/kimi-k2.5": {
+          "name": "Kimi K2.5 (NVIDIA)"
+        }
+      }
+    }
+  },
   "mcp": {
     "dart-mcp-server": {
       "type": "local",
@@ -19,9 +37,9 @@
     "flutter-skill": {
       "type": "local",
       "command": [
-        "dart", 
-        "run", 
-        "C:\\Users\\Elite-Store\\flutter-skill\\bin\\flutter_skill.dart", 
+        "dart",
+        "run",
+        "C:\\Users\\Elite-Store\\flutter-skill\\bin\\flutter_skill.dart",
         "server"
       ],
       "enabled": true

@@ -101,6 +101,10 @@ class PatientDocumentsNotifierNotifier
   /// Same decoupled-state pattern as [uploadDocument]: deletion is a
   /// write action whose outcome belongs to the caller, never to the
   /// family's list state.
+  ///
+  /// The repository auto-resolves both storage paths (main file +
+  /// optional thumbnail) from the DB row — the caller only passes
+  /// [documentId].
   Future<Result<void>> deleteDocument(PatientDocument doc) async {
     // Rule 6: Check logged-in user session.
     final Staff? currentUser = ref.read(currentUserProvider).value;
@@ -114,18 +118,10 @@ class PatientDocumentsNotifierNotifier
       );
     }
 
-    // Extract storage path from fileUrl.
-    final String key = 'patient-documents/';
-    final int index = doc.fileUrl.indexOf(key);
-    final String storagePath = index != -1
-        ? Uri.decodeComponent(doc.fileUrl.substring(index + key.length))
-        : '';
-
     final PatientDocumentsRepository repo =
         ref.read(patientDocumentsRepositoryProvider);
     final Result<void> result = await repo.deleteDocument(
       documentId: doc.id,
-      storagePath: storagePath,
     );
     if (!ref.mounted) return result;
 

@@ -25,7 +25,8 @@ abstract class PatientDocumentsRepository {
   ///
   /// For image uploads the bytes are compressed (skipped when already
   /// ≤ 400 KB) and a 320×320 thumbnail is generated and uploaded
-  /// alongside. PDF uploads are byte-pass-through with a size guard.
+  /// alongside (native only — web skips thumbnails to avoid freeze).
+  /// PDF uploads are byte-pass-through with a size guard.
   Future<Result<PatientDocument>> uploadDocument({
     required String patientId,
     required String fileName,
@@ -43,10 +44,14 @@ abstract class PatientDocumentsRepository {
     required String fileName,
   });
 
-  /// Deletes a document record from database and its file from storage.
+  /// Deletes a document record from database and **all** its storage
+  /// objects (main file + optional thumbnail).
+  ///
+  /// The repository reads the row from the database before deleting so
+  /// it knows every blob path to clean up. Callers only pass a
+  /// [documentId]; path extraction is handled internally.
   Future<Result<void>> deleteDocument({
     required String documentId,
-    required String storagePath,
   });
 }
 
@@ -65,7 +70,7 @@ class PatientDocumentsRepositoryImpl implements PatientDocumentsRepository {
   SupabaseClient get _client => Supabase.instance.client;
 
   // Upload size guards.
-  static const int _maxImageBytes = 25 * 1024 * 1024;
+  static const int _maxImageBytes = 10 * 1024 * 1024;
   static const int _maxPdfBytes = 10 * 1024 * 1024;
 
   @override
@@ -88,11 +93,6 @@ class PatientDocumentsRepositoryImpl implements PatientDocumentsRepository {
   }
 
   /// Hard timeout ceiling for any single upload pipeline call.
-  ///
-  /// Acts as the last-line safety net so that an underlying plugin
-  /// deadlock (notably `flutter_image_compress` on web, where
-  /// `compressWithList` can throw `UnimplementedError` or hang) cannot
-  /// trap the caller in a permanent loading state.
   static const Duration _uploadTimeout = Duration(seconds: 30);
 
   @override
@@ -169,7 +169,8 @@ class PatientDocumentsRepositoryImpl implements PatientDocumentsRepository {
         );
       }
 
-      // 2. Image-only: compress (skip if already small) + generate thumb.
+      // 2. Image-only: compress (skip if already small) + generate thumb
+      //    (native only — web needs no separate thumbnail).
       Uint8List uploadBytes = bytes;
       String? thumbnailStoragePath;
       Uint8List? thumbnailBytes;
@@ -178,10 +179,12 @@ class PatientDocumentsRepositoryImpl implements PatientDocumentsRepository {
           source: bytes,
           originalName: fileName,
         );
-        thumbnailBytes = await _compressService.compressForThumbnail(
-          source: bytes,
-          originalName: fileName,
-        );
+        if (!kIsWeb) {
+          thumbnailBytes = await _compressService.compressForThumbnail(
+            source: bytes,
+            originalName: fileName,
+          );
+        }
       }
 
       // 3. Upload to Supabase Storage in 'patient-documents' bucket.
@@ -191,7 +194,7 @@ class PatientDocumentsRepositoryImpl implements PatientDocumentsRepository {
           .from('patient-documents')
           .uploadBinary(storagePath, uploadBytes);
 
-      // 4. Upload thumbnail (same bucket, separate path).
+      // 4. Upload thumbnail (same bucket, separate path) — native only.
       if (thumbnailBytes != null) {
         thumbnailStoragePath =
             '$patientId/${stamp}_thumb_$fileName';
@@ -236,16 +239,6 @@ class PatientDocumentsRepositoryImpl implements PatientDocumentsRepository {
       return Result.failure(e);
       // ignore: avoid_catches_without_on_clauses
     } catch (e) {
-      // Temporary diagnostic — surfaces the actual `Error` type to the
-      // Flutter run-time console / Chrome DevTools console. Remove once
-      // root cause is confirmed.
-      debugPrint('upload-doc throwable: ${e.runtimeType} → $e');
-      // Catches `Error` subtypes that would otherwise escape the future
-      // (e.g. `UnsupportedError` / `UnimplementedError` from
-      // `flutter_image_compress` on web when the platform plugin can't
-      // encode). Mapping to `Result.failure` keeps the AsyncNotifier's
-      // `await` resolvable so the UI can recover instead of spinning
-      // forever.
       return Result.failure(UnknownException(message: e.toString()));
     }
   }
@@ -290,22 +283,61 @@ class PatientDocumentsRepositoryImpl implements PatientDocumentsRepository {
   @override
   Future<Result<void>> deleteDocument({
     required String documentId,
-    required String storagePath,
   }) async {
     try {
-      // 1. Remove from storage first
-      if (storagePath.isNotEmpty) {
-        await _client.storage.from('patient-documents').remove([storagePath]);
+      // 1. Read the row so we know every blob path to remove (main
+      //    file + optional thumbnail). This also makes the call
+      //    idempotent — if the row is already gone (double-tap delete)
+      //    we treat it as success.
+      final Map<String, dynamic>? row = await _client
+          .from('patient_documents')
+          .select('file_url, thumbnail_url')
+          .eq('id', documentId)
+          .maybeSingle();
+
+      final List<String> pathsToRemove = <String>[];
+      if (row != null) {
+        final String? mainPath = _storagePathFromUrl(row['file_url'] as String?);
+        if (mainPath != null && mainPath.isNotEmpty) {
+          pathsToRemove.add(mainPath);
+        }
+        final String? thumbPath =
+            _storagePathFromUrl(row['thumbnail_url'] as String?);
+        if (thumbPath != null && thumbPath.isNotEmpty) {
+          pathsToRemove.add(thumbPath);
+        }
       }
-      // 2. Delete the record row
+
+      // 2. Remove all blobs from storage.
+      if (pathsToRemove.isNotEmpty) {
+        await _client.storage
+            .from('patient-documents')
+            .remove(pathsToRemove);
+      }
+
+      // 3. Delete the database row.
       await _client.from('patient_documents').delete().eq('id', documentId);
       return const Result.success(null);
-    } on PostgrestException catch (e) {
-      return Result.failure(AppException.fromSupabaseException(e));
     } on StorageException catch (e) {
       return Result.failure(AppException.fromSupabaseException(e));
-    } on Exception catch (e) {
+    } on PostgrestException catch (e) {
       return Result.failure(AppException.fromSupabaseException(e));
+      // ignore: avoid_catches_without_on_clauses
+    } catch (e) {
+      return Result.failure(UnknownException(message: e.toString()));
     }
+  }
+
+  /// Extracts the relative storage path from a public URL.
+  ///
+  /// Same `indexOf('patient-documents/')` pattern used everywhere in
+  /// this repo — works whether the URL is `object/public/...`,
+  /// `object/sign/...`, or any prefix variant.
+  static String? _storagePathFromUrl(String? url) {
+    if (url == null) return null;
+    const String key = 'patient-documents/';
+    final int idx = url.indexOf(key);
+    if (idx == -1) return null;
+    return Uri.decodeComponent(url.substring(idx + key.length));
   }
 }

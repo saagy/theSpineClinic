@@ -77,5 +77,18 @@ abstract class PatientRepository {
     String? doctorId,
     ClinicLocation? clinic,
   });
+
+  /// Checks whether a patient has zero related records across
+  /// appointments, payments, notes, and documents.
+  ///
+  /// Used to guard hard deletion — only empty patients may be deleted.
+  Future<Result<bool>> isPatientEmpty(String patientId);
+
+  /// Permanently deletes a patient record by its ID.
+  ///
+  /// Database cascades automatically clean up [patient_doctors] rows.
+  /// Callers must ensure the patient has no appointments, payments,
+  /// notes, or documents before invoking this method.
+  Future<Result<void>> deletePatient(String patientId);
 }
 
