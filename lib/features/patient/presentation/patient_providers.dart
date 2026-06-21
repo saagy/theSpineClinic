@@ -18,6 +18,7 @@ import 'package:spine_clinic_app/features/patient/data/patient_repository_impl.d
 import 'package:spine_clinic_app/features/patient/domain/clinic_location.dart';
 import 'package:spine_clinic_app/features/patient/domain/patient.dart';
 import 'package:spine_clinic_app/features/patient/domain/patient_repository.dart';
+import 'package:spine_clinic_app/features/patient/presentation/patient_documents_providers.dart';
 
 part 'patient_providers.g.dart';
 
@@ -26,6 +27,7 @@ part 'patient_providers.g.dart';
 PatientRepository patientRepository(Ref ref) {
   return PatientRepositoryImpl(
     supabaseService: SupabaseService.instance,
+    documentsRepository: ref.read(patientDocumentsRepositoryProvider),
   );
 }
 

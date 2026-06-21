@@ -571,4 +571,11 @@ abstract final class AppStrings {
   static const String packageFilterAll = 'All';
   static const String packageFilterPackage = 'Package';
   static const String packageFilterNoPackage = 'No Package';
+
+  // ── Patient Pill Access (appointment detail header) ──
+  static const String patientPillAccessExpired =
+      'Access to this patient has expired. Tap is only allowed within '
+      '7 days before or 1 day after a shared appointment.';
+  static const String patientPillAccessNotAuthenticated =
+      'Sign in to view this patient.';
 }

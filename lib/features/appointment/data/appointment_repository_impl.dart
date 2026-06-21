@@ -1,6 +1,7 @@
 import 'package:spine_clinic_app/core/errors/app_exception.dart';
 import 'package:spine_clinic_app/core/errors/result.dart';
 import 'package:spine_clinic_app/core/network/supabase_service.dart';
+import 'package:spine_clinic_app/features/appointment/data/appointment_repository_recent_access.dart';
 import 'package:spine_clinic_app/features/appointment/domain/appointment.dart';
 import 'package:spine_clinic_app/features/appointment/domain/appointment_doctor.dart';
 import 'package:spine_clinic_app/features/appointment/domain/appointment_repository.dart';
@@ -573,5 +574,17 @@ class AppointmentRepositoryImpl implements AppointmentRepository {
         await _service.from(_appointmentDoctorsTable).insert(rowsToInsert);
       }
     });
+  }
+
+  @override
+  Future<Result<bool>> hasDoctorRecentAppointmentWithPatient({
+    required String patientId,
+    required String doctorId,
+  }) {
+    return checkRecentDoctorPatientAppointment(
+      service: _service,
+      patientId: patientId,
+      doctorId: doctorId,
+    );
   }
 }

@@ -15,18 +15,16 @@ import 'package:spine_clinic_app/core/errors/app_exception.dart';
 import 'package:spine_clinic_app/core/errors/result.dart';
 import 'package:spine_clinic_app/features/auth/domain/staff.dart';
 import 'package:spine_clinic_app/features/auth/presentation/auth_providers.dart';
-import 'package:spine_clinic_app/features/patient/data/image_compress_service.dart';
 import 'package:spine_clinic_app/features/patient/data/patient_documents_repository.dart';
 import 'package:spine_clinic_app/features/patient/domain/patient_document.dart';
+import 'package:spine_clinic_app/features/patient/domain/patient_documents_repository.dart';
 
 part 'patient_documents_providers.g.dart';
 
 /// Provides a singleton [PatientDocumentsRepository] instance.
 @Riverpod(keepAlive: true)
 PatientDocumentsRepository patientDocumentsRepository(Ref ref) {
-  return PatientDocumentsRepositoryImpl(
-    compressService: ref.read(imageCompressServiceProvider),
-  );
+  return PatientDocumentsRepositoryImpl();
 }
 
 /// Family AsyncNotifier managing the document list state for a patient.
@@ -102,11 +100,13 @@ class PatientDocumentsNotifierNotifier
   /// write action whose outcome belongs to the caller, never to the
   /// family's list state.
   ///
-  /// The repository auto-resolves both storage paths (main file +
-  /// optional thumbnail) from the DB row — the caller only passes
-  /// [documentId].
+  /// Authorization is enforced at the DB layer via the
+  /// `patient_documents` DELETE RLS policy (any active staff member
+  /// with read access to the patient row can delete its documents).
+  /// The notifier only verifies a session exists.
   Future<Result<void>> deleteDocument(PatientDocument doc) async {
-    // Rule 6: Check logged-in user session.
+    // Rule 6: Check logged-in user session. Per-role authorization
+    // is enforced by RLS at delete time.
     final Staff? currentUser = ref.read(currentUserProvider).value;
     if (currentUser == null) {
       return const Result.failure(

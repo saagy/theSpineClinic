@@ -29,7 +29,6 @@ dependencies:
   intl: ^0.20.0
   flutter_form_builder: ^10.3.0+2
   form_builder_validators: ^11.3.0
-  path_provider: ^2.1.5
   path: ^1.9.1
   shared_preferences: ^2.5.5
   open_filex: ^4.7.0
@@ -38,8 +37,6 @@ dependencies:
   google_nav_bar: ^5.0.7
   auto_size_text: ^3.0.0
   pdfrx: ^2.4.4
-  flutter_image_compress: ^2.4.0
-  image: ^4.9.1
   meta: ^1.18.0
 
 dev_dependencies:

@@ -7,14 +7,20 @@ import 'package:spine_clinic_app/core/utils/patient_helpers.dart';
 import 'package:spine_clinic_app/features/patient/data/patient_repository_queries.dart';
 import 'package:spine_clinic_app/features/patient/domain/clinic_location.dart';
 import 'package:spine_clinic_app/features/patient/domain/patient.dart';
+import 'package:spine_clinic_app/features/patient/domain/patient_documents_repository.dart';
 import 'package:spine_clinic_app/features/patient/domain/patient_repository.dart';
 
 /// Supabase-backed implementation of [PatientRepository].
 class PatientRepositoryImpl implements PatientRepository {
   /// Creates a [PatientRepositoryImpl].
-  PatientRepositoryImpl({required SupabaseService supabaseService}) : _service = supabaseService;
+  PatientRepositoryImpl({
+    required SupabaseService supabaseService,
+    required PatientDocumentsRepository documentsRepository,
+  })  : _service = supabaseService,
+        _documentsRepo = documentsRepository;
 
   final SupabaseService _service;
+  final PatientDocumentsRepository _documentsRepo;
   late final PatientRepositoryQueries _queries = PatientRepositoryQueries(_service);
   static const String _table = 'patients';
   static const String _doctorsTable = 'patient_doctors';
@@ -188,6 +194,11 @@ class PatientRepositoryImpl implements PatientRepository {
   @override
   Future<Result<void>> deletePatient(String patientId) async {
     try {
+      // Safety-net: sweep the patient's storage folder BEFORE the DB
+      // row delete. The UI guard `isPatientEmpty` should already
+      // prevent this running with active documents, but this catches
+      // orphaned blobs from earlier upload failures.
+      await _documentsRepo.deletePatientStorageFolder(patientId);
       await _service.guardQuery(() => _service.from(_table).delete().eq('id', patientId));
       return const Result.success(null);
     } on AppException catch (e) {

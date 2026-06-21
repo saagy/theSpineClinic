@@ -162,6 +162,18 @@ abstract class AppointmentRepository {
     List<String> doctorIds,
     String? editorId,
   );
+
+  /// Returns true if there is at least one active [AppointmentDoctor] row
+  /// linking [doctorId] to [patientId] where the joined `appointments.scheduled_at`
+  /// falls inside the patient-access window (default 7 days before / 1 day after).
+  ///
+  /// Examines ALL appointments between the doctor and the patient, not just
+  /// a specific appointment id, so the doctor retains ad-hoc access during
+  /// the window even when viewing an appointment detail screen.
+  Future<Result<bool>> hasDoctorRecentAppointmentWithPatient({
+    required String patientId,
+    required String doctorId,
+  });
 }
 
 /// Helper domain model wrapping a doctor's active appointment assignment
