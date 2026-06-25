@@ -189,8 +189,8 @@ List<RouteBase> _buildRoutes(Ref ref) {
       pageBuilder: (BuildContext context, GoRouterState state, Widget child) {
         final Staff? user = ref.read(currentUserProvider).value;
         final String role = user?.role.dbValue ?? 'receptionist';
-        final int activeIndex = _resolveActiveIndex(role, state.matchedLocation);
-        final bool isSubPage = _isSubPage(state.matchedLocation);
+        final int activeIndex = _resolveActiveIndex(role, state.uri.path);
+        final bool isSubPage = _isSubPage(state.uri.path);
 
         return NoTransitionPage(
           child: _SessionGuard(

@@ -63,12 +63,31 @@ class AppointmentScheduleCard extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: AppSizes.p4),
-                    Text(
-                      appointment.usePackage ? 'Using Package' : 'No Package',
-                      style: AppTextStyles.bodySecondary.copyWith(
-                        color: AppColors.textSecondary,
+                    if (appointment.usePackage)
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: AppSizes.p8,
+                          vertical: AppSizes.p2,
+                        ),
+                        decoration: const BoxDecoration(
+                          color: AppColors.primaryLight,
+                          borderRadius: BorderRadius.all(Radius.circular(AppSizes.r4)),
+                        ),
+                        child: Text(
+                          'Using Package',
+                          style: AppTextStyles.captionBold.copyWith(
+                            color: AppColors.primary,
+                            fontSize: 11,
+                          ),
+                        ),
+                      )
+                    else
+                      Text(
+                        'No Package',
+                        style: AppTextStyles.bodySecondary.copyWith(
+                          color: AppColors.textSecondary,
+                        ),
                       ),
-                    ),
                   ],
                 ),
               ),
