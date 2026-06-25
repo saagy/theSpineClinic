@@ -52,31 +52,37 @@ class SortFilterBar extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           // ── Sort button ──
-          InkWell(
-            onTap: onSortTap,
-            borderRadius:
-                const BorderRadius.all(Radius.circular(AppSizes.r8)),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(
-                horizontal: AppSizes.p8,
-                vertical: AppSizes.p6,
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Icon(
-                    Icons.swap_vert_rounded,
-                    color: AppColors.primary,
-                    size: AppSizes.iconDefault,
-                  ),
-                  const SizedBox(width: AppSizes.p4),
-                  Text(
-                    sortLabel,
-                    style: AppTextStyles.bodyMedium.copyWith(
+          Flexible(
+            child: InkWell(
+              onTap: onSortTap,
+              borderRadius:
+                  const BorderRadius.all(Radius.circular(AppSizes.r8)),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: AppSizes.p8,
+                  vertical: AppSizes.p6,
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(
+                      Icons.swap_vert_rounded,
                       color: AppColors.primary,
+                      size: AppSizes.iconDefault,
                     ),
-                  ),
-                ],
+                    const SizedBox(width: AppSizes.p4),
+                    Flexible(
+                      child: Text(
+                        sortLabel,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: AppTextStyles.bodyMedium.copyWith(
+                          color: AppColors.primary,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
           ),

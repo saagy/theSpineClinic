@@ -34,7 +34,7 @@ dependencies:
   open_filex: ^4.7.0
   google_fonts: ^6.2.1
   flutter_animate: ^4.5.2
-  google_nav_bar: ^5.0.7
+
   auto_size_text: ^3.0.0
   pdfrx: ^2.4.4
   meta: ^1.18.0

@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:spine_clinic_app/core/constants/app_colors.dart';
 import 'package:spine_clinic_app/core/constants/app_sizes.dart';
 import 'package:spine_clinic_app/core/constants/app_strings.dart';
 import 'package:spine_clinic_app/core/constants/app_text_styles.dart';
@@ -54,6 +53,14 @@ class _DoctorSearchSheetState extends State<DoctorSearchSheet> {
 
   void _toggle(Staff doctor) {
     final isSelected = _selectedIds.contains(doctor.id);
+    if (isSelected && _selectedIds.length == 1) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(AppStrings.atLeastOneDoctorRequired),
+        ),
+      );
+      return;
+    }
     setState(() {
       if (isSelected) {
         _selectedIds.remove(doctor.id);
@@ -104,6 +111,8 @@ class _DoctorSearchSheetState extends State<DoctorSearchSheet> {
   Widget build(BuildContext context) {
     final bottom = MediaQuery.of(context).viewInsets.bottom;
     final filtered = _filtered();
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
 
     return Padding(
       padding: EdgeInsets.fromLTRB(0, AppSizes.p16, 0, bottom),
@@ -116,7 +125,7 @@ class _DoctorSearchSheetState extends State<DoctorSearchSheet> {
               width: 36,
               height: 4,
               decoration: BoxDecoration(
-                color: AppColors.border,
+                color: colorScheme.outlineVariant,
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
@@ -137,10 +146,10 @@ class _DoctorSearchSheetState extends State<DoctorSearchSheet> {
               decoration: InputDecoration(
                 hintText: AppStrings.searchDoctorsHint,
                 hintStyle: AppTextStyles.bodySecondary,
-                prefixIcon: const Icon(Icons.search_rounded,
-                    color: AppColors.primary, size: AppSizes.iconDefault),
+                prefixIcon: Icon(Icons.search_rounded,
+                    color: colorScheme.primary, size: AppSizes.iconDefault),
                 filled: true,
-                fillColor: AppColors.background,
+                fillColor: colorScheme.surface,
                 contentPadding: AppSizes.paddingCell,
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(AppSizes.r12),

@@ -87,6 +87,8 @@ class SpineClinicApp extends ConsumerWidget {
       seedColor: AppColors.primary,
       primary: AppColors.primary,
       onPrimary: AppColors.textOnPrimary,
+      primaryContainer: AppColors.primaryLight,
+      onPrimaryContainer: AppColors.primaryDeep,
       surface: AppColors.surface,
       onSurface: AppColors.textPrimary,
       error: AppColors.error,
@@ -227,15 +229,53 @@ class SpineClinicApp extends ConsumerWidget {
         checkmarkColor: AppColors.textOnPrimary,
       ),
 
-      // ── Bottom Navigation ──
-      bottomNavigationBarTheme: BottomNavigationBarThemeData(
-        backgroundColor: AppColors.surface,
-        selectedItemColor: AppColors.primary,
-        unselectedItemColor: AppColors.textMuted,
-        type: BottomNavigationBarType.fixed,
+      // ── Navigation Bar (M3 — mobile) ──
+      navigationBarTheme: NavigationBarThemeData(
+        backgroundColor: colorScheme.surfaceContainer,
+        indicatorColor: colorScheme.primaryContainer,
+        surfaceTintColor: AppColors.transparent,
         elevation: 0,
-        selectedLabelStyle: AppTextStyles.captionBold,
-        unselectedLabelStyle: AppTextStyles.caption,
+        height: AppSizes.bottomNavHeight,
+        labelTextStyle: WidgetStateProperty.resolveWith((states) {
+          if (states.contains(WidgetState.selected)) {
+            return AppTextStyles.captionBold
+                .copyWith(color: colorScheme.onPrimaryContainer);
+          }
+          return AppTextStyles.caption
+              .copyWith(color: colorScheme.onSurfaceVariant);
+        }),
+        iconTheme: WidgetStateProperty.resolveWith((states) {
+          if (states.contains(WidgetState.selected)) {
+            return IconThemeData(
+              color: colorScheme.onPrimaryContainer,
+              size: AppSizes.iconDefault,
+            );
+          }
+          return IconThemeData(
+            color: colorScheme.onSurfaceVariant,
+            size: AppSizes.iconDefault,
+          );
+        }),
+      ),
+
+      // ── Navigation Rail (M3 — desktop) ──
+      navigationRailTheme: NavigationRailThemeData(
+        backgroundColor: colorScheme.surface,
+        indicatorColor: colorScheme.primaryContainer,
+        selectedIconTheme: IconThemeData(
+          color: colorScheme.onPrimaryContainer,
+          size: AppSizes.iconDefault,
+        ),
+        unselectedIconTheme: IconThemeData(
+          color: colorScheme.onSurfaceVariant,
+          size: AppSizes.iconDefault,
+        ),
+        selectedLabelTextStyle: AppTextStyles.captionBold
+            .copyWith(color: colorScheme.onPrimaryContainer),
+        unselectedLabelTextStyle: AppTextStyles.caption
+            .copyWith(color: colorScheme.onSurfaceVariant),
+        elevation: 0,
+        minWidth: AppSizes.navRailWidth,
       ),
 
       // ── Dialogs ──

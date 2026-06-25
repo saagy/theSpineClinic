@@ -1,9 +1,9 @@
 ## Inviolable Code & UI Rules
-1. **Strict File Length Limit:** No file longer than 200 lines. Split components or files immediately if they grow past this threshold.
+1. **Strict File Length Limit:** No file longer than 200 lines. Split components or files immediately if they grow past this threshold. (Slightly flexible, if a file is slightly over then it's ok)
 2. **Encapsulated Data Access:** No Supabase or database engine calls directly inside widgets. All data access must reside exclusively inside repository classes.
-3. **Unified State Management:** Manage all application state via Riverpod. Never use `setState` except for trivial, localized UI micro-animations.
+3. **Unified State Management:** Manage all application state via Riverpod. `setState` is acceptable for widget-local state only: form submission flags (`_isSubmitting`), input toggles (password visibility), date/filter selections within a single sheet or form, and expand/collapse animations. All shared, cross-screen, or repository-backed state must go through Riverpod providers.
 4. **Type-Safe Async Architecture:** Every asynchronous repository function must return a `Result<T>` wrapper rather than a raw `Future<T>`.
-5. **Strict Static Typing:** No dynamic types. Never use `var` where the type is ambiguous. Zero usage of the `dynamic` keyword.
+5. **Strict Static Typing:** No `dynamic` as a variable or return type where a concrete type is known. `Map<String, dynamic>` for JSON deserialization (`fromJson`/`toJson`, Supabase query rows) is expected and acceptable — this is the standard Dart serialization pattern. Never use `var` where the type is ambiguous.
 6. **Role-Based Security Verification:** Every user action that writes or modifies data must explicitly verify roles and permissions via the `currentUserProvider`.
 7. **Zero Hardcoded Strings:** All localized text, labels, and system messages must be sourced via the `AppStrings` constants class.
 8. **Semantic Size Mapping:** No hardcoded layout sizing parameters. Dimensions must map completely to layout configurations inside the `AppSizes` token file.
@@ -13,11 +13,15 @@
 12. **Debounced Network Queries:** Any interactive text search input or real-time filter execution hitting a Repository or Supabase must utilize a minimum 300ms debounce pattern via Riverpod or an explicit debouncer mechanism. Never trigger database operations on individual keystrokes.
 13. **Modern Component Spacing:** Zero usage of raw `Divider()` lines between list components. Every list item row must be configured as a distinct Material 3 container/card element styled with uniform `BorderRadius.circular(16)`. Every row or card target must enforce a minimum internal layout padding of `EdgeInsets.all(16)` for physical touch comfort.
 14. **Clean Mobile Control Layouts:** Never stack more than two filter inputs or dropdown controls vertically directly on a main screen surface. If a feature demands deeper control variables (e.g., Doctor, Status, Date Ranges), implement a horizontal scrolling row of Material 3 `ChoiceChip` components for primary selectors, alongside a trailing button that opens a structured `showModalBottomSheet`.
-15. **Context-Driven Theme Tokens:** Zero usage of absolute color constants from `AppColors` directly within styling or visual component declarations. All component coloring parameters must be mapped dynamically from the active runtime theme context (e.g., `Theme.of(context).colorScheme.surfaceContainer` or `Theme.of(context).colorScheme.onSurface`) to ensure instant system theme compliance.
+15. **Context-Driven Theme Tokens:** Zero usage of absolute color constants from `AppColors` directly within widget styling or visual component declarations. `AppColors` constants are seed values for `ThemeData` construction in `main.dart` only. Widgets must never reference `AppColors` directly — use `Theme.of(context).colorScheme.*` or component theme defaults to ensure instant system theme and light/dark mode compliance.
 16. **Design System Compliance:** Zero usage of raw color values or hardcoded
     hex codes in any widget. All colors must come from the active theme via
     Theme.of(context). All spacing must reference AppSizes tokens. All text
     styles must reference AppTextStyles.
+    *Legacy note: The codebase currently has 100+ `AppColors` references inside
+    widget files. These are legacy violations. When touching a file for any
+    reason, migrate its color references to `Theme.of(context)`. Do not
+    introduce new `AppColors` references in widgets.*
 17. **Component Reuse Mandate:** Before building any new visual element, check
     shared/widgets/ first. If a suitable component exists, use it. If a new
     pattern is needed, build it in shared/widgets/ first, then use it. Never
@@ -77,17 +81,20 @@
     }
     ```
 
-27. **Status Callback Wiring:** Every screen that uses `ReceptionistAppointmentCard`
-    with `showMenu: true` (the default) MUST pass an `onStatusChanged` callback
-    that refreshes that screen's data source. The callback chain must be
-    unbroken: Screen → tab widget → day list → every card. A missing callback
-    means status changes disappear until the user manually pulls to refresh.
-    Pattern:
-    ```dart
-    // Screen
-    onStatusChanged: () => ref.read(myProvider.notifier).refresh()
-    // Widget accepts VoidCallback? onStatusChanged and forwards to card
-    ```
+## Known Gotchas
+
+### Status Callback Wiring
+Every screen that uses `ReceptionistAppointmentCard` with `showMenu: true`
+(the default) MUST pass an `onStatusChanged` callback that refreshes that
+screen's data source. The callback chain must be unbroken: Screen → tab
+widget → day list → every card. A missing callback means status changes
+disappear until the user manually pulls to refresh.
+```dart
+// Screen
+onStatusChanged: () => ref.read(myProvider.notifier).refresh()
+// Widget accepts VoidCallback? onStatusChanged and forwards to card
+```
+
 ## 2. Data Flow Contract
 
 Every feature must follow this exact flow. No shortcuts.
@@ -104,18 +111,24 @@ Repository Implementation (data layer, calls SupabaseService)
 SupabaseService (core/network, wraps Supabase client)
   ↓
 Supabase (database + RLS enforces access)
+```
 
 ## 3. Folder Structure
 Every file must live inside this exact structure. Never create folders
 outside it. Never place business logic in presentation. Never place
 Supabase calls in widgets.
 
+Every feature folder follows the same `data/domain/presentation` layering:
+`data/` for repository implementations and DTOs, `domain/` for Freezed models
+and repository interfaces, `presentation/` for screens, providers, and notifiers.
+
 ```
 lib/
 ├── core/
 │   ├── constants/       # AppColors, AppSizes, AppStrings, AppTextStyles
 │   ├── errors/          # AppException, Failure types, Result<T>
-│   ├── network/         # Supabase client singleton, SupabaseService
+│   ├── network/         # Supabase client singleton, SupabaseService,
+│   │                    # app router & routes
 │   └── utils/           # formatDate, formatCurrency, formatPhone
 ├── shared/
 │   └── widgets/         # AppButton, AppTextField, AppSearchBar,
@@ -124,28 +137,35 @@ lib/
 │                        # SectionCard, DataListTile, InfoRow,
 │                        # AppBottomSheet, AppBottomNav, AppShell
 └── features/
-    ├── auth/
-    ├── patient/
-    ├── appointment/
-    ├── medical_records/
-    ├── payments/
-    ├── replacements/
-    ├── staff/
-    └── admin/
-        ├── data/         # DTOs, repository implementations
-        ├── domain/       # Freezed models, repository interfaces
-        └── presentation/ # Screens, providers, notifiers
+    ├── auth/            # data/ domain/ presentation/
+    ├── patient/         # data/ domain/ presentation/
+    ├── appointment/     # data/ domain/ presentation/
+    ├── medical_records/ # data/ domain/ presentation/
+    ├── payments/        # data/ domain/ presentation/
+    ├── staff/           # data/ domain/ presentation/
+    └── admin/           # data/ domain/ presentation/
+# replacements/ — on hold, may return in future
+```
 
 ## Development Rules
 - ALWAYS run `flutter analyze` immediately after rewriting logic or files.
 - If an automated edit breaks compiling, stop and fix the core structural files first.
 - Keep components modular. Do not merge visual presentation with database models.
+- Providers are created via `@riverpod` annotations and `riverpod_generator`.
+  Never hand-write Provider classes — use the annotation pattern and run
+  `build_runner` to generate `.g.dart` files.
+
 ## Build & Test Commands
 - Check compilation/errors: `flutter analyze`
 - Run local tests: `flutter test`
 - Get dependencies: `flutter pub get`
+- Regenerate code (after editing Freezed models or Riverpod providers):
+  `dart run build_runner build --delete-conflicting-outputs`
 
-## Full Data Schema At AGENT_CONTEXT.md
+## Data Sources
+- **Schema Docs (agent-readable):** `docs/database-schema.md` — full DB reference (tables, columns, enums, RLS, functions, business rules, model mapping)
+- **Schema DDL (recreation):** `supabase/full_schema.sql` — run this to recreate the DB schema from scratch
+- **Migrations:** `supabase/migrations/` — incremental changes (not comprehensive)
 
 ## Design Reference
 Target aesthetic: Medics Medical App UI Kit vibe.

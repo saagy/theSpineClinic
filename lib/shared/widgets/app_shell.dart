@@ -1,26 +1,25 @@
-/// Master scaffold shell with branded AppBar and floating capsule navigation.
+/// Master scaffold shell — adaptive navigation.
 ///
-/// Uses [Scaffold.bottomNavigationBar] so that modal bottom sheets
-/// (e.g. quick-action FAB menus) render above the nav bar instead of
-/// being obscured by a Stack-positioned overlay.
+/// Narrow (<600 px): M3 [NavigationBar] at the bottom.
+/// Wide (>=600 px): M3 [NavigationRail] on the left, content fills the rest.
 ///
-/// Rule 1 — under 200 lines.
+/// Rule 1 — under 200 lines. Rule 15/16 — theme-driven colors.
 library;
 
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:spine_clinic_app/core/constants/app_colors.dart';
 import 'package:spine_clinic_app/core/constants/app_sizes.dart';
 import 'package:spine_clinic_app/core/constants/app_strings.dart';
 import 'package:spine_clinic_app/core/constants/app_text_styles.dart';
 import 'package:spine_clinic_app/core/network/app_routes.dart';
-import 'package:spine_clinic_app/shared/widgets/app_bottom_nav.dart';
+import 'package:spine_clinic_app/shared/widgets/app_nav_bar.dart';
+import 'package:spine_clinic_app/shared/widgets/app_nav_rail.dart';
 import 'package:spine_clinic_app/shared/widgets/loading_overlay.dart';
 
-/// Root application shell with branded AppBar and floating capsule bottom nav.
+/// Root application shell with adaptive navigation.
 ///
-/// When [showBrandedAppBar] is false, the shell renders only the bottom
-/// navigation — sub-page screens provide their own [Scaffold] + [AppBar].
+/// When [showBrandedAppBar] is false, the shell renders only the navigation
+/// — sub-page screens provide their own [Scaffold] + [AppBar].
 class AppShell extends StatelessWidget {
   const AppShell({
     super.key,
@@ -38,68 +37,101 @@ class AppShell extends StatelessWidget {
   final String userRole;
   final bool isGlobalLoading;
   final List<Widget>? actions;
-
-  /// Whether to render the branded [AppBar]. Set false for sub-pages that
-  /// carry their own titled [AppBar] to avoid stacking two AppBars.
   final bool showBrandedAppBar;
+
+  static const double _wideBreakpoint = 600;
 
   @override
   Widget build(BuildContext context) {
     return LoadingOverlay(
       isLoading: isGlobalLoading,
-      child: Scaffold(
-        backgroundColor: AppColors.background,
-        appBar: showBrandedAppBar ? _buildAppBar() : null,
-        body: child,
-        bottomNavigationBar: AppBottomNav(
-          currentTabIndex: currentTabIndex,
-          onTabSelected: onTabSelected,
-          userRole: userRole,
-        ),
+      child: LayoutBuilder(
+        builder: (context, constraints) => constraints.maxWidth >= _wideBreakpoint
+            ? _buildWide(context)
+            : _buildNarrow(context),
       ),
     );
   }
 
-  PreferredSizeWidget _buildAppBar() {
-    return PreferredSize(
-      preferredSize: const Size.fromHeight(AppSizes.appBarHeight),
-      child: Container(
-        height: AppSizes.appBarHeight,
-        decoration: const BoxDecoration(color: AppColors.surface),
-        child: SafeArea(
-          bottom: false,
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: AppSizes.p20),
-            child: Row(children: [
-              Container(
-                width: AppSizes.iconDefault + 4,
-                height: AppSizes.iconDefault + 4,
-                decoration: BoxDecoration(
-                  color: AppColors.primary,
-                  borderRadius:
-                      const BorderRadius.all(Radius.circular(AppSizes.r8)),
-                ),
-                child: const Icon(Icons.spa_rounded,
-                    color: AppColors.textOnPrimary,
-                    size: AppSizes.iconDefault),
-              ),
-              const SizedBox(width: AppSizes.p12),
-              Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(AppStrings.appName, style: AppTextStyles.brand),
-                  Text(AppStrings.appTagline,
-                      style: AppTextStyles.caption
-                          .copyWith(color: AppColors.textMuted)),
-                ],
-              ),
-              const Spacer(),
-              _HomeButton(userRole: userRole),
-              if (actions != null && actions!.isNotEmpty)
-                Row(mainAxisSize: MainAxisSize.min, children: actions!),
-            ]),
+  Widget _buildWide(BuildContext context) {
+    return Scaffold(
+      body: Row(children: [
+        AppNavRail(
+          currentIndex: currentTabIndex,
+          onTabSelected: onTabSelected,
+          userRole: userRole,
+        ),
+        Expanded(
+          child: Scaffold(
+            appBar: showBrandedAppBar
+                ? _BrandedAppBar(userRole: userRole, actions: actions)
+                : null,
+            body: child,
           ),
+        ),
+      ]),
+    );
+  }
+
+  Widget _buildNarrow(BuildContext context) {
+    return Scaffold(
+      appBar: showBrandedAppBar
+          ? _BrandedAppBar(userRole: userRole, actions: actions)
+          : null,
+      body: child,
+      bottomNavigationBar: AppNavBar(
+        currentIndex: currentTabIndex,
+        onTabSelected: onTabSelected,
+        userRole: userRole,
+      ),
+    );
+  }
+}
+
+class _BrandedAppBar extends StatelessWidget implements PreferredSizeWidget {
+  const _BrandedAppBar({required this.userRole, this.actions});
+  final String userRole;
+  final List<Widget>? actions;
+
+  @override
+  Size get preferredSize => const Size.fromHeight(AppSizes.appBarHeight);
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    return Container(
+      height: AppSizes.appBarHeight,
+      color: cs.surface,
+      child: SafeArea(
+        bottom: false,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: AppSizes.p20),
+          child: Row(children: [
+            Container(
+              width: AppSizes.iconDefault + AppSizes.p4,
+              height: AppSizes.iconDefault + AppSizes.p4,
+              decoration: BoxDecoration(
+                color: cs.primary,
+                borderRadius: BorderRadius.circular(AppSizes.r8),
+              ),
+              child: Icon(Icons.spa_rounded,
+                  color: cs.onPrimary, size: AppSizes.iconDefault),
+            ),
+            const SizedBox(width: AppSizes.p12),
+            Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(AppStrings.appName, style: AppTextStyles.brand),
+                Text(AppStrings.appTagline,
+                    style: AppTextStyles.caption
+                        .copyWith(color: cs.onSurfaceVariant)),
+              ],
+            ),
+            const Spacer(),
+            _HomeButton(userRole: userRole),
+            if (actions != null && actions!.isNotEmpty) ...actions!,
+          ]),
         ),
       ),
     );
@@ -113,15 +145,16 @@ class _HomeButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return IconButton(
-      icon: const Icon(Icons.home_rounded, color: AppColors.primary),
+      icon: Icon(Icons.home_rounded,
+          color: Theme.of(context).colorScheme.primary),
       tooltip: 'Home',
       onPressed: () => context.go(_homeRoute),
     );
   }
 
   String get _homeRoute => switch (userRole) {
-    'doctor' => AppRoutes.schedule,
-    'super_admin' => AppRoutes.schedule,
-    _ => AppRoutes.allAppointments,
-  };
+        'doctor' => AppRoutes.schedule,
+        'super_admin' => AppRoutes.schedule,
+        _ => AppRoutes.allAppointments,
+      };
 }

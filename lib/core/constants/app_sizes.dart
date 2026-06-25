@@ -119,8 +119,8 @@ abstract final class AppSizes {
   /// App bar / top navigation bar height.
   static const double appBarHeight = 56.0;
 
-  /// Bottom navigation bar height.
-  static const double bottomNavHeight = 60.0;
+  /// Bottom navigation bar height (M3 NavigationBar standard).
+  static const double bottomNavHeight = 80.0;
 
   /// Side-navigation rail width (collapsed).
   static const double navRailWidth = 72.0;

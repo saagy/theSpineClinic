@@ -29,20 +29,20 @@ class PatientSearchFilters extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Row(
+          Wrap(
+            spacing: AppSizes.p8,
+            runSpacing: AppSizes.p8,
             children: [
               _FilterChip(
                 label: AppStrings.all,
                 selected: selectedClinic == null,
                 onTap: () => onClinicSelected(null),
               ),
-              const SizedBox(width: AppSizes.p8),
               _FilterChip(
                 label: AppStrings.clinicTagamoa,
                 selected: selectedClinic == ClinicLocation.tagamoa,
                 onTap: () => onClinicSelected(ClinicLocation.tagamoa),
               ),
-              const SizedBox(width: AppSizes.p8),
               _FilterChip(
                 label: AppStrings.clinicMasrElgedida,
                 selected: selectedClinic == ClinicLocation.masrElgedida,

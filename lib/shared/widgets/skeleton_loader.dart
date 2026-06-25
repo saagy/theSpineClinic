@@ -130,11 +130,10 @@ class SkeletonTileList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
+    return ListView.builder(
       padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: Column(
-        children: List.generate(count, (_) => const SkeletonListTile()),
-      ),
+      itemCount: count,
+      itemBuilder: (context, index) => const SkeletonListTile(),
     );
   }
 }

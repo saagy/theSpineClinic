@@ -603,4 +603,7 @@ abstract final class AppStrings {
       '7 days before or 1 day after a shared appointment.';
   static const String patientPillAccessNotAuthenticated =
       'Sign in to view this patient.';
+
+  static const String collapse = 'Collapse';
 }
+
