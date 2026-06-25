@@ -30,7 +30,7 @@ class AppointmentDoctorsSection extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.fromLTRB(
         AppSizes.p24,
-        AppSizes.p8,
+        AppSizes.p2,
         AppSizes.p24,
         AppSizes.p8,
       ),

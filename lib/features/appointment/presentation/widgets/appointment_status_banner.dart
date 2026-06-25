@@ -24,39 +24,39 @@ class AppointmentStatusBanner extends StatelessWidget {
 
     switch (status) {
       case AppointmentStatus.scheduled:
-        bg = AppColors.infoBg;
-        fg = AppColors.info;
+        bg = AppColors.neutralBg;
+        fg = AppColors.neutral;
         icon = Icons.schedule_rounded;
         title = 'Scheduled';
-        description = 'Patient is expected for their session.';
+        description = 'Patient expected.';
         break;
       case AppointmentStatus.checkedIn:
         bg = AppColors.successBg;
         fg = AppColors.success;
         icon = Icons.check_circle_outline_rounded;
         title = 'Checked In';
-        description = 'Patient has arrived and is ready for treatment.';
+        description = 'Patient has arrived.';
         break;
       case AppointmentStatus.cancelled:
         bg = AppColors.errorBg;
         fg = AppColors.error;
         icon = Icons.cancel_outlined;
         title = 'Cancelled';
-        description = 'This appointment was cancelled.';
+        description = 'Appointment cancelled.';
         break;
       case AppointmentStatus.completed:
         bg = colorScheme.surface;
         fg = AppColors.textSecondary;
         icon = Icons.task_alt_rounded;
         title = 'Completed';
-        description = 'This treatment session has been completed.';
+        description = 'Session finished.';
         break;
       case AppointmentStatus.noShow:
         bg = AppColors.warningBg;
         fg = AppColors.warning;
         icon = Icons.person_off_rounded;
         title = 'No Show';
-        description = 'Patient did not arrive for their scheduled time.';
+        description = 'Patient did not arrive.';
         break;
     }
 

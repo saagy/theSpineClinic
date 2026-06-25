@@ -197,12 +197,10 @@ class _AppointmentDetailBody extends ConsumerWidget {
                   AppointmentStatusBanner(status: state.appointment.status),
                   const SizedBox(height: AppSizes.p8),
                   AppointmentScheduleCard(appointment: state.appointment),
-                  const SizedBox(height: AppSizes.p16),
                   AppointmentDoctorsSection(
                     activeDoctors: state.activeDoctors,
                     inactiveDoctors: state.inactiveDoctors,
                   ),
-                  const SizedBox(height: AppSizes.p16),
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: AppSizes.p24),
                     child: AppointmentNotesCard(
