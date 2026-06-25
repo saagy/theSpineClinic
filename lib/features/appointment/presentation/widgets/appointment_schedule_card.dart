@@ -39,10 +39,21 @@ class AppointmentScheduleCard extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: AppSizes.p4),
-                    Text(
-                      appointment.type.displayLabel,
-                      style: AppTextStyles.bodySecondary.copyWith(
-                        color: AppColors.textSecondary,
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: AppSizes.p8,
+                        vertical: AppSizes.p2,
+                      ),
+                      decoration: const BoxDecoration(
+                        color: AppColors.neutralBg,
+                        borderRadius: BorderRadius.all(Radius.circular(AppSizes.r4)),
+                      ),
+                      child: Text(
+                        appointment.type.displayLabel,
+                        style: AppTextStyles.captionBold.copyWith(
+                          color: AppColors.neutral,
+                          fontSize: 11,
+                        ),
                       ),
                     ),
                   ],
