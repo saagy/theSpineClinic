@@ -1,8 +1,6 @@
 /// Card component showing visit notes for an appointment.
 ///
-/// When a note exists and the user can modify it, edit/delete actions are
-/// compact icon buttons in the card header's trailing slot — not full-width
-/// pills competing with page-level actions.
+/// Refactored to match cardless document layout design with left color border.
 library;
 
 import 'package:flutter/material.dart';
@@ -19,10 +17,8 @@ import 'package:spine_clinic_app/features/medical_records/domain/patient_note.da
 import 'package:spine_clinic_app/features/medical_records/presentation/medical_records_providers.dart';
 import 'package:spine_clinic_app/features/medical_records/presentation/patient_notes_list_notifier.dart';
 import 'package:spine_clinic_app/features/patient/presentation/widgets/add_note_sheet.dart';
-import 'package:spine_clinic_app/shared/widgets/app_button.dart';
 import 'package:spine_clinic_app/shared/widgets/app_snackbar.dart';
 import 'package:spine_clinic_app/shared/widgets/confirmation_dialog.dart';
-import 'package:spine_clinic_app/shared/widgets/section_card.dart';
 
 class AppointmentNotesCard extends ConsumerWidget {
   const AppointmentNotesCard({
@@ -38,58 +34,113 @@ class AppointmentNotesCard extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final noteAsync = ref.watch(appointmentNoteProvider(appointmentId));
     final Staff? currentUser = ref.watch(currentUserProvider).value;
+    final theme = Theme.of(context);
 
-    return noteAsync.when(
-      loading: () => const SectionCard(
-        title: 'Visit Notes',
-        child: Center(
-          child: CircularProgressIndicator(color: AppColors.primary),
-        ),
-      ),
-      error: (error, stack) {
-        final AppException ex = error is AppException
-            ? error
-            : UnknownException(message: '$error');
-        return SectionCard(
-          title: 'Visit Notes',
-          child: Text(
-            AppStrings.fromKey(ex.userMessageKey),
-            style: AppTextStyles.body.copyWith(color: AppColors.error),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        noteAsync.when(
+          loading: () => const Padding(
+            padding: EdgeInsets.symmetric(vertical: AppSizes.p16),
+            child: Center(
+              child: CircularProgressIndicator(color: AppColors.primary),
+            ),
           ),
-        );
-      },
-      data: (note) {
-        final bool canModify = note != null && currentUser != null &&
-            (currentUser.role == UserRole.doctor ||
-             currentUser.role == UserRole.superAdmin ||
-             currentUser.id == note.createdBy);
+          error: (error, stack) {
+            final AppException ex = error is AppException
+                ? error
+                : UnknownException(message: '$error');
+            return Padding(
+              padding: const EdgeInsets.symmetric(vertical: AppSizes.p16),
+              child: Text(
+                AppStrings.fromKey(ex.userMessageKey),
+                style: AppTextStyles.body.copyWith(color: AppColors.error),
+              ),
+            );
+          },
+          data: (note) {
+            final bool canModify = note != null && currentUser != null &&
+                (currentUser.role == UserRole.doctor ||
+                 currentUser.role == UserRole.superAdmin ||
+                 currentUser.id == note.createdBy);
 
-        final Widget? action = (note != null && canModify)
-            ? _NoteActions(
-                onEdit: () => _showNoteSheet(context, note),
-                onDelete: () => _confirmDeleteNote(context, ref, note),
-              )
-            : null;
-
-        return SectionCard(
-          title: 'Visit Notes',
-          action: action,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              if (note != null && note.noteText.isNotEmpty)
-                Text(note.noteText, style: AppTextStyles.body)
-              else if (note == null)
-                AppButton(
-                  labelText: 'Add Note',
-                  onPressed: () => _showNoteSheet(context, null),
-                  icon: Icons.add,
-                  shape: AppButtonShape.pill,
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Row(
+                  children: [
+                    Text(
+                      'VISIT NOTES',
+                      style: AppTextStyles.captionMedium.copyWith(
+                        color: AppColors.textSecondary,
+                        fontWeight: FontWeight.w600,
+                        letterSpacing: 1.2,
+                      ),
+                    ),
+                    const Spacer(),
+                    if (note != null && canModify)
+                      _NoteActions(
+                        onEdit: () => _showNoteSheet(context, note),
+                        onDelete: () => _confirmDeleteNote(context, ref, note),
+                      ),
+                  ],
                 ),
-            ],
-          ),
-        );
-      },
+                const SizedBox(height: AppSizes.p8),
+                if (note != null && note.noteText.isNotEmpty)
+                  Container(
+                    margin: const EdgeInsets.symmetric(vertical: AppSizes.p4),
+                    padding: const EdgeInsets.fromLTRB(AppSizes.p12, AppSizes.p2, 0, AppSizes.p2),
+                    decoration: BoxDecoration(
+                      border: Border(
+                        left: BorderSide(
+                          color: theme.colorScheme.primary,
+                          width: 4.0,
+                        ),
+                      ),
+                    ),
+                    child: Text(
+                      note.noteText,
+                      style: AppTextStyles.body,
+                    ),
+                  )
+                else
+                  GestureDetector(
+                    onTap: () => _showNoteSheet(context, null),
+                    child: Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.symmetric(vertical: AppSizes.p14),
+                      decoration: BoxDecoration(
+                        border: Border.all(
+                          color: AppColors.border,
+                          width: 1.0,
+                        ),
+                        borderRadius: const BorderRadius.all(Radius.circular(AppSizes.r12)),
+                        color: AppColors.neutralBg.withValues(alpha: 0.2),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.add_rounded,
+                            color: AppColors.textSecondary,
+                            size: AppSizes.iconSmall,
+                          ),
+                          const SizedBox(width: AppSizes.p8),
+                          Text(
+                            'Add visit note...',
+                            style: AppTextStyles.bodySecondary.copyWith(
+                              color: AppColors.textSecondary,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+              ],
+            );
+          },
+        ),
+      ],
     );
   }
 
@@ -144,7 +195,7 @@ class AppointmentNotesCard extends ConsumerWidget {
   }
 }
 
-/// Compact edit + delete icon buttons for the note card header.
+/// Compact edit + delete icon buttons.
 class _NoteActions extends StatelessWidget {
   const _NoteActions({required this.onEdit, required this.onDelete});
   final VoidCallback onEdit;

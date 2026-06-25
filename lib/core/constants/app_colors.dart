@@ -16,8 +16,8 @@ import 'package:flutter/material.dart';
 abstract final class AppColors {
   // ──────────────── Canvas & Surfaces ────────────────
 
-  /// Pure white — full-page background canvas.
-  static const Color background = Color(0xFFFFFFFF);
+  /// Soft off-white/light gray — full-page background canvas.
+  static const Color background = Color(0xFFF8F9FA);
 
   /// Pure white — card / container / modal surfaces.
   static const Color surface = Color(0xFFFFFFFF);

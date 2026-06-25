@@ -1,21 +1,10 @@
-/// Status-specific bottom action layouts for the appointment detail screen.
-///
-/// Scheduled / Checked-In: flat TextButton (Cancel) + Expanded primary pill.
-/// This gives a clear primary/secondary hierarchy and keeps the bar short.
-///
-/// Cancelled: single full-width secondary "Restore Appointment".
-///
-/// Rule 1 — under 200 lines.
-library;
-
 import 'package:flutter/material.dart';
 import 'package:spine_clinic_app/core/constants/app_colors.dart';
 import 'package:spine_clinic_app/core/constants/app_sizes.dart';
-import 'package:spine_clinic_app/core/constants/app_strings.dart';
 import 'package:spine_clinic_app/core/constants/app_text_styles.dart';
 import 'package:spine_clinic_app/shared/widgets/app_button.dart';
 
-/// Scheduled: flat "Cancel" + expanded teal "Check In" pill.
+/// Scheduled: flat "Cancel Appointment" + expanded teal "Check In" pill.
 class ScheduledActions extends StatelessWidget {
   const ScheduledActions({
     super.key,
@@ -31,11 +20,15 @@ class ScheduledActions extends StatelessWidget {
   Widget build(BuildContext context) {
     return Row(
       children: [
-        _flatCancelButton(loading: loading, onCancel: onCancel),
+        Flexible(
+          flex: 1,
+          child: _flatCancelButton(loading: loading, onCancel: onCancel),
+        ),
         const SizedBox(width: AppSizes.p12),
-        Expanded(
+        Flexible(
+          flex: 2,
           child: AppButton(
-            labelText: AppStrings.checkIn,
+            labelText: 'Check In',
             onPressed: loading ? null : onCheckIn,
             isLoading: loading,
             shape: AppButtonShape.pill,
@@ -46,7 +39,7 @@ class ScheduledActions extends StatelessWidget {
   }
 }
 
-/// Checked-In: flat "Cancel" + expanded secondary "Undo Check-In" pill.
+/// Checked-In: flat "Cancel Appointment" + expanded secondary "Undo Check-In" pill.
 class CheckedInActions extends StatelessWidget {
   const CheckedInActions({
     super.key,
@@ -62,11 +55,15 @@ class CheckedInActions extends StatelessWidget {
   Widget build(BuildContext context) {
     return Row(
       children: [
-        _flatCancelButton(loading: loading, onCancel: onCancel),
+        Flexible(
+          flex: 1,
+          child: _flatCancelButton(loading: loading, onCancel: onCancel),
+        ),
         const SizedBox(width: AppSizes.p12),
-        Expanded(
+        Flexible(
+          flex: 2,
           child: AppButton(
-            labelText: AppStrings.undoCheckIn,
+            labelText: 'Undo Check-In',
             onPressed: loading ? null : onRevert,
             isLoading: loading,
             variant: AppButtonVariant.secondary,
@@ -91,7 +88,7 @@ class CancelledActions extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return AppButton(
-      labelText: AppStrings.restoreToScheduled,
+      labelText: 'Restore Appointment',
       onPressed: loading ? null : onRestore,
       isLoading: loading,
       variant: AppButtonVariant.secondary,
@@ -107,11 +104,17 @@ Widget _flatCancelButton({required bool loading, required VoidCallback onCancel}
   return TextButton(
     onPressed: loading ? null : onCancel,
     style: TextButton.styleFrom(
-      padding: const EdgeInsets.symmetric(horizontal: AppSizes.p12),
+      padding: const EdgeInsets.symmetric(horizontal: AppSizes.p8),
     ),
     child: Text(
-      AppStrings.cancel,
-      style: AppTextStyles.button.copyWith(color: AppColors.textSecondary),
+      'Cancel Appointment',
+      style: AppTextStyles.button.copyWith(
+        color: AppColors.error,
+        fontSize: 14,
+      ),
+      textAlign: TextAlign.center,
+      maxLines: 2,
+      overflow: TextOverflow.ellipsis,
     ),
   );
 }

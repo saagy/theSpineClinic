@@ -20,6 +20,7 @@ import 'package:spine_clinic_app/features/appointment/presentation/appointment_d
 import 'package:spine_clinic_app/features/appointment/presentation/widgets/appointment_action_buttons.dart';
 import 'package:spine_clinic_app/features/appointment/presentation/widgets/appointment_detail_header.dart';
 import 'package:spine_clinic_app/features/appointment/presentation/widgets/appointment_doctors_section.dart';
+import 'package:spine_clinic_app/features/appointment/presentation/widgets/appointment_status_banner.dart';
 import 'package:spine_clinic_app/features/appointment/presentation/widgets/delete_appointment_button.dart';
 import 'package:spine_clinic_app/features/auth/domain/user_role.dart';
 import 'package:spine_clinic_app/features/auth/presentation/auth_providers.dart';
@@ -58,33 +59,32 @@ class AppointmentDetailScreen extends ConsumerWidget {
         backgroundColor: AppColors.surface,
         surfaceTintColor: AppColors.transparent,
         leading: const AppBackButton(),
-        title: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              AppStrings.appointmentDetails,
-              style: AppTextStyles.captionMedium.copyWith(
-                color: AppColors.textMuted,
-              ),
-            ),
-            if (patientName != null)
-              Text(
+        centerTitle: false,
+        title: patientName != null
+            ? Text(
                 patientName,
                 style: AppTextStyles.headingSmall.copyWith(
                   fontSize: 18,
-                  fontWeight: FontWeight.w700,
+                  fontWeight: FontWeight.w600,
                 ),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-              ),
-          ],
-        ),
+              )
+            : const SizedBox.shrink(),
         actions: [
-          if (showEdit || showDelete)
+          if (showEdit)
+            IconButton(
+              icon: const Icon(Icons.edit_outlined, color: AppColors.textSecondary),
+              onPressed: () {
+                context.push(
+                  AppRoutes.editAppointment.replaceAll(':id', detailState.appointment.id),
+                );
+              },
+              tooltip: AppStrings.editDetails,
+            ),
+          if (showDelete)
             _DetailOverflowButton(
               appointment: detailState.appointment,
-              showEdit: showEdit,
-              showDelete: showDelete,
             ),
         ],
       ),
@@ -108,16 +108,12 @@ class AppointmentDetailScreen extends ConsumerWidget {
   }
 }
 
-/// Overflow menu for Edit Details + Delete Appointment.
+/// Overflow menu for Delete Appointment.
 class _DetailOverflowButton extends ConsumerWidget {
   const _DetailOverflowButton({
     required this.appointment,
-    required this.showEdit,
-    required this.showDelete,
   });
   final dynamic appointment;
-  final bool showEdit;
-  final bool showDelete;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -132,55 +128,33 @@ class _DetailOverflowButton extends ConsumerWidget {
       elevation: 1,
       position: PopupMenuPosition.under,
       onSelected: (value) async {
-        switch (value) {
-          case 'edit':
-            context.push(
-              AppRoutes.editAppointment.replaceAll(':id', appointment.id),
-            );
-          case 'delete':
-            await deleteAppointmentWithConfirmation(context, ref, appointment);
+        if (value == 'delete') {
+          await deleteAppointmentWithConfirmation(context, ref, appointment);
         }
       },
       itemBuilder: (_) => [
-        if (showEdit)
-          PopupMenuItem<String>(
-            value: 'edit',
-            height: AppSizes.buttonHeightSmall,
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Icon(Icons.edit_outlined, size: 18, color: AppColors.primary),
-                const SizedBox(width: AppSizes.p8),
-                Text(AppStrings.editDetails,
-                    style: AppTextStyles.bodyMedium.copyWith(
-                      color: AppColors.primary,
-                    )),
-              ],
-            ),
+        PopupMenuItem<String>(
+          value: 'delete',
+          height: AppSizes.buttonHeightSmall,
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(Icons.delete_outline_rounded,
+                  size: 18, color: AppColors.error),
+              const SizedBox(width: AppSizes.p8),
+              Text(AppStrings.deleteAppointment,
+                  style: AppTextStyles.bodyMedium.copyWith(
+                    color: AppColors.error,
+                  )),
+            ],
           ),
-        if (showDelete)
-          PopupMenuItem<String>(
-            value: 'delete',
-            height: AppSizes.buttonHeightSmall,
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Icon(Icons.delete_outline_rounded,
-                    size: 18, color: AppColors.error),
-                const SizedBox(width: AppSizes.p8),
-                Text(AppStrings.deleteAppointment,
-                    style: AppTextStyles.bodyMedium.copyWith(
-                      color: AppColors.error,
-                    )),
-              ],
-            ),
-          ),
+        ),
       ],
     );
   }
 }
 
-/// Data-state body with three cards and pinned bottom actions.
+/// Data-state body with flat segments and pinned bottom actions.
 class _AppointmentDetailBody extends ConsumerWidget {
   const _AppointmentDetailBody({required this.state});
   final AppointmentDetailState state;
@@ -220,7 +194,8 @@ class _AppointmentDetailBody extends ConsumerWidget {
                     appointment: state.appointment,
                     patient: state.patient,
                   ).animate().fadeIn(duration: 300.ms),
-                  const SizedBox(height: AppSizes.p16),
+                  AppointmentStatusBanner(status: state.appointment.status),
+                  const SizedBox(height: AppSizes.p8),
                   AppointmentScheduleCard(appointment: state.appointment),
                   const SizedBox(height: AppSizes.p16),
                   AppointmentDoctorsSection(
@@ -245,7 +220,7 @@ class _AppointmentDetailBody extends ConsumerWidget {
           SafeArea(
             child: Container(
               padding: const EdgeInsets.fromLTRB(
-                  AppSizes.p24, AppSizes.p12, AppSizes.p24, AppSizes.p12),
+                  AppSizes.p24, AppSizes.p16, AppSizes.p24, AppSizes.p16),
               decoration: const BoxDecoration(
                 color: AppColors.surface,
                 border: Border(
