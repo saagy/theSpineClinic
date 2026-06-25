@@ -344,6 +344,7 @@ class _AllAppointmentsScreenState extends ConsumerState<AllAppointmentsScreen> {
                 child: ReceptionistAppointmentCard(
                   key: ValueKey(item.appointment.id),
                   item: item,
+                  onStatusChanged: () => ref.read(allAppointmentsProvider.notifier).refresh(),
                 ),
               );
             },

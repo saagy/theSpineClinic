@@ -1,15 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:spine_clinic_app/core/constants/app_colors.dart';
 import 'package:spine_clinic_app/core/constants/app_sizes.dart';
 import 'package:spine_clinic_app/core/constants/app_strings.dart';
-import 'package:spine_clinic_app/core/constants/app_text_styles.dart';
 import 'package:spine_clinic_app/features/auth/domain/user_role.dart';
 import 'package:spine_clinic_app/features/auth/presentation/auth_providers.dart';
 import 'package:spine_clinic_app/features/patient/domain/patient.dart';
 import 'package:spine_clinic_app/features/patient/presentation/delete_patient_controller.dart';
 import 'package:spine_clinic_app/features/patient/presentation/patient_providers.dart';
+import 'package:spine_clinic_app/shared/widgets/app_button.dart';
 import 'package:spine_clinic_app/shared/widgets/app_snackbar.dart';
 import 'package:spine_clinic_app/shared/widgets/confirmation_dialog.dart';
 
@@ -69,36 +68,13 @@ class DeletePatientButton extends ConsumerWidget {
 
     return Padding(
       padding: const EdgeInsets.only(top: AppSizes.p16),
-      child: OutlinedButton(
-        style: OutlinedButton.styleFrom(
-          foregroundColor: AppColors.error,
-          side: const BorderSide(color: AppColors.error),
-          padding: const EdgeInsets.symmetric(vertical: AppSizes.p14),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(AppSizes.r12),
-          ),
-        ),
+      child: AppButton(
+        labelText: AppStrings.deletePatient,
         onPressed: isLoading ? null : () => _onPressed(context, ref),
-        child: isLoading
-            ? const SizedBox(
-                height: 20,
-                width: 20,
-                child: CircularProgressIndicator(
-                  strokeWidth: 2,
-                  valueColor: AlwaysStoppedAnimation<Color>(AppColors.error),
-                ),
-              )
-            : Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Icon(Icons.delete_outline, size: 20),
-                  const SizedBox(width: AppSizes.p8),
-                  Text(
-                    AppStrings.deletePatient,
-                    style: AppTextStyles.bodyBold.copyWith(color: AppColors.error),
-                  ),
-                ],
-              ),
+        isLoading: isLoading,
+        variant: AppButtonVariant.danger,
+        icon: Icons.delete_outline,
+        shape: AppButtonShape.pill,
       ),
     );
   }

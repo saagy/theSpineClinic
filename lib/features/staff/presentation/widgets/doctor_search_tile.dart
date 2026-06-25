@@ -4,6 +4,7 @@ import 'package:spine_clinic_app/core/constants/app_sizes.dart';
 import 'package:spine_clinic_app/core/constants/app_strings.dart';
 import 'package:spine_clinic_app/core/constants/app_text_styles.dart';
 import 'package:spine_clinic_app/features/auth/domain/staff.dart';
+import 'package:spine_clinic_app/shared/widgets/app_avatar.dart';
 
 /// One row inside [DoctorSearchSheet]. Extracted to keep the sheet's
 /// `itemBuilder` body short and the file under the 200-line limit.
@@ -21,20 +22,12 @@ class DoctorSearchTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final initials = doctor.fullName.isNotEmpty
-        ? doctor.fullName[0].toUpperCase()
-        : '?';
     return ListTile(
       dense: true,
-      leading: CircleAvatar(
+      leading: AppAvatar(
+        name: doctor.fullName,
         radius: 18,
-        backgroundColor:
-            doctor.isActive ? AppColors.primary : AppColors.textMuted,
-        child: Text(
-          initials,
-          style:
-              AppTextStyles.captionBold.copyWith(color: AppColors.textOnPrimary),
-        ),
+        color: doctor.isActive ? AppColors.primary : AppColors.textMuted,
       ),
       title: Row(children: [
         Flexible(

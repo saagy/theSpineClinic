@@ -8,6 +8,7 @@ import 'package:spine_clinic_app/core/constants/app_text_styles.dart';
 import 'package:spine_clinic_app/features/payments/domain/clinic_package.dart';
 import 'package:spine_clinic_app/features/payments/domain/package_kind.dart';
 import 'package:spine_clinic_app/shared/widgets/app_button.dart';
+import 'package:spine_clinic_app/shared/widgets/responsive_button_row.dart';
 
 /// Modal form sheet to add or edit a clinic package.
 ///
@@ -248,23 +249,18 @@ class _PackageFormSheetState extends State<PackageFormSheet> {
             ),
             const SizedBox(height: AppSizes.p24),
 
-            Row(
+            ResponsiveButtonRow(
               children: [
-                Expanded(
-                  child: AppButton(
-                    labelText: AppStrings.cancel,
-                    onPressed: () => Navigator.of(context).pop(),
-                    variant: AppButtonVariant.secondary,
-                  ),
+                AppButton(
+                  labelText: AppStrings.cancel,
+                  onPressed: () => Navigator.of(context).pop(),
+                  variant: AppButtonVariant.secondary,
                 ),
-                const SizedBox(width: AppSizes.p12),
-                Expanded(
-                  child: AppButton(
-                    labelText: isEdit ? AppStrings.save : AppStrings.add,
-                    onPressed: _submit,
-                    variant: AppButtonVariant.primary,
-                    debounceMs: 1000,
-                  ),
+                AppButton(
+                  labelText: isEdit ? AppStrings.save : AppStrings.add,
+                  onPressed: _submit,
+                  variant: AppButtonVariant.primary,
+                  debounceMs: 1000,
                 ),
               ],
             ),

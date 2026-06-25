@@ -143,10 +143,10 @@ class _NewAppointmentFormState extends ConsumerState<NewAppointmentForm> {
 
   Future<void> _submitForm() async {
     setState(() {
-      _dateErrorText = _selectedDate == null ? 'Date required' : null;
-      _timeErrorText = _selectedTime == null ? 'Time required' : null;
+      _dateErrorText = _selectedDate == null ? AppStrings.dateRequired : null;
+      _timeErrorText = _selectedTime == null ? AppStrings.timeRequired : null;
       _daysErrorText = _isRecurring && _selectedWeekdays.isEmpty
-          ? 'Select at least one day'
+          ? AppStrings.daysRequired
           : null;
     });
     if (_dateErrorText != null ||
@@ -156,7 +156,7 @@ class _NewAppointmentFormState extends ConsumerState<NewAppointmentForm> {
     }
     if (_patientId == null) {
       AppSnackbar.show(context,
-          message: 'Please select a patient',
+          message: AppStrings.patientRequired,
           variant: AppSnackbarVariant.error);
       return;
     }
@@ -187,19 +187,21 @@ class _NewAppointmentFormState extends ConsumerState<NewAppointmentForm> {
         ref.invalidate(patientDetailProvider(_patientId!));
         ref.invalidate(
             futureScheduledAppointmentsCountProvider(_patientId!));
-        ref.invalidate(availablePackageBalanceProvider(_patientId!));
+        ref.invalidate(availableBalanceForTypeProvider(
+          (patientId: _patientId!, type: _selectedType),
+        ));
         AppSnackbar.show(
           context,
           message: _isRecurring
-              ? 'Recurring sessions booked'
-              : 'Appointment booked',
+              ? AppStrings.bookingRecurringSuccess
+              : AppStrings.bookingSuccess,
           variant: AppSnackbarVariant.success,
         );
         context.pop();
       },
-      failure: (_) => AppSnackbar.show(
+      failure: (e) => AppSnackbar.show(
         context,
-        message: 'Booking failed. Try again.',
+        message: AppStrings.fromKey(e.userMessageKey),
         variant: AppSnackbarVariant.error,
       ),
     );
@@ -216,10 +218,13 @@ class _NewAppointmentFormState extends ConsumerState<NewAppointmentForm> {
     final patient = _resolvePatient();
     final isPatientValid = _patientId != null;
     final availableAsync = isPatientValid
-        ? ref.watch(availablePackageBalanceProvider(_patientId!))
+        ? ref.watch(availableBalanceForTypeProvider(
+            (patientId: _patientId!, type: _selectedType),
+          ))
         : null;
     final proposedCount = _usePackage ? _computedSlots.length : 0;
     final isSubmissionBlocked = isPatientValid &&
+        proposedCount > 0 &&
         (availableAsync == null ||
             availableAsync.isLoading ||
             availableAsync.hasError ||
@@ -306,7 +311,7 @@ class _NewAppointmentFormState extends ConsumerState<NewAppointmentForm> {
                 onChanged: (_) {},
                 validator: (val) {
                   if (val == null || val.isEmpty) {
-                    return 'At least one doctor is required';
+                    return AppStrings.atLeastOneDoctorRequired;
                   }
                   return null;
                 },

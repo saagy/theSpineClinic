@@ -212,7 +212,7 @@ class _PatientSearchScreenState extends ConsumerState<PatientSearchScreen> {
             onPressed: () => context.push(AppRoutes.newPatient),
             backgroundColor: AppColors.primary,
             shape: const CircleBorder(),
-            child: const Icon(Icons.add, color: Colors.white),
+            child: const Icon(Icons.add, color: AppColors.textOnPrimary),
           )
         : null,
     );

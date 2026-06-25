@@ -6,6 +6,7 @@ import 'package:spine_clinic_app/core/constants/app_colors.dart';
 import 'package:spine_clinic_app/core/constants/app_sizes.dart';
 import 'package:spine_clinic_app/core/constants/app_strings.dart';
 import 'package:spine_clinic_app/core/constants/app_text_styles.dart';
+import 'package:spine_clinic_app/core/errors/result.dart';
 import 'package:spine_clinic_app/core/utils/file_opener_helper.dart';
 import 'package:spine_clinic_app/features/patient/domain/patient_document.dart';
 import 'package:spine_clinic_app/features/patient/domain/patient_documents_repository.dart';
@@ -31,6 +32,7 @@ class PatientDocumentItem extends ConsumerStatefulWidget {
 class _PatientDocumentItemState extends ConsumerState<PatientDocumentItem> {
   bool _isOpening = false;
   bool _isDeleting = false;
+  bool _isConfirmingDelete = false;
 
   Future<void> _handleOpen() async {
     if (_isOpening) return;
@@ -63,33 +65,49 @@ class _PatientDocumentItemState extends ConsumerState<PatientDocumentItem> {
   }
 
   Future<void> _handleDelete(WidgetRef ref) async {
-    if (_isDeleting) return;
-    final confirm = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => ConfirmationDialog(
-        title: AppStrings.deleteDocumentTitle,
-        message: AppStrings.confirmDeleteDocument,
-        confirmLabel: AppStrings.delete,
-        cancelLabel: AppStrings.cancel,
-        isDestructive: true,
-      ),
-    );
+    // Gate above the dialog so a fast double-tap cannot stack
+    // two ConfirmationDialog instances.
+    if (_isDeleting || _isConfirmingDelete) return;
+    setState(() => _isConfirmingDelete = true);
+    bool? confirm;
+    try {
+      if (!mounted) return;
+      confirm = await showDialog<bool>(
+        context: context,
+        builder: (ctx) => ConfirmationDialog(
+          title: AppStrings.deleteDocumentTitle,
+          message: AppStrings.confirmDeleteDocument,
+          confirmLabel: AppStrings.delete,
+          cancelLabel: AppStrings.cancel,
+          isDestructive: true,
+        ),
+      );
+    } finally {
+      if (mounted) setState(() => _isConfirmingDelete = false);
+    }
     if (confirm != true || !mounted) return;
+    if (_isDeleting) return;
 
     setState(() => _isDeleting = true);
-    final result = await ref
-        .read(patientDocumentsNotifierProvider(widget.doc.patientId).notifier)
-        .deleteDocument(widget.doc);
-    if (!mounted) return;
-    setState(() => _isDeleting = false);
-    result.when(
-      success: (_) => AppSnackbar.show(context,
-          message: AppStrings.documentDeleted,
-          variant: AppSnackbarVariant.success),
-      failure: (error) => AppSnackbar.show(context,
-          message: AppStrings.fromKey(error.userMessageKey),
-          variant: AppSnackbarVariant.error),
-    );
+    try {
+      final Result<void> result = await ref
+          .read(patientDocumentsNotifierProvider(widget.doc.patientId).notifier)
+          .deleteDocument(widget.doc);
+      if (!mounted) return;
+      result.when(
+        success: (_) => AppSnackbar.show(context,
+            message: AppStrings.documentDeleted,
+            variant: AppSnackbarVariant.success),
+        failure: (error) => AppSnackbar.show(context,
+            message: AppStrings.fromKey(error.userMessageKey),
+            variant: AppSnackbarVariant.error),
+      );
+    } finally {
+      // try/finally guarantees the busy spinner clears even if the
+      // awaited future throws an uncaught exception (e.g. disposal
+      // race inside Riverpod that isn't wrapped in `Result`).
+      if (mounted) setState(() => _isDeleting = false);
+    }
   }
 
   Future<Uint8List> _loadImageBytes(WidgetRef ref) async {
@@ -137,7 +155,9 @@ class _PatientDocumentItemState extends ConsumerState<PatientDocumentItem> {
         : IconButton(
             icon: const Icon(Icons.delete_outline_rounded,
                 color: AppColors.error),
-            onPressed: _isOpening ? null : () => _handleDelete(ref),
+            onPressed: (_isOpening || _isConfirmingDelete)
+                ? null
+                : () => _handleDelete(ref),
           );
 
     final trailingButtons = Row(

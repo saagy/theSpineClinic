@@ -11,7 +11,7 @@ import 'package:spine_clinic_app/features/auth/domain/user_role.dart';
 import 'package:spine_clinic_app/features/auth/presentation/auth_providers.dart';
 import 'package:spine_clinic_app/features/auth/presentation/doctor_history_screen.dart';
 import 'package:spine_clinic_app/features/auth/presentation/doctor_profile_screen.dart';
-import 'package:spine_clinic_app/features/auth/presentation/doctor_register_screen.dart';
+import 'package:spine_clinic_app/features/auth/presentation/register_screen.dart';
 import 'package:spine_clinic_app/features/auth/presentation/login_screen.dart';
 import 'package:spine_clinic_app/features/auth/presentation/receptionist_profile_screen.dart';
 import 'package:spine_clinic_app/features/auth/presentation/splash_screen.dart';
@@ -126,7 +126,7 @@ List<RouteBase> _buildRoutes(Ref ref) {
     ),
     GoRoute(
       path: AppRoutes.register,
-      pageBuilder: (_, __) => const NoTransitionPage(child: DoctorRegisterScreen()),
+      pageBuilder: (_, __) => const NoTransitionPage(child: RegisterScreen()),
     ),
     GoRoute(
       path: AppRoutes.search,
@@ -179,33 +179,18 @@ List<RouteBase> _buildRoutes(Ref ref) {
     ),
 
     GoRoute(
-      path: AppRoutes.doctorHistory,
-      pageBuilder: (_, __) => const NoTransitionPage(child: DoctorHistoryScreen()),
-    ),
-    GoRoute(
-      path: AppRoutes.staffList,
-      pageBuilder: (_, __) => const NoTransitionPage(child: StaffListScreen()),
-    ),
-    GoRoute(
       path: AppRoutes.staffForm,
       pageBuilder: (_, GoRouterState state) {
         final Staff? staff = state.extra as Staff?;
         return NoTransitionPage(child: StaffFormScreen(staff: staff));
       },
     ),
-    GoRoute(
-      path: AppRoutes.doctorApplications,
-      pageBuilder: (_, __) => const NoTransitionPage(child: DoctorApplicationsScreen()),
-    ),
-    GoRoute(
-      path: AppRoutes.clinicSettings,
-      pageBuilder: (_, __) => const NoTransitionPage(child: ClinicSettingsScreen()),
-    ),
     ShellRoute(
       pageBuilder: (BuildContext context, GoRouterState state, Widget child) {
         final Staff? user = ref.read(currentUserProvider).value;
         final String role = user?.role.dbValue ?? 'receptionist';
         final int activeIndex = _resolveActiveIndex(role, state.matchedLocation);
+        final bool isSubPage = _isSubPage(state.matchedLocation);
 
         return NoTransitionPage(
           child: _SessionGuard(
@@ -213,6 +198,7 @@ List<RouteBase> _buildRoutes(Ref ref) {
               userRole: role,
               currentTabIndex: activeIndex,
               onTabSelected: (int index) => _onTabSelected(context, role, index),
+              showBrandedAppBar: !isSubPage,
               child: child,
             ),
           ),
@@ -285,6 +271,22 @@ List<RouteBase> _buildRoutes(Ref ref) {
             return NoTransitionPage(child: VisitDetailScreen(appointmentId: appointmentId));
           },
         ),
+        GoRoute(
+          path: AppRoutes.doctorHistory,
+          pageBuilder: (_, __) => const NoTransitionPage(child: DoctorHistoryScreen()),
+        ),
+        GoRoute(
+          path: AppRoutes.staffList,
+          pageBuilder: (_, __) => const NoTransitionPage(child: StaffListScreen()),
+        ),
+        GoRoute(
+          path: AppRoutes.doctorApplications,
+          pageBuilder: (_, __) => const NoTransitionPage(child: DoctorApplicationsScreen()),
+        ),
+        GoRoute(
+          path: AppRoutes.clinicSettings,
+          pageBuilder: (_, __) => const NoTransitionPage(child: ClinicSettingsScreen()),
+        ),
       ],
     ),
   ];
@@ -293,22 +295,65 @@ List<RouteBase> _buildRoutes(Ref ref) {
 int _resolveActiveIndex(String role, String location) {
   switch (role) {
     case 'doctor':
-      if (location == AppRoutes.doctorProfile) return 2;
-      if (location == AppRoutes.myPatients || location.startsWith('/patient')) return 1;
+      if (location == AppRoutes.doctorProfile || location == AppRoutes.doctorHistory) return 2;
+      if (location == AppRoutes.myPatients || location == AppRoutes.patientList || location.startsWith('/patient/')) return 1;
+      if (location == AppRoutes.schedule || location.startsWith('/appointment/') || location.startsWith('/visit/')) return 0;
       return 0; // my schedule
     case 'super_admin':
-      if (location == AppRoutes.adminHub || location.startsWith('/admin')) return 4;
-      if (location == AppRoutes.patientList || location.startsWith('/patient')) return 3;
-      if (location == AppRoutes.schedule) return 2;
-      if (location == AppRoutes.allAppointments || location.startsWith('/appointment') || location.startsWith('/visit')) return 1;
       if (location == AppRoutes.reports) return 0;
+      if (location == AppRoutes.adminHub ||
+          location == AppRoutes.doctorHistory ||
+          location == AppRoutes.staffList ||
+          location == AppRoutes.doctorApplications ||
+          location == AppRoutes.clinicSettings ||
+          location.startsWith('/admin/')) {
+        return 4;
+      }
+      if (location == AppRoutes.patientList || location.startsWith('/patient/')) return 3;
+      if (location == AppRoutes.schedule) return 2;
+      if (location == AppRoutes.allAppointments ||
+          location.startsWith('/appointment/') ||
+          location.startsWith('/visit/')) {
+        return 1;
+      }
       return 0;
     case 'receptionist':
     default:
       if (location == AppRoutes.receptionistProfile) return 2;
-      if (location == AppRoutes.patientList || location.startsWith('/patient')) return 1;
+      if (location == AppRoutes.patientList || location.startsWith('/patient/')) return 1;
+      if (location == AppRoutes.allAppointments ||
+          location.startsWith('/appointment/') ||
+          location.startsWith('/visit/')) {
+        return 0;
+      }
       return 0; // appts (allAppointments)
   }
+}
+
+/// Returns true when the matched route renders inside the shell but carries
+/// its own [Scaffold] + [AppBar] (i.e. detail/management sub-pages). The shell
+/// hides its branded AppBar for these so the two do not stack.
+bool _isSubPage(String location) {
+  if (location.startsWith('/appointment/') &&
+      !location.endsWith('/edit') &&
+      !location.endsWith('/notes')) {
+    return true;
+  }
+  if (location.startsWith('/visit/')) {
+    return true;
+  }
+  if (location.startsWith('/patient/') &&
+      !location.endsWith('/edit') &&
+      !location.endsWith('/pay')) {
+    return true;
+  }
+  if (location == AppRoutes.doctorHistory ||
+      location == AppRoutes.staffList ||
+      location == AppRoutes.doctorApplications ||
+      location == AppRoutes.clinicSettings) {
+    return true;
+  }
+  return false;
 }
 
 /// Watches [currentUserProvider] and force-redirects to login when the

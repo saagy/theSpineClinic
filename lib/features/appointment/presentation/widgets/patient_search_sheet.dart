@@ -8,6 +8,7 @@ import 'package:spine_clinic_app/core/constants/app_sizes.dart';
 import 'package:spine_clinic_app/core/constants/app_text_styles.dart';
 import 'package:spine_clinic_app/features/patient/domain/patient.dart';
 import 'package:spine_clinic_app/features/patient/presentation/patient_list_providers.dart';
+import 'package:spine_clinic_app/shared/widgets/app_avatar.dart';
 
 /// Bottom sheet that lets the user search and pick a patient.
 class PatientSearchSheet extends ConsumerStatefulWidget {
@@ -118,15 +119,9 @@ class _PatientSearchSheetState extends ConsumerState<PatientSearchSheet> {
                   itemBuilder: (_, i) {
                     final p = filtered[i];
                     return ListTile(
-                      leading: CircleAvatar(
-                        backgroundColor: AppColors.primary,
+                      leading: AppAvatar(
+                        name: p.fullName,
                         radius: 18,
-                        child: Text(
-                          p.fullName[0].toUpperCase(),
-                          style: AppTextStyles.captionBold.copyWith(
-                            color: AppColors.textOnPrimary,
-                          ),
-                        ),
                       ),
                       title: Text(p.fullName, style: AppTextStyles.bodyBold),
                       subtitle: Text(

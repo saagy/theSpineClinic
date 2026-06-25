@@ -11,6 +11,7 @@ import 'package:spine_clinic_app/features/medical_records/presentation/widgets/p
 import 'package:spine_clinic_app/features/patient/domain/patient.dart';
 import 'package:spine_clinic_app/features/patient/presentation/widgets/add_note_sheet.dart';
 import 'package:spine_clinic_app/features/patient/presentation/widgets/patient_note_item.dart';
+import 'package:spine_clinic_app/shared/widgets/app_button.dart';
 import 'package:spine_clinic_app/shared/widgets/app_bottom_sheet.dart';
 import 'package:spine_clinic_app/shared/widgets/empty_state.dart';
 import 'package:spine_clinic_app/shared/widgets/error_view.dart';
@@ -104,21 +105,11 @@ class _PatientTabRecordsState extends ConsumerState<PatientTabRecords> {
       children: [
         Padding(
           padding: const EdgeInsets.fromLTRB(AppSizes.p16, AppSizes.p16, AppSizes.p16, AppSizes.p8),
-          child: ElevatedButton.icon(
+          child: AppButton(
+            labelText: 'Add Note',
             onPressed: () => _showAddNoteSheet(context),
-            icon: const Icon(Icons.add, color: AppColors.textOnPrimary),
-            label: Text(
-              'Add Note',
-              style: AppTextStyles.bodyBold.copyWith(color: AppColors.textOnPrimary),
-            ),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.primary,
-              minimumSize: const Size.fromHeight(AppSizes.buttonHeight),
-              padding: const EdgeInsets.symmetric(horizontal: AppSizes.p24, vertical: AppSizes.p14),
-              shape: const RoundedRectangleBorder(
-                borderRadius: BorderRadius.all(Radius.circular(AppSizes.r6)),
-              ),
-            ),
+            icon: Icons.add,
+            shape: AppButtonShape.pill,
           ),
         ),
         SortFilterBar(

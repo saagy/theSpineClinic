@@ -5,7 +5,7 @@ import 'package:spine_clinic_app/core/constants/app_strings.dart';
 import 'package:spine_clinic_app/core/constants/app_text_styles.dart';
 import 'package:spine_clinic_app/features/auth/domain/staff.dart';
 import 'package:spine_clinic_app/shared/widgets/app_avatar.dart';
-import 'package:spine_clinic_app/shared/widgets/app_snackbar.dart';
+
 
 /// Renders a single selected doctor as an avatar + name row with an optional
 /// remove button. Used by [AppDoctorMultiSelectField].
@@ -15,13 +15,11 @@ class SelectedDoctorRow extends StatelessWidget {
     super.key,
     required this.doctor,
     required this.showRemove,
-    required this.isLastDoctor,
     required this.onRemove,
   });
 
   final Staff doctor;
   final bool showRemove;
-  final bool isLastDoctor;
   final VoidCallback onRemove;
 
   @override
@@ -52,17 +50,7 @@ class SelectedDoctorRow extends StatelessWidget {
           ),
           if (showRemove)
             GestureDetector(
-              onTap: () {
-                if (isLastDoctor) {
-                  AppSnackbar.show(
-                    context,
-                    message: 'At least one doctor is required.',
-                    variant: AppSnackbarVariant.error,
-                  );
-                  return;
-                }
-                onRemove();
-              },
+              onTap: onRemove,
               child: const Icon(Icons.close,
                   size: AppSizes.iconSmall,
                   color: AppColors.textMuted),

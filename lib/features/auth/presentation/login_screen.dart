@@ -24,7 +24,7 @@ import 'package:spine_clinic_app/features/auth/presentation/widgets/auth_validat
 import 'package:spine_clinic_app/shared/widgets/app_snackbar.dart';
 import 'package:spine_clinic_app/shared/widgets/app_text_input.dart';
 import 'package:spine_clinic_app/shared/widgets/loading_overlay.dart';
-import 'package:spine_clinic_app/shared/widgets/primary_button.dart';
+import 'package:spine_clinic_app/shared/widgets/app_button.dart';
 
 /// Single login screen used by all staff roles.
 class LoginScreen extends ConsumerStatefulWidget {
@@ -162,7 +162,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           controller: _passwordCtrl,
           labelText: AppStringsAuth.password,
           prefixIcon: Icons.lock_outlined,
-          obscureText: true,
+          isPassword: true,
           validator: AuthValidators.required,
           enabled: !isLoading,
           textInputAction: TextInputAction.done,
@@ -171,10 +171,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         const SizedBox(height: AppSizes.p24),
 
         // ── Sign in ──
-        PrimaryButton(
-          label: AppStringsAuth.signIn,
-          onPressed: isLoading ? null : _handleLogin,
+        AppButton(
+          labelText: AppStringsAuth.signIn,
+          onPressed: isLoading ? null : () => _handleLogin(),
           isLoading: isLoading,
+          shape: AppButtonShape.pill,
         ),
         const SizedBox(height: AppSizes.p20),
 
@@ -182,7 +183,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         GestureDetector(
           onTap: () => context.go(AppRoutes.register),
           child: Text(
-            AppStringsAuth.registerAsDoctor,
+            AppStringsAuth.register,
             style: AppTextStyles.bodyMedium.copyWith(
               color: AppColors.primary,
             ),

@@ -11,7 +11,7 @@ import 'package:spine_clinic_app/core/constants/app_sizes.dart';
 import 'package:spine_clinic_app/core/constants/app_strings.dart';
 import 'package:spine_clinic_app/core/constants/app_text_styles.dart';
 import 'package:spine_clinic_app/features/medical_records/presentation/medical_records_providers.dart';
-import 'package:spine_clinic_app/shared/widgets/debounced_button.dart';
+import 'package:spine_clinic_app/shared/widgets/app_button.dart';
 
 /// Bottom sheet for adding or editing a patient note.
 class AddNoteSheet extends ConsumerStatefulWidget {
@@ -144,9 +144,11 @@ class _AddNoteSheetState extends ConsumerState<AddNoteSheet> {
             ),
           ),
           const SizedBox(height: AppSizes.p20),
-          DebouncedElevatedButton(
-            label: 'Save Note',
-            onPressed: _save,
+          AppButton(
+            labelText: 'Save Note',
+            onPressed: () => _save(),
+            debounceMs: 1000,
+            shape: AppButtonShape.pill,
           ),
         ],
       ),

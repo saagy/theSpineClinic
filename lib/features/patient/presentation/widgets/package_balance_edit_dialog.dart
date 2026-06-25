@@ -14,6 +14,7 @@ import 'package:spine_clinic_app/core/constants/app_text_styles.dart';
 import 'package:spine_clinic_app/core/errors/app_exception.dart';
 import 'package:spine_clinic_app/features/patient/domain/patient.dart';
 import 'package:spine_clinic_app/features/patient/presentation/package_balance_controller.dart';
+import 'package:spine_clinic_app/shared/widgets/app_button.dart';
 import 'package:spine_clinic_app/shared/widgets/app_snackbar.dart';
 
 /// Edit dialog for both PT and traction package balances.
@@ -150,14 +151,8 @@ class _PackageBalanceEditDialogState extends State<PackageBalanceEditDialog> {
                 style: AppTextStyles.bodyBold.copyWith(color: AppColors.textSecondary),
               ),
             ),
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primary,
-                foregroundColor: AppColors.textOnPrimary,
-                shape: const RoundedRectangleBorder(
-                  borderRadius: BorderRadius.all(Radius.circular(AppSizes.r999)),
-                ),
-              ),
+            AppButton(
+              labelText: AppStrings.save,
               onPressed: isLoading
                   ? null
                   : () async {
@@ -192,19 +187,9 @@ class _PackageBalanceEditDialogState extends State<PackageBalanceEditDialog> {
                         }
                       }
                     },
-              child: isLoading
-                  ? const SizedBox(
-                      width: AppSizes.thumbnailDefault,
-                      height: AppSizes.thumbnailDefault,
-                      child: CircularProgressIndicator(
-                        strokeWidth: AppSizes.strokeWidthThin,
-                        color: AppColors.textOnPrimary,
-                      ),
-                    )
-                  : Text(
-                      AppStrings.save,
-                      style: AppTextStyles.bodyBold.copyWith(color: AppColors.textOnPrimary),
-                    ),
+              isLoading: isLoading,
+              shape: AppButtonShape.pill,
+              fullWidth: false,
             ),
           ],
         );

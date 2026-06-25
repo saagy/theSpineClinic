@@ -23,14 +23,14 @@ class StatusIndicator extends StatelessWidget {
           padding: const EdgeInsets.symmetric(
               horizontal: AppSizes.p8, vertical: AppSizes.p2),
           decoration: BoxDecoration(
-            color: const Color(0xFFF0FAF6),
+            color: AppColors.checkedInBg,
             borderRadius:
                 const BorderRadius.all(Radius.circular(AppSizes.r24)),
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Icon(Icons.check, size: 12, color: Color(0xFF085041)),
+              const Icon(Icons.check, size: 12, color: AppColors.primaryDeep),
               const SizedBox(width: AppSizes.p2),
               Flexible(
                 child: Text(AppStrings.statusCheckedIn,
@@ -38,7 +38,7 @@ class StatusIndicator extends StatelessWidget {
                     overflow: TextOverflow.ellipsis,
                     style: AppTextStyles.captionBold.copyWith(
                       fontSize: 11,
-                      color: const Color(0xFF085041),
+                      color: AppColors.primaryDeep,
                     )),
               ),
             ],

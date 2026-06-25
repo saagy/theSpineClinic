@@ -539,7 +539,7 @@ final class FutureScheduledAppointmentsCountForTypeProvider
 }
 
 String _$futureScheduledAppointmentsCountForTypeHash() =>
-    r'4aa6799c83159703a4880acbbc4c4760d18a9e8f';
+    r'8ddbc96975a13d8c0002dd15e23c7f942daeb3b9';
 
 /// Family provider resolving the count of future scheduled appointments
 /// of a specific bucket (PT or Traction). Assessments always return 0
@@ -647,7 +647,7 @@ final class AvailableBalanceForTypeProvider
 }
 
 String _$availableBalanceForTypeHash() =>
-    r'e91c0ba953fbffdf451230e6f4078c35879b4129';
+    r'5764a0126e1f4e6a0871093326fa318f6bedfe79';
 
 /// Family provider evaluating: Current Balance - Future Commitments for a
 /// given appointment type's bucket.

@@ -8,6 +8,7 @@ library;
 
 import 'package:flutter/material.dart';
 import 'package:google_nav_bar/google_nav_bar.dart';
+import 'package:spine_clinic_app/core/constants/app_colors.dart';
 import 'package:spine_clinic_app/core/constants/app_strings.dart';
 
 /// A floating capsule bottom navigation bar using the google_nav_bar package.
@@ -22,8 +23,8 @@ class AppBottomNav extends StatelessWidget {
   final ValueSetter<int> onTabSelected;
   final String userRole;
 
-  static const Color _activeColor = Color(0xFF085041);
-  static const Color _activeBg = Color(0xFFE1F5EE);
+  static const Color _activeColor = AppColors.primaryDeep;
+  static const Color _activeBg = AppColors.primaryLight;
 
   @override
   Widget build(BuildContext context) {
@@ -38,28 +39,22 @@ class AppBottomNav extends StatelessWidget {
       margin: EdgeInsets.only(left: hMargin, right: hMargin, bottom: 20),
       padding: EdgeInsets.symmetric(horizontal: hPadding, vertical: 10),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.surface,
         borderRadius: const BorderRadius.all(Radius.circular(30)),
-        boxShadow: [
-          BoxShadow(
-            blurRadius: 20,
-            color: Colors.black.withValues(alpha: 0.06),
-            offset: const Offset(0, 4),
-          ),
-        ],
+        boxShadow: const [AppColors.elevatedShadow],
       ),
       child: GNav(
         selectedIndex: currentTabIndex,
         onTabChange: onTabSelected,
-        rippleColor: Colors.grey[300]!,
-        hoverColor: Colors.grey[100]!,
+        rippleColor: AppColors.border,
+        hoverColor: AppColors.primaryLight,
         gap: gap,
         activeColor: _activeColor,
         iconSize: isAdmin ? 20 : 22,
         padding: EdgeInsets.symmetric(horizontal: hPadding, vertical: 10),
         duration: const Duration(milliseconds: 300),
         tabBackgroundColor: _activeBg,
-        color: Colors.grey,
+        color: AppColors.textMuted,
         tabBorderRadius: 30,
         tabs: tabs
             .map((t) => GButton(icon: t.icon, text: t.label))

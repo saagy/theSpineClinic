@@ -13,6 +13,7 @@ import 'package:spine_clinic_app/features/patient/presentation/patient_providers
 import 'package:spine_clinic_app/features/payments/domain/clinic_package.dart';
 import 'package:spine_clinic_app/features/payments/presentation/record_payment_controller.dart';
 import 'package:spine_clinic_app/features/payments/presentation/widgets/payment_form_fields.dart';
+import 'package:spine_clinic_app/shared/widgets/app_avatar.dart';
 import 'package:spine_clinic_app/shared/widgets/app_button.dart';
 import 'package:spine_clinic_app/shared/widgets/app_snackbar.dart';
 import 'package:spine_clinic_app/shared/widgets/error_view.dart';
@@ -145,13 +146,10 @@ class _RecordPaymentFormState extends ConsumerState<_RecordPaymentForm> {
       title: AppStrings.patientDisplayName,
       child: Row(
         children: [
-          CircleAvatar(
-            backgroundColor: AppColors.primaryLight,
+          AppAvatar(
+            name: patient.fullName,
+            color: AppColors.primaryLight,
             radius: AppSizes.p24,
-            child: Text(
-              patient.fullName.isNotEmpty ? patient.fullName[0].toUpperCase() : '?',
-              style: AppTextStyles.bodyBold.copyWith(color: AppColors.primary),
-            ),
           ),
           const SizedBox(width: AppSizes.p16),
           Expanded(

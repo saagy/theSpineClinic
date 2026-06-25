@@ -28,9 +28,9 @@ class AppointmentStatusStyle {
 
   static AppointmentStatusStyle forStatus(AppointmentStatus s) => switch (s) {
     AppointmentStatus.checkedIn => const AppointmentStatusStyle(
-        bg: Color(0xFFF0FAF6),
-        border: Color(0xFF9FE1CB),
-        timeColor: Color(0xFF085041),
+        bg: AppColors.checkedInBg,
+        border: AppColors.checkedInBorder,
+        timeColor: AppColors.primaryDeep,
         avatarBg: AppColors.primary,
         nameDecoration: null,
         nameColor: AppColors.textPrimary,

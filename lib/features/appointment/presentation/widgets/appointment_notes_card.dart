@@ -1,3 +1,10 @@
+/// Card component showing visit notes for an appointment.
+///
+/// When a note exists and the user can modify it, edit/delete actions are
+/// compact icon buttons in the card header's trailing slot — not full-width
+/// pills competing with page-level actions.
+library;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:spine_clinic_app/core/constants/app_colors.dart';
@@ -10,24 +17,21 @@ import 'package:spine_clinic_app/features/auth/domain/user_role.dart';
 import 'package:spine_clinic_app/features/auth/presentation/auth_providers.dart';
 import 'package:spine_clinic_app/features/medical_records/domain/patient_note.dart';
 import 'package:spine_clinic_app/features/medical_records/presentation/medical_records_providers.dart';
+import 'package:spine_clinic_app/features/medical_records/presentation/patient_notes_list_notifier.dart';
 import 'package:spine_clinic_app/features/patient/presentation/widgets/add_note_sheet.dart';
-import 'package:spine_clinic_app/shared/widgets/section_card.dart';
+import 'package:spine_clinic_app/shared/widgets/app_button.dart';
 import 'package:spine_clinic_app/shared/widgets/app_snackbar.dart';
 import 'package:spine_clinic_app/shared/widgets/confirmation_dialog.dart';
+import 'package:spine_clinic_app/shared/widgets/section_card.dart';
 
-/// Card component showing visit notes for an appointment with a button to edit/add notes.
 class AppointmentNotesCard extends ConsumerWidget {
-  /// Creates an [AppointmentNotesCard].
   const AppointmentNotesCard({
     super.key,
     required this.appointmentId,
     required this.patientId,
   });
 
-  /// Unique ID of the appointment.
   final String appointmentId;
-
-  /// Unique ID of the patient.
   final String patientId;
 
   @override
@@ -60,72 +64,28 @@ class AppointmentNotesCard extends ConsumerWidget {
              currentUser.role == UserRole.superAdmin ||
              currentUser.id == note.createdBy);
 
+        final Widget? action = (note != null && canModify)
+            ? _NoteActions(
+                onEdit: () => _showNoteSheet(context, note),
+                onDelete: () => _confirmDeleteNote(context, ref, note),
+              )
+            : null;
+
         return SectionCard(
           title: 'Visit Notes',
+          action: action,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              if (note != null && note.noteText.isNotEmpty) ...[
-                Text(
-                  note.noteText,
-                  style: AppTextStyles.body,
-                ),
-                const SizedBox(height: AppSizes.p16),
-              ],
-              if (note != null) ...[
-                Row(
-                  children: [
-                    Expanded(
-                      child: ElevatedButton.icon(
-                        onPressed: () => _showNoteSheet(context, note),
-                        icon: const Icon(Icons.add, color: AppColors.textOnPrimary),
-                        label: Text(
-                          'Edit Note',
-                          style: AppTextStyles.bodyBold.copyWith(color: AppColors.textOnPrimary),
-                        ),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.primary,
-                          padding: const EdgeInsets.symmetric(vertical: AppSizes.p12),
-                          shape: const RoundedRectangleBorder(
-                            borderRadius: BorderRadius.all(Radius.circular(AppSizes.r6)),
-                          ),
-                        ),
-                      ),
-                    ),
-                    if (canModify) ...[
-                      const SizedBox(width: AppSizes.p12),
-                      OutlinedButton(
-                        onPressed: () => _confirmDeleteNote(context, ref, note),
-                        style: OutlinedButton.styleFrom(
-                          foregroundColor: AppColors.error,
-                          side: const BorderSide(color: AppColors.error),
-                          padding: const EdgeInsets.symmetric(vertical: AppSizes.p12, horizontal: AppSizes.p12),
-                          shape: const RoundedRectangleBorder(
-                            borderRadius: BorderRadius.all(Radius.circular(AppSizes.r6)),
-                          ),
-                        ),
-                        child: const Icon(Icons.delete_outline_rounded, size: 20),
-                      ),
-                    ],
-                  ],
-                ),
-              ] else ...[
-                ElevatedButton.icon(
+              if (note != null && note.noteText.isNotEmpty)
+                Text(note.noteText, style: AppTextStyles.body)
+              else if (note == null)
+                AppButton(
+                  labelText: 'Add Note',
                   onPressed: () => _showNoteSheet(context, null),
-                  icon: const Icon(Icons.add, color: AppColors.textOnPrimary),
-                  label: Text(
-                    'Add Note',
-                    style: AppTextStyles.bodyBold.copyWith(color: AppColors.textOnPrimary),
-                  ),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primary,
-                    padding: const EdgeInsets.symmetric(vertical: AppSizes.p12),
-                    shape: const RoundedRectangleBorder(
-                      borderRadius: BorderRadius.all(Radius.circular(AppSizes.r6)),
-                    ),
-                  ),
+                  icon: Icons.add,
+                  shape: AppButtonShape.pill,
                 ),
-              ],
             ],
           ),
         );
@@ -149,7 +109,8 @@ class AppointmentNotesCard extends ConsumerWidget {
     );
   }
 
-  Future<void> _confirmDeleteNote(BuildContext context, WidgetRef ref, PatientNote note) async {
+  Future<void> _confirmDeleteNote(
+      BuildContext context, WidgetRef ref, PatientNote note) async {
     final confirm = await showDialog<bool>(
       context: context,
       builder: (_) => const ConfirmationDialog(
@@ -169,6 +130,7 @@ class AppointmentNotesCard extends ConsumerWidget {
             AppSnackbar.show(context,
                 message: AppStrings.noteDeleted,
                 variant: AppSnackbarVariant.success);
+            ref.invalidate(patientNotesListProvider(note.patientId));
             ref.invalidate(patientNotesNotifierProvider(note.patientId));
             ref.invalidate(appointmentNoteProvider(note.appointmentId!));
           },
@@ -179,5 +141,38 @@ class AppointmentNotesCard extends ConsumerWidget {
         );
       }
     }
+  }
+}
+
+/// Compact edit + delete icon buttons for the note card header.
+class _NoteActions extends StatelessWidget {
+  const _NoteActions({required this.onEdit, required this.onDelete});
+  final VoidCallback onEdit;
+  final VoidCallback onDelete;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        IconButton(
+          icon: const Icon(Icons.edit_outlined, size: 20),
+          color: AppColors.textSecondary,
+          tooltip: AppStrings.edit,
+          padding: EdgeInsets.zero,
+          constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+          onPressed: onEdit,
+        ),
+        const SizedBox(width: AppSizes.p4),
+        IconButton(
+          icon: const Icon(Icons.delete_outline_rounded, size: 20),
+          color: AppColors.error,
+          tooltip: AppStrings.delete,
+          padding: EdgeInsets.zero,
+          constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+          onPressed: onDelete,
+        ),
+      ],
+    );
   }
 }

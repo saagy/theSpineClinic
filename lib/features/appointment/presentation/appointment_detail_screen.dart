@@ -20,24 +20,22 @@ import 'package:spine_clinic_app/features/appointment/presentation/appointment_d
 import 'package:spine_clinic_app/features/appointment/presentation/widgets/appointment_action_buttons.dart';
 import 'package:spine_clinic_app/features/appointment/presentation/widgets/appointment_detail_header.dart';
 import 'package:spine_clinic_app/features/appointment/presentation/widgets/appointment_doctors_section.dart';
+import 'package:spine_clinic_app/features/appointment/presentation/widgets/delete_appointment_button.dart';
+import 'package:spine_clinic_app/features/auth/domain/user_role.dart';
 import 'package:spine_clinic_app/features/auth/presentation/auth_providers.dart';
 import 'package:spine_clinic_app/shared/widgets/empty_state.dart';
 import 'package:spine_clinic_app/shared/widgets/error_view.dart';
 import 'package:spine_clinic_app/shared/widgets/skeleton_loader.dart';
 import 'package:spine_clinic_app/features/appointment/presentation/widgets/appointment_notes_card.dart';
-import 'package:go_router/go_router.dart';
-import 'package:spine_clinic_app/core/network/app_routes.dart';
-import 'package:spine_clinic_app/features/auth/domain/user_role.dart';
-import 'package:spine_clinic_app/features/appointment/presentation/widgets/delete_appointment_button.dart';
 import 'package:spine_clinic_app/features/appointment/presentation/widgets/appointment_schedule_card.dart';
 import 'package:spine_clinic_app/shared/widgets/app_back_button.dart';
+import 'package:go_router/go_router.dart';
+import 'package:spine_clinic_app/core/network/app_routes.dart';
 
 /// Screen displaying the full detail view for a single appointment.
 class AppointmentDetailScreen extends ConsumerWidget {
-  /// Creates an [AppointmentDetailScreen].
   const AppointmentDetailScreen({super.key, required this.appointmentId});
 
-  /// The unique ID of the appointment to display.
   final String appointmentId;
 
   @override
@@ -47,36 +45,46 @@ class AppointmentDetailScreen extends ConsumerWidget {
     final detailState = detailAsync.value;
     final user = ref.watch(currentUserProvider).value;
     final bool showEdit = detailState != null && user != null;
+    final bool showDelete = detailState != null &&
+        user != null &&
+        user.role != UserRole.doctor &&
+        (detailState.appointment.status == AppointmentStatus.scheduled ||
+         detailState.appointment.status == AppointmentStatus.cancelled);
+    final String? patientName = detailState?.patient.fullName;
 
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
-        title: Text(
-          AppStrings.appointmentDetails,
-          style: AppTextStyles.headingSmall,
-        ),
         backgroundColor: AppColors.surface,
         surfaceTintColor: AppColors.transparent,
         leading: const AppBackButton(),
-        actions: [
-          if (showEdit)
-            Padding(
-              padding: const EdgeInsets.only(right: AppSizes.p16),
-              child: TextButton.icon(
-                style: TextButton.styleFrom(
-                  backgroundColor: AppColors.primary.withAlpha(25),
-                  foregroundColor: AppColors.primary,
-                  padding: const EdgeInsets.symmetric(horizontal: AppSizes.p12),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(AppSizes.r12),
-                  ),
-                ),
-                icon: const Icon(Icons.edit_outlined, size: 18),
-                label: const Text('Edit', style: TextStyle(fontWeight: FontWeight.bold)),
-                onPressed: () => context.push(
-                  AppRoutes.editAppointment.replaceAll(':id', appointmentId),
-                ),
+        title: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              AppStrings.appointmentDetails,
+              style: AppTextStyles.captionMedium.copyWith(
+                color: AppColors.textMuted,
               ),
+            ),
+            if (patientName != null)
+              Text(
+                patientName,
+                style: AppTextStyles.headingSmall.copyWith(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w700,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+          ],
+        ),
+        actions: [
+          if (showEdit || showDelete)
+            _DetailOverflowButton(
+              appointment: detailState.appointment,
+              showEdit: showEdit,
+              showDelete: showDelete,
             ),
         ],
       ),
@@ -96,6 +104,78 @@ class AppointmentDetailScreen extends ConsumerWidget {
         data: (AppointmentDetailState state) =>
             _AppointmentDetailBody(state: state),
       ),
+    );
+  }
+}
+
+/// Overflow menu for Edit Details + Delete Appointment.
+class _DetailOverflowButton extends ConsumerWidget {
+  const _DetailOverflowButton({
+    required this.appointment,
+    required this.showEdit,
+    required this.showDelete,
+  });
+  final dynamic appointment;
+  final bool showEdit;
+  final bool showDelete;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return PopupMenuButton<String>(
+      icon: const Icon(Icons.more_vert_rounded, color: AppColors.textSecondary),
+      padding: const EdgeInsets.only(right: AppSizes.p8),
+      constraints: const BoxConstraints(),
+      color: AppColors.surface,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(AppSizes.r12),
+      ),
+      elevation: 1,
+      position: PopupMenuPosition.under,
+      onSelected: (value) async {
+        switch (value) {
+          case 'edit':
+            context.push(
+              AppRoutes.editAppointment.replaceAll(':id', appointment.id),
+            );
+          case 'delete':
+            await deleteAppointmentWithConfirmation(context, ref, appointment);
+        }
+      },
+      itemBuilder: (_) => [
+        if (showEdit)
+          PopupMenuItem<String>(
+            value: 'edit',
+            height: AppSizes.buttonHeightSmall,
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(Icons.edit_outlined, size: 18, color: AppColors.primary),
+                const SizedBox(width: AppSizes.p8),
+                Text(AppStrings.editDetails,
+                    style: AppTextStyles.bodyMedium.copyWith(
+                      color: AppColors.primary,
+                    )),
+              ],
+            ),
+          ),
+        if (showDelete)
+          PopupMenuItem<String>(
+            value: 'delete',
+            height: AppSizes.buttonHeightSmall,
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(Icons.delete_outline_rounded,
+                    size: 18, color: AppColors.error),
+                const SizedBox(width: AppSizes.p8),
+                Text(AppStrings.deleteAppointment,
+                    style: AppTextStyles.bodyMedium.copyWith(
+                      color: AppColors.error,
+                    )),
+              ],
+            ),
+          ),
+      ],
     );
   }
 }
@@ -129,9 +209,7 @@ class _AppointmentDetailBody extends ConsumerWidget {
                 await ref.read(
                   appointmentDetailControllerProvider(state.appointment.id).future,
                 );
-              } catch (_) {
-                // Ignore errors for refresh UI completion
-              }
+              } catch (_) {}
             },
             child: SingleChildScrollView(
               physics: const AlwaysScrollableScrollPhysics(),
@@ -143,16 +221,13 @@ class _AppointmentDetailBody extends ConsumerWidget {
                     patient: state.patient,
                   ).animate().fadeIn(duration: 300.ms),
                   const SizedBox(height: AppSizes.p16),
-                  // ── Card 1: Schedule ──
                   AppointmentScheduleCard(appointment: state.appointment),
                   const SizedBox(height: AppSizes.p16),
-                  // ── Card 2: Care Team ──
                   AppointmentDoctorsSection(
                     activeDoctors: state.activeDoctors,
                     inactiveDoctors: state.inactiveDoctors,
                   ),
                   const SizedBox(height: AppSizes.p16),
-                  // ── Card 3: Clinical Notes ──
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: AppSizes.p24),
                     child: AppointmentNotesCard(
@@ -160,20 +235,12 @@ class _AppointmentDetailBody extends ConsumerWidget {
                       patientId: state.appointment.patientId,
                     ),
                   ),
-                  if (userRole != UserRole.doctor) ...[
-                    const SizedBox(height: AppSizes.p24),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: AppSizes.p24),
-                      child: DeleteAppointmentButton(appointment: state.appointment),
-                    ),
-                  ],
                   const SizedBox(height: AppSizes.p24),
                 ],
               ),
             ),
           ),
         ),
-        // ── Pinned bottom actions ──
         if (hasActions)
           SafeArea(
             child: Container(
@@ -194,5 +261,3 @@ class _AppointmentDetailBody extends ConsumerWidget {
     );
   }
 }
-
-

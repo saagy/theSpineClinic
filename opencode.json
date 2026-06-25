@@ -2,8 +2,10 @@
   "$schema": "https://opencode.ai/config.json",
   "plugin": [
     ["opencode-morph-fast-apply", {}],
-    ["opencode-goal-plugin", {}]
+    ["opencode-goal-plugin", {}],
+    ["opencode-ponytail", {}]
   ],
+  
   "provider": {
     "nvidia": {
       "name": "NVIDIA NIM",

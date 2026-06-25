@@ -18,6 +18,9 @@ import 'package:spine_clinic_app/shared/widgets/app_bottom_nav.dart';
 import 'package:spine_clinic_app/shared/widgets/loading_overlay.dart';
 
 /// Root application shell with branded AppBar and floating capsule bottom nav.
+///
+/// When [showBrandedAppBar] is false, the shell renders only the bottom
+/// navigation — sub-page screens provide their own [Scaffold] + [AppBar].
 class AppShell extends StatelessWidget {
   const AppShell({
     super.key,
@@ -27,6 +30,7 @@ class AppShell extends StatelessWidget {
     required this.userRole,
     this.isGlobalLoading = false,
     this.actions,
+    this.showBrandedAppBar = true,
   });
   final Widget child;
   final int currentTabIndex;
@@ -35,13 +39,17 @@ class AppShell extends StatelessWidget {
   final bool isGlobalLoading;
   final List<Widget>? actions;
 
+  /// Whether to render the branded [AppBar]. Set false for sub-pages that
+  /// carry their own titled [AppBar] to avoid stacking two AppBars.
+  final bool showBrandedAppBar;
+
   @override
   Widget build(BuildContext context) {
     return LoadingOverlay(
       isLoading: isGlobalLoading,
       child: Scaffold(
         backgroundColor: AppColors.background,
-        appBar: _buildAppBar(),
+        appBar: showBrandedAppBar ? _buildAppBar() : null,
         body: child,
         bottomNavigationBar: AppBottomNav(
           currentTabIndex: currentTabIndex,

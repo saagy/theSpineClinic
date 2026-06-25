@@ -48,6 +48,7 @@ class ActiveBranch extends _$ActiveBranch {
       await ref.read(authRepositoryProvider).updateStaffProfile(
         staff: updated,
       );
+      ref.invalidate(currentUserProvider);
     }
   }
 }

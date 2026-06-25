@@ -14,6 +14,8 @@ import 'package:spine_clinic_app/core/errors/result.dart';
 import 'package:spine_clinic_app/core/network/supabase_service.dart';
 import 'package:spine_clinic_app/features/auth/domain/auth_repository.dart';
 import 'package:spine_clinic_app/features/auth/domain/staff.dart';
+import 'package:spine_clinic_app/features/auth/domain/user_role.dart';
+import 'package:spine_clinic_app/features/patient/domain/clinic_location.dart';
 
 /// Supabase-backed [AuthRepository].
 class AuthRepositoryImpl implements AuthRepository {
@@ -127,14 +129,16 @@ class AuthRepositoryImpl implements AuthRepository {
   }
 
   @override
-  Future<Result<void>> registerDoctor({
+  Future<Result<void>> registerStaff({
+    required UserRole role,
     required String fullName,
     required String email,
     required String phone,
     required String password,
+    ClinicLocation? branch,
   }) async {
     try {
-      debugPrint('REGISTER: Starting signup for $email');
+      debugPrint('REGISTER: Starting signup for $email as ${role.dbValue}');
       final response = await _service.signUpWithEmail(
         email: email,
         password: password,
@@ -155,12 +159,9 @@ class AuthRepositoryImpl implements AuthRepository {
         );
       }
 
-      // Verify we have an active session before inserting into staff.
-      // Without a session the RLS INSERT policy (requires `authenticated`
-      // role) will reject the request with HTTP 401.
       if (!_service.isAuthenticated) {
         debugPrint(
-          'REGISTER: No session after signUp — email confirmation '
+          'REGISTER: No session after signup — email confirmation '
           'may be enabled in Supabase. Cannot insert staff row.',
         );
         return const Result.failure(
@@ -176,19 +177,21 @@ class AuthRepositoryImpl implements AuthRepository {
       }
 
       debugPrint('REGISTER: Inserting staff row for $userId');
+      final Map<String, Object?> staffData = {
+        'user_id': userId,
+        'full_name': fullName,
+        'email': email,
+        'phone': phone,
+        'role': role.dbValue,
+        'is_active': false,
+      };
+      if (branch != null) staffData['branch'] = branch.dbValue;
+
       await _service.guardQuery(
-        () => _service.from(_staffTable).insert({
-          'user_id': userId,
-          'full_name': fullName,
-          'email': email,
-          'phone': phone,
-          'role': 'doctor',
-          'is_active': false,
-        }),
+        () => _service.from(_staffTable).insert(staffData),
       );
 
       debugPrint('REGISTER: Staff row inserted, signing out');
-      // Clear the session — doctor must NOT be logged in after registration.
       await _service.signOut();
 
       debugPrint('REGISTER: Registration complete');

@@ -6,6 +6,8 @@
 /// Rule 1 — under 200 lines.
 library;
 
+import 'dart:typed_data';
+
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -96,6 +98,15 @@ class _PatientQuickActionsFabState extends ConsumerState<PatientQuickActionsFab>
     if (result == null || result.files.isEmpty) return;
     final PlatformFile file = result.files.first;
     if (!mounted) return;
+    final Uint8List? bytes = file.bytes;
+    if (bytes == null) {
+      AppSnackbar.show(
+        context,
+        message: AppStrings.fromKey('error_doc_file_too_large'),
+        variant: AppSnackbarVariant.error,
+      );
+      return;
+    }
 
     setState(() => _isUploading = true);
     try {
@@ -103,8 +114,7 @@ class _PatientQuickActionsFabState extends ConsumerState<PatientQuickActionsFab>
           .read(patientDocumentsNotifierProvider(widget.patient.id).notifier)
           .uploadDocument(
             fileName: file.name,
-            filePath: file.path,
-            fileBytes: file.bytes,
+            fileBytes: bytes,
           );
       if (!mounted) return;
       uploadResult.when(

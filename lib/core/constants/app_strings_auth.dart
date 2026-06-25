@@ -17,12 +17,15 @@ abstract final class AppStringsAuth {
   static const String forgotPassword = 'Forgot Password?';
   static const String register = 'Register';
   static const String doctorRegistration = 'Doctor Registration';
+  static const String registration = 'Registration';
+  static const String accountType = 'Account Type';
   static const String pendingApproval =
       'Your account is pending admin approval.';
   static const String registrationSuccess =
       'Registration submitted. Please wait for admin approval.';
   static const String alreadyHaveAccount = 'Already have an account?';
   static const String registerAsDoctor = 'Register as a Doctor';
+  static const String registerAsReceptionist = 'Register as a Receptionist';
   static const String registrationSubmittedTitle = 'Application Submitted';
   static const String registrationSubmittedMessage =
       'Your application has been submitted. '

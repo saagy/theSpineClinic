@@ -16,7 +16,7 @@ import 'package:spine_clinic_app/core/constants/app_sizes.dart';
 import 'package:spine_clinic_app/core/constants/app_strings.dart';
 import 'package:spine_clinic_app/core/constants/app_text_styles.dart';
 import 'package:spine_clinic_app/core/errors/app_exception.dart';
-import 'package:spine_clinic_app/shared/widgets/primary_button.dart';
+import 'package:spine_clinic_app/shared/widgets/app_button.dart';
 
 /// A centered layout displaying AppException details and a retry action.
 class ErrorView extends StatelessWidget {
@@ -76,10 +76,11 @@ class ErrorView extends StatelessWidget {
             ),
             if (onRetry != null) ...[
               const SizedBox(height: AppSizes.p24),
-              PrimaryButton(
-                label: AppStrings.retry,
+              AppButton(
+                labelText: AppStrings.retry,
                 onPressed: onRetry,
-                variant: PrimaryButtonVariant.secondary,
+                variant: AppButtonVariant.secondary,
+                shape: AppButtonShape.pill,
               ),
             ],
           ],

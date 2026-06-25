@@ -75,6 +75,7 @@ class _AppDoctorMultiSelectFieldWidgetState
         onSelectionChanged: (updated) {
           widget.state.didChange(updated);
           widget.onChanged?.call(updated);
+          widget.state.validate();
         },
       ),
     );
@@ -156,11 +157,11 @@ class _AppDoctorMultiSelectFieldWidgetState
             children: selected.map((doc) => SelectedDoctorRow(
               doctor: doc,
               showRemove: widget.enabled,
-              isLastDoctor: selected.length <= 1,
               onRemove: () {
                 final updated = selected.where((d) => d.id != doc.id).toList();
                 widget.state.didChange(updated);
                 widget.onChanged?.call(updated);
+                widget.state.validate();
               },
             )).toList(),
           ),

@@ -17,17 +17,20 @@ abstract class PatientDocumentsRepository {
   /// Fetches all documents associated with a specific patient, newest first.
   Future<Result<List<PatientDocument>>> fetchDocuments(String patientId);
 
-  /// Uploads a file payload to storage and saves a record row in database.
+  /// Uploads a byte payload to storage and saves a record row in database.
   ///
   /// Bytes pass through unchanged — no client-side compression. The
   /// `thumbnail_url` column is intentionally left `null`; a future
   /// server-side job (Edge Function or Storage Transform) can populate
   /// it without any client change.
+  ///
+  /// Callers MUST supply [fileBytes]. Web builds have no filesystem
+  /// path, and mobile pickers always populate [bytes] alongside any
+  /// path they expose.
   Future<Result<PatientDocument>> uploadDocument({
     required String patientId,
     required String fileName,
-    String? filePath,
-    Uint8List? fileBytes,
+    required Uint8List fileBytes,
     required String uploadedBy,
   });
 
@@ -40,8 +43,9 @@ abstract class PatientDocumentsRepository {
 
   /// Deletes a document row and its single linked storage object.
   /// DB row deletion happens first; if it succeeds but the blob
-  /// removal fails, the orphan blob is left in the bucket and is
-  /// swept up by [deletePatientStorageFolder].
+  /// removal fails, the orphan blob is silently tolerated and is
+  /// swept up by [deletePatientStorageFolder] during a later patient
+  /// deletion.
   Future<Result<void>> deleteDocument({required String documentId});
 
   /// Lists all objects under the `{patientId}/` folder and removes

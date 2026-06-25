@@ -146,6 +146,7 @@ class StaffRepositoryImpl implements StaffRepository {
             'phone': staff.phone,
             'role': staff.role.dbValue,
             'is_active': staff.isActive,
+            'deactivated_at': staff.isActive ? null : DateTime.now().toUtc().toIso8601String(),
           })
           .eq('id', staff.id));
 

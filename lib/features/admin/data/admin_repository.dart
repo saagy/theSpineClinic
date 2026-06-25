@@ -78,7 +78,7 @@ class AdminRepositoryImpl implements AdminRepository {
   Future<Result<List<Staff>>> getPendingDoctorApplications() async {
     try {
       final rows = await _service.guardQuery(() => _service
-          .from('staff').select().eq('role', 'doctor').eq('is_active', false).order('created_at'));
+          .from('staff').select().eq('is_active', false).isFilter('deactivated_at', null).order('created_at'));
       return Result.success(rows.map(Staff.fromJson).toList());
     } on AppException catch (e) {
       return Result.failure(e);
@@ -91,7 +91,7 @@ class AdminRepositoryImpl implements AdminRepository {
   Future<Result<List<Staff>>> getAllDoctorApplications() async {
     try {
       final rows = await _service.guardQuery(() => _service
-          .from('staff').select().eq('role', 'doctor').order('created_at'));
+          .from('staff').select().order('created_at'));
       return Result.success(rows.map(Staff.fromJson).toList());
     } on AppException catch (e) {
       return Result.failure(e);
@@ -103,7 +103,7 @@ class AdminRepositoryImpl implements AdminRepository {
   @override
   Future<Result<void>> approveDoctor(String id) async {
     try {
-      await _service.guardQuery(() => _service.from('staff').update({'is_active': true}).eq('id', id));
+      await _service.guardQuery(() => _service.from('staff').update({'is_active': true, 'deactivated_at': null}).eq('id', id));
       return const Result.success(null);
     } on AppException catch (e) {
       return Result.failure(e);

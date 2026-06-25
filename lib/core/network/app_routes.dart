@@ -25,7 +25,7 @@ abstract final class AppRoutes {
   /// Patient search screen (protected, full-screen without shell).
   static const String search = '/search';
 
-  /// Patient detail screen (protected, full-screen without shell).
+  /// Patient detail screen (protected, shell sub-page with its own AppBar).
   static const String patientDetail = '/patient/:id';
 
   /// Edit patient screen (protected, full-screen without shell).
@@ -40,7 +40,7 @@ abstract final class AppRoutes {
   /// New appointment booking screen (protected, full-screen without shell).
   static const String newAppointment = '/new-appointment';
 
-  /// Appointment detail screen (protected, full-screen without shell).
+  /// Appointment detail screen (protected, shell sub-page with its own AppBar).
   static const String appointmentDetail = '/appointment/:id';
 
   /// Edit appointment screen (protected, full-screen without shell).
@@ -49,7 +49,7 @@ abstract final class AppRoutes {
   /// Add/edit visit notes screen (protected, full-screen without shell).
   static const String addVisitNotes = '/appointment/:id/notes';
 
-  /// Visit detail screen (protected, full-screen without shell).
+  /// Visit detail screen (protected, shell sub-page with its own AppBar).
   static const String visitDetail = '/visit/:id';
 
   /// Doctor's assigned patients roster view.
@@ -67,10 +67,10 @@ abstract final class AppRoutes {
   /// Doctor profile shell route.
   static const String doctorProfile = '/doctor/profile';
 
-  /// Doctor historic appointments full history view.
+  /// Doctor historic appointments view (shell sub-page with its own AppBar).
   static const String doctorHistory = '/doctor/history';
 
-  /// Admin staff list screen.
+  /// Admin staff list screen (shell sub-page with its own AppBar).
   static const String staffList = '/admin/staff';
 
   /// Admin staff form screen (create/edit).
@@ -79,10 +79,10 @@ abstract final class AppRoutes {
   /// Admin central hub dashboard.
   static const String adminHub = '/admin';
 
-  /// Doctor registration applications management.
+  /// Doctor registration applications management (shell sub-page).
   static const String doctorApplications = '/admin/doctor-applications';
 
-  /// Clinic global packages and configuration settings.
+  /// Clinic global packages and configuration settings (shell sub-page).
   static const String clinicSettings = '/admin/clinic-settings';
 
   /// Clinic statistical reports and analytics dashboard.

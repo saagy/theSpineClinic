@@ -37,7 +37,7 @@ final class EditAppointmentControllerProvider
 }
 
 String _$editAppointmentControllerHash() =>
-    r'0e351ec10f0f5ed2559abf7e1a41105fee03e320';
+    r'8abec258c121b3ea591cbc160a7bf99d8a60636b';
 
 /// Notifier state class for editing appointment.
 

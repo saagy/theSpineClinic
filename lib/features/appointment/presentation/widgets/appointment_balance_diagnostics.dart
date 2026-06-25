@@ -57,7 +57,9 @@ class AppointmentBalanceDiagnostics extends ConsumerWidget {
     }
 
     final bool isPt = appointmentType == AppointmentType.normalPtSession;
-    final String bucketLabel = isPt ? 'PT Sessions' : 'Traction Sessions';
+    final String bucketLabel = isPt
+        ? AppStrings.ptSessionsBucket
+        : AppStrings.tractionSessionsBucket;
 
     final patientAsync = ref.watch(patientDetailProvider(patientId));
     final bucketBalanceAsync = ref.watch(
@@ -86,7 +88,7 @@ class AppointmentBalanceDiagnostics extends ConsumerWidget {
       return _wrapContainer(
         AppColors.surface,
         Text(
-          'Error loading package metrics.',
+          AppStrings.errorLoadingPackageMetrics,
           style: AppTextStyles.bodySecondary.copyWith(color: AppColors.error),
           textAlign: TextAlign.center,
         ),
@@ -122,28 +124,53 @@ class AppointmentBalanceDiagnostics extends ConsumerWidget {
               const SizedBox(width: AppSizes.p8),
               Expanded(
                 child: Text(
-                  'Live Ledger Preview — $bucketLabel',
+                  '${AppStrings.liveLedgerPreview} — $bucketLabel',
                   style: AppTextStyles.bodyBold.copyWith(color: statusTextColor),
                 ),
               ),
             ],
           ),
           const SizedBox(height: AppSizes.p12),
-          _buildRow('Current Bucket', '$baseline'),
-          _buildRow('Upcoming in this bucket', '-$futureCommitments'),
-          _buildRow('Net Available', '$netAvailable', isBold: true),
-          _buildRow('This Order Count', '$requestedCount',
+          _buildRow(AppStrings.currentBucket, '$baseline'),
+          _buildRow(AppStrings.upcomingInBucket, '-$futureCommitments'),
+          _buildRow(AppStrings.netAvailableLabel, '$netAvailable', isBold: true),
+          _buildRow(AppStrings.thisOrderCount, '$requestedCount',
               valueColor: requestedCount > 0 ? AppColors.warning : AppColors.textSecondary,
               isBold: requestedCount > 0),
           const SizedBox(height: AppSizes.p8),
           Text(
             isDeficit
-                ? 'Package Deficit: ${requestedCount - netAvailable} session(s) overdrawn.'
-                : 'Projected Leftover Balance: $leftover session(s).',
+                ? AppStrings.packageDeficitMessage(requestedCount - netAvailable)
+                : AppStrings.projectedLeftoverMessage(leftover),
             style: AppTextStyles.bodySecondary.copyWith(
               color: isDeficit ? AppColors.error : AppColors.textSecondary,
             ),
           ),
+          if (baseline < 0) ...[
+            const SizedBox(height: AppSizes.p8),
+            Row(
+              children: [
+                const Icon(Icons.warning_amber_rounded,
+                    size: AppSizes.iconSmall, color: AppColors.warning),
+                const SizedBox(width: AppSizes.p8),
+                Expanded(
+                  child: Text(
+                    AppStrings.negativeBalanceOutstanding,
+                    style: AppTextStyles.bodySecondary
+                        .copyWith(color: AppColors.warning),
+                  ),
+                ),
+              ],
+            ),
+          ],
+          if (isDeficit && requestedCount > 0) ...[
+            const SizedBox(height: AppSizes.p8),
+            Text(
+              AppStrings.insufficientPackageBalance,
+              style: AppTextStyles.bodySecondary
+                  .copyWith(color: AppColors.error),
+            ),
+          ],
         ],
       ),
     );

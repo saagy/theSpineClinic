@@ -9,7 +9,6 @@
 /// through unchanged — no client-side compression.
 library;
 
-import 'dart:io';
 import 'dart:typed_data';
 import 'package:supabase_flutter/supabase_flutter.dart' hide StorageException;
 
@@ -38,8 +37,7 @@ class PatientDocumentsRepositoryImpl implements PatientDocumentsRepository {
           .select()
           .eq('patient_id', patientId)
           .order('uploaded_at', ascending: false);
-      return Result.success(
-          rows.map(PatientDocument.fromJson).toList());
+      return Result.success(rows.map(PatientDocument.fromJson).toList());
     } on PostgrestException catch (e) {
       return Result.failure(AppException.fromSupabaseException(e));
     } on Exception catch (e) {
@@ -51,14 +49,12 @@ class PatientDocumentsRepositoryImpl implements PatientDocumentsRepository {
   Future<Result<PatientDocument>> uploadDocument({
     required String patientId,
     required String fileName,
-    String? filePath,
-    Uint8List? fileBytes,
+    required Uint8List fileBytes,
     required String uploadedBy,
   }) =>
       _uploadImpl(
         patientId: patientId,
         fileName: fileName,
-        filePath: filePath,
         fileBytes: fileBytes,
         uploadedBy: uploadedBy,
       ).timeout(
@@ -75,30 +71,16 @@ class PatientDocumentsRepositoryImpl implements PatientDocumentsRepository {
   Future<Result<PatientDocument>> _uploadImpl({
     required String patientId,
     required String fileName,
-    String? filePath,
-    Uint8List? fileBytes,
+    required Uint8List fileBytes,
     required String uploadedBy,
   }) async {
     try {
-      Uint8List? bytes = fileBytes;
-      if (bytes == null && filePath != null) {
-        bytes = await File(filePath).readAsBytes();
-      }
-      if (bytes == null) {
-        return const Result.failure(
-          DatabaseException(
-            code: 'db/invalid-payload',
-            message: 'Both filePath and fileBytes are null.',
-            userMessageKey: 'error_database_generic',
-          ),
-        );
-      }
-      if (bytes.length > _maxBytes) {
+      if (fileBytes.length > _maxBytes) {
         return const Result.failure(
           StorageException(
             code: 'storage/file-too-large',
             message: 'File exceeds the 10 MB limit.',
-            userMessageKey: 'error_doc_image_too_large',
+            userMessageKey: 'error_doc_file_too_large',
           ),
         );
       }
@@ -107,7 +89,7 @@ class PatientDocumentsRepositoryImpl implements PatientDocumentsRepository {
       final String storagePath = '$patientId/${stamp}_$fileName';
       await _client.storage
           .from(_bucket)
-          .uploadBinary(storagePath, bytes);
+          .uploadBinary(storagePath, fileBytes);
 
       final String fileUrl =
           _client.storage.from(_bucket).getPublicUrl(storagePath);
@@ -170,12 +152,16 @@ class PatientDocumentsRepositoryImpl implements PatientDocumentsRepository {
           .eq('id', documentId)
           .maybeSingle();
 
-      // Delete DB row FIRST. If this fails (e.g. RLS denies) no
-      // storage object is touched — prevents broken visible records.
+      // DB row FIRST. If this fails (e.g. RLS denies) no storage
+      // object is touched — the original bug is "blob gone, row
+      // remains, broken UI"; this ordering prevents it.
       await _client.from('patient_documents').delete().eq('id', documentId);
+
+      // Storage sweep is best-effort. The DB row is the source of
+      // truth for the UI; a transient blob-removal failure leaves
+      // an orphan that is reaped by [deletePatientStorageFolder]
+      // when the patient is later deleted.
       if (row != null) {
-        // After DB row is gone, sweep storage. Orphaned blobs are
-        // handled by deletePatientStorageFolder if this fails.
         final List<String> paths = <String>[];
         final String? main = _storagePathFromUrl(row['file_url'] as String?);
         if (main != null && main.isNotEmpty) paths.add(main);
@@ -183,17 +169,25 @@ class PatientDocumentsRepositoryImpl implements PatientDocumentsRepository {
             _storagePathFromUrl(row['thumbnail_url'] as String?);
         if (thumb != null && thumb.isNotEmpty) paths.add(thumb);
         if (paths.isNotEmpty) {
-          await _client.storage.from(_bucket).remove(paths);
+          // Storage sweep is best-effort. The DB row is the source
+          // of truth for the UI; a transient blob-removal failure
+          // leaves an orphan that is reaped by [deletePatient] ->
+          // [deletePatientStorageFolder] when the patient is
+          // later deleted. Swallow with try/catch (returning the
+          // empty list silences the analyzer).
+          try {
+            await _client.storage.from(_bucket).remove(paths);
+            // ignore: unused_result
+          } on StorageException {
+            // Orphan tolerated; see comment above.
+          }
         }
       }
       return const Result.success(null);
-    } on StorageException catch (e) {
-      return Result.failure(AppException.fromSupabaseException(e));
     } on PostgrestException catch (e) {
       return Result.failure(AppException.fromSupabaseException(e));
-      // ignore: avoid_catches_without_on_clauses
-    } catch (e) {
-      return Result.failure(UnknownException(message: e.toString()));
+    } on Exception catch (e) {
+      return Result.failure(AppException.fromSupabaseException(e));
     }
   }
 

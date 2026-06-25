@@ -1,14 +1,11 @@
-/// Doctor self-registration screen.
+/// Unified staff self-registration screen (doctor or receptionist).
 ///
 /// On submission, creates a Supabase Auth user AND inserts a Staff
-/// row with `role = 'doctor'` and `is_active = false`. The session
-/// is cleared immediately — the user is NOT logged in after
-/// registration (AGENT_CONTEXT §8).
+/// row with `is_active = false` — admin approval required before login.
+/// The session is cleared immediately (AGENT_CONTEXT §8).
 ///
 /// On success, swaps the form for [RegisterSuccessView].
 /// Form validation is delegated to [AuthValidators].
-///
-/// Rule 1 — under 200 lines (validation + success view split out).
 library;
 
 import 'package:flutter/material.dart';
@@ -22,25 +19,26 @@ import 'package:spine_clinic_app/core/constants/app_strings_auth.dart';
 import 'package:spine_clinic_app/core/constants/app_text_styles.dart';
 import 'package:spine_clinic_app/core/errors/app_exception.dart';
 import 'package:spine_clinic_app/core/network/app_routes.dart';
+import 'package:spine_clinic_app/features/auth/domain/user_role.dart';
 import 'package:spine_clinic_app/features/auth/presentation/auth_providers.dart';
 import 'package:spine_clinic_app/features/auth/presentation/widgets/auth_validators.dart';
 import 'package:spine_clinic_app/features/auth/presentation/widgets/register_success_view.dart';
+import 'package:spine_clinic_app/features/patient/domain/clinic_location.dart';
 import 'package:spine_clinic_app/shared/widgets/app_button.dart';
 import 'package:spine_clinic_app/shared/widgets/app_snackbar.dart';
 import 'package:spine_clinic_app/shared/widgets/app_text_field.dart';
+import 'package:spine_clinic_app/shared/widgets/filter_chip.dart';
 import 'package:spine_clinic_app/shared/widgets/loading_overlay.dart';
 
-/// Public doctor registration form screen.
-class DoctorRegisterScreen extends ConsumerStatefulWidget {
-  /// Creates a [DoctorRegisterScreen].
-  const DoctorRegisterScreen({super.key});
+/// Public registration form screen for doctors and receptionists.
+class RegisterScreen extends ConsumerStatefulWidget {
+  const RegisterScreen({super.key});
 
   @override
-  ConsumerState<DoctorRegisterScreen> createState() =>
-      _DoctorRegisterScreenState();
+  ConsumerState<RegisterScreen> createState() => _RegisterScreenState();
 }
 
-class _DoctorRegisterScreenState extends ConsumerState<DoctorRegisterScreen> {
+class _RegisterScreenState extends ConsumerState<RegisterScreen> {
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
   final TextEditingController _nameCtrl = TextEditingController();
   final TextEditingController _emailCtrl = TextEditingController();
@@ -48,6 +46,8 @@ class _DoctorRegisterScreenState extends ConsumerState<DoctorRegisterScreen> {
   final TextEditingController _passwordCtrl = TextEditingController();
   final TextEditingController _confirmCtrl = TextEditingController();
 
+  UserRole _selectedRole = UserRole.doctor;
+  ClinicLocation? _selectedBranch;
   bool _isLoading = false;
   bool _isSuccess = false;
 
@@ -66,11 +66,14 @@ class _DoctorRegisterScreenState extends ConsumerState<DoctorRegisterScreen> {
 
     setState(() => _isLoading = true);
 
-    final result = await ref.read(authRepositoryProvider).registerDoctor(
+    final result = await ref.read(authRepositoryProvider).registerStaff(
+          role: _selectedRole,
           fullName: _nameCtrl.text.trim(),
           email: _emailCtrl.text.trim(),
           phone: _phoneCtrl.text.trim(),
           password: _passwordCtrl.text,
+          branch:
+              _selectedRole == UserRole.receptionist ? _selectedBranch : null,
         );
 
     if (!mounted) return;
@@ -90,10 +93,8 @@ class _DoctorRegisterScreenState extends ConsumerState<DoctorRegisterScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // ── Success state: full-screen confirmation ──
     if (_isSuccess) return const RegisterSuccessView();
 
-    // ── Default state: registration form ──
     return Scaffold(
       backgroundColor: AppColors.background,
       body: LoadingOverlay(
@@ -110,11 +111,45 @@ class _DoctorRegisterScreenState extends ConsumerState<DoctorRegisterScreen> {
                   children: [
                     const SizedBox(height: AppSizes.p24),
                     Text(
-                      AppStringsAuth.doctorRegistration,
+                      AppStringsAuth.registration,
                       style: AppTextStyles.headingLarge,
                       textAlign: TextAlign.center,
                     ),
-                    const SizedBox(height: AppSizes.p32),
+                    const SizedBox(height: AppSizes.p24),
+
+                    // ── Role Selection ──
+                    Text(
+                      AppStringsAuth.accountType,
+                      style: AppTextStyles.bodySecondary,
+                    ),
+                    const SizedBox(height: AppSizes.p12),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: AppFilterChip(
+                            label: AppStrings.doctorRoleLabel,
+                            isActive: _selectedRole == UserRole.doctor,
+                            onTap: _isLoading
+                                ? null
+                                : () => setState(
+                                    () => _selectedRole = UserRole.doctor),
+                          ),
+                        ),
+                        const SizedBox(width: AppSizes.p12),
+                        Expanded(
+                          child: AppFilterChip(
+                            label: AppStrings.receptionistRoleLabel,
+                            isActive:
+                                _selectedRole == UserRole.receptionist,
+                            onTap: _isLoading
+                                ? null
+                                : () => setState(() =>
+                                    _selectedRole = UserRole.receptionist),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: AppSizes.p24),
 
                     // ── Full Name ──
                     AppTextField(
@@ -145,11 +180,33 @@ class _DoctorRegisterScreenState extends ConsumerState<DoctorRegisterScreen> {
                     ),
                     const SizedBox(height: AppSizes.p16),
 
+                    // ── Branch (receptionist only, optional) ──
+                    if (_selectedRole == UserRole.receptionist) ...[
+                      DropdownButtonFormField<ClinicLocation>(
+                        initialValue: _selectedBranch,
+                        decoration: const InputDecoration(
+                          labelText: AppStrings.branch,
+                          hintText: AppStrings.selectBranch,
+                        ),
+                        items: ClinicLocation.values
+                            .map((loc) => DropdownMenuItem(
+                                  value: loc,
+                                  child: Text(loc.displayLabel),
+                                ))
+                            .toList(),
+                        onChanged: _isLoading
+                            ? null
+                            : (ClinicLocation? next) =>
+                                setState(() => _selectedBranch = next),
+                      ),
+                      const SizedBox(height: AppSizes.p16),
+                    ],
+
                     // ── Password ──
                     AppTextField(
                       controller: _passwordCtrl,
                       labelText: AppStringsAuth.password,
-                      obscureText: true,
+                      isPassword: true,
                       validator: AuthValidators.password,
                       enabled: !_isLoading,
                     ),
@@ -159,7 +216,7 @@ class _DoctorRegisterScreenState extends ConsumerState<DoctorRegisterScreen> {
                     AppTextField(
                       controller: _confirmCtrl,
                       labelText: AppStringsAuth.confirmPassword,
-                      obscureText: true,
+                      isPassword: true,
                       validator: AuthValidators.confirmPassword(
                         () => _passwordCtrl.text,
                       ),

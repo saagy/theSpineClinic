@@ -88,7 +88,7 @@ class _FilterChip extends StatelessWidget {
         child: Text(
           label,
           style: AppTextStyles.caption.copyWith(
-            color: selected ? Colors.white : AppColors.textSecondary,
+            color: selected ? AppColors.textOnPrimary : AppColors.textSecondary,
             fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
           ),
         ),

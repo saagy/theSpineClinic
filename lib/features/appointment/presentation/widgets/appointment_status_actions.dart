@@ -1,8 +1,9 @@
 /// Status-specific bottom action layouts for the appointment detail screen.
 ///
-/// All states use an identical structural Row of two equal-width Expanded
-/// buttons (h=48, r=14). Only the right-hand button's style and label change
-/// per status — no vertical stacking, no width shifts.
+/// Scheduled / Checked-In: flat TextButton (Cancel) + Expanded primary pill.
+/// This gives a clear primary/secondary hierarchy and keeps the bar short.
+///
+/// Cancelled: single full-width secondary "Restore Appointment".
 ///
 /// Rule 1 — under 200 lines.
 library;
@@ -11,12 +12,10 @@ import 'package:flutter/material.dart';
 import 'package:spine_clinic_app/core/constants/app_colors.dart';
 import 'package:spine_clinic_app/core/constants/app_sizes.dart';
 import 'package:spine_clinic_app/core/constants/app_strings.dart';
+import 'package:spine_clinic_app/core/constants/app_text_styles.dart';
+import 'package:spine_clinic_app/shared/widgets/app_button.dart';
 
-/// Shared geometry constants — identical across every status.
-const double _kH = 48;
-const double _kR = 14;
-
-/// Fixed 50/50 grid for SCHEDULED: Cancel (outlined) | Check In (teal-filled).
+/// Scheduled: flat "Cancel" + expanded teal "Check In" pill.
 class ScheduledActions extends StatelessWidget {
   const ScheduledActions({
     super.key,
@@ -30,16 +29,24 @@ class ScheduledActions extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Row(children: [
-      Expanded(child: _cancelButton(loading: loading, onCancel: onCancel)),
-      const SizedBox(width: AppSizes.p12),
-      Expanded(child: _checkInButton(loading: loading, onCheckIn: onCheckIn)),
-    ]);
+    return Row(
+      children: [
+        _flatCancelButton(loading: loading, onCancel: onCancel),
+        const SizedBox(width: AppSizes.p12),
+        Expanded(
+          child: AppButton(
+            labelText: AppStrings.checkIn,
+            onPressed: loading ? null : onCheckIn,
+            isLoading: loading,
+            shape: AppButtonShape.pill,
+          ),
+        ),
+      ],
+    );
   }
 }
 
-/// Fixed 50/50 grid for CHECKED IN: Cancel (outlined) | Undo Check-In (outlined).
-/// Structurally identical to Scheduled — only the right button changes.
+/// Checked-In: flat "Cancel" + expanded secondary "Undo Check-In" pill.
 class CheckedInActions extends StatelessWidget {
   const CheckedInActions({
     super.key,
@@ -53,15 +60,25 @@ class CheckedInActions extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Row(children: [
-      Expanded(child: _cancelButton(loading: loading, onCancel: onCancel)),
-      const SizedBox(width: AppSizes.p12),
-      Expanded(child: _undoButton(loading: loading, onRevert: onRevert)),
-    ]);
+    return Row(
+      children: [
+        _flatCancelButton(loading: loading, onCancel: onCancel),
+        const SizedBox(width: AppSizes.p12),
+        Expanded(
+          child: AppButton(
+            labelText: AppStrings.undoCheckIn,
+            onPressed: loading ? null : onRevert,
+            isLoading: loading,
+            variant: AppButtonVariant.secondary,
+            shape: AppButtonShape.pill,
+          ),
+        ),
+      ],
+    );
   }
 }
 
-/// Cancelled: single full-width outlined teal "Restore Appointment".
+/// Cancelled: single full-width secondary "Restore Appointment".
 class CancelledActions extends StatelessWidget {
   const CancelledActions({
     super.key,
@@ -73,83 +90,28 @@ class CancelledActions extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      height: _kH,
-      child: OutlinedButton(
-        style: OutlinedButton.styleFrom(
-          foregroundColor: AppColors.primary,
-          side: const BorderSide(color: AppColors.primary),
-          shape: const RoundedRectangleBorder(
-              borderRadius: BorderRadius.all(Radius.circular(_kR))),
-        ),
-        onPressed: loading ? null : onRestore,
-        child: const Text(AppStrings.restoreToScheduled),
-      ),
+    return AppButton(
+      labelText: AppStrings.restoreToScheduled,
+      onPressed: loading ? null : onRestore,
+      isLoading: loading,
+      variant: AppButtonVariant.secondary,
+      shape: AppButtonShape.pill,
     );
   }
 }
 
-// ── Private shared button builders ────────────────────────────────────
+// ── Private shared widget ─────────────────────────────────────────────
 
-/// Cancel button — identical across Scheduled and Checked In.
-Widget _cancelButton({required bool loading, required VoidCallback onCancel}) {
-  return SizedBox(
-    height: _kH,
-    child: OutlinedButton(
-      style: OutlinedButton.styleFrom(
-        foregroundColor: AppColors.error,
-        side: const BorderSide(color: AppColors.border),
-        shape: const RoundedRectangleBorder(
-            borderRadius: BorderRadius.all(Radius.circular(_kR))),
-      ),
-      onPressed: loading ? null : onCancel,
-      child: const Text(AppStrings.cancelAppointment),
+/// Borderless flat text button — quiet secondary action.
+Widget _flatCancelButton({required bool loading, required VoidCallback onCancel}) {
+  return TextButton(
+    onPressed: loading ? null : onCancel,
+    style: TextButton.styleFrom(
+      padding: const EdgeInsets.symmetric(horizontal: AppSizes.p12),
     ),
-  );
-}
-
-/// Teal-filled Check In button.
-Widget _checkInButton({
-  required bool loading,
-  required VoidCallback onCheckIn,
-}) {
-  return SizedBox(
-    height: _kH,
-    child: ElevatedButton(
-      style: ElevatedButton.styleFrom(
-        backgroundColor: AppColors.primary,
-        disabledBackgroundColor: AppColors.textMuted.withAlpha(50),
-        foregroundColor: AppColors.textOnPrimary,
-        disabledForegroundColor: AppColors.textMuted,
-        shape: const RoundedRectangleBorder(
-            borderRadius: BorderRadius.all(Radius.circular(_kR))),
-        elevation: 0,
-      ),
-      onPressed: loading ? null : onCheckIn,
-      child: loading
-          ? const SizedBox(
-              width: 20,
-              height: 20,
-              child: CircularProgressIndicator(
-                  strokeWidth: 2, color: AppColors.textOnPrimary))
-          : const Text(AppStrings.checkIn),
-    ),
-  );
-}
-
-/// Gray-outlined Undo Check-In button.
-Widget _undoButton({required bool loading, required VoidCallback onRevert}) {
-  return SizedBox(
-    height: _kH,
-    child: OutlinedButton(
-      style: OutlinedButton.styleFrom(
-        foregroundColor: AppColors.textSecondary,
-        side: const BorderSide(color: AppColors.border),
-        shape: const RoundedRectangleBorder(
-            borderRadius: BorderRadius.all(Radius.circular(_kR))),
-      ),
-      onPressed: loading ? null : onRevert,
-      child: const Text(AppStrings.undoCheckIn),
+    child: Text(
+      AppStrings.cancel,
+      style: AppTextStyles.button.copyWith(color: AppColors.textSecondary),
     ),
   );
 }

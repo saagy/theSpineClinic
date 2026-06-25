@@ -3,12 +3,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:spine_clinic_app/core/constants/app_colors.dart';
 import 'package:spine_clinic_app/core/constants/app_sizes.dart';
 import 'package:spine_clinic_app/core/constants/app_strings.dart';
-import 'package:spine_clinic_app/core/constants/app_text_styles.dart';
 import 'package:spine_clinic_app/core/errors/app_exception.dart';
 import 'package:spine_clinic_app/core/utils/formatters.dart';
 import 'package:spine_clinic_app/features/admin/presentation/doctor_applications_controller.dart';
 import 'package:spine_clinic_app/features/admin/presentation/widgets/application_action_buttons.dart';
 import 'package:spine_clinic_app/features/auth/domain/staff.dart';
+import 'package:spine_clinic_app/features/auth/domain/user_role.dart';
+import 'package:spine_clinic_app/shared/widgets/app_avatar.dart';
+import 'package:spine_clinic_app/shared/widgets/app_badge.dart';
 import 'package:spine_clinic_app/shared/widgets/app_snackbar.dart';
 import 'package:spine_clinic_app/shared/widgets/confirmation_dialog.dart';
 import 'package:spine_clinic_app/shared/widgets/data_list_tile.dart';
@@ -136,12 +138,16 @@ class PendingTabView extends ConsumerWidget {
                       DataListTile(
                         title: doctor.fullName,
                         subtitle: '${doctor.email} • ${doctor.phone != null ? Formatters.formatPhone(doctor.phone!) : 'No phone'} • Reg: ${doctor.createdAt.toShortDateString()}',
-                        leading: CircleAvatar(
+                        leading: AppAvatar(
+                          name: doctor.fullName,
+                          color: AppColors.primaryLight,
+                        ),
+                        trailing: AppBadge(
+                          label: doctor.role == UserRole.doctor
+                              ? AppStrings.doctorRoleLabel
+                              : AppStrings.receptionistRoleLabel,
+                          textColor: AppColors.primary,
                           backgroundColor: AppColors.primaryLight,
-                          child: Text(
-                            doctor.fullName.isNotEmpty ? doctor.fullName[0].toUpperCase() : '?',
-                            style: AppTextStyles.bodyBold.copyWith(color: AppColors.primary),
-                          ),
                         ),
                         transparent: true,
                       ),

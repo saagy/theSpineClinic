@@ -7,6 +7,7 @@ import 'package:spine_clinic_app/core/constants/app_strings.dart';
 import 'package:spine_clinic_app/core/constants/app_text_styles.dart';
 import 'package:spine_clinic_app/features/auth/domain/staff.dart';
 import 'package:spine_clinic_app/features/auth/domain/user_role.dart';
+import 'package:spine_clinic_app/shared/widgets/password_visibility_toggle.dart';
 
 /// Isolated form fields for creating or editing staff members.
 class StaffFormFields extends StatefulWidget {
@@ -37,8 +38,10 @@ class StaffFormFields extends StatefulWidget {
 
 class _StaffFormFieldsState extends State<StaffFormFields> {
   bool _changePassword = false;
+  bool _obscurePassword = true;
+  bool _obscureConfirm = true;
 
-  InputDecoration _buildDecoration({required String labelText, String? hintText}) {
+  InputDecoration _buildDecoration({required String labelText, String? hintText, Widget? suffixIcon}) {
     final OutlineInputBorder borderBase = OutlineInputBorder(
       borderRadius: const BorderRadius.all(Radius.circular(AppSizes.r6)),
       borderSide: const BorderSide(color: AppColors.border, width: AppSizes.borderWidth),
@@ -66,6 +69,7 @@ class _StaffFormFieldsState extends State<StaffFormFields> {
         borderSide: const BorderSide(color: AppColors.error, width: AppSizes.borderWidthFocused),
       ),
       errorStyle: AppTextStyles.caption.copyWith(color: AppColors.error),
+      suffixIcon: suffixIcon,
     );
   }
 
@@ -181,8 +185,16 @@ class _StaffFormFieldsState extends State<StaffFormFields> {
           FormBuilderTextField(
             name: 'password',
             enabled: widget.enabled,
-            obscureText: true,
-            decoration: _buildDecoration(labelText: AppStrings.password, hintText: 'Enter password'),
+            obscureText: _obscurePassword,
+            decoration: _buildDecoration(
+              labelText: AppStrings.password,
+              hintText: 'Enter password',
+              suffixIcon: PasswordVisibilityToggle(
+                isObscured: _obscurePassword,
+                onToggle: () =>
+                    setState(() => _obscurePassword = !_obscurePassword),
+              ),
+            ),
             validator: FormBuilderValidators.compose([
               FormBuilderValidators.required(errorText: AppStrings.passwordRequired),
               FormBuilderValidators.minLength(8, errorText: AppStrings.passwordMinLength),
@@ -192,8 +204,16 @@ class _StaffFormFieldsState extends State<StaffFormFields> {
           FormBuilderTextField(
             name: 'confirm_password',
             enabled: widget.enabled,
-            obscureText: true,
-            decoration: _buildDecoration(labelText: AppStrings.confirmPassword, hintText: 'Confirm password'),
+            obscureText: _obscureConfirm,
+            decoration: _buildDecoration(
+              labelText: AppStrings.confirmPassword,
+              hintText: 'Confirm password',
+              suffixIcon: PasswordVisibilityToggle(
+                isObscured: _obscureConfirm,
+                onToggle: () =>
+                    setState(() => _obscureConfirm = !_obscureConfirm),
+              ),
+            ),
             validator: (val) {
               if (val == null || val.isEmpty) {
                 return AppStrings.passwordRequired;

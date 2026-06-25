@@ -13,6 +13,7 @@ import 'package:spine_clinic_app/core/constants/app_text_styles.dart';
 import 'package:spine_clinic_app/features/appointment/domain/appointment.dart';
 import 'package:spine_clinic_app/features/appointment/domain/appointment_status.dart';
 import 'package:spine_clinic_app/features/appointment/domain/appointment_type.dart';
+import 'package:spine_clinic_app/features/appointment/presentation/appointment_detail_controller.dart';
 import 'package:spine_clinic_app/features/appointment/presentation/edit_appointment_controller.dart';
 import 'package:spine_clinic_app/features/appointment/presentation/widgets/booking_form_fields.dart';
 import 'package:spine_clinic_app/features/auth/domain/staff.dart';
@@ -92,29 +93,39 @@ class _EditAppointmentFormState extends ConsumerState<EditAppointmentForm> {
       scheduledAt: updatedScheduledAt,
     );
 
-    final result = await ref
-        .read(editAppointmentControllerProvider.notifier)
-        .updateAppointment(
-          appointment: updatedAppt,
-          doctorIds: doctors.map((d) => d.id).toList(),
-        );
+    try {
+      final result = await ref
+          .read(editAppointmentControllerProvider.notifier)
+          .updateAppointment(
+            appointment: updatedAppt,
+            doctorIds: doctors.map((d) => d.id).toList(),
+          );
 
-    if (!mounted) return;
-    setState(() => _isSubmitting = false);
+      if (!mounted) return;
 
-    result.when(
-      success: (_) {
-        AppSnackbar.show(context,
-            message: AppStrings.appointmentUpdated,
-            variant: AppSnackbarVariant.success);
-        context.pop();
-      },
-      failure: (e) {
-        AppSnackbar.show(context,
-            message: AppStrings.fromKey(e.userMessageKey),
-            variant: AppSnackbarVariant.error);
-      },
-    );
+      result.when(
+        success: (_) {
+          ref.invalidate(
+              appointmentDetailControllerProvider(widget.appointment.id));
+          AppSnackbar.show(context,
+              message: AppStrings.appointmentUpdated,
+              variant: AppSnackbarVariant.success);
+          context.pop();
+        },
+        failure: (e) {
+          AppSnackbar.show(context,
+              message: AppStrings.fromKey(e.userMessageKey),
+              variant: AppSnackbarVariant.error);
+        },
+      );
+    } catch (e) {
+      if (!mounted) return;
+      AppSnackbar.show(context,
+          message: AppStrings.errorUnknown,
+          variant: AppSnackbarVariant.error);
+    } finally {
+      if (mounted) setState(() => _isSubmitting = false);
+    }
   }
 
   @override

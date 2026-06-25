@@ -1,7 +1,11 @@
-/// Doctor profile screen with historic appointments preview and logout.
+/// Doctor profile screen — unified identity header plus a stack of
+/// settings menu rows (Appointment History, Sign Out).
 ///
-/// Shows the doctor's own profile info, the last 5 appointments, a
-/// "View All History" link, an "Edit Profile" button, and sign-out.
+/// The legacy "Recent Appointments" preview feed has been removed in
+/// favor of a single tap-through row that opens the dedicated history
+/// route.
+///
+/// Rule 1 — under 200 lines.
 library;
 
 import 'package:flutter/material.dart';
@@ -11,21 +15,17 @@ import 'package:go_router/go_router.dart';
 import 'package:spine_clinic_app/core/constants/app_colors.dart';
 import 'package:spine_clinic_app/core/constants/app_sizes.dart';
 import 'package:spine_clinic_app/core/constants/app_strings.dart';
-import 'package:spine_clinic_app/core/constants/app_text_styles.dart';
 import 'package:spine_clinic_app/core/errors/app_exception.dart';
 import 'package:spine_clinic_app/core/network/app_routes.dart';
-import 'package:spine_clinic_app/features/auth/domain/staff.dart';
 import 'package:spine_clinic_app/features/auth/domain/user_role.dart';
+import 'package:spine_clinic_app/features/auth/presentation/auth_actions.dart';
 import 'package:spine_clinic_app/features/auth/presentation/auth_providers.dart';
 import 'package:spine_clinic_app/features/auth/presentation/edit_profile_sheet.dart';
-import 'package:spine_clinic_app/features/auth/presentation/widgets/recent_appointments_preview.dart';
-import 'package:spine_clinic_app/shared/widgets/app_button.dart';
-import 'package:spine_clinic_app/shared/widgets/confirmation_dialog.dart';
-import 'package:spine_clinic_app/shared/widgets/info_row.dart';
 import 'package:spine_clinic_app/shared/widgets/error_view.dart';
-import 'package:spine_clinic_app/shared/widgets/section_card.dart';
+import 'package:spine_clinic_app/shared/widgets/profile_menu_row.dart';
+import 'package:spine_clinic_app/shared/widgets/staff_profile_header.dart';
 
-/// Doctor's own profile page with last-5 appointments preview and sign-out.
+/// Doctor's own profile page with history shortcut and sign-out.
 class DoctorProfileScreen extends ConsumerWidget {
   /// Creates a [DoctorProfileScreen].
   const DoctorProfileScreen({super.key});
@@ -66,46 +66,22 @@ class DoctorProfileScreen extends ConsumerWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  SectionCard(
-                    title: AppStrings.profile,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        InfoRow.fixedLabel(label: AppStrings.fullName, value: user.fullName),
-                        const SizedBox(height: AppSizes.p12),
-                        InfoRow.fixedLabel(label: AppStrings.email, value: user.email),
-                        if (user.phone != null && user.phone!.isNotEmpty) ...[
-                          const SizedBox(height: AppSizes.p12),
-                          InfoRow.fixedLabel(label: AppStrings.phone, value: user.phone!),
-                        ],
-                        const SizedBox(height: AppSizes.p12),
-                        InfoRow.fixedLabel(
-                          label: AppStrings.role,
-                          value: _roleLabel(user.role),
-                        ),
-                        const SizedBox(height: AppSizes.p16),
-                        AppButton(
-                          labelText: AppStrings.editProfile,
-                          variant: AppButtonVariant.secondary,
-                          onPressed: () => _showEditProfileSheet(context, ref, user),
-                        ),
-                      ],
-                    ),
+                  StaffProfileHeader(
+                    user: user,
+                    roleLabel: _roleLabel(user.role),
+                    onEditProfile: () => EditProfileSheet.show(context, user),
                   ),
                   const SizedBox(height: AppSizes.p16),
-                  SectionCard(
-                    title: AppStrings.recentAppointments,
-                    action: TextButton(
-                      onPressed: () => context.push(AppRoutes.doctorHistory),
-                      child: Text(AppStrings.viewAll, style: AppTextStyles.bodyBold),
-                    ),
-                    child: RecentAppointmentsPreview(doctorId: user.id),
+                  ProfileMenuRow(
+                    title: AppStrings.appointmentHistory,
+                    leadingIcon: Icons.history_rounded,
+                    onTap: () => context.push(AppRoutes.doctorHistory),
                   ),
-                  const SizedBox(height: AppSizes.p24),
-                  AppButton(
-                    labelText: AppStrings.signOut,
-                    variant: AppButtonVariant.danger,
-                    onPressed: () => _handleSignOut(context, ref),
+                  ProfileMenuRow(
+                    title: AppStrings.signOut,
+                    leadingIcon: Icons.logout_rounded,
+                    isDestructive: true,
+                    onTap: () => confirmAndSignOut(context, ref),
                   ),
                 ],
               ),
@@ -114,33 +90,6 @@ class DoctorProfileScreen extends ConsumerWidget {
         );
       },
     );
-  }
-
-  void _showEditProfileSheet(BuildContext context, WidgetRef ref, Staff user) {
-    showModalBottomSheet<void>(
-      context: context,
-      isScrollControlled: true,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(AppSizes.r12)),
-      ),
-      builder: (_) => EditProfileSheet(staff: user),
-    );
-  }
-
-  Future<void> _handleSignOut(BuildContext context, WidgetRef ref) async {
-    final confirm = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => const ConfirmationDialog(
-        title: AppStrings.signOut,
-        message: AppStrings.confirmSignOut,
-        confirmLabel: AppStrings.signOut,
-        cancelLabel: AppStrings.cancel,
-        isDestructive: true,
-      ),
-    );
-    if (confirm == true) {
-      await ref.read(currentUserProvider.notifier).logout();
-    }
   }
 }
 

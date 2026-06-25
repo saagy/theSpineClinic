@@ -28,6 +28,7 @@ abstract final class AppStrings {
   static const String errorUnknown = 'An unexpected error occurred. Try again.';
 
   // Document upload size guards
+  static const String errorDocFileTooLarge = 'File is too large to upload. Maximum size is 10 MB.';
   static const String errorDocImageTooLarge = 'Image is too large to upload. Maximum size is 10 MB.';
   static const String errorDocPdfTooLarge = 'PDF is too large to upload. Maximum size is 10 MB.';
   static const String errorAttachmentPartialFail =
@@ -54,6 +55,7 @@ abstract final class AppStrings {
     'error_unknown': errorUnknown,
     'error_doc_image_too_large': errorDocImageTooLarge,
     'error_doc_pdf_too_large': errorDocPdfTooLarge,
+    'error_doc_file_too_large': errorDocFileTooLarge,
     'error_attachment_partial_fail': errorAttachmentPartialFail,
   };
 
@@ -93,7 +95,9 @@ abstract final class AppStrings {
   static const String approve = 'Approve';
   static const String reject = 'Reject';
   static const String viewDetails = 'View Details';
-  static const String viewAll = 'View All';
+  static const String appointmentHistory = 'Appointment History';
+  static const String appointmentHistorySubtitle = 'View all of your appointments';
+  static const String editProfileTooltip = 'Edit Profile';
 
   // State Messages
   static const String loading = 'Loading…';
@@ -134,9 +138,9 @@ abstract final class AppStrings {
   static const String session = 'Session';
   static const String gehazShadFakarat = 'Spinal Traction';
   static const String checkUp = 'Check-up';
-  static const String normalPtSession = 'Normal PT Session';
-  static const String spinalTractionSession = 'Spinal Traction Session';
-  static const String initialAssessment = 'Initial Assessment';
+  static const String normalPtSession = 'PT Session';
+  static const String spinalTractionSession = 'Spinal Traction';
+  static const String initialAssessment = 'Assessment';
   static const String reassessment = 'Reassessment';
   static const String paidSeparately = 'Paid separately';
   static const String assessmentPaidSeparatelyCaption =
@@ -167,6 +171,7 @@ abstract final class AppStrings {
   static const String yes = 'Yes';
   static const String no = 'No';
   static const String editAppointment = 'Edit Appointment';
+  static const String editDetails = 'Edit Details';
   static const String deleteAppointment = 'Delete Appointment';
   static const String appointmentDeleted = 'Appointment deleted successfully.';
   static const String appointmentUpdated = 'Appointment updated successfully.';
@@ -232,6 +237,28 @@ abstract final class AppStrings {
   static const String historicalNote = 'This appointment is read-only.';
   static const String statusUpdateSuccess = 'Status updated successfully.';
   static const String statusUpdateError = 'Failed to update status.';
+
+  // ── Booking Balance Diagnostics ──
+  static const String insufficientPackageBalance =
+      'Insufficient package balance. Toggle off \'Use Package\' to book as a paid session.';
+  static const String negativeBalanceOutstanding =
+      'Outstanding balance — patient owes sessions from previous bookings.';
+  static const String errorLoadingPackageMetrics = 'Error loading package metrics.';
+  static const String liveLedgerPreview = 'Live Ledger Preview';
+  static const String ptSessionsBucket = 'PT Sessions';
+  static const String tractionSessionsBucket = 'Traction Sessions';
+  static const String currentBucket = 'Current Bucket';
+  static const String upcomingInBucket = 'Upcoming in this bucket';
+  static const String netAvailableLabel = 'Net Available';
+  static const String thisOrderCount = 'This Order Count';
+
+  /// Deficit message shown when requested sessions exceed available balance.
+  static String packageDeficitMessage(int deficit) =>
+      'Package Deficit: $deficit session(s) overdrawn.';
+
+  /// Leftover message shown when booking leaves a positive remainder.
+  static String projectedLeftoverMessage(int leftover) =>
+      'Projected Leftover Balance: $leftover session(s).';
 
   // Payment Screen Strings
   static const String recordPayment = 'Record Payment';
@@ -313,7 +340,6 @@ abstract final class AppStrings {
   static const String manageDoctorsLabel = 'Review and approve new doctors';
   static const String manageStaffLabel = 'Manage receptionist and admin accounts';
   static const String configureClinicLabel = 'Set up session packages and pricing';
-  static const String viewReportsLabel = 'Check clinic statistics and performance';
   static const String noPendingApplications = 'No pending applications found.';
   static const String pending = 'Pending';
   static const String allApplications = 'All Applications';
@@ -398,7 +424,6 @@ abstract final class AppStrings {
 
   // Profile / Edit
   static const String editProfile = 'Edit Profile';
-  static const String recentAppointments = 'Recent Appointments';
   static const String changePasswordOptional = 'Change Password (optional)';
   static const String newPasswordHint = 'New Password';
   static const String profileUpdatedSuccess = 'Profile updated successfully.';

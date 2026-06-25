@@ -1,16 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
-import 'package:spine_clinic_app/core/constants/app_colors.dart';
 import 'package:spine_clinic_app/core/constants/app_sizes.dart';
 import 'package:spine_clinic_app/core/constants/app_text_styles.dart';
-import 'package:spine_clinic_app/core/network/app_routes.dart';
-import 'package:spine_clinic_app/core/utils/formatters.dart';
 import 'package:spine_clinic_app/features/appointment/domain/appointment_repository.dart';
-import 'package:spine_clinic_app/features/appointment/presentation/widgets/appointment_actions_trailing.dart';
-import 'package:spine_clinic_app/shared/widgets/app_avatar.dart';
-import 'package:spine_clinic_app/shared/widgets/data_list_tile.dart';
-
+import 'package:spine_clinic_app/features/appointment/presentation/widgets/receptionist_appointment_card.dart';
+import 'package:spine_clinic_app/core/constants/app_colors.dart';
 import 'package:spine_clinic_app/shared/widgets/animated_list_item.dart';
 
 class DoctorHistoryListView extends StatefulWidget {
@@ -19,11 +13,13 @@ class DoctorHistoryListView extends StatefulWidget {
     required this.items,
     required this.scrollController,
     required this.onRefresh,
+    this.onStatusChanged,
   });
 
   final List<DoctorScheduleItem> items;
   final ScrollController scrollController;
   final RefreshCallback onRefresh;
+  final VoidCallback? onStatusChanged;
 
   @override
   State<DoctorHistoryListView> createState() => _DoctorHistoryListViewState();
@@ -50,8 +46,6 @@ class _DoctorHistoryListViewState extends State<DoctorHistoryListView> {
         physics: const AlwaysScrollableScrollPhysics(),
         controller: widget.scrollController,
         padding: const EdgeInsets.only(
-          left: AppSizes.p16,
-          right: AppSizes.p16,
           bottom: AppSizes.p32,
         ),
         itemCount: displayItems.length,
@@ -74,19 +68,16 @@ class _DoctorHistoryListViewState extends State<DoctorHistoryListView> {
           return AnimatedListItem(
             index: index,
             animatedIndices: _animatedIndices,
-            child: DataListTile(
+            child: ReceptionistAppointmentCard(
               key: ValueKey(item.appointment.id),
-              title: item.patient.fullName,
-              subtitle: '${item.appointment.type.displayLabel} · '
-                  '${Formatters.formatTime(item.appointment.scheduledAt.toLocal())}',
-              leading: AppAvatar(
-                name: item.patient.fullName,
-                radius: AppSizes.avatarTile / 2,
+              item: AppointmentWithPatient(
+                appointment: item.appointment,
+                patient: item.patient,
               ),
-              trailing: AppointmentActionsTrailing(appointment: item.appointment),
-              onTap: () => context.push(
-                AppRoutes.appointmentDetail.replaceAll(':id', item.appointment.id),
-              ),
+              faded: true,
+              showMenu: true,
+              showDate: true,
+              onStatusChanged: widget.onStatusChanged,
             ),
           );
         },

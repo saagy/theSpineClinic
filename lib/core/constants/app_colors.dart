@@ -39,6 +39,15 @@ abstract final class AppColors {
   /// Very light teal tint used for selected-row highlights or badges.
   static const Color primaryLight = Color(0xFFE8F7F4);
 
+  /// Deep teal — active nav text, checked-in status text.
+  static const Color primaryDeep = Color(0xFF085041);
+
+  /// Checked-in status card background tint.
+  static const Color checkedInBg = Color(0xFFF0FAF6);
+
+  /// Checked-in status card border.
+  static const Color checkedInBorder = Color(0xFF9FE1CB);
+
   // ──────────────── Text Hierarchy ────────────────
 
   /// Near-black — headings, primary labels, titles.

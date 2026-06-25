@@ -54,8 +54,7 @@ class PatientDocumentsNotifierNotifier
   /// it via [AppSnackbar] without disturbing the visible list.
   Future<Result<PatientDocument>> uploadDocument({
     required String fileName,
-    String? filePath,
-    Uint8List? fileBytes,
+    required Uint8List fileBytes,
   }) async {
     // Rule 6: Every write action must read currentUserProvider to check role and id.
     final Staff? currentUser = ref.read(currentUserProvider).value;
@@ -74,7 +73,6 @@ class PatientDocumentsNotifierNotifier
     final Result<PatientDocument> result = await repo.uploadDocument(
       patientId: patientId,
       fileName: fileName,
-      filePath: filePath,
       fileBytes: fileBytes,
       uploadedBy: currentUser.id,
     );

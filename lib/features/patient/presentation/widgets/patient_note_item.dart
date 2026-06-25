@@ -12,6 +12,7 @@ import 'package:spine_clinic_app/features/auth/domain/user_role.dart';
 import 'package:spine_clinic_app/features/auth/presentation/auth_providers.dart';
 import 'package:spine_clinic_app/features/medical_records/domain/patient_note.dart';
 import 'package:spine_clinic_app/features/medical_records/presentation/medical_records_providers.dart';
+import 'package:spine_clinic_app/features/medical_records/presentation/patient_notes_list_notifier.dart';
 import 'package:spine_clinic_app/features/patient/presentation/widgets/add_note_sheet.dart';
 import 'package:spine_clinic_app/shared/widgets/app_badge.dart';
 import 'package:spine_clinic_app/shared/widgets/app_snackbar.dart';
@@ -159,6 +160,7 @@ class PatientNoteItem extends ConsumerWidget {
             AppSnackbar.show(context,
                 message: AppStrings.noteDeleted,
                 variant: AppSnackbarVariant.success);
+            ref.invalidate(patientNotesListProvider(note.patientId));
             ref.invalidate(patientNotesNotifierProvider(note.patientId));
             if (note.appointmentId != null) {
               ref.invalidate(appointmentNoteProvider(note.appointmentId!));

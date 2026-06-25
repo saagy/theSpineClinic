@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
@@ -5,13 +7,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:spine_clinic_app/core/constants/app_colors.dart';
 import 'package:spine_clinic_app/core/constants/app_sizes.dart';
 import 'package:spine_clinic_app/core/constants/app_strings.dart';
-import 'package:spine_clinic_app/core/constants/app_text_styles.dart';
 import 'package:spine_clinic_app/core/errors/app_exception.dart';
 import 'package:spine_clinic_app/core/errors/result.dart';
 import 'package:spine_clinic_app/features/patient/domain/patient.dart';
 import 'package:spine_clinic_app/features/patient/domain/patient_document.dart';
 import 'package:spine_clinic_app/features/patient/presentation/patient_documents_providers.dart';
 import 'package:spine_clinic_app/features/patient/presentation/widgets/patient_document_item.dart';
+import 'package:spine_clinic_app/shared/widgets/app_button.dart';
 import 'package:spine_clinic_app/shared/widgets/app_snackbar.dart';
 import 'package:spine_clinic_app/shared/widgets/empty_state.dart';
 import 'package:spine_clinic_app/shared/widgets/error_view.dart';
@@ -50,14 +52,22 @@ class _PatientTabDocumentsState extends ConsumerState<PatientTabDocuments> {
     if (result == null || result.files.isEmpty) return;
     final PlatformFile file = result.files.first;
     if (!mounted) return;
+    final Uint8List? bytes = file.bytes;
+    if (bytes == null) {
+      AppSnackbar.show(
+        context,
+        message: AppStrings.fromKey('error_doc_file_too_large'),
+        variant: AppSnackbarVariant.error,
+      );
+      return;
+    }
     setState(() => _isUploadingLocal = true);
     try {
       final Result<PatientDocument> uploadResult = await ref
           .read(patientDocumentsNotifierProvider(widget.patient.id).notifier)
           .uploadDocument(
             fileName: file.name,
-            filePath: file.path,
-            fileBytes: file.bytes,
+            fileBytes: bytes,
           );
       if (!mounted) return;
       uploadResult.when(
@@ -89,57 +99,52 @@ class _PatientTabDocumentsState extends ConsumerState<PatientTabDocuments> {
           const LinearProgressIndicator(color: AppColors.primary),
         Padding(
           padding: const EdgeInsets.all(AppSizes.p16),
-          child: SizedBox(
-            height: 48,
-            child: ElevatedButton.icon(
-              onPressed: _isUploadingLocal ? null : _pickAndUpload,
-              icon: _isUploadingLocal
-                  ? const SizedBox(
-                      width: 20,
-                      height: 20,
-                      child: CircularProgressIndicator(
-                          strokeWidth: 2, color: AppColors.textOnPrimary))
-                  : const Icon(Icons.add, color: AppColors.textOnPrimary),
-              label: Text(AppStrings.addDocument,
-                  style: AppTextStyles.bodyBold
-                      .copyWith(color: AppColors.textOnPrimary)),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primary,
-                minimumSize: const Size.fromHeight(AppSizes.buttonHeight),
-                padding: const EdgeInsets.symmetric(
-                    horizontal: AppSizes.p24, vertical: AppSizes.p14),
-                shape: const RoundedRectangleBorder(
-                    borderRadius:
-                        BorderRadius.all(Radius.circular(AppSizes.r12))),
-                elevation: 0,
-              ),
-            ),
+          child: AppButton(
+            labelText: AppStrings.addDocument,
+            onPressed: _isUploadingLocal ? null : _pickAndUpload,
+            isLoading: _isUploadingLocal,
+            icon: Icons.add,
+            shape: AppButtonShape.pill,
+            debounceMs: 1000,
           ),
         ),
         const Divider(height: 1, thickness: 1, color: AppColors.border),
         Expanded(
-          child: documentsAsync.when(
-            loading: () => const SkeletonTileList(count: 4),
-            error: (err, stack) => ErrorView(
-              exception: err is AppException
-                  ? err
-                  : AppException.fromSupabaseException(err),
-              onRetry: () => ref.invalidate(
-                patientDocumentsNotifierProvider(widget.patient.id),
-              ),
+          child: RefreshIndicator(
+            color: AppColors.primary,
+            onRefresh: () async => ref.invalidate(
+              patientDocumentsNotifierProvider(widget.patient.id),
             ),
-            data: (List<PatientDocument> docs) {
-              if (docs.isEmpty) {
-                return const EmptyState(
-                  message: AppStrings.noDocumentsYet,
-                  icon: Icons.folder_open_rounded,
-                );
-              }
-              return RefreshIndicator(
-                color: AppColors.primary,
-                onRefresh: () async => ref.invalidate(
-                    patientDocumentsNotifierProvider(widget.patient.id)),
-                child: ListView.builder(
+            child: documentsAsync.when(
+              loading: () => const SkeletonTileList(count: 4),
+              error: (err, stack) => ListView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                children: [
+                  ErrorView(
+                    exception: err is AppException
+                        ? err
+                        : AppException.fromSupabaseException(err),
+                    onRetry: () => ref.invalidate(
+                      patientDocumentsNotifierProvider(widget.patient.id),
+                    ),
+                  ),
+                ],
+              ),
+              data: (List<PatientDocument> docs) {
+                if (docs.isEmpty) {
+                  return ListView(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    padding: const EdgeInsets.symmetric(
+                        vertical: AppSizes.p48),
+                    children: const [
+                      EmptyState(
+                        message: AppStrings.noDocumentsYet,
+                        icon: Icons.folder_open_rounded,
+                      ),
+                    ],
+                  );
+                }
+                return ListView.builder(
                   physics: const AlwaysScrollableScrollPhysics(),
                   padding:
                       const EdgeInsets.symmetric(vertical: AppSizes.p8),
@@ -149,9 +154,9 @@ class _PatientTabDocumentsState extends ConsumerState<PatientTabDocuments> {
                         .animate()
                         .fadeIn(duration: 250.ms, delay: (index * 30).ms);
                   },
-                ),
-              );
-            },
+                );
+              },
+            ),
           ),
         ),
       ],

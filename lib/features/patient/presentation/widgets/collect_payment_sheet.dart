@@ -22,7 +22,7 @@ import 'package:spine_clinic_app/features/patient/presentation/patient_providers
 import 'package:spine_clinic_app/features/payments/presentation/record_payment_controller.dart';
 import 'package:spine_clinic_app/shared/widgets/app_snackbar.dart';
 import 'package:spine_clinic_app/shared/widgets/confirmation_dialog.dart';
-import 'package:spine_clinic_app/shared/widgets/debounced_button.dart';
+import 'package:spine_clinic_app/shared/widgets/app_button.dart';
 import 'package:spine_clinic_app/shared/widgets/reason_chips_row.dart';
 
 /// Bottom sheet for collecting a payment with reason selection and
@@ -314,9 +314,11 @@ class _SheetBody extends StatelessWidget {
             ),
           ],
           const SizedBox(height: AppSizes.p16),
-          DebouncedElevatedButton(
-            label: 'Confirm Payment',
-            onPressed: onSubmit,
+          AppButton(
+            labelText: 'Confirm Payment',
+            onPressed: () => onSubmit(),
+            debounceMs: 1000,
+            shape: AppButtonShape.pill,
           ),
         ],
       ),

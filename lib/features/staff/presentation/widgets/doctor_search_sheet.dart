@@ -5,7 +5,7 @@ import 'package:spine_clinic_app/core/constants/app_strings.dart';
 import 'package:spine_clinic_app/core/constants/app_text_styles.dart';
 import 'package:spine_clinic_app/features/auth/domain/staff.dart';
 import 'package:spine_clinic_app/features/staff/presentation/widgets/doctor_search_tile.dart';
-import 'package:spine_clinic_app/shared/widgets/app_snackbar.dart';
+
 
 /// Bottom sheet content for searching and multi-selecting doctors.
 ///
@@ -54,14 +54,6 @@ class _DoctorSearchSheetState extends State<DoctorSearchSheet> {
 
   void _toggle(Staff doctor) {
     final isSelected = _selectedIds.contains(doctor.id);
-    if (isSelected && _selectedIds.length <= 1) {
-      AppSnackbar.show(
-        context,
-        message: AppStrings.atLeastOneDoctorRequired,
-        variant: AppSnackbarVariant.error,
-      );
-      return;
-    }
     setState(() {
       if (isSelected) {
         _selectedIds.remove(doctor.id);
@@ -77,6 +69,14 @@ class _DoctorSearchSheetState extends State<DoctorSearchSheet> {
       for (final d in widget.activeDoctors)
         if (_selectedIds.contains(d.id)) d,
     ];
+    // Preserve any originally-selected deactivated doctors — they can't be
+    // toggled in this sheet but can be removed via the × button in the form.
+    final activeIds = widget.activeDoctors.map((d) => d.id).toSet();
+    for (final d in widget.selectedDoctors) {
+      if (!activeIds.contains(d.id)) {
+        updated.add(d);
+      }
+    }
     widget.onSelectionChanged(updated);
   }
 

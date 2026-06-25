@@ -57,43 +57,37 @@ class BookingFormFields extends StatelessWidget {
         _PatientSearchField(onTap: onPatientTap ?? () {}),
       const SizedBox(height: AppSizes.p16),
 
-      // ── Appointment type — pill chips (horizontal scroll for long labels) ──
+      // ── Appointment type — wrapped pill chips ──
       _SectionLabel(AppStrings.appointmentType),
       const SizedBox(height: AppSizes.p6),
-      SizedBox(
-        height: AppSizes.buttonHeightSmall,
-        child: ListView.separated(
-          scrollDirection: Axis.horizontal,
-          physics: const AlwaysScrollableScrollPhysics(),
-          itemCount: AppointmentType.values.length,
-          separatorBuilder: (_, __) => const SizedBox(width: AppSizes.p8),
-          itemBuilder: (_, index) {
-            final type = AppointmentType.values[index];
-            final bool active = selectedType == type;
-            return GestureDetector(
-              onTap: () => onTypeChanged(type),
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 180),
-                padding: const EdgeInsets.symmetric(
-                    horizontal: AppSizes.p16, vertical: AppSizes.p8),
-                alignment: Alignment.center,
-                decoration: BoxDecoration(
-                  color: active
-                      ? AppColors.primary
-                      : AppColors.primaryLight.withAlpha(100),
-                  borderRadius:
-                      const BorderRadius.all(Radius.circular(AppSizes.r999)),
-                ),
-                child: Text(type.displayLabel,
-                    style: AppTextStyles.bodyBold.copyWith(
-                        color: active
-                            ? AppColors.textOnPrimary
-                            : AppColors.textSecondary,
-                        fontSize: 13)),
+      Wrap(
+        spacing: AppSizes.p8,
+        runSpacing: AppSizes.p8,
+        children: AppointmentType.values.map((type) {
+          final bool active = selectedType == type;
+          return GestureDetector(
+            onTap: () => onTypeChanged(type),
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 180),
+              padding: const EdgeInsets.symmetric(
+                  horizontal: AppSizes.p16, vertical: AppSizes.p8),
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                color: active
+                    ? AppColors.primary
+                    : AppColors.primaryLight.withAlpha(100),
+                borderRadius:
+                    const BorderRadius.all(Radius.circular(AppSizes.r999)),
               ),
-            );
-          },
-        ),
+              child: Text(type.displayLabel,
+                  style: AppTextStyles.bodyBold.copyWith(
+                      color: active
+                          ? AppColors.textOnPrimary
+                          : AppColors.textSecondary,
+                      fontSize: 13)),
+            ),
+          );
+        }).toList(),
       ),
       const SizedBox(height: AppSizes.p16),
 

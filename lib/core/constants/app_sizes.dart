@@ -131,6 +131,12 @@ abstract final class AppSizes {
   /// Maximum content width for centered page layouts.
   static const double maxContentWidth = 1080.0;
 
+  /// Maximum content width for profile / settings surfaces that should
+  /// read as a single column on wide monitors (e.g. Admin Hub, profile
+  /// menu rows). Phone screens stay unaffected because intrinsic widths
+  /// are below this.
+  static const double profileLayoutMaxWidth = 640.0;
+
   // ──────────────── Avatar Sizes ────────────────
 
   /// Small avatar — inline badges, compact lists.

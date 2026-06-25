@@ -4,6 +4,9 @@
 /// Supports three variants (primary, secondary, danger), loading indicators,
 /// and a mechanical tap shrink effect (0.98 scale transition).
 ///
+/// Set `shape: AppButtonShape.pill` for the rounded Medics UI Kit look; the
+/// default `rounded` matches the Stripe Dashboard reference.
+///
 /// Rule 1 — keep files under 200 lines.
 library;
 
@@ -31,6 +34,15 @@ enum AppButtonVariant {
   success,
 }
 
+/// Corners available on [AppButton].
+enum AppButtonShape {
+  /// Soft 8 px rounded corners — Stripe Dashboard reference.
+  rounded,
+
+  /// Fully pill-shaped — Medics UI Kit reference.
+  pill,
+}
+
 /// A highly-polished button component built with Spine Clinic design tokens.
 ///
 /// Set [debounceMs] to a positive value (e.g. 1000) to lock the button
@@ -46,13 +58,17 @@ class AppButton extends StatefulWidget {
     this.variant = AppButtonVariant.primary,
     this.fullWidth = true,
     this.debounceMs = 0,
+    this.shape = AppButtonShape.rounded,
+    this.icon,
   });
 
   /// The text label displayed inside the button.
   final String labelText;
 
   /// Callback when the button is tapped. If null, the button is disabled.
-  final VoidCallback? onPressed;
+  /// Accepts an async function so mutators can `await` their work; the
+  /// provided [debounceMs] window begins on tap, not on completion.
+  final FutureOr<void> Function()? onPressed;
 
   /// If true, displays a progress spinner and disables interactions.
   final bool isLoading;
@@ -66,6 +82,12 @@ class AppButton extends StatefulWidget {
   /// Milliseconds the button stays locked after each tap.
   /// Set to 1000 on save / submit / pay / book buttons.
   final int debounceMs;
+
+  /// Corner radius preset. Defaults to [AppButtonShape.rounded].
+  final AppButtonShape shape;
+
+  /// Optional icon shown to the left of the label.
+  final IconData? icon;
 
   @override
   State<AppButton> createState() => _AppButtonState();
@@ -115,13 +137,18 @@ class _AppButtonState extends State<AppButton> with SingleTickerProviderStateMix
 
   void _handleTap() {
     if (widget.onPressed == null || widget.isLoading || _coolingDown) return;
-    widget.onPressed!();
+    final FutureOr<void> Function() cb = widget.onPressed!;
+    final dynamic result = cb();
     if (widget.debounceMs > 0) {
       setState(() => _coolingDown = true);
       _timer?.cancel();
       _timer = Timer(Duration(milliseconds: widget.debounceMs), () {
         if (mounted) setState(() => _coolingDown = false);
       });
+    }
+    if (result is Future<void>) {
+      // Ignore the future — the cool-down timer already handles lockout.
+      result.catchError((_) {});
     }
   }
 
@@ -130,7 +157,6 @@ class _AppButtonState extends State<AppButton> with SingleTickerProviderStateMix
     final bool isDisabled =
         widget.onPressed == null || widget.isLoading || _coolingDown;
 
-    // Resolve visual assets from design tokens
     final Color backgroundColor;
     final Color textColor;
     final BorderSide borderSide;
@@ -180,6 +206,10 @@ class _AppButtonState extends State<AppButton> with SingleTickerProviderStateMix
       }
     }
 
+    final BorderRadius borderRadius = widget.shape == AppButtonShape.pill
+        ? AppSizes.borderRadiusPill
+        : const BorderRadius.all(Radius.circular(AppSizes.r8));
+
     final bool showSpinner = widget.isLoading || _coolingDown;
     final Widget content = showSpinner
         ? Center(
@@ -193,18 +223,28 @@ class _AppButtonState extends State<AppButton> with SingleTickerProviderStateMix
             ),
           )
         : Center(
-            child: Text(
-              widget.labelText,
-              style: AppTextStyles.button.copyWith(color: textColor),
-              textAlign: TextAlign.center,
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                if (widget.icon != null) ...[
+                  Icon(widget.icon, color: textColor, size: AppSizes.iconSmall),
+                  const SizedBox(width: AppSizes.p8),
+                ],
+                Text(
+                  widget.labelText,
+                  style: AppTextStyles.button.copyWith(color: textColor),
+                  textAlign: TextAlign.center,
+                ),
+              ],
             ),
           );
 
     final Widget buttonDecoration = Container(
-      height: AppSizes.h48, // Standardized comfortable height (48 px)
+      height: AppSizes.buttonHeight,
       decoration: BoxDecoration(
         color: backgroundColor,
-        borderRadius: const BorderRadius.all(Radius.circular(AppSizes.r8)),
+        borderRadius: borderRadius,
         border: borderSide != BorderSide.none
             ? Border.all(color: borderSide.color, width: borderSide.width)
             : null,

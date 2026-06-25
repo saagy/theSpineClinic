@@ -4,6 +4,7 @@ import 'package:spine_clinic_app/core/constants/app_sizes.dart';
 import 'package:spine_clinic_app/core/constants/app_strings.dart';
 import 'package:spine_clinic_app/core/constants/app_text_styles.dart';
 import 'package:spine_clinic_app/features/auth/domain/staff.dart';
+import 'package:spine_clinic_app/shared/widgets/app_avatar.dart';
 
 /// Scrollable list of matching doctor results.
 class DoctorResultsList extends StatelessWidget {
@@ -64,9 +65,6 @@ class DoctorResultsList extends StatelessWidget {
         ),
         itemBuilder: (_, int i) {
           final Staff d = doctors[i];
-          final String initials = d.fullName.isNotEmpty
-              ? d.fullName[0].toUpperCase()
-              : '?';
           final bool isSelected = d.id == selectedId;
 
           return Material(
@@ -80,15 +78,9 @@ class DoctorResultsList extends StatelessWidget {
                 ),
                 child: Row(
                   children: [
-                    CircleAvatar(
+                    AppAvatar(
+                      name: d.fullName,
                       radius: AppSizes.avatarSmall / 2,
-                      backgroundColor: AppColors.primary,
-                      child: Text(
-                        initials,
-                        style: AppTextStyles.captionBold.copyWith(
-                          color: AppColors.textOnPrimary,
-                        ),
-                      ),
                     ),
                     const SizedBox(width: AppSizes.p12),
                     Expanded(

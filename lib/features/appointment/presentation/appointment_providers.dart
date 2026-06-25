@@ -173,7 +173,7 @@ Future<int> futureScheduledAppointmentsCountForType(
 
   return result.when(
     success: (data) => data,
-    failure: (_) => 0,
+    failure: (err) => throw err,
   );
 }
 
@@ -194,7 +194,7 @@ Future<int?> availableBalanceForType(Ref ref, ({String patientId, AppointmentTyp
   );
   final int futureCommitments = commitmentsResult.when(
     success: (data) => data,
-    failure: (err) => 0,
+    failure: (err) => throw err,
   );
   final int baseline = switch (args.type) {
     AppointmentType.normalPtSession => patient.sessionBalance,

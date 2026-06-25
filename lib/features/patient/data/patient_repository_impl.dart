@@ -194,12 +194,21 @@ class PatientRepositoryImpl implements PatientRepository {
   @override
   Future<Result<void>> deletePatient(String patientId) async {
     try {
-      // Safety-net: sweep the patient's storage folder BEFORE the DB
-      // row delete. The UI guard `isPatientEmpty` should already
-      // prevent this running with active documents, but this catches
-      // orphaned blobs from earlier upload failures.
-      await _documentsRepo.deletePatientStorageFolder(patientId);
-      await _service.guardQuery(() => _service.from(_table).delete().eq('id', patientId));
+      // DB row is the source of truth — delete it first. If RLS or
+      // any other constraint denies, we abort cleanly with no
+      // side effects. Storage cleanup is intentionally NOT inside
+      // this try block so a transient bucket/RPC failure doesn't
+      // block the user-visible DB delete.
+      await _service.guardQuery(
+          () => _service.from(_table).delete().eq('id', patientId));
+
+      // Best-effort storage sweep. Catches orphans from earlier
+      // upload failures. Any error here is silently tolerated;
+      // unhandled orphans don't affect user-visible state.
+      await _documentsRepo.deletePatientStorageFolder(patientId).catchError(
+            (_) => const Result.success(null),
+          );
+
       return const Result.success(null);
     } on AppException catch (e) {
       return Result.failure(e);

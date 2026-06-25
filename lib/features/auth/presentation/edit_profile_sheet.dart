@@ -1,7 +1,8 @@
-/// Inline bottom-sheet for doctors to edit their profile details.
+/// Inline bottom-sheet for any authenticated staff member to edit their
+/// profile details.
 ///
 /// Allows editing full name, email, and optionally changing the account
-/// password. All writes are role‑checked and routed through the repository.
+/// password. All writes are role-checked and routed through the repository.
 library;
 
 import 'package:flutter/material.dart';
@@ -13,14 +14,29 @@ import 'package:spine_clinic_app/features/auth/domain/staff.dart';
 import 'package:spine_clinic_app/features/auth/presentation/auth_providers.dart';
 import 'package:spine_clinic_app/shared/widgets/app_button.dart';
 import 'package:spine_clinic_app/shared/widgets/app_snackbar.dart';
+import 'package:spine_clinic_app/shared/widgets/password_visibility_toggle.dart';
 
-/// Bottom-sheet allowing a doctor to edit name, email, and password.
+/// Bottom-sheet allowing a staff member to edit name, email, and password.
 class EditProfileSheet extends ConsumerStatefulWidget {
   /// Creates an [EditProfileSheet].
   const EditProfileSheet({super.key, required this.staff});
 
   /// The currently authenticated staff profile.
   final Staff staff;
+
+  /// Opens the sheet above the current route with the standardized chrome
+  /// (scroll-controlled, softened top corners). Centralizes the launch
+  /// plumbing so callers don't need their own `showModalBottomSheet` glue.
+  static Future<void> show(BuildContext context, Staff staff) {
+    return showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(AppSizes.r12)),
+      ),
+      builder: (_) => EditProfileSheet(staff: staff),
+    );
+  }
 
   @override
   ConsumerState<EditProfileSheet> createState() => _EditProfileSheetState();
@@ -34,6 +50,8 @@ class _EditProfileSheetState extends ConsumerState<EditProfileSheet> {
   final TextEditingController _passwordCtrl = TextEditingController();
   final TextEditingController _confirmPasswordCtrl = TextEditingController();
   bool _isSubmitting = false;
+  bool _obscurePassword = true;
+  bool _obscureConfirm = true;
 
   @override
   void initState() {
@@ -53,11 +71,12 @@ class _EditProfileSheetState extends ConsumerState<EditProfileSheet> {
     super.dispose();
   }
 
-  InputDecoration _decoration(String label) {
+  InputDecoration _decoration(String label, {Widget? suffixIcon}) {
     return InputDecoration(
       labelText: label,
       isDense: true,
       contentPadding: AppSizes.paddingCell,
+      suffixIcon: suffixIcon,
       border: const OutlineInputBorder(
         borderRadius: BorderRadius.all(Radius.circular(AppSizes.r6)),
       ),
@@ -162,8 +181,15 @@ class _EditProfileSheetState extends ConsumerState<EditProfileSheet> {
             TextFormField(
               controller: _passwordCtrl,
               enabled: !_isSubmitting,
-              obscureText: true,
-              decoration: _decoration(AppStrings.newPasswordHint),
+              obscureText: _obscurePassword,
+              decoration: _decoration(
+                AppStrings.newPasswordHint,
+                suffixIcon: PasswordVisibilityToggle(
+                  isObscured: _obscurePassword,
+                  onToggle: () =>
+                      setState(() => _obscurePassword = !_obscurePassword),
+                ),
+              ),
               validator: (v) {
                 if (v != null && v.trim().isNotEmpty && v.trim().length < 8) {
                   return AppStrings.passwordMinLength;
@@ -175,8 +201,15 @@ class _EditProfileSheetState extends ConsumerState<EditProfileSheet> {
             TextFormField(
               controller: _confirmPasswordCtrl,
               enabled: !_isSubmitting,
-              obscureText: true,
-              decoration: _decoration(AppStrings.confirmPassword),
+              obscureText: _obscureConfirm,
+              decoration: _decoration(
+                AppStrings.confirmPassword,
+                suffixIcon: PasswordVisibilityToggle(
+                  isObscured: _obscureConfirm,
+                  onToggle: () =>
+                      setState(() => _obscureConfirm = !_obscureConfirm),
+                ),
+              ),
               validator: (v) {
                 if (_passwordCtrl.text.trim().isNotEmpty) {
                   if (v != _passwordCtrl.text.trim()) {

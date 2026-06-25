@@ -104,11 +104,16 @@ class NewPatientController extends _$NewPatientController {
         ref.read(indexedAttachmentStatusProvider(i).notifier)
             .set(AttachmentStatus.uploading);
         final file = attachments[i];
+        final bytes = file.bytes;
+        if (bytes == null) {
+          ref.read(indexedAttachmentStatusProvider(i).notifier)
+              .set(AttachmentStatus.failed);
+          continue;
+        }
         final uploadResult = await docRepo.uploadDocument(
           patientId: createdPatient.id,
           fileName: file.name,
-          filePath: file.path,
-          fileBytes: file.bytes,
+          fileBytes: bytes,
           uploadedBy: currentUser?.id ?? '',
         );
         attachmentResults.add(uploadResult);

@@ -6,6 +6,8 @@ library;
 
 import 'package:spine_clinic_app/core/errors/result.dart';
 import 'package:spine_clinic_app/features/auth/domain/staff.dart';
+import 'package:spine_clinic_app/features/auth/domain/user_role.dart';
+import 'package:spine_clinic_app/features/patient/domain/clinic_location.dart';
 
 /// Defines the authentication operations available to the application.
 ///
@@ -34,16 +36,22 @@ abstract class AuthRepository {
   /// matching `public.staff` row is found for `auth.uid()`.
   Future<Result<Staff?>> getCurrentUserStaffProfile();
 
-  /// Registers a new doctor: creates a Supabase Auth user AND inserts
-  /// a `public.staff` row with `role = 'doctor'` and `is_active = false`.
+  /// Registers a new staff member (doctor or receptionist): creates a
+  /// Supabase Auth user AND inserts a `public.staff` row with
+  /// `is_active = false` — admin approval required before login.
+  ///
+  /// [role] determines the account type. [branch] is optional and only
+  /// relevant for receptionists — it can be set later by an admin.
   ///
   /// The session is cleared immediately after — the user is NOT left
   /// logged in (AGENT_CONTEXT §8).
-  Future<Result<void>> registerDoctor({
+  Future<Result<void>> registerStaff({
+    required UserRole role,
     required String fullName,
     required String email,
     required String phone,
     required String password,
+    ClinicLocation? branch,
   });
 
   /// Resolves the staff profile for a given staff ID.

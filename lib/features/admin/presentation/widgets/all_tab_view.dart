@@ -6,6 +6,8 @@ import 'package:spine_clinic_app/core/constants/app_strings.dart';
 import 'package:spine_clinic_app/core/errors/app_exception.dart';
 import 'package:spine_clinic_app/core/utils/formatters.dart';
 import 'package:spine_clinic_app/features/admin/presentation/doctor_applications_controller.dart';
+import 'package:spine_clinic_app/features/auth/domain/user_role.dart';
+import 'package:spine_clinic_app/shared/widgets/app_avatar.dart';
 import 'package:spine_clinic_app/shared/widgets/app_badge.dart';
 import 'package:spine_clinic_app/shared/widgets/data_list_tile.dart';
 import 'package:spine_clinic_app/shared/widgets/empty_state.dart';
@@ -49,17 +51,27 @@ class AllTabView extends ConsumerWidget {
               return DataListTile(
                 title: doctor.fullName,
                 subtitle: '${doctor.email} • ${doctor.phone != null ? Formatters.formatPhone(doctor.phone!) : 'No phone'} • Reg: ${doctor.createdAt.toShortDateString()}',
-                leading: CircleAvatar(
-                  backgroundColor: AppColors.background,
-                  child: Text(
-                    doctor.fullName.isNotEmpty ? doctor.fullName[0].toUpperCase() : '?',
-                    style: TextStyle(color: doctor.isActive ? AppColors.success : AppColors.warning),
-                  ),
+                leading: AppAvatar(
+                  name: doctor.fullName,
+                  color: doctor.isActive ? AppColors.success : AppColors.warning,
                 ),
-                trailing: AppBadge(
-                  label: doctor.isActive ? AppStrings.completed : AppStrings.scheduled,
-                  textColor: doctor.isActive ? AppColors.success : AppColors.warning,
-                  backgroundColor: doctor.isActive ? AppColors.successBg : AppColors.warningBg,
+                trailing: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    AppBadge(
+                      label: doctor.role == UserRole.doctor
+                          ? AppStrings.doctorRoleLabel
+                          : AppStrings.receptionistRoleLabel,
+                      textColor: AppColors.primary,
+                      backgroundColor: AppColors.primaryLight,
+                    ),
+                    const SizedBox(width: AppSizes.p8),
+                    AppBadge(
+                      label: doctor.isActive ? AppStrings.completed : AppStrings.scheduled,
+                      textColor: doctor.isActive ? AppColors.success : AppColors.warning,
+                      backgroundColor: doctor.isActive ? AppColors.successBg : AppColors.warningBg,
+                    ),
+                  ],
                 ),
               );
             },

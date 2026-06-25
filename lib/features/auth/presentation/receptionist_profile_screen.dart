@@ -1,7 +1,13 @@
-/// Profile and settings screen for receptionist role.
+/// Profile and settings screen for the receptionist role.
 ///
-/// Displays staff profile info, active branch selection dropdown,
-/// and sign-out button. Branch selection is cached via LocalSettingsService.
+/// Displays the staff identity header, the active branch selector
+/// inlined as a settings row, and a destructive sign-out row.
+///
+/// The legacy standalone "Active Branch" card and full-width logout
+/// button have been replaced with compact menu rows that match the
+/// modern profile layout shared with the doctor role.
+///
+/// Rule 1 — under 200 lines.
 library;
 
 import 'package:flutter/material.dart';
@@ -13,17 +19,15 @@ import 'package:spine_clinic_app/core/constants/app_strings.dart';
 import 'package:spine_clinic_app/core/constants/app_text_styles.dart';
 import 'package:spine_clinic_app/core/errors/app_exception.dart';
 import 'package:spine_clinic_app/features/admin/presentation/branch_providers.dart';
-import 'package:spine_clinic_app/features/auth/domain/staff.dart';
+import 'package:spine_clinic_app/features/auth/presentation/auth_actions.dart';
 import 'package:spine_clinic_app/features/auth/presentation/auth_providers.dart';
 import 'package:spine_clinic_app/features/auth/presentation/edit_profile_sheet.dart';
 import 'package:spine_clinic_app/features/patient/domain/clinic_location.dart';
-import 'package:spine_clinic_app/shared/widgets/app_button.dart';
-import 'package:spine_clinic_app/shared/widgets/confirmation_dialog.dart';
 import 'package:spine_clinic_app/shared/widgets/error_view.dart';
-import 'package:spine_clinic_app/shared/widgets/info_row.dart';
-import 'package:spine_clinic_app/shared/widgets/section_card.dart';
+import 'package:spine_clinic_app/shared/widgets/profile_menu_row.dart';
+import 'package:spine_clinic_app/shared/widgets/staff_profile_header.dart';
 
-/// Profile/settings screen for receptionists with branch selection.
+/// Profile/settings screen for receptionists.
 class ReceptionistProfileScreen extends ConsumerWidget {
   /// Creates a [ReceptionistProfileScreen].
   const ReceptionistProfileScreen({super.key});
@@ -65,92 +69,28 @@ class ReceptionistProfileScreen extends ConsumerWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  // Profile info card
-                  SectionCard(
-                    title: AppStrings.profile,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        InfoRow.fixedLabel(label: AppStrings.fullName, value: user.fullName),
-                        const SizedBox(height: AppSizes.p12),
-                        InfoRow.fixedLabel(label: AppStrings.email, value: user.email),
-                        if (user.phone != null && user.phone!.isNotEmpty) ...[
-                          const SizedBox(height: AppSizes.p12),
-                          InfoRow.fixedLabel(label: AppStrings.phone, value: user.phone!),
-                        ],
-                        const SizedBox(height: AppSizes.p12),
-                        const InfoRow.fixedLabel(label: AppStrings.role, value: AppStrings.receptionistRoleLabel),
-                        const SizedBox(height: AppSizes.p16),
-                        AppButton(
-                          labelText: AppStrings.editProfile,
-                          variant: AppButtonVariant.secondary,
-                          onPressed: () => _showEditProfileSheet(context, user),
-                        ),
-                      ],
-                    ),
+                  StaffProfileHeader(
+                    user: user,
+                    roleLabel: AppStrings.receptionistRoleLabel,
+                    onEditProfile: () => EditProfileSheet.show(context, user),
                   ),
                   const SizedBox(height: AppSizes.p16),
-
-                  // Branch selection
-                  SectionCard(
+                  ProfileMenuRow(
                     title: AppStrings.activeBranch,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          AppStrings.branchSelectionHint,
-                          style: AppTextStyles.caption.copyWith(
-                            color: AppColors.textSecondary,
-                          ),
-                        ),
-                        const SizedBox(height: AppSizes.p12),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: AppSizes.p12,
-                          ),
-                          decoration: BoxDecoration(
-                            color: AppColors.surface,
-                            borderRadius: const BorderRadius.all(
-                              Radius.circular(AppSizes.r6),
-                            ),
-                            border: Border.all(
-                              color: AppColors.border,
-                              width: AppSizes.borderWidth,
-                            ),
-                          ),
-                          child: DropdownButtonHideUnderline(
-                            child: DropdownButton<ClinicLocation>(
-                              isExpanded: true,
-                              value: activeBranch,
-                              style: AppTextStyles.bodyMedium.copyWith(
-                                color: AppColors.textPrimary,
-                              ),
-                              items: ClinicLocation.values.map((loc) {
-                                return DropdownMenuItem(
-                                  value: loc,
-                                  child: Text(loc.displayLabel),
-                                );
-                              }).toList(),
-                              onChanged: (ClinicLocation? value) {
-                                if (value != null) {
-                                  ref
-                                      .read(activeBranchProvider.notifier)
-                                      .setBranch(value);
-                                }
-                              },
-                            ),
-                          ),
-                        ),
-                      ],
+                    leadingIcon: Icons.business_rounded,
+                    onTap: null,
+                    trailing: _BranchDropdown(
+                      value: activeBranch,
+                      onChanged: (loc) => ref
+                          .read(activeBranchProvider.notifier)
+                          .setBranch(loc),
                     ),
                   ),
-                  const SizedBox(height: AppSizes.p24),
-
-                  // Sign out
-                  AppButton(
-                    labelText: AppStrings.signOut,
-                    variant: AppButtonVariant.danger,
-                    onPressed: () => _handleSignOut(context, ref),
+                  ProfileMenuRow(
+                    title: AppStrings.signOut,
+                    leadingIcon: Icons.logout_rounded,
+                    isDestructive: true,
+                    onTap: () => confirmAndSignOut(context, ref),
                   ),
                 ],
               ),
@@ -160,31 +100,41 @@ class ReceptionistProfileScreen extends ConsumerWidget {
       },
     );
   }
+}
 
-  void _showEditProfileSheet(BuildContext context, Staff user) {
-    showModalBottomSheet<void>(
-      context: context,
-      isScrollControlled: true,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(AppSizes.r12)),
-      ),
-      builder: (_) => EditProfileSheet(staff: user),
-    );
-  }
+/// Compact inline branch picker rendered as the trailing slot of the
+/// Active Branch menu row. Drops the legacy [Container]-wrapped chrome
+/// in favor of plain dropdown chrome inside the menu tile.
+class _BranchDropdown extends StatelessWidget {
+  /// Creates an [_BranchDropdown].
+  const _BranchDropdown({required this.value, required this.onChanged});
 
-  Future<void> _handleSignOut(BuildContext context, WidgetRef ref) async {
-    final confirm = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => const ConfirmationDialog(
-        title: AppStrings.signOut,
-        message: AppStrings.confirmSignOut,
-        confirmLabel: AppStrings.signOut,
-        cancelLabel: AppStrings.cancel,
-        isDestructive: true,
+  /// The currently selected branch.
+  final ClinicLocation value;
+
+  /// Callback invoked when the user picks a different branch.
+  final ValueChanged<ClinicLocation> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    final Color textColor = Theme.of(context).colorScheme.onSurface;
+
+    return DropdownButtonHideUnderline(
+      child: DropdownButton<ClinicLocation>(
+        isDense: true,
+        value: value,
+        borderRadius: const BorderRadius.all(Radius.circular(AppSizes.r8)),
+        style: AppTextStyles.bodyMedium.copyWith(color: textColor),
+        items: ClinicLocation.values
+            .map((loc) => DropdownMenuItem(
+                  value: loc,
+                  child: Text(loc.displayLabel),
+                ))
+            .toList(),
+        onChanged: (ClinicLocation? next) {
+          if (next != null) onChanged(next);
+        },
       ),
     );
-    if (confirm == true) {
-      await ref.read(currentUserProvider.notifier).logout();
-    }
   }
 }

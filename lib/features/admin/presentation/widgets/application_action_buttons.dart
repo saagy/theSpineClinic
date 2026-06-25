@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:spine_clinic_app/core/constants/app_sizes.dart';
 import 'package:spine_clinic_app/core/constants/app_strings.dart';
 import 'package:spine_clinic_app/shared/widgets/app_button.dart';
+import 'package:spine_clinic_app/shared/widgets/responsive_button_row.dart';
 
 /// Renders a touch-friendly Approve/Reject button row for pending doctor applications.
 class ApplicationActionButtons extends StatelessWidget {
@@ -24,22 +24,17 @@ class ApplicationActionButtons extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Row(
+    return ResponsiveButtonRow(
       children: [
-        Expanded(
-          child: AppButton(
-            labelText: AppStrings.reject,
-            onPressed: isLoading ? null : onReject,
-            variant: AppButtonVariant.danger,
-          ),
+        AppButton(
+          labelText: AppStrings.reject,
+          onPressed: isLoading ? null : onReject,
+          variant: AppButtonVariant.danger,
         ),
-        const SizedBox(width: AppSizes.p12),
-        Expanded(
-          child: AppButton(
-            labelText: AppStrings.approve,
-            onPressed: isLoading ? null : onApprove,
-            variant: AppButtonVariant.success,
-          ),
+        AppButton(
+          labelText: AppStrings.approve,
+          onPressed: isLoading ? null : onApprove,
+          variant: AppButtonVariant.success,
         ),
       ],
     );

@@ -9,7 +9,8 @@ import 'package:spine_clinic_app/features/patient/domain/clinic_location.dart';
 import 'package:spine_clinic_app/features/staff/presentation/staff_providers.dart';
 import 'package:spine_clinic_app/shared/widgets/doctor_results_list.dart';
 import 'package:spine_clinic_app/shared/widgets/filter_chip.dart';
-import 'package:spine_clinic_app/shared/widgets/primary_button.dart';
+import 'package:spine_clinic_app/shared/widgets/app_button.dart';
+import 'package:spine_clinic_app/shared/widgets/responsive_button_row.dart';
 import 'package:spine_clinic_app/shared/widgets/section_header.dart';
 
 /// A unified bottom sheet layout for filtering data, satisfying Rule 17.
@@ -274,28 +275,18 @@ class _UnifiedFilterSheetState extends ConsumerState<UnifiedFilterSheet> {
             AppSizes.p20,
             AppSizes.p16,
           ),
-          child: Row(
+          child: ResponsiveButtonRow(
             children: [
-              Expanded(
-                child: OutlinedButton(
-                  onPressed: _clearAll,
-                  style: OutlinedButton.styleFrom(
-                    side: const BorderSide(color: AppColors.border),
-                    padding: const EdgeInsets.symmetric(vertical: AppSizes.p14),
-                    shape: const StadiumBorder(),
-                  ),
-                  child: Text(
-                    'Reset',
-                    style: AppTextStyles.bodyMedium.copyWith(color: AppColors.textSecondary),
-                  ),
-                ),
+              AppButton(
+                labelText: 'Reset',
+                onPressed: _clearAll,
+                variant: AppButtonVariant.secondary,
+                shape: AppButtonShape.pill,
               ),
-              const SizedBox(width: AppSizes.p12),
-              Expanded(
-                child: PrimaryButton(
-                  label: AppStrings.applyFilters,
-                  onPressed: () => widget.onApplied(_selectedDoctorId, _clinic),
-                ),
+              AppButton(
+                labelText: AppStrings.applyFilters,
+                onPressed: () => widget.onApplied(_selectedDoctorId, _clinic),
+                shape: AppButtonShape.pill,
               ),
             ],
           ),

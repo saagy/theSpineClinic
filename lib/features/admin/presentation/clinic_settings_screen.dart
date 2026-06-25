@@ -31,29 +31,29 @@ class ClinicSettingsScreen extends ConsumerWidget {
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(AppSizes.r12)),
       ),
-      builder: (context) => PackageFormSheet(
-        onSave: (package) async {
-          Navigator.of(context).pop();
-          final result = await ref
-              .read(clinicSettingsActionProvider.notifier)
-              .addPackage(package);
+    builder: (sheetContext) => PackageFormSheet(
+      onSave: (package) async {
+        Navigator.of(sheetContext).pop();
+        final result = await ref
+            .read(clinicSettingsActionProvider.notifier)
+            .addPackage(package);
 
-          if (context.mounted) {
-            result.when(
-              success: (_) => AppSnackbar.show(
-                context,
-                message: AppStrings.packageCreatedSuccess,
-                variant: AppSnackbarVariant.success,
-              ),
-              failure: (error) => AppSnackbar.show(
-                context,
-                message: error.message,
-                variant: AppSnackbarVariant.error,
-              ),
-            );
-          }
-        },
-      ),
+        if (context.mounted) {
+          result.when(
+            success: (_) => AppSnackbar.show(
+              context,
+              message: AppStrings.packageCreatedSuccess,
+              variant: AppSnackbarVariant.success,
+            ),
+            failure: (error) => AppSnackbar.show(
+              context,
+              message: error.message,
+              variant: AppSnackbarVariant.error,
+            ),
+          );
+        }
+      },
+    ),
     );
   }
 
@@ -65,30 +65,30 @@ class ClinicSettingsScreen extends ConsumerWidget {
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(AppSizes.r12)),
       ),
-      builder: (context) => PackageFormSheet(
-        package: package,
-        onSave: (updatedPackage) async {
-          Navigator.of(context).pop();
-          final result = await ref
-              .read(clinicSettingsActionProvider.notifier)
-              .editPackage(index, updatedPackage);
+    builder: (sheetContext) => PackageFormSheet(
+      package: package,
+      onSave: (updatedPackage) async {
+        Navigator.of(sheetContext).pop();
+        final result = await ref
+            .read(clinicSettingsActionProvider.notifier)
+            .editPackage(index, updatedPackage);
 
-          if (context.mounted) {
-            result.when(
-              success: (_) => AppSnackbar.show(
-                context,
-                message: AppStrings.packageUpdatedSuccess,
-                variant: AppSnackbarVariant.success,
-              ),
-              failure: (error) => AppSnackbar.show(
-                context,
-                message: error.message,
-                variant: AppSnackbarVariant.error,
-              ),
-            );
-          }
-        },
-      ),
+        if (context.mounted) {
+          result.when(
+            success: (_) => AppSnackbar.show(
+              context,
+              message: AppStrings.packageUpdatedSuccess,
+              variant: AppSnackbarVariant.success,
+            ),
+            failure: (error) => AppSnackbar.show(
+              context,
+              message: error.message,
+              variant: AppSnackbarVariant.error,
+            ),
+          );
+        }
+      },
+    ),
     );
   }
 
