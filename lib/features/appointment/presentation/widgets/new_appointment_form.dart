@@ -235,153 +235,206 @@ class _NewAppointmentFormState extends ConsumerState<NewAppointmentForm> {
       child: Form(
         key: _formKey,
         child: SingleChildScrollView(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              BookingFormFields(
-                preselectedPatient: patient,
-                onPatientTap: () => _openPatientSearch(context),
-                selectedType: _selectedType,
-                onTypeChanged: (type) => setState(() {
-                  _selectedType = type;
-                  // Assessments never deduct packages: lock the toggle off.
-                  if (!type.affectsPackageBalance) {
-                    _usePackage = false;
-                  }
-                }),
-                isRecurring: _isRecurring,
-                onRecurringChanged: (v) =>
-                    setState(() => _isRecurring = v),
-                selectedDate: _selectedDate,
-                onDateChanged: (d) => setState(() => _selectedDate = d),
-                selectedTime: _selectedTime,
-                onTimeChanged: (t) => setState(() => _selectedTime = t),
-                dateErrorText: _dateErrorText,
-                timeErrorText: _timeErrorText,
-              ),
-              if (_isRecurring) ...[
-                const SizedBox(height: AppSizes.p16),
-                if (_selectedDate != null &&
-                    _selectedWeekdays.isNotEmpty)
-                  RecurrenceGuide(
-                    startDate: _selectedDate!,
-                    selectedWeekdays: _selectedWeekdays,
-                    totalSessions:
-                        int.tryParse(_sessionsController.text) ?? 0,
-                    slots: _computedSlots,
+          keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+          padding: const EdgeInsets.all(AppSizes.p16),
+          child: Align(
+            alignment: Alignment.topCenter,
+            child: Container(
+              constraints: const BoxConstraints(maxWidth: 600),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  BookingFormFields(
+                    preselectedPatient: patient,
+                    onPatientTap: () => _openPatientSearch(context),
+                    selectedType: _selectedType,
+                    onTypeChanged: (type) => setState(() {
+                      _selectedType = type;
+                      // Assessments never deduct packages: lock the toggle off.
+                      if (!type.affectsPackageBalance) {
+                        _usePackage = false;
+                      }
+                    }),
+                    isRecurring: _isRecurring,
+                    onRecurringChanged: (v) =>
+                        setState(() => _isRecurring = v),
+                    selectedDate: _selectedDate,
+                    onDateChanged: (d) => setState(() => _selectedDate = d),
+                    selectedTime: _selectedTime,
+                    onTimeChanged: (t) => setState(() => _selectedTime = t),
+                    dateErrorText: _dateErrorText,
+                    timeErrorText: _timeErrorText,
                   ),
-                RecurringPatternPicker(
-                  selectedWeekdays: _selectedWeekdays,
-                  onWeekdaysChanged: (d) =>
-                      setState(() => _selectedWeekdays = d),
-                  sessionsController: _sessionsController,
-                  daysErrorText: _daysErrorText,
-                ),
-              ],
-              const SizedBox(height: AppSizes.p16),
-              if (_isFetchingDoctors)
-                Padding(
-                  padding: const EdgeInsets.symmetric(
-                      vertical: AppSizes.p8),
-                  child: Row(
-                    children: [
-                      const SizedBox(
-                        width: AppSizes.iconDefault,
-                        height: AppSizes.iconDefault,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          color: AppColors.primary,
-                        ),
+                  if (_isRecurring) ...[
+                    const SizedBox(height: AppSizes.p16),
+                    Container(
+                      padding: const EdgeInsets.all(AppSizes.p16),
+                      decoration: BoxDecoration(
+                        color: AppColors.surface,
+                        borderRadius: const BorderRadius.all(Radius.circular(AppSizes.r16)),
+                        border: Border.all(color: AppColors.border, width: AppSizes.borderWidth),
                       ),
-                      const SizedBox(width: AppSizes.p12),
-                      Text(
-                        'Loading assigned doctors…',
-                        style: AppTextStyles.caption.copyWith(
-                          color: AppColors.textSecondary,
-                        ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Recurrence Pattern',
+                            style: AppTextStyles.captionMedium.copyWith(color: AppColors.textSecondary),
+                          ),
+                          const SizedBox(height: AppSizes.p12),
+                          if (_selectedDate != null &&
+                              _selectedWeekdays.isNotEmpty) ...[
+                            RecurrenceGuide(
+                              startDate: _selectedDate!,
+                              selectedWeekdays: _selectedWeekdays,
+                              totalSessions:
+                                  int.tryParse(_sessionsController.text) ?? 0,
+                              slots: _computedSlots,
+                            ),
+                            const SizedBox(height: AppSizes.p12),
+                          ],
+                          RecurringPatternPicker(
+                            selectedWeekdays: _selectedWeekdays,
+                            onWeekdaysChanged: (d) =>
+                                setState(() => _selectedWeekdays = d),
+                            sessionsController: _sessionsController,
+                            daysErrorText: _daysErrorText,
+                          ),
+                        ],
                       ),
-                    ],
-                  ),
-                ),
-              AppDoctorMultiSelectField(
-                key: _doctorFieldKey,
-                initialValue: const [],
-                enabled: _doctorFieldEnabled,
-                onSavedDoctors: (_) {},
-                onChanged: (_) {},
-                validator: (val) {
-                  if (val == null || val.isEmpty) {
-                    return AppStrings.atLeastOneDoctorRequired;
-                  }
-                  return null;
-                },
-              ),
-              const SizedBox(height: AppSizes.p16),
-              if (_selectedType.affectsPackageBalance)
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(AppStrings.usePackageBalance,
-                        style: AppTextStyles.body
-                            .copyWith(color: AppColors.textPrimary)),
-                    Switch(
-                      value: _usePackage,
-                      onChanged: (v) => setState(() => _usePackage = v),
-                      activeThumbColor: AppColors.primary,
                     ),
                   ],
-                )
-              else
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: AppSizes.p12, vertical: AppSizes.p8),
-                  decoration: BoxDecoration(
-                    color: AppColors.infoBg,
-                    borderRadius: const BorderRadius.all(Radius.circular(AppSizes.r12)),
-                  ),
-                  child: Row(
-                    children: [
-                      const Icon(Icons.info_outline_rounded,
-                          size: AppSizes.iconSmall, color: AppColors.info),
-                      const SizedBox(width: AppSizes.p8),
-                      Expanded(
-                        child: Text(
-                          AppStrings.paidSeparately,
-                          style: AppTextStyles.bodySecondary.copyWith(
-                              color: AppColors.textPrimary),
+                  const SizedBox(height: AppSizes.p16),
+                  
+                  // ── Card 3: Provider & Billing ──
+                  Container(
+                    padding: const EdgeInsets.all(AppSizes.p16),
+                    decoration: BoxDecoration(
+                      color: AppColors.surface,
+                      borderRadius: const BorderRadius.all(Radius.circular(AppSizes.r16)),
+                      border: Border.all(color: AppColors.border, width: AppSizes.borderWidth),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Provider & Billing',
+                          style: AppTextStyles.captionMedium.copyWith(color: AppColors.textSecondary),
                         ),
-                      ),
-                    ],
+                        const SizedBox(height: AppSizes.p12),
+                        
+                        if (_isFetchingDoctors) ...[
+                          Padding(
+                            padding: const EdgeInsets.symmetric(
+                                vertical: AppSizes.p8),
+                            child: Row(
+                              children: [
+                                const SizedBox(
+                                  width: AppSizes.iconDefault,
+                                  height: AppSizes.iconDefault,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    color: AppColors.primary,
+                                  ),
+                                ),
+                                const SizedBox(width: AppSizes.p12),
+                                Text(
+                                  'Loading assigned doctors…',
+                                  style: AppTextStyles.caption.copyWith(
+                                    color: AppColors.textSecondary,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(height: AppSizes.p8),
+                        ],
+                        
+                        AppDoctorMultiSelectField(
+                          key: _doctorFieldKey,
+                          initialValue: const [],
+                          enabled: _doctorFieldEnabled,
+                          onSavedDoctors: (_) {},
+                          onChanged: (_) {},
+                          validator: (val) {
+                            if (val == null || val.isEmpty) {
+                              return AppStrings.atLeastOneDoctorRequired;
+                            }
+                            return null;
+                          },
+                        ),
+                        const SizedBox(height: AppSizes.p16),
+                        
+                        if (_selectedType.affectsPackageBalance)
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(AppStrings.usePackageBalance,
+                                  style: AppTextStyles.body
+                                      .copyWith(color: AppColors.textPrimary)),
+                              Switch(
+                                value: _usePackage,
+                                onChanged: (v) => setState(() => _usePackage = v),
+                                activeThumbColor: AppColors.primary,
+                              ),
+                            ],
+                          )
+                        else
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: AppSizes.p12, vertical: AppSizes.p8),
+                            decoration: BoxDecoration(
+                              color: AppColors.infoBg,
+                              borderRadius: const BorderRadius.all(Radius.circular(AppSizes.r12)),
+                            ),
+                            child: Row(
+                              children: [
+                                const Icon(Icons.info_outline_rounded,
+                                    size: AppSizes.iconSmall, color: AppColors.info),
+                                const SizedBox(width: AppSizes.p8),
+                                Expanded(
+                                  child: Text(
+                                    AppStrings.paidSeparately,
+                                    style: AppTextStyles.bodySecondary.copyWith(
+                                        color: AppColors.textPrimary),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                      ],
+                    ),
                   ),
-                ),
-              if (isPatientValid) ...[
-                const SizedBox(height: AppSizes.p24),
-                AppointmentBalanceDiagnostics(
-                  patientId: _patientId!,
-                  appointmentType: _selectedType,
-                  requestedCount: proposedCount,
-                ),
-              ],
-              if (_computedSlots.isNotEmpty) ...[
-                const SizedBox(height: AppSizes.p24),
-                BookingSlotsPreview(
-                  slots: _computedSlots,
-                  timeOfDay: _selectedTime,
-                  usePackage: _usePackage,
-                ),
-              ],
-              const SizedBox(height: AppSizes.p32),
-              AppButton(
-                labelText: AppStrings.save,
-                onPressed: (isSubmissionBlocked || _isSubmitting)
-                    ? null
-                    : _submitForm,
-                isLoading: _isSubmitting,
-                debounceMs: 1000,
-                shape: AppButtonShape.pill,
+                  
+                  if (isPatientValid) ...[
+                    const SizedBox(height: AppSizes.p24),
+                    AppointmentBalanceDiagnostics(
+                      patientId: _patientId!,
+                      appointmentType: _selectedType,
+                      requestedCount: proposedCount,
+                    ),
+                  ],
+                  if (_computedSlots.isNotEmpty) ...[
+                    const SizedBox(height: AppSizes.p24),
+                    BookingSlotsPreview(
+                      slots: _computedSlots,
+                      timeOfDay: _selectedTime,
+                      usePackage: _usePackage,
+                    ),
+                  ],
+                  const SizedBox(height: AppSizes.p32),
+                  AppButton(
+                    labelText: AppStrings.save,
+                    onPressed: (isSubmissionBlocked || _isSubmitting)
+                        ? null
+                        : _submitForm,
+                    isLoading: _isSubmitting,
+                    debounceMs: 1000,
+                  ),
+                  const SizedBox(height: AppSizes.p48),
+                ],
               ),
-              const SizedBox(height: AppSizes.p48),
-            ],
+            ),
           ),
         ),
       ),

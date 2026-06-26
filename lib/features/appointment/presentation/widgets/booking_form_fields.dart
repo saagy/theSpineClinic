@@ -1,5 +1,5 @@
-/// Modern booking form fields with patient selector card, responsive card grid
-/// selector, and soft-filled input decorations.
+/// Modern booking form fields with patient selector card, unified segmented grid,
+/// and soft-filled input decorations.
 ///
 /// Rule 1 — under 200 lines.
 library;
@@ -47,189 +47,111 @@ class BookingFormFields extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      // ── Patient selector ──
-      _SectionLabel('Patient'),
-      const SizedBox(height: AppSizes.p6),
-      if (preselectedPatient != null)
-        _PatientCard(patient: preselectedPatient!)
-      else
-        _PatientSearchField(onTap: onPatientTap ?? () {}),
-      const SizedBox(height: AppSizes.p16),
-
-      // ── Appointment type — responsive cards grid ──
-      _SectionLabel(AppStrings.appointmentType),
-      const SizedBox(height: AppSizes.p6),
-      LayoutBuilder(
-        builder: (context, constraints) {
-          final types = AppointmentType.values;
-          if (constraints.maxWidth >= 600) {
-            return Row(
-              children: [
-                Expanded(child: _buildTypeCard(context, types[0])),
-                const SizedBox(width: AppSizes.p12),
-                Expanded(child: _buildTypeCard(context, types[1])),
-                const SizedBox(width: AppSizes.p12),
-                Expanded(child: _buildTypeCard(context, types[2])),
-                const SizedBox(width: AppSizes.p12),
-                Expanded(child: _buildTypeCard(context, types[3])),
-              ],
-            );
-          } else {
-            return Column(
-              children: [
-                Row(
-                  children: [
-                    Expanded(child: _buildTypeCard(context, types[0])),
-                    const SizedBox(width: AppSizes.p12),
-                    Expanded(child: _buildTypeCard(context, types[1])),
-                  ],
-                ),
-                const SizedBox(height: AppSizes.p12),
-                Row(
-                  children: [
-                    Expanded(child: _buildTypeCard(context, types[2])),
-                    const SizedBox(width: AppSizes.p12),
-                    Expanded(child: _buildTypeCard(context, types[3])),
-                  ],
-                ),
-              ],
-            );
-          }
-        },
+    return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+      // ── Card 1: Patient Selection ──
+      Container(
+        padding: const EdgeInsets.all(AppSizes.p16),
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: const BorderRadius.all(Radius.circular(AppSizes.r16)),
+          border: Border.all(color: AppColors.border, width: AppSizes.borderWidth),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const _SectionLabel('Patient'),
+            const SizedBox(height: AppSizes.p12),
+            if (preselectedPatient != null)
+              _PatientCard(patient: preselectedPatient!)
+            else
+              _PatientSearchField(onTap: onPatientTap ?? () {}),
+          ],
+        ),
       ),
       const SizedBox(height: AppSizes.p16),
 
-      // ── Recurring toggle ──
-      if (showRecurringToggle) ...[
-        Row(children: [
-          Checkbox(
-            value: isRecurring,
-            onChanged: (v) => onRecurringChanged(v ?? false),
-            activeColor: AppColors.primary,
-          ),
-          GestureDetector(
-            onTap: () => onRecurringChanged(!isRecurring),
-            child: Text('Recurring booking',
-                style: AppTextStyles.body
-                    .copyWith(color: AppColors.textPrimary)),
-          ),
-        ]),
-        const SizedBox(height: AppSizes.p16),
-      ],
-
-      // ── Date & Time pickers ──
-      Row(children: [
-        Expanded(
-            child: _PickerField(
-                label: isRecurring ? 'Start Date' : 'Select Date',
-                valueText: selectedDate != null
-                    ? _fmt(selectedDate!)
-                    : 'Select',
-                icon: Icons.calendar_today,
-                errorText: dateErrorText,
-                onTap: () => _pickDate(context))),
-        const SizedBox(width: AppSizes.p16),
-        Expanded(
-            child: _PickerField(
-                label: 'Select Time',
-                valueText: selectedTime != null
-                    ? '${selectedTime!.hour.toString().padLeft(2, '0')}:${selectedTime!.minute.toString().padLeft(2, '0')}'
-                    : 'Select',
-                icon: Icons.access_time,
-                errorText: timeErrorText,
-                onTap: () => _pickTime(context))),
-      ]),
+      // ── Card 2: Appointment Settings ──
+      Container(
+        padding: const EdgeInsets.all(AppSizes.p16),
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: const BorderRadius.all(Radius.circular(AppSizes.r16)),
+          border: Border.all(color: AppColors.border, width: AppSizes.borderWidth),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const _SectionLabel(AppStrings.appointmentType),
+            const SizedBox(height: AppSizes.p12),
+            SegmentedAppointmentTypeSelector(
+              selectedType: selectedType,
+              onTypeChanged: onTypeChanged,
+            ),
+            const SizedBox(height: AppSizes.p20),
+            
+            // Date & Time pickers
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  child: _PickerField(
+                    label: isRecurring ? 'Start Date' : 'Select Date',
+                    valueText: selectedDate != null ? _fmt(selectedDate!) : 'Select',
+                    icon: Icons.calendar_today,
+                    errorText: dateErrorText,
+                    onTap: () => _pickDate(context),
+                  ),
+                ),
+                const SizedBox(width: AppSizes.p12),
+                Expanded(
+                  child: _PickerField(
+                    label: 'Select Time',
+                    valueText: selectedTime != null
+                        ? '${selectedTime!.hour.toString().padLeft(2, '0')}:${selectedTime!.minute.toString().padLeft(2, '0')}'
+                        : 'Select',
+                    icon: Icons.access_time,
+                    errorText: timeErrorText,
+                    onTap: () => _pickTime(context),
+                  ),
+                ),
+              ],
+            ),
+            
+            // Recurring toggle
+            if (showRecurringToggle) ...[
+              const SizedBox(height: AppSizes.p16),
+              const Divider(color: AppColors.border, height: 1, thickness: 0.5),
+              const SizedBox(height: AppSizes.p12),
+              Row(
+                children: [
+                  SizedBox(
+                    height: 24,
+                    width: 24,
+                    child: Checkbox(
+                      value: isRecurring,
+                      onChanged: (v) => onRecurringChanged(v ?? false),
+                      activeColor: AppColors.primary,
+                    ),
+                  ),
+                  const SizedBox(width: AppSizes.p8),
+                  GestureDetector(
+                    onTap: () => onRecurringChanged(!isRecurring),
+                    child: Text(
+                      'Recurring booking',
+                      style: AppTextStyles.body.copyWith(
+                        color: AppColors.textPrimary,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ],
+        ),
+      ),
     ]);
   }
-
-  Widget _buildTypeCard(BuildContext context, AppointmentType type) {
-    final bool active = selectedType == type;
-
-    return GestureDetector(
-      onTap: () => onTypeChanged(type),
-      child: Stack(
-        children: [
-          AnimatedContainer(
-            duration: const Duration(milliseconds: 180),
-            padding: const EdgeInsets.symmetric(
-              horizontal: AppSizes.p12,
-              vertical: AppSizes.p16,
-            ),
-            height: 110,
-            decoration: BoxDecoration(
-              color: AppColors.surface,
-              borderRadius: const BorderRadius.all(Radius.circular(AppSizes.r12)),
-              border: Border.all(
-                color: active ? AppColors.primary : AppColors.border,
-                width: active ? 2.0 : 1.0,
-              ),
-              boxShadow: active ? const [AppColors.cardShadow] : const [],
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Icon(
-                  _getIconForType(type),
-                  color: active ? AppColors.primary : AppColors.textSecondary,
-                  size: 24,
-                ),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      type.displayLabel,
-                      style: AppTextStyles.bodyBold.copyWith(
-                        color: active ? AppColors.primary : AppColors.textPrimary,
-                        fontSize: 13,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    const SizedBox(height: AppSizes.p2),
-                    Text(
-                      _getSubtextForType(type),
-                      style: AppTextStyles.caption.copyWith(
-                        color: active ? AppColors.primary.withAlpha(200) : AppColors.textMuted,
-                        fontSize: 10,
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-          if (active)
-            const Positioned(
-              top: 8,
-              right: 8,
-              child: Icon(
-                Icons.check_circle_rounded,
-                color: AppColors.primary,
-                size: 18,
-              ),
-            ),
-        ],
-      ),
-    );
-  }
-
-  IconData _getIconForType(AppointmentType type) => switch (type) {
-        AppointmentType.normalPtSession => Icons.accessibility_new_rounded,
-        AppointmentType.spinalTractionSession => Icons.settings_accessibility_rounded,
-        AppointmentType.initialAssessment => Icons.assignment_ind_rounded,
-        AppointmentType.reassessment => Icons.rate_review_rounded,
-      };
-
-  String _getSubtextForType(AppointmentType type) => switch (type) {
-        AppointmentType.normalPtSession ||
-        AppointmentType.spinalTractionSession =>
-          'Deducts 1 Session',
-        AppointmentType.initialAssessment ||
-        AppointmentType.reassessment =>
-          'No balance deduction',
-      };
 
   String _fmt(DateTime d) {
     final m = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
@@ -256,6 +178,118 @@ class BookingFormFields extends StatelessWidget {
   }
 }
 
+/// A responsive, unified segmented controller for selecting AppointmentType.
+///
+/// On Mobile: renders as a 2x2 grid.
+/// On PC: renders as a 1x4 horizontal row.
+class SegmentedAppointmentTypeSelector extends StatelessWidget {
+  const SegmentedAppointmentTypeSelector({
+    super.key,
+    required this.selectedType,
+    required this.onTypeChanged,
+  });
+
+  final AppointmentType selectedType;
+  final ValueChanged<AppointmentType> onTypeChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        color: AppColors.border,
+        borderRadius: const BorderRadius.all(Radius.circular(AppSizes.r12)),
+        border: Border.all(color: AppColors.border, width: AppSizes.borderWidth),
+      ),
+      child: ClipRRect(
+        borderRadius: const BorderRadius.all(Radius.circular(AppSizes.r12 - 1)),
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final bool isWide = constraints.maxWidth > 480;
+            if (isWide) {
+              return IntrinsicHeight(
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Expanded(child: _buildCell(AppointmentType.normalPtSession)),
+                    const SizedBox(width: 0.5),
+                    Expanded(child: _buildCell(AppointmentType.spinalTractionSession)),
+                    const SizedBox(width: 0.5),
+                    Expanded(child: _buildCell(AppointmentType.initialAssessment)),
+                    const SizedBox(width: 0.5),
+                    Expanded(child: _buildCell(AppointmentType.reassessment)),
+                  ],
+                ),
+              );
+            } else {
+              return Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  IntrinsicHeight(
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        Expanded(child: _buildCell(AppointmentType.normalPtSession)),
+                        const SizedBox(width: 0.5),
+                        Expanded(child: _buildCell(AppointmentType.spinalTractionSession)),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 0.5),
+                  IntrinsicHeight(
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        Expanded(child: _buildCell(AppointmentType.initialAssessment)),
+                        const SizedBox(width: 0.5),
+                        Expanded(child: _buildCell(AppointmentType.reassessment)),
+                      ],
+                    ),
+                  ),
+                ],
+              );
+            }
+          },
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCell(AppointmentType type) {
+    final bool active = selectedType == type;
+    return Material(
+      color: AppColors.surface,
+      child: InkWell(
+        onTap: () => onTypeChanged(type),
+        child: Container(
+          padding: const EdgeInsets.all(4.0),
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 150),
+            alignment: Alignment.center,
+            padding: const EdgeInsets.symmetric(vertical: AppSizes.p12, horizontal: AppSizes.p4),
+            decoration: BoxDecoration(
+              color: active ? AppColors.primaryLight : Colors.transparent,
+              border: Border.all(
+                color: active ? AppColors.primary : Colors.transparent,
+                width: 1.0,
+              ),
+              borderRadius: const BorderRadius.all(Radius.circular(AppSizes.r8)),
+            ),
+            child: Text(
+              type.displayLabel,
+              textAlign: TextAlign.center,
+              style: (active ? AppTextStyles.bodyBold : AppTextStyles.body).copyWith(
+                color: active ? AppColors.primaryDeep : AppColors.textSecondary,
+                fontSize: 12,
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Read-only profile card showing avatar, name, phone, truncated ID.
 class _PatientCard extends StatelessWidget {
   const _PatientCard({required this.patient});
   final Patient patient;
@@ -291,6 +325,7 @@ class _PatientCard extends StatelessWidget {
   }
 }
 
+/// Tappable search field that opens a patient search sheet when tapped.
 class _PatientSearchField extends StatelessWidget {
   const _PatientSearchField({required this.onTap});
   final VoidCallback onTap;

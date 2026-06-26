@@ -90,7 +90,7 @@ class _AppDoctorMultiSelectFieldWidgetState
     final bool hasError = doctorsAsync.hasError;
 
     final border = OutlineInputBorder(
-      borderRadius: const BorderRadius.all(Radius.circular(AppSizes.r6)),
+      borderRadius: const BorderRadius.all(Radius.circular(AppSizes.r12)),
       borderSide: BorderSide(
         color: widget.state.hasError ? AppColors.error : AppColors.border,
         width: AppSizes.borderWidth,
@@ -110,6 +110,8 @@ class _AppDoctorMultiSelectFieldWidgetState
           },
           decoration: InputDecoration(
             isDense: true,
+            filled: true,
+            fillColor: AppColors.surface,
             labelText: AppStrings.searchAndAssignDoctors,
             hintText: AppStrings.typeDoctorName,
             suffixIcon: isLoading

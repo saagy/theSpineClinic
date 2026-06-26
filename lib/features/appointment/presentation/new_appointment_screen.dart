@@ -9,6 +9,8 @@ import 'package:spine_clinic_app/features/auth/domain/user_role.dart';
 import 'package:spine_clinic_app/features/auth/presentation/auth_providers.dart';
 import 'package:spine_clinic_app/shared/widgets/app_snackbar.dart';
 
+import 'package:spine_clinic_app/shared/widgets/app_back_button.dart';
+
 /// Screen container for booking a new single or recurring appointment.
 class NewAppointmentScreen extends ConsumerWidget {
   /// Creates a [NewAppointmentScreen].
@@ -44,12 +46,9 @@ class NewAppointmentScreen extends ConsumerWidget {
         backgroundColor: AppColors.surface,
         foregroundColor: AppColors.textPrimary,
         elevation: 0,
+        leading: const AppBackButton(),
       ),
-      body: SingleChildScrollView(
-        keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
-        padding: const EdgeInsets.all(AppSizes.p16),
-        child: NewAppointmentForm(preselectedPatientId: preselectedPatientId),
-      ),
+      body: NewAppointmentForm(preselectedPatientId: preselectedPatientId),
     );
   }
 }

@@ -140,77 +140,102 @@ class _EditAppointmentFormState extends ConsumerState<EditAppointmentForm> {
         child: SingleChildScrollView(
           keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
           padding: const EdgeInsets.all(AppSizes.p16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              BookingFormFields(
-                preselectedPatient: widget.patient,
-                onPatientTap: null,
-                selectedType: _selectedType,
-                onTypeChanged: (type) =>
-                    setState(() => _selectedType = type),
-                isRecurring: false,
-                onRecurringChanged: (_) {},
-                selectedDate: _selectedDate,
-                onDateChanged: (d) => setState(() => _selectedDate = d),
-                selectedTime: _selectedTime,
-                onTimeChanged: (t) => setState(() => _selectedTime = t),
-                dateErrorText: _dateErrorText,
-                timeErrorText: _timeErrorText,
-                showRecurringToggle: false,
-              ),
-              const SizedBox(height: AppSizes.p16),
-              AppDoctorMultiSelectField(
-                key: _doctorFieldKey,
-                initialValue: widget.initialDoctors,
-                enabled: true,
-                onSavedDoctors: (_) {},
-                onChanged: (_) {},
-                validator: (val) {
-                  if (val == null || val.isEmpty) {
-                    return 'At least one doctor is required';
-                  }
-                  return null;
-                },
-              ),
-              const SizedBox(height: AppSizes.p16),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          child: Align(
+            alignment: Alignment.topCenter,
+            child: Container(
+              constraints: const BoxConstraints(maxWidth: 600),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  Expanded(
+                  BookingFormFields(
+                    preselectedPatient: widget.patient,
+                    onPatientTap: null,
+                    selectedType: _selectedType,
+                    onTypeChanged: (type) =>
+                        setState(() => _selectedType = type),
+                    isRecurring: false,
+                    onRecurringChanged: (_) {},
+                    selectedDate: _selectedDate,
+                    onDateChanged: (d) => setState(() => _selectedDate = d),
+                    selectedTime: _selectedTime,
+                    onTimeChanged: (t) => setState(() => _selectedTime = t),
+                    dateErrorText: _dateErrorText,
+                    timeErrorText: _timeErrorText,
+                    showRecurringToggle: false,
+                  ),
+                  const SizedBox(height: AppSizes.p16),
+                  
+                  // ── Card 3: Provider & Billing ──
+                  Container(
+                    padding: const EdgeInsets.all(AppSizes.p16),
+                    decoration: BoxDecoration(
+                      color: AppColors.surface,
+                      borderRadius: const BorderRadius.all(Radius.circular(AppSizes.r16)),
+                      border: Border.all(color: AppColors.border, width: AppSizes.borderWidth),
+                    ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(AppStrings.usePackageBalance,
-                            style: AppTextStyles.body.copyWith(
-                                color: AppColors.textPrimary)),
-                        if (!isScheduled) ...[
-                          const SizedBox(height: AppSizes.p4),
-                          Text(AppStrings.usePackageChangeWarning,
-                              style: AppTextStyles.caption.copyWith(
-                                  color: AppColors.warning)),
-                        ],
+                        Text(
+                          'Provider & Billing',
+                          style: AppTextStyles.captionMedium.copyWith(color: AppColors.textSecondary),
+                        ),
+                        const SizedBox(height: AppSizes.p12),
+                        AppDoctorMultiSelectField(
+                          key: _doctorFieldKey,
+                          initialValue: widget.initialDoctors,
+                          enabled: true,
+                          onSavedDoctors: (_) {},
+                          onChanged: (_) {},
+                          validator: (val) {
+                            if (val == null || val.isEmpty) {
+                              return 'At least one doctor is required';
+                            }
+                            return null;
+                          },
+                        ),
+                        const SizedBox(height: AppSizes.p16),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(AppStrings.usePackageBalance,
+                                      style: AppTextStyles.body.copyWith(
+                                          color: AppColors.textPrimary)),
+                                  if (!isScheduled) ...[
+                                    const SizedBox(height: AppSizes.p4),
+                                    Text(AppStrings.usePackageChangeWarning,
+                                        style: AppTextStyles.caption.copyWith(
+                                            color: AppColors.warning)),
+                                  ],
+                                ],
+                              ),
+                            ),
+                            Switch(
+                              value: _usePackage,
+                              onChanged: isScheduled
+                                  ? (v) => setState(() => _usePackage = v)
+                                  : null,
+                              activeThumbColor: AppColors.primary,
+                            ),
+                          ],
+                        ),
                       ],
                     ),
                   ),
-                  Switch(
-                    value: _usePackage,
-                    onChanged: isScheduled
-                        ? (v) => setState(() => _usePackage = v)
-                        : null,
-                    activeThumbColor: AppColors.primary,
+                  const SizedBox(height: AppSizes.p32),
+                  AppButton(
+                    labelText: AppStrings.save,
+                    onPressed: _isSubmitting ? null : _submit,
+                    isLoading: _isSubmitting,
+                    debounceMs: 1000,
                   ),
                 ],
               ),
-              const SizedBox(height: AppSizes.p32),
-              AppButton(
-                labelText: AppStrings.save,
-                onPressed: _isSubmitting ? null : _submit,
-                isLoading: _isSubmitting,
-                debounceMs: 1000,
-                shape: AppButtonShape.pill,
-              ),
-            ],
+            ),
           ),
         ),
       ),
