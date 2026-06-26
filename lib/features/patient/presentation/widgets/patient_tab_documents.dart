@@ -1,10 +1,15 @@
+/// Documents tab — 2-column grid view with thumbnails for images.
+///
+/// Rule 13 — no raw Divider (uses SizedBox gap).
+/// Rule 15/16 — colours via Theme.of(context).colorScheme.
+library;
+
 import 'dart:typed_data';
 
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:spine_clinic_app/core/constants/app_colors.dart';
 import 'package:spine_clinic_app/core/constants/app_sizes.dart';
 import 'package:spine_clinic_app/core/constants/app_strings.dart';
 import 'package:spine_clinic_app/core/errors/app_exception.dart';
@@ -19,11 +24,6 @@ import 'package:spine_clinic_app/shared/widgets/empty_state.dart';
 import 'package:spine_clinic_app/shared/widgets/error_view.dart';
 import 'package:spine_clinic_app/shared/widgets/skeleton_loader.dart';
 
-/// Documents tab for the patient detail screen.
-///
-/// The + Add Document button triggers the native file/gallery picker directly
-/// instead of showing a redundant intermediate bottom sheet, avoiding iOS
-/// event-bubbling conflicts with mobile Safari's native file handler.
 class PatientTabDocuments extends ConsumerStatefulWidget {
   const PatientTabDocuments({super.key, required this.patient});
   final Patient patient;
@@ -36,13 +36,6 @@ class PatientTabDocuments extends ConsumerStatefulWidget {
 class _PatientTabDocumentsState extends ConsumerState<PatientTabDocuments> {
   bool _isUploadingLocal = false;
 
-  /// Opens the native file picker directly — no intermediate bottom sheet.
-  ///
-  /// The wrap in `try`/`finally` (with `mounted` guards) ensures the
-  /// button always re-enables even if the future is interrupted or the
-  /// widget is disposed mid-upload. Upload outcomes are surfaced via
-  /// [AppSnackbar] so transient failures never replace the documents
-  /// list (the list AsyncNotifier is intentionally NOT mutated here).
   Future<void> _pickAndUpload() async {
     final FilePickerResult? result = await FilePicker.platform.pickFiles(
       type: FileType.custom,
@@ -54,33 +47,24 @@ class _PatientTabDocumentsState extends ConsumerState<PatientTabDocuments> {
     if (!mounted) return;
     final Uint8List? bytes = file.bytes;
     if (bytes == null) {
-      AppSnackbar.show(
-        context,
-        message: AppStrings.fromKey('error_doc_file_too_large'),
-        variant: AppSnackbarVariant.error,
-      );
+      AppSnackbar.show(context,
+          message: AppStrings.fromKey('error_doc_file_too_large'),
+          variant: AppSnackbarVariant.error);
       return;
     }
     setState(() => _isUploadingLocal = true);
     try {
       final Result<PatientDocument> uploadResult = await ref
           .read(patientDocumentsNotifierProvider(widget.patient.id).notifier)
-          .uploadDocument(
-            fileName: file.name,
-            fileBytes: bytes,
-          );
+          .uploadDocument(fileName: file.name, fileBytes: bytes);
       if (!mounted) return;
       uploadResult.when(
-        success: (_) => AppSnackbar.show(
-          context,
-          message: AppStrings.documentUploaded,
-          variant: AppSnackbarVariant.success,
-        ),
-        failure: (AppException error) => AppSnackbar.show(
-          context,
-          message: AppStrings.fromKey(error.userMessageKey),
-          variant: AppSnackbarVariant.error,
-        ),
+        success: (_) => AppSnackbar.show(context,
+            message: AppStrings.documentUploaded,
+            variant: AppSnackbarVariant.success),
+        failure: (AppException error) => AppSnackbar.show(context,
+            message: AppStrings.fromKey(error.userMessageKey),
+            variant: AppSnackbarVariant.error),
       );
     } finally {
       if (mounted) setState(() => _isUploadingLocal = false);
@@ -89,6 +73,7 @@ class _PatientTabDocumentsState extends ConsumerState<PatientTabDocuments> {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     final documentsAsync =
         ref.watch(patientDocumentsNotifierProvider(widget.patient.id));
 
@@ -96,7 +81,7 @@ class _PatientTabDocumentsState extends ConsumerState<PatientTabDocuments> {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         if (_isUploadingLocal)
-          const LinearProgressIndicator(color: AppColors.primary),
+          LinearProgressIndicator(color: cs.primary),
         Padding(
           padding: const EdgeInsets.all(AppSizes.p16),
           child: AppButton(
@@ -108,16 +93,16 @@ class _PatientTabDocumentsState extends ConsumerState<PatientTabDocuments> {
             debounceMs: 1000,
           ),
         ),
-        const Divider(height: 1, thickness: 1, color: AppColors.border),
+        const SizedBox(height: AppSizes.p4),
         Expanded(
           child: RefreshIndicator(
-            color: AppColors.primary,
+            color: cs.primary,
             onRefresh: () async => ref.invalidate(
               patientDocumentsNotifierProvider(widget.patient.id),
             ),
             child: documentsAsync.when(
               loading: () => const SkeletonTileList(count: 4),
-              error: (err, stack) => ListView(
+              error: (err, _) => ListView(
                 physics: const AlwaysScrollableScrollPhysics(),
                 children: [
                   ErrorView(
@@ -134,9 +119,8 @@ class _PatientTabDocumentsState extends ConsumerState<PatientTabDocuments> {
                 if (docs.isEmpty) {
                   return ListView(
                     physics: const AlwaysScrollableScrollPhysics(),
-                    padding: const EdgeInsets.symmetric(
-                        vertical: AppSizes.p48),
                     children: const [
+                      SizedBox(height: AppSizes.p48),
                       EmptyState(
                         message: AppStrings.noDocumentsYet,
                         icon: Icons.folder_open_rounded,
@@ -144,15 +128,26 @@ class _PatientTabDocumentsState extends ConsumerState<PatientTabDocuments> {
                     ],
                   );
                 }
-                return ListView.builder(
+                return GridView.builder(
                   physics: const AlwaysScrollableScrollPhysics(),
-                  padding:
-                      const EdgeInsets.symmetric(vertical: AppSizes.p8),
+                  padding: const EdgeInsets.fromLTRB(
+                      AppSizes.p16, 0, AppSizes.p16, AppSizes.p16),
+                  gridDelegate:
+                      const SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 2,
+                    crossAxisSpacing: AppSizes.p12,
+                    mainAxisSpacing: AppSizes.p12,
+                    childAspectRatio: 0.72,
+                  ),
                   itemCount: docs.length,
                   itemBuilder: (context, index) {
-                    return PatientDocumentItem(doc: docs[index])
-                        .animate()
-                        .fadeIn(duration: 250.ms, delay: (index * 30).ms);
+                    return PatientDocumentItem(
+                      key: ValueKey(docs[index].id),
+                      doc: docs[index],
+                    ).animate().fadeIn(
+                          duration: 250.ms,
+                          delay: (index * 30).ms,
+                        );
                   },
                 );
               },

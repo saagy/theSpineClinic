@@ -1,12 +1,10 @@
-/// Pill-indicator TabBar that centres when all tabs fit, scrolls with a
-/// right-edge fade only when they overflow.
+/// Pill-indicator TabBar — always scrollable with right-edge fade.
 ///
-/// Rule 1 — under 200 lines.
+/// Rule 15/16 — all colours via Theme.of(context).colorScheme.
 library;
 
 import 'package:flutter/material.dart';
 
-import 'package:spine_clinic_app/core/constants/app_colors.dart';
 import 'package:spine_clinic_app/core/constants/app_sizes.dart';
 import 'package:spine_clinic_app/core/constants/app_text_styles.dart';
 
@@ -16,81 +14,48 @@ class PillTabBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      color: AppColors.surface,
-      child: LayoutBuilder(
-        builder: (context, constraints) {
-          // Estimate total tab width: each tab label ~100px + 32px padding.
-          // If the estimate fits the available width, use fixed (centred) tabs.
-          const double estimatedTabWidth = 120.0;
-          final double totalEstimate = tabs.length * estimatedTabWidth;
-          final bool fits = totalEstimate <= constraints.maxWidth;
+    final cs = Theme.of(context).colorScheme;
 
-          if (fits) {
-            return TabBar(
-              labelColor: AppColors.textOnPrimary,
-              unselectedLabelColor: AppColors.textSecondary,
-              labelStyle: AppTextStyles.captionBold,
-              unselectedLabelStyle: AppTextStyles.captionMedium,
-              indicator: const BoxDecoration(
-                color: AppColors.primary,
-                borderRadius:
-                    BorderRadius.all(Radius.circular(AppSizes.r24)),
-              ),
-              indicatorSize: TabBarIndicatorSize.tab,
-              dividerColor: AppColors.transparent,
-              isScrollable: true,
-              tabAlignment: TabAlignment.start,
-              padding: const EdgeInsets.only(
-                  left: AppSizes.p16, right: AppSizes.p16, bottom: AppSizes.p4),
-              tabs: tabs,
-            );
-          }
-
-          return Stack(
-            children: [
-              TabBar(
-                labelColor: AppColors.textOnPrimary,
-                unselectedLabelColor: AppColors.textSecondary,
-                labelStyle: AppTextStyles.captionBold,
-                unselectedLabelStyle: AppTextStyles.captionMedium,
-                indicator: const BoxDecoration(
-                  color: AppColors.primary,
-                  borderRadius:
-                      BorderRadius.all(Radius.circular(AppSizes.r24)),
-                ),
-                indicatorSize: TabBarIndicatorSize.tab,
-                dividerColor: AppColors.transparent,
-                isScrollable: true,
-                tabAlignment: TabAlignment.start,
-                padding: const EdgeInsets.fromLTRB(
-                    AppSizes.p16, AppSizes.p4, AppSizes.p32, AppSizes.p4),
-                tabs: tabs,
-              ),
-              Positioned(
-                right: 0,
-                top: 0,
-                bottom: 0,
-                child: IgnorePointer(
-                  child: Container(
-                    width: AppSizes.p24,
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        begin: Alignment.centerRight,
-                        end: Alignment.centerLeft,
-                        colors: [
-                          AppColors.surface,
-                          AppColors.surface.withAlpha(0),
-                        ],
-                      ),
-                    ),
-                  ),
+    return Stack(
+      children: [
+        Material(
+          color: cs.surface,
+          child: TabBar(
+            labelColor: cs.onPrimary,
+            unselectedLabelColor: cs.onSurfaceVariant,
+            labelStyle: AppTextStyles.captionBold,
+            unselectedLabelStyle: AppTextStyles.captionMedium,
+            indicator: BoxDecoration(
+              color: cs.primary,
+              borderRadius: const BorderRadius.all(Radius.circular(AppSizes.r24)),
+            ),
+            indicatorSize: TabBarIndicatorSize.tab,
+            dividerColor: Colors.transparent,
+            isScrollable: true,
+            tabAlignment: TabAlignment.start,
+            padding: const EdgeInsets.fromLTRB(
+                AppSizes.p16, AppSizes.p4, AppSizes.p32, AppSizes.p4),
+            tabs: tabs,
+          ),
+        ),
+        Positioned(
+          right: 0,
+          top: 0,
+          bottom: 0,
+          child: IgnorePointer(
+            child: Container(
+              width: AppSizes.p24,
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.centerRight,
+                  end: Alignment.centerLeft,
+                  colors: [cs.surface, cs.surface.withAlpha(0)],
                 ),
               ),
-            ],
-          );
-        },
-      ),
+            ),
+          ),
+        ),
+      ],
     );
   }
 }

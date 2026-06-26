@@ -546,6 +546,19 @@ abstract final class AppStrings {
   static const String totalPaid = 'Total Paid';
   static const String noDoctorsAssigned = 'No doctors assigned';
   static const String errorLoadingAssignedDoctors = 'Error loading assigned doctors';
+  static const String tabInfo = 'Info';
+  static const String tabRecords = 'Records';
+  static const String tabDocuments = 'Documents';
+  static const String sortOptions = 'Sort Options';
+  static const String totalNotes = 'Total Notes';
+  static const String addNote = 'Add Note';
+  static const String noNotesRecorded = 'No notes recorded yet';
+  static const String quickActions = 'Quick Actions';
+  static const String collectPayment = 'Collect Payment';
+  static const String contact = 'Contact';
+  static const String lastVisit = 'Last Visit';
+  static const String programNone = 'None';
+  static const String recordedBy = 'Recorded by';
 
   // ── Document Actions ──
   static const String openTooltip = 'Open';

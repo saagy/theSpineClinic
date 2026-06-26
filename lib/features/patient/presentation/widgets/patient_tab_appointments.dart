@@ -1,18 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:spine_clinic_app/core/constants/app_colors.dart';
-import 'package:spine_clinic_app/core/constants/app_text_styles.dart';
 import 'package:spine_clinic_app/core/constants/app_sizes.dart';
 import 'package:spine_clinic_app/core/constants/app_strings.dart';
-import 'package:spine_clinic_app/core/network/app_routes.dart';
+import 'package:spine_clinic_app/core/constants/app_text_styles.dart';
 import 'package:spine_clinic_app/core/errors/app_exception.dart';
+import 'package:spine_clinic_app/core/network/app_routes.dart';
 import 'package:spine_clinic_app/features/appointment/domain/appointment_repository.dart';
 import 'package:spine_clinic_app/features/appointment/presentation/widgets/receptionist_appointment_card.dart';
 import 'package:spine_clinic_app/features/auth/domain/user_role.dart';
 import 'package:spine_clinic_app/features/auth/presentation/auth_providers.dart';
 import 'package:spine_clinic_app/features/patient/domain/patient.dart';
 import 'package:spine_clinic_app/features/patient/domain/patient_appointment_sort_option.dart';
+import 'package:spine_clinic_app/features/patient/domain/patient_appointments_state.dart';
 import 'package:spine_clinic_app/features/patient/presentation/patient_appointments_notifier.dart';
 import 'package:spine_clinic_app/shared/widgets/app_button.dart';
 import 'package:spine_clinic_app/shared/widgets/app_bottom_sheet.dart';
@@ -31,56 +31,70 @@ class PatientTabAppointments extends ConsumerStatefulWidget {
   final Patient patient;
 
   @override
-  ConsumerState<PatientTabAppointments> createState() => _PatientTabAppointmentsState();
+  ConsumerState<PatientTabAppointments> createState() =>
+      _PatientTabAppointmentsState();
 }
 
-class _PatientTabAppointmentsState extends ConsumerState<PatientTabAppointments> {
+class _PatientTabAppointmentsState
+    extends ConsumerState<PatientTabAppointments> {
   final ScrollController _scrollCtrl = ScrollController();
   final Set<int> _animatedIndices = <int>{};
+
   @override
   void initState() {
     super.initState();
     _scrollCtrl.addListener(_onScroll);
   }
+
   @override
   void dispose() {
     _scrollCtrl.dispose();
     super.dispose();
   }
+
   void _onScroll() {
-    if (_scrollCtrl.position.pixels >= _scrollCtrl.position.maxScrollExtent - 200) {
-      ref.read(patientAppointmentsProvider(widget.patient.id).notifier).loadMore();
+    if (_scrollCtrl.position.pixels >=
+        _scrollCtrl.position.maxScrollExtent - 200) {
+      ref
+          .read(patientAppointmentsProvider(widget.patient.id).notifier)
+          .loadMore();
     }
   }
+
   Future<void> _showSortSheet() async {
-    final state = ref.read(patientAppointmentsProvider(widget.patient.id));
-    final notifier = ref.read(patientAppointmentsProvider(widget.patient.id).notifier);
+    final state =
+        ref.read(patientAppointmentsProvider(widget.patient.id));
+    final notifier =
+        ref.read(patientAppointmentsProvider(widget.patient.id).notifier);
 
     final selected = await SortOptionsSheet.show<PatientAppointmentSortOption>(
       context: context,
-      title: 'Sort Options',
+      title: AppStrings.sortOptions,
       options: PatientAppointmentSortOption.values
-          .map((o) => SortOption(value: o, label: o.displayLabel, buttonLabel: o.buttonLabel))
+          .map((o) =>
+              SortOption(value: o, label: o.displayLabel, buttonLabel: o.buttonLabel))
           .toList(),
       selected: state.sort,
     );
     if (selected != null && mounted) notifier.setSort(selected);
   }
 
-  Widget _buildErrorState(dynamic notifier) {
-    final String errorMessage = notifier.state.errorMessage ?? '';
+  Widget _buildErrorState(
+      PatientAppointmentsState state, PatientAppointments notifier) {
+    final cs = Theme.of(context).colorScheme;
+    final String errorMessage = state.errorMessage ?? '';
     final AppException ex = UnknownException(message: errorMessage);
     return RefreshIndicator(
-      color: Theme.of(context).colorScheme.primary,
+      color: cs.primary,
       onRefresh: () async => notifier.refresh(),
-      child: ListView(
-        physics: const AlwaysScrollableScrollPhysics(),
-        children: [
-          SizedBox(
-            height: MediaQuery.of(context).size.height * 0.65,
+      child: LayoutBuilder(
+        builder: (context, constraints) => SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          child: SizedBox(
+            height: constraints.maxHeight,
             child: ErrorView(exception: ex, onRetry: notifier.refresh),
           ),
-        ],
+        ),
       ),
     );
   }
@@ -88,7 +102,7 @@ class _PatientTabAppointmentsState extends ConsumerState<PatientTabAppointments>
   void _openFilterSheet() {
     AppBottomSheet.show(
       context: context,
-      title: 'Filters',
+      title: AppStrings.filters,
       builder: (context, scrollController) => PatientAppointmentFilterContent(
         patientId: widget.patient.id,
         scrollController: scrollController,
@@ -98,13 +112,15 @@ class _PatientTabAppointmentsState extends ConsumerState<PatientTabAppointments>
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     final user = ref.watch(currentUserProvider).value;
     final isDoctor = user?.role == UserRole.doctor;
     final state = ref.watch(patientAppointmentsProvider(widget.patient.id));
     if (state.isLoading) {
       _animatedIndices.clear();
     }
-    final notifier = ref.read(patientAppointmentsProvider(widget.patient.id).notifier);
+    final notifier =
+        ref.read(patientAppointmentsProvider(widget.patient.id).notifier);
     final chips = buildPatientAppointmentChips(ref, state, notifier);
 
     return Column(
@@ -112,15 +128,17 @@ class _PatientTabAppointmentsState extends ConsumerState<PatientTabAppointments>
       children: [
         if (!isDoctor) ...[
           Padding(
-            padding: const EdgeInsets.fromLTRB(AppSizes.p16, AppSizes.p16, AppSizes.p16, AppSizes.p8),
+            padding: const EdgeInsets.fromLTRB(
+                AppSizes.p16, AppSizes.p16, AppSizes.p16, AppSizes.p8),
             child: AppButton(
               labelText: AppStrings.bookAppointment,
-              onPressed: () => context.push('${AppRoutes.newAppointment}?patientId=${widget.patient.id}'),
+              onPressed: () => context.push(
+                  '${AppRoutes.newAppointment}?patientId=${widget.patient.id}'),
             ),
           ),
         ],
         SortFilterBar(
-          sortLabel: 'Sort: ${state.sort.buttonLabel}',
+          sortLabel: '${AppStrings.sort}: ${state.sort.buttonLabel}',
           onSortTap: _showSortSheet,
           activeFilterCount: chips.length,
           onFilterTap: _openFilterSheet,
@@ -128,12 +146,14 @@ class _PatientTabAppointmentsState extends ConsumerState<PatientTabAppointments>
         ActiveFilterChipsRow(chips: chips, onClearAll: notifier.clearFilters),
         if (state.appointments.isNotEmpty && !state.isLoading)
           Padding(
-            padding: const EdgeInsets.fromLTRB(AppSizes.p20, AppSizes.p8, AppSizes.p20, AppSizes.p4),
+            padding: const EdgeInsets.fromLTRB(
+                AppSizes.p20, AppSizes.p8, AppSizes.p20, AppSizes.p4),
             child: Align(
               alignment: Alignment.centerLeft,
               child: Text(
-                'Total Appointments: ${state.totalCount}',
-                style: AppTextStyles.captionBold.copyWith(color: AppColors.textSecondary),
+                '${AppStrings.totalAppointments}: ${state.totalCount}',
+                style: AppTextStyles.captionBold.copyWith(
+                    color: cs.onSurfaceVariant),
               ),
             ),
           ),
@@ -141,27 +161,36 @@ class _PatientTabAppointmentsState extends ConsumerState<PatientTabAppointments>
           child: state.isLoading
               ? const SkeletonTileList(count: 4)
               : state.errorMessage != null
-                  ? _buildErrorState(notifier)
+                  ? _buildErrorState(state, notifier)
                   : state.appointments.isEmpty
-                      ? const EmptyState(message: AppStrings.noAppointments, icon: Icons.calendar_today_rounded)
+                      ? const EmptyState(
+                          message: AppStrings.noAppointments,
+                          icon: Icons.calendar_today_rounded)
                       : RefreshIndicator(
                           onRefresh: notifier.refresh,
-                          color: AppColors.primary,
-                          backgroundColor: AppColors.surface,
+                          color: cs.primary,
                           child: ListView.builder(
                             physics: const AlwaysScrollableScrollPhysics(),
                             controller: _scrollCtrl,
-                            padding: const EdgeInsets.only(bottom: AppSizes.p16),
-                            itemCount: state.appointments.length + (state.isLoadingMore ? 1 : 0),
+                            padding:
+                                const EdgeInsets.only(bottom: AppSizes.p16),
+                            itemCount: state.appointments.length +
+                                (state.isLoadingMore ? 1 : 0),
                             itemBuilder: (context, index) {
                               if (index == state.appointments.length) {
                                 return const Padding(
-                                  padding: EdgeInsets.symmetric(vertical: AppSizes.p16),
-                                  child: Center(child: CircularProgressIndicator(strokeWidth: AppSizes.strokeWidthThin)),
+                                  padding: EdgeInsets.symmetric(
+                                      vertical: AppSizes.p16),
+                                  child: Center(
+                                      child: CircularProgressIndicator(
+                                          strokeWidth:
+                                              AppSizes.strokeWidthThin)),
                                 );
                               }
                               final appointment = state.appointments[index];
-                              final item = AppointmentWithPatient(appointment: appointment, patient: widget.patient);
+                              final item = AppointmentWithPatient(
+                                  appointment: appointment,
+                                  patient: widget.patient);
                               return AnimatedListItem(
                                 index: index,
                                 animatedIndices: _animatedIndices,

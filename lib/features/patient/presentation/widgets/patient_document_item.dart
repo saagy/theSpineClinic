@@ -1,8 +1,16 @@
+/// Grid card for a single patient document.
+///
+/// Shows image thumbnail (cached in initState) or PDF icon.
+/// Tap card to open, delete icon in top-right corner for admins.
+///
+/// Bug fix: image Future cached in initState, not recreated in build.
+/// Rule 15/16 — colours via Theme.of(context).colorScheme.
+library;
+
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path/path.dart' as p;
-import 'package:spine_clinic_app/core/constants/app_colors.dart';
 import 'package:spine_clinic_app/core/constants/app_sizes.dart';
 import 'package:spine_clinic_app/core/constants/app_strings.dart';
 import 'package:spine_clinic_app/core/constants/app_text_styles.dart';
@@ -14,13 +22,8 @@ import 'package:spine_clinic_app/features/patient/presentation/patient_documents
 import 'package:spine_clinic_app/shared/widgets/app_file_viewer.dart';
 import 'package:spine_clinic_app/shared/widgets/app_snackbar.dart';
 import 'package:spine_clinic_app/shared/widgets/confirmation_dialog.dart';
-import 'package:spine_clinic_app/shared/widgets/data_list_tile.dart';
 
-/// Renders a single document item. Shows image thumbnail or PDF icon
-/// with open/delete actions. Open and delete track their own loading
-/// state so the UI never appears stuck.
 class PatientDocumentItem extends ConsumerStatefulWidget {
-  /// Creates a [PatientDocumentItem].
   const PatientDocumentItem({super.key, required this.doc});
   final PatientDocument doc;
 
@@ -34,39 +37,56 @@ class _PatientDocumentItemState extends ConsumerState<PatientDocumentItem> {
   bool _isDeleting = false;
   bool _isConfirmingDelete = false;
 
+  late final Future<Uint8List>? _imageFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    final String ext = p.extension(widget.doc.fileName).toLowerCase();
+    final bool isImage = ext == '.png' || ext == '.jpg' || ext == '.jpeg';
+    _imageFuture = isImage ? _loadImageBytes() : null;
+  }
+
+  Future<Uint8List> _loadImageBytes() async {
+    final PatientDocumentsRepository repo =
+        ref.read(patientDocumentsRepositoryProvider);
+    final result = await repo.downloadDocumentBytes(
+      fileUrl: widget.doc.fileUrl,
+      fileName: widget.doc.fileName,
+    );
+    return result.when(
+      success: (bytes) => bytes,
+      failure: (error) => throw error,
+    );
+  }
+
   Future<void> _handleOpen() async {
     if (_isOpening) return;
     setState(() => _isOpening = true);
     try {
       final String ext = p.extension(widget.doc.fileName).toLowerCase();
       final bool isPdf = ext == '.pdf';
-      final bool isImage =
-          ext == '.png' || ext == '.jpg' || ext == '.jpeg';
+      final bool isImage = ext == '.png' || ext == '.jpg' || ext == '.jpeg';
       if (isPdf || isImage) {
-        showAppFileViewer(
-          context,
-          fileUrl: widget.doc.fileUrl,
-          fileName: widget.doc.fileName,
-          isImage: isImage,
-          isPdf: isPdf,
-        );
+        showAppFileViewer(context,
+            fileUrl: widget.doc.fileUrl,
+            fileName: widget.doc.fileName,
+            isImage: isImage,
+            isPdf: isPdf);
       } else {
-        await FileOpenerHelper.openFile(
-            widget.doc.fileUrl, widget.doc.fileName);
+        await FileOpenerHelper.openFile(widget.doc.fileUrl, widget.doc.fileName);
       }
     } catch (e) {
       if (mounted) {
-        AppSnackbar.show(context, message: '$e',
-            variant: AppSnackbarVariant.error);
+        AppSnackbar.show(context,
+            message: AppStrings.errorUnknown, variant: AppSnackbarVariant.error);
       }
     } finally {
       if (mounted) setState(() => _isOpening = false);
     }
   }
 
-  Future<void> _handleDelete(WidgetRef ref) async {
-    // Gate above the dialog so a fast double-tap cannot stack
-    // two ConfirmationDialog instances.
+  Future<void> _handleDelete() async {
     if (_isDeleting || _isConfirmingDelete) return;
     setState(() => _isConfirmingDelete = true);
     bool? confirm;
@@ -74,7 +94,7 @@ class _PatientDocumentItemState extends ConsumerState<PatientDocumentItem> {
       if (!mounted) return;
       confirm = await showDialog<bool>(
         context: context,
-        builder: (ctx) => ConfirmationDialog(
+        builder: (ctx) => const ConfirmationDialog(
           title: AppStrings.deleteDocumentTitle,
           message: AppStrings.confirmDeleteDocument,
           confirmLabel: AppStrings.delete,
@@ -103,145 +123,141 @@ class _PatientDocumentItemState extends ConsumerState<PatientDocumentItem> {
             variant: AppSnackbarVariant.error),
       );
     } finally {
-      // try/finally guarantees the busy spinner clears even if the
-      // awaited future throws an uncaught exception (e.g. disposal
-      // race inside Riverpod that isn't wrapped in `Result`).
       if (mounted) setState(() => _isDeleting = false);
     }
   }
 
-  Future<Uint8List> _loadImageBytes(WidgetRef ref) async {
-    final PatientDocumentsRepository repo =
-        ref.read(patientDocumentsRepositoryProvider);
-    final result = await repo.downloadDocumentBytes(
-      fileUrl: widget.doc.fileUrl,
-      fileName: widget.doc.fileName,
-    );
-    return result.when(
-      success: (bytes) => bytes,
-      failure: (error) => throw error,
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    final String dateStr =
+        widget.doc.uploadedAt.toIso8601String().split('T')[0];
+
+    return Container(
+      decoration: BoxDecoration(
+        color: cs.surface,
+        borderRadius: BorderRadius.circular(AppSizes.r16),
+        border: Border.all(color: cs.outlineVariant),
+        boxShadow: [
+          BoxShadow(
+            color: cs.shadow.withAlpha(20),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(AppSizes.r16),
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: _isDeleting ? null : _handleOpen,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Expanded(
+                  child: Stack(
+                    fit: StackFit.expand,
+                    children: [
+                      _buildPreview(cs),
+                      if (_isOpening)
+                        Container(
+                          color: cs.scrim.withAlpha(100),
+                          child: Center(
+                            child: SizedBox(
+                              width: AppSizes.iconDefault,
+                              height: AppSizes.iconDefault,
+                              child: CircularProgressIndicator(
+                                strokeWidth: AppSizes.strokeWidthThin,
+                                color: cs.primary,
+                              ),
+                            ),
+                          ),
+                        ),
+                      if (_isDeleting)
+                        Container(
+                          color: cs.scrim.withAlpha(100),
+                          child: Center(
+                            child: SizedBox(
+                              width: AppSizes.iconDefault,
+                              height: AppSizes.iconDefault,
+                              child: CircularProgressIndicator(
+                                strokeWidth: AppSizes.strokeWidthThin,
+                                color: cs.error,
+                              ),
+                            ),
+                          ),
+                        )
+                      else
+                        Positioned(
+                          top: AppSizes.p4,
+                          right: AppSizes.p4,
+                          child: IconButton(
+                            icon: Icon(Icons.delete_outline_rounded,
+                                color: cs.error, size: AppSizes.iconSmall),
+                            onPressed: _isOpening ? null : _handleDelete,
+                            constraints: const BoxConstraints(),
+                            padding: const EdgeInsets.all(AppSizes.p4),
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.all(AppSizes.p12),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        widget.doc.fileName,
+                        style: AppTextStyles.captionMedium,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const SizedBox(height: AppSizes.p2),
+                      Text(dateStr, style: AppTextStyles.caption),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
     );
   }
 
-  @override
-  Widget build(BuildContext context) {
-    final String ext = p.extension(widget.doc.fileName).toLowerCase();
-    final bool isImage = ext == '.png' || ext == '.jpg' || ext == '.jpeg';
-    final String dateStr = widget.doc.uploadedAt.toIso8601String().split('T')[0];
-
-    final Widget openButton = _isOpening
-        ? const SizedBox(
-            width: AppSizes.iconDefault,
-            height: AppSizes.iconDefault,
-            child: CircularProgressIndicator(
-                strokeWidth: AppSizes.strokeWidthThin,
-                color: AppColors.primary),
-          )
-        : IconButton(
-            icon: const Icon(Icons.open_in_new_rounded,
-                color: AppColors.primary),
-            tooltip: AppStrings.openTooltip,
-            onPressed: _isDeleting ? null : _handleOpen,
-          );
-
-    final Widget deleteButton = _isDeleting
-        ? const SizedBox(
-            width: AppSizes.iconDefault,
-            height: AppSizes.iconDefault,
-            child: CircularProgressIndicator(
-                strokeWidth: AppSizes.strokeWidthThin,
-                color: AppColors.error),
-          )
-        : IconButton(
-            icon: const Icon(Icons.delete_outline_rounded,
-                color: AppColors.error),
-            onPressed: (_isOpening || _isConfirmingDelete)
-                ? null
-                : () => _handleDelete(ref),
-          );
-
-    final trailingButtons = Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [openButton, deleteButton],
-    );
-
-    if (isImage) {
-      return Container(
-        margin: const EdgeInsets.symmetric(
-            horizontal: AppSizes.p16, vertical: AppSizes.p8),
-        padding: const EdgeInsets.all(AppSizes.p12),
-        decoration: BoxDecoration(
-          color: AppColors.surface,
-          borderRadius: AppSizes.borderRadiusCard,
-          border: Border.all(color: AppColors.border),
-          boxShadow: const [AppColors.cardShadow],
-        ),
-        child: Row(
-          children: [
-            ClipRRect(
-              borderRadius:
-                  const BorderRadius.all(Radius.circular(AppSizes.r4)),
-              child: Container(
-                width: 80,
-                height: 80,
-                color: AppColors.background,
-                child: FutureBuilder<Uint8List>(
-                  future: _loadImageBytes(ref),
-                  builder: (context, snapshot) {
-                    if (snapshot.connectionState ==
-                        ConnectionState.waiting) {
-                      return const Center(
-                          child: SizedBox(
-                              width: AppSizes.thumbnailDefault,
-                              height: AppSizes.thumbnailDefault,
-                              child: CircularProgressIndicator(
-                                  strokeWidth:
-                                      AppSizes.strokeWidthThin)));
-                    }
-                    if (snapshot.hasError) {
-                      return Container(
-                          color: AppColors.errorBg,
-                          child: const Icon(Icons.broken_image_outlined,
-                              color: AppColors.error,
-                              size: AppSizes.iconLarge));
-                    }
-                    return Image.memory(snapshot.data!,
-                        fit: BoxFit.cover, cacheWidth: 150);
-                  },
+  Widget _buildPreview(ColorScheme cs) {
+    if (_imageFuture != null) {
+      return FutureBuilder<Uint8List>(
+        future: _imageFuture,
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return Container(
+              color: cs.surfaceContainerHighest,
+              child: const Center(
+                child: SizedBox(
+                  width: AppSizes.iconDefault,
+                  height: AppSizes.iconDefault,
+                  child: CircularProgressIndicator(strokeWidth: AppSizes.strokeWidthThin),
                 ),
               ),
-            ),
-            const SizedBox(width: AppSizes.p16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(widget.doc.fileName,
-                      style: AppTextStyles.bodyBold
-                          .copyWith(color: AppColors.textPrimary),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis),
-                  const SizedBox(height: AppSizes.p4),
-                  Text(dateStr, style: AppTextStyles.bodySecondary),
-                ],
-              ),
-            ),
-            trailingButtons,
-          ],
-        ),
+            );
+          }
+          if (snapshot.hasError) {
+            return Container(
+              color: cs.errorContainer,
+              child: Icon(Icons.broken_image_outlined, color: cs.error, size: AppSizes.iconLarge),
+            );
+          }
+          return Image.memory(snapshot.data!, fit: BoxFit.cover);
+        },
       );
     }
-
-    return Padding(
-      padding: const EdgeInsets.symmetric(
-          horizontal: AppSizes.p16, vertical: AppSizes.p4),
-      child: DataListTile(
-        title: widget.doc.fileName,
-        subtitle: dateStr,
-        leading: const Icon(Icons.picture_as_pdf_outlined,
-            color: AppColors.error),
-        trailing: trailingButtons,
-      ),
+    return Container(
+      color: cs.surfaceContainerHighest,
+      child: Icon(Icons.picture_as_pdf_outlined, color: cs.error, size: AppSizes.iconHero),
     );
   }
 }

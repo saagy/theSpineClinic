@@ -96,4 +96,22 @@ class RecordPaymentController extends _$RecordPaymentController {
 
     return result;
   }
+
+  /// Deletes a payment record and invalidates dependent providers.
+  Future<Result<void>> deletePayment({
+    required String paymentId,
+    required String patientId,
+  }) async {
+    final repo = ref.read(paymentRepositoryProvider);
+    final result = await repo.deletePayment(paymentId);
+    if (!ref.mounted) return result;
+    result.when(
+      success: (_) {
+        ref.invalidate(patientPaymentsProvider(patientId));
+        ref.invalidate(patientDetailProvider(patientId));
+      },
+      failure: (_) {},
+    );
+    return result;
+  }
 }

@@ -1,9 +1,9 @@
 /// FAB that opens a role-filtered quick-actions bottom sheet.
 ///
-/// The FAB itself is a ConsumerStatefulWidget so file-picking and upload
-/// survive sheet dismissal — the sheet merely signals which action was picked.
+/// Handles document uploads directly so the async work survives
+/// bottom-sheet disposal.
 ///
-/// Rule 1 — under 200 lines.
+/// Rule 15/16 — colours via Theme.of(context).colorScheme.
 library;
 
 import 'dart:typed_data';
@@ -12,7 +12,6 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:spine_clinic_app/core/constants/app_colors.dart';
 import 'package:spine_clinic_app/core/constants/app_sizes.dart';
 import 'package:spine_clinic_app/core/constants/app_strings.dart';
 import 'package:spine_clinic_app/core/errors/app_exception.dart';
@@ -26,10 +25,6 @@ import 'package:spine_clinic_app/features/patient/presentation/widgets/collect_p
 import 'package:spine_clinic_app/features/patient/presentation/widgets/quick_actions_sheet.dart';
 import 'package:spine_clinic_app/shared/widgets/app_snackbar.dart';
 
-/// FAB that surfaces a role-filtered quick-actions menu.
-///
-/// Handles document uploads directly so the async work survives bottom-sheet
-/// disposal (the sheet's context is gone the moment [Navigator.pop] runs).
 class PatientQuickActionsFab extends ConsumerStatefulWidget {
   const PatientQuickActionsFab({
     super.key,
@@ -44,10 +39,9 @@ class PatientQuickActionsFab extends ConsumerStatefulWidget {
       _PatientQuickActionsFabState();
 }
 
-class _PatientQuickActionsFabState extends ConsumerState<PatientQuickActionsFab> {
+class _PatientQuickActionsFabState
+    extends ConsumerState<PatientQuickActionsFab> {
   bool _isUploading = false;
-
-  // ── Sheet action callbacks ──────────────────────────────────────────
 
   void _onBookAppointment() {
     Navigator.of(context, rootNavigator: true).pop();
@@ -60,7 +54,8 @@ class _PatientQuickActionsFabState extends ConsumerState<PatientQuickActionsFab>
       context: context,
       isScrollControlled: true,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        borderRadius:
+            BorderRadius.vertical(top: Radius.circular(AppSizes.r16)),
       ),
       builder: (_) => CollectPaymentSheet(patient: widget.patient),
     );
@@ -72,21 +67,13 @@ class _PatientQuickActionsFabState extends ConsumerState<PatientQuickActionsFab>
       context: context,
       isScrollControlled: true,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        borderRadius:
+            BorderRadius.vertical(top: Radius.circular(AppSizes.r16)),
       ),
       builder: (_) => AddNoteSheet(patientId: widget.patient.id),
     );
   }
 
-  /// Dismisses the quick-actions sheet first, then triggers the native file
-  /// picker. The upload runs inside this stateful widget so [ref] and [mounted]
-  /// remain valid even after the sheet is gone.
-  ///
-  /// `try`/`finally` with `mounted` guards ensure the FAB always
-  /// re-enables, even if the future is interrupted or the widget is
-  /// disposed mid-upload. Upload outcomes flow through [AppSnackbar]
-  /// so transient failures never replace the documents list (the
-  /// list AsyncNotifier is intentionally NOT mutated here).
   Future<void> _onAddDocument() async {
     Navigator.of(context, rootNavigator: true).pop();
 
@@ -100,11 +87,9 @@ class _PatientQuickActionsFabState extends ConsumerState<PatientQuickActionsFab>
     if (!mounted) return;
     final Uint8List? bytes = file.bytes;
     if (bytes == null) {
-      AppSnackbar.show(
-        context,
-        message: AppStrings.fromKey('error_doc_file_too_large'),
-        variant: AppSnackbarVariant.error,
-      );
+      AppSnackbar.show(context,
+          message: AppStrings.fromKey('error_doc_file_too_large'),
+          variant: AppSnackbarVariant.error);
       return;
     }
 
@@ -112,44 +97,36 @@ class _PatientQuickActionsFabState extends ConsumerState<PatientQuickActionsFab>
     try {
       final Result<PatientDocument> uploadResult = await ref
           .read(patientDocumentsNotifierProvider(widget.patient.id).notifier)
-          .uploadDocument(
-            fileName: file.name,
-            fileBytes: bytes,
-          );
+          .uploadDocument(fileName: file.name, fileBytes: bytes);
       if (!mounted) return;
       uploadResult.when(
-        success: (_) => AppSnackbar.show(
-          context,
-          message: AppStrings.documentUploaded,
-          variant: AppSnackbarVariant.success,
-        ),
-        failure: (AppException error) => AppSnackbar.show(
-          context,
-          message: AppStrings.fromKey(error.userMessageKey),
-          variant: AppSnackbarVariant.error,
-        ),
+        success: (_) => AppSnackbar.show(context,
+            message: AppStrings.documentUploaded,
+            variant: AppSnackbarVariant.success),
+        failure: (AppException error) => AppSnackbar.show(context,
+            message: AppStrings.fromKey(error.userMessageKey),
+            variant: AppSnackbarVariant.error),
       );
     } finally {
       if (mounted) setState(() => _isUploading = false);
     }
   }
 
-  // ── Build ───────────────────────────────────────────────────────────
-
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     return FloatingActionButton(
       shape: const CircleBorder(),
-      backgroundColor:
-          _isUploading ? AppColors.primary.withAlpha(180) : AppColors.primary,
-      foregroundColor: AppColors.textOnPrimary,
+      backgroundColor: cs.primary,
+      foregroundColor: cs.onPrimary,
       onPressed: _isUploading
           ? null
           : () => showModalBottomSheet(
                 context: context,
                 useRootNavigator: true,
                 shape: const RoundedRectangleBorder(
-                  borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+                  borderRadius:
+                      BorderRadius.vertical(top: Radius.circular(AppSizes.r16)),
                 ),
                 builder: (_) => QuickActionsSheet(
                   isDoctor: widget.isDoctor,
@@ -160,12 +137,12 @@ class _PatientQuickActionsFabState extends ConsumerState<PatientQuickActionsFab>
                 ),
               ),
       child: _isUploading
-          ? const SizedBox(
+          ? SizedBox(
               width: AppSizes.iconDefault,
               height: AppSizes.iconDefault,
               child: CircularProgressIndicator(
-                strokeWidth: 2.5,
-                color: AppColors.textOnPrimary,
+                strokeWidth: AppSizes.borderWidth,
+                color: cs.onPrimary,
               ),
             )
           : const Icon(Icons.add_rounded),

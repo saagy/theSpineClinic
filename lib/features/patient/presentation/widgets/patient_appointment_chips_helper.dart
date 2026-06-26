@@ -1,22 +1,21 @@
 /// Active-filter-chips helper for [PatientTabAppointments].
 ///
-/// Extracted to keep the parent file under 200 lines.
-///
-/// Rule 1 — under 200 lines.
+/// Typed parameters — no dynamic.
 library;
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:spine_clinic_app/core/constants/app_strings.dart';
 import 'package:spine_clinic_app/core/utils/formatters.dart';
 import 'package:spine_clinic_app/features/auth/domain/staff.dart';
+import 'package:spine_clinic_app/features/patient/domain/patient_appointments_state.dart';
+import 'package:spine_clinic_app/features/patient/presentation/patient_appointments_notifier.dart';
 import 'package:spine_clinic_app/features/staff/presentation/staff_providers.dart';
 import 'package:spine_clinic_app/shared/widgets/active_filter_chips_row.dart';
 
-/// Builds active filter chips from the appointments notifier state.
 List<ActiveFilterChip> buildPatientAppointmentChips(
   WidgetRef ref,
-  dynamic state,
-  dynamic notifier,
+  PatientAppointmentsState state,
+  PatientAppointments notifier,
 ) {
   final chips = <ActiveFilterChip>[];
   if (state.dateFrom != null || state.dateTo != null) {

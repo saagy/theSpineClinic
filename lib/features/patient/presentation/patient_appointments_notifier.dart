@@ -80,7 +80,7 @@ class PatientAppointments extends _$PatientAppointments {
   void _reloadDebounced() {
     _generation++;
     final int currentGen = _generation;
-    Future.delayed(const Duration(milliseconds: 150), () {
+    Future.delayed(const Duration(milliseconds: 300), () {
       if (currentGen == _generation) {
         _fetchFirstPage();
       }

@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:spine_clinic_app/core/constants/app_colors.dart';
 import 'package:spine_clinic_app/core/constants/app_sizes.dart';
+import 'package:spine_clinic_app/core/constants/app_strings.dart';
 import 'package:spine_clinic_app/core/constants/app_text_styles.dart';
 import 'package:spine_clinic_app/core/errors/app_exception.dart';
 import 'package:spine_clinic_app/core/utils/formatters.dart';
+import 'package:spine_clinic_app/features/medical_records/domain/patient_notes_list_state.dart';
 import 'package:spine_clinic_app/features/medical_records/domain/patient_notes_sort_option.dart';
 import 'package:spine_clinic_app/features/medical_records/presentation/patient_notes_list_notifier.dart';
 import 'package:spine_clinic_app/features/medical_records/presentation/widgets/patient_notes_filter_content.dart';
@@ -21,7 +22,6 @@ import 'package:spine_clinic_app/shared/widgets/sort_options_sheet.dart';
 import 'package:spine_clinic_app/shared/widgets/active_filter_chips_row.dart';
 import 'package:spine_clinic_app/shared/widgets/animated_list_item.dart';
 
-/// Renders a chronological feed of patient notes with pagination, sorting, and filtering.
 class PatientTabRecords extends ConsumerStatefulWidget {
   const PatientTabRecords({super.key, required this.patient});
   final Patient patient;
@@ -47,20 +47,25 @@ class _PatientTabRecordsState extends ConsumerState<PatientTabRecords> {
   }
 
   void _onScroll() {
-    if (_scrollCtrl.position.pixels >= _scrollCtrl.position.maxScrollExtent - 200) {
-      ref.read(patientNotesListProvider(widget.patient.id).notifier).loadMore();
+    if (_scrollCtrl.position.pixels >=
+        _scrollCtrl.position.maxScrollExtent - 200) {
+      ref
+          .read(patientNotesListProvider(widget.patient.id).notifier)
+          .loadMore();
     }
   }
 
   Future<void> _showSortSheet() async {
     final state = ref.read(patientNotesListProvider(widget.patient.id));
-    final notifier = ref.read(patientNotesListProvider(widget.patient.id).notifier);
+    final notifier =
+        ref.read(patientNotesListProvider(widget.patient.id).notifier);
 
     final selected = await SortOptionsSheet.show<PatientNotesSortOption>(
       context: context,
-      title: 'Sort Options',
+      title: AppStrings.sortOptions,
       options: PatientNotesSortOption.values
-          .map((o) => SortOption(value: o, label: o.displayLabel, buttonLabel: o.buttonLabel))
+          .map((o) =>
+              SortOption(value: o, label: o.displayLabel, buttonLabel: o.buttonLabel))
           .toList(),
       selected: state.sort,
     );
@@ -70,7 +75,7 @@ class _PatientTabRecordsState extends ConsumerState<PatientTabRecords> {
   void _openFilterSheet() {
     AppBottomSheet.show(
       context: context,
-      title: 'Filters',
+      title: AppStrings.filters,
       builder: (context, scrollController) => PatientNotesFilterContent(
         patientId: widget.patient.id,
         scrollController: scrollController,
@@ -78,7 +83,8 @@ class _PatientTabRecordsState extends ConsumerState<PatientTabRecords> {
     );
   }
 
-  List<ActiveFilterChip> _getActiveChips(dynamic state, dynamic notifier) {
+  List<ActiveFilterChip> _getActiveChips(
+      PatientNotesListState state, PatientNotesList notifier) {
     final chips = <ActiveFilterChip>[];
     if (state.dateFrom != null || state.dateTo != null) {
       final label = state.dateFrom != null && state.dateTo != null
@@ -86,34 +92,38 @@ class _PatientTabRecordsState extends ConsumerState<PatientTabRecords> {
           : state.dateFrom != null
               ? 'From ${Formatters.formatDateShort(state.dateFrom!)}'
               : 'To ${Formatters.formatDateShort(state.dateTo!.subtract(const Duration(days: 1)))}';
-      chips.add(ActiveFilterChip(label: label, onRemove: () => notifier.setDateRange(null, null)));
+      chips.add(ActiveFilterChip(
+          label: label, onRemove: () => notifier.setDateRange(null, null)));
     }
     return chips;
   }
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     final state = ref.watch(patientNotesListProvider(widget.patient.id));
     if (state.isLoading) {
       _animatedIndices.clear();
     }
-    final notifier = ref.read(patientNotesListProvider(widget.patient.id).notifier);
+    final notifier =
+        ref.read(patientNotesListProvider(widget.patient.id).notifier);
     final chips = _getActiveChips(state, notifier);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Padding(
-          padding: const EdgeInsets.fromLTRB(AppSizes.p16, AppSizes.p16, AppSizes.p16, AppSizes.p8),
+          padding: const EdgeInsets.fromLTRB(
+              AppSizes.p16, AppSizes.p16, AppSizes.p16, AppSizes.p8),
           child: AppButton(
-            labelText: 'Add Note',
+            labelText: AppStrings.addNote,
             onPressed: () => _showAddNoteSheet(context),
             icon: Icons.add,
             shape: AppButtonShape.pill,
           ),
         ),
         SortFilterBar(
-          sortLabel: 'Sort: ${state.sort.buttonLabel}',
+          sortLabel: '${AppStrings.sort}: ${state.sort.buttonLabel}',
           onSortTap: _showSortSheet,
           activeFilterCount: chips.length,
           onFilterTap: _openFilterSheet,
@@ -121,12 +131,14 @@ class _PatientTabRecordsState extends ConsumerState<PatientTabRecords> {
         ActiveFilterChipsRow(chips: chips, onClearAll: notifier.clearFilters),
         if (state.notes.isNotEmpty && !state.isLoading)
           Padding(
-            padding: const EdgeInsets.fromLTRB(AppSizes.p20, AppSizes.p8, AppSizes.p20, AppSizes.p4),
+            padding: const EdgeInsets.fromLTRB(
+                AppSizes.p20, AppSizes.p8, AppSizes.p20, AppSizes.p4),
             child: Align(
               alignment: Alignment.centerLeft,
               child: Text(
-                'Total Notes: ${state.totalCount}',
-                style: AppTextStyles.captionBold.copyWith(color: AppColors.textSecondary),
+                '${AppStrings.totalNotes}: ${state.totalCount}',
+                style: AppTextStyles.captionBold
+                    .copyWith(color: cs.onSurfaceVariant),
               ),
             ),
           ),
@@ -134,26 +146,47 @@ class _PatientTabRecordsState extends ConsumerState<PatientTabRecords> {
           child: state.isLoading
               ? const SkeletonTileList(count: 4)
               : state.errorMessage != null
-                  ? ErrorView(
-                      exception: UnknownException(message: state.errorMessage!),
-                      onRetry: notifier.refresh,
+                  ? RefreshIndicator(
+                      onRefresh: notifier.refresh,
+                      color: cs.primary,
+                      child: LayoutBuilder(
+                        builder: (context, constraints) =>
+                            SingleChildScrollView(
+                          physics: const AlwaysScrollableScrollPhysics(),
+                          child: SizedBox(
+                            height: constraints.maxHeight,
+                            child: ErrorView(
+                              exception:
+                                  UnknownException(message: state.errorMessage!),
+                              onRetry: notifier.refresh,
+                            ),
+                          ),
+                        ),
+                      ),
                     )
                   : state.notes.isEmpty
-                      ? const EmptyState(message: 'No notes recorded yet', icon: Icons.history_edu_rounded)
+                      ? const EmptyState(
+                          message: AppStrings.noNotesRecorded,
+                          icon: Icons.history_edu_rounded)
                       : RefreshIndicator(
                           onRefresh: notifier.refresh,
-                          color: AppColors.primary,
-                          backgroundColor: AppColors.surface,
+                          color: cs.primary,
                           child: ListView.builder(
                             physics: const AlwaysScrollableScrollPhysics(),
                             controller: _scrollCtrl,
-                            padding: const EdgeInsets.only(bottom: AppSizes.p16),
-                            itemCount: state.notes.length + (state.isLoadingMore ? 1 : 0),
+                            padding:
+                                const EdgeInsets.only(bottom: AppSizes.p16),
+                            itemCount: state.notes.length +
+                                (state.isLoadingMore ? 1 : 0),
                             itemBuilder: (context, index) {
                               if (index == state.notes.length) {
                                 return const Padding(
-                                  padding: EdgeInsets.symmetric(vertical: AppSizes.p16),
-                                  child: Center(child: CircularProgressIndicator(strokeWidth: AppSizes.strokeWidthThin)),
+                                  padding: EdgeInsets.symmetric(
+                                      vertical: AppSizes.p16),
+                                  child: Center(
+                                      child: CircularProgressIndicator(
+                                          strokeWidth:
+                                              AppSizes.strokeWidthThin)),
                                 );
                               }
                               final note = state.notes[index];
@@ -175,7 +208,8 @@ class _PatientTabRecordsState extends ConsumerState<PatientTabRecords> {
       context: context,
       isScrollControlled: true,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        borderRadius:
+            BorderRadius.vertical(top: Radius.circular(AppSizes.r16)),
       ),
       builder: (_) => AddNoteSheet(patientId: widget.patient.id),
     );

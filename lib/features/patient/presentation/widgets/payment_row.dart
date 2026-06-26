@@ -1,11 +1,11 @@
 /// Payment history row with amount and optional admin delete action.
 ///
-/// Rule 1 — under 200 lines.
+/// Rule 15/16 — all colours via Theme.of(context).colorScheme.
+/// Rule 3 — delete goes through RecordPaymentController, not direct repo.
 library;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:spine_clinic_app/core/constants/app_colors.dart';
 import 'package:spine_clinic_app/core/constants/app_sizes.dart';
 import 'package:spine_clinic_app/core/constants/app_strings.dart';
 import 'package:spine_clinic_app/core/constants/app_text_styles.dart';
@@ -14,12 +14,10 @@ import 'package:spine_clinic_app/features/auth/domain/staff.dart';
 import 'package:spine_clinic_app/features/auth/presentation/auth_providers.dart';
 import 'package:spine_clinic_app/features/payments/domain/payment_record.dart';
 import 'package:spine_clinic_app/features/payments/presentation/record_payment_controller.dart';
-import 'package:spine_clinic_app/features/patient/presentation/patient_providers.dart';
 import 'package:spine_clinic_app/shared/widgets/app_snackbar.dart';
 import 'package:spine_clinic_app/shared/widgets/confirmation_dialog.dart';
 import 'package:spine_clinic_app/shared/widgets/data_list_tile.dart';
 
-/// A single payment history row with amount and optional delete.
 class PaymentRow extends ConsumerWidget {
   const PaymentRow({
     super.key,
@@ -27,13 +25,13 @@ class PaymentRow extends ConsumerWidget {
     required this.isAdmin,
     required this.patientId,
   });
-
   final PaymentRecord payment;
   final bool isAdmin;
   final String patientId;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final cs = Theme.of(context).colorScheme;
     final recordedByAsync = payment.recordedBy != null
         ? ref.watch(staffProfileProvider(payment.recordedBy!))
         : null;
@@ -44,23 +42,18 @@ class PaymentRow extends ConsumerWidget {
         spacing: AppSizes.p8,
         runSpacing: AppSizes.p4,
         children: [
-          Text(
-            payment.reason,
-            style: AppTextStyles.bodyBold.copyWith(
-              color: AppColors.textPrimary,
-            ),
-          ),
+          Text(payment.reason, style: AppTextStyles.bodyBold),
           if (payment.sessionBalanceAdded > 0)
             _BalanceTag(
               label: '+${payment.sessionBalanceAdded} PT',
-              bg: AppColors.primaryLight,
-              fg: AppColors.primary,
+              bg: cs.primaryContainer,
+              fg: cs.primary,
             ),
           if (payment.tractionBalanceAdded > 0)
             _BalanceTag(
               label: '+${payment.tractionBalanceAdded} Tr',
-              bg: AppColors.warningBg,
-              fg: AppColors.warning,
+              bg: cs.secondaryContainer,
+              fg: cs.secondary,
             ),
         ],
       ),
@@ -70,26 +63,21 @@ class PaymentRow extends ConsumerWidget {
         children: [
           Text(
             payment.amount.toCurrencyString(),
-            style: AppTextStyles.bodyBold.copyWith(color: AppColors.textPrimary),
+            style: AppTextStyles.bodyBold,
           ),
           if (isAdmin) ...[
-            const SizedBox(width: AppSizes.p4),
-            GestureDetector(
-              onTap: () => _confirmDelete(context, ref),
-              child: const Icon(Icons.delete_outline_rounded,
-                  size: AppSizes.iconSmall, color: AppColors.error),
+            const SizedBox(width: AppSizes.p8),
+            IconButton(
+              icon: Icon(Icons.delete_outline_rounded, color: cs.error, size: AppSizes.iconSmall),
+              onPressed: () => _confirmDelete(context, ref),
             ),
           ],
         ],
       ),
-      transparent: true,
     );
   }
 
-  Widget _buildSubtitle(
-    WidgetRef ref,
-    AsyncValue<Staff>? recordedByAsync,
-  ) {
+  Widget _buildSubtitle(WidgetRef ref, AsyncValue<Staff>? recordedByAsync) {
     final dateStr = payment.recordedAt.toDateTimeString();
     final recordedByWidget = recordedByAsync?.when(
           data: (staff) {
@@ -97,8 +85,8 @@ class PaymentRow extends ConsumerWidget {
                 ? staff.fullName
                 : '${staff.fullName} (${AppStrings.deactivated})';
             return Text(
-              'Recorded by $name',
-              style: AppTextStyles.caption.copyWith(color: AppColors.textMuted),
+              '${AppStrings.recordedBy} $name',
+              style: AppTextStyles.caption,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
             );
@@ -112,10 +100,7 @@ class PaymentRow extends ConsumerWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
       children: [
-        Text(
-          dateStr,
-          style: AppTextStyles.caption.copyWith(color: AppColors.textMuted),
-        ),
+        Text(dateStr, style: AppTextStyles.caption),
         if (recordedByAsync != null) recordedByWidget,
       ],
     );
@@ -132,25 +117,17 @@ class PaymentRow extends ConsumerWidget {
         isDestructive: true,
       ),
     );
-    if (confirm == true && context.mounted) {
-      final repo = ref.read(paymentRepositoryProvider);
-      final result = await repo.deletePayment(payment.id);
-      if (context.mounted) {
-        result.when(
-          success: (_) {
-            AppSnackbar.show(context,
-                message: AppStrings.paymentDeleted,
-                variant: AppSnackbarVariant.success);
-            ref.invalidate(patientPaymentsProvider(patientId));
-            ref.invalidate(patientDetailProvider(patientId));
-          },
-          failure: (error) {
-            AppSnackbar.show(context,
-                message: error.message, variant: AppSnackbarVariant.error);
-          },
-        );
-      }
-    }
+    if (confirm != true || !context.mounted) return;
+    final result = await ref
+        .read(recordPaymentControllerProvider.notifier)
+        .deletePayment(paymentId: payment.id, patientId: patientId);
+    if (!context.mounted) return;
+    result.when(
+      success: (_) => AppSnackbar.show(context,
+          message: AppStrings.paymentDeleted, variant: AppSnackbarVariant.success),
+      failure: (error) => AppSnackbar.show(context,
+          message: error.message, variant: AppSnackbarVariant.error),
+    );
   }
 }
 
@@ -163,20 +140,14 @@ class _BalanceTag extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppSizes.p8,
-        vertical: AppSizes.p2,
-      ),
+      padding: const EdgeInsets.symmetric(horizontal: AppSizes.p8, vertical: AppSizes.p2),
       decoration: BoxDecoration(
         color: bg,
-        borderRadius: const BorderRadius.all(Radius.circular(AppSizes.r6)),
+        borderRadius: BorderRadius.circular(AppSizes.r6),
       ),
       child: Text(
         label,
-        style: AppTextStyles.caption.copyWith(
-          color: fg,
-          fontWeight: FontWeight.bold,
-        ),
+        style: AppTextStyles.caption.copyWith(color: fg, fontWeight: FontWeight.bold),
       ),
     );
   }

@@ -1,5 +1,9 @@
+/// Wallet-style balance card for the payments tab.
+///
+/// Rule 15/16 — all colours via Theme.of(context).colorScheme.
+library;
+
 import 'package:flutter/material.dart';
-import 'package:spine_clinic_app/core/constants/app_colors.dart';
 import 'package:spine_clinic_app/core/constants/app_sizes.dart';
 import 'package:spine_clinic_app/core/constants/app_strings.dart';
 import 'package:spine_clinic_app/core/constants/app_text_styles.dart';
@@ -14,37 +18,35 @@ class PaymentSummaryHeader extends StatelessWidget {
     required this.totalPaid,
     required this.isDoctor,
     required this.patient,
-    required this.isAdmin,
   });
-
   final double totalPaid;
   final bool isDoctor;
   final Patient patient;
-  final bool isAdmin;
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        // ── Prominent balance container ──
         Container(
           padding: const EdgeInsets.all(AppSizes.p20),
           decoration: BoxDecoration(
-            color: AppColors.successBg,
-            borderRadius: const BorderRadius.all(Radius.circular(AppSizes.r16)),
+            color: cs.primaryContainer.withAlpha(40),
+            borderRadius: BorderRadius.circular(AppSizes.r16),
+            border: Border.all(color: cs.outlineVariant),
           ),
           child: Column(
             children: [
               Text(
                 AppStrings.totalPaid,
-                style: AppTextStyles.captionMedium.copyWith(color: AppColors.success),
+                style: AppTextStyles.captionMedium.copyWith(color: cs.onSurfaceVariant),
               ),
               const SizedBox(height: AppSizes.p4),
               Text(
                 totalPaid.toCurrencyString(),
-                style: AppTextStyles.headingLarge.copyWith(
-                  color: AppColors.success,
+                style: AppTextStyles.numberLarge.copyWith(
+                  color: cs.primary,
                   fontWeight: FontWeight.w800,
                 ),
               ),
@@ -54,23 +56,19 @@ class PaymentSummaryHeader extends StatelessWidget {
         if (!isDoctor) ...[
           const SizedBox(height: AppSizes.p16),
           AppButton(
-            labelText: 'Record Payment',
-            onPressed: () => _openCollectPaymentSheet(context),
+            labelText: AppStrings.recordPayment,
+            onPressed: () => showModalBottomSheet(
+              context: context,
+              isScrollControlled: true,
+              shape: const RoundedRectangleBorder(
+                borderRadius: BorderRadius.vertical(top: Radius.circular(AppSizes.r16)),
+              ),
+              builder: (_) => CollectPaymentSheet(patient: patient),
+            ),
             shape: AppButtonShape.pill,
           ),
         ],
       ],
-    );
-  }
-
-  void _openCollectPaymentSheet(BuildContext context) {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (_) => CollectPaymentSheet(patient: patient),
     );
   }
 }
