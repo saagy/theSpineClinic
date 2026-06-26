@@ -208,6 +208,7 @@ class _EditAppointmentFormState extends ConsumerState<EditAppointmentForm> {
                 onPressed: _isSubmitting ? null : _submit,
                 isLoading: _isSubmitting,
                 debounceMs: 1000,
+                shape: AppButtonShape.pill,
               ),
             ],
           ),

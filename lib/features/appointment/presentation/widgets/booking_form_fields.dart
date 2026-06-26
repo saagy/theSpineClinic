@@ -1,5 +1,5 @@
-/// Modern booking form fields with patient selector card, pill type chips,
-/// and soft-filled input decorations.
+/// Modern booking form fields with patient selector card, responsive card grid
+/// selector, and soft-filled input decorations.
 ///
 /// Rule 1 — under 200 lines.
 library;
@@ -57,37 +57,46 @@ class BookingFormFields extends StatelessWidget {
         _PatientSearchField(onTap: onPatientTap ?? () {}),
       const SizedBox(height: AppSizes.p16),
 
-      // ── Appointment type — wrapped pill chips ──
+      // ── Appointment type — responsive cards grid ──
       _SectionLabel(AppStrings.appointmentType),
       const SizedBox(height: AppSizes.p6),
-      Wrap(
-        spacing: AppSizes.p8,
-        runSpacing: AppSizes.p8,
-        children: AppointmentType.values.map((type) {
-          final bool active = selectedType == type;
-          return GestureDetector(
-            onTap: () => onTypeChanged(type),
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 180),
-              padding: const EdgeInsets.symmetric(
-                  horizontal: AppSizes.p16, vertical: AppSizes.p8),
-              alignment: Alignment.center,
-              decoration: BoxDecoration(
-                color: active
-                    ? AppColors.primary
-                    : AppColors.primaryLight.withAlpha(100),
-                borderRadius:
-                    const BorderRadius.all(Radius.circular(AppSizes.r999)),
-              ),
-              child: Text(type.displayLabel,
-                  style: AppTextStyles.bodyBold.copyWith(
-                      color: active
-                          ? AppColors.textOnPrimary
-                          : AppColors.textSecondary,
-                      fontSize: 13)),
-            ),
-          );
-        }).toList(),
+      LayoutBuilder(
+        builder: (context, constraints) {
+          final types = AppointmentType.values;
+          if (constraints.maxWidth >= 600) {
+            return Row(
+              children: [
+                Expanded(child: _buildTypeCard(context, types[0])),
+                const SizedBox(width: AppSizes.p12),
+                Expanded(child: _buildTypeCard(context, types[1])),
+                const SizedBox(width: AppSizes.p12),
+                Expanded(child: _buildTypeCard(context, types[2])),
+                const SizedBox(width: AppSizes.p12),
+                Expanded(child: _buildTypeCard(context, types[3])),
+              ],
+            );
+          } else {
+            return Column(
+              children: [
+                Row(
+                  children: [
+                    Expanded(child: _buildTypeCard(context, types[0])),
+                    const SizedBox(width: AppSizes.p12),
+                    Expanded(child: _buildTypeCard(context, types[1])),
+                  ],
+                ),
+                const SizedBox(height: AppSizes.p12),
+                Row(
+                  children: [
+                    Expanded(child: _buildTypeCard(context, types[2])),
+                    const SizedBox(width: AppSizes.p12),
+                    Expanded(child: _buildTypeCard(context, types[3])),
+                  ],
+                ),
+              ],
+            );
+          }
+        },
       ),
       const SizedBox(height: AppSizes.p16),
 
@@ -134,6 +143,94 @@ class BookingFormFields extends StatelessWidget {
     ]);
   }
 
+  Widget _buildTypeCard(BuildContext context, AppointmentType type) {
+    final bool active = selectedType == type;
+
+    return GestureDetector(
+      onTap: () => onTypeChanged(type),
+      child: Stack(
+        children: [
+          AnimatedContainer(
+            duration: const Duration(milliseconds: 180),
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppSizes.p12,
+              vertical: AppSizes.p16,
+            ),
+            height: 110,
+            decoration: BoxDecoration(
+              color: AppColors.surface,
+              borderRadius: const BorderRadius.all(Radius.circular(AppSizes.r12)),
+              border: Border.all(
+                color: active ? AppColors.primary : AppColors.border,
+                width: active ? 2.0 : 1.0,
+              ),
+              boxShadow: active ? const [AppColors.cardShadow] : const [],
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Icon(
+                  _getIconForType(type),
+                  color: active ? AppColors.primary : AppColors.textSecondary,
+                  size: 24,
+                ),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      type.displayLabel,
+                      style: AppTextStyles.bodyBold.copyWith(
+                        color: active ? AppColors.primary : AppColors.textPrimary,
+                        fontSize: 13,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: AppSizes.p2),
+                    Text(
+                      _getSubtextForType(type),
+                      style: AppTextStyles.caption.copyWith(
+                        color: active ? AppColors.primary.withAlpha(200) : AppColors.textMuted,
+                        fontSize: 10,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          if (active)
+            const Positioned(
+              top: 8,
+              right: 8,
+              child: Icon(
+                Icons.check_circle_rounded,
+                color: AppColors.primary,
+                size: 18,
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  IconData _getIconForType(AppointmentType type) => switch (type) {
+        AppointmentType.normalPtSession => Icons.accessibility_new_rounded,
+        AppointmentType.spinalTractionSession => Icons.settings_accessibility_rounded,
+        AppointmentType.initialAssessment => Icons.assignment_ind_rounded,
+        AppointmentType.reassessment => Icons.rate_review_rounded,
+      };
+
+  String _getSubtextForType(AppointmentType type) => switch (type) {
+        AppointmentType.normalPtSession ||
+        AppointmentType.spinalTractionSession =>
+          'Deducts 1 Session',
+        AppointmentType.initialAssessment ||
+        AppointmentType.reassessment =>
+          'No balance deduction',
+      };
+
   String _fmt(DateTime d) {
     final m = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
     return '${m[d.month-1]} ${d.day}';
@@ -159,7 +256,6 @@ class BookingFormFields extends StatelessWidget {
   }
 }
 
-/// Read-only profile card showing avatar, name, phone, truncated ID.
 class _PatientCard extends StatelessWidget {
   const _PatientCard({required this.patient});
   final Patient patient;
@@ -195,7 +291,6 @@ class _PatientCard extends StatelessWidget {
   }
 }
 
-/// Tappable search field that opens a patient search sheet when tapped.
 class _PatientSearchField extends StatelessWidget {
   const _PatientSearchField({required this.onTap});
   final VoidCallback onTap;

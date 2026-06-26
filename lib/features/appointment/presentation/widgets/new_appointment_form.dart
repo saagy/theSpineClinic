@@ -378,6 +378,7 @@ class _NewAppointmentFormState extends ConsumerState<NewAppointmentForm> {
                     : _submitForm,
                 isLoading: _isSubmitting,
                 debounceMs: 1000,
+                shape: AppButtonShape.pill,
               ),
               const SizedBox(height: AppSizes.p48),
             ],
