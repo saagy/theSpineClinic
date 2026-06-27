@@ -197,8 +197,7 @@ class _BranchDropdown extends ConsumerWidget {
           if (branch != null) {
             ref.read(adminBranchFilterProvider.notifier).set(value);
             ref.read(allAppointmentsProvider.notifier).setClinicFilter(value);
-            // Update active branch so Today/Upcoming tabs re-fetch.
-            ref.read(activeBranchProvider.notifier).setBranch(branch);
+
           }
         }
         // Refresh Today and Upcoming tabs for the selected branch.
@@ -231,7 +230,7 @@ class _TabStrip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: AppColors.surface,
+      color: Theme.of(context).scaffoldBackgroundColor,
       child: TabBar(
         controller: controller,
         labelColor: AppColors.primary,
