@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:spine_clinic_app/core/constants/app_sizes.dart';
 import 'package:spine_clinic_app/core/constants/app_strings.dart';
-import 'package:spine_clinic_app/core/constants/app_text_styles.dart';
 import 'package:spine_clinic_app/core/errors/app_exception.dart';
 import 'package:spine_clinic_app/core/utils/formatters.dart';
 import 'package:spine_clinic_app/features/medical_records/domain/patient_notes_list_state.dart';
@@ -12,47 +11,42 @@ import 'package:spine_clinic_app/features/medical_records/presentation/widgets/p
 import 'package:spine_clinic_app/features/patient/domain/patient.dart';
 import 'package:spine_clinic_app/features/patient/presentation/widgets/add_note_sheet.dart';
 import 'package:spine_clinic_app/features/patient/presentation/widgets/patient_note_item.dart';
-import 'package:spine_clinic_app/shared/widgets/app_button.dart';
+import 'package:spine_clinic_app/shared/widgets/active_filter_chips_row.dart';
+import 'package:spine_clinic_app/shared/widgets/animated_list_item.dart';
 import 'package:spine_clinic_app/shared/widgets/app_bottom_sheet.dart';
+import 'package:spine_clinic_app/shared/widgets/app_button.dart';
 import 'package:spine_clinic_app/shared/widgets/empty_state.dart';
 import 'package:spine_clinic_app/shared/widgets/error_view.dart';
 import 'package:spine_clinic_app/shared/widgets/skeleton_loader.dart';
-import 'package:spine_clinic_app/shared/widgets/sort_filter_bar.dart';
+import 'package:spine_clinic_app/shared/widgets/slim_sort_filter_bar.dart';
 import 'package:spine_clinic_app/shared/widgets/sort_options_sheet.dart';
-import 'package:spine_clinic_app/shared/widgets/active_filter_chips_row.dart';
-import 'package:spine_clinic_app/shared/widgets/animated_list_item.dart';
 
 class PatientTabRecords extends ConsumerStatefulWidget {
   const PatientTabRecords({super.key, required this.patient});
   final Patient patient;
 
   @override
-  ConsumerState<PatientTabRecords> createState() => _PatientTabRecordsState();
+  ConsumerState<PatientTabRecords> createState() =>
+      _PatientTabRecordsState();
 }
 
 class _PatientTabRecordsState extends ConsumerState<PatientTabRecords> {
-  final ScrollController _scrollCtrl = ScrollController();
   final Set<int> _animatedIndices = <int>{};
+  bool _notifiedLoadMore = false;
 
-  @override
-  void initState() {
-    super.initState();
-    _scrollCtrl.addListener(_onScroll);
-  }
-
-  @override
-  void dispose() {
-    _scrollCtrl.dispose();
-    super.dispose();
-  }
-
-  void _onScroll() {
-    if (_scrollCtrl.position.pixels >=
-        _scrollCtrl.position.maxScrollExtent - 200) {
-      ref
-          .read(patientNotesListProvider(widget.patient.id).notifier)
-          .loadMore();
+  bool _onScrollNotification(ScrollNotification notification) {
+    if (notification is ScrollEndNotification &&
+        notification.metrics.pixels >=
+            notification.metrics.maxScrollExtent - 200) {
+      if (!_notifiedLoadMore) {
+        _notifiedLoadMore = true;
+        ref
+            .read(patientNotesListProvider(widget.patient.id).notifier)
+            .loadMore()
+            .then((_) => _notifiedLoadMore = false);
+      }
     }
+    return false;
   }
 
   Future<void> _showSortSheet() async {
@@ -60,12 +54,13 @@ class _PatientTabRecordsState extends ConsumerState<PatientTabRecords> {
     final notifier =
         ref.read(patientNotesListProvider(widget.patient.id).notifier);
 
-    final selected = await SortOptionsSheet.show<PatientNotesSortOption>(
+    final selected =
+        await SortOptionsSheet.show<PatientNotesSortOption>(
       context: context,
       title: AppStrings.sortOptions,
       options: PatientNotesSortOption.values
-          .map((o) =>
-              SortOption(value: o, label: o.displayLabel, buttonLabel: o.buttonLabel))
+          .map((o) => SortOption(
+              value: o, label: o.displayLabel, buttonLabel: o.buttonLabel))
           .toList(),
       selected: state.sort,
     );
@@ -76,7 +71,8 @@ class _PatientTabRecordsState extends ConsumerState<PatientTabRecords> {
     AppBottomSheet.show(
       context: context,
       title: AppStrings.filters,
-      builder: (context, scrollController) => PatientNotesFilterContent(
+      builder: (context, scrollController) =>
+          PatientNotesFilterContent(
         patientId: widget.patient.id,
         scrollController: scrollController,
       ),
@@ -93,7 +89,8 @@ class _PatientTabRecordsState extends ConsumerState<PatientTabRecords> {
               ? 'From ${Formatters.formatDateShort(state.dateFrom!)}'
               : 'To ${Formatters.formatDateShort(state.dateTo!.subtract(const Duration(days: 1)))}';
       chips.add(ActiveFilterChip(
-          label: label, onRemove: () => notifier.setDateRange(null, null)));
+          label: label,
+          onRemove: () => notifier.setDateRange(null, null)));
     }
     return chips;
   }
@@ -109,97 +106,90 @@ class _PatientTabRecordsState extends ConsumerState<PatientTabRecords> {
         ref.read(patientNotesListProvider(widget.patient.id).notifier);
     final chips = _getActiveChips(state, notifier);
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Padding(
-          padding: const EdgeInsets.fromLTRB(
-              AppSizes.p16, AppSizes.p16, AppSizes.p16, AppSizes.p8),
-          child: AppButton(
-            labelText: AppStrings.addNote,
-            onPressed: () => _showAddNoteSheet(context),
-            icon: Icons.add,
-            shape: AppButtonShape.pill,
-          ),
-        ),
-        SortFilterBar(
-          sortLabel: '${AppStrings.sort}: ${state.sort.buttonLabel}',
-          onSortTap: _showSortSheet,
-          activeFilterCount: chips.length,
-          onFilterTap: _openFilterSheet,
-        ),
-        ActiveFilterChipsRow(chips: chips, onClearAll: notifier.clearFilters),
-        if (state.notes.isNotEmpty && !state.isLoading)
+    return NotificationListener<ScrollNotification>(
+      onNotification: _onScrollNotification,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
           Padding(
             padding: const EdgeInsets.fromLTRB(
-                AppSizes.p20, AppSizes.p8, AppSizes.p20, AppSizes.p4),
-            child: Align(
-              alignment: Alignment.centerLeft,
-              child: Text(
-                '${AppStrings.totalNotes}: ${state.totalCount}',
-                style: AppTextStyles.captionBold
-                    .copyWith(color: cs.onSurfaceVariant),
-              ),
+                AppSizes.p16, AppSizes.p8, AppSizes.p16, AppSizes.p4),
+            child: AppButton(
+              labelText: AppStrings.addNote,
+              onPressed: () => _showAddNoteSheet(context),
+              icon: Icons.add,
+              shape: AppButtonShape.pill,
             ),
           ),
-        Expanded(
-          child: state.isLoading
-              ? const SkeletonTileList(count: 4)
-              : state.errorMessage != null
-                  ? RefreshIndicator(
-                      onRefresh: notifier.refresh,
-                      color: cs.primary,
-                      child: LayoutBuilder(
-                        builder: (context, constraints) =>
-                            SingleChildScrollView(
-                          physics: const AlwaysScrollableScrollPhysics(),
-                          child: SizedBox(
-                            height: constraints.maxHeight,
-                            child: ErrorView(
-                              exception:
-                                  UnknownException(message: state.errorMessage!),
-                              onRetry: notifier.refresh,
+          SlimSortFilterBar(
+            sortLabel: state.sort.buttonLabel,
+            onSortTap: _showSortSheet,
+            activeFilterCount: chips.length,
+            onFilterTap: _openFilterSheet,
+            totalCount: state.notes.isNotEmpty ? state.totalCount : null,
+          ),
+          if (chips.isNotEmpty)
+            ActiveFilterChipsRow(
+                chips: chips, onClearAll: notifier.clearFilters),
+          Expanded(
+            child: state.isLoading
+                ? const SkeletonTileList(count: 4)
+                : state.errorMessage != null
+                    ? RefreshIndicator(
+                        onRefresh: notifier.refresh,
+                        color: cs.primary,
+                        child: LayoutBuilder(
+                          builder: (context, constraints) =>
+                              SingleChildScrollView(
+                            physics: const AlwaysScrollableScrollPhysics(),
+                            child: SizedBox(
+                              height: constraints.maxHeight,
+                              child: ErrorView(
+                                exception: UnknownException(
+                                    message: state.errorMessage!),
+                                onRetry: notifier.refresh,
+                              ),
                             ),
                           ),
                         ),
-                      ),
-                    )
-                  : state.notes.isEmpty
-                      ? const EmptyState(
-                          message: AppStrings.noNotesRecorded,
-                          icon: Icons.history_edu_rounded)
-                      : RefreshIndicator(
-                          onRefresh: notifier.refresh,
-                          color: cs.primary,
-                          child: ListView.builder(
-                            physics: const AlwaysScrollableScrollPhysics(),
-                            controller: _scrollCtrl,
-                            padding:
-                                const EdgeInsets.only(bottom: AppSizes.p16),
-                            itemCount: state.notes.length +
-                                (state.isLoadingMore ? 1 : 0),
-                            itemBuilder: (context, index) {
-                              if (index == state.notes.length) {
-                                return const Padding(
-                                  padding: EdgeInsets.symmetric(
-                                      vertical: AppSizes.p16),
-                                  child: Center(
-                                      child: CircularProgressIndicator(
-                                          strokeWidth:
-                                              AppSizes.strokeWidthThin)),
+                      )
+                    : state.notes.isEmpty
+                        ? const EmptyState(
+                            message: AppStrings.noNotesRecorded,
+                            icon: Icons.history_edu_rounded)
+                        : RefreshIndicator(
+                            onRefresh: notifier.refresh,
+                            color: cs.primary,
+                            child: ListView.builder(
+                              physics:
+                                  const AlwaysScrollableScrollPhysics(),
+                              padding: const EdgeInsets.only(
+                                  bottom: AppSizes.p16),
+                              itemCount: state.notes.length +
+                                  (state.isLoadingMore ? 1 : 0),
+                              itemBuilder: (context, index) {
+                                if (index == state.notes.length) {
+                                  return const Padding(
+                                    padding: EdgeInsets.symmetric(
+                                        vertical: AppSizes.p16),
+                                    child: Center(
+                                        child: CircularProgressIndicator(
+                                            strokeWidth: AppSizes
+                                                .strokeWidthThin)),
+                                  );
+                                }
+                                final note = state.notes[index];
+                                return AnimatedListItem(
+                                  index: index,
+                                  animatedIndices: _animatedIndices,
+                                  child: PatientNoteItem(note: note),
                                 );
-                              }
-                              final note = state.notes[index];
-                              return AnimatedListItem(
-                                index: index,
-                                animatedIndices: _animatedIndices,
-                                child: PatientNoteItem(note: note),
-                              );
-                            },
+                              },
+                            ),
                           ),
-                        ),
-        ),
-      ],
+          ),
+        ],
+      ),
     );
   }
 

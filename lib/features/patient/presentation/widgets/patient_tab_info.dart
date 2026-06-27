@@ -1,6 +1,7 @@
-/// Dashboard-style Info tab for the patient detail screen.
+/// Info tab — cardless continuous scroll matching appointment detail.
 ///
-/// Sections: Quick Stats Strip → Contact → Assigned Doctors → Package Balance
+/// Sections: Quick Stats → Contact → Assigned Doctors → Package Balance
+/// Separated by 24px gaps and 0.5px hairline dividers with eyebrow labels.
 ///
 /// Rule 15/16 — all colours via Theme.of(context).colorScheme.
 library;
@@ -20,10 +21,9 @@ import 'package:spine_clinic_app/features/patient/presentation/patient_appointme
 import 'package:spine_clinic_app/features/patient/presentation/patient_providers.dart';
 import 'package:spine_clinic_app/features/patient/presentation/widgets/package_balance_edit_dialog.dart';
 import 'package:spine_clinic_app/features/payments/presentation/record_payment_controller.dart';
-import 'package:spine_clinic_app/shared/widgets/app_avatar.dart';
-import 'package:spine_clinic_app/shared/widgets/empty_state.dart';
+import 'package:spine_clinic_app/shared/widgets/doctor_row.dart';
 import 'package:spine_clinic_app/shared/widgets/error_view.dart';
-import 'package:spine_clinic_app/shared/widgets/section_card.dart';
+import 'package:spine_clinic_app/shared/widgets/eyebrow_label.dart';
 import 'package:spine_clinic_app/shared/widgets/skeleton_loader.dart';
 
 class PatientTabInfo extends ConsumerWidget {
@@ -37,9 +37,8 @@ class PatientTabInfo extends ConsumerWidget {
     final apptState = ref.watch(patientAppointmentsProvider(patient.id));
     final paymentsAsync = ref.watch(patientPaymentsProvider(patient.id));
     final doctorsAsync = ref.watch(patientAssignedDoctorsProvider(patient.id));
-    final totalPaid = paymentsAsync.value
-            ?.fold(0.0, (sum, p) => sum + p.amount) ??
-        0.0;
+    final totalPaid =
+        paymentsAsync.value?.fold(0.0, (sum, p) => sum + p.amount) ?? 0.0;
 
     return RefreshIndicator(
       onRefresh: () async {
@@ -53,29 +52,30 @@ class PatientTabInfo extends ConsumerWidget {
       child: SingleChildScrollView(
         keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
         physics: const AlwaysScrollableScrollPhysics(),
-        padding: const EdgeInsets.all(AppSizes.p16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            _QuickStatsStrip(
+            _StatsStrip(
               apptCount: apptState.totalCount,
               apptLoading: apptState.isLoading,
               lastVisit: patient.lastAppointmentDate,
               totalPaid: totalPaid,
               paymentsLoading: paymentsAsync.isLoading,
               isDoctor: isDoctor,
-              onTapAppointments: () =>
-                  DefaultTabController.of(context).animateTo(1),
-              onTapPayments: isDoctor
-                  ? null
-                  : () => DefaultTabController.of(context).animateTo(3),
             ),
-            const SizedBox(height: AppSizes.p16),
+            const _FullWidthHairline(),
+            const SizedBox(height: AppSizes.p24),
             _ContactSection(patient: patient),
-            const SizedBox(height: AppSizes.p16),
-            _AssignedDoctorsCard(doctorsAsync: doctorsAsync),
-            const SizedBox(height: AppSizes.p16),
-            _PackageBalanceCard(patient: patient, isDoctor: isDoctor),
+            const SizedBox(height: AppSizes.p24),
+            const _HairlineDivider(),
+            const SizedBox(height: AppSizes.p24),
+            _AssignedDoctorsSection(doctorsAsync: doctorsAsync),
+            const SizedBox(height: AppSizes.p24),
+            const _HairlineDivider(),
+            const SizedBox(height: AppSizes.p24),
+            _PackageBalanceSection(
+                patient: patient, isDoctor: isDoctor),
+            const SizedBox(height: AppSizes.p24),
           ],
         ),
       ),
@@ -83,16 +83,37 @@ class PatientTabInfo extends ConsumerWidget {
   }
 }
 
-class _QuickStatsStrip extends StatelessWidget {
-  const _QuickStatsStrip({
+class _FullWidthHairline extends StatelessWidget {
+  const _FullWidthHairline();
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    return Divider(color: cs.outlineVariant, height: 0.5, thickness: 0.5);
+  }
+}
+
+class _HairlineDivider extends StatelessWidget {
+  const _HairlineDivider();
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: AppSizes.p24),
+      child: Divider(color: cs.outlineVariant, height: 1, thickness: 0.5),
+    );
+  }
+}
+
+class _StatsStrip extends StatelessWidget {
+  const _StatsStrip({
     required this.apptCount,
     required this.apptLoading,
     required this.lastVisit,
     required this.totalPaid,
     required this.paymentsLoading,
     required this.isDoctor,
-    required this.onTapAppointments,
-    required this.onTapPayments,
   });
   final int apptCount;
   final bool apptLoading;
@@ -100,100 +121,94 @@ class _QuickStatsStrip extends StatelessWidget {
   final double totalPaid;
   final bool paymentsLoading;
   final bool isDoctor;
-  final VoidCallback onTapAppointments;
-  final VoidCallback? onTapPayments;
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Expanded(
-          child: _StatCard(
-            value: apptLoading ? '—' : '$apptCount',
-            label: AppStrings.totalAppointments,
-            icon: Icons.calendar_today_rounded,
-            onTap: onTapAppointments,
-          ),
-        ),
-        const SizedBox(width: AppSizes.p12),
-        Expanded(
-          child: _StatCard(
-            value: lastVisit != null
-                ? Formatters.formatDateMedium(lastVisit!)
-                : '—',
-            label: AppStrings.lastVisit,
-            icon: Icons.event_available_rounded,
-          ),
-        ),
-        if (!isDoctor) ...[
-          const SizedBox(width: AppSizes.p12),
-          Expanded(
-            child: _StatCard(
-              value: paymentsLoading ? '—' : totalPaid.toCurrencyString(),
-              label: AppStrings.totalPaid,
-              icon: Icons.payments_rounded,
-              onTap: onTapPayments,
-            ),
-          ),
-        ],
-      ],
-    );
-  }
-}
-
-class _StatCard extends StatelessWidget {
-  const _StatCard({
-    required this.value,
-    required this.label,
-    required this.icon,
-    this.onTap,
-  });
-  final String value;
-  final String label;
-  final IconData icon;
-  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
-    return Material(
-      color: cs.surface,
-      borderRadius: BorderRadius.circular(AppSizes.r16),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(AppSizes.r16),
-        child: Container(
-          padding: const EdgeInsets.all(AppSizes.p16),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(AppSizes.r16),
-            border: Border.all(color: cs.outlineVariant),
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(icon, color: cs.primary, size: AppSizes.iconDefault),
-              const SizedBox(height: AppSizes.p8),
-              Text(
-                value,
-                style: AppTextStyles.headingSmall.copyWith(
-                  fontWeight: FontWeight.w700,
-                ),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                textAlign: TextAlign.center,
+    final stats = <_Stat>[
+      _Stat(
+        value: apptLoading ? '—' : '$apptCount',
+        label: AppStrings.totalAppointments,
+      ),
+      _Stat(
+        value: lastVisit != null
+            ? Formatters.formatDateMedium(lastVisit!)
+            : '—',
+        label: AppStrings.lastVisit,
+      ),
+    ];
+    if (!isDoctor) {
+      stats.add(_Stat(
+        value: paymentsLoading ? '—' : totalPaid.toCurrencyString(),
+        label: AppStrings.totalPaid,
+      ));
+    }
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(
+          horizontal: AppSizes.p24, vertical: AppSizes.p16),
+      child: Row(
+        children: [
+          for (int i = 0; i < stats.length; i++) ...[
+            if (i > 0)
+              Container(
+                width: 0.5,
+                height: AppSizes.iconHero,
+                color: cs.outlineVariant,
+                margin:
+                    const EdgeInsets.symmetric(horizontal: AppSizes.p8),
               ),
-              const SizedBox(height: AppSizes.p4),
-              Text(
-                label,
-                style: AppTextStyles.caption.copyWith(color: cs.onSurfaceVariant),
-                textAlign: TextAlign.center,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ],
+            Expanded(
+              child: _StatItem(stat: stats[i]),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _Stat {
+  const _Stat({required this.value, required this.label});
+  final String value;
+  final String label;
+}
+
+class _StatItem extends StatelessWidget {
+  const _StatItem({required this.stat});
+  final _Stat stat;
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        FittedBox(
+          fit: BoxFit.scaleDown,
+          child: Text(
+            stat.value,
+            style: TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.w500,
+              fontFeatures: const [FontFeature.tabularFigures()],
+              color: cs.onSurface,
+            ),
+            maxLines: 1,
           ),
         ),
-      ),
+        const SizedBox(height: AppSizes.p4),
+        Text(
+          stat.label,
+          style: TextStyle(
+            fontSize: 11,
+            color: cs.onSurfaceVariant,
+          ),
+          textAlign: TextAlign.center,
+          maxLines: 2,
+          overflow: TextOverflow.ellipsis,
+        ),
+      ],
     );
   }
 }
@@ -204,10 +219,13 @@ class _ContactSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SectionCard(
-      title: AppStrings.contact,
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: AppSizes.p24),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
+          const EyebrowLabel(text: AppStrings.contact),
+          const SizedBox(height: AppSizes.p12),
           _ContactRow(
             icon: Icons.phone_outlined,
             label: AppStrings.phone,
@@ -248,7 +266,9 @@ class _ContactRow extends StatelessWidget {
       children: [
         Icon(icon, size: AppSizes.iconDefault, color: cs.primary),
         const SizedBox(width: AppSizes.p12),
-        Text(label, style: AppTextStyles.bodySecondary.copyWith(color: cs.onSurfaceVariant)),
+        Text(label,
+            style:
+                AppTextStyles.bodySecondary.copyWith(color: cs.onSurfaceVariant)),
         const Spacer(),
         Flexible(
           child: Text(
@@ -264,67 +284,40 @@ class _ContactRow extends StatelessWidget {
   }
 }
 
-class _AssignedDoctorsCard extends StatelessWidget {
-  const _AssignedDoctorsCard({required this.doctorsAsync});
+class _AssignedDoctorsSection extends StatelessWidget {
+  const _AssignedDoctorsSection({required this.doctorsAsync});
   final AsyncValue<List<Staff>> doctorsAsync;
 
   @override
   Widget build(BuildContext context) {
-    return SectionCard(
-      title: AppStrings.assignedDoctors,
-      child: doctorsAsync.when(
-        data: (doctors) => doctors.isEmpty
-            ? const EmptyState(
-                message: AppStrings.noDoctorsAssigned,
-                icon: Icons.person_off_outlined,
-              )
-            : Column(
-                children: doctors.map((doc) => _DoctorRow(doc: doc)).toList(),
-              ),
-        loading: () => const SkeletonListTile(),
-        error: (_, __) => ErrorView(
-          exception: UnknownException(
-              message: AppStrings.errorLoadingAssignedDoctors),
-        ),
-      ),
-    );
-  }
-}
-
-class _DoctorRow extends StatelessWidget {
-  const _DoctorRow({required this.doc});
-  final Staff doc;
-
-  @override
-  Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: AppSizes.p6),
-      child: Row(
+      padding: const EdgeInsets.symmetric(horizontal: AppSizes.p24),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          AppAvatar(name: doc.fullName, radius: AppSizes.avatarSmall / 2),
-          const SizedBox(width: AppSizes.p12),
-          Expanded(
-            child: Row(
-              children: [
-                Flexible(
-                  child: Text(
-                    doc.fullName,
-                    style: AppTextStyles.bodyBold,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-                if (!doc.isActive) ...[
-                  const SizedBox(width: AppSizes.p8),
-                  Text(
-                    AppStrings.deactivated,
-                    style: AppTextStyles.caption.copyWith(
-                      color: cs.error,
-                      fontWeight: FontWeight.w600,
+          const EyebrowLabel(text: AppStrings.assignedDoctors),
+          const SizedBox(height: AppSizes.p8),
+          doctorsAsync.when(
+            data: (doctors) => doctors.isEmpty
+                ? Padding(
+                    padding: const EdgeInsets.symmetric(vertical: AppSizes.p8),
+                    child: Text(
+                      AppStrings.noDoctorsAssigned,
+                      style: AppTextStyles.bodySecondary,
                     ),
+                  )
+                : Column(
+                    children: doctors
+                        .map((doc) => DoctorRow(
+                              name: doc.fullName,
+                              isActive: doc.isActive,
+                            ))
+                        .toList(),
                   ),
-                ],
-              ],
+            loading: () => const SkeletonListTile(),
+            error: (_, __) => ErrorView(
+              exception: UnknownException(
+                  message: AppStrings.errorLoadingAssignedDoctors),
             ),
           ),
         ],
@@ -333,42 +326,61 @@ class _DoctorRow extends StatelessWidget {
   }
 }
 
-class _PackageBalanceCard extends StatelessWidget {
-  const _PackageBalanceCard({required this.patient, required this.isDoctor});
+class _PackageBalanceSection extends StatelessWidget {
+  const _PackageBalanceSection({required this.patient, required this.isDoctor});
   final Patient patient;
   final bool isDoctor;
 
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
-    return SectionCard(
-      title: AppStrings.packageBalance,
-      action: isDoctor
-          ? null
-          : TextButton.icon(
-              onPressed: () => showDialog<void>(
-                context: context,
-                builder: (_) => PackageBalanceEditDialog(patient: patient),
-              ),
-              icon: Icon(Icons.edit_outlined, size: AppSizes.iconSmall, color: cs.primary),
-              label: Text(AppStrings.edit, style: TextStyle(color: cs.primary)),
-            ),
-      child: Row(
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: AppSizes.p24),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Expanded(
-            child: _BalanceNumber(
-              label: AppStrings.ptSessionsBucket,
-              value: patient.sessionBalance,
-              positiveColor: cs.primary,
-            ),
+          EyebrowLabel(
+            text: AppStrings.packageBalance,
+            action: isDoctor
+                ? null
+                : GestureDetector(
+                    onTap: () => showDialog<void>(
+                      context: context,
+                      builder: (_) =>
+                          PackageBalanceEditDialog(patient: patient),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.edit_outlined,
+                            size: AppSizes.iconSmall, color: cs.primary),
+                        const SizedBox(width: AppSizes.p4),
+                        Text(AppStrings.edit,
+                            style: AppTextStyles.captionMedium
+                                .copyWith(color: cs.primary)),
+                      ],
+                    ),
+                  ),
           ),
-          const SizedBox(width: AppSizes.p16),
-          Expanded(
-            child: _BalanceNumber(
-              label: AppStrings.tractionSessionsBucket,
-              value: patient.tractionBalance,
-              positiveColor: cs.tertiary,
-            ),
+          const SizedBox(height: AppSizes.p16),
+          Row(
+            children: [
+              Expanded(
+                child: _BalanceNumber(
+                  label: AppStrings.ptSessionsBucket,
+                  value: patient.sessionBalance,
+                  positiveColor: cs.primary,
+                ),
+              ),
+              const SizedBox(width: AppSizes.p16),
+              Expanded(
+                child: _BalanceNumber(
+                  label: AppStrings.tractionSessionsBucket,
+                  value: patient.tractionBalance,
+                  positiveColor: cs.tertiary,
+                ),
+              ),
+            ],
           ),
         ],
       ),
@@ -394,10 +406,8 @@ class _BalanceNumber extends StatelessWidget {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Text(
-          '$value',
-          style: AppTextStyles.numberLarge.copyWith(color: color),
-        ),
+        Text('$value',
+            style: AppTextStyles.numberLarge.copyWith(color: color)),
         const SizedBox(height: AppSizes.p4),
         Text(
           label,

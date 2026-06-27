@@ -1,9 +1,11 @@
-/// Patient profile screen with rich header, pill TabBar, and FAB
-/// quick-actions hub.
+/// Patient profile screen with scroll-away header, pinned pill TabBar,
+/// and FAB quick-actions hub.
+///
+/// Uses NestedScrollView so the profile header scrolls off-screen when
+/// browsing tab data, while the tab bar stays pinned. This maximises
+/// vertical space for list content.
 ///
 /// Sub-tabs: Info | Appointments | Records | Payments | Documents
-///
-/// Rule 1 — under 200 lines.
 library;
 
 import 'package:flutter/material.dart';
@@ -22,12 +24,12 @@ import 'package:spine_clinic_app/features/patient/presentation/patient_providers
 import 'package:spine_clinic_app/features/patient/presentation/widgets/patient_profile_header.dart';
 import 'package:spine_clinic_app/features/patient/presentation/widgets/patient_profile_skeleton.dart';
 import 'package:spine_clinic_app/features/patient/presentation/widgets/patient_quick_actions.dart';
-import 'package:spine_clinic_app/features/patient/presentation/widgets/pill_tab_bar.dart';
 import 'package:spine_clinic_app/features/patient/presentation/widgets/patient_tab_appointments.dart';
 import 'package:spine_clinic_app/features/patient/presentation/widgets/patient_tab_documents.dart';
 import 'package:spine_clinic_app/features/patient/presentation/widgets/patient_tab_info.dart';
 import 'package:spine_clinic_app/features/patient/presentation/widgets/patient_tab_payments.dart';
 import 'package:spine_clinic_app/features/patient/presentation/widgets/patient_tab_records.dart';
+import 'package:spine_clinic_app/features/patient/presentation/widgets/pill_tab_bar.dart';
 import 'package:spine_clinic_app/shared/widgets/app_back_button.dart';
 import 'package:spine_clinic_app/shared/widgets/app_snackbar.dart';
 import 'package:spine_clinic_app/shared/widgets/confirmation_dialog.dart';
@@ -140,12 +142,20 @@ class _PatientProfile extends ConsumerWidget {
               ),
           ],
         ),
-        body: Column(
-          children: [
-            PatientProfileHeader(patient: patient, isDoctor: isDoctor),
-            PillTabBar(tabs: tabs),
-            Expanded(child: TabBarView(children: views)),
+        body: NestedScrollView(
+          headerSliverBuilder: (context, innerBoxIsScrolled) => [
+            SliverToBoxAdapter(
+              child: PatientProfileHeader(patient: patient, isDoctor: isDoctor),
+            ),
+            SliverPersistentHeader(
+              pinned: true,
+              delegate: _PinnedTabBarDelegate(
+                tabBar: UnderlineTabBar(tabs: tabs),
+                bgColor: cs.surface,
+              ),
+            ),
           ],
+          body: TabBarView(children: views),
         ),
         floatingActionButton: PatientQuickActionsFab(
           patient: patient,
@@ -181,4 +191,29 @@ class _PatientProfile extends ConsumerWidget {
           variant: AppSnackbarVariant.error),
     );
   }
+}
+
+/// Pinned sliver delegate wrapping the pill tab bar.
+class _PinnedTabBarDelegate extends SliverPersistentHeaderDelegate {
+  _PinnedTabBarDelegate({required this.tabBar, required this.bgColor});
+  final Widget tabBar;
+  final Color bgColor;
+
+  @override
+  double get minExtent => _tabBarHeight;
+  @override
+  double get maxExtent => _tabBarHeight;
+  static const double _tabBarHeight = 48;
+
+  @override
+  Widget build(BuildContext context, double shrinkOffset, bool overlaps) {
+    return Container(
+      color: bgColor,
+      child: tabBar,
+    );
+  }
+
+  @override
+  bool shouldRebuild(_PinnedTabBarDelegate oldDelegate) =>
+      tabBar != oldDelegate.tabBar || bgColor != oldDelegate.bgColor;
 }

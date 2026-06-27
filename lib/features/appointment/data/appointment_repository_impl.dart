@@ -463,7 +463,10 @@ class AppointmentRepositoryImpl implements AppointmentRepository {
       for (final String token in patientQuery.trim().split(RegExp(r'\s+'))) {
         if (token.isNotEmpty) {
           final String escaped = _escapeLike(token);
-          builder = builder.or('patient.full_name.ilike.%$escaped%,patient.phone_number.ilike.%$escaped%');
+          builder = builder.or(
+            'full_name.ilike.%$escaped%,phone_number.ilike.%$escaped%',
+            referencedTable: 'patients',
+          );
         }
       }
     }

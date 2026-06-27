@@ -190,14 +190,30 @@ class _PatientDocumentItemState extends ConsumerState<PatientDocumentItem> {
                         )
                       else
                         Positioned(
-                          top: AppSizes.p4,
-                          right: AppSizes.p4,
-                          child: IconButton(
-                            icon: Icon(Icons.delete_outline_rounded,
-                                color: cs.error, size: AppSizes.iconSmall),
-                            onPressed: _isOpening ? null : _handleDelete,
-                            constraints: const BoxConstraints(),
-                            padding: const EdgeInsets.all(AppSizes.p4),
+                          top: AppSizes.p8,
+                          right: AppSizes.p8,
+                          child: GestureDetector(
+                            onTap: _isOpening ? null : _handleDelete,
+                            child: Container(
+                              width: 28,
+                              height: 28,
+                              decoration: BoxDecoration(
+                                color: cs.surface,
+                                shape: BoxShape.circle,
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: cs.shadow.withAlpha(40),
+                                    blurRadius: 4,
+                                    offset: const Offset(0, 1),
+                                  ),
+                                ],
+                              ),
+                              child: Icon(
+                                Icons.delete_outline_rounded,
+                                color: cs.error,
+                                size: AppSizes.iconSmall,
+                              ),
+                            ),
                           ),
                         ),
                     ],

@@ -1,4 +1,7 @@
-/// Pill-indicator TabBar — always scrollable with right-edge fade.
+/// Underline tab bar — standard Material 3 style.
+///
+/// 2px active indicator in primary teal, no filled pill background.
+/// Active label: 13px, w500, primary. Inactive: 13px, w400, onSurfaceVariant.
 ///
 /// Rule 15/16 — all colours via Theme.of(context).colorScheme.
 library;
@@ -6,56 +9,38 @@ library;
 import 'package:flutter/material.dart';
 
 import 'package:spine_clinic_app/core/constants/app_sizes.dart';
-import 'package:spine_clinic_app/core/constants/app_text_styles.dart';
 
-class PillTabBar extends StatelessWidget {
-  const PillTabBar({super.key, required this.tabs});
+class UnderlineTabBar extends StatelessWidget {
+  const UnderlineTabBar({super.key, required this.tabs});
   final List<Tab> tabs;
 
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
 
-    return Stack(
-      children: [
-        Material(
-          color: cs.surface,
-          child: TabBar(
-            labelColor: cs.onPrimary,
-            unselectedLabelColor: cs.onSurfaceVariant,
-            labelStyle: AppTextStyles.captionBold,
-            unselectedLabelStyle: AppTextStyles.captionMedium,
-            indicator: BoxDecoration(
-              color: cs.primary,
-              borderRadius: const BorderRadius.all(Radius.circular(AppSizes.r24)),
-            ),
-            indicatorSize: TabBarIndicatorSize.tab,
-            dividerColor: Colors.transparent,
-            isScrollable: true,
-            tabAlignment: TabAlignment.start,
-            padding: const EdgeInsets.fromLTRB(
-                AppSizes.p16, AppSizes.p4, AppSizes.p32, AppSizes.p4),
-            tabs: tabs,
-          ),
+    return Material(
+      color: cs.surface,
+      child: TabBar(
+        labelColor: cs.primary,
+        unselectedLabelColor: cs.onSurfaceVariant,
+        labelStyle: const TextStyle(
+          fontSize: 13,
+          fontWeight: FontWeight.w500,
         ),
-        Positioned(
-          right: 0,
-          top: 0,
-          bottom: 0,
-          child: IgnorePointer(
-            child: Container(
-              width: AppSizes.p24,
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.centerRight,
-                  end: Alignment.centerLeft,
-                  colors: [cs.surface, cs.surface.withAlpha(0)],
-                ),
-              ),
-            ),
-          ),
+        unselectedLabelStyle: const TextStyle(
+          fontSize: 13,
+          fontWeight: FontWeight.w400,
         ),
-      ],
+        indicatorColor: cs.primary,
+        indicatorSize: TabBarIndicatorSize.tab,
+        indicatorWeight: 2,
+        dividerColor: cs.outlineVariant,
+        dividerHeight: 0.5,
+        isScrollable: true,
+        tabAlignment: TabAlignment.start,
+        padding: const EdgeInsets.symmetric(horizontal: AppSizes.p16),
+        tabs: tabs,
+      ),
     );
   }
 }
