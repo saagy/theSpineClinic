@@ -20,26 +20,32 @@ class UnderlineTabBar extends StatelessWidget {
 
     return Material(
       color: cs.surface,
-      child: TabBar(
-        labelColor: cs.primary,
-        unselectedLabelColor: cs.onSurfaceVariant,
-        labelStyle: const TextStyle(
-          fontSize: 13,
-          fontWeight: FontWeight.w500,
+      child: Align(
+        alignment: Alignment.centerLeft,
+        child: Container(
+          constraints: const BoxConstraints(maxWidth: 600),
+          child: TabBar(
+            labelColor: cs.primary,
+            unselectedLabelColor: cs.onSurfaceVariant,
+            labelStyle: const TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w500,
+            ),
+            unselectedLabelStyle: const TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w400,
+            ),
+            indicatorColor: cs.primary,
+            indicatorSize: TabBarIndicatorSize.tab,
+            indicatorWeight: 2,
+            dividerColor: cs.outlineVariant,
+            dividerHeight: 0.5,
+            isScrollable: true,
+            tabAlignment: TabAlignment.start,
+            padding: const EdgeInsets.symmetric(horizontal: AppSizes.p16),
+            tabs: tabs,
+          ),
         ),
-        unselectedLabelStyle: const TextStyle(
-          fontSize: 13,
-          fontWeight: FontWeight.w400,
-        ),
-        indicatorColor: cs.primary,
-        indicatorSize: TabBarIndicatorSize.tab,
-        indicatorWeight: 2,
-        dividerColor: cs.outlineVariant,
-        dividerHeight: 0.5,
-        isScrollable: true,
-        tabAlignment: TabAlignment.start,
-        padding: const EdgeInsets.symmetric(horizontal: AppSizes.p16),
-        tabs: tabs,
       ),
     );
   }

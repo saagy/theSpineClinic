@@ -8,10 +8,8 @@ library;
 
 import 'package:flutter/material.dart';
 import 'package:spine_clinic_app/core/constants/app_sizes.dart';
-import 'package:spine_clinic_app/core/constants/app_strings.dart';
 import 'package:spine_clinic_app/core/constants/app_text_styles.dart';
 import 'package:spine_clinic_app/features/patient/domain/patient.dart';
-import 'package:spine_clinic_app/features/patient/presentation/widgets/package_balance_edit_dialog.dart';
 import 'package:spine_clinic_app/features/patient/presentation/widgets/patient_balance_chip.dart';
 import 'package:spine_clinic_app/shared/widgets/app_avatar.dart';
 
@@ -32,10 +30,7 @@ class PatientProfileHeader extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(
           AppSizes.p20, AppSizes.p16, AppSizes.p20, AppSizes.p16),
       decoration: BoxDecoration(
-        color: cs.primaryContainer.withAlpha(30),
-        border: Border(
-          bottom: BorderSide(color: cs.outlineVariant, width: 0.5),
-        ),
+        color: cs.surface,
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
@@ -54,6 +49,7 @@ class PatientProfileHeader extends StatelessWidget {
                 Wrap(
                   spacing: AppSizes.p8,
                   runSpacing: AppSizes.p4,
+                  crossAxisAlignment: WrapCrossAlignment.center,
                   children: [
                     _MiniBadge(
                       label: patient.clinic.displayLabel,
@@ -62,52 +58,15 @@ class PatientProfileHeader extends StatelessWidget {
                     PatientBalanceChip(
                       sessionBalance: patient.sessionBalance,
                       tractionBalance: patient.tractionBalance,
+                      patient: patient,
+                      canEdit: !isDoctor,
                     ),
-                    if (!isDoctor)
-                      _EditBalanceButton(patient: patient),
                   ],
                 ),
               ],
             ),
           ),
         ],
-      ),
-    );
-  }
-}
-
-class _EditBalanceButton extends StatelessWidget {
-  const _EditBalanceButton({required this.patient});
-  final Patient patient;
-
-  @override
-  Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-    return InkWell(
-      onTap: () => showDialog<void>(
-        context: context,
-        builder: (_) => PackageBalanceEditDialog(patient: patient),
-      ),
-      borderRadius: BorderRadius.circular(AppSizes.r6),
-      child: Container(
-        padding: const EdgeInsets.symmetric(
-            horizontal: AppSizes.p8, vertical: AppSizes.p4),
-        decoration: BoxDecoration(
-          color: cs.surface,
-          borderRadius: BorderRadius.circular(AppSizes.r6),
-          border: Border.all(color: cs.outlineVariant),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(Icons.edit_outlined, size: AppSizes.iconSmall, color: cs.primary),
-            const SizedBox(width: AppSizes.p4),
-            Text(
-              AppStrings.packageBalance,
-              style: AppTextStyles.caption.copyWith(color: cs.onSurfaceVariant),
-            ),
-          ],
-        ),
       ),
     );
   }

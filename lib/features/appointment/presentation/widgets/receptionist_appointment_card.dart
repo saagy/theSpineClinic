@@ -165,7 +165,7 @@ class ReceptionistAppointmentCard extends StatelessWidget {
       padding: const EdgeInsets.symmetric(
           horizontal: AppSizes.p16, vertical: AppSizes.p6),
       child: applyFade
-          ? Opacity(opacity: 0.45, child: card)
+          ? Opacity(opacity: 0.6, child: card)
           : card,
     );
     return padded;

@@ -7,20 +7,26 @@ library;
 import 'package:flutter/material.dart';
 import 'package:spine_clinic_app/core/constants/app_sizes.dart';
 import 'package:spine_clinic_app/core/constants/app_text_styles.dart';
+import 'package:spine_clinic_app/features/patient/domain/patient.dart';
+import 'package:spine_clinic_app/features/patient/presentation/widgets/package_balance_edit_dialog.dart';
 
 class PatientBalanceChip extends StatelessWidget {
   const PatientBalanceChip({
     super.key,
     required this.sessionBalance,
     required this.tractionBalance,
+    this.patient,
+    this.canEdit = false,
   });
   final int sessionBalance;
   final int tractionBalance;
+  final Patient? patient;
+  final bool canEdit;
 
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
-    return Container(
+    final Widget chip = Container(
       padding: const EdgeInsets.symmetric(horizontal: AppSizes.p8, vertical: AppSizes.p4),
       decoration: BoxDecoration(
         color: cs.surface,
@@ -33,9 +39,29 @@ class PatientBalanceChip extends StatelessWidget {
           _Segment(label: 'PT', value: sessionBalance, accent: cs.primary),
           const SizedBox(width: AppSizes.p12),
           _Segment(label: 'Tr', value: tractionBalance, accent: cs.secondary),
+          if (canEdit) ...[
+            const SizedBox(width: AppSizes.p8),
+            Icon(
+              Icons.edit_outlined,
+              size: AppSizes.iconSmall,
+              color: cs.primary,
+            ),
+          ],
         ],
       ),
     );
+
+    if (canEdit && patient != null) {
+      return InkWell(
+        onTap: () => showDialog<void>(
+          context: context,
+          builder: (_) => PackageBalanceEditDialog(patient: patient!),
+        ),
+        borderRadius: BorderRadius.circular(AppSizes.r8),
+        child: chip,
+      );
+    }
+    return chip;
   }
 }
 

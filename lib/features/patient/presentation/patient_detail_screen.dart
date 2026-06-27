@@ -14,13 +14,13 @@ import 'package:go_router/go_router.dart';
 
 import 'package:spine_clinic_app/core/constants/app_sizes.dart';
 import 'package:spine_clinic_app/core/constants/app_strings.dart';
-import 'package:spine_clinic_app/core/errors/app_exception.dart';
 import 'package:spine_clinic_app/core/network/app_routes.dart';
 import 'package:spine_clinic_app/features/auth/domain/user_role.dart';
 import 'package:spine_clinic_app/features/auth/presentation/auth_providers.dart';
 import 'package:spine_clinic_app/features/patient/domain/patient.dart';
 import 'package:spine_clinic_app/features/patient/presentation/delete_patient_controller.dart';
 import 'package:spine_clinic_app/features/patient/presentation/patient_providers.dart';
+import 'package:spine_clinic_app/features/patient/presentation/widgets/error_scaffold.dart';
 import 'package:spine_clinic_app/features/patient/presentation/widgets/patient_profile_header.dart';
 import 'package:spine_clinic_app/features/patient/presentation/widgets/patient_profile_skeleton.dart';
 import 'package:spine_clinic_app/features/patient/presentation/widgets/patient_quick_actions.dart';
@@ -29,11 +29,11 @@ import 'package:spine_clinic_app/features/patient/presentation/widgets/patient_t
 import 'package:spine_clinic_app/features/patient/presentation/widgets/patient_tab_info.dart';
 import 'package:spine_clinic_app/features/patient/presentation/widgets/patient_tab_payments.dart';
 import 'package:spine_clinic_app/features/patient/presentation/widgets/patient_tab_records.dart';
+import 'package:spine_clinic_app/features/patient/presentation/widgets/pinned_tab_bar_delegate.dart';
 import 'package:spine_clinic_app/features/patient/presentation/widgets/pill_tab_bar.dart';
 import 'package:spine_clinic_app/shared/widgets/app_back_button.dart';
 import 'package:spine_clinic_app/shared/widgets/app_snackbar.dart';
 import 'package:spine_clinic_app/shared/widgets/confirmation_dialog.dart';
-import 'package:spine_clinic_app/shared/widgets/error_view.dart';
 
 class PatientDetailScreen extends ConsumerWidget {
   const PatientDetailScreen({super.key, required this.patientId});
@@ -47,7 +47,7 @@ class PatientDetailScreen extends ConsumerWidget {
 
     return asyncPatient.when(
       loading: () => const Scaffold(body: PatientProfileSkeleton()),
-      error: (error, _) => _ErrorScaffold(
+      error: (error, _) => PatientErrorScaffold(
         error: error,
         onRetry: () => ref.invalidate(patientDetailProvider(patientId)),
       ),
@@ -56,29 +56,47 @@ class PatientDetailScreen extends ConsumerWidget {
   }
 }
 
-class _ErrorScaffold extends StatelessWidget {
-  const _ErrorScaffold({required this.error, required this.onRetry});
-  final Object error;
-  final VoidCallback onRetry;
-  @override
-  Widget build(BuildContext context) {
-    final AppException ex = error is AppException
-        ? error as AppException
-        : UnknownException(message: AppStrings.errorDatabaseQueryFailed);
-    return Scaffold(
-      appBar: AppBar(leading: const AppBackButton()),
-      body: ErrorView(exception: ex, onRetry: onRetry),
-    );
-  }
-}
-
-class _PatientProfile extends ConsumerWidget {
+class _PatientProfile extends ConsumerStatefulWidget {
   const _PatientProfile({required this.patient, required this.isDoctor});
   final Patient patient;
   final bool isDoctor;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<_PatientProfile> createState() => _PatientProfileState();
+}
+
+class _PatientProfileState extends ConsumerState<_PatientProfile> {
+  late final ScrollController _scrollController;
+  bool _showAppBarTitle = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _scrollController = ScrollController();
+    _scrollController.addListener(_onScroll);
+  }
+
+  @override
+  void dispose() {
+    _scrollController.removeListener(_onScroll);
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  void _onScroll() {
+    if (!_scrollController.hasClients) return;
+    final bool show = _scrollController.offset > 80;
+    if (show != _showAppBarTitle) {
+      setState(() {
+        _showAppBarTitle = show;
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final patient = widget.patient;
+    final isDoctor = widget.isDoctor;
     final cs = Theme.of(context).colorScheme;
     final user = ref.watch(currentUserProvider).value;
     final canDelete = user?.role == UserRole.superAdmin ||
@@ -105,11 +123,18 @@ class _PatientProfile extends ConsumerWidget {
       length: tabs.length,
       child: Scaffold(
         appBar: AppBar(
+          backgroundColor: cs.surface,
+          elevation: 0,
+          surfaceTintColor: Colors.transparent,
           leading: const AppBackButton(),
-          title: Text(
-            patient.fullName,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
+          title: AnimatedOpacity(
+            opacity: _showAppBarTitle ? 1.0 : 0.0,
+            duration: const Duration(milliseconds: 200),
+            child: Text(
+              patient.fullName,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
           ),
           actions: [
             IconButton(
@@ -126,7 +151,7 @@ class _PatientProfile extends ConsumerWidget {
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(AppSizes.r12),
                 ),
-                onSelected: (_) => _confirmDelete(context, ref),
+                onSelected: (_) => _confirmDelete(context),
                 itemBuilder: (_) => [
                   PopupMenuItem(
                     value: 'delete',
@@ -143,13 +168,14 @@ class _PatientProfile extends ConsumerWidget {
           ],
         ),
         body: NestedScrollView(
+          controller: _scrollController,
           headerSliverBuilder: (context, innerBoxIsScrolled) => [
             SliverToBoxAdapter(
               child: PatientProfileHeader(patient: patient, isDoctor: isDoctor),
             ),
             SliverPersistentHeader(
               pinned: true,
-              delegate: _PinnedTabBarDelegate(
+              delegate: PinnedTabBarDelegate(
                 tabBar: UnderlineTabBar(tabs: tabs),
                 bgColor: cs.surface,
               ),
@@ -165,7 +191,7 @@ class _PatientProfile extends ConsumerWidget {
     );
   }
 
-  Future<void> _confirmDelete(BuildContext context, WidgetRef ref) async {
+  Future<void> _confirmDelete(BuildContext context) async {
     final confirm = await showDialog<bool>(
       context: context,
       builder: (_) => const ConfirmationDialog(
@@ -177,7 +203,7 @@ class _PatientProfile extends ConsumerWidget {
     if (confirm != true || !context.mounted) return;
     final result = await ref
         .read(deletePatientControllerProvider.notifier)
-        .deletePatient(patient.id);
+        .deletePatient(widget.patient.id);
     if (!context.mounted) return;
     result.when(
       success: (_) {
@@ -191,29 +217,4 @@ class _PatientProfile extends ConsumerWidget {
           variant: AppSnackbarVariant.error),
     );
   }
-}
-
-/// Pinned sliver delegate wrapping the pill tab bar.
-class _PinnedTabBarDelegate extends SliverPersistentHeaderDelegate {
-  _PinnedTabBarDelegate({required this.tabBar, required this.bgColor});
-  final Widget tabBar;
-  final Color bgColor;
-
-  @override
-  double get minExtent => _tabBarHeight;
-  @override
-  double get maxExtent => _tabBarHeight;
-  static const double _tabBarHeight = 48;
-
-  @override
-  Widget build(BuildContext context, double shrinkOffset, bool overlaps) {
-    return Container(
-      color: bgColor,
-      child: tabBar,
-    );
-  }
-
-  @override
-  bool shouldRebuild(_PinnedTabBarDelegate oldDelegate) =>
-      tabBar != oldDelegate.tabBar || bgColor != oldDelegate.bgColor;
 }

@@ -74,9 +74,7 @@ class _DoctorHistoryListViewState extends State<DoctorHistoryListView> {
                 appointment: item.appointment,
                 patient: item.patient,
               ),
-              faded: true,
               showMenu: true,
-              showDate: true,
               onStatusChanged: widget.onStatusChanged,
             ),
           );

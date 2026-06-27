@@ -91,7 +91,6 @@ class _ReceptionistTodayTabState extends State<ReceptionistTodayTab> {
                   animatedIndices: _animatedIndices,
                   child: ReceptionistAppointmentCard(
                     item: item,
-                    faded: true,
                     onStatusChanged: widget.onStatusChanged,
                   ),
                 )),

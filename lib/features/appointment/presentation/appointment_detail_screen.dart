@@ -21,7 +21,7 @@ import 'package:spine_clinic_app/features/appointment/presentation/widgets/appoi
 import 'package:spine_clinic_app/features/appointment/presentation/widgets/appointment_detail_header.dart';
 import 'package:spine_clinic_app/features/appointment/presentation/widgets/appointment_doctors_section.dart';
 import 'package:spine_clinic_app/features/appointment/presentation/widgets/appointment_status_banner.dart';
-import 'package:spine_clinic_app/features/appointment/presentation/widgets/delete_appointment_button.dart';
+import 'package:spine_clinic_app/features/appointment/presentation/widgets/detail_overflow_button.dart';
 import 'package:spine_clinic_app/features/auth/domain/user_role.dart';
 import 'package:spine_clinic_app/features/auth/presentation/auth_providers.dart';
 import 'package:spine_clinic_app/shared/widgets/empty_state.dart';
@@ -34,13 +34,48 @@ import 'package:go_router/go_router.dart';
 import 'package:spine_clinic_app/core/network/app_routes.dart';
 
 /// Screen displaying the full detail view for a single appointment.
-class AppointmentDetailScreen extends ConsumerWidget {
+class AppointmentDetailScreen extends ConsumerStatefulWidget {
   const AppointmentDetailScreen({super.key, required this.appointmentId});
 
   final String appointmentId;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<AppointmentDetailScreen> createState() =>
+      _AppointmentDetailScreenState();
+}
+
+class _AppointmentDetailScreenState
+    extends ConsumerState<AppointmentDetailScreen> {
+  late final ScrollController _scrollController;
+  bool _showAppBarTitle = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _scrollController = ScrollController();
+    _scrollController.addListener(_onScroll);
+  }
+
+  @override
+  void dispose() {
+    _scrollController.removeListener(_onScroll);
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  void _onScroll() {
+    if (!_scrollController.hasClients) return;
+    final bool show = _scrollController.offset > 60;
+    if (show != _showAppBarTitle) {
+      setState(() {
+        _showAppBarTitle = show;
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final appointmentId = widget.appointmentId;
     final AsyncValue<AppointmentDetailState> detailAsync =
         ref.watch(appointmentDetailControllerProvider(appointmentId));
     final detailState = detailAsync.value;
@@ -61,14 +96,18 @@ class AppointmentDetailScreen extends ConsumerWidget {
         leading: const AppBackButton(),
         centerTitle: false,
         title: patientName != null
-            ? Text(
-                patientName,
-                style: AppTextStyles.headingSmall.copyWith(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w600,
+            ? AnimatedOpacity(
+                opacity: _showAppBarTitle ? 1.0 : 0.0,
+                duration: const Duration(milliseconds: 200),
+                child: Text(
+                  patientName,
+                  style: AppTextStyles.headingSmall.copyWith(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w600,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
               )
             : const SizedBox.shrink(),
         actions: [
@@ -83,7 +122,7 @@ class AppointmentDetailScreen extends ConsumerWidget {
               tooltip: AppStrings.editDetails,
             ),
           if (showDelete)
-            _DetailOverflowButton(
+            DetailOverflowButton(
               appointment: detailState.appointment,
             ),
         ],
@@ -102,62 +141,20 @@ class AppointmentDetailScreen extends ConsumerWidget {
           ),
         ),
         data: (AppointmentDetailState state) =>
-            _AppointmentDetailBody(state: state),
+            _AppointmentDetailBody(state: state, scrollController: _scrollController),
       ),
-    );
-  }
-}
-
-/// Overflow menu for Delete Appointment.
-class _DetailOverflowButton extends ConsumerWidget {
-  const _DetailOverflowButton({
-    required this.appointment,
-  });
-  final dynamic appointment;
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    return PopupMenuButton<String>(
-      icon: const Icon(Icons.more_vert_rounded, color: AppColors.textSecondary),
-      padding: const EdgeInsets.only(right: AppSizes.p8),
-      constraints: const BoxConstraints(),
-      color: AppColors.surface,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(AppSizes.r12),
-      ),
-      elevation: 1,
-      position: PopupMenuPosition.under,
-      onSelected: (value) async {
-        if (value == 'delete') {
-          await deleteAppointmentWithConfirmation(context, ref, appointment);
-        }
-      },
-      itemBuilder: (_) => [
-        PopupMenuItem<String>(
-          value: 'delete',
-          height: AppSizes.buttonHeightSmall,
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Icon(Icons.delete_outline_rounded,
-                  size: 18, color: AppColors.error),
-              const SizedBox(width: AppSizes.p8),
-              Text(AppStrings.deleteAppointment,
-                  style: AppTextStyles.bodyMedium.copyWith(
-                    color: AppColors.error,
-                  )),
-            ],
-          ),
-        ),
-      ],
     );
   }
 }
 
 /// Data-state body with flat segments and pinned bottom actions.
 class _AppointmentDetailBody extends ConsumerWidget {
-  const _AppointmentDetailBody({required this.state});
+  const _AppointmentDetailBody({
+    required this.state,
+    required this.scrollController,
+  });
   final AppointmentDetailState state;
+  final ScrollController scrollController;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -186,6 +183,7 @@ class _AppointmentDetailBody extends ConsumerWidget {
               } catch (_) {}
             },
             child: SingleChildScrollView(
+              controller: scrollController,
               physics: const AlwaysScrollableScrollPhysics(),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,

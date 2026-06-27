@@ -153,7 +153,7 @@ class _StatsStrip extends StatelessWidget {
             if (i > 0)
               Container(
                 width: 0.5,
-                height: AppSizes.iconHero,
+                height: AppSizes.iconHero / 2,
                 color: cs.outlineVariant,
                 margin:
                     const EdgeInsets.symmetric(horizontal: AppSizes.p8),
@@ -189,8 +189,8 @@ class _StatItem extends StatelessWidget {
           child: Text(
             stat.value,
             style: TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.w500,
+              fontSize: 22,
+              fontWeight: FontWeight.w700,
               fontFeatures: const [FontFeature.tabularFigures()],
               color: cs.onSurface,
             ),
@@ -202,6 +202,7 @@ class _StatItem extends StatelessWidget {
           stat.label,
           style: TextStyle(
             fontSize: 11,
+            fontWeight: FontWeight.w500,
             color: cs.onSurfaceVariant,
           ),
           textAlign: TextAlign.center,
@@ -266,15 +267,18 @@ class _ContactRow extends StatelessWidget {
       children: [
         Icon(icon, size: AppSizes.iconDefault, color: cs.primary),
         const SizedBox(width: AppSizes.p12),
-        Text(label,
-            style:
-                AppTextStyles.bodySecondary.copyWith(color: cs.onSurfaceVariant)),
-        const Spacer(),
-        Flexible(
+        SizedBox(
+          width: 120,
+          child: Text(
+            label,
+            style: AppTextStyles.bodySecondary.copyWith(color: cs.onSurfaceVariant),
+          ),
+        ),
+        const SizedBox(width: AppSizes.p16),
+        Expanded(
           child: Text(
             value,
             style: AppTextStyles.bodyBold,
-            textAlign: TextAlign.end,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
           ),
