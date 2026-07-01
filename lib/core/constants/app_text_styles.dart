@@ -12,20 +12,21 @@
 library;
 
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 import 'package:spine_clinic_app/core/constants/app_colors.dart';
 
 /// Application-wide [TextStyle] constants.
 ///
-/// Uses [GoogleFonts.plusJakartaSans] for the brand typeface. Styles are
-/// `static final` rather than `const` because the Google Fonts package
-/// resolves font files at runtime.
+/// Uses the locally bundled "Plus Jakarta Sans" typeface. Styles are declared
+/// as compile-time `const` for optimal performance.
 abstract final class AppTextStyles {
+  static const String _fontFamily = 'Plus Jakarta Sans';
+
   // ──────────────── Headings ────────────────
 
   /// Screen titles, page headers — 24px bold.
-  static final TextStyle headingLarge = GoogleFonts.plusJakartaSans(
+  static const TextStyle headingLarge = TextStyle(
+    fontFamily: _fontFamily,
     fontSize: 24,
     fontWeight: FontWeight.w700,
     height: 1.2,
@@ -33,7 +34,8 @@ abstract final class AppTextStyles {
   );
 
   /// Card headers, dialog titles — 20px bold.
-  static final TextStyle headingMedium = GoogleFonts.plusJakartaSans(
+  static const TextStyle headingMedium = TextStyle(
+    fontFamily: _fontFamily,
     fontSize: 20,
     fontWeight: FontWeight.w700,
     height: 1.25,
@@ -41,7 +43,8 @@ abstract final class AppTextStyles {
   );
 
   /// Section headers, form group labels — 16px semibold.
-  static final TextStyle headingSmall = GoogleFonts.plusJakartaSans(
+  static const TextStyle headingSmall = TextStyle(
+    fontFamily: _fontFamily,
     fontSize: 16,
     fontWeight: FontWeight.w600,
     height: 1.3,
@@ -51,7 +54,8 @@ abstract final class AppTextStyles {
   // ──────────────── Body ────────────────
 
   /// Default body copy — 14px regular.
-  static final TextStyle body = GoogleFonts.plusJakartaSans(
+  static const TextStyle body = TextStyle(
+    fontFamily: _fontFamily,
     fontSize: 14,
     fontWeight: FontWeight.w400,
     height: 1.5,
@@ -59,7 +63,8 @@ abstract final class AppTextStyles {
   );
 
   /// Bold body — inline emphasis, row labels.
-  static final TextStyle bodyBold = GoogleFonts.plusJakartaSans(
+  static const TextStyle bodyBold = TextStyle(
+    fontFamily: _fontFamily,
     fontSize: 14,
     fontWeight: FontWeight.w600,
     height: 1.5,
@@ -67,7 +72,8 @@ abstract final class AppTextStyles {
   );
 
   /// Medium-weight body — buttons, nav items, interactive text.
-  static final TextStyle bodyMedium = GoogleFonts.plusJakartaSans(
+  static const TextStyle bodyMedium = TextStyle(
+    fontFamily: _fontFamily,
     fontSize: 14,
     fontWeight: FontWeight.w500,
     height: 1.5,
@@ -75,7 +81,8 @@ abstract final class AppTextStyles {
   );
 
   /// Secondary body — metadata, descriptions, helper text.
-  static final TextStyle bodySecondary = GoogleFonts.plusJakartaSans(
+  static const TextStyle bodySecondary = TextStyle(
+    fontFamily: _fontFamily,
     fontSize: 14,
     fontWeight: FontWeight.w400,
     height: 1.5,
@@ -83,7 +90,8 @@ abstract final class AppTextStyles {
   );
 
   /// Larger body for intro text and empty states — 16px regular.
-  static final TextStyle bodyLarge = GoogleFonts.plusJakartaSans(
+  static const TextStyle bodyLarge = TextStyle(
+    fontFamily: _fontFamily,
     fontSize: 16,
     fontWeight: FontWeight.w400,
     height: 1.5,
@@ -91,7 +99,8 @@ abstract final class AppTextStyles {
   );
 
   /// Card title — patient names, list item primary text. 18px bold.
-  static final TextStyle cardTitle = GoogleFonts.plusJakartaSans(
+  static const TextStyle cardTitle = TextStyle(
+    fontFamily: _fontFamily,
     fontSize: 18,
     fontWeight: FontWeight.w700,
     height: 1.3,
@@ -101,7 +110,8 @@ abstract final class AppTextStyles {
   // ──────────────── Captions ────────────────
 
   /// Timestamps, metadata labels — 12px regular.
-  static final TextStyle caption = GoogleFonts.plusJakartaSans(
+  static const TextStyle caption = TextStyle(
+    fontFamily: _fontFamily,
     fontSize: 12,
     fontWeight: FontWeight.w400,
     height: 1.5,
@@ -109,7 +119,8 @@ abstract final class AppTextStyles {
   );
 
   /// Medium-weight caption — column headers, tab labels, chip text.
-  static final TextStyle captionMedium = GoogleFonts.plusJakartaSans(
+  static const TextStyle captionMedium = TextStyle(
+    fontFamily: _fontFamily,
     fontSize: 12,
     fontWeight: FontWeight.w500,
     height: 1.5,
@@ -117,7 +128,8 @@ abstract final class AppTextStyles {
   );
 
   /// Bold caption — active tabs, badge text, highlighted chips.
-  static final TextStyle captionBold = GoogleFonts.plusJakartaSans(
+  static const TextStyle captionBold = TextStyle(
+    fontFamily: _fontFamily,
     fontSize: 12,
     fontWeight: FontWeight.w600,
     height: 1.5,
@@ -127,7 +139,8 @@ abstract final class AppTextStyles {
   // ──────────────── Special Purpose ────────────────
 
   /// Brand wordmark — the "Spine Clinic" header identity. 20px extrabold.
-  static final TextStyle brand = GoogleFonts.plusJakartaSans(
+  static const TextStyle brand = TextStyle(
+    fontFamily: _fontFamily,
     fontSize: 20,
     fontWeight: FontWeight.w800,
     height: 1.2,
@@ -135,7 +148,8 @@ abstract final class AppTextStyles {
   );
 
   /// Button label — semibold 16px on primary-coloured background.
-  static final TextStyle button = GoogleFonts.plusJakartaSans(
+  static const TextStyle button = TextStyle(
+    fontFamily: _fontFamily,
     fontSize: 16,
     fontWeight: FontWeight.w600,
     height: 1.0,
@@ -143,7 +157,8 @@ abstract final class AppTextStyles {
   );
 
   /// Numeric data cells — tabular (monospaced-like) figures.
-  static final TextStyle number = GoogleFonts.plusJakartaSans(
+  static const TextStyle number = TextStyle(
+    fontFamily: _fontFamily,
     fontSize: 14,
     fontWeight: FontWeight.w500,
     height: 1.4,
@@ -152,7 +167,8 @@ abstract final class AppTextStyles {
   );
 
   /// Large numeric display — KPI cards, summary stats.
-  static final TextStyle numberLarge = GoogleFonts.plusJakartaSans(
+  static const TextStyle numberLarge = TextStyle(
+    fontFamily: _fontFamily,
     fontSize: 24,
     fontWeight: FontWeight.w700,
     height: 1.2,

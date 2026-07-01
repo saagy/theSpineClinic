@@ -11,6 +11,7 @@ dependencies:
     sdk: flutter
 
   cupertino_icons: ^1.0.8
+  flutter_lucide: ^1.11.0
 
   # Modern State Management Architecture
   flutter_riverpod: ^3.3.1
@@ -67,4 +68,14 @@ flutter:
         - asset: assets/fonts/Inter-VariableFont_opsz,wght.ttf
           weight: 600
         - asset: assets/fonts/Inter-VariableFont_opsz,wght.ttf
+          weight: 700
+    - family: Plus Jakarta Sans
+      fonts:
+        - asset: assets/fonts/PlusJakartaSans-VariableFont_wght.ttf
+          weight: 400
+        - asset: assets/fonts/PlusJakartaSans-VariableFont_wght.ttf
+          weight: 500
+        - asset: assets/fonts/PlusJakartaSans-VariableFont_wght.ttf
+          weight: 600
+        - asset: assets/fonts/PlusJakartaSans-VariableFont_wght.ttf
           weight: 700

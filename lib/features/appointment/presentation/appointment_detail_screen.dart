@@ -10,7 +10,6 @@ library;
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:spine_clinic_app/core/constants/app_colors.dart';
 import 'package:spine_clinic_app/core/constants/app_sizes.dart';
 import 'package:spine_clinic_app/core/constants/app_strings.dart';
 import 'package:spine_clinic_app/core/constants/app_text_styles.dart';
@@ -88,11 +87,14 @@ class _AppointmentDetailScreenState
          detailState.appointment.status == AppointmentStatus.cancelled);
     final String? patientName = detailState?.patient.fullName;
 
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: AppColors.surface,
-        surfaceTintColor: AppColors.transparent,
+        backgroundColor: theme.scaffoldBackgroundColor,
+        surfaceTintColor: Colors.transparent,
         leading: const AppBackButton(),
         centerTitle: false,
         title: patientName != null
@@ -113,7 +115,7 @@ class _AppointmentDetailScreenState
         actions: [
           if (showEdit)
             IconButton(
-              icon: const Icon(Icons.edit_outlined, color: AppColors.textSecondary),
+              icon: Icon(Icons.edit_outlined, color: colorScheme.onSurfaceVariant),
               onPressed: () {
                 context.push(
                   AppRoutes.editAppointment.replaceAll(':id', detailState.appointment.id),
@@ -158,6 +160,7 @@ class _AppointmentDetailBody extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final theme = Theme.of(context);
     final userRole = ref.watch(currentUserProvider).value?.role;
     if (userRole == null) {
       return const EmptyState(
@@ -216,11 +219,11 @@ class _AppointmentDetailBody extends ConsumerWidget {
           SafeArea(
             child: Container(
               padding: const EdgeInsets.fromLTRB(
-                  AppSizes.p24, AppSizes.p16, AppSizes.p24, AppSizes.p16),
-              decoration: const BoxDecoration(
-                color: AppColors.surface,
+                  AppSizes.p24, AppSizes.p12, AppSizes.p24, AppSizes.p12),
+              decoration: BoxDecoration(
+                color: theme.colorScheme.surface,
                 border: Border(
-                    top: BorderSide(color: AppColors.border, width: 0.5)),
+                    top: BorderSide(color: theme.colorScheme.outlineVariant, width: 0.5)),
               ),
               child: AppointmentActionButtons(
                 appointment: state.appointment,

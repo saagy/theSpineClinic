@@ -19,6 +19,7 @@ import 'package:spine_clinic_app/features/medical_records/presentation/patient_n
 import 'package:spine_clinic_app/features/patient/presentation/widgets/add_note_sheet.dart';
 import 'package:spine_clinic_app/shared/widgets/app_snackbar.dart';
 import 'package:spine_clinic_app/shared/widgets/confirmation_dialog.dart';
+import 'package:spine_clinic_app/shared/widgets/eyebrow_label.dart';
 
 class AppointmentNotesCard extends ConsumerWidget {
   const AppointmentNotesCard({
@@ -67,23 +68,15 @@ class AppointmentNotesCard extends ConsumerWidget {
             return Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                Row(
-                  children: [
-                    Text(
-                      'VISIT NOTES',
-                      style: AppTextStyles.captionMedium.copyWith(
-                        color: AppColors.textSecondary,
-                        fontWeight: FontWeight.w600,
-                        letterSpacing: 1.2,
-                      ),
-                    ),
-                    const Spacer(),
-                    if (note != null && canModify)
-                      _NoteActions(
-                        onEdit: () => _showNoteSheet(context, note),
-                        onDelete: () => _confirmDeleteNote(context, ref, note),
-                      ),
-                  ],
+                EyebrowLabel(
+                  text: AppStrings.notes,
+                  isUppercase: false,
+                  action: note != null && canModify
+                      ? _NoteActions(
+                          onEdit: () => _showNoteSheet(context, note),
+                          onDelete: () => _confirmDeleteNote(context, ref, note),
+                        )
+                      : null,
                 ),
                 const SizedBox(height: AppSizes.p8),
                 if (note != null && note.noteText.isNotEmpty)
@@ -203,24 +196,25 @@ class _NoteActions extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
         IconButton(
-          icon: const Icon(Icons.edit_outlined, size: 20),
-          color: AppColors.textSecondary,
+          icon: const Icon(Icons.edit_outlined, size: 22),
+          color: cs.onSurfaceVariant,
           tooltip: AppStrings.edit,
           padding: EdgeInsets.zero,
-          constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+          constraints: const BoxConstraints(minWidth: 44, minHeight: 44),
           onPressed: onEdit,
         ),
         const SizedBox(width: AppSizes.p4),
         IconButton(
-          icon: const Icon(Icons.delete_outline_rounded, size: 20),
-          color: AppColors.error,
+          icon: const Icon(Icons.delete_outline_rounded, size: 22),
+          color: cs.error,
           tooltip: AppStrings.delete,
           padding: EdgeInsets.zero,
-          constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+          constraints: const BoxConstraints(minWidth: 44, minHeight: 44),
           onPressed: onDelete,
         ),
       ],

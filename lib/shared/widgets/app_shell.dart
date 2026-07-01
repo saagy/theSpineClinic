@@ -98,10 +98,11 @@ class _BrandedAppBar extends StatelessWidget implements PreferredSizeWidget {
 
   @override
   Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
+    final theme = Theme.of(context);
+    final cs = theme.colorScheme;
     return Container(
       height: AppSizes.appBarHeight,
-      color: cs.surface,
+      color: theme.scaffoldBackgroundColor,
       child: SafeArea(
         bottom: false,
         child: Padding(

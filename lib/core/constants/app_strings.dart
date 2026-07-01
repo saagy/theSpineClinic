@@ -213,6 +213,7 @@ abstract final class AppStrings {
   static const String newAppointment = 'New Appointment';
   static const String patientId = 'Patient ID';
   static const String appointmentType = 'Appointment Type';
+  static const String visitType = 'Visit Type';
   static const String single = 'Single';
   static const String recurring = 'Recurring';
   static const String isRecurring = 'Is Recurring?';

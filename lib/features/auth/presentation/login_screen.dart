@@ -12,7 +12,6 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import 'package:spine_clinic_app/core/constants/app_colors.dart';
 import 'package:spine_clinic_app/core/constants/app_sizes.dart';
 import 'package:spine_clinic_app/core/constants/app_strings.dart';
 import 'package:spine_clinic_app/core/constants/app_strings_auth.dart';
@@ -75,28 +74,32 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     });
 
     final bool isLoading = ref.watch(currentUserProvider).isLoading;
+    final theme = Theme.of(context);
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: theme.scaffoldBackgroundColor,
       body: LoadingOverlay(
         isLoading: isLoading,
         child: SafeArea(
           child: Center(
             child: SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(
-                horizontal: AppSizes.p32,
-              ),
-              child: Form(
-                key: _formKey,
-                child: _buildContent(isLoading)
-                    .animate()
-                    .fadeIn(duration: 600.ms)
-                    .slideY(
-                      begin: 0.06,
-                      end: 0,
-                      duration: 600.ms,
-                      curve: Curves.easeOut,
-                    ),
+              padding: const EdgeInsets.all(AppSizes.p24),
+              child: Center(
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 400),
+                  child: Form(
+                    key: _formKey,
+                    child: _buildCardContent(context, isLoading)
+                        .animate()
+                        .fadeIn(duration: 600.ms)
+                        .slideY(
+                          begin: 0.04,
+                          end: 0,
+                          duration: 600.ms,
+                          curve: Curves.easeOut,
+                        ),
+                  ),
+                ),
               ),
             ),
           ),
@@ -105,92 +108,156 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     );
   }
 
-  Widget _buildContent(bool isLoading) {
+  Widget _buildCardContent(BuildContext context, bool isLoading) {
+    final theme = Theme.of(context);
+    final cs = theme.colorScheme;
+
     return Column(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        const SizedBox(height: AppSizes.p36),
-
-        // ── Small medical mark ──
-        const Icon(
-          Icons.medical_services_outlined,
-          size: 28,
-          color: AppColors.primary,
-        ),
-        const SizedBox(height: AppSizes.p12),
-
-        // ── Clinic wordmark ──
-        Text(
-          AppStrings.appName,
-          style: AppTextStyles.headingSmall.copyWith(
-            color: AppColors.primary,
-            letterSpacing: 0.5,
+        // ── Brand Lockup (Centered) ──
+        Center(
+          child: Column(
+            children: [
+              Container(
+                width: 56,
+                height: 56,
+                decoration: BoxDecoration(
+                  color: cs.primary,
+                  borderRadius: BorderRadius.circular(16),
+                  boxShadow: [
+                    BoxShadow(
+                      color: cs.primary.withOpacity(0.12),
+                      blurRadius: 16,
+                      offset: const Offset(0, 6),
+                    ),
+                  ],
+                ),
+                child: Icon(
+                  Icons.spa_rounded,
+                  color: cs.onPrimary,
+                  size: 32,
+                ),
+              ),
+              const SizedBox(height: AppSizes.p16),
+              Text(
+                'THE SPINE CLINIC',
+                style: theme.textTheme.titleMedium?.copyWith(
+                  color: cs.onSurface,
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: 1.5,
+                ),
+              ),
+              const SizedBox(height: AppSizes.p4),
+              Text(
+                'Clinical Excellence Center',
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: cs.onSurfaceVariant,
+                  fontSize: 11,
+                ),
+              ),
+            ],
           ),
-          textAlign: TextAlign.center,
-        ),
-        const SizedBox(height: AppSizes.p16),
-
-        // ── Welcome copy ──
-        Text(
-          AppStringsAuth.welcomeBack,
-          style: AppTextStyles.headingLarge,
-          textAlign: TextAlign.center,
-        ),
-        const SizedBox(height: AppSizes.p6),
-        Text(
-          AppStringsAuth.signInToContinue,
-          style: AppTextStyles.bodyLarge,
-          textAlign: TextAlign.center,
         ),
         const SizedBox(height: AppSizes.p36),
 
-        // ── Email ──
-        AppTextInput(
-          controller: _emailCtrl,
-          labelText: AppStrings.email,
-          prefixIcon: Icons.email_outlined,
-          keyboardType: TextInputType.emailAddress,
-          validator: AuthValidators.email,
-          enabled: !isLoading,
-          textInputAction: TextInputAction.next,
-        ),
-        const SizedBox(height: AppSizes.p16),
+        // ── Form Card ──
+        Container(
+          padding: const EdgeInsets.all(AppSizes.p24),
+          decoration: BoxDecoration(
+            color: cs.surface,
+            borderRadius: const BorderRadius.all(Radius.circular(AppSizes.r24)),
+            boxShadow: const [
+              BoxShadow(
+                color: Color(0x06000000),
+                blurRadius: 16,
+                offset: Offset(0, 8),
+              ),
+            ],
+            border: Border.all(
+              color: Color(0x0E000000),
+              width: AppSizes.borderWidth,
+            ),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Text(
+                'Welcome back',
+                style: theme.textTheme.headlineSmall?.copyWith(
+                  fontWeight: FontWeight.w700,
+                  color: cs.onSurface,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: AppSizes.p4),
+              Text(
+                'Sign in to your clinical account',
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: cs.onSurfaceVariant,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: AppSizes.p28),
 
-        // ── Password ──
-        AppTextInput(
-          controller: _passwordCtrl,
-          labelText: AppStringsAuth.password,
-          prefixIcon: Icons.lock_outlined,
-          isPassword: true,
-          validator: AuthValidators.required,
-          enabled: !isLoading,
-          textInputAction: TextInputAction.done,
-          onSubmitted: isLoading ? null : (_) => _handleLogin(),
+              // ── Email ──
+              AppTextInput(
+                controller: _emailCtrl,
+                labelText: AppStrings.email,
+                prefixIcon: Icons.email_outlined,
+                keyboardType: TextInputType.emailAddress,
+                validator: AuthValidators.email,
+                enabled: !isLoading,
+                textInputAction: TextInputAction.next,
+              ),
+              const SizedBox(height: AppSizes.p16),
+
+              // ── Password ──
+              AppTextInput(
+                controller: _passwordCtrl,
+                labelText: AppStringsAuth.password,
+                prefixIcon: Icons.lock_outlined,
+                isPassword: true,
+                validator: AuthValidators.required,
+                enabled: !isLoading,
+                textInputAction: TextInputAction.done,
+                onSubmitted: isLoading ? null : (_) => _handleLogin(),
+              ),
+              const SizedBox(height: AppSizes.p24),
+
+              // ── Sign in ──
+              AppButton(
+                labelText: AppStringsAuth.signIn,
+                onPressed: isLoading ? null : () => _handleLogin(),
+                isLoading: isLoading,
+                shape: AppButtonShape.pill,
+              ),
+            ],
+          ),
         ),
         const SizedBox(height: AppSizes.p24),
 
-        // ── Sign in ──
-        AppButton(
-          labelText: AppStringsAuth.signIn,
-          onPressed: isLoading ? null : () => _handleLogin(),
-          isLoading: isLoading,
-          shape: AppButtonShape.pill,
-        ),
-        const SizedBox(height: AppSizes.p20),
-
         // ── Register link ──
-        GestureDetector(
-          onTap: () => context.go(AppRoutes.register),
-          child: Text(
-            AppStringsAuth.register,
-            style: AppTextStyles.bodyMedium.copyWith(
-              color: AppColors.primary,
+        Center(
+          child: TextButton(
+            onPressed: () => context.go(AppRoutes.register),
+            style: TextButton.styleFrom(
+              foregroundColor: cs.primary,
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppSizes.p16,
+                vertical: AppSizes.p8,
+              ),
             ),
-            textAlign: TextAlign.center,
+            child: Text(
+              AppStringsAuth.register,
+              style: AppTextStyles.bodyMedium.copyWith(
+                color: cs.primary,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
           ),
         ),
-        const SizedBox(height: AppSizes.p36),
       ],
     );
   }

@@ -9,10 +9,10 @@
 library;
 
 import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import 'package:spine_clinic_app/core/constants/app_colors.dart';
 import 'package:spine_clinic_app/core/constants/app_sizes.dart';
 import 'package:spine_clinic_app/core/constants/app_strings.dart';
 import 'package:spine_clinic_app/core/constants/app_strings_auth.dart';
@@ -26,7 +26,7 @@ import 'package:spine_clinic_app/features/auth/presentation/widgets/register_suc
 import 'package:spine_clinic_app/features/patient/domain/clinic_location.dart';
 import 'package:spine_clinic_app/shared/widgets/app_button.dart';
 import 'package:spine_clinic_app/shared/widgets/app_snackbar.dart';
-import 'package:spine_clinic_app/shared/widgets/app_text_field.dart';
+import 'package:spine_clinic_app/shared/widgets/app_text_input.dart';
 import 'package:spine_clinic_app/shared/widgets/filter_chip.dart';
 import 'package:spine_clinic_app/shared/widgets/loading_overlay.dart';
 
@@ -95,170 +95,272 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
   Widget build(BuildContext context) {
     if (_isSuccess) return const RegisterSuccessView();
 
+    final theme = Theme.of(context);
+
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: theme.scaffoldBackgroundColor,
       body: LoadingOverlay(
         isLoading: _isLoading,
         child: SafeArea(
           child: Center(
             child: SingleChildScrollView(
-              padding: AppSizes.paddingScreenH,
-              child: Form(
-                key: _formKey,
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    const SizedBox(height: AppSizes.p24),
-                    Text(
-                      AppStringsAuth.registration,
-                      style: AppTextStyles.headingLarge,
-                      textAlign: TextAlign.center,
-                    ),
-                    const SizedBox(height: AppSizes.p24),
-
-                    // ── Role Selection ──
-                    Text(
-                      AppStringsAuth.accountType,
-                      style: AppTextStyles.bodySecondary,
-                    ),
-                    const SizedBox(height: AppSizes.p12),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: AppFilterChip(
-                            label: AppStrings.doctorRoleLabel,
-                            isActive: _selectedRole == UserRole.doctor,
-                            onTap: _isLoading
-                                ? null
-                                : () => setState(
-                                    () => _selectedRole = UserRole.doctor),
-                          ),
+              padding: const EdgeInsets.all(AppSizes.p24),
+              child: Center(
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 400),
+                  child: Form(
+                    key: _formKey,
+                    child: _buildCardContent(context)
+                        .animate()
+                        .fadeIn(duration: 600.ms)
+                        .slideY(
+                          begin: 0.04,
+                          end: 0,
+                          duration: 600.ms,
+                          curve: Curves.easeOut,
                         ),
-                        const SizedBox(width: AppSizes.p12),
-                        Expanded(
-                          child: AppFilterChip(
-                            label: AppStrings.receptionistRoleLabel,
-                            isActive:
-                                _selectedRole == UserRole.receptionist,
-                            onTap: _isLoading
-                                ? null
-                                : () => setState(() =>
-                                    _selectedRole = UserRole.receptionist),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: AppSizes.p24),
-
-                    // ── Full Name ──
-                    AppTextField(
-                      controller: _nameCtrl,
-                      labelText: AppStrings.fullName,
-                      validator: AuthValidators.fullName,
-                      enabled: !_isLoading,
-                    ),
-                    const SizedBox(height: AppSizes.p16),
-
-                    // ── Email ──
-                    AppTextField(
-                      controller: _emailCtrl,
-                      labelText: AppStrings.email,
-                      keyboardType: TextInputType.emailAddress,
-                      validator: AuthValidators.email,
-                      enabled: !_isLoading,
-                    ),
-                    const SizedBox(height: AppSizes.p16),
-
-                    // ── Phone ──
-                    AppTextField(
-                      controller: _phoneCtrl,
-                      labelText: AppStrings.phone,
-                      keyboardType: TextInputType.phone,
-                      validator: AuthValidators.phone,
-                      enabled: !_isLoading,
-                    ),
-                    const SizedBox(height: AppSizes.p16),
-
-                    // ── Branch (receptionist only, optional) ──
-                    if (_selectedRole == UserRole.receptionist) ...[
-                      DropdownButtonFormField<ClinicLocation>(
-                        initialValue: _selectedBranch,
-                        decoration: const InputDecoration(
-                          labelText: AppStrings.branch,
-                          hintText: AppStrings.selectBranch,
-                        ),
-                        items: ClinicLocation.values
-                            .map((loc) => DropdownMenuItem(
-                                  value: loc,
-                                  child: Text(loc.displayLabel),
-                                ))
-                            .toList(),
-                        onChanged: _isLoading
-                            ? null
-                            : (ClinicLocation? next) =>
-                                setState(() => _selectedBranch = next),
-                      ),
-                      const SizedBox(height: AppSizes.p16),
-                    ],
-
-                    // ── Password ──
-                    AppTextField(
-                      controller: _passwordCtrl,
-                      labelText: AppStringsAuth.password,
-                      isPassword: true,
-                      validator: AuthValidators.password,
-                      enabled: !_isLoading,
-                    ),
-                    const SizedBox(height: AppSizes.p16),
-
-                    // ── Confirm Password ──
-                    AppTextField(
-                      controller: _confirmCtrl,
-                      labelText: AppStringsAuth.confirmPassword,
-                      isPassword: true,
-                      validator: AuthValidators.confirmPassword(
-                        () => _passwordCtrl.text,
-                      ),
-                      enabled: !_isLoading,
-                    ),
-                    const SizedBox(height: AppSizes.p24),
-
-                    // ── Submit ──
-                    AppButton(
-                      labelText: AppStrings.submit,
-                      onPressed: _isLoading ? null : _handleSubmit,
-                      isLoading: _isLoading,
-                    ),
-                    const SizedBox(height: AppSizes.p24),
-
-                    // ── Login link ──
-                    GestureDetector(
-                      onTap: () => context.go(AppRoutes.login),
-                      child: Text.rich(
-                        TextSpan(
-                          text: '${AppStringsAuth.alreadyHaveAccount} ',
-                          style: AppTextStyles.bodySecondary,
-                          children: [
-                            TextSpan(
-                              text: AppStringsAuth.signIn,
-                              style: AppTextStyles.bodyMedium.copyWith(
-                                color: AppColors.primary,
-                              ),
-                            ),
-                          ],
-                        ),
-                        textAlign: TextAlign.center,
-                      ),
-                    ),
-                    const SizedBox(height: AppSizes.p32),
-                  ],
+                  ),
                 ),
               ),
             ),
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildCardContent(BuildContext context) {
+    final theme = Theme.of(context);
+    final cs = theme.colorScheme;
+
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        // ── Header Brand lockup ──
+        Center(
+          child: Column(
+            children: [
+              Container(
+                width: 48,
+                height: 48,
+                decoration: BoxDecoration(
+                  color: cs.primary,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(
+                  Icons.spa_rounded,
+                  color: cs.onPrimary,
+                  size: 28,
+                ),
+              ),
+              const SizedBox(height: AppSizes.p12),
+              Text(
+                AppStringsAuth.registration,
+                style: theme.textTheme.headlineSmall?.copyWith(
+                  fontWeight: FontWeight.w800,
+                  color: cs.onSurface,
+                  letterSpacing: 0.5,
+                ),
+              ),
+              const SizedBox(height: AppSizes.p4),
+              Text(
+                'Create a clinical staff account',
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: cs.onSurfaceVariant,
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: AppSizes.p28),
+
+        // ── Card container ──
+        Container(
+          padding: const EdgeInsets.all(AppSizes.p24),
+          decoration: BoxDecoration(
+            color: cs.surface,
+            borderRadius: const BorderRadius.all(Radius.circular(AppSizes.r24)),
+            boxShadow: const [
+              BoxShadow(
+                color: Color(0x06000000),
+                blurRadius: 16,
+                offset: Offset(0, 8),
+              ),
+            ],
+            border: Border.all(
+              color: Color(0x0E000000),
+              width: AppSizes.borderWidth,
+            ),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              // ── Full Name ──
+              AppTextInput(
+                controller: _nameCtrl,
+                labelText: AppStrings.fullName,
+                prefixIcon: Icons.person_outline,
+                validator: AuthValidators.fullName,
+                enabled: !_isLoading,
+                textInputAction: TextInputAction.next,
+              ),
+              const SizedBox(height: AppSizes.p16),
+
+              // ── Email ──
+              AppTextInput(
+                controller: _emailCtrl,
+                labelText: AppStrings.email,
+                prefixIcon: Icons.email_outlined,
+                keyboardType: TextInputType.emailAddress,
+                validator: AuthValidators.email,
+                enabled: !_isLoading,
+                textInputAction: TextInputAction.next,
+              ),
+              const SizedBox(height: AppSizes.p16),
+
+              // ── Phone ──
+              AppTextInput(
+                controller: _phoneCtrl,
+                labelText: AppStrings.phone,
+                prefixIcon: Icons.phone_outlined,
+                keyboardType: TextInputType.phone,
+                validator: AuthValidators.phone,
+                enabled: !_isLoading,
+                textInputAction: TextInputAction.next,
+              ),
+              const SizedBox(height: AppSizes.p20),
+
+              // ── Role Selection ──
+              Text(
+                AppStringsAuth.accountType,
+                style: AppTextStyles.bodyBold.copyWith(
+                  color: cs.onSurface,
+                ),
+              ),
+              const SizedBox(height: AppSizes.p12),
+              Row(
+                children: [
+                  Expanded(
+                    child: AppFilterChip(
+                      label: AppStrings.doctorRoleLabel,
+                      isActive: _selectedRole == UserRole.doctor,
+                      onTap: _isLoading
+                          ? null
+                          : () => setState(
+                              () => _selectedRole = UserRole.doctor),
+                    ),
+                  ),
+                  const SizedBox(width: AppSizes.p12),
+                  Expanded(
+                    child: AppFilterChip(
+                      label: AppStrings.receptionistRoleLabel,
+                      isActive: _selectedRole == UserRole.receptionist,
+                      onTap: _isLoading
+                          ? null
+                          : () => setState(() =>
+                              _selectedRole = UserRole.receptionist),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: AppSizes.p16),
+
+              // ── Branch (receptionist only, optional) ──
+              if (_selectedRole == UserRole.receptionist) ...[
+                DropdownButtonFormField<ClinicLocation>(
+                  initialValue: _selectedBranch,
+                  decoration: const InputDecoration(
+                    labelText: AppStrings.branch,
+                    hintText: AppStrings.selectBranch,
+                    contentPadding: EdgeInsets.symmetric(
+                      horizontal: AppSizes.p16,
+                      vertical: AppSizes.p12,
+                    ),
+                  ),
+                  items: ClinicLocation.values
+                      .map((loc) => DropdownMenuItem(
+                            value: loc,
+                            child: Text(loc.displayLabel),
+                          ))
+                      .toList(),
+                  onChanged: _isLoading
+                      ? null
+                      : (ClinicLocation? next) =>
+                          setState(() => _selectedBranch = next),
+                ),
+                const SizedBox(height: AppSizes.p16),
+              ],
+
+              // ── Password ──
+              AppTextInput(
+                controller: _passwordCtrl,
+                labelText: AppStringsAuth.password,
+                prefixIcon: Icons.lock_outlined,
+                isPassword: true,
+                validator: AuthValidators.password,
+                enabled: !_isLoading,
+                textInputAction: TextInputAction.next,
+              ),
+              const SizedBox(height: AppSizes.p16),
+
+              // ── Confirm Password ──
+              AppTextInput(
+                controller: _confirmCtrl,
+                labelText: AppStringsAuth.confirmPassword,
+                prefixIcon: Icons.lock_outlined,
+                isPassword: true,
+                validator: AuthValidators.confirmPassword(
+                  () => _passwordCtrl.text,
+                ),
+                enabled: !_isLoading,
+                textInputAction: TextInputAction.done,
+                onSubmitted: _isLoading ? null : (_) => _handleSubmit(),
+              ),
+              const SizedBox(height: AppSizes.p24),
+
+              // ── Submit ──
+              AppButton(
+                labelText: AppStrings.submit,
+                onPressed: _isLoading ? null : _handleSubmit,
+                isLoading: _isLoading,
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: AppSizes.p24),
+
+        // ── Login link ──
+        Center(
+          child: TextButton(
+            onPressed: () => context.go(AppRoutes.login),
+            style: TextButton.styleFrom(
+              foregroundColor: cs.primary,
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppSizes.p16,
+                vertical: AppSizes.p8,
+              ),
+            ),
+            child: Text.rich(
+              TextSpan(
+                text: '${AppStringsAuth.alreadyHaveAccount} ',
+                style: AppTextStyles.bodySecondary,
+                children: [
+                  TextSpan(
+                    text: AppStringsAuth.signIn,
+                    style: AppTextStyles.bodyMedium.copyWith(
+                      color: cs.primary,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ),
+        ),
+        const SizedBox(height: AppSizes.p24),
+      ],
     );
   }
 }

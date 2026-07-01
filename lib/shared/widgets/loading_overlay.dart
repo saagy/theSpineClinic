@@ -24,6 +24,7 @@ class LoadingOverlay extends StatefulWidget {
     super.key,
     required this.isLoading,
     required this.child,
+    this.escapeHatchDuration = const Duration(seconds: 15),
   });
 
   /// Whether the loading overlay spinner is visible.
@@ -31,6 +32,9 @@ class LoadingOverlay extends StatefulWidget {
 
   /// The widget content rendered beneath the overlay.
   final Widget child;
+
+  /// The duration to wait before showing the escape hatch/cancel button.
+  final Duration escapeHatchDuration;
 
   @override
   State<LoadingOverlay> createState() => _LoadingOverlayState();
@@ -68,7 +72,7 @@ class _LoadingOverlayState extends State<LoadingOverlay> {
 
   void _startTimer() {
     _stopTimer();
-    _escapeTimer = Timer(const Duration(seconds: 5), () {
+    _escapeTimer = Timer(widget.escapeHatchDuration, () {
       if (mounted) {
         setState(() => _showEscapeHatch = true);
       }

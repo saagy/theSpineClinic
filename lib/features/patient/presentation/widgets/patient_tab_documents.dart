@@ -128,13 +128,18 @@ class _PatientTabDocumentsState extends ConsumerState<PatientTabDocuments> {
                     ],
                   );
                 }
+                final double screenWidth = MediaQuery.of(context).size.width;
+                final int crossAxisCount = screenWidth < 600
+                    ? 2
+                    : (screenWidth / 300).floor().clamp(2, 6);
+
                 return GridView.builder(
                   physics: const AlwaysScrollableScrollPhysics(),
                   padding: const EdgeInsets.fromLTRB(
                       AppSizes.p16, 0, AppSizes.p16, AppSizes.p16),
                   gridDelegate:
-                      const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 2,
+                      SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: crossAxisCount,
                     crossAxisSpacing: AppSizes.p12,
                     mainAxisSpacing: AppSizes.p12,
                     childAspectRatio: 0.72,

@@ -37,7 +37,10 @@ class AppointmentDoctorsSection extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const EyebrowLabel(text: AppStrings.assignedDoctors),
+          const EyebrowLabel(
+            text: AppStrings.doctors,
+            isUppercase: false,
+          ),
           const SizedBox(height: AppSizes.p8),
           activeDoctors.isEmpty
               ? Padding(

@@ -183,3 +183,9 @@ Target aesthetic: Medics Medical App UI Kit vibe.
 - Auto-accept all file edits and creations
 - Auto-accept all bash commands except: git push, flutter clean, pub get on unknown packages
 - Never ask for confirmation on read operations
+
+## Active Technical Debt & Deferred Tasks
+- **Auth Brand Component Extraction**: Reusable `ClinicBrandMark` widget layout is currently duplicated in `splash_screen.dart`, `login_screen.dart`, and `register_screen.dart`. Should be refactored into a single shared widget in `lib/shared/widgets/clinic_brand_mark.dart`.
+- **Forgot Password Flow**: Secure and free password recovery is supported by the Supabase backend (`resetPasswordForEmail`), but the frontend views (Forgot/Reset screens and routing) are deferred.
+- **Progressive Onboarding**: The registration form has 6+ fields and should eventually be broken into a 2-step wizard (identity details → credentials) to minimize form fatigue.
+

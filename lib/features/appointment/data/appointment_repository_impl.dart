@@ -580,6 +580,27 @@ class AppointmentRepositoryImpl implements AppointmentRepository {
   }
 
   @override
+  Future<Result<void>> createRecurringBookings({
+    required String patientId,
+    required AppointmentType type,
+    required List<DateTime> slots,
+    required bool usePackage,
+    required String? creatorId,
+    required List<String> doctorIds,
+  }) {
+    return _run(() async {
+      await _service.rpc('book_recurring_appointments', params: {
+        'p_patient_id': patientId,
+        'p_type': type.dbValue,
+        'p_slots': slots.map((s) => s.toUtc().toIso8601String()).toList(),
+        'p_use_package': type.affectsPackageBalance ? usePackage : false,
+        'p_creator_id': creatorId,
+        'p_doctor_ids': doctorIds,
+      });
+    });
+  }
+
+  @override
   Future<Result<bool>> hasDoctorRecentAppointmentWithPatient({
     required String patientId,
     required String doctorId,

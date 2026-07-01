@@ -39,6 +39,9 @@ enum AppButtonShape {
   /// Soft 8 px rounded corners — Stripe Dashboard reference.
   rounded,
 
+  /// Soft 12 px rounded corners.
+  rounded12,
+
   /// Fully pill-shaped — Medics UI Kit reference.
   pill,
 }
@@ -206,9 +209,11 @@ class _AppButtonState extends State<AppButton> with SingleTickerProviderStateMix
       }
     }
 
-    final BorderRadius borderRadius = widget.shape == AppButtonShape.pill
-        ? AppSizes.borderRadiusPill
-        : const BorderRadius.all(Radius.circular(AppSizes.r8));
+    final BorderRadius borderRadius = switch (widget.shape) {
+      AppButtonShape.pill => AppSizes.borderRadiusPill,
+      AppButtonShape.rounded12 => const BorderRadius.all(Radius.circular(AppSizes.r12)),
+      AppButtonShape.rounded => const BorderRadius.all(Radius.circular(AppSizes.r8)),
+    };
 
     final bool showSpinner = widget.isLoading || _coolingDown;
     final Widget content = showSpinner

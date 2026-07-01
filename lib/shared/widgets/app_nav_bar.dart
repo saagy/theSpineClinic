@@ -6,8 +6,6 @@
 library;
 
 import 'package:flutter/material.dart';
-import 'package:spine_clinic_app/core/constants/app_sizes.dart';
-import 'package:spine_clinic_app/core/constants/app_text_styles.dart';
 import 'package:spine_clinic_app/shared/widgets/nav_tabs.dart';
 
 class AppNavBar extends StatelessWidget {
@@ -29,88 +27,91 @@ class AppNavBar extends StatelessWidget {
 
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
+    final isDark = theme.brightness == Brightness.dark;
 
     return Container(
-      height: AppSizes.bottomNavHeight + MediaQuery.paddingOf(context).bottom,
+      // Modern spacious base height (74px) + device safe area padding
+      height: 74.0 + MediaQuery.paddingOf(context).bottom,
       decoration: BoxDecoration(
         color: colorScheme.surface,
         border: Border(
           top: BorderSide(
-            color: colorScheme.outlineVariant,
-            width: AppSizes.borderWidth,
+            // Extremely soft, thin border separator
+            color: isDark ? const Color(0xFF374151) : const Color(0xFFE5E7EB),
+            width: 0.8,
           ),
         ),
-        boxShadow: [
-          BoxShadow(
-            color: colorScheme.shadow.withAlpha(8),
-            blurRadius: 8,
-            offset: const Offset(0, -2),
-          ),
-        ],
       ),
       child: SafeArea(
         top: false,
         bottom: true,
-        child: Row(
-          children: List.generate(numTabs, (index) {
-            final tab = tabs[index];
-            final isSelected = index == currentIndex;
+        child: Padding(
+          padding: const EdgeInsets.only(top: 8.0, bottom: 18.0),
+          child: Row(
+            children: List.generate(numTabs, (index) {
+              final tab = tabs[index];
+              final isSelected = index == currentIndex;
 
-            return Expanded(
-              child: InkWell(
-                onTap: () => onTabSelected(index),
-                splashColor: colorScheme.primary.withAlpha(20),
-                highlightColor: Colors.transparent,
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    // Scale micro-interaction + smooth color transition
-                    AnimatedScale(
-                      scale: isSelected ? 1.12 : 1.0,
-                      duration: const Duration(milliseconds: 180),
-                      curve: isSelected ? Curves.easeOutBack : Curves.easeOutCubic,
-                      child: TweenAnimationBuilder<Color?>(
-                        duration: const Duration(milliseconds: 180),
+              return Expanded(
+                child: InkWell(
+                  onTap: () => onTabSelected(index),
+                  // Disable Android splash ripples to match iOS/Airbnb premium feel
+                  splashColor: Colors.transparent,
+                  highlightColor: Colors.transparent,
+                  hoverColor: Colors.transparent,
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.start,
+                    children: [
+                      // Soft scale micro-interaction + smooth color transition
+                      AnimatedScale(
+                        scale: isSelected ? 1.08 : 1.0,
+                        duration: const Duration(milliseconds: 150),
                         curve: Curves.easeOutCubic,
-                        tween: ColorTween(
-                          begin: isSelected
-                              ? colorScheme.onSurfaceVariant
-                              : colorScheme.primary,
-                          end: isSelected
-                              ? colorScheme.primary
-                              : colorScheme.onSurfaceVariant,
+                        child: TweenAnimationBuilder<Color?>(
+                          duration: const Duration(milliseconds: 150),
+                          curve: Curves.easeOutCubic,
+                          tween: ColorTween(
+                            begin: isSelected
+                                ? const Color(0xFF6B7280) // Inactive slate-grey
+                                : colorScheme.primary,
+                            end: isSelected
+                                ? colorScheme.primary
+                                : const Color(0xFF6B7280),
+                          ),
+                          builder: (context, color, child) {
+                            return Icon(
+                              isSelected ? tab.selectedIcon : tab.icon,
+                              color: color,
+                              size: 24.0,
+                            );
+                          },
                         ),
-                        builder: (context, color, child) {
-                          return Icon(
-                            isSelected ? tab.selectedIcon : tab.icon,
-                            color: color,
-                            size: AppSizes.iconDefault,
-                          );
-                        },
                       ),
-                    ),
-                    const SizedBox(height: AppSizes.p4),
-                    // Text transition
-                    AnimatedDefaultTextStyle(
-                      duration: const Duration(milliseconds: 180),
-                      curve: Curves.easeOutCubic,
-                      style: (isSelected
-                              ? AppTextStyles.captionBold
-                              : AppTextStyles.caption)
-                          .copyWith(
-                        color: isSelected
-                            ? colorScheme.primary
-                            : colorScheme.onSurfaceVariant,
+                      const SizedBox(height: 4),
+                      // Precise typography: tiny, medium/semibold weight, tracked out
+                      AnimatedDefaultTextStyle(
+                        duration: const Duration(milliseconds: 150),
+                        curve: Curves.easeOutCubic,
+                        style: TextStyle(
+                          fontFamily: 'Plus Jakarta Sans',
+                          fontSize: 9.5,
+                          fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+                          letterSpacing: 0.4,
+                          color: isSelected
+                              ? colorScheme.primary
+                              : const Color(0xFF6B7280),
+                        ),
+                        child: Text(tab.label),
                       ),
-                      child: Text(tab.label),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
-              ),
-            );
-          }),
+              );
+            }),
+          ),
         ),
       ),
     );
   }
 }
+

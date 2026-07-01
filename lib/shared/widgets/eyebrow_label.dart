@@ -14,10 +14,14 @@ class EyebrowLabel extends StatelessWidget {
     super.key,
     required this.text,
     this.action,
+    this.isUppercase = true,
+    this.fontSize,
   });
 
   final String text;
   final Widget? action;
+  final bool isUppercase;
+  final double? fontSize;
 
   @override
   Widget build(BuildContext context) {
@@ -26,11 +30,12 @@ class EyebrowLabel extends StatelessWidget {
       children: [
         Expanded(
           child: Text(
-            text.toUpperCase(),
+            isUppercase ? text.toUpperCase() : text,
             style: AppTextStyles.captionMedium.copyWith(
               color: cs.onSurfaceVariant,
               fontWeight: FontWeight.w600,
-              letterSpacing: 1.2,
+              fontSize: fontSize ?? (isUppercase ? 12.0 : 14.0),
+              letterSpacing: isUppercase ? 1.2 : 0.0,
             ),
           ),
         ),

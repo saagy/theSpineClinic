@@ -155,6 +155,16 @@ abstract class AppointmentRepository {
   /// Hard-deletes an appointment by its ID.
   Future<Result<void>> deleteAppointment(String appointmentId);
 
+  /// Creates multiple appointments and assigns doctors to them in a single database transaction.
+  Future<Result<void>> createRecurringBookings({
+    required String patientId,
+    required AppointmentType type,
+    required List<DateTime> slots,
+    required bool usePackage,
+    required String? creatorId,
+    required List<String> doctorIds,
+  });
+
   /// Updates doctor assignments for an appointment.
   /// Deactivates existing active assignments and inserts new ones.
   Future<Result<void>> updateAppointmentDoctors(

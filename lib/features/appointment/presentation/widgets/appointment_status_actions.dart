@@ -1,10 +1,10 @@
+import 'package:auto_size_text/auto_size_text.dart';
 import 'package:flutter/material.dart';
-import 'package:spine_clinic_app/core/constants/app_colors.dart';
 import 'package:spine_clinic_app/core/constants/app_sizes.dart';
 import 'package:spine_clinic_app/core/constants/app_text_styles.dart';
 import 'package:spine_clinic_app/shared/widgets/app_button.dart';
 
-/// Scheduled: flat "Cancel Appointment" + expanded teal "Check In" pill.
+/// Scheduled: asymmetric row with text "Cancel Appt." (flex 10) + solid teal "Check In" button (flex 19).
 class ScheduledActions extends StatelessWidget {
   const ScheduledActions({
     super.key,
@@ -21,17 +21,17 @@ class ScheduledActions extends StatelessWidget {
     return Row(
       children: [
         Flexible(
-          flex: 1,
-          child: _flatCancelButton(loading: loading, onCancel: onCancel),
+          flex: 10,
+          child: _flatCancelButton(context: context, loading: loading, onCancel: onCancel),
         ),
         const SizedBox(width: AppSizes.p12),
         Flexible(
-          flex: 2,
+          flex: 19,
           child: AppButton(
             labelText: 'Check In',
             onPressed: loading ? null : onCheckIn,
             isLoading: loading,
-            shape: AppButtonShape.pill,
+            shape: AppButtonShape.rounded12,
           ),
         ),
       ],
@@ -39,7 +39,7 @@ class ScheduledActions extends StatelessWidget {
   }
 }
 
-/// Checked-In: flat "Cancel Appointment" + expanded secondary "Undo Check-In" pill.
+/// Checked-In: asymmetric row with text "Cancel Appt." (flex 10) + secondary "Undo Check-In" button (flex 19).
 class CheckedInActions extends StatelessWidget {
   const CheckedInActions({
     super.key,
@@ -56,18 +56,18 @@ class CheckedInActions extends StatelessWidget {
     return Row(
       children: [
         Flexible(
-          flex: 1,
-          child: _flatCancelButton(loading: loading, onCancel: onCancel),
+          flex: 10,
+          child: _flatCancelButton(context: context, loading: loading, onCancel: onCancel),
         ),
         const SizedBox(width: AppSizes.p12),
         Flexible(
-          flex: 2,
+          flex: 19,
           child: AppButton(
             labelText: 'Undo Check-In',
             onPressed: loading ? null : onRevert,
             isLoading: loading,
             variant: AppButtonVariant.secondary,
-            shape: AppButtonShape.pill,
+            shape: AppButtonShape.rounded12,
           ),
         ),
       ],
@@ -92,7 +92,7 @@ class CancelledActions extends StatelessWidget {
       onPressed: loading ? null : onRestore,
       isLoading: loading,
       variant: AppButtonVariant.secondary,
-      shape: AppButtonShape.pill,
+      shape: AppButtonShape.rounded12,
     );
   }
 }
@@ -100,21 +100,27 @@ class CancelledActions extends StatelessWidget {
 // ── Private shared widget ─────────────────────────────────────────────
 
 /// Borderless flat text button — quiet secondary action.
-Widget _flatCancelButton({required bool loading, required VoidCallback onCancel}) {
+Widget _flatCancelButton({
+  required BuildContext context,
+  required bool loading,
+  required VoidCallback onCancel,
+}) {
   return TextButton(
     onPressed: loading ? null : onCancel,
     style: TextButton.styleFrom(
-      padding: const EdgeInsets.symmetric(horizontal: AppSizes.p8),
+      padding: const EdgeInsets.symmetric(horizontal: AppSizes.p4),
+      minimumSize: const Size.fromHeight(AppSizes.tappableMin),
     ),
-    child: Text(
-      'Cancel Appointment',
+    child: AutoSizeText(
+      'Cancel Appt.',
       style: AppTextStyles.button.copyWith(
-        color: AppColors.error,
+        color: Theme.of(context).colorScheme.error,
         fontSize: 14,
       ),
-      textAlign: TextAlign.center,
-      maxLines: 2,
+      maxLines: 1,
+      minFontSize: 10,
       overflow: TextOverflow.ellipsis,
+      textAlign: TextAlign.center,
     ),
   );
 }

@@ -60,8 +60,8 @@ class DoctorRow extends StatelessWidget {
                         const SizedBox(width: AppSizes.p6),
                         _Badge(
                           label: AppStrings.deactivated,
-                          bg: cs.tertiaryContainer,
-                          fg: cs.tertiary,
+                          bg: cs.onSurface.withValues(alpha: 0.08),
+                          fg: cs.onSurface.withValues(alpha: 0.6),
                         ),
                       ],
                       if (badgeLabel != null) ...[

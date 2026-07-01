@@ -142,6 +142,8 @@ class _NewAppointmentFormState extends ConsumerState<NewAppointmentForm> {
               totalSessions: int.tryParse(_sessionsController.text) ?? 0));
 
   Future<void> _submitForm() async {
+    final bool isFormValid = _formKey.currentState?.validate() ?? false;
+
     setState(() {
       _dateErrorText = _selectedDate == null ? AppStrings.dateRequired : null;
       _timeErrorText = _selectedTime == null ? AppStrings.timeRequired : null;
@@ -149,7 +151,21 @@ class _NewAppointmentFormState extends ConsumerState<NewAppointmentForm> {
           ? AppStrings.daysRequired
           : null;
     });
-    if (_dateErrorText != null ||
+
+    if (_isRecurring) {
+      final int sessions = int.tryParse(_sessionsController.text) ?? 0;
+      if (sessions < 1 || sessions > 24) {
+        AppSnackbar.show(
+          context,
+          message: 'Number of sessions must be between 1 and 24.',
+          variant: AppSnackbarVariant.error,
+        );
+        return;
+      }
+    }
+
+    if (!isFormValid ||
+        _dateErrorText != null ||
         _timeErrorText != null ||
         _daysErrorText != null) {
       return;
@@ -299,6 +315,17 @@ class _NewAppointmentFormState extends ConsumerState<NewAppointmentForm> {
                                 setState(() => _selectedWeekdays = d),
                             sessionsController: _sessionsController,
                             daysErrorText: _daysErrorText,
+                            sessionsValidator: (val) {
+                              if (!_isRecurring) return null;
+                              if (val == null || val.trim().isEmpty) {
+                                return 'Number of sessions is required';
+                              }
+                              final int? parsed = int.tryParse(val);
+                              if (parsed == null || parsed < 1 || parsed > 24) {
+                                return 'Must be between 1 and 24 sessions';
+                              }
+                              return null;
+                            },
                           ),
                         ],
                       ),
