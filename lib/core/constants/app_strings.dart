@@ -381,6 +381,11 @@ abstract final class AppStrings {
   static const String noHistoricAppointments = 'No past appointments found.';
   static const String branchSelectionHint = 'Select your active branch';
   static const String profileSettingsDescription = 'Manage your preferences and account settings.';
+  static const String theme = 'Theme';
+  static const String themeSubtitle = 'Light, dark, or follow system';
+  static const String themeModeLight = 'Light';
+  static const String themeModeDark = 'Dark';
+  static const String themeModeSystem = 'System';
 
   // Patient List
   static const String allPatients = 'All Patients';
@@ -436,6 +441,7 @@ abstract final class AppStrings {
   static const String filterByType = 'Filter by Type';
   static const String allTypes = 'All Types';
   static const String clearFilters = 'Clear';
+  static const String clearAll = 'Clear All';
 
   // Quick Payment
   static const String fillAmountAndReason = 'Please fill in amount and reason.';
@@ -558,6 +564,7 @@ abstract final class AppStrings {
   static const String collectPayment = 'Collect Payment';
   static const String contact = 'Contact';
   static const String lastVisit = 'Last Visit';
+  static const String noVisitsYet = 'No visits yet';
   static const String programNone = 'None';
   static const String recordedBy = 'Recorded by';
 
@@ -620,4 +627,3 @@ abstract final class AppStrings {
 
   static const String collapse = 'Collapse';
 }
-

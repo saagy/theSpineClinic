@@ -8,7 +8,6 @@
 library;
 
 import 'package:flutter/material.dart';
-import 'package:spine_clinic_app/core/constants/app_colors.dart';
 import 'package:spine_clinic_app/core/constants/app_text_styles.dart';
 import 'package:spine_clinic_app/shared/widgets/app_bottom_sheet.dart';
 
@@ -70,6 +69,7 @@ class SortOptionsSheet<T> extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final ColorScheme cs = Theme.of(context).colorScheme;
     return ListView.builder(
       controller: null, // scrollController handled by AppBottomSheet
       shrinkWrap: true,
@@ -81,13 +81,12 @@ class SortOptionsSheet<T> extends StatelessWidget {
           title: Text(
             option.label,
             style: AppTextStyles.bodyMedium.copyWith(
-              color:
-                  isSelected ? AppColors.primary : AppColors.textPrimary,
+              color: isSelected ? cs.primary : cs.onSurface,
               fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
             ),
           ),
           trailing: isSelected
-              ? const Icon(Icons.check_rounded, color: AppColors.primary)
+              ? Icon(Icons.check_rounded, color: cs.primary)
               : null,
           onTap: () => onSelected(option.value),
         );

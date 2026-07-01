@@ -11,9 +11,9 @@
 library;
 
 import 'package:flutter/material.dart';
-import 'package:spine_clinic_app/core/constants/app_colors.dart';
 import 'package:spine_clinic_app/core/constants/app_sizes.dart';
 import 'package:spine_clinic_app/core/constants/app_text_styles.dart';
+import 'package:spine_clinic_app/core/constants/clinic_colors.dart';
 import 'package:spine_clinic_app/shared/widgets/password_visibility_toggle.dart';
 
 /// A standard form text field styled with Spine Clinic design tokens.
@@ -81,8 +81,9 @@ class _AppTextFieldState extends State<AppTextField> {
 
   @override
   Widget build(BuildContext context) {
-    final bool obscured =
-        widget.isPassword ? _obscured : widget.obscureText;
+    final bool obscured = widget.isPassword ? _obscured : widget.obscureText;
+    final ColorScheme cs = Theme.of(context).colorScheme;
+    final ClinicColors clinic = ClinicColors.of(context);
     final Widget? suffix = widget.isPassword
         ? PasswordVisibilityToggle(
             isObscured: _obscured,
@@ -93,10 +94,7 @@ class _AppTextFieldState extends State<AppTextField> {
     // Basic border parameters calling strictly AppSizes.r6 for sharp layout feel
     final OutlineInputBorder borderBase = OutlineInputBorder(
       borderRadius: const BorderRadius.all(Radius.circular(AppSizes.r6)),
-      borderSide: const BorderSide(
-        color: AppColors.border,
-        width: AppSizes.borderWidth,
-      ),
+      borderSide: BorderSide(color: cs.outline, width: AppSizes.borderWidth),
     );
 
     return Column(
@@ -107,7 +105,7 @@ class _AppTextFieldState extends State<AppTextField> {
         Text(
           widget.labelText,
           style: AppTextStyles.captionMedium.copyWith(
-            color: widget.enabled ? AppColors.textSecondary : AppColors.textMuted,
+            color: widget.enabled ? cs.onSurfaceVariant : clinic.textMuted,
           ),
         ),
         const SizedBox(height: AppSizes.p6),
@@ -121,20 +119,22 @@ class _AppTextFieldState extends State<AppTextField> {
           maxLines: widget.maxLines,
           onChanged: widget.onChanged,
           style: AppTextStyles.body.copyWith(
-            color: widget.enabled ? AppColors.textPrimary : AppColors.textMuted,
+            color: widget.enabled ? cs.onSurface : clinic.textMuted,
           ),
           decoration: InputDecoration(
             isDense: true,
             filled: true,
-            fillColor: widget.enabled ? AppColors.surface : AppColors.background,
+            fillColor: widget.enabled ? cs.surface : cs.surfaceContainer,
             hintText: widget.hintText,
             hintStyle: AppTextStyles.bodySecondary.copyWith(
-              color: AppColors.textMuted,
+              color: clinic.textMuted,
             ),
             contentPadding: AppSizes.paddingCell,
             prefixIcon: widget.prefixIcon != null
                 ? Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: AppSizes.p8),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: AppSizes.p8,
+                    ),
                     child: widget.prefixIcon,
                   )
                 : null,
@@ -144,7 +144,9 @@ class _AppTextFieldState extends State<AppTextField> {
             ),
             suffixIcon: suffix != null
                 ? Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: AppSizes.p8),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: AppSizes.p8,
+                    ),
                     child: suffix,
                   )
                 : null,
@@ -156,35 +158,33 @@ class _AppTextFieldState extends State<AppTextField> {
             enabledBorder: borderBase,
             // Disabled border state
             disabledBorder: borderBase.copyWith(
-              borderSide: const BorderSide(
-                color: AppColors.border,
+              borderSide: BorderSide(
+                color: cs.outline,
                 width: AppSizes.borderWidth,
               ),
             ),
             // Focus border state (transitions cleanly using Flutter's native focus engine)
             focusedBorder: borderBase.copyWith(
-              borderSide: const BorderSide(
-                color: AppColors.borderStrong,
+              borderSide: BorderSide(
+                color: clinic.outlineStrong,
                 width: AppSizes.borderWidthFocused,
               ),
             ),
             // Validation error border states
             errorBorder: borderBase.copyWith(
-              borderSide: const BorderSide(
-                color: AppColors.error,
+              borderSide: BorderSide(
+                color: cs.error,
                 width: AppSizes.borderWidth,
               ),
             ),
             focusedErrorBorder: borderBase.copyWith(
-              borderSide: const BorderSide(
-                color: AppColors.error,
+              borderSide: BorderSide(
+                color: cs.error,
                 width: AppSizes.borderWidthFocused,
               ),
             ),
             // Validation error message style
-            errorStyle: AppTextStyles.caption.copyWith(
-              color: AppColors.error,
-            ),
+            errorStyle: AppTextStyles.caption.copyWith(color: cs.error),
           ),
         ),
       ],

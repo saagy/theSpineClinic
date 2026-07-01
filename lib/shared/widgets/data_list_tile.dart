@@ -7,9 +7,9 @@
 library;
 
 import 'package:flutter/material.dart';
-import 'package:spine_clinic_app/core/constants/app_colors.dart';
 import 'package:spine_clinic_app/core/constants/app_sizes.dart';
 import 'package:spine_clinic_app/core/constants/app_text_styles.dart';
+import 'package:spine_clinic_app/core/constants/clinic_colors.dart';
 
 /// A high-density data row tile styled with Spine Clinic design tokens.
 class DataListTile extends StatelessWidget {
@@ -73,8 +73,12 @@ class DataListTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final ColorScheme cs = Theme.of(context).colorScheme;
+    final ClinicColors clinic = ClinicColors.of(context);
     final Widget cellContent = Padding(
-      padding: const EdgeInsets.all(AppSizes.p16), // Comfortable touch-padding (Rule 13)
+      padding: const EdgeInsets.all(
+        AppSizes.p16,
+      ), // Comfortable touch-padding (Rule 13)
       child: Row(
         children: [
           if (leading != null) ...[
@@ -90,10 +94,9 @@ class DataListTile extends StatelessWidget {
                 titleWidget ??
                     Text(
                       title,
-                      style: titleStyle ??
-                          AppTextStyles.bodyBold.copyWith(
-                            color: AppColors.textPrimary,
-                          ),
+                      style:
+                          titleStyle ??
+                          AppTextStyles.bodyBold.copyWith(color: cs.onSurface),
                       maxLines: titleMaxLines ?? 1,
                       softWrap: true,
                       overflow: titleMaxLines == null
@@ -107,9 +110,10 @@ class DataListTile extends StatelessWidget {
                   const SizedBox(height: AppSizes.p2),
                   Text(
                     subtitle!,
-                    style: subtitleStyle ??
+                    style:
+                        subtitleStyle ??
                         AppTextStyles.caption.copyWith(
-                          color: AppColors.textSecondary,
+                          color: cs.onSurfaceVariant,
                         ),
                     maxLines: subtitleMaxLines ?? 1,
                     softWrap: true,
@@ -131,29 +135,36 @@ class DataListTile extends StatelessWidget {
 
     // Decorate the tile container as an M3 Card (Rule 13)
     final Widget tileContainer = Container(
-      margin: margin ?? (transparent ? EdgeInsets.zero : const EdgeInsets.only(bottom: AppSizes.p12)),
+      margin:
+          margin ??
+          (transparent
+              ? EdgeInsets.zero
+              : const EdgeInsets.only(bottom: AppSizes.p12)),
       decoration: transparent
           ? const BoxDecoration()
           : BoxDecoration(
-              color: AppColors.surface,
-              borderRadius: const BorderRadius.all(Radius.circular(AppSizes.r16)),
+              color: cs.surface,
+              borderRadius: const BorderRadius.all(
+                Radius.circular(AppSizes.r16),
+              ),
               border: Border.all(
-                color: AppColors.border,
+                color: cs.outline,
                 width: AppSizes.borderWidth,
               ),
-              boxShadow: const [AppColors.cardShadow],
+              boxShadow: [clinic.cardShadow],
             ),
       child: ClipRRect(
         borderRadius: const BorderRadius.all(Radius.circular(AppSizes.r16)),
         child: Material(
-          color: transparent ? AppColors.transparent : AppColors.surface,
+          color: transparent ? Colors.transparent : cs.surface,
           child: onTap != null
               ? InkWell(
                   onTap: onTap,
-                  // Match the visual theme with Slate 50 touch highlight tint
-                  splashColor: AppColors.background,
-                  highlightColor: AppColors.background.withAlpha(128),
-                  borderRadius: const BorderRadius.all(Radius.circular(AppSizes.r16)),
+                  splashColor: cs.surfaceContainer,
+                  highlightColor: cs.surfaceContainer.withAlpha(128),
+                  borderRadius: const BorderRadius.all(
+                    Radius.circular(AppSizes.r16),
+                  ),
                   child: cellContent,
                 )
               : cellContent,

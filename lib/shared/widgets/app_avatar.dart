@@ -7,7 +7,6 @@
 library;
 
 import 'package:flutter/material.dart';
-import 'package:spine_clinic_app/core/constants/app_colors.dart';
 
 /// A dynamic avatar that extracts up to two letter initials from [name].
 ///
@@ -15,12 +14,7 @@ import 'package:spine_clinic_app/core/constants/app_colors.dart';
 /// [Icons.person] as a fallback.
 class AppAvatar extends StatelessWidget {
   /// Creates an [AppAvatar].
-  const AppAvatar({
-    super.key,
-    required this.name,
-    this.radius,
-    this.color,
-  });
+  const AppAvatar({super.key, required this.name, this.radius, this.color});
 
   /// The full name to derive initials from (e.g. "Hassan Shaker" → "HS").
   final String name;
@@ -28,32 +22,29 @@ class AppAvatar extends StatelessWidget {
   /// Avatar radius. Defaults to 23 (matching [AppSizes.avatarTile] / 2).
   final double? radius;
 
-  /// Avatar background color. Defaults to [AppColors.primary].
+  /// Avatar background color. Defaults to the active theme primary color.
   final Color? color;
 
   @override
   Widget build(BuildContext context) {
     final double r = radius ?? 23;
     final String? initials = _deriveInitials(name);
+    final ColorScheme cs = Theme.of(context).colorScheme;
 
     return CircleAvatar(
       radius: r,
-      backgroundColor: color ?? AppColors.primary,
+      backgroundColor: color ?? cs.primary,
       child: initials != null
           ? Text(
               initials,
               style: TextStyle(
-                color: AppColors.textOnPrimary,
+                color: cs.onPrimary,
                 fontSize: r * 0.44,
                 fontWeight: FontWeight.w700,
                 height: 1.0,
               ),
             )
-          : Icon(
-              Icons.person,
-              color: AppColors.textOnPrimary,
-              size: r * 0.52,
-            ),
+          : Icon(Icons.person, color: cs.onPrimary, size: r * 0.52),
     );
   }
 

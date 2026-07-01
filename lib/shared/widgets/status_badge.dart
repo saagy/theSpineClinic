@@ -8,13 +8,13 @@
 library;
 
 import 'package:flutter/material.dart';
-import 'package:spine_clinic_app/core/constants/app_colors.dart';
 import 'package:spine_clinic_app/core/constants/app_sizes.dart';
 import 'package:spine_clinic_app/core/constants/app_text_styles.dart';
+import 'package:spine_clinic_app/core/constants/clinic_colors.dart';
 
 /// Predefined status variants that drive the badge colour scheme.
 enum StatusVariant {
-  /// Teal — scheduled, confirmed, active.
+  /// Primary color — scheduled, confirmed, active.
   active,
 
   /// Amber — pending, waiting, under review.
@@ -55,7 +55,7 @@ class StatusBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final (Color fg, Color bg) = _resolveColors();
+    final (Color fg, Color bg) = _resolveColors(context);
 
     return Container(
       padding: const EdgeInsets.symmetric(
@@ -66,29 +66,28 @@ class StatusBadge extends StatelessWidget {
         color: bg,
         borderRadius: AppSizes.borderRadiusPill,
       ),
-      child: Text(
-        label,
-        style: AppTextStyles.captionBold.copyWith(color: fg),
-      ),
+      child: Text(label, style: AppTextStyles.captionBold.copyWith(color: fg)),
     );
   }
 
-  (Color, Color) _resolveColors() {
+  (Color, Color) _resolveColors(BuildContext context) {
     if (color != null && backgroundColor != null) {
       return (color!, backgroundColor!);
     }
 
+    final ColorScheme cs = Theme.of(context).colorScheme;
+    final ClinicColors clinic = ClinicColors.of(context);
     switch (variant) {
       case StatusVariant.active:
-        return (AppColors.textOnPrimary, AppColors.primary);
+        return (cs.onPrimary, cs.primary);
       case StatusVariant.pending:
-        return (AppColors.warning, AppColors.warningBg);
+        return (clinic.warning, clinic.warningContainer);
       case StatusVariant.cancelled:
-        return (AppColors.textOnPrimary, AppColors.error);
+        return (cs.onError, cs.error);
       case StatusVariant.completed:
-        return (AppColors.textOnPrimary, AppColors.success);
+        return (cs.onPrimary, clinic.success);
       case StatusVariant.info:
-        return (AppColors.info, AppColors.infoBg);
+        return (clinic.info, clinic.infoContainer);
     }
   }
 }

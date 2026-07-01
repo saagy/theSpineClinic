@@ -8,8 +8,8 @@
 library;
 
 import 'package:flutter/material.dart';
-import 'package:spine_clinic_app/core/constants/app_colors.dart';
 import 'package:spine_clinic_app/core/constants/app_sizes.dart';
+import 'package:spine_clinic_app/core/constants/app_strings.dart';
 import 'package:spine_clinic_app/core/constants/app_text_styles.dart';
 
 /// A row with sort (left) and filter (right) action buttons.
@@ -37,9 +37,10 @@ class SortFilterBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final ColorScheme cs = Theme.of(context).colorScheme;
     final String filterLabel = activeFilterCount > 0
-        ? 'Filters ($activeFilterCount)'
-        : 'Filters';
+        ? '${AppStrings.filters} ($activeFilterCount)'
+        : AppStrings.filters;
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(
@@ -55,8 +56,9 @@ class SortFilterBar extends StatelessWidget {
           Flexible(
             child: InkWell(
               onTap: onSortTap,
-              borderRadius:
-                  const BorderRadius.all(Radius.circular(AppSizes.r8)),
+              borderRadius: const BorderRadius.all(
+                Radius.circular(AppSizes.r8),
+              ),
               child: Padding(
                 padding: const EdgeInsets.symmetric(
                   horizontal: AppSizes.p8,
@@ -65,9 +67,9 @@ class SortFilterBar extends StatelessWidget {
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Icon(
+                    Icon(
                       Icons.swap_vert_rounded,
-                      color: AppColors.primary,
+                      color: cs.primary,
                       size: AppSizes.iconDefault,
                     ),
                     const SizedBox(width: AppSizes.p4),
@@ -77,7 +79,7 @@ class SortFilterBar extends StatelessWidget {
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: AppTextStyles.bodyMedium.copyWith(
-                          color: AppColors.primary,
+                          color: cs.primary,
                         ),
                       ),
                     ),
@@ -89,8 +91,7 @@ class SortFilterBar extends StatelessWidget {
           // ── Filter button ──
           InkWell(
             onTap: onFilterTap,
-            borderRadius:
-                const BorderRadius.all(Radius.circular(AppSizes.r8)),
+            borderRadius: const BorderRadius.all(Radius.circular(AppSizes.r8)),
             child: Padding(
               padding: const EdgeInsets.symmetric(
                 horizontal: AppSizes.p8,
@@ -99,9 +100,9 @@ class SortFilterBar extends StatelessWidget {
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Icon(
+                  Icon(
                     Icons.tune_rounded,
-                    color: AppColors.textSecondary,
+                    color: cs.onSurfaceVariant,
                     size: AppSizes.iconDefault,
                   ),
                   const SizedBox(width: AppSizes.p4),
@@ -109,8 +110,8 @@ class SortFilterBar extends StatelessWidget {
                     filterLabel,
                     style: AppTextStyles.bodyMedium.copyWith(
                       color: activeFilterCount > 0
-                          ? AppColors.primary
-                          : AppColors.textSecondary,
+                          ? cs.primary
+                          : cs.onSurfaceVariant,
                       fontWeight: activeFilterCount > 0
                           ? FontWeight.w600
                           : FontWeight.w400,

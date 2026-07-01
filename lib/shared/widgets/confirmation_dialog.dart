@@ -7,7 +7,6 @@
 library;
 
 import 'package:flutter/material.dart';
-import 'package:spine_clinic_app/core/constants/app_colors.dart';
 import 'package:spine_clinic_app/core/constants/app_sizes.dart';
 import 'package:spine_clinic_app/core/constants/app_strings.dart';
 import 'package:spine_clinic_app/core/constants/app_text_styles.dart';
@@ -42,27 +41,29 @@ class ConfirmationDialog extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final ColorScheme cs = Theme.of(context).colorScheme;
+
     return AlertDialog(
-      backgroundColor: AppColors.surface, // Pure white background
-      surfaceTintColor: AppColors.transparent, // Disable Material 3 overlay tinting
+      backgroundColor: cs.surface,
+      surfaceTintColor: Colors.transparent,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.all(Radius.circular(AppSizes.r16)), // Modern card radius
+        borderRadius: BorderRadius.all(
+          Radius.circular(AppSizes.r16),
+        ), // Modern card radius
       ),
       insetPadding: const EdgeInsets.symmetric(
         horizontal: AppSizes.p24, // Symmetrical screen edge margins
       ),
-      contentPadding: const EdgeInsets.all(AppSizes.p24), // Uniform content padding
+      contentPadding: const EdgeInsets.all(
+        AppSizes.p24,
+      ), // Uniform content padding
       title: Text(
         title,
-        style: AppTextStyles.headingSmall.copyWith(
-          color: AppColors.textPrimary,
-        ),
+        style: AppTextStyles.headingSmall.copyWith(color: cs.onSurface),
       ),
       content: Text(
         message,
-        style: AppTextStyles.body.copyWith(
-          color: AppColors.textSecondary,
-        ),
+        style: AppTextStyles.body.copyWith(color: cs.onSurfaceVariant),
       ),
       actionsPadding: const EdgeInsets.only(
         right: AppSizes.p24,
@@ -80,12 +81,16 @@ class ConfirmationDialog extends StatelessWidget {
               variant: AppButtonVariant.secondary,
               fullWidth: false,
             ),
-            const SizedBox(width: AppSizes.p12), // 12px compact action separation
+            const SizedBox(
+              width: AppSizes.p12,
+            ), // 12px compact action separation
             // Confirm button (primary or danger based on parameter)
             AppButton(
               labelText: confirmLabel,
               onPressed: () => Navigator.of(context).pop(true),
-              variant: isDestructive ? AppButtonVariant.danger : AppButtonVariant.primary,
+              variant: isDestructive
+                  ? AppButtonVariant.danger
+                  : AppButtonVariant.primary,
               fullWidth: false,
             ),
           ],

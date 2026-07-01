@@ -14,10 +14,10 @@
 library;
 
 import 'package:flutter/material.dart';
-import 'package:spine_clinic_app/core/constants/app_colors.dart';
 import 'package:spine_clinic_app/core/constants/app_sizes.dart';
 import 'package:spine_clinic_app/core/constants/app_strings.dart';
 import 'package:spine_clinic_app/core/constants/app_text_styles.dart';
+import 'package:spine_clinic_app/core/constants/clinic_colors.dart';
 import 'package:spine_clinic_app/features/auth/domain/staff.dart';
 import 'package:spine_clinic_app/shared/widgets/app_avatar.dart';
 
@@ -46,16 +46,14 @@ class StaffProfileHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final ColorScheme cs = Theme.of(context).colorScheme;
+    final ClinicColors clinic = ClinicColors.of(context);
 
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: cs.surface,
         borderRadius: const BorderRadius.all(Radius.circular(AppSizes.r16)),
-        border: Border.all(
-          color: AppColors.border,
-          width: AppSizes.borderWidth,
-        ),
-        boxShadow: const [AppColors.cardShadow],
+        border: Border.all(color: cs.outline, width: AppSizes.borderWidth),
+        boxShadow: [clinic.cardShadow],
       ),
       padding: const EdgeInsets.all(AppSizes.p20),
       child: Column(

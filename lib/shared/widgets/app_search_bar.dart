@@ -8,9 +8,9 @@ library;
 
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:spine_clinic_app/core/constants/app_colors.dart';
 import 'package:spine_clinic_app/core/constants/app_sizes.dart';
 import 'package:spine_clinic_app/core/constants/app_text_styles.dart';
+import 'package:spine_clinic_app/core/constants/clinic_colors.dart';
 
 /// A standard debounced search input styled with Spine Clinic design tokens.
 class AppSearchBar extends StatefulWidget {
@@ -75,7 +75,7 @@ class _AppSearchBarState extends State<AppSearchBar> {
     _debounceTimer?.cancel();
     _controller.clear();
     setState(() {});
-    
+
     // Clear instantly
     widget.onChanged('');
     if (widget.onClear != null) {
@@ -85,13 +85,12 @@ class _AppSearchBarState extends State<AppSearchBar> {
 
   @override
   Widget build(BuildContext context) {
+    final ColorScheme cs = Theme.of(context).colorScheme;
+    final ClinicColors clinic = ClinicColors.of(context);
     // Match AppTextField border styling exactly
     final OutlineInputBorder borderBase = OutlineInputBorder(
       borderRadius: const BorderRadius.all(Radius.circular(AppSizes.r6)),
-      borderSide: const BorderSide(
-        color: AppColors.border,
-        width: AppSizes.borderWidth,
-      ),
+      borderSide: BorderSide(color: cs.outline, width: AppSizes.borderWidth),
     );
 
     return SizedBox(
@@ -101,23 +100,23 @@ class _AppSearchBarState extends State<AppSearchBar> {
         onChanged: _onTextChanged,
         enabled: widget.enabled,
         style: AppTextStyles.body.copyWith(
-          color: widget.enabled ? AppColors.textPrimary : AppColors.textMuted,
+          color: widget.enabled ? cs.onSurface : clinic.textMuted,
         ),
         decoration: InputDecoration(
           isDense: true,
           filled: true,
-          fillColor: widget.enabled ? AppColors.surface : AppColors.background,
+          fillColor: widget.enabled ? cs.surface : cs.surfaceContainer,
           hintText: widget.hintText,
           hintStyle: AppTextStyles.bodySecondary.copyWith(
-            color: AppColors.textMuted,
+            color: clinic.textMuted,
           ),
           contentPadding: const EdgeInsets.symmetric(
             vertical: AppSizes.p12,
             horizontal: AppSizes.p12,
           ),
-          prefixIcon: const Icon(
+          prefixIcon: Icon(
             Icons.search,
-            color: AppColors.textSecondary,
+            color: cs.onSurfaceVariant,
             size: AppSizes.iconDefault,
           ),
           prefixIconConstraints: const BoxConstraints(
@@ -127,9 +126,9 @@ class _AppSearchBarState extends State<AppSearchBar> {
           suffixIcon: _controller.text.isNotEmpty && widget.enabled
               ? GestureDetector(
                   onTap: _handleClear,
-                  child: const Icon(
+                  child: Icon(
                     Icons.close,
-                    color: AppColors.textSecondary,
+                    color: cs.onSurfaceVariant,
                     size: AppSizes.iconDefault,
                   ),
                 )
@@ -142,15 +141,15 @@ class _AppSearchBarState extends State<AppSearchBar> {
           enabledBorder: borderBase,
           // Disabled border state
           disabledBorder: borderBase.copyWith(
-            borderSide: const BorderSide(
-              color: AppColors.border,
+            borderSide: BorderSide(
+              color: cs.outline,
               width: AppSizes.borderWidth,
             ),
           ),
           // Focus border state (transitions cleanly using Flutter's native focus engine)
           focusedBorder: borderBase.copyWith(
-            borderSide: const BorderSide(
-              color: AppColors.borderStrong,
+            borderSide: BorderSide(
+              color: clinic.outlineStrong,
               width: AppSizes.borderWidthFocused,
             ),
           ),

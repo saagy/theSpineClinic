@@ -1,16 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:spine_clinic_app/core/constants/app_colors.dart';
 import 'package:spine_clinic_app/core/constants/app_sizes.dart';
 import 'package:spine_clinic_app/core/constants/app_text_styles.dart';
 
 /// A bottom sheet container styled with Spine Clinic design tokens and DraggableScrollableSheet.
 class AppBottomSheet extends StatelessWidget {
   /// Creates an [AppBottomSheet].
-  const AppBottomSheet({
-    required this.title,
-    required this.builder,
-    super.key,
-  });
+  const AppBottomSheet({required this.title, required this.builder, super.key});
 
   /// Heading label for the modal context.
   final String title;
@@ -28,17 +23,16 @@ class AppBottomSheet extends StatelessWidget {
     return showModalBottomSheet<T>(
       context: context,
       isScrollControlled: isScrollControlled,
-      backgroundColor: AppColors.transparent, // Let Container handle styling shapes
+      backgroundColor: Colors.transparent,
       elevation: 0,
-      builder: (context) => AppBottomSheet(
-        title: title,
-        builder: builder,
-      ),
+      builder: (context) => AppBottomSheet(title: title, builder: builder),
     );
   }
 
   @override
   Widget build(BuildContext context) {
+    final ColorScheme cs = Theme.of(context).colorScheme;
+
     return DraggableScrollableSheet(
       initialChildSize: 0.75,
       minChildSize: 0.5,
@@ -46,10 +40,10 @@ class AppBottomSheet extends StatelessWidget {
       expand: false,
       builder: (context, scrollController) {
         return Container(
-          decoration: const BoxDecoration(
-            color: AppColors.surface, // Pure white background
-            borderRadius: BorderRadius.vertical(
-              top: Radius.circular(AppSizes.r16), // Modern softer top radius
+          decoration: BoxDecoration(
+            color: cs.surface,
+            borderRadius: const BorderRadius.vertical(
+              top: Radius.circular(AppSizes.r16),
             ),
           ),
           child: SafeArea(
@@ -69,32 +63,36 @@ class AppBottomSheet extends StatelessWidget {
                     child: Container(
                       width: AppSizes.handleWidth,
                       height: AppSizes.handleHeight,
-                      decoration: const BoxDecoration(
-                        color: AppColors.border, // Slate 200 cosmetic line
-                        borderRadius: BorderRadius.all(Radius.circular(AppSizes.p2)),
+                      decoration: BoxDecoration(
+                        color: cs.outline,
+                        borderRadius: const BorderRadius.all(
+                          Radius.circular(AppSizes.p2),
+                        ),
                       ),
                     ),
                   ),
                   const SizedBox(height: AppSizes.p8),
                   // Header title and close button row layout
                   Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: AppSizes.p20),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: AppSizes.p20,
+                    ),
                     child: Row(
                       children: [
                         Expanded(
                           child: Text(
                             title,
                             style: AppTextStyles.headingSmall.copyWith(
-                              color: AppColors.textPrimary,
+                              color: cs.onSurface,
                             ),
                           ),
                         ),
                         const SizedBox(width: AppSizes.p12),
                         // Trailing close cross button
                         IconButton(
-                          icon: const Icon(
+                          icon: Icon(
                             Icons.close,
-                            color: AppColors.textSecondary,
+                            color: cs.onSurfaceVariant,
                             size: AppSizes.iconDefault,
                           ),
                           padding: EdgeInsets.zero,
@@ -106,9 +104,7 @@ class AppBottomSheet extends StatelessWidget {
                   ),
                   const SizedBox(height: AppSizes.p12),
                   // Sheet body content block
-                  Expanded(
-                    child: builder(context, scrollController),
-                  ),
+                  Expanded(child: builder(context, scrollController)),
                 ],
               ),
             ),

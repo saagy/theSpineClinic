@@ -7,19 +7,14 @@
 library;
 
 import 'package:flutter/material.dart';
-import 'package:spine_clinic_app/core/constants/app_colors.dart';
 import 'package:spine_clinic_app/core/constants/app_sizes.dart';
 import 'package:spine_clinic_app/core/constants/app_text_styles.dart';
+import 'package:spine_clinic_app/core/constants/clinic_colors.dart';
 
 /// A flat surface container card styled with Spine Clinic design tokens.
 class SectionCard extends StatelessWidget {
   /// Creates a [SectionCard].
-  const SectionCard({
-    super.key,
-    required this.child,
-    this.title,
-    this.action,
-  });
+  const SectionCard({super.key, required this.child, this.title, this.action});
 
   /// The main body content inside the card.
   final Widget child;
@@ -33,16 +28,17 @@ class SectionCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final bool hasHeader = title != null;
+    final ColorScheme cs = Theme.of(context).colorScheme;
+    final ClinicColors clinic = ClinicColors.of(context);
 
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surface, // Pure white background
-        borderRadius: const BorderRadius.all(Radius.circular(AppSizes.r16)), // Softer card radius
-        border: Border.all(
-          color: AppColors.border, // Slate 200 crisp lines
-          width: AppSizes.borderWidth,
-        ),
-        boxShadow: const [AppColors.cardShadow], // Stripe bottom micro-shadow
+        color: cs.surface,
+        borderRadius: const BorderRadius.all(
+          Radius.circular(AppSizes.r16),
+        ), // Softer card radius
+        border: Border.all(color: cs.outline, width: AppSizes.borderWidth),
+        boxShadow: [clinic.cardShadow],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -62,7 +58,7 @@ class SectionCard extends StatelessWidget {
                     child: Text(
                       title!,
                       style: AppTextStyles.headingSmall.copyWith(
-                        color: AppColors.textPrimary,
+                        color: cs.onSurface,
                       ),
                     ),
                   ),

@@ -9,17 +9,14 @@
 library;
 
 import 'package:flutter/material.dart';
-import 'package:spine_clinic_app/core/constants/app_colors.dart';
 import 'package:spine_clinic_app/core/constants/app_sizes.dart';
+import 'package:spine_clinic_app/core/constants/app_strings.dart';
 import 'package:spine_clinic_app/core/constants/app_text_styles.dart';
 
 /// Describes a single active filter chip.
 class ActiveFilterChip {
   /// Creates an [ActiveFilterChip].
-  const ActiveFilterChip({
-    required this.label,
-    required this.onRemove,
-  });
+  const ActiveFilterChip({required this.label, required this.onRemove});
 
   /// Text displayed on the chip (e.g. "Checked In", "Dr. Smith").
   final String label;
@@ -49,6 +46,7 @@ class ActiveFilterChipsRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (chips.isEmpty) return const SizedBox.shrink();
+    final ColorScheme cs = Theme.of(context).colorScheme;
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(
@@ -63,12 +61,14 @@ class ActiveFilterChipsRow extends StatelessWidget {
           children: [
             // ── Pinned Clear All ──
             Material(
-              color: AppColors.errorBg,
-              borderRadius:
-                  const BorderRadius.all(Radius.circular(AppSizes.r24)),
+              color: cs.errorContainer,
+              borderRadius: const BorderRadius.all(
+                Radius.circular(AppSizes.r24),
+              ),
               child: InkWell(
-                borderRadius:
-                    const BorderRadius.all(Radius.circular(AppSizes.r24)),
+                borderRadius: const BorderRadius.all(
+                  Radius.circular(AppSizes.r24),
+                ),
                 onTap: onClearAll,
                 child: Padding(
                   padding: const EdgeInsets.symmetric(
@@ -76,9 +76,9 @@ class ActiveFilterChipsRow extends StatelessWidget {
                     vertical: AppSizes.p6,
                   ),
                   child: Text(
-                    'Clear All',
+                    AppStrings.clearAll,
                     style: AppTextStyles.captionBold.copyWith(
-                      color: AppColors.error,
+                      color: cs.onErrorContainer,
                     ),
                   ),
                 ),
@@ -88,7 +88,7 @@ class ActiveFilterChipsRow extends StatelessWidget {
             Container(
               width: 1,
               height: AppSizes.iconDefault,
-              color: AppColors.border,
+              color: cs.outline,
             ),
             const SizedBox(width: AppSizes.p4),
             // ── Scrollable chips ──
@@ -121,8 +121,10 @@ class ActiveFilterChipsRow extends StatelessWidget {
                             begin: Alignment.centerRight,
                             end: Alignment.centerLeft,
                             colors: [
-                              AppColors.background,
-                              AppColors.background.withAlpha(0),
+                              Theme.of(context).scaffoldBackgroundColor,
+                              Theme.of(
+                                context,
+                              ).scaffoldBackgroundColor.withAlpha(0),
                             ],
                           ),
                         ),
@@ -147,8 +149,9 @@ class _FilterChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final ColorScheme cs = Theme.of(context).colorScheme;
     return Material(
-      color: AppColors.primaryLight,
+      color: cs.primaryContainer,
       borderRadius: const BorderRadius.all(Radius.circular(AppSizes.r24)),
       child: InkWell(
         borderRadius: const BorderRadius.all(Radius.circular(AppSizes.r24)),
@@ -166,15 +169,11 @@ class _FilterChip extends StatelessWidget {
               Text(
                 label,
                 style: AppTextStyles.captionMedium.copyWith(
-                  color: AppColors.primary,
+                  color: cs.onPrimaryContainer,
                 ),
               ),
               const SizedBox(width: AppSizes.p2),
-              const Icon(
-                Icons.close,
-                size: 14,
-                color: AppColors.primary,
-              ),
+              Icon(Icons.close, size: 14, color: cs.onPrimaryContainer),
             ],
           ),
         ),

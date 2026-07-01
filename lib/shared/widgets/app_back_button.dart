@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:spine_clinic_app/core/constants/app_colors.dart';
 import 'package:spine_clinic_app/core/constants/app_strings.dart';
 import 'package:spine_clinic_app/core/network/app_routes.dart';
 import 'package:spine_clinic_app/features/auth/domain/user_role.dart';
@@ -16,7 +15,10 @@ class AppBackButton extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return IconButton(
-      icon: const Icon(Icons.arrow_back, color: AppColors.primary),
+      icon: Icon(
+        Icons.arrow_back,
+        color: Theme.of(context).colorScheme.primary,
+      ),
       tooltip: AppStrings.backTooltip,
       onPressed: () {
         if (context.canPop()) {

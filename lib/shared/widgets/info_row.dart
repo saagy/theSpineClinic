@@ -7,9 +7,9 @@
 library;
 
 import 'package:flutter/material.dart';
-import 'package:spine_clinic_app/core/constants/app_colors.dart';
 import 'package:spine_clinic_app/core/constants/app_sizes.dart';
 import 'package:spine_clinic_app/core/constants/app_text_styles.dart';
+import 'package:spine_clinic_app/core/constants/clinic_colors.dart';
 
 /// A high-density key-value text row styled with Spine Clinic design tokens.
 ///
@@ -51,13 +51,15 @@ class InfoRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (useFixedLabelWidth) {
-      return _buildFixedLabelLayout();
+      return _buildFixedLabelLayout(context);
     }
-    return _buildSpaceBetweenLayout();
+    return _buildSpaceBetweenLayout(context);
   }
 
-  Widget _buildSpaceBetweenLayout() {
-    final Color valueColor = isMuted ? AppColors.textMuted : AppColors.textPrimary;
+  Widget _buildSpaceBetweenLayout(BuildContext context) {
+    final ColorScheme cs = Theme.of(context).colorScheme;
+    final Color muted = ClinicColors.of(context).textMuted;
+    final Color valueColor = isMuted ? muted : cs.onSurface;
 
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: AppSizes.p6),
@@ -68,7 +70,7 @@ class InfoRow extends StatelessWidget {
           Text(
             label,
             style: AppTextStyles.bodySecondary.copyWith(
-              color: AppColors.textSecondary,
+              color: cs.onSurfaceVariant,
             ),
           ),
           const SizedBox(width: AppSizes.p16),
@@ -84,8 +86,10 @@ class InfoRow extends StatelessWidget {
     );
   }
 
-  Widget _buildFixedLabelLayout() {
-    final Color valueColor = isMuted ? AppColors.textMuted : AppColors.textPrimary;
+  Widget _buildFixedLabelLayout(BuildContext context) {
+    final ColorScheme cs = Theme.of(context).colorScheme;
+    final Color muted = ClinicColors.of(context).textMuted;
+    final Color valueColor = isMuted ? muted : cs.onSurface;
 
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -95,7 +99,7 @@ class InfoRow extends StatelessWidget {
           child: Text(
             label,
             style: AppTextStyles.captionMedium.copyWith(
-              color: AppColors.textSecondary,
+              color: cs.onSurfaceVariant,
             ),
           ),
         ),

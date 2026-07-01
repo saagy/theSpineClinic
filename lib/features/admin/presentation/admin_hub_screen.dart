@@ -20,6 +20,7 @@ import 'package:spine_clinic_app/core/constants/app_sizes.dart';
 import 'package:spine_clinic_app/core/constants/app_strings.dart';
 import 'package:spine_clinic_app/core/errors/app_exception.dart';
 import 'package:spine_clinic_app/core/network/app_routes.dart';
+import 'package:spine_clinic_app/core/utils/theme_mode_controller.dart';
 import 'package:spine_clinic_app/features/auth/domain/staff.dart';
 import 'package:spine_clinic_app/features/auth/domain/user_role.dart';
 import 'package:spine_clinic_app/features/auth/presentation/auth_actions.dart';
@@ -78,6 +79,7 @@ class _AdminHubBody extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final ThemeMode currentMode = ref.watch(themeModeControllerProvider);
     return SafeArea(
       child: SingleChildScrollView(
         physics: const AlwaysScrollableScrollPhysics(),
@@ -120,6 +122,14 @@ class _AdminHubBody extends ConsumerWidget {
                     subtitle: AppStrings.configureClinicLabel,
                     leadingIcon: Icons.settings_rounded,
                     onTap: () => context.push(AppRoutes.clinicSettings),
+                  ),
+                  ProfileMenuRow(
+                    title: AppStrings.theme,
+                    subtitle: AppStrings.themeSubtitle,
+                    leadingIcon: Icons.palette_outlined,
+                    trailing: Text(themeModeLabel(currentMode)),
+                    onTap: () =>
+                        ThemeModeController.pickFromSheet(context, ref),
                   ),
                   ProfileMenuRow(
                     title: AppStrings.signOut,

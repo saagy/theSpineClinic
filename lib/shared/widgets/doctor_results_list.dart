@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:spine_clinic_app/core/constants/app_colors.dart';
 import 'package:spine_clinic_app/core/constants/app_sizes.dart';
 import 'package:spine_clinic_app/core/constants/app_strings.dart';
 import 'package:spine_clinic_app/core/constants/app_text_styles.dart';
+import 'package:spine_clinic_app/core/constants/clinic_colors.dart';
 import 'package:spine_clinic_app/features/auth/domain/staff.dart';
 import 'package:spine_clinic_app/shared/widgets/app_avatar.dart';
 
@@ -27,6 +27,9 @@ class DoctorResultsList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final ColorScheme cs = Theme.of(context).colorScheme;
+    final ClinicColors clinic = ClinicColors.of(context);
+
     if (doctors.isEmpty) {
       return Padding(
         padding: const EdgeInsets.symmetric(
@@ -47,28 +50,25 @@ class DoctorResultsList extends StatelessWidget {
       ),
       constraints: const BoxConstraints(maxHeight: 200),
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: cs.surface,
         borderRadius: AppSizes.borderRadiusInput,
-        border: Border.all(
-          color: AppColors.border,
-          width: AppSizes.borderWidth,
-        ),
+        border: Border.all(color: cs.outline, width: AppSizes.borderWidth),
       ),
       child: ListView.separated(
         shrinkWrap: true,
         padding: EdgeInsets.zero,
         itemCount: doctors.length,
-        separatorBuilder: (_, __) => const Divider(
+        separatorBuilder: (_, __) => Divider(
           height: AppSizes.borderWidth,
           thickness: AppSizes.borderWidth,
-          color: AppColors.border,
+          color: cs.outline,
         ),
         itemBuilder: (_, int i) {
           final Staff d = doctors[i];
           final bool isSelected = d.id == selectedId;
 
           return Material(
-            color: isSelected ? AppColors.primaryLight : AppColors.transparent,
+            color: isSelected ? cs.primaryContainer : Colors.transparent,
             child: InkWell(
               onTap: () => onSelect(d),
               child: Padding(
@@ -99,7 +99,7 @@ class DoctorResultsList extends StatelessWidget {
                             Text(
                               AppStrings.deactivated,
                               style: AppTextStyles.caption.copyWith(
-                                color: AppColors.warning,
+                                color: clinic.warning,
                                 fontWeight: FontWeight.w600,
                               ),
                             ),

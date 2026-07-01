@@ -1,7 +1,7 @@
 /// Centralised colour palette for the Spine Clinic application.
 ///
 /// Design tokens follow the Medics Medical App UI Kit aesthetic:
-/// Pure white canvases, a single teal primary accent (#2BB5A0),
+/// Pure white canvases, a single clinical-blue primary accent (#2563EB),
 /// soft shadows, and paired foreground/background status colours.
 ///
 /// Rule 8 — no hardcoded colours anywhere outside this file.
@@ -17,30 +17,30 @@ abstract final class AppColors {
   // ──────────────── Canvas & Surfaces ────────────────
 
   /// Soft off-white/light gray — full-page background canvas.
-  static const Color background = Color(0xFFF8F9FA);
+  static const Color background = Color(0xFFF8FAFC);
 
   /// Pure white — card / container / modal surfaces.
   static const Color surface = Color(0xFFFFFFFF);
 
   /// Light gray — subtle 1px borders, dividers, input outlines.
-  static const Color border = Color(0xFFE8E8E8);
+  static const Color border = Color(0xFFE2E8F0);
 
   /// Slightly darker border used on focus states.
-  static const Color borderStrong = Color(0xFFD0D0D0);
+  static const Color borderStrong = Color(0xFFCBD5E1);
 
-  // ──────────────── Primary (Teal) ────────────────
+  // ──────────────── Primary (Clinical Blue) ────────────────
 
-  /// Teal — primary action buttons, links, active states, icons.
-  static const Color primary = Color(0xFF2BB5A0);
+  /// Clinical blue — primary action buttons, links, active states, icons.
+  static const Color primary = Color(0xFF2563EB);
 
-  /// Darker teal for pressed / hover states.
-  static const Color primaryDark = Color(0xFF239A8A);
+  /// Darker blue for pressed states.
+  static const Color primaryDark = Color(0xFF1D4ED8);
 
-  /// Very light teal tint used for selected-row highlights or badges.
-  static const Color primaryLight = Color(0xFFE8F7F4);
+  /// Very light blue tint used for selected-row highlights or badges.
+  static const Color primaryLight = Color(0xFFDBEAFE);
 
-  /// Deep teal — active nav text, checked-in status text.
-  static const Color primaryDeep = Color(0xFF085041);
+  /// Deep blue for active nav text and selected states.
+  static const Color primaryDeep = Color(0xFF1E3A8A);
 
   /// Checked-in status card background tint.
   static const Color checkedInBg = Color(0xFFF0FAF6);
@@ -59,7 +59,7 @@ abstract final class AppColors {
   /// Light gray — placeholders, disabled text, timestamps.
   static const Color textMuted = Color(0xFF9CA3AF);
 
-  /// White text for use on dark or teal backgrounds.
+  /// White text for use on dark or primary backgrounds.
   static const Color textOnPrimary = Color(0xFFFFFFFF);
 
   // ──────────────── Status Pairs ────────────────

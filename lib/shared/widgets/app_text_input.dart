@@ -1,7 +1,7 @@
-/// Modern rounded text input with teal leading icon and floating label.
+/// Modern rounded text input with themed leading icon and floating label.
 ///
 /// Matches the Medics UI Kit style: rounded border, light gray outline,
-/// coloured leading icon, and a label positioned above the field.
+/// themed leading icon, and a label positioned above the field.
 ///
 /// When [isPassword] is true the field auto-manages its own obscure state
 /// and renders a show/hide eye toggle as the suffix icon.
@@ -10,12 +10,11 @@
 library;
 
 import 'package:flutter/material.dart';
-import 'package:spine_clinic_app/core/constants/app_colors.dart';
 import 'package:spine_clinic_app/core/constants/app_sizes.dart';
 import 'package:spine_clinic_app/core/constants/app_text_styles.dart';
 import 'package:spine_clinic_app/shared/widgets/password_visibility_toggle.dart';
 
-/// A styled text input field with teal accent icon and rounded border.
+/// A styled text input field with themed accent icon and rounded border.
 class AppTextInput extends StatefulWidget {
   /// Creates an [AppTextInput].
   const AppTextInput({
@@ -46,7 +45,7 @@ class AppTextInput extends StatefulWidget {
   /// Placeholder hint inside the field.
   final String? hintText;
 
-  /// Icon displayed at the leading edge (coloured teal).
+  /// Icon displayed at the leading edge.
   final IconData? prefixIcon;
 
   /// Icon displayed at the trailing edge.
@@ -92,8 +91,8 @@ class _AppTextInputState extends State<AppTextInput> {
 
   @override
   Widget build(BuildContext context) {
-    final bool obscured =
-        widget.isPassword ? _obscured : widget.obscureText;
+    final bool obscured = widget.isPassword ? _obscured : widget.obscureText;
+    final ColorScheme cs = Theme.of(context).colorScheme;
     final Widget? suffix = widget.isPassword
         ? PasswordVisibilityToggle(
             isObscured: _obscured,
@@ -110,7 +109,7 @@ class _AppTextInputState extends State<AppTextInput> {
             padding: const EdgeInsets.only(bottom: AppSizes.p6),
             child: Text(
               widget.labelText!,
-              style: AppTextStyles.bodyBold,
+              style: AppTextStyles.bodyBold.copyWith(color: cs.onSurface),
             ),
           ),
         ],
@@ -131,7 +130,7 @@ class _AppTextInputState extends State<AppTextInput> {
             prefixIcon: widget.prefixIcon != null
                 ? Icon(
                     widget.prefixIcon,
-                    color: AppColors.primary,
+                    color: cs.primary,
                     size: AppSizes.iconDefault,
                   )
                 : null,

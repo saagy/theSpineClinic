@@ -1,5 +1,5 @@
 /// A clean section header with bold title on the left and an optional
-/// teal action link on the right.
+/// themed action link on the right.
 ///
 /// Used to introduce card groups, list sections, and form groupings.
 /// No divider — cards themselves provide visual separation.
@@ -8,7 +8,6 @@
 library;
 
 import 'package:flutter/material.dart';
-import 'package:spine_clinic_app/core/constants/app_colors.dart';
 import 'package:spine_clinic_app/core/constants/app_sizes.dart';
 import 'package:spine_clinic_app/core/constants/app_text_styles.dart';
 
@@ -26,7 +25,7 @@ class SectionHeader extends StatelessWidget {
   /// The bold section title displayed on the left.
   final String title;
 
-  /// Optional teal action text (e.g. "See all", "Edit").
+  /// Optional themed action text (e.g. "See all", "Edit").
   final String? actionLabel;
 
   /// Called when the action text is tapped.
@@ -37,8 +36,10 @@ class SectionHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final ColorScheme cs = Theme.of(context).colorScheme;
     return Padding(
-      padding: padding ??
+      padding:
+          padding ??
           const EdgeInsets.symmetric(
             horizontal: AppSizes.p24,
             vertical: AppSizes.p12,
@@ -48,16 +49,14 @@ class SectionHeader extends StatelessWidget {
         children: [
           Text(
             title,
-            style: AppTextStyles.headingSmall,
+            style: AppTextStyles.headingSmall.copyWith(color: cs.onSurface),
           ),
           if (actionLabel != null)
             GestureDetector(
               onTap: onActionTap,
               child: Text(
                 actionLabel!,
-                style: AppTextStyles.bodyMedium.copyWith(
-                  color: AppColors.primary,
-                ),
+                style: AppTextStyles.bodyMedium.copyWith(color: cs.primary),
               ),
             ),
         ],

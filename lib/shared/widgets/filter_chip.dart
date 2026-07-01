@@ -1,8 +1,8 @@
 /// An interactive pill-shaped chip with smooth animated transitions.
 ///
 /// Two variants:
-/// - [AppFilterChipVariant.filled]: solid teal fill + white text (active filter).
-/// - [AppFilterChipVariant.outlined]: white fill + teal border + teal text
+/// - [AppFilterChipVariant.filled]: solid primary fill + white text.
+/// - [AppFilterChipVariant.outlined]: surface fill + primary border/text
 ///   (sort toggles, secondary selectors).
 ///
 /// Designed for horizontal chip rows and inline filter bars.
@@ -11,16 +11,16 @@
 library;
 
 import 'package:flutter/material.dart';
-import 'package:spine_clinic_app/core/constants/app_colors.dart';
 import 'package:spine_clinic_app/core/constants/app_sizes.dart';
 import 'package:spine_clinic_app/core/constants/app_text_styles.dart';
+import 'package:spine_clinic_app/core/constants/clinic_colors.dart';
 
 /// Visual variant for [AppFilterChip].
 enum AppFilterChipVariant {
-  /// Solid teal fill, white text, subtle shadow.
+  /// Solid primary fill, white text, subtle shadow.
   filled,
 
-  /// White fill, teal border, teal text — always "active" appearance
+  /// Surface fill, primary border/text — always "active" appearance
   /// but outlined instead of solid.
   outlined,
 }
@@ -56,6 +56,8 @@ class AppFilterChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final bool outlined = variant == AppFilterChipVariant.outlined;
+    final ColorScheme cs = Theme.of(context).colorScheme;
+    final ClinicColors clinic = ClinicColors.of(context);
 
     final Color bgColor;
     final Color borderColor;
@@ -63,19 +65,19 @@ class AppFilterChip extends StatelessWidget {
     final TextStyle textStyle;
 
     if (isActive && !outlined) {
-      bgColor = AppColors.primary;
-      borderColor = AppColors.primary;
-      textColor = AppColors.textOnPrimary;
+      bgColor = cs.primary;
+      borderColor = cs.primary;
+      textColor = cs.onPrimary;
       textStyle = AppTextStyles.captionBold;
     } else if (isActive && outlined) {
-      bgColor = AppColors.surface;
-      borderColor = AppColors.primary;
-      textColor = AppColors.primary;
+      bgColor = cs.surface;
+      borderColor = cs.primary;
+      textColor = cs.primary;
       textStyle = AppTextStyles.captionBold;
     } else {
-      bgColor = AppColors.surface;
-      borderColor = AppColors.border;
-      textColor = AppColors.textSecondary;
+      bgColor = cs.surface;
+      borderColor = cs.outline;
+      textColor = cs.onSurfaceVariant;
       textStyle = AppTextStyles.captionMedium;
     }
 
@@ -91,12 +93,9 @@ class AppFilterChip extends StatelessWidget {
         decoration: BoxDecoration(
           color: bgColor,
           borderRadius: AppSizes.borderRadiusPill,
-          border: Border.all(
-            color: borderColor,
-            width: AppSizes.borderWidth,
-          ),
+          border: Border.all(color: borderColor, width: AppSizes.borderWidth),
           boxShadow: isActive && !outlined && showShadow
-              ? [AppColors.cardShadow]
+              ? [clinic.cardShadow]
               : null,
         ),
         child: Text(label, style: textStyle.copyWith(color: textColor)),

@@ -8,8 +8,8 @@
 library;
 
 import 'package:flutter/material.dart';
-import 'package:spine_clinic_app/core/constants/app_colors.dart';
 import 'package:spine_clinic_app/core/constants/app_sizes.dart';
+import 'package:spine_clinic_app/core/constants/clinic_colors.dart';
 
 /// A shadow-elevated white card with generous rounded corners.
 class ClinicCard extends StatelessWidget {
@@ -40,12 +40,15 @@ class ClinicCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final ColorScheme cs = Theme.of(context).colorScheme;
+    final ClinicColors clinic = ClinicColors.of(context);
+
     return Container(
       margin: margin,
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: cs.surface,
         borderRadius: AppSizes.borderRadiusCard,
-        boxShadow: [AppColors.cardShadow],
+        boxShadow: [clinic.cardShadow],
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -75,14 +78,13 @@ class ClinicCard extends StatelessWidget {
             ),
           if (child != null)
             Padding(
-              padding: padding ??
+              padding:
+                  padding ??
                   EdgeInsets.only(
                     left: AppSizes.p20,
                     right: AppSizes.p20,
                     bottom: AppSizes.p20,
-                    top: (title != null || trailing != null)
-                        ? 0
-                        : AppSizes.p20,
+                    top: (title != null || trailing != null) ? 0 : AppSizes.p20,
                   ),
               child: child!,
             ),

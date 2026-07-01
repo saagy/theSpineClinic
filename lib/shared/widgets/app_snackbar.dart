@@ -7,9 +7,9 @@
 library;
 
 import 'package:flutter/material.dart';
-import 'package:spine_clinic_app/core/constants/app_colors.dart';
 import 'package:spine_clinic_app/core/constants/app_sizes.dart';
 import 'package:spine_clinic_app/core/constants/app_text_styles.dart';
+import 'package:spine_clinic_app/core/constants/clinic_colors.dart';
 
 /// Available snackbar design variants.
 enum AppSnackbarVariant {
@@ -34,6 +34,8 @@ abstract final class AppSnackbar {
     AppSnackbarVariant variant = AppSnackbarVariant.info,
     Duration duration = const Duration(seconds: 3),
   }) {
+    final ColorScheme cs = Theme.of(context).colorScheme;
+    final ClinicColors clinic = ClinicColors.of(context);
     // Resolve variant styling parameters
     final Color backgroundColor;
     final Color textColor;
@@ -41,25 +43,25 @@ abstract final class AppSnackbar {
 
     switch (variant) {
       case AppSnackbarVariant.success:
-        backgroundColor = AppColors.successBg;
-        textColor = AppColors.success;
-        border = Border.all(color: AppColors.transparent, width: 0);
+        backgroundColor = clinic.successContainer;
+        textColor = clinic.success;
+        border = Border.all(color: Colors.transparent, width: 0);
         break;
       case AppSnackbarVariant.error:
-        backgroundColor = AppColors.errorBg;
-        textColor = AppColors.error;
-        border = Border.all(color: AppColors.transparent, width: 0);
+        backgroundColor = cs.errorContainer;
+        textColor = cs.onErrorContainer;
+        border = Border.all(color: Colors.transparent, width: 0);
         break;
       case AppSnackbarVariant.info:
-        backgroundColor = AppColors.surface;
-        textColor = AppColors.textPrimary;
-        border = Border.all(color: AppColors.border, width: AppSizes.borderWidth);
+        backgroundColor = cs.surface;
+        textColor = cs.onSurface;
+        border = Border.all(color: cs.outline, width: AppSizes.borderWidth);
         break;
     }
 
     final SnackBar snackBar = SnackBar(
       behavior: SnackBarBehavior.floating,
-      backgroundColor: AppColors.transparent,
+      backgroundColor: Colors.transparent,
       elevation: 0,
       margin: const EdgeInsets.all(AppSizes.p16),
       padding: EdgeInsets.zero,
@@ -69,7 +71,7 @@ abstract final class AppSnackbar {
           color: backgroundColor,
           borderRadius: AppSizes.borderRadiusCard,
           border: border,
-          boxShadow: const [AppColors.cardShadow],
+          boxShadow: [clinic.cardShadow],
         ),
         padding: const EdgeInsets.symmetric(
           horizontal: AppSizes.p16,
@@ -79,7 +81,8 @@ abstract final class AppSnackbar {
           message,
           style: AppTextStyles.body.copyWith(
             color: textColor,
-            fontWeight: FontWeight.w500, // Medium weight for high scanning readability
+            fontWeight:
+                FontWeight.w500, // Medium weight for high scanning readability
           ),
         ),
       ),

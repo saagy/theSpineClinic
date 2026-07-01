@@ -12,11 +12,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import 'package:spine_clinic_app/core/constants/app_colors.dart';
 import 'package:spine_clinic_app/core/constants/app_sizes.dart';
 import 'package:spine_clinic_app/core/constants/app_strings.dart';
 import 'package:spine_clinic_app/core/errors/app_exception.dart';
 import 'package:spine_clinic_app/core/network/app_routes.dart';
+import 'package:spine_clinic_app/core/utils/theme_mode_controller.dart';
 import 'package:spine_clinic_app/features/auth/domain/user_role.dart';
 import 'package:spine_clinic_app/features/auth/presentation/auth_actions.dart';
 import 'package:spine_clinic_app/features/auth/presentation/auth_providers.dart';
@@ -33,33 +33,40 @@ class DoctorProfileScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final asyncUser = ref.watch(currentUserProvider);
+    final theme = Theme.of(context);
 
     return asyncUser.when(
-      loading: () => const Scaffold(
-        backgroundColor: AppColors.background,
-        body: Center(child: CircularProgressIndicator(color: AppColors.primary)),
+      loading: () => Scaffold(
+        backgroundColor: theme.scaffoldBackgroundColor,
+        body: Center(
+          child: CircularProgressIndicator(color: theme.colorScheme.primary),
+        ),
       ),
       error: (error, _) => Scaffold(
-        backgroundColor: AppColors.background,
+        backgroundColor: theme.scaffoldBackgroundColor,
         body: ErrorView(
           exception: error is AppException
               ? error
-              : const UnknownException(message: AppStrings.errorDatabaseQueryFailed),
+              : const UnknownException(
+                  message: AppStrings.errorDatabaseQueryFailed,
+                ),
           onRetry: () => ref.invalidate(currentUserProvider),
         ),
       ),
       data: (user) {
         if (user == null) {
-          return const Scaffold(
-            backgroundColor: AppColors.background,
-            body: ErrorView(
-              exception: UnknownException(message: AppStrings.errorAuthSessionExpired),
+          return Scaffold(
+            backgroundColor: theme.scaffoldBackgroundColor,
+            body: const ErrorView(
+              exception: UnknownException(
+                message: AppStrings.errorAuthSessionExpired,
+              ),
             ),
           );
         }
 
         return Scaffold(
-          backgroundColor: AppColors.background,
+          backgroundColor: theme.scaffoldBackgroundColor,
           body: SafeArea(
             child: SingleChildScrollView(
               padding: const EdgeInsets.all(AppSizes.p16),
@@ -76,6 +83,16 @@ class DoctorProfileScreen extends ConsumerWidget {
                     title: AppStrings.appointmentHistory,
                     leadingIcon: Icons.history_rounded,
                     onTap: () => context.push(AppRoutes.doctorHistory),
+                  ),
+                  ProfileMenuRow(
+                    title: AppStrings.theme,
+                    subtitle: AppStrings.themeSubtitle,
+                    leadingIcon: Icons.palette_outlined,
+                    trailing: Text(
+                      themeModeLabel(ref.watch(themeModeControllerProvider)),
+                    ),
+                    onTap: () =>
+                        ThemeModeController.pickFromSheet(context, ref),
                   ),
                   ProfileMenuRow(
                     title: AppStrings.signOut,

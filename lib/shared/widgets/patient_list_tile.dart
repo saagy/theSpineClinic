@@ -7,9 +7,10 @@ library;
 import 'package:auto_size_text/auto_size_text.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:spine_clinic_app/core/constants/app_colors.dart';
 import 'package:spine_clinic_app/core/constants/app_sizes.dart';
+import 'package:spine_clinic_app/core/constants/app_strings.dart';
 import 'package:spine_clinic_app/core/constants/app_text_styles.dart';
+import 'package:spine_clinic_app/core/constants/clinic_colors.dart';
 import 'package:spine_clinic_app/shared/widgets/app_avatar.dart';
 
 /// A standardized patient card list tile with person avatar, name, right-aligned branch,
@@ -56,26 +57,25 @@ class PatientListTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final String lastVisitText = lastVisitDate != null
         ? DateFormat('MMM d').format(lastVisitDate!.toLocal())
-        : 'No visits yet';
+        : AppStrings.noVisitsYet;
+    final ColorScheme cs = Theme.of(context).colorScheme;
+    final ClinicColors clinic = ClinicColors.of(context);
 
     return Container(
       margin: margin ?? const EdgeInsets.only(bottom: AppSizes.p12),
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: cs.surface,
         borderRadius: const BorderRadius.all(Radius.circular(AppSizes.r16)),
-        border: Border.all(
-          color: AppColors.border,
-          width: AppSizes.borderWidth,
-        ),
-        boxShadow: const [AppColors.cardShadow],
+        border: Border.all(color: cs.outline, width: AppSizes.borderWidth),
+        boxShadow: [clinic.cardShadow],
       ),
       child: ClipRRect(
         borderRadius: const BorderRadius.all(Radius.circular(AppSizes.r16)),
         child: Material(
-          color: AppColors.surface,
+          color: cs.surface,
           child: InkWell(
             onTap: onTap,
-            splashColor: AppColors.primaryLight,
+            splashColor: cs.primaryContainer,
             borderRadius: const BorderRadius.all(Radius.circular(AppSizes.r16)),
             child: Padding(
               padding: const EdgeInsets.all(AppSizes.p16),
@@ -101,7 +101,7 @@ class PatientListTile extends StatelessWidget {
                               child: AutoSizeText(
                                 name,
                                 style: AppTextStyles.cardTitle.copyWith(
-                                  color: AppColors.textPrimary,
+                                  color: cs.onSurface,
                                 ),
                                 maxLines: 1,
                                 minFontSize: 12,
@@ -112,7 +112,7 @@ class PatientListTile extends StatelessWidget {
                             Text(
                               branchLabel,
                               style: AppTextStyles.caption.copyWith(
-                                color: AppColors.textSecondary,
+                                color: cs.onSurfaceVariant,
                               ),
                             ),
                           ],
@@ -120,17 +120,17 @@ class PatientListTile extends StatelessWidget {
                         const SizedBox(height: AppSizes.p4),
                         Row(
                           children: [
-                            const Icon(
+                            Icon(
                               Icons.phone_rounded,
                               size: 13,
-                              color: AppColors.textMuted,
+                              color: clinic.textMuted,
                             ),
                             const SizedBox(width: AppSizes.p4),
                             Flexible(
                               child: Text(
                                 phone,
                                 style: AppTextStyles.caption.copyWith(
-                                  color: AppColors.textSecondary,
+                                  color: cs.onSurfaceVariant,
                                 ),
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
@@ -140,8 +140,8 @@ class PatientListTile extends StatelessWidget {
                             Container(
                               width: 3,
                               height: 3,
-                              decoration: const BoxDecoration(
-                                color: AppColors.textMuted,
+                              decoration: BoxDecoration(
+                                color: clinic.textMuted,
                                 shape: BoxShape.circle,
                               ),
                             ),
@@ -151,8 +151,8 @@ class PatientListTile extends StatelessWidget {
                                 lastVisitText,
                                 style: AppTextStyles.caption.copyWith(
                                   color: lastVisitDate != null
-                                      ? AppColors.textSecondary
-                                      : AppColors.textMuted,
+                                      ? cs.onSurfaceVariant
+                                      : clinic.textMuted,
                                 ),
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
