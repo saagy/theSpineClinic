@@ -3,56 +3,61 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:spine_clinic_app/core/constants/app_strings.dart';
 import 'package:spine_clinic_app/core/errors/result.dart';
 import 'package:spine_clinic_app/core/utils/formatters.dart';
-import 'package:spine_clinic_app/features/patient/domain/patient.dart';
-import 'package:spine_clinic_app/features/patient/presentation/patient_providers.dart';
-import 'package:spine_clinic_app/features/patient/presentation/widgets/collect_payment_content.dart';
+import 'package:spine_clinic_app/features/patient/presentation/widgets/edit_payment_content.dart';
+import 'package:spine_clinic_app/features/payments/domain/payment_record.dart';
 import 'package:spine_clinic_app/features/payments/presentation/record_payment_controller.dart';
 import 'package:spine_clinic_app/features/payments/presentation/widgets/payment_input_parsers.dart';
 import 'package:spine_clinic_app/features/payments/presentation/widgets/payment_reason_presets.dart';
 import 'package:spine_clinic_app/shared/widgets/app_snackbar.dart';
 import 'package:spine_clinic_app/shared/widgets/confirmation_dialog.dart';
 
-class CollectPaymentSheet extends ConsumerStatefulWidget {
-  const CollectPaymentSheet({
+class EditPaymentSheet extends ConsumerStatefulWidget {
+  const EditPaymentSheet({
     super.key,
-    required this.patient,
+    required this.payment,
+    required this.patientId,
     this.scrollController,
   });
 
-  final Patient patient;
+  final PaymentRecord payment;
+  final String patientId;
   final ScrollController? scrollController;
 
   @override
-  ConsumerState<CollectPaymentSheet> createState() =>
-      _CollectPaymentSheetState();
+  ConsumerState<EditPaymentSheet> createState() => _EditPaymentSheetState();
 }
 
-class _CollectPaymentSheetState extends ConsumerState<CollectPaymentSheet> {
+class _EditPaymentSheetState extends ConsumerState<EditPaymentSheet> {
   final _amountCtrl = TextEditingController();
   final _totalPriceCtrl = TextEditingController();
   final _reasonCtrl = TextEditingController();
-  final _sessionCtrl = TextEditingController();
-  final _tractionCtrl = TextEditingController();
   final _amountFocus = FocusNode();
+  final _totalFocus = FocusNode();
+  final _reasonFocus = FocusNode();
 
   bool _submitting = false;
   bool _isPartial = false;
-  bool _addToPackage = false;
-  String _reason = AppStrings.paymentReasonNormalPtSession;
+  String _reason = '';
   String _lastTotalPrice = '';
-
-  bool get _isAssessment =>
-      _reason == AppStrings.paymentReasonInitialAssessment ||
-      _reason == AppStrings.paymentReasonReassessment;
 
   @override
   void initState() {
     super.initState();
+    _isPartial = widget.payment.totalPrice != null;
+    _amountCtrl.text = widget.payment.amount.toStringAsFixed(2);
+    final double? totalPrice = widget.payment.totalPrice;
+    if (totalPrice != null) {
+      _totalPriceCtrl.text = totalPrice.toStringAsFixed(2);
+      _lastTotalPrice = _totalPriceCtrl.text;
+    }
+    _reason = paymentReasonPresets.contains(widget.payment.reason)
+        ? widget.payment.reason
+        : AppStrings.paymentReasonOther;
+    if (_reason == AppStrings.paymentReasonOther) {
+      _reasonCtrl.text = widget.payment.reason;
+    }
     _amountCtrl.addListener(_refresh);
     _totalPriceCtrl.addListener(_refresh);
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) FocusScope.of(context).requestFocus(_amountFocus);
-    });
   }
 
   void _refresh() => setState(() {});
@@ -64,9 +69,9 @@ class _CollectPaymentSheetState extends ConsumerState<CollectPaymentSheet> {
     _amountCtrl.dispose();
     _totalPriceCtrl.dispose();
     _reasonCtrl.dispose();
-    _sessionCtrl.dispose();
-    _tractionCtrl.dispose();
     _amountFocus.dispose();
+    _totalFocus.dispose();
+    _reasonFocus.dispose();
     super.dispose();
   }
 
@@ -77,6 +82,9 @@ class _CollectPaymentSheetState extends ConsumerState<CollectPaymentSheet> {
         _totalPriceCtrl.text = _lastTotalPrice.isNotEmpty
             ? _lastTotalPrice
             : _amountCtrl.text;
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted) FocusScope.of(context).requestFocus(_totalFocus);
+        });
       } else {
         _lastTotalPrice = _totalPriceCtrl.text;
         _totalPriceCtrl.clear();
@@ -87,9 +95,7 @@ class _CollectPaymentSheetState extends ConsumerState<CollectPaymentSheet> {
   void _setReason(String value) {
     setState(() {
       _reason = value;
-      _reasonCtrl.clear();
-      _addToPackage =
-          !_isAssessment && value == AppStrings.paymentReasonPackage;
+      if (value != AppStrings.paymentReasonOther) _reasonCtrl.clear();
     });
   }
 
@@ -99,31 +105,20 @@ class _CollectPaymentSheetState extends ConsumerState<CollectPaymentSheet> {
     final double? totalPrice = _isPartial ? _readTotalPrice(amount) : null;
     if (_isPartial && totalPrice == null) return;
     final String reason = _finalReason();
-    if (reason.isEmpty) {
-      return _err(
-        _reason == AppStrings.paymentReasonOther
-            ? AppStrings.customReasonRequiredMessage
-            : AppStrings.reasonRequiredMessage,
-      );
-    }
-    final credits = _readCredits();
-    if (credits == null) return;
+    if (reason.isEmpty) return _err(AppStrings.customReasonRequiredMessage);
 
-    final String amountText = amount.toCurrencyString();
-    final String message = credits.pt > 0 || credits.traction > 0
-        ? AppStrings.confirmRecordPaymentWithCredits(
-            amountText,
-            reason,
-            credits.pt,
-            credits.traction,
-          )
-        : AppStrings.confirmRecordPayment(amountText, reason);
+    final bool paidInFull = !_isPartial || amount == totalPrice;
+    final String message = paidInFull
+        ? AppStrings.confirmEditPaymentPaidInFull()
+        : AppStrings.confirmEditPaymentWithDue(
+            (totalPrice! - amount).toCurrencyString(),
+          );
     final bool? confirm = await showDialog<bool>(
       context: context,
       builder: (_) => ConfirmationDialog(
-        title: AppStrings.confirmPayment,
+        title: AppStrings.editPayment,
         message: message,
-        confirmLabel: AppStrings.confirm,
+        confirmLabel: AppStrings.save,
         cancelLabel: AppStrings.cancel,
       ),
     );
@@ -132,27 +127,44 @@ class _CollectPaymentSheetState extends ConsumerState<CollectPaymentSheet> {
     setState(() => _submitting = true);
     final result = await ref
         .read(recordPaymentControllerProvider.notifier)
-        .submitPayment(
-          patientId: widget.patient.id,
+        .editPayment(
+          paymentId: widget.payment.id,
+          patientId: widget.patientId,
           amount: amount,
           reason: reason,
-          sessionBalanceAdded: credits.pt,
-          tractionBalanceAdded: credits.traction,
-          totalPrice: totalPrice,
+          totalPrice: paidInFull ? null : totalPrice,
         );
     if (!mounted) return;
     if (result is Failure) {
       setState(() => _submitting = false);
       return _err(result.exception.message);
     }
-    ref.invalidate(patientDetailProvider(widget.patient.id));
-    ref.invalidate(patientPaymentsProvider(widget.patient.id));
     AppSnackbar.show(
       context,
-      message: AppStrings.paymentRecordedSuccess,
+      message: AppStrings.paymentUpdated,
       variant: AppSnackbarVariant.success,
     );
     Navigator.of(context).pop();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return EditPaymentContent(
+      scrollController: widget.scrollController,
+      amountCtrl: _amountCtrl,
+      totalPriceCtrl: _totalPriceCtrl,
+      reasonCtrl: _reasonCtrl,
+      amountFocus: _amountFocus,
+      totalFocus: _totalFocus,
+      reasonFocus: _reasonFocus,
+      reason: _reason,
+      reasonPresets: paymentReasonPresets,
+      isPartial: _isPartial,
+      submitting: _submitting,
+      onPartialChanged: _setPartial,
+      onReasonChanged: _setReason,
+      onSubmit: _submit,
+    );
   }
 
   double? _readAmount() {
@@ -170,17 +182,6 @@ class _CollectPaymentSheetState extends ConsumerState<CollectPaymentSheet> {
     return result.value;
   }
 
-  ({int pt, int traction})? _readCredits() {
-    if (!_addToPackage || _isAssessment) return (pt: 0, traction: 0);
-    final int? pt = readOptionalCredit(_sessionCtrl.text);
-    final int? traction = readOptionalCredit(_tractionCtrl.text);
-    if (pt == null) return _errNull(AppStrings.validPtSessionsMessage);
-    if (traction == null) {
-      return _errNull(AppStrings.validTractionSessionsMessage);
-    }
-    return (pt: pt, traction: traction);
-  }
-
   String _finalReason() => _reason == AppStrings.paymentReasonOther
       ? _reasonCtrl.text.trim()
       : _reason;
@@ -190,32 +191,4 @@ class _CollectPaymentSheetState extends ConsumerState<CollectPaymentSheet> {
     message: message,
     variant: AppSnackbarVariant.error,
   );
-
-  ({int pt, int traction})? _errNull(String message) {
-    _err(message);
-    return null;
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return CollectPaymentContent(
-      scrollController: widget.scrollController,
-      amountCtrl: _amountCtrl,
-      totalPriceCtrl: _totalPriceCtrl,
-      reasonCtrl: _reasonCtrl,
-      sessionCtrl: _sessionCtrl,
-      tractionCtrl: _tractionCtrl,
-      amountFocus: _amountFocus,
-      reason: _reason,
-      reasonPresets: paymentReasonPresets,
-      isPartial: _isPartial,
-      addToPackage: _addToPackage,
-      isAssessment: _isAssessment,
-      submitting: _submitting,
-      onPartialChanged: _setPartial,
-      onReasonChanged: _setReason,
-      onPackageChanged: (value) => setState(() => _addToPackage = value),
-      onSubmit: _submit,
-    );
-  }
 }

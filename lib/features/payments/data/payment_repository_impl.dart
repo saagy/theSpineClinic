@@ -124,12 +124,46 @@ class PaymentRepositoryImpl implements PaymentRepository {
     required String paymentId,
     required double amount,
     required String reason,
+    double? totalPrice,
   }) async {
     try {
       await _service.guardQuery(
         () => _service.from(_paymentRecordsTable).update({
           'amount': amount,
           'reason': reason,
+          'total_price': totalPrice,
+        }).eq('id', paymentId),
+      );
+      return const Result.success(null);
+    } on AppException catch (error) {
+      return Result.failure(error);
+    } on Exception catch (error) {
+      return Result.failure(AppException.fromSupabaseException(error));
+    }
+  }
+
+  @override
+  Future<Result<void>> collectDue({
+    required String paymentId,
+    required double additionalAmount,
+  }) async {
+    try {
+      // First fetch current payment record to get the current amount
+      final List<Map<String, dynamic>> rows = await _service.guardQuery(
+        () => _service
+            .from(_paymentRecordsTable)
+            .select('amount')
+            .eq('id', paymentId),
+      );
+      if (rows.isEmpty) {
+        return Result.failure(const UnknownException(message: 'Payment record not found'));
+      }
+      final double currentAmount = (rows.first['amount'] as num).toDouble();
+
+      // Update amount to currentAmount + additionalAmount
+      await _service.guardQuery(
+        () => _service.from(_paymentRecordsTable).update({
+          'amount': currentAmount + additionalAmount,
         }).eq('id', paymentId),
       );
       return const Result.success(null);

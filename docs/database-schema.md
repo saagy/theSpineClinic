@@ -157,6 +157,7 @@ Financial transactions. Balance changes synced to `patients` via trigger.
 | `recorded_at` | `timestamptz` | NO | `now()` | |
 | `session_balance_added` | `integer` | NO | `0` | |
 | `traction_balance_added` | `integer` | NO | `0` | |
+| `total_price` | `numeric` | YES | `NULL` | Full service cost. NULL if paid in full. |
 
 **RLS:** All active staff can read. Only super_admin/receptionist can insert/update/delete.
 

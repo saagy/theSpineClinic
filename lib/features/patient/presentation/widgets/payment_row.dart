@@ -1,23 +1,26 @@
-/// Payment history row with amount and optional admin delete action.
+/// Payment history row component with structured ledger breakdown and context menu.
 ///
-/// Rule 15/16 — all colours via Theme.of(context).colorScheme.
-/// Rule 3 — delete goes through RecordPaymentController, not direct repo.
+/// Rule 1  — under 200 lines.
+/// Rule 3  — Riverpod state management.
+/// Rule 15 — colorScheme tokens.
 library;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:spine_clinic_app/core/constants/app_sizes.dart';
 import 'package:spine_clinic_app/core/constants/app_strings.dart';
-import 'package:spine_clinic_app/core/constants/app_text_styles.dart';
-import 'package:spine_clinic_app/core/utils/formatters.dart';
-import 'package:spine_clinic_app/features/auth/domain/staff.dart';
 import 'package:spine_clinic_app/features/auth/presentation/auth_providers.dart';
+import 'package:spine_clinic_app/features/patient/presentation/widgets/collect_due_sheet.dart';
+import 'package:spine_clinic_app/features/patient/presentation/widgets/edit_payment_sheet.dart';
+import 'package:spine_clinic_app/features/patient/presentation/widgets/payment_ledger_box.dart';
+import 'package:spine_clinic_app/features/patient/presentation/widgets/payment_row_header.dart';
 import 'package:spine_clinic_app/features/payments/domain/payment_record.dart';
 import 'package:spine_clinic_app/features/payments/presentation/record_payment_controller.dart';
+import 'package:spine_clinic_app/shared/widgets/app_bottom_sheet.dart';
 import 'package:spine_clinic_app/shared/widgets/app_snackbar.dart';
 import 'package:spine_clinic_app/shared/widgets/confirmation_dialog.dart';
-import 'package:spine_clinic_app/shared/widgets/data_list_tile.dart';
 
+/// A single payment row card in the patient payment history list.
 class PaymentRow extends ConsumerWidget {
   const PaymentRow({
     super.key,
@@ -25,6 +28,7 @@ class PaymentRow extends ConsumerWidget {
     required this.isAdmin,
     required this.patientId,
   });
+
   final PaymentRecord payment;
   final bool isAdmin;
   final String patientId;
@@ -36,73 +40,81 @@ class PaymentRow extends ConsumerWidget {
         ? ref.watch(staffProfileProvider(payment.recordedBy!))
         : null;
 
-    return DataListTile(
-      titleWidget: Wrap(
-        crossAxisAlignment: WrapCrossAlignment.center,
-        spacing: AppSizes.p8,
-        runSpacing: AppSizes.p4,
-        children: [
-          Text(payment.reason, style: AppTextStyles.bodyBold),
-          if (payment.sessionBalanceAdded > 0)
-            _BalanceTag(
-              label: '+${payment.sessionBalanceAdded} PT',
-              bg: cs.primaryContainer,
-              fg: cs.primary,
-            ),
-          if (payment.tractionBalanceAdded > 0)
-            _BalanceTag(
-              label: '+${payment.tractionBalanceAdded} Tr',
-              bg: cs.secondaryContainer,
-              fg: cs.secondary,
-            ),
-        ],
+    return Card(
+      margin: const EdgeInsets.only(bottom: AppSizes.p12),
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        borderRadius: const BorderRadius.all(Radius.circular(AppSizes.r16)),
+        side: BorderSide(color: cs.outlineVariant, width: AppSizes.borderWidth),
       ),
-      subtitleWidget: _buildSubtitle(ref, recordedByAsync),
-      trailing: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(
-            payment.amount.toCurrencyString(),
-            style: AppTextStyles.bodyBold,
-          ),
-          if (isAdmin) ...[
-            const SizedBox(width: AppSizes.p8),
-            IconButton(
-              icon: Icon(Icons.delete_outline_rounded, color: cs.error, size: AppSizes.iconSmall),
-              onPressed: () => _confirmDelete(context, ref),
+      color: cs.surface,
+      child: ClipRRect(
+        borderRadius: const BorderRadius.all(Radius.circular(AppSizes.r16)),
+        child: InkWell(
+          onTap: isAdmin ? () => _showEditPayment(context) : null,
+          onLongPress: isAdmin ? () => _confirmDelete(context, ref) : null,
+          splashColor: cs.surfaceContainer,
+          highlightColor: cs.surfaceContainer.withAlpha(128),
+          child: Padding(
+            padding: const EdgeInsets.all(AppSizes.p16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                PaymentRowHeader(
+                  payment: payment,
+                  recordedByAsync: recordedByAsync,
+                  isAdmin: isAdmin,
+                  onEdit: () => _showEditPayment(context),
+                  onDelete: () => _confirmDelete(context, ref),
+                ),
+                if (_hasLedgerData)
+                  PaymentLedgerBox(
+                    payment: payment,
+                    isAdmin: isAdmin,
+                    onCollectDue: () => _showCollectDue(context),
+                  ),
+              ],
             ),
-          ],
-        ],
+          ),
+        ),
       ),
     );
   }
 
-  Widget _buildSubtitle(WidgetRef ref, AsyncValue<Staff>? recordedByAsync) {
-    final dateStr = payment.recordedAt.toDateTimeString();
-    final recordedByWidget = recordedByAsync?.when(
-          data: (staff) {
-            final String name = staff.isActive
-                ? staff.fullName
-                : '${staff.fullName} (${AppStrings.deactivated})';
-            return Text(
-              '${AppStrings.recordedBy} $name',
-              style: AppTextStyles.caption,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            );
-          },
-          loading: () => const SizedBox.shrink(),
-          error: (_, __) => const SizedBox.shrink(),
-        ) ??
-        const SizedBox.shrink();
+  bool get _hasLedgerData =>
+      payment.sessionBalanceAdded > 0 ||
+      payment.tractionBalanceAdded > 0 ||
+      payment.totalPrice != null ||
+      payment.hasOutstandingDue;
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Text(dateStr, style: AppTextStyles.caption),
-        if (recordedByAsync != null) recordedByWidget,
-      ],
+  void _showCollectDue(BuildContext context) {
+    AppBottomSheet.show<void>(
+      context: context,
+      title: AppStrings.collectDue,
+      initialChildSize: 0.58,
+      minChildSize: 0.4,
+      maxChildSize: 0.9,
+      builder: (_, scrollController) => CollectDueSheet(
+        payment: payment,
+        patientId: patientId,
+        scrollController: scrollController,
+      ),
+    );
+  }
+
+  void _showEditPayment(BuildContext context) {
+    AppBottomSheet.show<void>(
+      context: context,
+      title: AppStrings.editPayment,
+      initialChildSize: 0.78,
+      minChildSize: 0.5,
+      maxChildSize: 0.95,
+      builder: (_, scrollController) => EditPaymentSheet(
+        payment: payment,
+        patientId: patientId,
+        scrollController: scrollController,
+      ),
     );
   }
 
@@ -123,31 +135,15 @@ class PaymentRow extends ConsumerWidget {
         .deletePayment(paymentId: payment.id, patientId: patientId);
     if (!context.mounted) return;
     result.when(
-      success: (_) => AppSnackbar.show(context,
-          message: AppStrings.paymentDeleted, variant: AppSnackbarVariant.success),
-      failure: (error) => AppSnackbar.show(context,
-          message: error.message, variant: AppSnackbarVariant.error),
-    );
-  }
-}
-
-class _BalanceTag extends StatelessWidget {
-  const _BalanceTag({required this.label, required this.bg, required this.fg});
-  final String label;
-  final Color bg;
-  final Color fg;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: AppSizes.p8, vertical: AppSizes.p2),
-      decoration: BoxDecoration(
-        color: bg,
-        borderRadius: BorderRadius.circular(AppSizes.r6),
+      success: (_) => AppSnackbar.show(
+        context,
+        message: AppStrings.paymentDeleted,
+        variant: AppSnackbarVariant.success,
       ),
-      child: Text(
-        label,
-        style: AppTextStyles.caption.copyWith(color: fg, fontWeight: FontWeight.bold),
+      failure: (error) => AppSnackbar.show(
+        context,
+        message: error.message,
+        variant: AppSnackbarVariant.error,
       ),
     );
   }

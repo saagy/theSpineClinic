@@ -10,7 +10,36 @@
   <link rel="apple-touch-icon" href="icons/Icon-192.png">
   <link rel="icon" type="image/png" href="favicon.png"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <meta name="theme-color" content="#2BB5A0">
+  <!-- Dynamic theme loader script to prevent screen flash on startup -->
+  <script>
+    (function() {
+      try {
+        var theme = localStorage.getItem('flutter.theme_mode_preference');
+        var isDark = false;
+        if (theme) {
+          theme = theme.replace(/^"|"$/g, '');
+          if (theme === 'dark') {
+            isDark = true;
+            document.documentElement.classList.add('dark-theme');
+          } else if (theme === 'light') {
+            isDark = false;
+            document.documentElement.classList.add('light-theme');
+          } else if (theme === 'system') {
+            isDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+          }
+        } else {
+          isDark = false;
+          document.documentElement.classList.add('light-theme');
+        }
+        var newMeta = document.createElement('meta');
+        newMeta.name = 'theme-color';
+        newMeta.content = isDark ? '#0F172A' : '#2563EB';
+        document.getElementsByTagName('head')[0].appendChild(newMeta);
+      } catch (e) {
+        console.error('Error loading theme:', e);
+      }
+    })();
+  </script>
   <title>Spine Clinic</title>
   <link rel="manifest" href="manifest.json">
   <!-- BUILD_ID injected at deploy time so the page knows it changed -->
@@ -18,12 +47,37 @@
   <style>
     body {
       margin: 0;
-      background: #F8F9FA;
+      background: #F8FAFC;
       display: flex;
       align-items: center;
       justify-content: center;
       height: 100vh;
       overflow: hidden;
+      transition: background-color 0.3s ease;
+    }
+    .logo-svg {
+      fill: #2563EB;
+      transition: fill 0.3s ease;
+    }
+    @media (prefers-color-scheme: dark) {
+      body {
+        background: #0F172A;
+      }
+      .logo-svg {
+        fill: #93C5FD;
+      }
+    }
+    .light-theme body {
+      background: #F8FAFC !important;
+    }
+    .light-theme .logo-svg {
+      fill: #2563EB !important;
+    }
+    .dark-theme body {
+      background: #0F172A !important;
+    }
+    .dark-theme .logo-svg {
+      fill: #93C5FD !important;
     }
     #loading {
       display: flex;
@@ -134,7 +188,7 @@
   <div id="loading">
     <div class="logo-container">
       <svg version="1.0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1582.000000 388.000000" preserveAspectRatio="xMidYMid meet" style="width: 100%; height: auto;">
-        <g transform="translate(0.000000,388.000000) scale(0.100000,-0.100000)" fill="#085041" stroke="none">
+        <g class="logo-svg" transform="translate(0.000000,388.000000) scale(0.100000,-0.100000)" fill="#2563EB" stroke="none">
           <path d="M8175 3103 c-218 -25 -413 -107 -543 -228 -81 -75 -126 -145 -163 -256 -29 -86 -32 -105 -32 -224 0 -107 4 -142 23 -200 71 -221 199 -360 497 -539 81 -49 164 -101 183 -116 19 -14 60 -39 90 -55 55 -29 184 -108 315 -193 201 -130 297 -245 325 -390 32 -158 -29 -308 -159 -391 -88 -57 -151 -72 -313 -78 -80 -3 -158 -3 -172 1 -48 12 -60 55 -53 191 4 66 14 167 24 225 10 58 18 140 18 182 0 71 -2 79 -29 107 -43 45 -103 69 -276 112 -175 44 -223 62 -244 94 -13 20 -70 200 -116 370 -47 173 -71 243 -98 285 -60 94 -123 135 -282 185 -154 48 -223 96 -400 275 -114 116 -116 117 -280 201 -141 72 -174 93 -229 148 -35 36 -68 78 -74 94 -9 27 -13 29 -47 23 -40 -6 -129 -44 -155 -66 -30 -25 -18 -64 30 -98 46 -32 59 -67 30 -78 -15 -6 -21 -34 -7 -34 109 -7 217 -46 295 -108 160 -128 201 -160 239 -187 70 -50 64 -80 -29 -154 -29 -23 -63 -60 -75 -84 -30 -58 -30 -147 1 -209 26 -54 148 -173 198 -195 39 -16 45 -13 158 76 28 22 59 40 71 40 48 2 159 -96 256 -224 101 -133 104 -177 18 -239 -39 -28 -58 -53 -97 -128 -53 -102 -86 -134 -253 -247 -107 -73 -172 -97 -285 -105 -115 -9 -185 -32 -315 -106 -58 -33 -169 -91 -246 -129 -176 -85 -176 -85 -114 -223 65 -147 73 -161 109 -185 34 -23 117 -32 155 -17 36 14 37 39 1 78 -45 50 -60 95 -45 140 15 46 37 58 192 110 192 64 266 82 423 106 192 28 226 35 365 80 78 25 158 60 222 96 55 31 118 61 141 65 73 14 461 11 481 -4 25 -18 76 -247 83 -367 3 -62 0 -116 -9 -155 -17 -76 -13 -112 15 -127 38 -21 315 -28 474 -12 275 27 374 50 524 122 168 80 275 183 348 335 53 108 61 148 60 297 0 149 -17 225 -73 324 -42 75 -145 185 -241 258 -58 44 -307 198 -490 303 -334 193 -493 300 -559 376 -50 59 -96 158 -103 220 -18 175 58 323 202 397 90 45 147 54 309 49 134 -4 160 -8 232 -34 146 -53 229 -115 314 -235 73 -103 143 -287 189 -493 7 -29 9 -30 61 -30 55 0 55 0 55 285 0 285 0 285 -34 348 -53 97 -155 180 -293 239 -193 81 -369 113 -608 111 -85 0 -168 -3 -185 -5z"/>
           <path d="M8745 2750 c-3 -5 -1 -10 4 -10 6 0 11 5 11 10 0 6 -2 10 -4 10 -3 0 -8 -4 -11 -10z"/>
           <path d="M9380 2695 c0 -8 5 -15 10 -15 6 0 10 7 10 15 0 8 -4 15 -10 15 -5 0 -10 -7 -10 -15z"/>

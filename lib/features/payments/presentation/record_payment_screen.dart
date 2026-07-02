@@ -111,12 +111,22 @@ class _RecordPaymentFormState extends ConsumerState<_RecordPaymentForm> {
         tractionAdded = tText.isEmpty ? 0 : (int.tryParse(tText) ?? 0);
       }
 
+      final bool isPartial = (values['is_partial'] as bool?) ?? false;
+      double? totalPrice;
+      if (isPartial) {
+        final tpStr = values['total_price'] as String?;
+        if (tpStr != null && tpStr.isNotEmpty) {
+          totalPrice = double.tryParse(tpStr);
+        }
+      }
+
       final result = await ref.read(recordPaymentControllerProvider.notifier).submitPayment(
             patientId: patient.id,
             amount: amount,
             reason: reason,
             sessionBalanceAdded: sessionAdded,
             tractionBalanceAdded: tractionAdded,
+            totalPrice: totalPrice,
           );
 
       if (mounted) {

@@ -29,10 +29,17 @@ abstract class PaymentRepository {
   /// Deletes a payment record by ID.
   Future<Result<void>> deletePayment(String paymentId);
 
-  /// Updates an existing payment record's amount and reason.
+  /// Updates an existing payment record's amount, reason, and total price.
   Future<Result<void>> updatePayment({
     required String paymentId,
     required double amount,
     required String reason,
+    double? totalPrice,
+  });
+
+  /// Collects a due payment amount, adding it to the recorded amount.
+  Future<Result<void>> collectDue({
+    required String paymentId,
+    required double additionalAmount,
   });
 }

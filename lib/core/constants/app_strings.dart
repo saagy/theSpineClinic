@@ -9,28 +9,44 @@ abstract final class AppStrings {
   static const String appTagline = 'Patient & Appointment Manager';
 
   // Error Messages (userMessageKey)
-  static const String errorAuthGeneric = 'Authentication failed. Please try again.';
-  static const String errorAuthInvalidCredentials = 'Invalid email or password.';
-  static const String errorAuthEmailNotConfirmed = 'Email not confirmed. Check your inbox.';
-  static const String errorAuthUserAlreadyExists = 'An account with this email already exists.';
-  static const String errorAuthSessionExpired = 'Your session has expired. Sign in again.';
-  static const String errorAuthRateLimited = 'Too many attempts. Please wait a moment and try again.';
+  static const String errorAuthGeneric =
+      'Authentication failed. Please try again.';
+  static const String errorAuthInvalidCredentials =
+      'Invalid email or password.';
+  static const String errorAuthEmailNotConfirmed =
+      'Email not confirmed. Check your inbox.';
+  static const String errorAuthUserAlreadyExists =
+      'An account with this email already exists.';
+  static const String errorAuthSessionExpired =
+      'Your session has expired. Sign in again.';
+  static const String errorAuthRateLimited =
+      'Too many attempts. Please wait a moment and try again.';
 
-  static const String errorDatabaseGeneric = 'A database error occurred. Try again.';
-  static const String errorDatabasePermissionDenied = 'You do not have permission.';
-  static const String errorDatabaseReferenceNotFound = 'Referenced record not found.';
-  static const String errorDatabaseRecordNotFound = 'The requested record was deleted or does not exist.';
+  static const String errorDatabaseGeneric =
+      'A database error occurred. Try again.';
+  static const String errorDatabasePermissionDenied =
+      'You do not have permission.';
+  static const String errorDatabaseReferenceNotFound =
+      'Referenced record not found.';
+  static const String errorDatabaseRecordNotFound =
+      'The requested record was deleted or does not exist.';
   static const String errorDatabaseDuplicateRecord = 'Record already exists.';
-  static const String errorDatabaseRequiredFieldMissing = 'Required field is missing.';
+  static const String errorDatabaseRequiredFieldMissing =
+      'Required field is missing.';
   static const String errorDatabaseValidationFailed = 'Data validation failed.';
-  static const String errorDatabaseQueryFailed = 'Database query failed. Try again.';
-  static const String errorNetworkGeneric = 'Unable to reach server. Check connection.';
+  static const String errorDatabaseQueryFailed =
+      'Database query failed. Try again.';
+  static const String errorNetworkGeneric =
+      'Unable to reach server. Check connection.';
   static const String errorUnknown = 'An unexpected error occurred. Try again.';
 
   // Document upload size guards
-  static const String errorDocFileTooLarge = 'File is too large to upload. Maximum size is 10 MB.';
-  static const String errorDocImageTooLarge = 'Image is too large to upload. Maximum size is 10 MB.';
-  static const String errorDocPdfTooLarge = 'PDF is too large to upload. Maximum size is 10 MB.';
+  static const String errorDocFileTooLarge =
+      'File is too large to upload. Maximum size is 10 MB.';
+  static const String errorDocImageTooLarge =
+      'Image is too large to upload. Maximum size is 10 MB.';
+  static const String errorDocPdfTooLarge =
+      'PDF is too large to upload. Maximum size is 10 MB.';
   static const String errorAttachmentPartialFail =
       'Patient was saved but some attachments failed to upload. Open the patient to retry them.';
 
@@ -96,7 +112,8 @@ abstract final class AppStrings {
   static const String reject = 'Reject';
   static const String viewDetails = 'View Details';
   static const String appointmentHistory = 'Appointment History';
-  static const String appointmentHistorySubtitle = 'View all of your appointments';
+  static const String appointmentHistorySubtitle =
+      'View all of your appointments';
   static const String editProfileTooltip = 'Edit Profile';
 
   // State Messages
@@ -175,12 +192,14 @@ abstract final class AppStrings {
   static const String deleteAppointment = 'Delete Appointment';
   static const String appointmentDeleted = 'Appointment deleted successfully.';
   static const String appointmentUpdated = 'Appointment updated successfully.';
-  static const String deleteAppointmentWarning = 'This will permanently remove the appointment record and doctor assignments. This action cannot be undone.';
-  static const String usePackageChangeWarning = 'Cannot change package deduction. This option can only be edited for "Scheduled" appointments, not for checked-in or completed sessions.';
+  static const String deleteAppointmentWarning =
+      'This will permanently remove the appointment record and doctor assignments. This action cannot be undone.';
+  static const String usePackageChangeWarning =
+      'Cannot change package deduction. This option can only be edited for "Scheduled" appointments, not for checked-in or completed sessions.';
   static const String deletePatient = 'Delete Patient';
-  static const String deletePatientWarning = 'This will permanently remove this patient record. This action cannot be undone.';
+  static const String deletePatientWarning =
+      'This will permanently remove this patient record. This action cannot be undone.';
   static const String patientDeleted = 'Patient deleted successfully.';
-
 
   // Replacement
   static const String initiateReplacement = 'Initiate Replacement';
@@ -204,8 +223,10 @@ abstract final class AppStrings {
       'No appointments found for this doctor on this date.';
 
   // Confirmation Dialogs
-  static const String confirmDelete = 'Are you sure you want to delete this record?';
-  static const String confirmCancel = 'Are you sure you want to cancel this appointment?';
+  static const String confirmDelete =
+      'Are you sure you want to delete this record?';
+  static const String confirmCancel =
+      'Are you sure you want to cancel this appointment?';
   static const String confirmSignOut = 'Are you sure you want to sign out?';
   static const String actionCannotBeUndone = 'This action cannot be undone.';
 
@@ -221,7 +242,8 @@ abstract final class AppStrings {
   static const String numberOfSessions = 'Number of Sessions';
   static const String scheduledSlots = 'Scheduled Slots Preview';
   static const String bookingSuccess = 'Appointment booked successfully.';
-  static const String bookingRecurringSuccess = 'Recurring appointments booked successfully.';
+  static const String bookingRecurringSuccess =
+      'Recurring appointments booked successfully.';
   static const String bookingError = 'Failed to book appointment.';
   static const String accessDenied = 'Access denied. Receptionist/Admin only.';
   static const String patientRequired = 'Patient ID is required.';
@@ -229,7 +251,8 @@ abstract final class AppStrings {
   static const String timeRequired = 'Time is required.';
   static const String sessionsRequired = 'Number of sessions is required.';
   static const String daysRequired = 'At least one day must be selected.';
-  static const String noAssignedDoctors = 'No assigned doctors found for this patient.';
+  static const String noAssignedDoctors =
+      'No assigned doctors found for this patient.';
   static const String selectDate = 'Select Date';
   static const String selectTime = 'Select Time';
   static const String checkInPatient = 'Check In Patient';
@@ -244,7 +267,8 @@ abstract final class AppStrings {
       'Insufficient package balance. Toggle off \'Use Package\' to book as a paid session.';
   static const String negativeBalanceOutstanding =
       'Outstanding balance — patient owes sessions from previous bookings.';
-  static const String errorLoadingPackageMetrics = 'Error loading package metrics.';
+  static const String errorLoadingPackageMetrics =
+      'Error loading package metrics.';
   static const String liveLedgerPreview = 'Live Ledger Preview';
   static const String ptSessionsBucket = 'PT Sessions';
   static const String tractionSessionsBucket = 'Traction Sessions';
@@ -281,23 +305,105 @@ abstract final class AppStrings {
   static const String paymentRecordedSuccess = 'Payment recorded successfully.';
   static const String selectPackage = 'Select Package';
   static const String patientDisplayName = 'Patient';
-  static const String doctorAccessBlocked = 'Doctors are completely restricted from modifying payment databases.';
+  static const String doctorAccessBlocked =
+      'Doctors are completely restricted from modifying payment databases.';
+  static const String paymentLoginRequired =
+      'Must be logged in to manage payments.';
+  static const String paymentAccessDenied =
+      'Only super admins and receptionists can manage payments.';
   static const String sessionBalanceAddedField = 'PT Sessions Added';
   static const String tractionBalanceAddedField = 'Traction Sessions Added';
   static const String packageContentsLabelPrefix = 'Includes';
+
+  // Partial Payments & Editing
+  static const String collectDue = 'Collect Due';
+  static const String totalAmount = 'Total Amount';
+  static const String serviceTotal = 'Total Amount';
+  static const String amountPaidNow = 'Amount paid now';
+  static const String amountPaidSoFar = 'Amount paid so far';
+  static const String amountToCollect = 'Amount to collect';
+  static const String currencyEgp = 'EGP';
+  static const String zeroAmountHint = '0.00';
+  static const String amountPaid = 'Amount Paid';
+  static const String dueBalance = 'Due balance';
+  static const String remainingDue = 'Remaining due';
+  static const String remainingAfterThis = 'Remaining after this';
+  static const String liveSummary = 'Live summary';
+  static const String paymentSummaryOf = 'Of';
+  static const String paidInFull = 'Fully Paid';
+  static const String partialPayment = 'Partial payment';
+  static const String paidInFullMode = 'Fully Paid';
+  static const String partialPaymentMode = 'Partial payment';
+  static const String totalOutstanding = 'Total Outstanding';
+  static const String confirmCollection = 'Confirm Collection';
+  static const String saveChanges = 'Save Changes';
+  static const String editPaymentHint =
+      'To record a new collection, use the "Collect Due" button.';
+  static const String partialPaymentHelpText =
+      'Turn on if the patient paid only part of the total.';
+  static const String amountRequiredMessage = 'Please enter an amount.';
+  static const String reasonRequiredMessage = 'Please enter a reason.';
+  static const String totalAmountRequired = 'Total Amount is required.';
+  static const String totalAmountPositive =
+      'Total Amount must be greater than zero.';
+  static const String amountExceedsServiceTotal =
+      'Amount paid cannot exceed Total Amount.';
+  static const String amountExceedsRemainingDue =
+      'Amount cannot exceed remaining due.';
+  static const String customReasonRequiredMessage =
+      'Please enter a custom reason.';
+  static const String validPtSessionsMessage =
+      'Enter a valid PT session amount or leave it empty.';
+  static const String validTractionSessionsMessage =
+      'Enter a valid traction amount or leave it empty.';
+  static const String validNumericAmount = 'Must be a valid numeric amount.';
+  static const String specifyReason = 'Specify reason';
+  static const String customReasonHint = 'Enter custom payment description';
+  static const String chooseClinicPackage = 'Choose clinic package';
+  static const String packageSelectionRequired =
+      'Package selection is required';
+  static const String leaveEmptyToSkip = 'Blank = 0';
+  static const String addBalanceAssessmentDisabled =
+      'Assessment payments do not add package balances.';
+  static const String noRemainingDueSaved =
+      'No remaining due. This payment will be saved as paid in full.';
+  static const String collectionRecordedSuccess =
+      'Collection recorded successfully.';
+
+  static String recordPaymentCta(String amount) => 'Record $amount';
+  static String collectPaymentCta(String amount) => 'Collect $amount';
+  static String dueAmountLabel(String amount) => 'Due: $amount';
+  static String confirmRecordPayment(String amount, String reason) =>
+      'Record $amount for $reason?';
+  static String confirmRecordPaymentWithCredits(
+    String amount,
+    String reason,
+    int pt,
+    int traction,
+  ) => 'Record $amount for $reason and add $pt PT + $traction traction?';
+  static String confirmCollectDue(String amount) =>
+      'Record collection of $amount for this due payment?';
+  static String confirmEditPaymentPaidInFull() =>
+      'Save changes? This payment will have no remaining due.';
+  static String confirmEditPaymentWithDue(String due) =>
+      'Save changes to this payment record? Remaining due will be $due.';
 
   // Package Balance Edit Strings
   static const String editPackageBalance = 'Edit Package Balances';
   static const String enterNewPackageBalance = 'Enter new package balance';
   static const String balanceRequired = 'Please enter a balance';
   static const String balanceMustBeInteger = 'Must be a valid integer';
-  static const String packageBalanceUpdatedSuccess = 'Package balances updated successfully.';
-  static const String editPackageBalanceAccessDenied = 'Only super admins and receptionists can edit package balances.';
+  static const String packageBalanceUpdatedSuccess =
+      'Package balances updated successfully.';
+  static const String editPackageBalanceAccessDenied =
+      'Only super admins and receptionists can edit package balances.';
   static const String sessionBalanceHint = 'Sets the new total for PT sessions';
-  static const String tractionBalanceHint = 'Sets the new total for traction sessions';
+  static const String tractionBalanceHint =
+      'Sets the new total for traction sessions';
   static const String currentBalancePrefix = 'Current: ';
   static const String addBalanceToggleTitle = 'Add to package balances';
-  static const String addBalanceBothZero = 'Leave any field empty to skip that bucket';
+  static const String addBalanceBothZero =
+      'Leave any field empty to skip that bucket';
   static const String editReplacesExplanation =
       'Sets the new totals. Editing this way replaces the previous values.';
 
@@ -305,8 +411,10 @@ abstract final class AppStrings {
   static const String revertToScheduled = 'Revert to Scheduled';
   static const String undoCheckIn = 'Undo Check-In';
   static const String restoreToScheduled = 'Restore to Scheduled';
-  static const String confirmRevert = 'Are you sure you want to revert this appointment to scheduled?';
-  static const String confirmRestore = 'Are you sure you want to restore this appointment to scheduled?';
+  static const String confirmRevert =
+      'Are you sure you want to revert this appointment to scheduled?';
+  static const String confirmRestore =
+      'Are you sure you want to restore this appointment to scheduled?';
 
   // Staff Management Strings
   static const String staffManagement = 'Staff Management';
@@ -321,13 +429,16 @@ abstract final class AppStrings {
   static const String active = 'Active';
   static const String deactivated = 'Deactivated';
   static const String changePassword = 'Change Password';
-  static const String deactivateStaffConfirm = 'Deactivate this staff member? They will no longer be able to log in.';
-  static const String selfDeactivationError = 'You cannot deactivate your own account.';
+  static const String deactivateStaffConfirm =
+      'Deactivate this staff member? They will no longer be able to log in.';
+  static const String selfDeactivationError =
+      'You cannot deactivate your own account.';
   static const String staffCreateSuccess = 'Staff member created successfully.';
   static const String staffUpdateSuccess = 'Staff member updated successfully.';
   static const String passwordRequired = 'Password is required';
   static const String passwordsDoNotMatch = 'Passwords do not match';
-  static const String passwordMinLength = 'Password must be at least 8 characters';
+  static const String passwordMinLength =
+      'Password must be at least 8 characters';
   static const String emailRequired = 'Email is required';
   static const String emailInvalid = 'Invalid email format';
   static const String fullNameRequired = 'Full name is required';
@@ -339,8 +450,10 @@ abstract final class AppStrings {
   static const String clinicSettings = 'Clinic Settings';
   static const String reportsAndAnalytics = 'Reports & Analytics';
   static const String manageDoctorsLabel = 'Review and approve new doctors';
-  static const String manageStaffLabel = 'Manage receptionist and admin accounts';
-  static const String configureClinicLabel = 'Set up session packages and pricing';
+  static const String manageStaffLabel =
+      'Manage receptionist and admin accounts';
+  static const String configureClinicLabel =
+      'Set up session packages and pricing';
   static const String noPendingApplications = 'No pending applications found.';
   static const String pending = 'Pending';
   static const String allApplications = 'All Applications';
@@ -358,19 +471,24 @@ abstract final class AppStrings {
   static const String packageKindLabel = 'Package Type';
   static const String nameRequired = 'Package name is required';
   static const String sessionCountRequired = 'Session count is required';
-  static const String sessionCountPositive = 'Session count must be an integer greater than zero';
-  static const String tractionsCountPositive = 'Traction count must be an integer greater than zero';
-  static const String packageCountsAtLeastOne = 'At least one of PT sessions or traction count must be greater than zero';
+  static const String sessionCountPositive =
+      'Session count must be an integer greater than zero';
+  static const String tractionsCountPositive =
+      'Traction count must be an integer greater than zero';
+  static const String packageCountsAtLeastOne =
+      'At least one of PT sessions or traction count must be greater than zero';
   static const String priceRequired = 'Price is required';
   static const String pricePositive = 'Price must be greater than zero';
   static const String packageCreatedSuccess = 'Package added successfully.';
   static const String packageUpdatedSuccess = 'Package updated successfully.';
   static const String packageDeletedSuccess = 'Package deleted successfully.';
-  static const String deletePackageConfirm = 'Are you sure you want to delete this package? This action cannot be undone.';
+  static const String deletePackageConfirm =
+      'Are you sure you want to delete this package? This action cannot be undone.';
   static const String noPackages = 'No clinic packages configured yet.';
   static const String doctor = 'Doctor';
   static const String packageSummarySessions = 'PT Package Sessions';
-  static const String packageSummaryTractions = 'Spinal Traction Package Sessions';
+  static const String packageSummaryTractions =
+      'Spinal Traction Package Sessions';
 
   // Profile / Settings
   static const String profile = 'Profile';
@@ -380,7 +498,8 @@ abstract final class AppStrings {
   static const String historicAppointments = 'Historic Appointments';
   static const String noHistoricAppointments = 'No past appointments found.';
   static const String branchSelectionHint = 'Select your active branch';
-  static const String profileSettingsDescription = 'Manage your preferences and account settings.';
+  static const String profileSettingsDescription =
+      'Manage your preferences and account settings.';
   static const String theme = 'Theme';
   static const String themeSubtitle = 'Light, dark, or follow system';
   static const String themeModeLight = 'Light';
@@ -403,22 +522,27 @@ abstract final class AppStrings {
   static const String branch = 'Branch';
   static const String loadMore = 'Load More';
   static const String registerNewPatient = 'Register New Patient';
-  static const String patientRegisteredSuccess = 'Patient registered successfully.';
+  static const String patientRegisteredSuccess =
+      'Patient registered successfully.';
   static const String quickPayment = 'Quick Payment';
   static const String paymentAmountHint = 'Enter amount';
   static const String paymentReasonHint = 'Enter reason';
   static const String confirmPayment = 'Confirm Payment';
-  static const String confirmPaymentMessage = 'Record a payment of %s for this patient?';
+  static const String confirmPaymentMessage =
+      'Record a payment of %s for this patient?';
 
   // Note deletion
   static const String deleteNote = 'Delete Note';
-  static const String confirmDeleteNote = 'Are you sure you want to delete this note?';
+  static const String confirmDeleteNote =
+      'Are you sure you want to delete this note?';
   static const String noteDeleted = 'Note deleted successfully.';
-  static const String cannotSaveEmptyNote = 'Note text cannot be empty. If you want to remove the note, please delete it instead.';
+  static const String cannotSaveEmptyNote =
+      'Note text cannot be empty. If you want to remove the note, please delete it instead.';
 
   // Payment CRUD
   static const String deletePayment = 'Delete Payment';
-  static const String confirmDeletePayment = 'Are you sure you want to delete this payment record?';
+  static const String confirmDeletePayment =
+      'Are you sure you want to delete this payment record?';
   static const String paymentDeleted = 'Payment deleted successfully.';
   static const String editPayment = 'Edit Payment';
   static const String paymentUpdated = 'Payment updated successfully.';
@@ -445,8 +569,10 @@ abstract final class AppStrings {
 
   // Quick Payment
   static const String fillAmountAndReason = 'Please fill in amount and reason.';
-  static const String packageBalanceMustBeInteger = 'Package balance must be a valid integer.';
-  static const String addPackageBalanceOptional = 'Add Package Balances (optional)';
+  static const String packageBalanceMustBeInteger =
+      'Package balance must be a valid integer.';
+  static const String addPackageBalanceOptional =
+      'Add Package Balances (optional)';
   static const String packageBalanceHint = 'E.g. 5 to add 5 sessions';
   static const String zeroIsAllowed = 'Leave at 0 to skip';
 
@@ -464,7 +590,8 @@ abstract final class AppStrings {
   static const String filterByDate = 'Filter by Date';
   static const String noAppointmentsFound = 'No appointments found.';
   static const String allDoctorsAppts = 'All Doctors';
-  static const String accessDeniedAdminReceptionOnly = 'Access denied. Receptionist/Admin only.';
+  static const String accessDeniedAdminReceptionOnly =
+      'Access denied. Receptionist/Admin only.';
 
   // ── Admin Reports / Analytics ──
   static const String totalPatients = 'Total Patients';
@@ -521,10 +648,12 @@ abstract final class AppStrings {
   static String coveringDoctorLabel(String name) => 'Covering $name';
 
   /// Returns formatted "No patients found for '[query]'" message.
-  static String noPatientsFoundFor(String query) => "No patients found for '$query'";
+  static String noPatientsFoundFor(String query) =>
+      "No patients found for '$query'";
 
   /// Returns formatted "You are covering for [name] today" banner message.
-  static String coveringForDoctorToday(String name) => 'You are covering for $name today';
+  static String coveringForDoctorToday(String name) =>
+      'You are covering for $name today';
 
   /// Returns formatted "Today, [date]" header string.
   static String todayWithDate(String dateStr) => 'Today, $dateStr';
@@ -533,7 +662,8 @@ abstract final class AppStrings {
   static const String addVisitNotes = 'Add Visit Notes';
   static const String visitDetails = 'Visit Details';
   static const String editNotesTooltip = 'Edit Notes';
-  static const String noStaffAssignedToSession = 'No staff assigned to this session.';
+  static const String noStaffAssignedToSession =
+      'No staff assigned to this session.';
 
   // ── Doctor Overlay ──
   static const String selectDoctors = 'Select Doctors';
@@ -552,9 +682,10 @@ abstract final class AppStrings {
   static const String noPaymentsRecorded = 'No payments recorded';
   static const String totalPaid = 'Total Paid';
   static const String noDoctorsAssigned = 'No doctors assigned';
-  static const String errorLoadingAssignedDoctors = 'Error loading assigned doctors';
+  static const String errorLoadingAssignedDoctors =
+      'Error loading assigned doctors';
   static const String tabInfo = 'Info';
-  static const String tabRecords = 'Records';
+  static const String tabRecords = 'Notes';
   static const String tabDocuments = 'Documents';
   static const String sortOptions = 'Sort Options';
   static const String totalNotes = 'Total Notes';
@@ -603,12 +734,14 @@ abstract final class AppStrings {
   static const String yearToDate = 'Year to Date';
   static const String busiestDay = 'Busiest Day';
   static const String noFinancialData = 'No financial data for this period.';
-  static const String noAppointmentData = 'No appointment data for this period.';
+  static const String noAppointmentData =
+      'No appointment data for this period.';
   static const String noStaffData = 'No staff data for this period.';
   static const String noPatientData = 'No patient data for this period.';
   static const String cashPayments = 'Cash / Card';
   static const String packageRedemptions = 'Package Redemptions';
-  static const String patientsWithNegativeBalance = 'Patients with negative balance';
+  static const String patientsWithNegativeBalance =
+      'Patients with negative balance';
   static const String packagesSold = 'Packages Sold';
   static const String packagesSoldValue = 'Packages Sold Value';
   static const String sessionsCompleted = 'Sessions Completed';

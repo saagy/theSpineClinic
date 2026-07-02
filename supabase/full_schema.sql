@@ -114,7 +114,8 @@ CREATE TABLE public.payment_records (
     recorded_by            uuid REFERENCES public.staff(id),
     recorded_at            timestamptz NOT NULL DEFAULT now(),
     session_balance_added  integer NOT NULL DEFAULT 0,
-    traction_balance_added integer NOT NULL DEFAULT 0
+    traction_balance_added integer NOT NULL DEFAULT 0,
+    total_price            numeric DEFAULT NULL
 );
 ALTER TABLE public.payment_records ENABLE ROW LEVEL SECURITY;
 

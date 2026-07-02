@@ -23,6 +23,7 @@ import 'package:spine_clinic_app/features/patient/presentation/patient_documents
 import 'package:spine_clinic_app/features/patient/presentation/widgets/add_note_sheet.dart';
 import 'package:spine_clinic_app/features/patient/presentation/widgets/collect_payment_sheet.dart';
 import 'package:spine_clinic_app/features/patient/presentation/widgets/quick_actions_sheet.dart';
+import 'package:spine_clinic_app/shared/widgets/app_bottom_sheet.dart';
 import 'package:spine_clinic_app/shared/widgets/app_snackbar.dart';
 
 class PatientQuickActionsFab extends ConsumerStatefulWidget {
@@ -50,14 +51,16 @@ class _PatientQuickActionsFabState
 
   void _onCollectPayment() {
     Navigator.of(context, rootNavigator: true).pop();
-    showModalBottomSheet(
+    AppBottomSheet.show<void>(
       context: context,
-      isScrollControlled: true,
-      shape: const RoundedRectangleBorder(
-        borderRadius:
-            BorderRadius.vertical(top: Radius.circular(AppSizes.r16)),
+      title: AppStrings.collectPayment,
+      initialChildSize: 0.82,
+      minChildSize: 0.5,
+      maxChildSize: 0.95,
+      builder: (_, scrollController) => CollectPaymentSheet(
+        patient: widget.patient,
+        scrollController: scrollController,
       ),
-      builder: (_) => CollectPaymentSheet(patient: widget.patient),
     );
   }
 
@@ -67,8 +70,7 @@ class _PatientQuickActionsFabState
       context: context,
       isScrollControlled: true,
       shape: const RoundedRectangleBorder(
-        borderRadius:
-            BorderRadius.vertical(top: Radius.circular(AppSizes.r16)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(AppSizes.r16)),
       ),
       builder: (_) => AddNoteSheet(patientId: widget.patient.id),
     );
@@ -87,9 +89,11 @@ class _PatientQuickActionsFabState
     if (!mounted) return;
     final Uint8List? bytes = file.bytes;
     if (bytes == null) {
-      AppSnackbar.show(context,
-          message: AppStrings.fromKey('error_doc_file_too_large'),
-          variant: AppSnackbarVariant.error);
+      AppSnackbar.show(
+        context,
+        message: AppStrings.fromKey('error_doc_file_too_large'),
+        variant: AppSnackbarVariant.error,
+      );
       return;
     }
 
@@ -100,12 +104,16 @@ class _PatientQuickActionsFabState
           .uploadDocument(fileName: file.name, fileBytes: bytes);
       if (!mounted) return;
       uploadResult.when(
-        success: (_) => AppSnackbar.show(context,
-            message: AppStrings.documentUploaded,
-            variant: AppSnackbarVariant.success),
-        failure: (AppException error) => AppSnackbar.show(context,
-            message: AppStrings.fromKey(error.userMessageKey),
-            variant: AppSnackbarVariant.error),
+        success: (_) => AppSnackbar.show(
+          context,
+          message: AppStrings.documentUploaded,
+          variant: AppSnackbarVariant.success,
+        ),
+        failure: (AppException error) => AppSnackbar.show(
+          context,
+          message: AppStrings.fromKey(error.userMessageKey),
+          variant: AppSnackbarVariant.error,
+        ),
       );
     } finally {
       if (mounted) setState(() => _isUploading = false);
@@ -122,20 +130,21 @@ class _PatientQuickActionsFabState
       onPressed: _isUploading
           ? null
           : () => showModalBottomSheet(
-                context: context,
-                useRootNavigator: true,
-                shape: const RoundedRectangleBorder(
-                  borderRadius:
-                      BorderRadius.vertical(top: Radius.circular(AppSizes.r16)),
-                ),
-                builder: (_) => QuickActionsSheet(
-                  isDoctor: widget.isDoctor,
-                  onBookAppointment: _onBookAppointment,
-                  onCollectPayment: _onCollectPayment,
-                  onAddNote: _onAddNote,
-                  onAddDocument: _onAddDocument,
+              context: context,
+              useRootNavigator: true,
+              shape: const RoundedRectangleBorder(
+                borderRadius: BorderRadius.vertical(
+                  top: Radius.circular(AppSizes.r16),
                 ),
               ),
+              builder: (_) => QuickActionsSheet(
+                isDoctor: widget.isDoctor,
+                onBookAppointment: _onBookAppointment,
+                onCollectPayment: _onCollectPayment,
+                onAddNote: _onAddNote,
+                onAddDocument: _onAddDocument,
+              ),
+            ),
       child: _isUploading
           ? SizedBox(
               width: AppSizes.iconDefault,

@@ -21,9 +21,25 @@ double _amountFromJson(Object? value) {
 
 Object _amountToJson(double value) => value;
 
+double? _nullableAmountFromJson(Object? value) {
+  if (value == null) return null;
+  if (value is num) {
+    return value.toDouble();
+  }
+  if (value is String) {
+    return double.tryParse(value);
+  }
+  return null;
+}
+
+Object? _nullableAmountToJson(double? value) => value;
+
 /// A payment record in the Spine Clinic system.
 @freezed
 abstract class PaymentRecord with _$PaymentRecord {
+  /// Constructor required to add custom getters / methods to a Freezed class.
+  const PaymentRecord._();
+
   /// Creates a [PaymentRecord].
   const factory PaymentRecord({
     required String id,
@@ -38,7 +54,17 @@ abstract class PaymentRecord with _$PaymentRecord {
 
     /// Number of Spinal Traction sessions added to patient balance by this payment.
     @JsonKey(name: 'traction_balance_added') @Default(0) int tractionBalanceAdded,
+
+    /// Full price of the service (null = paid in full, meaning total_price is equal to amount).
+    @JsonKey(name: 'total_price', fromJson: _nullableAmountFromJson, toJson: _nullableAmountToJson) double? totalPrice,
   }) = _PaymentRecord;
+
+  /// Computed helper for outstanding due.
+  double get remainingDue =>
+      (totalPrice != null && totalPrice! > amount) ? totalPrice! - amount : 0.0;
+
+  /// Whether this payment has any outstanding due balance.
+  bool get hasOutstandingDue => remainingDue > 0.0;
 
   /// Deserialises from a Supabase JSON row.
   factory PaymentRecord.fromJson(Map<String, dynamic> json) =>

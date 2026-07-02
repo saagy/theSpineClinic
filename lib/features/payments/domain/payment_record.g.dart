@@ -17,6 +17,7 @@ _PaymentRecord _$PaymentRecordFromJson(
   recordedAt: DateTime.parse(json['recorded_at'] as String),
   sessionBalanceAdded: (json['session_balance_added'] as num?)?.toInt() ?? 0,
   tractionBalanceAdded: (json['traction_balance_added'] as num?)?.toInt() ?? 0,
+  totalPrice: _nullableAmountFromJson(json['total_price']),
 );
 
 Map<String, dynamic> _$PaymentRecordToJson(_PaymentRecord instance) =>
@@ -29,4 +30,5 @@ Map<String, dynamic> _$PaymentRecordToJson(_PaymentRecord instance) =>
       'recorded_at': instance.recordedAt.toIso8601String(),
       'session_balance_added': instance.sessionBalanceAdded,
       'traction_balance_added': instance.tractionBalanceAdded,
+      'total_price': _nullableAmountToJson(instance.totalPrice),
     };

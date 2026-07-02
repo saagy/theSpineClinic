@@ -47,6 +47,8 @@ class PatientTabPayments extends ConsumerWidget {
       data: (payments) {
         final double totalSum =
             payments.fold(0.0, (sum, pmt) => sum + pmt.amount);
+        final double totalOutstanding =
+            payments.fold(0.0, (sum, pmt) => sum + pmt.remainingDue);
 
         return RefreshIndicator(
           onRefresh: () async {
@@ -63,6 +65,7 @@ class PatientTabPayments extends ConsumerWidget {
               children: [
                 PaymentSummaryHeader(
                   totalPaid: totalSum,
+                  totalOutstanding: totalOutstanding,
                   isDoctor: isDoctor,
                   patient: patient,
                 ),
