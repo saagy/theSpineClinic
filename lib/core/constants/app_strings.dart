@@ -681,6 +681,7 @@ abstract final class AppStrings {
   static const String usePackageBalance = 'Use Package Balance';
   static const String noPaymentsRecorded = 'No payments recorded';
   static const String totalPaid = 'Total Paid';
+  static const String amountDue = 'Amount Due';
   static const String noDoctorsAssigned = 'No doctors assigned';
   static const String errorLoadingAssignedDoctors =
       'Error loading assigned doctors';
