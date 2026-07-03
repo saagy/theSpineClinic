@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:spine_clinic_app/core/constants/app_colors.dart';
+import 'package:spine_clinic_app/core/constants/clinic_colors.dart';
 import 'package:spine_clinic_app/core/constants/app_sizes.dart';
 import 'package:spine_clinic_app/core/constants/app_strings.dart';
 import 'package:spine_clinic_app/core/constants/app_text_styles.dart';
@@ -21,7 +21,7 @@ class RevenueSummaryCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (isLoading) {
-      return _buildSkeleton();
+      return _buildSkeleton(context);
     }
 
     return SectionCard(
@@ -31,43 +31,43 @@ class RevenueSummaryCard extends StatelessWidget {
             label: AppStrings.grossIncome,
             value: '$grossIncome',
             icon: Icons.trending_up_rounded,
-            color: AppColors.success,
+            color: ClinicColors.of(context).success,
           )),
           Container(
             width: AppSizes.borderWidth,
             height: AppSizes.revenueIconSize + AppSizes.p16,
-            color: AppColors.border,
+            color: Theme.of(context).colorScheme.outline,
           ),
           Expanded(child: _MetricTile(
             label: AppStrings.totalPackageBalances,
             value: '$totalPackageBalances ${AppStrings.activeSessions}',
             icon: Icons.inventory_2_rounded,
-            color: AppColors.info,
+            color: ClinicColors.of(context).info,
           )),
         ],
       ),
     );
   }
 
-  Widget _buildSkeleton() {
+  Widget _buildSkeleton(BuildContext context) {
     return SectionCard(
       child: Row(
         children: [
           Expanded(child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _skeletonBox(AppSizes.skeletonLabelWidth, AppSizes.skeletonLabelHeight),
+              _skeletonBox(context, AppSizes.skeletonLabelWidth, AppSizes.skeletonLabelHeight),
               const SizedBox(height: AppSizes.p8),
-              _skeletonBox(AppSizes.skeletonValueWidth, AppSizes.skeletonValueHeight),
+              _skeletonBox(context, AppSizes.skeletonValueWidth, AppSizes.skeletonValueHeight),
             ],
           )),
           const SizedBox(width: AppSizes.p16),
           Expanded(child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _skeletonBox(AppSizes.skeletonLabelWidth, AppSizes.skeletonLabelHeight),
+              _skeletonBox(context, AppSizes.skeletonLabelWidth, AppSizes.skeletonLabelHeight),
               const SizedBox(height: AppSizes.p8),
-              _skeletonBox(AppSizes.skeletonValueWidth, AppSizes.skeletonValueHeight),
+              _skeletonBox(context, AppSizes.skeletonValueWidth, AppSizes.skeletonValueHeight),
             ],
           )),
         ],
@@ -75,13 +75,13 @@ class RevenueSummaryCard extends StatelessWidget {
     );
   }
 
-  Widget _skeletonBox(double width, double height) {
+  Widget _skeletonBox(BuildContext context, double width, double height) {
     return Container(
       width: width,
       height: height,
-      decoration: const BoxDecoration(
-        color: AppColors.border,
-        borderRadius: BorderRadius.all(Radius.circular(AppSizes.r4)),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.outline,
+        borderRadius: const BorderRadius.all(Radius.circular(AppSizes.r4)),
       ),
     );
   }
@@ -119,9 +119,9 @@ class _MetricTile extends StatelessWidget {
           ],
         ),
         const SizedBox(height: AppSizes.p12),
-        Text(label, style: AppTextStyles.captionMedium.copyWith(color: AppColors.textSecondary)),
+        Text(label, style: AppTextStyles.captionMedium.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant)),
         const SizedBox(height: AppSizes.p4),
-        Text(value, style: AppTextStyles.numberLarge.copyWith(color: AppColors.textPrimary)),
+        Text(value, style: AppTextStyles.numberLarge.copyWith(color: Theme.of(context).colorScheme.onSurface)),
       ],
     );
   }

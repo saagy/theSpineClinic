@@ -19,6 +19,7 @@ import 'package:spine_clinic_app/core/network/app_routes.dart';
 import 'package:spine_clinic_app/features/appointment/domain/appointment_repository.dart';
 import 'package:spine_clinic_app/features/appointment/domain/appointment_status.dart';
 import 'package:spine_clinic_app/features/appointment/presentation/widgets/appointment_actions_trailing.dart';
+import 'package:spine_clinic_app/features/appointment/presentation/widgets/appointment_badge_colors.dart';
 import 'package:spine_clinic_app/features/appointment/presentation/widgets/appointment_status_style.dart';
 import 'package:spine_clinic_app/shared/widgets/app_avatar.dart';
 
@@ -48,8 +49,10 @@ class ReceptionistAppointmentCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final AppointmentStatus status = item.appointment.status;
     final AppointmentStatusStyle style = AppointmentStatusStyle.forStatus(
+      context,
       status,
     );
+    final AppointmentBadgeColors statusBadge = status.badgeColors(context);
     final bool isCancelled = status == AppointmentStatus.cancelled;
     final bool applyFade = faded || isCancelled;
 
@@ -96,7 +99,7 @@ class ReceptionistAppointmentCard extends StatelessWidget {
         border: Border.all(color: style.border, width: 0.5),
       ),
       child: Material(
-        color: Colors.transparent,
+        color: Theme.of(context).colorScheme.surface.withAlpha(0),
         borderRadius: const BorderRadius.all(Radius.circular(AppSizes.r16)),
         child: InkWell(
           borderRadius: const BorderRadius.all(Radius.circular(AppSizes.r16)),
@@ -163,7 +166,7 @@ class ReceptionistAppointmentCard extends StatelessWidget {
                           ),
                           const SizedBox(width: AppSizes.p6),
                           _StatusDot(
-                            color: status.textColor,
+                            color: statusBadge.textColor,
                             label: status.displayLabel,
                           ),
                         ],

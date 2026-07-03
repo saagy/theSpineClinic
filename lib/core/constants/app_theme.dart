@@ -24,6 +24,12 @@ abstract final class AppTheme {
     final Color error = isDark
         ? const Color(0xFFFB7185)
         : const Color(0xFFE11D48);
+    final Color errorContainer = isDark
+        ? const Color(0xFF881337)
+        : const Color(0xFFFFF1F2);
+    final Color onErrorContainer = isDark
+        ? const Color(0xFFFFDDE5)
+        : const Color(0xFF9F1239);
     final ColorScheme cs =
         ColorScheme.fromSeed(
           seedColor: palette.primary,
@@ -41,6 +47,8 @@ abstract final class AppTheme {
           outline: palette.outline,
           error: error,
           onError: Colors.white,
+          errorContainer: errorContainer,
+          onErrorContainer: onErrorContainer,
           shadow: Colors.black,
         );
 

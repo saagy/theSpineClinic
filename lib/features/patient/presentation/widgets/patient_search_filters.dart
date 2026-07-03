@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:spine_clinic_app/core/constants/app_colors.dart';
 import 'package:spine_clinic_app/core/constants/app_sizes.dart';
 import 'package:spine_clinic_app/core/constants/app_strings.dart';
 import 'package:spine_clinic_app/core/constants/app_text_styles.dart';
@@ -78,17 +77,17 @@ class _FilterChip extends StatelessWidget {
           vertical: AppSizes.p6,
         ),
         decoration: BoxDecoration(
-          color: selected ? AppColors.primary : AppColors.surface,
+          color: selected ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.surface,
           borderRadius: AppSizes.borderRadiusBadge,
           border: Border.all(
-            color: selected ? AppColors.primary : AppColors.border,
+            color: selected ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.outline,
             width: AppSizes.borderWidth,
           ),
         ),
         child: Text(
           label,
           style: AppTextStyles.caption.copyWith(
-            color: selected ? AppColors.textOnPrimary : AppColors.textSecondary,
+            color: selected ? Theme.of(context).colorScheme.onPrimary : Theme.of(context).colorScheme.onSurfaceVariant,
             fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
           ),
         ),

@@ -2,7 +2,6 @@
 library;
 
 import 'package:flutter/material.dart';
-import 'package:spine_clinic_app/core/constants/app_colors.dart';
 import 'package:spine_clinic_app/core/constants/app_sizes.dart';
 import 'package:spine_clinic_app/core/constants/app_text_styles.dart';
 import 'package:spine_clinic_app/shared/widgets/app_text_field.dart';
@@ -37,7 +36,7 @@ class RecurringPatternPicker extends StatelessWidget {
   Widget build(BuildContext context) {
     final bool err = daysErrorText != null;
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      Text('Select Days', style: AppTextStyles.captionMedium.copyWith(color: AppColors.textSecondary)),
+      Text('Select Days', style: AppTextStyles.captionMedium.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant)),
       const SizedBox(height: AppSizes.p8),
       Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -55,25 +54,41 @@ class RecurringPatternPicker extends StatelessWidget {
               height: AppSizes.tappableMin,
               alignment: Alignment.center,
               decoration: BoxDecoration(
-                color: active ? AppColors.primary : AppColors.surface,
+                color: active ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.surface,
                 borderRadius: const BorderRadius.all(Radius.circular(AppSizes.r6)),
                 border: Border.all(
-                  color: active ? AppColors.primary : (err ? AppColors.error : AppColors.border),
+                  color: active ? Theme.of(context).colorScheme.primary : (err ? Theme.of(context).colorScheme.error : Theme.of(context).colorScheme.outline),
                   width: AppSizes.borderWidth,
                 ),
               ),
-              child: Text(d.label,
-                  style: AppTextStyles.bodyBold.copyWith(
-                      color: active ? AppColors.surface : AppColors.textPrimary)),
+              child: Text(
+                d.label,
+                style: AppTextStyles.bodyBold.copyWith(
+                  color: active
+                      ? Theme.of(context).colorScheme.surface
+                      : Theme.of(context).colorScheme.onSurface,
+                ),
+              ),
             ),
           );
         }).toList(),
       ),
-      if (err) ...[const SizedBox(height: AppSizes.p4), Text(daysErrorText!, style: AppTextStyles.caption.copyWith(color: AppColors.error))],
+      if (err) ...[
+        const SizedBox(height: AppSizes.p4),
+        Text(
+          daysErrorText!,
+          style: AppTextStyles.caption.copyWith(
+            color: Theme.of(context).colorScheme.error,
+          ),
+        ),
+      ],
       const SizedBox(height: AppSizes.p16),
       AppTextField(
-        controller: sessionsController, labelText: 'Number of Sessions',
-        hintText: 'Max 24', keyboardType: TextInputType.number, validator: sessionsValidator,
+        controller: sessionsController,
+        labelText: 'Number of Sessions',
+        hintText: 'Max 24',
+        keyboardType: TextInputType.number,
+        validator: sessionsValidator,
       ),
     ]);
   }

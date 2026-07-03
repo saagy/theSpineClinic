@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:spine_clinic_app/core/constants/app_colors.dart';
+import 'package:spine_clinic_app/core/constants/clinic_colors.dart';
 import 'package:spine_clinic_app/core/constants/app_sizes.dart';
 import 'package:spine_clinic_app/core/constants/app_strings.dart';
 import 'package:spine_clinic_app/core/constants/app_text_styles.dart';
@@ -42,7 +42,7 @@ class SelectedDoctorRow extends StatelessWidget {
                   const SizedBox(width: AppSizes.p6),
                   Text(AppStrings.deactivated,
                       style: AppTextStyles.caption.copyWith(
-                          color: AppColors.warning,
+                          color: ClinicColors.of(context).warning,
                           fontWeight: FontWeight.w600)),
                 ],
               ],
@@ -51,9 +51,9 @@ class SelectedDoctorRow extends StatelessWidget {
           if (showRemove)
             GestureDetector(
               onTap: onRemove,
-              child: const Icon(Icons.close,
+              child: Icon(Icons.close,
                   size: AppSizes.iconSmall,
-                  color: AppColors.textMuted),
+                  color: ClinicColors.of(context).textMuted),
             ),
         ],
       ),

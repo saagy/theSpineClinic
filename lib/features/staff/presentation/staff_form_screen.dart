@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_form_builder/flutter_form_builder.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:spine_clinic_app/core/constants/app_colors.dart';
 import 'package:spine_clinic_app/core/constants/app_sizes.dart';
 import 'package:spine_clinic_app/core/constants/app_strings.dart';
 import 'package:spine_clinic_app/core/errors/app_exception.dart';
@@ -128,14 +127,14 @@ class _StaffFormScreenState extends ConsumerState<StaffFormScreen> {
     final asyncUser = ref.watch(currentUserProvider);
 
     return asyncUser.when(
-      loading: () => const Scaffold(
-        backgroundColor: AppColors.background,
+      loading: () => Scaffold(
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         body: Center(
-          child: CircularProgressIndicator(color: AppColors.primary),
+          child: CircularProgressIndicator(color: Theme.of(context).colorScheme.primary),
         ),
       ),
       error: (error, _) => Scaffold(
-        backgroundColor: AppColors.background,
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         body: ErrorView(
           exception: error is AppException
               ? error
@@ -145,8 +144,8 @@ class _StaffFormScreenState extends ConsumerState<StaffFormScreen> {
       ),
       data: (currentUser) {
         if (currentUser == null || currentUser.role != UserRole.superAdmin) {
-          return const Scaffold(
-            backgroundColor: AppColors.background,
+          return Scaffold(
+            backgroundColor: Theme.of(context).scaffoldBackgroundColor,
             body: ErrorView(
               exception: UnknownException(
                 message: AppStrings.errorDatabasePermissionDenied,
@@ -161,10 +160,10 @@ class _StaffFormScreenState extends ConsumerState<StaffFormScreen> {
         final formState = ref.watch(staffFormControllerProvider);
 
         return Scaffold(
-          backgroundColor: AppColors.background,
+          backgroundColor: Theme.of(context).scaffoldBackgroundColor,
           appBar: AppBar(
-            backgroundColor: AppColors.surface,
-            foregroundColor: AppColors.textPrimary,
+            backgroundColor: Theme.of(context).colorScheme.surface,
+            foregroundColor: Theme.of(context).colorScheme.onSurface,
             elevation: 0,
             title: Text(isEdit ? AppStrings.editStaff : AppStrings.addStaff),
             leading: IconButton(

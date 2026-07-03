@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:spine_clinic_app/core/constants/app_colors.dart';
+import 'package:spine_clinic_app/core/constants/clinic_colors.dart';
 import 'package:spine_clinic_app/core/constants/app_sizes.dart';
 import 'package:spine_clinic_app/core/constants/app_text_styles.dart';
 import 'package:spine_clinic_app/shared/widgets/section_card.dart';
@@ -46,17 +46,17 @@ class StatsMetricCard extends StatelessWidget {
                 Container(
                   height: AppSizes.skeletonLabelHeight,
                   width: AppSizes.skeletonLabelWidth,
-                  decoration: const BoxDecoration(
-                    color: AppColors.border,
-                    borderRadius: BorderRadius.all(Radius.circular(AppSizes.r4)),
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).colorScheme.outline,
+                    borderRadius: const BorderRadius.all(Radius.circular(AppSizes.r4)),
                   ),
                 ),
                 if (icon != null)
                   Container(
                     height: AppSizes.iconDefault,
                     width: AppSizes.iconDefault,
-                    decoration: const BoxDecoration(
-                      color: AppColors.border,
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).colorScheme.outline,
                       shape: BoxShape.circle,
                     ),
                   ),
@@ -66,9 +66,9 @@ class StatsMetricCard extends StatelessWidget {
             Container(
               height: AppSizes.skeletonValueHeight,
               width: AppSizes.skeletonValueWidth,
-              decoration: const BoxDecoration(
-                color: AppColors.border,
-                borderRadius: BorderRadius.all(Radius.circular(AppSizes.r4)),
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.outline,
+                borderRadius: const BorderRadius.all(Radius.circular(AppSizes.r4)),
               ),
             ),
             if (subtitle != null) ...[
@@ -76,9 +76,9 @@ class StatsMetricCard extends StatelessWidget {
               Container(
                 height: AppSizes.skeletonSubtitleHeight,
                 width: AppSizes.skeletonSubtitleWidth,
-                decoration: const BoxDecoration(
-                  color: AppColors.border,
-                  borderRadius: BorderRadius.all(Radius.circular(AppSizes.r4)),
+                decoration: BoxDecoration(
+                  color: Theme.of(context).colorScheme.outline,
+                  borderRadius: const BorderRadius.all(Radius.circular(AppSizes.r4)),
                 ),
               ),
             ],
@@ -99,7 +99,7 @@ class StatsMetricCard extends StatelessWidget {
                 child: Text(
                   title,
                   style: AppTextStyles.captionMedium.copyWith(
-                    color: AppColors.textSecondary,
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
                   ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
@@ -109,7 +109,7 @@ class StatsMetricCard extends StatelessWidget {
                 const SizedBox(width: AppSizes.p8),
                 Icon(
                   icon,
-                  color: AppColors.textMuted,
+                  color: ClinicColors.of(context).textMuted,
                   size: AppSizes.iconDefault,
                 ),
               ],
@@ -119,7 +119,7 @@ class StatsMetricCard extends StatelessWidget {
           Text(
             value,
             style: AppTextStyles.numberLarge.copyWith(
-              color: AppColors.textPrimary,
+              color: Theme.of(context).colorScheme.onSurface,
             ),
           ),
           if (subtitle != null) ...[
@@ -127,7 +127,7 @@ class StatsMetricCard extends StatelessWidget {
             Text(
               subtitle!,
               style: AppTextStyles.caption.copyWith(
-                color: AppColors.textMuted,
+                color: ClinicColors.of(context).textMuted,
               ),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,

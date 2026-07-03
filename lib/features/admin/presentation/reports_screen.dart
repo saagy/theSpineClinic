@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:spine_clinic_app/core/constants/clinic_colors.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:spine_clinic_app/core/constants/app_colors.dart';
 import 'package:spine_clinic_app/core/constants/app_sizes.dart';
 import 'package:spine_clinic_app/core/constants/app_strings.dart';
 import 'package:spine_clinic_app/core/errors/app_exception.dart';
@@ -28,12 +28,12 @@ class ReportsScreen extends ConsumerWidget {
     final asyncUser = ref.watch(currentUserProvider);
 
     return asyncUser.when(
-      loading: () => const Scaffold(
-        backgroundColor: AppColors.background,
-        body: Center(child: CircularProgressIndicator(color: AppColors.primary)),
+      loading: () => Scaffold(
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+        body: Center(child: CircularProgressIndicator(color: Theme.of(context).colorScheme.primary)),
       ),
       error: (error, _) => Scaffold(
-        backgroundColor: AppColors.background,
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         body: ErrorView(
           exception: error is AppException ? error : const UnknownException(message: AppStrings.errorDatabaseQueryFailed),
           onRetry: () => ref.invalidate(currentUserProvider),
@@ -41,8 +41,8 @@ class ReportsScreen extends ConsumerWidget {
       ),
       data: (user) {
         if (user == null || user.role != UserRole.superAdmin) {
-          return const Scaffold(
-            backgroundColor: AppColors.background,
+          return Scaffold(
+            backgroundColor: Theme.of(context).scaffoldBackgroundColor,
             body: ErrorView(
               exception: UnknownException(message: AppStrings.errorDatabasePermissionDenied, code: 'security/blocked'),
             ),
@@ -52,14 +52,14 @@ class ReportsScreen extends ConsumerWidget {
         final reportsAsync = ref.watch(reportsDataProvider);
 
         return Scaffold(
-          backgroundColor: AppColors.background,
+          backgroundColor: Theme.of(context).scaffoldBackgroundColor,
           appBar: AppBar(
-            backgroundColor: AppColors.surface,
-            foregroundColor: AppColors.textPrimary,
+            backgroundColor: Theme.of(context).colorScheme.surface,
+            foregroundColor: Theme.of(context).colorScheme.onSurface,
             elevation: 0,
             title: const Text(AppStrings.reportsAndAnalytics),
             leading: IconButton(
-              icon: const Icon(Icons.arrow_back_rounded),
+              icon: Icon(Icons.arrow_back_rounded),
               onPressed: () => context.pop(),
             ),
           ),
@@ -69,8 +69,8 @@ class ReportsScreen extends ConsumerWidget {
               Expanded(
                 child: RefreshIndicator(
                   onRefresh: () => ref.refresh(reportsDataProvider.future),
-                  color: AppColors.primary,
-                  backgroundColor: AppColors.surface,
+                  color: Theme.of(context).colorScheme.primary,
+                  backgroundColor: Theme.of(context).colorScheme.surface,
                   child: reportsAsync.when(
                     data: (data) {
                       final bool hasNoData = data.totalPatients == 0 && data.totalAppointments == 0;
@@ -109,11 +109,11 @@ class ReportsScreen extends ConsumerWidget {
                           const SizedBox(height: AppSizes.p16),
                           TrendChart(monthlyTrends: data.monthlyTrends, yearlyTrends: data.yearlyTrends),
                           const SizedBox(height: AppSizes.p16),
-                          BreakdownListCard(title: AppStrings.appointmentsByStatus, data: data.statusBreakdown, barColor: AppColors.success),
+                          BreakdownListCard(title: AppStrings.appointmentsByStatus, data: data.statusBreakdown, barColor: ClinicColors.of(context).success),
                           const SizedBox(height: AppSizes.p16),
-                          BreakdownListCard(title: AppStrings.appointmentsByType, data: data.typeBreakdown, barColor: AppColors.info),
+                          BreakdownListCard(title: AppStrings.appointmentsByType, data: data.typeBreakdown, barColor: ClinicColors.of(context).info),
                           const SizedBox(height: AppSizes.p16),
-                          BreakdownListCard(title: AppStrings.appointmentsPerDoctor, data: data.doctorBreakdown, barColor: AppColors.primary),
+                          BreakdownListCard(title: AppStrings.appointmentsPerDoctor, data: data.doctorBreakdown, barColor: Theme.of(context).colorScheme.primary),
                         ],
                       );
                     },

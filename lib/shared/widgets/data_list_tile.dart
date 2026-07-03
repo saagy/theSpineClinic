@@ -59,7 +59,7 @@ class DataListTile extends StatelessWidget {
   /// Optional callback triggered when the row is tapped.
   final VoidCallback? onTap;
 
-  /// If true, uses transparent background instead of AppColors.surface.
+  /// If true, uses transparent background instead of Theme.of(context).colorScheme.surface.
   final bool transparent;
 
   /// Optional custom margin spacing around the tile card.
@@ -156,7 +156,7 @@ class DataListTile extends StatelessWidget {
       child: ClipRRect(
         borderRadius: const BorderRadius.all(Radius.circular(AppSizes.r16)),
         child: Material(
-          color: transparent ? Colors.transparent : cs.surface,
+          color: transparent ? cs.surface.withAlpha(0) : cs.surface,
           child: onTap != null
               ? InkWell(
                   onTap: onTap,

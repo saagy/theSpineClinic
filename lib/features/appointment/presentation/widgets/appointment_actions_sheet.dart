@@ -2,14 +2,15 @@ library;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:spine_clinic_app/core/constants/app_colors.dart';
 import 'package:spine_clinic_app/core/constants/app_sizes.dart';
 import 'package:spine_clinic_app/core/constants/app_strings.dart';
 import 'package:spine_clinic_app/core/constants/app_text_styles.dart';
+import 'package:spine_clinic_app/core/constants/clinic_colors.dart';
 import 'package:spine_clinic_app/core/utils/formatters.dart';
 import 'package:spine_clinic_app/features/appointment/domain/appointment.dart';
 import 'package:spine_clinic_app/features/appointment/domain/appointment_status.dart';
 import 'package:spine_clinic_app/features/appointment/presentation/appointment_providers.dart';
+import 'package:spine_clinic_app/features/appointment/presentation/widgets/appointment_badge_colors.dart';
 import 'package:spine_clinic_app/features/patient/presentation/patient_providers.dart';
 import 'package:spine_clinic_app/shared/widgets/app_badge.dart';
 import 'package:spine_clinic_app/shared/widgets/app_button.dart';
@@ -67,8 +68,13 @@ class _AppointmentActionsSheetState extends ConsumerState<AppointmentActionsShee
 
   @override
   Widget build(BuildContext context) {
+    final ColorScheme cs = Theme.of(context).colorScheme;
+    final ClinicColors clinic = ClinicColors.of(context);
     final appointment = widget.appointment;
     final String timeStr = Formatters.formatTime(appointment.scheduledAt.toLocal());
+    final AppointmentBadgeColors typeBadge = appointment.type.badgeColors(context);
+    final AppointmentBadgeColors statusBadge =
+        appointment.status.badgeColors(context);
 
     return LoadingOverlay(
       isLoading: _isLoading,
@@ -85,20 +91,20 @@ class _AppointmentActionsSheetState extends ConsumerState<AppointmentActionsShee
                     Text(
                       timeStr,
                       style: AppTextStyles.headingSmall.copyWith(
-                        color: AppColors.textPrimary,
+                        color: cs.onSurface,
                       ),
                     ),
                     const SizedBox(width: AppSizes.p12),
                     AppBadge(
                       label: appointment.type.displayLabel,
-                      textColor: appointment.type.textColor,
-                      backgroundColor: appointment.type.backgroundColor,
+                      textColor: typeBadge.textColor,
+                      backgroundColor: typeBadge.backgroundColor,
                     ),
                     const Spacer(),
                     AppBadge(
                       label: appointment.status.displayLabel,
-                      textColor: appointment.status.textColor,
-                      backgroundColor: appointment.status.backgroundColor,
+                      textColor: statusBadge.textColor,
+                      backgroundColor: statusBadge.backgroundColor,
                     ),
                   ],
                 ),
@@ -127,14 +133,14 @@ class _AppointmentActionsSheetState extends ConsumerState<AppointmentActionsShee
                 Container(
                   padding: const EdgeInsets.all(AppSizes.p16),
                   decoration: BoxDecoration(
-                    color: AppColors.background,
+                    color: Theme.of(context).scaffoldBackgroundColor,
                     borderRadius: const BorderRadius.all(Radius.circular(AppSizes.r6)),
-                    border: Border.all(color: AppColors.border),
+                    border: Border.all(color: cs.outline),
                   ),
                   child: Text(
                     AppStrings.historicalNote,
                     style: AppTextStyles.bodySecondary.copyWith(
-                      color: AppColors.textMuted,
+                      color: clinic.textMuted,
                     ),
                     textAlign: TextAlign.center,
                   ),

@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:spine_clinic_app/core/constants/app_colors.dart';
 import 'package:spine_clinic_app/core/constants/app_sizes.dart';
 import 'package:spine_clinic_app/core/constants/app_strings.dart';
 import 'package:spine_clinic_app/core/errors/app_exception.dart';
@@ -26,7 +25,7 @@ class PatientSummarySection extends ConsumerWidget {
         exception: error is AppException ? error : AppException.fromSupabaseException(error),
         onRetry: () => ref.invalidate(patientSummaryProvider),
       ),
-      data: (data) => _buildData(data),
+      data: (data) => _buildData(context, data),
     );
   }
 
@@ -52,7 +51,7 @@ class PatientSummarySection extends ConsumerWidget {
     );
   }
 
-  Widget _buildData(PatientSummary data) {
+  Widget _buildData(BuildContext context, PatientSummary data) {
     final bool isEmpty = data.totalActivePatients == 0;
 
     if (isEmpty) {
@@ -80,7 +79,7 @@ class PatientSummarySection extends ConsumerWidget {
           ],
         ),
         const SizedBox(height: AppSizes.p16),
-        BreakdownListCard(title: AppStrings.patientsByBranch, data: data.patientsByBranch, barColor: AppColors.primary),
+        BreakdownListCard(title: AppStrings.patientsByBranch, data: data.patientsByBranch, barColor: Theme.of(context).colorScheme.primary),
       ],
     );
   }

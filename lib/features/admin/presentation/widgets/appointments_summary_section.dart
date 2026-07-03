@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:spine_clinic_app/core/constants/clinic_colors.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:spine_clinic_app/core/constants/app_colors.dart';
 import 'package:spine_clinic_app/core/constants/app_sizes.dart';
 import 'package:spine_clinic_app/core/constants/app_strings.dart';
 import 'package:spine_clinic_app/core/errors/app_exception.dart';
@@ -26,7 +26,7 @@ class AppointmentsSummarySection extends ConsumerWidget {
         exception: error is AppException ? error : AppException.fromSupabaseException(error),
         onRetry: () => ref.invalidate(appointmentSummaryProvider),
       ),
-      data: (data) => _buildData(data),
+      data: (data) => _buildData(context, data),
     );
   }
 
@@ -52,7 +52,7 @@ class AppointmentsSummarySection extends ConsumerWidget {
     );
   }
 
-  Widget _buildData(AppointmentSummary data) {
+  Widget _buildData(BuildContext context, AppointmentSummary data) {
     final bool isEmpty = data.totalAppointments == 0;
 
     if (isEmpty) {
@@ -82,9 +82,9 @@ class AppointmentsSummarySection extends ConsumerWidget {
           ],
         ),
         const SizedBox(height: AppSizes.p16),
-        BreakdownListCard(title: AppStrings.appointmentsByStatus, data: data.byStatus, barColor: AppColors.success),
+        BreakdownListCard(title: AppStrings.appointmentsByStatus, data: data.byStatus, barColor: ClinicColors.of(context).success),
         const SizedBox(height: AppSizes.p16),
-        BreakdownListCard(title: AppStrings.appointmentsByDay, data: data.byDayOfWeek, barColor: AppColors.info),
+        BreakdownListCard(title: AppStrings.appointmentsByDay, data: data.byDayOfWeek, barColor: ClinicColors.of(context).info),
       ],
     );
   }

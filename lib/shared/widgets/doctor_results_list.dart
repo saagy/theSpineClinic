@@ -68,7 +68,7 @@ class DoctorResultsList extends StatelessWidget {
           final bool isSelected = d.id == selectedId;
 
           return Material(
-            color: isSelected ? cs.primaryContainer : Colors.transparent,
+            color: isSelected ? cs.primaryContainer : cs.surface.withAlpha(0),
             child: InkWell(
               onTap: () => onSelect(d),
               child: Padding(

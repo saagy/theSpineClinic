@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:spine_clinic_app/core/constants/app_colors.dart';
+import 'package:spine_clinic_app/core/constants/clinic_colors.dart';
 import 'package:spine_clinic_app/core/constants/app_sizes.dart';
 import 'package:spine_clinic_app/core/constants/app_strings.dart';
 import 'package:spine_clinic_app/core/constants/app_text_styles.dart';
@@ -38,7 +38,7 @@ class _TrendChartState extends State<TrendChart> {
         child: Container(
           height: AppSizes.chartContainerHeight,
           alignment: Alignment.center,
-          child: const CircularProgressIndicator(color: AppColors.primary),
+          child: CircularProgressIndicator(color: Theme.of(context).colorScheme.primary),
         ),
       );
     }
@@ -79,15 +79,15 @@ class _ToggleChip extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: AppSizes.p12, vertical: AppSizes.p4),
         decoration: BoxDecoration(
-          color: selected ? AppColors.primaryLight : AppColors.surface,
+          color: selected ? Theme.of(context).colorScheme.primaryContainer : Theme.of(context).colorScheme.surface,
           borderRadius: const BorderRadius.all(Radius.circular(AppSizes.r6)),
           border: Border.all(
-            color: selected ? AppColors.primary : AppColors.border,
+            color: selected ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.outline,
             width: AppSizes.borderWidth,
           ),
         ),
         child: Text(label, style: AppTextStyles.captionMedium.copyWith(
-          color: selected ? AppColors.primary : AppColors.textSecondary,
+          color: selected ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.onSurfaceVariant,
         )),
       ),
     );
@@ -111,9 +111,9 @@ class _ChartBody extends StatelessWidget {
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            _LegendDot(color: AppColors.primary, label: AppStrings.visits),
+            _LegendDot(color: Theme.of(context).colorScheme.primary, label: AppStrings.visits),
             const SizedBox(width: AppSizes.p16),
-            _LegendDot(color: AppColors.success, label: AppStrings.revenue),
+            _LegendDot(color: ClinicColors.of(context).success, label: AppStrings.revenue),
           ],
         ),
         const SizedBox(height: AppSizes.p12),
@@ -151,7 +151,7 @@ class _LegendDot extends StatelessWidget {
           decoration: BoxDecoration(color: color, shape: BoxShape.circle),
         ),
         const SizedBox(width: AppSizes.p4),
-        Text(label, style: AppTextStyles.caption.copyWith(color: AppColors.textSecondary)),
+        Text(label, style: AppTextStyles.caption.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant)),
       ],
     );
   }
@@ -179,9 +179,9 @@ class _BarGroup extends StatelessWidget {
           Container(
             width: AppSizes.chartBarWidth,
             height: _barHeight(point.revenue.toInt()),
-            decoration: const BoxDecoration(
-              color: AppColors.success,
-              borderRadius: BorderRadius.vertical(top: Radius.circular(AppSizes.r4)),
+            decoration: BoxDecoration(
+              color: ClinicColors.of(context).success,
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(AppSizes.r4)),
             ),
           ),
           const SizedBox(height: AppSizes.p2),
@@ -189,9 +189,9 @@ class _BarGroup extends StatelessWidget {
           Container(
             width: AppSizes.chartBarWidth,
             height: _barHeight(point.visits),
-            decoration: const BoxDecoration(
-              color: AppColors.primary,
-              borderRadius: BorderRadius.vertical(top: Radius.circular(AppSizes.r4)),
+            decoration: BoxDecoration(
+              color: Theme.of(context).colorScheme.primary,
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(AppSizes.r4)),
             ),
           ),
           const SizedBox(height: AppSizes.p4),
@@ -200,7 +200,7 @@ class _BarGroup extends StatelessWidget {
             width: AppSizes.chartBarWidth + AppSizes.p8,
             child: Text(
               point.label,
-              style: AppTextStyles.caption.copyWith(color: AppColors.textMuted, fontSize: AppSizes.fontSizeXs),
+              style: AppTextStyles.caption.copyWith(color: ClinicColors.of(context).textMuted, fontSize: AppSizes.fontSizeXs),
               textAlign: TextAlign.center,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,

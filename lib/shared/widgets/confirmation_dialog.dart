@@ -45,7 +45,7 @@ class ConfirmationDialog extends StatelessWidget {
 
     return AlertDialog(
       backgroundColor: cs.surface,
-      surfaceTintColor: Colors.transparent,
+      surfaceTintColor: cs.surface.withAlpha(0),
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.all(
           Radius.circular(AppSizes.r16),

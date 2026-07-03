@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:spine_clinic_app/core/constants/app_colors.dart';
 import 'package:spine_clinic_app/core/constants/app_sizes.dart';
 import 'package:spine_clinic_app/core/constants/app_strings.dart';
 import 'package:spine_clinic_app/core/errors/app_exception.dart';
@@ -27,7 +26,7 @@ class ClinicSettingsScreen extends ConsumerWidget {
     showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
-      backgroundColor: AppColors.surface,
+      backgroundColor: Theme.of(context).colorScheme.surface,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(AppSizes.r12)),
       ),
@@ -61,7 +60,7 @@ class ClinicSettingsScreen extends ConsumerWidget {
     showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
-      backgroundColor: AppColors.surface,
+      backgroundColor: Theme.of(context).colorScheme.surface,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(AppSizes.r12)),
       ),
@@ -130,14 +129,14 @@ class ClinicSettingsScreen extends ConsumerWidget {
     final asyncUser = ref.watch(currentUserProvider);
 
     return asyncUser.when(
-      loading: () => const Scaffold(
-        backgroundColor: AppColors.background,
+      loading: () => Scaffold(
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         body: Center(
-          child: CircularProgressIndicator(color: AppColors.primary),
+          child: CircularProgressIndicator(color: Theme.of(context).colorScheme.primary),
         ),
       ),
       error: (error, _) => Scaffold(
-        backgroundColor: AppColors.background,
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         body: ErrorView(
           exception: error is AppException
               ? error
@@ -147,8 +146,8 @@ class ClinicSettingsScreen extends ConsumerWidget {
       ),
       data: (user) {
         if (user == null || user.role != UserRole.superAdmin) {
-          return const Scaffold(
-            backgroundColor: AppColors.background,
+          return Scaffold(
+            backgroundColor: Theme.of(context).scaffoldBackgroundColor,
             body: ErrorView(
               exception: UnknownException(
                 message: AppStrings.errorDatabasePermissionDenied,
@@ -161,21 +160,21 @@ class ClinicSettingsScreen extends ConsumerWidget {
         final packagesAsync = ref.watch(clinicPackagesProvider);
 
         return Scaffold(
-          backgroundColor: AppColors.background,
+          backgroundColor: Theme.of(context).scaffoldBackgroundColor,
           appBar: AppBar(
-            backgroundColor: AppColors.surface,
-            foregroundColor: AppColors.textPrimary,
+            backgroundColor: Theme.of(context).colorScheme.surface,
+            foregroundColor: Theme.of(context).colorScheme.onSurface,
             elevation: 0,
             title: const Text(AppStrings.clinicSettings),
             leading: IconButton(
-              icon: const Icon(Icons.arrow_back_rounded),
+              icon: Icon(Icons.arrow_back_rounded),
               onPressed: () => context.pop(),
             ),
           ),
           body: RefreshIndicator(
             onRefresh: () => ref.refresh(clinicPackagesProvider.future),
-            color: AppColors.primary,
-            backgroundColor: AppColors.surface,
+            color: Theme.of(context).colorScheme.primary,
+            backgroundColor: Theme.of(context).colorScheme.surface,
             child: packagesAsync.when(
               data: (packages) {
                 if (packages.isEmpty) {
@@ -210,8 +209,8 @@ class ClinicSettingsScreen extends ConsumerWidget {
                   },
                 );
               },
-              loading: () => const Center(
-                child: CircularProgressIndicator(color: AppColors.primary),
+              loading: () => Center(
+                child: CircularProgressIndicator(color: Theme.of(context).colorScheme.primary),
               ),
               error: (error, _) => ErrorView(
                 exception: error is AppException ? error : AppException.fromSupabaseException(error),
@@ -221,9 +220,9 @@ class ClinicSettingsScreen extends ConsumerWidget {
           ),
           floatingActionButton: FloatingActionButton.extended(
             onPressed: () => _addPackage(context, ref),
-            backgroundColor: AppColors.primary,
-            foregroundColor: AppColors.textOnPrimary,
-            icon: const Icon(Icons.add_rounded),
+            backgroundColor: Theme.of(context).colorScheme.primary,
+            foregroundColor: Theme.of(context).colorScheme.onPrimary,
+            icon: Icon(Icons.add_rounded),
             label: const Text(AppStrings.addPackage),
           ),
         );

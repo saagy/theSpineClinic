@@ -65,7 +65,7 @@ class _PackageBalanceEditAction extends StatelessWidget {
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     return Material(
-      color: Colors.transparent,
+      color: cs.surface.withAlpha(0),
       child: InkWell(
         borderRadius: const BorderRadius.all(Radius.circular(AppSizes.r12)),
         onTap: () => showDialog<void>(

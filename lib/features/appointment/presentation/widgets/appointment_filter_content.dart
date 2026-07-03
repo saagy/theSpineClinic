@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:spine_clinic_app/core/constants/app_colors.dart';
 import 'package:spine_clinic_app/core/constants/app_sizes.dart';
 import 'package:spine_clinic_app/core/constants/app_strings.dart';
 import 'package:spine_clinic_app/core/constants/app_text_styles.dart';
@@ -114,13 +113,13 @@ class _AppointmentFilterContentState
       Container(
         decoration: BoxDecoration(
           color: (_dateFrom != null || _dateTo != null)
-              ? AppColors.primaryLight
-              : AppColors.surface,
+              ? Theme.of(context).colorScheme.primaryContainer
+              : Theme.of(context).colorScheme.surface,
           borderRadius: const BorderRadius.all(Radius.circular(AppSizes.r12)),
           border: Border.all(
             color: (_dateFrom != null || _dateTo != null)
-                ? AppColors.primary
-                : AppColors.border,
+                ? Theme.of(context).colorScheme.primary
+                : Theme.of(context).colorScheme.outline,
             width: AppSizes.borderWidth,
           ),
         ),
@@ -138,8 +137,8 @@ class _AppointmentFilterContentState
                   Icons.date_range_rounded,
                   size: AppSizes.iconDefault,
                   color: (_dateFrom != null || _dateTo != null)
-                      ? AppColors.primary
-                      : AppColors.textSecondary,
+                      ? Theme.of(context).colorScheme.primary
+                      : Theme.of(context).colorScheme.onSurfaceVariant,
                 ),
                 const SizedBox(width: AppSizes.p12),
                 Expanded(
@@ -149,7 +148,7 @@ class _AppointmentFilterContentState
                       Text(
                         'Date Range',
                         style: AppTextStyles.caption.copyWith(
-                          color: AppColors.textSecondary,
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
                         ),
                       ),
                       const SizedBox(height: AppSizes.p2),
@@ -157,16 +156,16 @@ class _AppointmentFilterContentState
                         dateRangeText,
                         style: AppTextStyles.bodyMedium.copyWith(
                           color: (_dateFrom != null || _dateTo != null)
-                              ? AppColors.primary
-                              : AppColors.textPrimary,
+                              ? Theme.of(context).colorScheme.primary
+                              : Theme.of(context).colorScheme.onSurface,
                         ),
                       ),
                     ],
                   ),
                 ),
-                const Icon(
+                Icon(
                   Icons.chevron_right_rounded,
-                  color: AppColors.textSecondary,
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
                 ),
               ],
             ),

@@ -1,11 +1,11 @@
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
+import 'package:spine_clinic_app/core/constants/clinic_colors.dart';
 import 'package:flutter_form_builder/flutter_form_builder.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:path/path.dart' as p;
 
-import 'package:spine_clinic_app/core/constants/app_colors.dart';
 import 'package:spine_clinic_app/core/constants/app_sizes.dart';
 import 'package:spine_clinic_app/core/constants/app_strings.dart';
 import 'package:spine_clinic_app/core/constants/app_text_styles.dart';
@@ -174,7 +174,7 @@ class _NewPatientFormState extends ConsumerState<NewPatientForm> {
       return Text(
         'No documents selected.',
         style: AppTextStyles.bodySecondary
-            .copyWith(color: AppColors.textMuted),
+            .copyWith(color: ClinicColors.of(context).textMuted),
       );
     }
 
@@ -336,11 +336,11 @@ class _AttachmentRow extends StatelessWidget {
     );
   }
 
-  Widget _statusChip() {
+  Widget _statusChip(BuildContext context) {
     final Color chipColor = switch (status) {
-      AttachmentStatus.idle => AppColors.textMuted,
+      AttachmentStatus.idle => ClinicColors.of(context).textMuted,
       AttachmentStatus.uploading => cs.primary,
-      AttachmentStatus.done => AppColors.success,
+      AttachmentStatus.done => ClinicColors.of(context).success,
       AttachmentStatus.failed => cs.error,
     };
     final String label = switch (status) {
@@ -370,7 +370,7 @@ class _AttachmentRow extends StatelessWidget {
       decoration: BoxDecoration(
         color: cs.surface,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.border),
+        border: Border.all(color: Theme.of(context).colorScheme.outline),
       ),
       child: Row(
         children: [
@@ -393,13 +393,13 @@ class _AttachmentRow extends StatelessWidget {
                 Text(
                   '${(file.size / 1024).toStringAsFixed(1)} KB',
                   style: AppTextStyles.caption
-                      .copyWith(color: AppColors.textSecondary),
+                      .copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
                 ),
               ],
             ),
           ),
           const SizedBox(width: AppSizes.p8),
-          _statusChip(),
+          _statusChip(context),
           if (onRemove != null) ...[
             const SizedBox(width: AppSizes.p4),
             IconButton(

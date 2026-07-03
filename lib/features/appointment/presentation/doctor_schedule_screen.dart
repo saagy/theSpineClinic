@@ -8,7 +8,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'package:spine_clinic_app/core/constants/app_colors.dart';
 import 'package:spine_clinic_app/core/constants/app_sizes.dart';
 import 'package:spine_clinic_app/core/constants/app_text_styles.dart';
 import 'package:spine_clinic_app/core/errors/app_exception.dart';
@@ -29,7 +28,7 @@ class DoctorScheduleScreen extends ConsumerWidget {
     final notifier = ref.read(doctorScheduleProvider.notifier);
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: SafeArea(
         child: state.loading
             ? const SkeletonTileList(count: 5)
@@ -102,7 +101,7 @@ class _GreetingHeader extends StatelessWidget {
                 const SizedBox(height: AppSizes.p2),
                 Text(doctor?.fullName ?? '',
                     style: AppTextStyles.headingMedium
-                        .copyWith(color: AppColors.textSecondary)),
+                        .copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant)),
               ],
             ),
           ),

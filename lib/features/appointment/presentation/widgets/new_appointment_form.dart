@@ -4,9 +4,9 @@ library;
 
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:spine_clinic_app/core/constants/clinic_colors.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:spine_clinic_app/core/constants/app_colors.dart';
 import 'package:spine_clinic_app/core/constants/app_sizes.dart';
 import 'package:spine_clinic_app/core/constants/app_strings.dart';
 import 'package:spine_clinic_app/core/constants/app_text_styles.dart';
@@ -286,16 +286,16 @@ class _NewAppointmentFormState extends ConsumerState<NewAppointmentForm> {
                     Container(
                       padding: const EdgeInsets.all(AppSizes.p16),
                       decoration: BoxDecoration(
-                        color: AppColors.surface,
+                        color: Theme.of(context).colorScheme.surface,
                         borderRadius: const BorderRadius.all(Radius.circular(AppSizes.r16)),
-                        border: Border.all(color: AppColors.border, width: AppSizes.borderWidth),
+                        border: Border.all(color: Theme.of(context).colorScheme.outline, width: AppSizes.borderWidth),
                       ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
                             'Recurrence Pattern',
-                            style: AppTextStyles.captionMedium.copyWith(color: AppColors.textSecondary),
+                            style: AppTextStyles.captionMedium.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
                           ),
                           const SizedBox(height: AppSizes.p12),
                           if (_selectedDate != null &&
@@ -337,16 +337,16 @@ class _NewAppointmentFormState extends ConsumerState<NewAppointmentForm> {
                   Container(
                     padding: const EdgeInsets.all(AppSizes.p16),
                     decoration: BoxDecoration(
-                      color: AppColors.surface,
+                      color: Theme.of(context).colorScheme.surface,
                       borderRadius: const BorderRadius.all(Radius.circular(AppSizes.r16)),
-                      border: Border.all(color: AppColors.border, width: AppSizes.borderWidth),
+                      border: Border.all(color: Theme.of(context).colorScheme.outline, width: AppSizes.borderWidth),
                     ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
                           'Provider & Billing',
-                          style: AppTextStyles.captionMedium.copyWith(color: AppColors.textSecondary),
+                          style: AppTextStyles.captionMedium.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
                         ),
                         const SizedBox(height: AppSizes.p12),
                         
@@ -356,19 +356,19 @@ class _NewAppointmentFormState extends ConsumerState<NewAppointmentForm> {
                                 vertical: AppSizes.p8),
                             child: Row(
                               children: [
-                                const SizedBox(
+                                SizedBox(
                                   width: AppSizes.iconDefault,
                                   height: AppSizes.iconDefault,
                                   child: CircularProgressIndicator(
                                     strokeWidth: 2,
-                                    color: AppColors.primary,
+                                    color: Theme.of(context).colorScheme.primary,
                                   ),
                                 ),
                                 const SizedBox(width: AppSizes.p12),
                                 Text(
                                   'Loading assigned doctors…',
                                   style: AppTextStyles.caption.copyWith(
-                                    color: AppColors.textSecondary,
+                                    color: Theme.of(context).colorScheme.onSurfaceVariant,
                                   ),
                                 ),
                               ],
@@ -398,11 +398,11 @@ class _NewAppointmentFormState extends ConsumerState<NewAppointmentForm> {
                             children: [
                               Text(AppStrings.usePackageBalance,
                                   style: AppTextStyles.body
-                                      .copyWith(color: AppColors.textPrimary)),
+                                      .copyWith(color: Theme.of(context).colorScheme.onSurface)),
                               Switch(
                                 value: _usePackage,
                                 onChanged: (v) => setState(() => _usePackage = v),
-                                activeThumbColor: AppColors.primary,
+                                activeThumbColor: Theme.of(context).colorScheme.primary,
                               ),
                             ],
                           )
@@ -411,19 +411,19 @@ class _NewAppointmentFormState extends ConsumerState<NewAppointmentForm> {
                             padding: const EdgeInsets.symmetric(
                                 horizontal: AppSizes.p12, vertical: AppSizes.p8),
                             decoration: BoxDecoration(
-                              color: AppColors.infoBg,
+                              color: ClinicColors.of(context).infoContainer,
                               borderRadius: const BorderRadius.all(Radius.circular(AppSizes.r12)),
                             ),
                             child: Row(
                               children: [
-                                const Icon(Icons.info_outline_rounded,
-                                    size: AppSizes.iconSmall, color: AppColors.info),
+                                Icon(Icons.info_outline_rounded,
+                                    size: AppSizes.iconSmall, color: ClinicColors.of(context).info),
                                 const SizedBox(width: AppSizes.p8),
                                 Expanded(
                                   child: Text(
                                     AppStrings.paidSeparately,
                                     style: AppTextStyles.bodySecondary.copyWith(
-                                        color: AppColors.textPrimary),
+                                        color: Theme.of(context).colorScheme.onSurface),
                                   ),
                                 ),
                               ],

@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:spine_clinic_app/core/constants/app_colors.dart';
 import 'package:spine_clinic_app/core/constants/app_sizes.dart';
 import 'package:spine_clinic_app/core/constants/app_strings.dart';
 import 'package:spine_clinic_app/core/errors/app_exception.dart';
@@ -23,16 +22,16 @@ class StaffSummarySection extends ConsumerWidget {
     final asyncData = ref.watch(staffSummaryProvider);
 
     return asyncData.when(
-      loading: () => _buildLoading(),
+      loading: () => _buildLoading(context),
       error: (error, _) => ErrorView(
         exception: error is AppException ? error : AppException.fromSupabaseException(error),
         onRetry: () => ref.invalidate(staffSummaryProvider),
       ),
-      data: (data) => _buildData(data),
+      data: (data) => _buildData(context, data),
     );
   }
 
-  Widget _buildLoading() {
+  Widget _buildLoading(BuildContext context) {
     return Column(
       children: [
         Row(
@@ -43,12 +42,12 @@ class StaffSummarySection extends ConsumerWidget {
           ],
         ),
         const SizedBox(height: AppSizes.p16),
-        _skeletonSection(),
+        _skeletonSection(context),
       ],
     );
   }
 
-  Widget _skeletonSection() {
+  Widget _skeletonSection(BuildContext context) {
     return SectionCard(
       title: AppStrings.topPerformingDoctors,
       child: Column(
@@ -57,9 +56,9 @@ class StaffSummarySection extends ConsumerWidget {
           child: Container(
             height: AppSizes.skeletonLabelHeight,
             width: double.infinity,
-            decoration: const BoxDecoration(
-              color: AppColors.border,
-              borderRadius: BorderRadius.all(Radius.circular(AppSizes.r4)),
+            decoration: BoxDecoration(
+              color: Theme.of(context).colorScheme.outline,
+              borderRadius: const BorderRadius.all(Radius.circular(AppSizes.r4)),
             ),
           ),
         )),
@@ -67,7 +66,7 @@ class StaffSummarySection extends ConsumerWidget {
     );
   }
 
-  Widget _buildData(StaffSummary data) {
+  Widget _buildData(BuildContext context, StaffSummary data) {
     final bool isEmpty = data.appointmentsPerDoctor.isEmpty && data.newStaffInPeriod == 0;
 
     if (isEmpty) {
@@ -85,15 +84,15 @@ class StaffSummarySection extends ConsumerWidget {
           ],
         ),
         const SizedBox(height: AppSizes.p16),
-        if (data.topDoctors.isNotEmpty) _buildTopDoctors(data),
+        if (data.topDoctors.isNotEmpty) _buildTopDoctors(context, data),
         const SizedBox(height: AppSizes.p16),
         if (data.appointmentsPerDoctor.isNotEmpty)
-          BreakdownListCard(title: AppStrings.appointmentsPerDoctor, data: data.appointmentsPerDoctor, barColor: AppColors.primary),
+          BreakdownListCard(title: AppStrings.appointmentsPerDoctor, data: data.appointmentsPerDoctor, barColor: Theme.of(context).colorScheme.primary),
       ],
     );
   }
 
-  Widget _buildTopDoctors(StaffSummary data) {
+  Widget _buildTopDoctors(BuildContext context, StaffSummary data) {
     return SectionCard(
       title: AppStrings.topPerformingDoctors,
       child: Column(
@@ -108,16 +107,16 @@ class StaffSummarySection extends ConsumerWidget {
                   width: AppSizes.iconDefault,
                   height: AppSizes.iconDefault,
                   decoration: BoxDecoration(
-                    color: AppColors.primaryLight,
+                    color: Theme.of(context).colorScheme.primaryContainer,
                     borderRadius: const BorderRadius.all(Radius.circular(AppSizes.r4)),
                   ),
                   child: Center(
-                    child: Text('${entry.key + 1}', style: AppTextStyles.captionBold.copyWith(color: AppColors.primary)),
+                    child: Text('${entry.key + 1}', style: AppTextStyles.captionBold.copyWith(color: Theme.of(context).colorScheme.primary)),
                   ),
                 ),
                 const SizedBox(width: AppSizes.p12),
-                Expanded(child: Text(name, style: AppTextStyles.bodyBold.copyWith(color: AppColors.textPrimary))),
-                Text('$count ${AppStrings.sessionsCompleted.toLowerCase()}', style: AppTextStyles.caption.copyWith(color: AppColors.textSecondary)),
+                Expanded(child: Text(name, style: AppTextStyles.bodyBold.copyWith(color: Theme.of(context).colorScheme.onSurface))),
+                Text('$count ${AppStrings.sessionsCompleted.toLowerCase()}', style: AppTextStyles.caption.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant)),
               ],
             ),
           );

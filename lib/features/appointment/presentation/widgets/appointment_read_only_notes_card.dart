@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:spine_clinic_app/core/constants/clinic_colors.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:spine_clinic_app/core/constants/app_colors.dart';
 import 'package:spine_clinic_app/core/constants/app_sizes.dart';
 import 'package:spine_clinic_app/core/constants/app_strings.dart';
 import 'package:spine_clinic_app/core/constants/app_text_styles.dart';
@@ -42,12 +42,12 @@ class AppointmentReadOnlyNotesCard extends ConsumerWidget {
       child: SectionCard(
         title: AppStrings.notes,
         child: noteAsync.when(
-          loading: () => const Center(
-            child: CircularProgressIndicator(color: AppColors.primary),
+          loading: () => Center(
+            child: CircularProgressIndicator(color: Theme.of(context).colorScheme.primary),
           ),
           error: (Object error, StackTrace stack) => Text(
             'Error loading notes.',
-            style: AppTextStyles.body.copyWith(color: AppColors.error),
+            style: AppTextStyles.body.copyWith(color: Theme.of(context).colorScheme.error),
           ),
           data: (PatientNote? note) {
             final String noteText = note?.noteText ?? '';
@@ -59,7 +59,7 @@ class AppointmentReadOnlyNotesCard extends ConsumerWidget {
                 Text(
                   hasNotes ? noteText : 'No visit notes recorded.',
                   style: AppTextStyles.body.copyWith(
-                    color: hasNotes ? AppColors.textPrimary : AppColors.textMuted,
+                    color: hasNotes ? Theme.of(context).colorScheme.onSurface : ClinicColors.of(context).textMuted,
                     fontStyle: hasNotes ? FontStyle.normal : FontStyle.italic,
                   ),
                 ),

@@ -17,6 +17,7 @@ import 'package:spine_clinic_app/core/constants/app_sizes.dart';
 import 'package:spine_clinic_app/core/constants/app_strings.dart';
 import 'package:spine_clinic_app/core/constants/app_strings_auth.dart';
 import 'package:spine_clinic_app/core/constants/app_text_styles.dart';
+import 'package:spine_clinic_app/core/constants/clinic_colors.dart';
 import 'package:spine_clinic_app/core/errors/app_exception.dart';
 import 'package:spine_clinic_app/core/network/app_routes.dart';
 import 'package:spine_clinic_app/features/auth/domain/user_role.dart';
@@ -132,6 +133,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
   Widget _buildCardContent(BuildContext context) {
     final theme = Theme.of(context);
     final cs = theme.colorScheme;
+    final clinic = ClinicColors.of(context);
 
     return Column(
       mainAxisSize: MainAxisSize.min,
@@ -181,15 +183,9 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
           decoration: BoxDecoration(
             color: cs.surface,
             borderRadius: const BorderRadius.all(Radius.circular(AppSizes.r24)),
-            boxShadow: const [
-              BoxShadow(
-                color: Color(0x06000000),
-                blurRadius: 16,
-                offset: Offset(0, 8),
-              ),
-            ],
+            boxShadow: [clinic.cardShadow],
             border: Border.all(
-              color: Color(0x0E000000),
+              color: cs.outline,
               width: AppSizes.borderWidth,
             ),
           ),

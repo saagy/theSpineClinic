@@ -125,7 +125,7 @@ class _PatientProfileState extends ConsumerState<_PatientProfile> {
         appBar: AppBar(
           backgroundColor: cs.surface,
           elevation: 0,
-          surfaceTintColor: Colors.transparent,
+          surfaceTintColor: cs.surface.withAlpha(0),
           leading: const AppBackButton(),
           title: AnimatedOpacity(
             opacity: _showAppBarTitle ? 1.0 : 0.0,

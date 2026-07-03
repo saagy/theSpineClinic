@@ -1,13 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:spine_clinic_app/core/constants/app_colors.dart';
 import 'package:spine_clinic_app/core/constants/app_sizes.dart';
 import 'package:spine_clinic_app/core/constants/app_strings.dart';
 import 'package:spine_clinic_app/core/constants/app_text_styles.dart';
+import 'package:spine_clinic_app/core/constants/clinic_colors.dart';
 import 'package:spine_clinic_app/core/errors/app_exception.dart';
 import 'package:spine_clinic_app/core/network/app_routes.dart';
 import 'package:spine_clinic_app/core/utils/formatters.dart';
+import 'package:spine_clinic_app/features/appointment/presentation/widgets/appointment_badge_colors.dart';
 import 'package:spine_clinic_app/features/medical_records/presentation/visit_detail_controller.dart';
 import 'package:spine_clinic_app/shared/widgets/app_badge.dart';
 import 'package:spine_clinic_app/shared/widgets/error_view.dart';
@@ -26,19 +27,20 @@ class VisitDetailScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final stateAsync = ref.watch(visitDetailControllerProvider(appointmentId));
+    final ColorScheme cs = Theme.of(context).colorScheme;
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
         title: Text(AppStrings.visitDetails, style: AppTextStyles.headingSmall),
-        backgroundColor: AppColors.surface,
-        surfaceTintColor: AppColors.transparent,
+        backgroundColor: cs.surface,
+        surfaceTintColor: cs.surface.withAlpha(0),
         leading: const AppBackButton(),
         actions: [
           stateAsync.maybeWhen(
             data: (state) => state.canEditNotes
                 ? IconButton(
-                    icon: const Icon(Icons.edit_note_rounded),
+                    icon: Icon(Icons.edit_note_rounded),
                     tooltip: AppStrings.editNotesTooltip,
                     onPressed: () => context.push(
                       AppRoutes.addVisitNotes.replaceAll(':id', appointmentId),
@@ -50,7 +52,7 @@ class VisitDetailScreen extends ConsumerWidget {
         ],
       ),
       body: stateAsync.when(
-        loading: () => const Center(child: CircularProgressIndicator(color: AppColors.primary)),
+        loading: () => Center(child: CircularProgressIndicator(color: cs.primary)),
         error: (err, stack) => ErrorView(
           exception: err is AppException ? err : AppException.fromSupabaseException(err),
           onRetry: () => ref.invalidate(visitDetailControllerProvider(appointmentId)),
@@ -62,9 +64,9 @@ class VisitDetailScreen extends ConsumerWidget {
             children: [
               _buildInfoSection(context, state),
               const SizedBox(height: AppSizes.p16),
-              _buildDoctorsSection(state),
+              _buildDoctorsSection(context, state),
               const SizedBox(height: AppSizes.p16),
-              _buildNotesSection(state),
+              _buildNotesSection(context, state),
             ],
           ),
         ),
@@ -73,6 +75,12 @@ class VisitDetailScreen extends ConsumerWidget {
   }
 
   Widget _buildInfoSection(BuildContext context, VisitDetailState state) {
+    final ColorScheme cs = Theme.of(context).colorScheme;
+    final AppointmentBadgeColors typeBadge =
+        state.appointment.type.badgeColors(context);
+    final AppointmentBadgeColors statusBadge =
+        state.appointment.status.badgeColors(context);
+
     return SectionCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -84,13 +92,13 @@ class VisitDetailScreen extends ConsumerWidget {
               padding: const EdgeInsets.symmetric(vertical: AppSizes.p4),
               child: Row(
                 children: [
-                  const Icon(Icons.person_rounded, color: AppColors.primary, size: AppSizes.iconDefault),
+                  Icon(Icons.person_rounded, color: cs.primary, size: AppSizes.iconDefault),
                   const SizedBox(width: AppSizes.p8),
                   Expanded(
                     child: Text(
                       state.patient.fullName,
                       style: AppTextStyles.bodyBold.copyWith(
-                        color: AppColors.primary,
+                        color: cs.primary,
                         decoration: TextDecoration.underline,
                       ),
                     ),
@@ -99,7 +107,7 @@ class VisitDetailScreen extends ConsumerWidget {
               ),
             ),
           ),
-          const Divider(height: AppSizes.p24),
+          Divider(height: AppSizes.p24),
           InfoRow(label: AppStrings.date, value: Formatters.formatDateMedium(state.appointment.scheduledAt)),
           InfoRow(label: AppStrings.time, value: Formatters.formatTime(state.appointment.scheduledAt)),
           const SizedBox(height: AppSizes.p12),
@@ -107,14 +115,14 @@ class VisitDetailScreen extends ConsumerWidget {
             children: [
               AppBadge(
                 label: state.appointment.type.displayLabel,
-                textColor: state.appointment.type.textColor,
-                backgroundColor: state.appointment.type.backgroundColor,
+                textColor: typeBadge.textColor,
+                backgroundColor: typeBadge.backgroundColor,
               ),
               const SizedBox(width: AppSizes.p8),
               AppBadge(
                 label: state.appointment.status.displayLabel,
-                textColor: state.appointment.status.textColor,
-                backgroundColor: state.appointment.status.backgroundColor,
+                textColor: statusBadge.textColor,
+                backgroundColor: statusBadge.backgroundColor,
               ),
             ],
           ),
@@ -123,7 +131,10 @@ class VisitDetailScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildDoctorsSection(VisitDetailState state) {
+  Widget _buildDoctorsSection(BuildContext context, VisitDetailState state) {
+    final ColorScheme cs = Theme.of(context).colorScheme;
+    final ClinicColors clinic = ClinicColors.of(context);
+
     return SectionCard(
       title: AppStrings.attendingStaff,
       child: state.activeDoctors.isEmpty
@@ -138,7 +149,11 @@ class VisitDetailScreen extends ConsumerWidget {
                   padding: const EdgeInsets.symmetric(vertical: AppSizes.p4),
                   child: Row(
                     children: [
-                      const Icon(Icons.medical_services_outlined, color: AppColors.textSecondary, size: AppSizes.iconSmall),
+                      Icon(
+                        Icons.medical_services_outlined,
+                        color: cs.onSurfaceVariant,
+                        size: AppSizes.iconSmall,
+                      ),
                       const SizedBox(width: AppSizes.p8),
                       Expanded(
                         child: RichText(
@@ -150,7 +165,7 @@ class VisitDetailScreen extends ConsumerWidget {
                                 TextSpan(
                                   text: ' (${AppStrings.deactivated})',
                                   style: AppTextStyles.caption.copyWith(
-                                    color: AppColors.warning,
+                                    color: clinic.warning,
                                     fontWeight: FontWeight.w600,
                                   ),
                                 ),
@@ -158,7 +173,7 @@ class VisitDetailScreen extends ConsumerWidget {
                                 TextSpan(
                                   text: ' (Covering $replacedDoctorName)',
                                   style: AppTextStyles.caption.copyWith(
-                                    color: AppColors.warning,
+                                    color: clinic.warning,
                                     fontWeight: FontWeight.w600,
                                   ),
                                 ),
@@ -174,14 +189,16 @@ class VisitDetailScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildNotesSection(VisitDetailState state) {
+  Widget _buildNotesSection(BuildContext context, VisitDetailState state) {
+    final ColorScheme cs = Theme.of(context).colorScheme;
+    final ClinicColors clinic = ClinicColors.of(context);
     final noteText = state.note?.noteText;
     return SectionCard(
       title: 'Clinical Visit Notes',
       child: Text(
         noteText?.isNotEmpty == true ? noteText! : 'No visit notes recorded for this session.',
         style: AppTextStyles.body.copyWith(
-          color: noteText?.isNotEmpty == true ? AppColors.textPrimary : AppColors.textMuted,
+          color: noteText?.isNotEmpty == true ? cs.onSurface : clinic.textMuted,
           fontStyle: noteText?.isNotEmpty == true ? FontStyle.normal : FontStyle.italic,
         ),
       ),

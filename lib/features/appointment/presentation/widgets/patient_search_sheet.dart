@@ -3,7 +3,6 @@ library;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:spine_clinic_app/core/constants/app_colors.dart';
 import 'package:spine_clinic_app/core/constants/app_sizes.dart';
 import 'package:spine_clinic_app/core/constants/app_text_styles.dart';
 import 'package:spine_clinic_app/features/patient/domain/patient.dart';
@@ -49,7 +48,7 @@ class _PatientSearchSheetState extends ConsumerState<PatientSearchSheet> {
               width: 36,
               height: 4,
               decoration: BoxDecoration(
-                color: AppColors.border,
+                color: Theme.of(context).colorScheme.outline,
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
@@ -73,11 +72,11 @@ class _PatientSearchSheetState extends ConsumerState<PatientSearchSheet> {
                   decoration: InputDecoration(
                     hintText: 'Search by name or phone…',
                     hintStyle: AppTextStyles.bodySecondary,
-                    prefixIcon: const Icon(Icons.search_rounded,
-                        color: AppColors.primary,
+                    prefixIcon: Icon(Icons.search_rounded,
+                        color: Theme.of(context).colorScheme.primary,
                         size: AppSizes.iconDefault),
                     filled: true,
-                    fillColor: AppColors.background,
+                    fillColor: Theme.of(context).scaffoldBackgroundColor,
                     contentPadding: AppSizes.paddingCell,
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(AppSizes.r12),
@@ -90,9 +89,9 @@ class _PatientSearchSheetState extends ConsumerState<PatientSearchSheet> {
           ),
           Expanded(
             child: listAsync.when(
-              loading: () => const Center(
+              loading: () => Center(
                 child: CircularProgressIndicator(
-                  color: AppColors.primary,
+                  color: Theme.of(context).colorScheme.primary,
                 ),
               ),
               error: (_, __) =>
@@ -127,7 +126,7 @@ class _PatientSearchSheetState extends ConsumerState<PatientSearchSheet> {
                       subtitle: Text(
                         p.phoneNumber,
                         style: AppTextStyles.caption.copyWith(
-                          color: AppColors.textSecondary,
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
                         ),
                       ),
                       onTap: () => widget.onSelected(p),

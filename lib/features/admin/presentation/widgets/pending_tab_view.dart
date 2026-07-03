@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:spine_clinic_app/core/constants/app_colors.dart';
 import 'package:spine_clinic_app/core/constants/app_sizes.dart';
 import 'package:spine_clinic_app/core/constants/app_strings.dart';
 import 'package:spine_clinic_app/core/errors/app_exception.dart';
@@ -104,8 +103,8 @@ class PendingTabView extends ConsumerWidget {
 
     return RefreshIndicator(
       onRefresh: () => ref.read(pendingDoctorApplicationsProvider.notifier).refresh(),
-      color: AppColors.primary,
-      backgroundColor: AppColors.surface,
+      color: Theme.of(context).colorScheme.primary,
+      backgroundColor: Theme.of(context).colorScheme.surface,
       child: pendingAsync.when(
         data: (applications) {
           if (applications.isEmpty) {
@@ -140,14 +139,14 @@ class PendingTabView extends ConsumerWidget {
                         subtitle: '${doctor.email} • ${doctor.phone != null ? Formatters.formatPhone(doctor.phone!) : 'No phone'} • Reg: ${doctor.createdAt.toShortDateString()}',
                         leading: AppAvatar(
                           name: doctor.fullName,
-                          color: AppColors.primaryLight,
+                          color: Theme.of(context).colorScheme.primaryContainer,
                         ),
                         trailing: AppBadge(
                           label: doctor.role == UserRole.doctor
                               ? AppStrings.doctorRoleLabel
                               : AppStrings.receptionistRoleLabel,
-                          textColor: AppColors.primary,
-                          backgroundColor: AppColors.primaryLight,
+                          textColor: Theme.of(context).colorScheme.primary,
+                          backgroundColor: Theme.of(context).colorScheme.primaryContainer,
                         ),
                         transparent: true,
                       ),
@@ -164,8 +163,8 @@ class PendingTabView extends ConsumerWidget {
             },
           );
         },
-        loading: () => const Center(
-          child: CircularProgressIndicator(color: AppColors.primary),
+        loading: () => Center(
+          child: CircularProgressIndicator(color: Theme.of(context).colorScheme.primary),
         ),
         error: (error, _) => ErrorView(
           exception: error is AppException ? error : AppException.fromSupabaseException(error),

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:spine_clinic_app/core/constants/clinic_colors.dart';
 import 'package:flutter_form_builder/flutter_form_builder.dart';
 import 'package:form_builder_validators/form_builder_validators.dart';
-import 'package:spine_clinic_app/core/constants/app_colors.dart';
 import 'package:spine_clinic_app/core/constants/app_sizes.dart';
 import 'package:spine_clinic_app/core/constants/app_strings.dart';
 import 'package:spine_clinic_app/core/constants/app_text_styles.dart';
@@ -39,31 +39,31 @@ class _PackageFormSheetState extends State<PackageFormSheet> {
   InputDecoration _buildDecoration({required String labelText, String? hintText}) {
     final OutlineInputBorder borderBase = OutlineInputBorder(
       borderRadius: const BorderRadius.all(Radius.circular(AppSizes.r6)),
-      borderSide: const BorderSide(color: AppColors.border, width: AppSizes.borderWidth),
+      borderSide: BorderSide(color: Theme.of(context).colorScheme.outline, width: AppSizes.borderWidth),
     );
 
     return InputDecoration(
       labelText: labelText,
-      labelStyle: AppTextStyles.captionMedium.copyWith(color: AppColors.textSecondary),
+      labelStyle: AppTextStyles.captionMedium.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
       floatingLabelBehavior: FloatingLabelBehavior.always,
       isDense: true,
       filled: true,
-      fillColor: AppColors.surface,
+      fillColor: Theme.of(context).colorScheme.surface,
       hintText: hintText,
-      hintStyle: AppTextStyles.bodySecondary.copyWith(color: AppColors.textMuted),
+      hintStyle: AppTextStyles.bodySecondary.copyWith(color: ClinicColors.of(context).textMuted),
       contentPadding: AppSizes.paddingCell,
       enabledBorder: borderBase,
       disabledBorder: borderBase,
       focusedBorder: borderBase.copyWith(
-        borderSide: const BorderSide(color: AppColors.borderStrong, width: AppSizes.borderWidthFocused),
+        borderSide: BorderSide(color: ClinicColors.of(context).outlineStrong, width: AppSizes.borderWidthFocused),
       ),
       errorBorder: borderBase.copyWith(
-        borderSide: const BorderSide(color: AppColors.error, width: AppSizes.borderWidth),
+        borderSide: BorderSide(color: Theme.of(context).colorScheme.error, width: AppSizes.borderWidth),
       ),
       focusedErrorBorder: borderBase.copyWith(
-        borderSide: const BorderSide(color: AppColors.error, width: AppSizes.borderWidthFocused),
+        borderSide: BorderSide(color: Theme.of(context).colorScheme.error, width: AppSizes.borderWidthFocused),
       ),
-      errorStyle: AppTextStyles.caption.copyWith(color: AppColors.error),
+      errorStyle: AppTextStyles.caption.copyWith(color: Theme.of(context).colorScheme.error),
     );
   }
 
@@ -133,9 +133,9 @@ class _PackageFormSheetState extends State<PackageFormSheet> {
                   style: AppTextStyles.headingSmall,
                 ),
                 IconButton(
-                  icon: const Icon(Icons.close_rounded),
+                  icon: Icon(Icons.close_rounded),
                   onPressed: () => Navigator.of(context).pop(),
-                  color: AppColors.textSecondary,
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
                 ),
               ],
             ),
@@ -159,7 +159,7 @@ class _PackageFormSheetState extends State<PackageFormSheet> {
             // ── Kind selector ──
             Text(
               AppStrings.packageKindLabel,
-              style: AppTextStyles.captionMedium.copyWith(color: AppColors.textSecondary),
+              style: AppTextStyles.captionMedium.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
             ),
             const SizedBox(height: AppSizes.p8),
             Wrap(
@@ -174,10 +174,10 @@ class _PackageFormSheetState extends State<PackageFormSheet> {
                 return ChoiceChip(
                   label: Text(label),
                   selected: active,
-                  selectedColor: AppColors.primary,
-                  backgroundColor: AppColors.surface,
+                  selectedColor: Theme.of(context).colorScheme.primary,
+                  backgroundColor: Theme.of(context).colorScheme.surface,
                   labelStyle: AppTextStyles.captionMedium.copyWith(
-                    color: active ? AppColors.textOnPrimary : AppColors.textSecondary,
+                    color: active ? Theme.of(context).colorScheme.onPrimary : Theme.of(context).colorScheme.onSurfaceVariant,
                   ),
                   onSelected: (_) => setState(() => _kind = kind),
                 );
@@ -220,7 +220,7 @@ class _PackageFormSheetState extends State<PackageFormSheet> {
             const SizedBox(height: AppSizes.p12),
             Text(
               AppStrings.packageCountsAtLeastOne,
-              style: AppTextStyles.caption.copyWith(color: AppColors.textMuted),
+              style: AppTextStyles.caption.copyWith(color: ClinicColors.of(context).textMuted),
             ),
             const SizedBox(height: AppSizes.p16),
 

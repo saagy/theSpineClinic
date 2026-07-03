@@ -13,8 +13,8 @@ library;
 
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:spine_clinic_app/core/constants/clinic_colors.dart';
 import 'package:go_router/go_router.dart';
-import 'package:spine_clinic_app/core/constants/app_colors.dart';
 import 'package:spine_clinic_app/core/network/app_routes.dart';
 
 /// A full-screen blocking overlay spinner styled with Spine Clinic design tokens.
@@ -143,7 +143,7 @@ class _EscapeHatch extends StatelessWidget {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: AppColors.overlayScrim.withAlpha(25),
+            color: ClinicColors.of(context).overlayScrim.withAlpha(25),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),

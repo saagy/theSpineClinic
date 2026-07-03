@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:spine_clinic_app/core/constants/app_colors.dart';
 import 'package:spine_clinic_app/core/constants/app_sizes.dart';
 import 'package:spine_clinic_app/core/constants/app_strings.dart';
 import 'package:spine_clinic_app/core/constants/app_text_styles.dart';
@@ -27,16 +26,16 @@ class AddVisitNotesScreen extends ConsumerWidget {
     final stateAsync = ref.watch(addVisitNotesControllerProvider(appointmentId));
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
         title: Text(AppStrings.addVisitNotes, style: AppTextStyles.headingSmall),
-        backgroundColor: AppColors.surface,
-        surfaceTintColor: AppColors.transparent,
+        backgroundColor: Theme.of(context).colorScheme.surface,
+        surfaceTintColor: Theme.of(context).colorScheme.surface.withAlpha(0),
         leading: const AppBackButton(),
       ),
       body: stateAsync.when(
-        loading: () => const Center(
-          child: CircularProgressIndicator(color: AppColors.primary),
+        loading: () => Center(
+          child: CircularProgressIndicator(color: Theme.of(context).colorScheme.primary),
         ),
         error: (Object error, StackTrace stack) => ErrorView(
           exception: error is AppException ? error : AppException.fromSupabaseException(error),

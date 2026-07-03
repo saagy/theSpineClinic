@@ -12,7 +12,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import 'package:spine_clinic_app/core/constants/app_colors.dart';
 import 'package:spine_clinic_app/core/constants/app_sizes.dart';
 import 'package:spine_clinic_app/core/constants/app_strings.dart';
 import 'package:spine_clinic_app/core/constants/app_text_styles.dart';
@@ -78,14 +77,14 @@ class _PatientSearchScreenState extends ConsumerState<PatientSearchScreen> {
     final showFab = user != null && user.role != UserRole.doctor;
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
         title: Text(
           AppStrings.patients,
           style: AppTextStyles.headingSmall,
         ),
-        backgroundColor: AppColors.surface,
-        foregroundColor: AppColors.textPrimary,
+        backgroundColor: Theme.of(context).colorScheme.surface,
+        foregroundColor: Theme.of(context).colorScheme.onSurface,
         elevation: 0,
       ),
       body: Column(
@@ -113,7 +112,7 @@ class _PatientSearchScreenState extends ConsumerState<PatientSearchScreen> {
                 alignment: Alignment.centerLeft,
                 child: Text(
                   'Search Results: ${asyncPatients.value!.length}',
-                  style: AppTextStyles.captionBold.copyWith(color: AppColors.textSecondary),
+                  style: AppTextStyles.captionBold.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
                 ),
               ),
             ),
@@ -122,9 +121,9 @@ class _PatientSearchScreenState extends ConsumerState<PatientSearchScreen> {
           // ── Results ──
           Expanded(
             child: asyncPatients.when(
-              loading: () => const Center(
+              loading: () => Center(
                 child: CircularProgressIndicator(
-                  color: AppColors.primary,
+                  color: Theme.of(context).colorScheme.primary,
                 ),
               ),
               error: (error, _) => Center(
@@ -144,7 +143,7 @@ class _PatientSearchScreenState extends ConsumerState<PatientSearchScreen> {
                         child: Text(
                           AppStrings.retry,
                           style: AppTextStyles.bodyMedium.copyWith(
-                            color: AppColors.primary,
+                            color: Theme.of(context).colorScheme.primary,
                           ),
                         ),
                       ),
@@ -210,9 +209,9 @@ class _PatientSearchScreenState extends ConsumerState<PatientSearchScreen> {
       floatingActionButton: showFab
         ? FloatingActionButton(
             onPressed: () => context.push(AppRoutes.newPatient),
-            backgroundColor: AppColors.primary,
+            backgroundColor: Theme.of(context).colorScheme.primary,
             shape: const CircleBorder(),
-            child: const Icon(Icons.add, color: AppColors.textOnPrimary),
+            child: Icon(Icons.add, color: Theme.of(context).colorScheme.onPrimary),
           )
         : null,
     );

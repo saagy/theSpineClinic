@@ -36,6 +36,7 @@ abstract final class AppSnackbar {
   }) {
     final ColorScheme cs = Theme.of(context).colorScheme;
     final ClinicColors clinic = ClinicColors.of(context);
+    final Color transparent = cs.surface.withAlpha(0);
     // Resolve variant styling parameters
     final Color backgroundColor;
     final Color textColor;
@@ -45,12 +46,12 @@ abstract final class AppSnackbar {
       case AppSnackbarVariant.success:
         backgroundColor = clinic.successContainer;
         textColor = clinic.success;
-        border = Border.all(color: Colors.transparent, width: 0);
+        border = Border.all(color: transparent, width: 0);
         break;
       case AppSnackbarVariant.error:
         backgroundColor = cs.errorContainer;
         textColor = cs.onErrorContainer;
-        border = Border.all(color: Colors.transparent, width: 0);
+        border = Border.all(color: transparent, width: 0);
         break;
       case AppSnackbarVariant.info:
         backgroundColor = cs.surface;
@@ -61,7 +62,7 @@ abstract final class AppSnackbar {
 
     final SnackBar snackBar = SnackBar(
       behavior: SnackBarBehavior.floating,
-      backgroundColor: Colors.transparent,
+      backgroundColor: transparent,
       elevation: 0,
       margin: const EdgeInsets.all(AppSizes.p16),
       padding: EdgeInsets.zero,

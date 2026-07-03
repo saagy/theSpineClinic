@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:spine_clinic_app/core/constants/app_colors.dart';
+import 'package:spine_clinic_app/core/constants/clinic_colors.dart';
 import 'package:spine_clinic_app/core/constants/app_sizes.dart';
 import 'package:spine_clinic_app/core/constants/app_strings.dart';
 import 'package:spine_clinic_app/core/constants/app_text_styles.dart';
@@ -63,15 +63,15 @@ class PatientDemographicFields extends StatelessWidget {
           enabled: enabled,
         ),
         const SizedBox(height: AppSizes.p16),
-        _buildClinicDropdown(),
+        _buildClinicDropdown(context),
       ],
     );
   }
 
-  Widget _buildClinicDropdown() {
-    const border = OutlineInputBorder(
-      borderRadius: BorderRadius.all(Radius.circular(AppSizes.r6)),
-      borderSide: BorderSide(color: AppColors.border, width: AppSizes.borderWidth),
+  Widget _buildClinicDropdown(BuildContext context) {
+    final border = OutlineInputBorder(
+      borderRadius: const BorderRadius.all(Radius.circular(AppSizes.r6)),
+      borderSide: BorderSide(color: Theme.of(context).colorScheme.outline, width: AppSizes.borderWidth),
     );
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -79,30 +79,30 @@ class PatientDemographicFields extends StatelessWidget {
         Text(
           AppStrings.clinic,
           style: AppTextStyles.captionMedium.copyWith(
-            color: enabled ? AppColors.textSecondary : AppColors.textMuted,
+            color: enabled ? Theme.of(context).colorScheme.onSurfaceVariant : ClinicColors.of(context).textMuted,
           ),
         ),
         const SizedBox(height: AppSizes.p6),
         DropdownButtonFormField<ClinicLocation>(
           initialValue: selectedClinic,
           style: AppTextStyles.body.copyWith(
-            color: enabled ? AppColors.textPrimary : AppColors.textMuted,
+            color: enabled ? Theme.of(context).colorScheme.onSurface : ClinicColors.of(context).textMuted,
           ),
           decoration: InputDecoration(
             isDense: true,
             filled: true,
-            fillColor: enabled ? AppColors.surface : AppColors.background,
+            fillColor: enabled ? Theme.of(context).colorScheme.surface : Theme.of(context).scaffoldBackgroundColor,
             contentPadding: AppSizes.paddingCell,
             enabledBorder: border,
             disabledBorder: border,
             focusedBorder: border.copyWith(
-              borderSide: const BorderSide(color: AppColors.borderStrong, width: AppSizes.borderWidthFocused),
+              borderSide: BorderSide(color: ClinicColors.of(context).outlineStrong, width: AppSizes.borderWidthFocused),
             ),
             errorBorder: border.copyWith(
-              borderSide: const BorderSide(color: AppColors.error, width: AppSizes.borderWidth),
+              borderSide: BorderSide(color: Theme.of(context).colorScheme.error, width: AppSizes.borderWidth),
             ),
             focusedErrorBorder: border.copyWith(
-              borderSide: const BorderSide(color: AppColors.error, width: AppSizes.borderWidthFocused),
+              borderSide: BorderSide(color: Theme.of(context).colorScheme.error, width: AppSizes.borderWidthFocused),
             ),
           ),
           items: ClinicLocation.values

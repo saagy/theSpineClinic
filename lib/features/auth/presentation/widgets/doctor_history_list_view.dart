@@ -4,7 +4,6 @@ import 'package:spine_clinic_app/core/constants/app_sizes.dart';
 import 'package:spine_clinic_app/core/constants/app_text_styles.dart';
 import 'package:spine_clinic_app/features/appointment/domain/appointment_repository.dart';
 import 'package:spine_clinic_app/features/appointment/presentation/widgets/receptionist_appointment_card.dart';
-import 'package:spine_clinic_app/core/constants/app_colors.dart';
 import 'package:spine_clinic_app/shared/widgets/animated_list_item.dart';
 
 class DoctorHistoryListView extends StatefulWidget {
@@ -59,7 +58,7 @@ class _DoctorHistoryListViewState extends State<DoctorHistoryListView> {
               child: Text(
                 listItem.title,
                 style: AppTextStyles.captionBold.copyWith(
-                  color: AppColors.textSecondary,
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
                 ),
               ),
             );

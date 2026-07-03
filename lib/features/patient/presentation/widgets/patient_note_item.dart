@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:spine_clinic_app/core/constants/clinic_colors.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:spine_clinic_app/core/constants/app_colors.dart';
 import 'package:spine_clinic_app/core/constants/app_sizes.dart';
 import 'package:spine_clinic_app/core/constants/app_strings.dart';
 import 'package:spine_clinic_app/core/constants/app_text_styles.dart';
@@ -45,11 +45,11 @@ class PatientNoteItem extends ConsumerWidget {
     return Card(
       elevation: 0,
       margin: const EdgeInsets.symmetric(horizontal: AppSizes.p16, vertical: AppSizes.p8),
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.all(Radius.circular(AppSizes.r8)),
-        side: BorderSide(color: AppColors.border),
+      shape: RoundedRectangleBorder(
+        borderRadius: const BorderRadius.all(Radius.circular(AppSizes.r8)),
+        side: BorderSide(color: Theme.of(context).colorScheme.outline),
       ),
-      color: AppColors.surface,
+      color: Theme.of(context).colorScheme.surface,
       child: InkWell(
         borderRadius: const BorderRadius.all(Radius.circular(AppSizes.r8)),
         onTap: canModify ? () => _showEditNoteSheet(context) : null,
@@ -77,7 +77,7 @@ class PatientNoteItem extends ConsumerWidget {
                             : '${staff.fullName} ($roleName, ${AppStrings.deactivated})';
                         return Text(
                           name,
-                          style: AppTextStyles.bodyBold.copyWith(color: AppColors.textPrimary),
+                          style: AppTextStyles.bodyBold.copyWith(color: Theme.of(context).colorScheme.onSurface),
                           softWrap: true,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
@@ -92,16 +92,16 @@ class PatientNoteItem extends ConsumerWidget {
                     children: [
                       Text(
                         dateStr,
-                        style: AppTextStyles.caption.copyWith(color: AppColors.textMuted),
+                        style: AppTextStyles.caption.copyWith(color: ClinicColors.of(context).textMuted),
                       ),
                       if (canModify) ...[
                         const SizedBox(width: AppSizes.p8),
                         GestureDetector(
                           onTap: () => _confirmDeleteNote(context, ref),
-                          child: const Icon(
+                          child: Icon(
                             Icons.delete_outline_rounded,
                             size: AppSizes.iconSmall,
-                            color: AppColors.error,
+                            color: Theme.of(context).colorScheme.error,
                           ),
                         ),
                       ],
@@ -112,7 +112,7 @@ class PatientNoteItem extends ConsumerWidget {
               const SizedBox(height: AppSizes.p8),
               Text(
                 note.noteText,
-                style: AppTextStyles.body.copyWith(color: AppColors.textPrimary),
+                style: AppTextStyles.body.copyWith(color: Theme.of(context).colorScheme.onSurface),
               ),
               if (note.appointmentId != null) ...[
                 const SizedBox(height: AppSizes.p12),
@@ -186,15 +186,15 @@ class _AppointmentLinkIndicator extends ConsumerWidget {
 
     return Row(
       children: [
-        const Icon(Icons.link_rounded, size: AppSizes.iconSmall, color: AppColors.info),
+        Icon(Icons.link_rounded, size: AppSizes.iconSmall, color: ClinicColors.of(context).info),
         const SizedBox(width: AppSizes.p4),
         appointmentAsync.when(
           data: (appt) {
             final apptDate = Formatters.formatDateMedium(appt.scheduledAt);
             return AppBadge(
               label: '${AppStrings.onAppointmentPrefix}${appt.type.displayLabel} ($apptDate)',
-              textColor: AppColors.info,
-              backgroundColor: AppColors.infoBg,
+              textColor: ClinicColors.of(context).info,
+              backgroundColor: ClinicColors.of(context).infoContainer,
             );
           },
           loading: () => Text(AppStrings.loadingDetails, style: AppTextStyles.caption),

@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:spine_clinic_app/core/constants/app_colors.dart';
 import 'package:spine_clinic_app/core/constants/app_sizes.dart';
 import 'package:spine_clinic_app/core/constants/app_strings.dart';
 import 'package:spine_clinic_app/core/constants/app_text_styles.dart';
@@ -185,9 +184,9 @@ class _UnifiedFilterSheetState extends ConsumerState<UnifiedFilterSheet> {
                     decoration: InputDecoration(
                       hintText: AppStrings.searchDoctors,
                       hintStyle: AppTextStyles.bodySecondary,
-                      prefixIcon: const Icon(
+                      prefixIcon: Icon(
                         Icons.search_rounded,
-                        color: AppColors.primary,
+                        color: Theme.of(context).colorScheme.primary,
                         size: AppSizes.iconDefault,
                       ),
                       suffixIcon: _searchCtrl.text.isNotEmpty
@@ -208,11 +207,11 @@ class _UnifiedFilterSheetState extends ConsumerState<UnifiedFilterSheet> {
                   // Results dropdown overlay
                   if (_showResults)
                     doctorsAsync.when(
-                      loading: () => const Padding(
-                        padding: EdgeInsets.all(AppSizes.p16),
+                      loading: () => Padding(
+                        padding: const EdgeInsets.all(AppSizes.p16),
                         child: Center(
                           child: CircularProgressIndicator(
-                            color: AppColors.primary,
+                            color: Theme.of(context).colorScheme.primary,
                           ),
                         ),
                       ),

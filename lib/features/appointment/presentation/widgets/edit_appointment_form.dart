@@ -4,9 +4,9 @@
 library;
 
 import 'package:flutter/material.dart';
+import 'package:spine_clinic_app/core/constants/clinic_colors.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:spine_clinic_app/core/constants/app_colors.dart';
 import 'package:spine_clinic_app/core/constants/app_sizes.dart';
 import 'package:spine_clinic_app/core/constants/app_strings.dart';
 import 'package:spine_clinic_app/core/constants/app_text_styles.dart';
@@ -169,16 +169,16 @@ class _EditAppointmentFormState extends ConsumerState<EditAppointmentForm> {
                   Container(
                     padding: const EdgeInsets.all(AppSizes.p16),
                     decoration: BoxDecoration(
-                      color: AppColors.surface,
+                      color: Theme.of(context).colorScheme.surface,
                       borderRadius: const BorderRadius.all(Radius.circular(AppSizes.r16)),
-                      border: Border.all(color: AppColors.border, width: AppSizes.borderWidth),
+                      border: Border.all(color: Theme.of(context).colorScheme.outline, width: AppSizes.borderWidth),
                     ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
                           'Provider & Billing',
-                          style: AppTextStyles.captionMedium.copyWith(color: AppColors.textSecondary),
+                          style: AppTextStyles.captionMedium.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
                         ),
                         const SizedBox(height: AppSizes.p12),
                         AppDoctorMultiSelectField(
@@ -204,12 +204,12 @@ class _EditAppointmentFormState extends ConsumerState<EditAppointmentForm> {
                                 children: [
                                   Text(AppStrings.usePackageBalance,
                                       style: AppTextStyles.body.copyWith(
-                                          color: AppColors.textPrimary)),
+                                          color: Theme.of(context).colorScheme.onSurface)),
                                   if (!isScheduled) ...[
                                     const SizedBox(height: AppSizes.p4),
                                     Text(AppStrings.usePackageChangeWarning,
                                         style: AppTextStyles.caption.copyWith(
-                                            color: AppColors.warning)),
+                                            color: ClinicColors.of(context).warning)),
                                   ],
                                 ],
                               ),
@@ -219,7 +219,7 @@ class _EditAppointmentFormState extends ConsumerState<EditAppointmentForm> {
                               onChanged: isScheduled
                                   ? (v) => setState(() => _usePackage = v)
                                   : null,
-                              activeThumbColor: AppColors.primary,
+                              activeThumbColor: Theme.of(context).colorScheme.primary,
                             ),
                           ],
                         ),

@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:spine_clinic_app/core/constants/app_colors.dart';
 import 'package:spine_clinic_app/core/constants/app_sizes.dart';
 import 'package:spine_clinic_app/core/constants/app_strings.dart';
 import 'package:spine_clinic_app/core/constants/app_text_styles.dart';
@@ -26,7 +25,7 @@ class AnalyticsScreen extends ConsumerWidget {
     final asyncUser = ref.watch(currentUserProvider);
 
     return asyncUser.when(
-      loading: () => const Center(child: CircularProgressIndicator(color: AppColors.primary)),
+      loading: () => Center(child: CircularProgressIndicator(color: Theme.of(context).colorScheme.primary)),
       error: (error, _) => ErrorView(
         exception: error is AppException ? error : const UnknownException(message: AppStrings.errorDatabaseQueryFailed),
         onRetry: () => ref.invalidate(currentUserProvider),
@@ -60,8 +59,8 @@ class _AnalyticsBody extends ConsumerWidget {
               ref.invalidate(staffSummaryProvider);
               ref.invalidate(patientSummaryProvider);
             },
-            color: AppColors.primary,
-            backgroundColor: AppColors.surface,
+            color: Theme.of(context).colorScheme.primary,
+            backgroundColor: Theme.of(context).colorScheme.surface,
             child: ListView(
               physics: const AlwaysScrollableScrollPhysics(),
               padding: const EdgeInsets.all(AppSizes.p16),
@@ -98,6 +97,6 @@ class _SectionHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Text(title, style: AppTextStyles.headingSmall.copyWith(color: AppColors.textPrimary));
+    return Text(title, style: AppTextStyles.headingSmall.copyWith(color: Theme.of(context).colorScheme.onSurface));
   }
 }

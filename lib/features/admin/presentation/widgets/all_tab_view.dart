@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:spine_clinic_app/core/constants/clinic_colors.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:spine_clinic_app/core/constants/app_colors.dart';
 import 'package:spine_clinic_app/core/constants/app_sizes.dart';
 import 'package:spine_clinic_app/core/constants/app_strings.dart';
 import 'package:spine_clinic_app/core/errors/app_exception.dart';
@@ -24,8 +24,8 @@ class AllTabView extends ConsumerWidget {
 
     return RefreshIndicator(
       onRefresh: () => ref.read(allDoctorApplicationsProvider.notifier).refresh(),
-      color: AppColors.primary,
-      backgroundColor: AppColors.surface,
+      color: Theme.of(context).colorScheme.primary,
+      backgroundColor: Theme.of(context).colorScheme.surface,
       child: allApplicationsAsync.when(
         data: (applications) {
           if (applications.isEmpty) {
@@ -53,7 +53,7 @@ class AllTabView extends ConsumerWidget {
                 subtitle: '${doctor.email} • ${doctor.phone != null ? Formatters.formatPhone(doctor.phone!) : 'No phone'} • Reg: ${doctor.createdAt.toShortDateString()}',
                 leading: AppAvatar(
                   name: doctor.fullName,
-                  color: doctor.isActive ? AppColors.success : AppColors.warning,
+                  color: doctor.isActive ? ClinicColors.of(context).success : ClinicColors.of(context).warning,
                 ),
                 trailing: Row(
                   mainAxisSize: MainAxisSize.min,
@@ -62,14 +62,14 @@ class AllTabView extends ConsumerWidget {
                       label: doctor.role == UserRole.doctor
                           ? AppStrings.doctorRoleLabel
                           : AppStrings.receptionistRoleLabel,
-                      textColor: AppColors.primary,
-                      backgroundColor: AppColors.primaryLight,
+                      textColor: Theme.of(context).colorScheme.primary,
+                      backgroundColor: Theme.of(context).colorScheme.primaryContainer,
                     ),
                     const SizedBox(width: AppSizes.p8),
                     AppBadge(
                       label: doctor.isActive ? AppStrings.completed : AppStrings.scheduled,
-                      textColor: doctor.isActive ? AppColors.success : AppColors.warning,
-                      backgroundColor: doctor.isActive ? AppColors.successBg : AppColors.warningBg,
+                      textColor: doctor.isActive ? ClinicColors.of(context).success : ClinicColors.of(context).warning,
+                      backgroundColor: doctor.isActive ? ClinicColors.of(context).successContainer : ClinicColors.of(context).warningContainer,
                     ),
                   ],
                 ),
@@ -77,8 +77,8 @@ class AllTabView extends ConsumerWidget {
             },
           );
         },
-        loading: () => const Center(
-          child: CircularProgressIndicator(color: AppColors.primary),
+        loading: () => Center(
+          child: CircularProgressIndicator(color: Theme.of(context).colorScheme.primary),
         ),
         error: (error, _) => ErrorView(
           exception: error is AppException ? error : AppException.fromSupabaseException(error),

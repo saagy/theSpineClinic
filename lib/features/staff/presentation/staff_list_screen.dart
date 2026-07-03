@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:spine_clinic_app/core/constants/clinic_colors.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:spine_clinic_app/core/constants/app_colors.dart';
 import 'package:spine_clinic_app/core/constants/app_sizes.dart';
 import 'package:spine_clinic_app/core/constants/app_strings.dart';
 import 'package:spine_clinic_app/core/errors/app_exception.dart';
@@ -35,14 +35,14 @@ class StaffListScreen extends ConsumerWidget {
     final asyncUser = ref.watch(currentUserProvider);
 
     return asyncUser.when(
-      loading: () => const Scaffold(
-        backgroundColor: AppColors.background,
+      loading: () => Scaffold(
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         body: Center(
-          child: CircularProgressIndicator(color: AppColors.primary),
+          child: CircularProgressIndicator(color: Theme.of(context).colorScheme.primary),
         ),
       ),
       error: (error, _) => Scaffold(
-        backgroundColor: AppColors.background,
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         body: ErrorView(
           exception: error is AppException
               ? error
@@ -52,8 +52,8 @@ class StaffListScreen extends ConsumerWidget {
       ),
       data: (user) {
         if (user == null || user.role != UserRole.superAdmin) {
-          return const Scaffold(
-            backgroundColor: AppColors.background,
+          return Scaffold(
+            backgroundColor: Theme.of(context).scaffoldBackgroundColor,
             body: ErrorView(
               exception: UnknownException(
                 message: AppStrings.errorDatabasePermissionDenied,
@@ -243,10 +243,10 @@ class _StaffListScaffoldState extends ConsumerState<_StaffListScaffold> {
     final filteredStaffAsync = ref.watch(filteredStaffProvider);
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: AppColors.surface,
-        foregroundColor: AppColors.textPrimary,
+        backgroundColor: Theme.of(context).colorScheme.surface,
+        foregroundColor: Theme.of(context).colorScheme.onSurface,
         elevation: 0,
         title: const Text(AppStrings.staffManagement),
         leading: IconButton(
@@ -282,8 +282,8 @@ class _StaffListScaffoldState extends ConsumerState<_StaffListScaffold> {
           Expanded(
             child: RefreshIndicator(
               onRefresh: () => ref.read(staffListProvider.notifier).refreshStaff(),
-              color: AppColors.primary,
-              backgroundColor: AppColors.surface,
+              color: Theme.of(context).colorScheme.primary,
+              backgroundColor: Theme.of(context).colorScheme.surface,
               child: filteredStaffAsync.when(
                 data: (staffList) {
                   List<Staff> display = _sorted(staffList);
@@ -323,8 +323,8 @@ class _StaffListScaffoldState extends ConsumerState<_StaffListScaffold> {
                     },
                   );
                 },
-                loading: () => const Center(
-                  child: CircularProgressIndicator(color: AppColors.primary),
+                loading: () => Center(
+                  child: CircularProgressIndicator(color: Theme.of(context).colorScheme.primary),
                 ),
                 error: (error, _) => ErrorView(
                   exception: error is AppException ? error : AppException.fromSupabaseException(error),
@@ -337,8 +337,8 @@ class _StaffListScaffoldState extends ConsumerState<_StaffListScaffold> {
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () => context.push(AppRoutes.staffForm),
-        backgroundColor: AppColors.primary,
-        foregroundColor: AppColors.textOnPrimary,
+        backgroundColor: Theme.of(context).colorScheme.primary,
+        foregroundColor: Theme.of(context).colorScheme.onPrimary,
         child: const Icon(Icons.add_rounded),
       ),
     );
@@ -359,18 +359,18 @@ class _StaffRow extends StatelessWidget {
     switch (staff.role) {
       case UserRole.superAdmin:
         roleLabel = AppStrings.superAdmin;
-        roleTextColor = AppColors.primary;
-        roleBgColor = AppColors.primaryLight;
+        roleTextColor = Theme.of(context).colorScheme.primary;
+        roleBgColor = Theme.of(context).colorScheme.primaryContainer;
         break;
       case UserRole.receptionist:
         roleLabel = AppStrings.receptionist;
-        roleTextColor = AppColors.success;
-        roleBgColor = AppColors.successBg;
+        roleTextColor = ClinicColors.of(context).success;
+        roleBgColor = ClinicColors.of(context).successContainer;
         break;
       case UserRole.doctor:
         roleLabel = AppStrings.doctor;
-        roleTextColor = AppColors.info;
-        roleBgColor = AppColors.infoBg;
+        roleTextColor = ClinicColors.of(context).info;
+        roleBgColor = ClinicColors.of(context).infoContainer;
         break;
     }
 
@@ -388,8 +388,8 @@ class _StaffRow extends StatelessWidget {
           const SizedBox(width: AppSizes.p8),
           AppBadge(
             label: staff.isActive ? AppStrings.active : AppStrings.deactivated,
-            textColor: staff.isActive ? AppColors.success : AppColors.error,
-            backgroundColor: staff.isActive ? AppColors.successBg : AppColors.errorBg,
+            textColor: staff.isActive ? ClinicColors.of(context).success : Theme.of(context).colorScheme.error,
+            backgroundColor: staff.isActive ? ClinicColors.of(context).successContainer : Theme.of(context).colorScheme.errorContainer,
           ),
         ],
       ),

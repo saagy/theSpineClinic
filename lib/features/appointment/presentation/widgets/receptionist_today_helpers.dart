@@ -7,7 +7,7 @@
 library;
 
 import 'package:flutter/material.dart';
-import 'package:spine_clinic_app/core/constants/app_colors.dart';
+import 'package:spine_clinic_app/core/constants/clinic_colors.dart';
 import 'package:spine_clinic_app/core/constants/app_sizes.dart';
 import 'package:spine_clinic_app/core/constants/app_text_styles.dart';
 import 'package:spine_clinic_app/features/appointment/presentation/receptionist_appointments_providers.dart';
@@ -25,19 +25,19 @@ class TodayStatsStrip extends StatelessWidget {
       child: Row(
         children: [
           _Stat(label: 'Scheduled', count: state.scheduledCount,
-              color: AppColors.textSecondary),
-          const SizedBox(
+              color: Theme.of(context).colorScheme.onSurfaceVariant),
+          SizedBox(
             height: AppSizes.iconDefault,
-            child: VerticalDivider(width: AppSizes.p24, color: AppColors.border),
+            child: VerticalDivider(width: AppSizes.p24, color: Theme.of(context).colorScheme.outline),
           ),
           _Stat(label: 'Checked In', count: state.checkedInCount,
-              color: AppColors.success),
-          const SizedBox(
+              color: ClinicColors.of(context).success),
+          SizedBox(
             height: AppSizes.iconDefault,
-            child: VerticalDivider(width: AppSizes.p24, color: AppColors.border),
+            child: VerticalDivider(width: AppSizes.p24, color: Theme.of(context).colorScheme.outline),
           ),
           _Stat(label: 'Cancelled', count: state.cancelledCount,
-              color: AppColors.error),
+              color: Theme.of(context).colorScheme.error),
         ],
       ),
     );
@@ -59,7 +59,7 @@ class _Stat extends StatelessWidget {
               style: AppTextStyles.headingMedium.copyWith(color: color)),
           const SizedBox(height: AppSizes.p2),
           Text(label,
-              style: AppTextStyles.caption.copyWith(color: AppColors.textMuted)),
+              style: AppTextStyles.caption.copyWith(color: ClinicColors.of(context).textMuted)),
         ],
       ),
     );
@@ -81,8 +81,8 @@ class TodaySearchField extends StatelessWidget {
         decoration: InputDecoration(
           hintText: 'Search by patient name…',
           hintStyle: AppTextStyles.bodySecondary,
-          prefixIcon: const Icon(Icons.search_rounded,
-              color: AppColors.primary, size: AppSizes.iconDefault),
+          prefixIcon: Icon(Icons.search_rounded,
+              color: Theme.of(context).colorScheme.primary, size: AppSizes.iconDefault),
           isDense: true,
           contentPadding: const EdgeInsets.symmetric(
               horizontal: AppSizes.p12, vertical: AppSizes.p8),
@@ -106,7 +106,7 @@ class TodaySectionHeader extends StatelessWidget {
       child: Text(
         '$title · $count',
         style: AppTextStyles.captionBold
-            .copyWith(color: AppColors.textSecondary),
+            .copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
       ),
     );
   }

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:spine_clinic_app/core/constants/clinic_colors.dart';
 import 'package:flutter_form_builder/flutter_form_builder.dart';
 import 'package:form_builder_validators/form_builder_validators.dart';
-import 'package:spine_clinic_app/core/constants/app_colors.dart';
 import 'package:spine_clinic_app/core/constants/app_sizes.dart';
 import 'package:spine_clinic_app/core/constants/app_strings.dart';
 import 'package:spine_clinic_app/core/constants/app_text_styles.dart';
@@ -44,31 +44,31 @@ class _StaffFormFieldsState extends State<StaffFormFields> {
   InputDecoration _buildDecoration({required String labelText, String? hintText, Widget? suffixIcon}) {
     final OutlineInputBorder borderBase = OutlineInputBorder(
       borderRadius: const BorderRadius.all(Radius.circular(AppSizes.r6)),
-      borderSide: const BorderSide(color: AppColors.border, width: AppSizes.borderWidth),
+      borderSide: BorderSide(color: Theme.of(context).colorScheme.outline, width: AppSizes.borderWidth),
     );
 
     return InputDecoration(
       labelText: labelText,
-      labelStyle: AppTextStyles.captionMedium.copyWith(color: AppColors.textSecondary),
+      labelStyle: AppTextStyles.captionMedium.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
       floatingLabelBehavior: FloatingLabelBehavior.always,
       isDense: true,
       filled: true,
-      fillColor: widget.enabled ? AppColors.surface : AppColors.background,
+      fillColor: widget.enabled ? Theme.of(context).colorScheme.surface : Theme.of(context).scaffoldBackgroundColor,
       hintText: hintText,
-      hintStyle: AppTextStyles.bodySecondary.copyWith(color: AppColors.textMuted),
+      hintStyle: AppTextStyles.bodySecondary.copyWith(color: ClinicColors.of(context).textMuted),
       contentPadding: AppSizes.paddingCell,
       enabledBorder: borderBase,
       disabledBorder: borderBase,
       focusedBorder: borderBase.copyWith(
-        borderSide: const BorderSide(color: AppColors.borderStrong, width: AppSizes.borderWidthFocused),
+        borderSide: BorderSide(color: ClinicColors.of(context).outlineStrong, width: AppSizes.borderWidthFocused),
       ),
       errorBorder: borderBase.copyWith(
-        borderSide: const BorderSide(color: AppColors.error, width: AppSizes.borderWidth),
+        borderSide: BorderSide(color: Theme.of(context).colorScheme.error, width: AppSizes.borderWidth),
       ),
       focusedErrorBorder: borderBase.copyWith(
-        borderSide: const BorderSide(color: AppColors.error, width: AppSizes.borderWidthFocused),
+        borderSide: BorderSide(color: Theme.of(context).colorScheme.error, width: AppSizes.borderWidthFocused),
       ),
-      errorStyle: AppTextStyles.caption.copyWith(color: AppColors.error),
+      errorStyle: AppTextStyles.caption.copyWith(color: Theme.of(context).colorScheme.error),
       suffixIcon: suffixIcon,
     );
   }
@@ -151,7 +151,7 @@ class _StaffFormFieldsState extends State<StaffFormFields> {
             title: Text(
               AppStrings.isActive,
               style: AppTextStyles.body.copyWith(
-                color: widget.enabled && !widget.isSelf ? AppColors.textPrimary : AppColors.textMuted,
+                color: widget.enabled && !widget.isSelf ? Theme.of(context).colorScheme.onSurface : ClinicColors.of(context).textMuted,
               ),
             ),
             enabled: widget.enabled && !widget.isSelf,
@@ -167,7 +167,7 @@ class _StaffFormFieldsState extends State<StaffFormFields> {
             initialValue: false,
             title: Text(
               AppStrings.changePassword,
-              style: AppTextStyles.body.copyWith(color: AppColors.textPrimary),
+              style: AppTextStyles.body.copyWith(color: Theme.of(context).colorScheme.onSurface),
             ),
             enabled: widget.enabled,
             decoration: const InputDecoration(border: InputBorder.none),

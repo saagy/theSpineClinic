@@ -6,8 +6,8 @@
 library;
 
 import 'package:flutter/material.dart';
+import 'package:spine_clinic_app/core/constants/clinic_colors.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:spine_clinic_app/core/constants/app_colors.dart';
 import 'package:spine_clinic_app/core/constants/app_sizes.dart';
 import 'package:spine_clinic_app/core/constants/app_strings.dart';
 import 'package:spine_clinic_app/core/constants/app_text_styles.dart';
@@ -54,31 +54,31 @@ class _PackageBalanceEditDialogState extends State<PackageBalanceEditDialog> {
   InputDecoration _buildDecoration({required String labelText, String? hintText}) {
     final OutlineInputBorder borderBase = OutlineInputBorder(
       borderRadius: const BorderRadius.all(Radius.circular(AppSizes.r8)),
-      borderSide: const BorderSide(color: AppColors.border, width: AppSizes.borderWidth),
+      borderSide: BorderSide(color: Theme.of(context).colorScheme.outline, width: AppSizes.borderWidth),
     );
 
     return InputDecoration(
       labelText: labelText,
       hintText: hintText,
-      labelStyle: AppTextStyles.captionMedium.copyWith(color: AppColors.textSecondary),
+      labelStyle: AppTextStyles.captionMedium.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
       floatingLabelBehavior: FloatingLabelBehavior.always,
       isDense: true,
       filled: true,
-      fillColor: AppColors.surface,
-      hintStyle: AppTextStyles.bodySecondary.copyWith(color: AppColors.textMuted),
+      fillColor: Theme.of(context).colorScheme.surface,
+      hintStyle: AppTextStyles.bodySecondary.copyWith(color: ClinicColors.of(context).textMuted),
       contentPadding: AppSizes.paddingCell,
       enabledBorder: borderBase,
       disabledBorder: borderBase,
       focusedBorder: borderBase.copyWith(
-        borderSide: const BorderSide(color: AppColors.borderStrong, width: AppSizes.borderWidthFocused),
+        borderSide: BorderSide(color: ClinicColors.of(context).outlineStrong, width: AppSizes.borderWidthFocused),
       ),
       errorBorder: borderBase.copyWith(
-        borderSide: const BorderSide(color: AppColors.error, width: AppSizes.borderWidth),
+        borderSide: BorderSide(color: Theme.of(context).colorScheme.error, width: AppSizes.borderWidth),
       ),
       focusedErrorBorder: borderBase.copyWith(
-        borderSide: const BorderSide(color: AppColors.error, width: AppSizes.borderWidthFocused),
+        borderSide: BorderSide(color: Theme.of(context).colorScheme.error, width: AppSizes.borderWidthFocused),
       ),
-      errorStyle: AppTextStyles.caption.copyWith(color: AppColors.error),
+      errorStyle: AppTextStyles.caption.copyWith(color: Theme.of(context).colorScheme.error),
     );
   }
 
@@ -93,10 +93,10 @@ class _PackageBalanceEditDialogState extends State<PackageBalanceEditDialog> {
           shape: const RoundedRectangleBorder(
             borderRadius: BorderRadius.all(Radius.circular(AppSizes.r16)),
           ),
-          backgroundColor: AppColors.surface,
+          backgroundColor: Theme.of(context).colorScheme.surface,
           title: Text(
             AppStrings.editPackageBalance,
-            style: AppTextStyles.headingSmall.copyWith(color: AppColors.textPrimary),
+            style: AppTextStyles.headingSmall.copyWith(color: Theme.of(context).colorScheme.onSurface),
           ),
           content: SizedBox(
             width: 360,
@@ -108,7 +108,7 @@ class _PackageBalanceEditDialogState extends State<PackageBalanceEditDialog> {
                 children: [
                   Text(
                     '${AppStrings.currentBalancePrefix}PT ${widget.patient.sessionBalance} · Tr ${widget.patient.tractionBalance}',
-                    style: AppTextStyles.caption.copyWith(color: AppColors.textMuted),
+                    style: AppTextStyles.caption.copyWith(color: ClinicColors.of(context).textMuted),
                   ),
                   const SizedBox(height: AppSizes.p12),
                   TextFormField(
@@ -119,7 +119,7 @@ class _PackageBalanceEditDialogState extends State<PackageBalanceEditDialog> {
                       labelText: AppStrings.sessionBalance,
                       hintText: AppStrings.sessionBalanceHint,
                     ),
-                    style: AppTextStyles.body.copyWith(color: AppColors.textPrimary),
+                    style: AppTextStyles.body.copyWith(color: Theme.of(context).colorScheme.onSurface),
                     validator: _validateInt,
                   ),
                   const SizedBox(height: AppSizes.p16),
@@ -131,13 +131,13 @@ class _PackageBalanceEditDialogState extends State<PackageBalanceEditDialog> {
                       labelText: AppStrings.tractionBalance,
                       hintText: AppStrings.tractionBalanceHint,
                     ),
-                    style: AppTextStyles.body.copyWith(color: AppColors.textPrimary),
+                    style: AppTextStyles.body.copyWith(color: Theme.of(context).colorScheme.onSurface),
                     validator: _validateInt,
                   ),
                   const SizedBox(height: AppSizes.p12),
                   Text(
                     AppStrings.editReplacesExplanation,
-                    style: AppTextStyles.caption.copyWith(color: AppColors.textMuted),
+                    style: AppTextStyles.caption.copyWith(color: ClinicColors.of(context).textMuted),
                   ),
                 ],
               ),
@@ -148,7 +148,7 @@ class _PackageBalanceEditDialogState extends State<PackageBalanceEditDialog> {
               onPressed: isLoading ? null : () => Navigator.of(context).pop(),
               child: Text(
                 AppStrings.cancel,
-                style: AppTextStyles.bodyBold.copyWith(color: AppColors.textSecondary),
+                style: AppTextStyles.bodyBold.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
               ),
             ),
             AppButton(

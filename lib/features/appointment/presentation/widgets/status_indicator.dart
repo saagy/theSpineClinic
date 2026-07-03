@@ -5,7 +5,7 @@
 library;
 
 import 'package:flutter/material.dart';
-import 'package:spine_clinic_app/core/constants/app_colors.dart';
+import 'package:spine_clinic_app/core/constants/clinic_colors.dart';
 import 'package:spine_clinic_app/core/constants/app_sizes.dart';
 import 'package:spine_clinic_app/core/constants/app_strings.dart';
 import 'package:spine_clinic_app/core/constants/app_text_styles.dart';
@@ -23,14 +23,14 @@ class StatusIndicator extends StatelessWidget {
           padding: const EdgeInsets.symmetric(
               horizontal: AppSizes.p8, vertical: AppSizes.p2),
           decoration: BoxDecoration(
-            color: AppColors.checkedInBg,
+            color: ClinicColors.of(context).checkedInContainer,
             borderRadius:
                 const BorderRadius.all(Radius.circular(AppSizes.r24)),
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Icon(Icons.check, size: 12, color: AppColors.primaryDeep),
+              Icon(Icons.check, size: 12, color: Theme.of(context).colorScheme.onPrimaryContainer),
               const SizedBox(width: AppSizes.p2),
               Flexible(
                 child: Text(AppStrings.statusCheckedIn,
@@ -38,7 +38,7 @@ class StatusIndicator extends StatelessWidget {
                     overflow: TextOverflow.ellipsis,
                     style: AppTextStyles.captionBold.copyWith(
                       fontSize: 11,
-                      color: AppColors.primaryDeep,
+                      color: Theme.of(context).colorScheme.onPrimaryContainer,
                     )),
               ),
             ],
@@ -47,12 +47,12 @@ class StatusIndicator extends StatelessWidget {
       AppointmentStatus.cancelled => Text(AppStrings.statusCancelled,
           style: AppTextStyles.captionBold.copyWith(
             fontSize: 11,
-            color: AppColors.error,
+            color: Theme.of(context).colorScheme.error,
           )),
       _ => Text(AppStrings.statusScheduled,
           style: AppTextStyles.captionBold.copyWith(
             fontSize: 11,
-            color: AppColors.textMuted,
+            color: ClinicColors.of(context).textMuted,
           )),
     };
   }

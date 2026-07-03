@@ -5,9 +5,7 @@
 /// Display labels come from [AppStrings] (Rule 7).
 library;
 
-import 'package:flutter/material.dart';
 import 'package:json_annotation/json_annotation.dart';
-import 'package:spine_clinic_app/core/constants/app_colors.dart';
 import 'package:spine_clinic_app/core/constants/app_strings.dart';
 
 /// The type of an appointment.
@@ -46,19 +44,4 @@ enum AppointmentType {
         AppointmentType.reassessment => false,
       };
 
-  /// Text color for UI badges.
-  Color get textColor => switch (this) {
-        AppointmentType.normalPtSession => AppColors.primary,
-        AppointmentType.spinalTractionSession => AppColors.warning,
-        AppointmentType.initialAssessment => AppColors.info,
-        AppointmentType.reassessment => AppColors.info,
-      };
-
-  /// Background color for UI badges.
-  Color get backgroundColor => switch (this) {
-        AppointmentType.normalPtSession => AppColors.primaryLight,
-        AppointmentType.spinalTractionSession => AppColors.warningBg,
-        AppointmentType.initialAssessment => AppColors.infoBg,
-        AppointmentType.reassessment => AppColors.infoBg,
-      };
 }

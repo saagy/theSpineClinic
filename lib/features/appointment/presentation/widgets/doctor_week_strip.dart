@@ -73,7 +73,7 @@ class DoctorWeekStrip extends StatelessWidget {
               textColor = colorScheme.primary;
               subtextColor = colorScheme.primary;
             } else {
-              backgroundColor = Colors.transparent;
+              backgroundColor = colorScheme.surface.withAlpha(0);
               border = null;
               textColor = colorScheme.onSurface;
               subtextColor = colorScheme.onSurfaceVariant;

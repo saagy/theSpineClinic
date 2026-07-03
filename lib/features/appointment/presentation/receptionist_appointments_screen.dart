@@ -14,7 +14,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
-import 'package:spine_clinic_app/core/constants/app_colors.dart';
 import 'package:spine_clinic_app/core/constants/app_sizes.dart';
 import 'package:spine_clinic_app/core/constants/app_text_styles.dart';
 import 'package:spine_clinic_app/features/admin/presentation/branch_providers.dart';
@@ -80,7 +79,7 @@ class _ReceptionistAppointmentsScreenState
     final isAdmin = user?.role == UserRole.superAdmin;
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: SafeArea(
         child: Column(
           children: [
@@ -145,7 +144,7 @@ class _Header extends StatelessWidget {
           else
             Text(clinic.displayLabel,
                 style: AppTextStyles.headingMedium
-                    .copyWith(color: AppColors.textPrimary)),
+                    .copyWith(color: Theme.of(context).colorScheme.onSurface)),
           Text(DateFormat('E, MMM d').format(DateTime.now()),
               style: AppTextStyles.bodySecondary),
         ],
@@ -173,7 +172,7 @@ class _BranchDropdown extends ConsumerWidget {
     return PopupMenuButton<String>(
       offset: const Offset(0, 40),
       padding: EdgeInsets.zero,
-      color: AppColors.surface,
+      color: Theme.of(context).colorScheme.surface,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.all(Radius.circular(AppSizes.r12)),
       ),
@@ -182,10 +181,10 @@ class _BranchDropdown extends ConsumerWidget {
         children: [
           Text(display,
               style: AppTextStyles.headingMedium
-                  .copyWith(color: AppColors.textPrimary)),
+                  .copyWith(color: Theme.of(context).colorScheme.onSurface)),
           const SizedBox(width: AppSizes.p4),
-          const Icon(Icons.arrow_drop_down_rounded,
-              color: AppColors.textSecondary),
+          Icon(Icons.arrow_drop_down_rounded,
+              color: Theme.of(context).colorScheme.onSurfaceVariant),
         ],
       ),
       onSelected: (String value) {
@@ -209,13 +208,13 @@ class _BranchDropdown extends ConsumerWidget {
           value: '__all__',
           child: Text('All Branches',
               style: AppTextStyles.bodyMedium.copyWith(
-                  color: AppColors.textPrimary)),
+                  color: Theme.of(context).colorScheme.onSurface)),
         ),
         ...ClinicLocation.values.map((loc) => PopupMenuItem<String>(
               value: loc.dbValue,
               child: Text(loc.displayLabel,
                   style: AppTextStyles.bodyMedium.copyWith(
-                      color: AppColors.textPrimary)),
+                      color: Theme.of(context).colorScheme.onSurface)),
             )),
       ],
     );
@@ -233,11 +232,11 @@ class _TabStrip extends StatelessWidget {
       color: Theme.of(context).scaffoldBackgroundColor,
       child: TabBar(
         controller: controller,
-        labelColor: AppColors.primary,
-        unselectedLabelColor: AppColors.textSecondary,
+        labelColor: Theme.of(context).colorScheme.primary,
+        unselectedLabelColor: Theme.of(context).colorScheme.onSurfaceVariant,
         labelStyle: AppTextStyles.bodyBold,
         unselectedLabelStyle: AppTextStyles.bodyMedium,
-        indicatorColor: AppColors.primary,
+        indicatorColor: Theme.of(context).colorScheme.primary,
         indicatorWeight: 2,
         tabs: const [Tab(text: 'Today'), Tab(text: 'Upcoming'), Tab(text: 'All')],
       ),

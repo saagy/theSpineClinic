@@ -13,12 +13,11 @@ library;
 
 import 'package:flutter/material.dart';
 
-import 'package:spine_clinic_app/core/constants/app_colors.dart';
-
 /// Application-wide [TextStyle] constants.
 ///
 /// Uses the locally bundled "Plus Jakarta Sans" typeface. Styles are declared
-/// as compile-time `const` for optimal performance.
+/// as compile-time `const` typography tokens. Colors are supplied by the active
+/// theme so light and dark modes can resolve the right contrast.
 abstract final class AppTextStyles {
   static const String _fontFamily = 'Plus Jakarta Sans';
 
@@ -30,7 +29,6 @@ abstract final class AppTextStyles {
     fontSize: 24,
     fontWeight: FontWeight.w700,
     height: 1.2,
-    color: AppColors.textPrimary,
   );
 
   /// Card headers, dialog titles — 20px bold.
@@ -39,7 +37,6 @@ abstract final class AppTextStyles {
     fontSize: 20,
     fontWeight: FontWeight.w700,
     height: 1.25,
-    color: AppColors.textPrimary,
   );
 
   /// Section headers, form group labels — 16px semibold.
@@ -48,7 +45,6 @@ abstract final class AppTextStyles {
     fontSize: 16,
     fontWeight: FontWeight.w600,
     height: 1.3,
-    color: AppColors.textPrimary,
   );
 
   // ──────────────── Body ────────────────
@@ -59,7 +55,6 @@ abstract final class AppTextStyles {
     fontSize: 14,
     fontWeight: FontWeight.w400,
     height: 1.5,
-    color: AppColors.textPrimary,
   );
 
   /// Bold body — inline emphasis, row labels.
@@ -68,7 +63,6 @@ abstract final class AppTextStyles {
     fontSize: 14,
     fontWeight: FontWeight.w600,
     height: 1.5,
-    color: AppColors.textPrimary,
   );
 
   /// Medium-weight body — buttons, nav items, interactive text.
@@ -77,7 +71,6 @@ abstract final class AppTextStyles {
     fontSize: 14,
     fontWeight: FontWeight.w500,
     height: 1.5,
-    color: AppColors.textPrimary,
   );
 
   /// Secondary body — metadata, descriptions, helper text.
@@ -86,7 +79,6 @@ abstract final class AppTextStyles {
     fontSize: 14,
     fontWeight: FontWeight.w400,
     height: 1.5,
-    color: AppColors.textSecondary,
   );
 
   /// Larger body for intro text and empty states — 16px regular.
@@ -95,7 +87,6 @@ abstract final class AppTextStyles {
     fontSize: 16,
     fontWeight: FontWeight.w400,
     height: 1.5,
-    color: AppColors.textSecondary,
   );
 
   /// Card title — patient names, list item primary text. 18px bold.
@@ -104,7 +95,6 @@ abstract final class AppTextStyles {
     fontSize: 18,
     fontWeight: FontWeight.w700,
     height: 1.3,
-    color: AppColors.textPrimary,
   );
 
   // ──────────────── Captions ────────────────
@@ -115,7 +105,6 @@ abstract final class AppTextStyles {
     fontSize: 12,
     fontWeight: FontWeight.w400,
     height: 1.5,
-    color: AppColors.textMuted,
   );
 
   /// Medium-weight caption — column headers, tab labels, chip text.
@@ -124,7 +113,6 @@ abstract final class AppTextStyles {
     fontSize: 12,
     fontWeight: FontWeight.w500,
     height: 1.5,
-    color: AppColors.textSecondary,
   );
 
   /// Bold caption — active tabs, badge text, highlighted chips.
@@ -133,7 +121,6 @@ abstract final class AppTextStyles {
     fontSize: 12,
     fontWeight: FontWeight.w600,
     height: 1.5,
-    color: AppColors.textPrimary,
   );
 
   // ──────────────── Special Purpose ────────────────
@@ -144,7 +131,6 @@ abstract final class AppTextStyles {
     fontSize: 20,
     fontWeight: FontWeight.w800,
     height: 1.2,
-    color: AppColors.textPrimary,
   );
 
   /// Button label — semibold 16px on primary-coloured background.
@@ -153,7 +139,6 @@ abstract final class AppTextStyles {
     fontSize: 16,
     fontWeight: FontWeight.w600,
     height: 1.0,
-    color: AppColors.textOnPrimary,
   );
 
   /// Numeric data cells — tabular (monospaced-like) figures.
@@ -162,7 +147,6 @@ abstract final class AppTextStyles {
     fontSize: 14,
     fontWeight: FontWeight.w500,
     height: 1.4,
-    color: AppColors.textPrimary,
     fontFeatures: [FontFeature.tabularFigures()],
   );
 
@@ -172,7 +156,6 @@ abstract final class AppTextStyles {
     fontSize: 24,
     fontWeight: FontWeight.w700,
     height: 1.2,
-    color: AppColors.textPrimary,
     fontFeatures: [FontFeature.tabularFigures()],
   );
 }

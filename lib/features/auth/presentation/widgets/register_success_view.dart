@@ -9,9 +9,9 @@
 library;
 
 import 'package:flutter/material.dart';
+import 'package:spine_clinic_app/core/constants/clinic_colors.dart';
 import 'package:go_router/go_router.dart';
 
-import 'package:spine_clinic_app/core/constants/app_colors.dart';
 import 'package:spine_clinic_app/core/constants/app_sizes.dart';
 import 'package:spine_clinic_app/core/constants/app_strings_auth.dart';
 import 'package:spine_clinic_app/core/constants/app_text_styles.dart';
@@ -26,7 +26,7 @@ class RegisterSuccessView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: SafeArea(
         child: Padding(
           padding: AppSizes.paddingScreenH,
@@ -35,10 +35,10 @@ class RegisterSuccessView extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               children: [
                 // Success icon
-                const Icon(
+                Icon(
                   Icons.check_circle_outline_rounded,
                   size: 64,
-                  color: AppColors.success,
+                  color: ClinicColors.of(context).success,
                 ),
                 const SizedBox(height: AppSizes.p24),
 

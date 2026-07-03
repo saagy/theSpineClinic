@@ -6,7 +6,6 @@ library;
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
-import 'package:spine_clinic_app/core/constants/app_colors.dart';
 import 'package:spine_clinic_app/core/constants/app_sizes.dart';
 import 'package:spine_clinic_app/core/constants/app_text_styles.dart';
 import 'package:spine_clinic_app/core/errors/app_exception.dart';
@@ -88,7 +87,7 @@ class _ReceptionistUpcomingTabState extends State<ReceptionistUpcomingTab> {
 
     if (widget.onRefresh != null) {
       return RefreshIndicator(
-        color: AppColors.primary,
+        color: Theme.of(context).colorScheme.primary,
         onRefresh: widget.onRefresh!,
         child: list,
       );
@@ -120,7 +119,7 @@ class _ReceptionistUpcomingTabState extends State<ReceptionistUpcomingTab> {
             child: Text(
               '$formatted · $count appointment${count == 1 ? '' : 's'}',
               style: AppTextStyles.captionBold
-                  .copyWith(color: AppColors.textSecondary),
+                  .copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
             ),
           ),
         ));

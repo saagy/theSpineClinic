@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 
-import 'package:spine_clinic_app/core/constants/app_colors.dart';
 import 'package:spine_clinic_app/core/constants/app_sizes.dart';
 import 'package:spine_clinic_app/core/constants/app_text_styles.dart';
 import 'package:spine_clinic_app/shared/widgets/image_viewer_view.dart';
@@ -112,7 +111,7 @@ class _AppFileViewerDialogState extends State<_AppFileViewerDialog> {
     }
     final ColorScheme cs = Theme.of(context).colorScheme;
     return Container(
-      color: AppColors.background,
+      color: Theme.of(context).scaffoldBackgroundColor,
       alignment: Alignment.center,
       child: Padding(
         padding: const EdgeInsets.all(AppSizes.p24),

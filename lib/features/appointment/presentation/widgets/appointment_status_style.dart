@@ -4,7 +4,7 @@
 library;
 
 import 'package:flutter/material.dart';
-import 'package:spine_clinic_app/core/constants/app_colors.dart';
+import 'package:spine_clinic_app/core/constants/clinic_colors.dart';
 import 'package:spine_clinic_app/features/appointment/domain/appointment_status.dart';
 
 /// Colour tokens for each appointment status: background, border, time colour,
@@ -26,30 +26,38 @@ class AppointmentStatusStyle {
   final TextDecoration? nameDecoration;
   final Color nameColor;
 
-  static AppointmentStatusStyle forStatus(AppointmentStatus s) => switch (s) {
-    AppointmentStatus.checkedIn => const AppointmentStatusStyle(
-        bg: AppColors.checkedInBg,
-        border: AppColors.checkedInBorder,
-        timeColor: AppColors.primaryDeep,
-        avatarBg: AppColors.primary,
+  static AppointmentStatusStyle forStatus(
+    BuildContext context,
+    AppointmentStatus s,
+  ) {
+    final ColorScheme cs = Theme.of(context).colorScheme;
+    final ClinicColors clinic = ClinicColors.of(context);
+
+    return switch (s) {
+      AppointmentStatus.checkedIn => AppointmentStatusStyle(
+        bg: clinic.checkedInContainer,
+        border: clinic.checkedInOutline,
+        timeColor: cs.onPrimaryContainer,
+        avatarBg: cs.primary,
         nameDecoration: null,
-        nameColor: AppColors.textPrimary,
+        nameColor: cs.onSurface,
       ),
-    AppointmentStatus.cancelled => const AppointmentStatusStyle(
-        bg: AppColors.surface,
-        border: AppColors.border,
-        timeColor: AppColors.textMuted,
-        avatarBg: AppColors.textMuted,
+      AppointmentStatus.cancelled => AppointmentStatusStyle(
+        bg: cs.surface,
+        border: cs.outline,
+        timeColor: clinic.textMuted,
+        avatarBg: clinic.textMuted,
         nameDecoration: TextDecoration.lineThrough,
-        nameColor: AppColors.textMuted,
+        nameColor: clinic.textMuted,
       ),
-    _ => const AppointmentStatusStyle(
-        bg: AppColors.surface,
-        border: AppColors.border,
-        timeColor: AppColors.textPrimary,
-        avatarBg: AppColors.primary,
+      _ => AppointmentStatusStyle(
+        bg: cs.surface,
+        border: cs.outline,
+        timeColor: cs.onSurface,
+        avatarBg: cs.primary,
         nameDecoration: null,
-        nameColor: AppColors.textPrimary,
+        nameColor: cs.onSurface,
       ),
-  };
+    };
+  }
 }

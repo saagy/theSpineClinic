@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:spine_clinic_app/core/constants/app_colors.dart';
+import 'package:spine_clinic_app/core/constants/clinic_colors.dart';
 import 'package:spine_clinic_app/core/constants/app_sizes.dart';
 import 'package:spine_clinic_app/core/constants/app_strings.dart';
 import 'package:spine_clinic_app/core/constants/app_text_styles.dart';
@@ -12,7 +12,7 @@ class BreakdownListCard extends StatelessWidget {
     super.key,
     required this.title,
     required this.data,
-    this.barColor = AppColors.primary,
+    this.barColor,
   });
 
   /// The title of this breakdown card.
@@ -22,11 +22,13 @@ class BreakdownListCard extends StatelessWidget {
   final Map<String, int> data;
 
   /// The theme color of progress indicators.
-  final Color barColor;
+  final Color? barColor;
 
   @override
   Widget build(BuildContext context) {
     final int total = data.values.fold(0, (sum, val) => sum + val);
+    final Color effectiveBarColor =
+        barColor ?? Theme.of(context).colorScheme.primary;
 
     return SectionCard(
       title: title,
@@ -36,7 +38,7 @@ class BreakdownListCard extends StatelessWidget {
               child: Center(
                 child: Text(
                   AppStrings.noRecordsInWindow,
-                  style: AppTextStyles.caption.copyWith(color: AppColors.textMuted),
+                  style: AppTextStyles.caption.copyWith(color: ClinicColors.of(context).textMuted),
                 ),
               ),
             )
@@ -62,7 +64,7 @@ class BreakdownListCard extends StatelessWidget {
                             child: Text(
                               displayLabel,
                               style: AppTextStyles.captionBold.copyWith(
-                                color: AppColors.textSecondary,
+                                color: Theme.of(context).colorScheme.onSurfaceVariant,
                               ),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
@@ -72,7 +74,7 @@ class BreakdownListCard extends StatelessWidget {
                           Text(
                             '$count (${(percent * 100).toStringAsFixed(0)}%)',
                             style: AppTextStyles.number.copyWith(
-                              color: AppColors.textPrimary,
+                              color: Theme.of(context).colorScheme.onSurface,
                             ),
                           ),
                         ],
@@ -82,8 +84,10 @@ class BreakdownListCard extends StatelessWidget {
                         borderRadius: const BorderRadius.all(Radius.circular(AppSizes.r4)),
                         child: LinearProgressIndicator(
                           value: percent,
-                          backgroundColor: AppColors.background,
-                          valueColor: AlwaysStoppedAnimation<Color>(barColor),
+                          backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+                          valueColor: AlwaysStoppedAnimation<Color>(
+                            effectiveBarColor,
+                          ),
                           minHeight: AppSizes.p6,
                         ),
                       ),

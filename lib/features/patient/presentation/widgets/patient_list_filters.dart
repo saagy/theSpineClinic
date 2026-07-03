@@ -2,9 +2,9 @@
 library;
 
 import 'package:flutter/material.dart';
+import 'package:spine_clinic_app/core/constants/clinic_colors.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'package:spine_clinic_app/core/constants/app_colors.dart';
 import 'package:spine_clinic_app/core/constants/app_sizes.dart';
 import 'package:spine_clinic_app/core/constants/app_strings.dart';
 import 'package:spine_clinic_app/core/constants/app_text_styles.dart';
@@ -117,7 +117,7 @@ class _SearchableDoctorFilterState extends ConsumerState<_SearchableDoctorFilter
               clipBehavior: Clip.antiAlias,
               child: Container(
                 constraints: const BoxConstraints(maxHeight: AppSizes.navDrawerWidth),
-                color: AppColors.surface,
+                color: Theme.of(context).colorScheme.surface,
                 child: ListView(
                   padding: EdgeInsets.zero,
                   shrinkWrap: true,
@@ -163,7 +163,7 @@ class _SearchableDoctorFilterState extends ConsumerState<_SearchableDoctorFilter
     final showPlaceholder = _selectedDoctorName.isEmpty;
     final border = OutlineInputBorder(
       borderRadius: const BorderRadius.all(Radius.circular(AppSizes.r6)),
-      borderSide: const BorderSide(color: AppColors.border, width: AppSizes.borderWidth),
+      borderSide: BorderSide(color: Theme.of(context).colorScheme.outline, width: AppSizes.borderWidth),
     );
 
     return CompositedTransformTarget(
@@ -174,13 +174,13 @@ class _SearchableDoctorFilterState extends ConsumerState<_SearchableDoctorFilter
           controller: _searchCtrl,
           focusNode: _focusNode,
           onChanged: (_) => _overlayEntry?.markNeedsBuild(),
-          style: AppTextStyles.captionMedium.copyWith(color: AppColors.textPrimary),
+          style: AppTextStyles.captionMedium.copyWith(color: Theme.of(context).colorScheme.onSurface),
           decoration: InputDecoration(
             isDense: true,
             contentPadding: const EdgeInsets.symmetric(horizontal: AppSizes.p12, vertical: AppSizes.p8),
             hintText: showPlaceholder ? AppStrings.filterByDoctor : _selectedDoctorName,
             hintStyle: AppTextStyles.captionMedium.copyWith(
-              color: showPlaceholder ? AppColors.textSecondary : AppColors.textPrimary,
+              color: showPlaceholder ? Theme.of(context).colorScheme.onSurfaceVariant : Theme.of(context).colorScheme.onSurface,
             ),
             suffixIcon: _selectedDoctorName.isNotEmpty
                 ? GestureDetector(
@@ -188,14 +188,14 @@ class _SearchableDoctorFilterState extends ConsumerState<_SearchableDoctorFilter
                       setState(() { _selectedDoctorName = ''; });
                       ref.read(patientListProvider.notifier).setDoctorFilter(null);
                     },
-                    child: const Icon(Icons.close, size: AppSizes.iconDefault, color: AppColors.textSecondary),
+                    child: Icon(Icons.close, size: AppSizes.iconDefault, color: Theme.of(context).colorScheme.onSurfaceVariant),
                   )
-                : const Icon(Icons.search_rounded, size: AppSizes.iconDefault, color: AppColors.textSecondary),
+                : Icon(Icons.search_rounded, size: AppSizes.iconDefault, color: Theme.of(context).colorScheme.onSurfaceVariant),
             filled: true,
-            fillColor: AppColors.surface,
+            fillColor: Theme.of(context).colorScheme.surface,
             enabledBorder: border,
             focusedBorder: border.copyWith(
-              borderSide: const BorderSide(color: AppColors.borderStrong, width: AppSizes.borderWidthFocused),
+              borderSide: BorderSide(color: ClinicColors.of(context).outlineStrong, width: AppSizes.borderWidthFocused),
             ),
           ),
         ),
@@ -225,26 +225,29 @@ class _BranchFilterDropdown extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final notifier = ref.read(patientListProvider.notifier);
+    final border = OutlineInputBorder(
+      borderRadius: const BorderRadius.all(Radius.circular(AppSizes.r6)),
+      borderSide: BorderSide(
+        color: Theme.of(context).colorScheme.outline,
+        width: AppSizes.borderWidth,
+      ),
+    );
     return DropdownButtonFormField<ClinicLocation?>(
       initialValue: notifier.currentClinicFilter,
       decoration: InputDecoration(
         isDense: true,
         contentPadding: const EdgeInsets.symmetric(horizontal: AppSizes.p12, vertical: AppSizes.p8),
-        border: const OutlineInputBorder(
-          borderRadius: BorderRadius.all(Radius.circular(AppSizes.r6)),
-          borderSide: BorderSide(color: AppColors.border, width: AppSizes.borderWidth),
-        ),
-        enabledBorder: const OutlineInputBorder(
-          borderRadius: BorderRadius.all(Radius.circular(AppSizes.r6)),
-          borderSide: BorderSide(color: AppColors.border, width: AppSizes.borderWidth),
-        ),
-        focusedBorder: const OutlineInputBorder(
-          borderRadius: BorderRadius.all(Radius.circular(AppSizes.r6)),
-          borderSide: BorderSide(color: AppColors.borderStrong, width: AppSizes.borderWidthFocused),
+        border: border,
+        enabledBorder: border,
+        focusedBorder: border.copyWith(
+          borderSide: BorderSide(
+            color: ClinicColors.of(context).outlineStrong,
+            width: AppSizes.borderWidthFocused,
+          ),
         ),
       ),
       hint: Text(AppStrings.allBranches,
-          style: AppTextStyles.captionMedium.copyWith(color: AppColors.textSecondary)),
+          style: AppTextStyles.captionMedium.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant)),
       items: const [
         DropdownMenuItem<ClinicLocation?>(value: null, child: Text(AppStrings.allBranches)),
         DropdownMenuItem<ClinicLocation?>(value: ClinicLocation.tagamoa, child: Text(AppStrings.clinicTagamoa)),

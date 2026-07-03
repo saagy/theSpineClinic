@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:spine_clinic_app/core/constants/app_colors.dart';
 import 'package:spine_clinic_app/core/constants/app_sizes.dart';
 import 'package:spine_clinic_app/core/constants/app_text_styles.dart';
 import 'package:spine_clinic_app/core/utils/formatters.dart';
@@ -86,10 +85,10 @@ class _PatientNotesFilterContentState extends ConsumerState<PatientNotesFilterCo
         const SizedBox(height: AppSizes.p8),
         Container(
           decoration: BoxDecoration(
-            color: (_dateFrom != null || _dateTo != null) ? AppColors.primaryLight : AppColors.surface,
+            color: (_dateFrom != null || _dateTo != null) ? Theme.of(context).colorScheme.primaryContainer : Theme.of(context).colorScheme.surface,
             borderRadius: const BorderRadius.all(Radius.circular(AppSizes.r12)),
             border: Border.all(
-              color: (_dateFrom != null || _dateTo != null) ? AppColors.primary : AppColors.border,
+              color: (_dateFrom != null || _dateTo != null) ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.outline,
               width: AppSizes.borderWidth,
             ),
           ),
@@ -103,25 +102,25 @@ class _PatientNotesFilterContentState extends ConsumerState<PatientNotesFilterCo
                   Icon(
                     Icons.date_range_rounded,
                     size: AppSizes.iconDefault,
-                    color: (_dateFrom != null || _dateTo != null) ? AppColors.primary : AppColors.textSecondary,
+                    color: (_dateFrom != null || _dateTo != null) ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.onSurfaceVariant,
                   ),
                   const SizedBox(width: AppSizes.p12),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text('Date Range', style: AppTextStyles.caption.copyWith(color: AppColors.textSecondary)),
+                        Text('Date Range', style: AppTextStyles.caption.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant)),
                         const SizedBox(height: AppSizes.p2),
                         Text(
                           dateRangeText,
                           style: AppTextStyles.bodyMedium.copyWith(
-                            color: (_dateFrom != null || _dateTo != null) ? AppColors.primary : AppColors.textPrimary,
+                            color: (_dateFrom != null || _dateTo != null) ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.onSurface,
                           ),
                         ),
                       ],
                     ),
                   ),
-                  const Icon(Icons.chevron_right_rounded, color: AppColors.textSecondary),
+                  Icon(Icons.chevron_right_rounded, color: Theme.of(context).colorScheme.onSurfaceVariant),
                 ],
               ),
             ),

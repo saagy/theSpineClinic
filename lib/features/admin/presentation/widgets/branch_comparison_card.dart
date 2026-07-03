@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:spine_clinic_app/core/constants/app_colors.dart';
 import 'package:spine_clinic_app/core/constants/app_sizes.dart';
 import 'package:spine_clinic_app/core/constants/app_strings.dart';
 import 'package:spine_clinic_app/core/constants/app_text_styles.dart';
@@ -21,7 +20,7 @@ class BranchComparisonCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (isLoading) return _buildSkeleton();
+    if (isLoading) return _buildSkeleton(context);
 
     return SectionCard(
       title: AppStrings.branchComparison,
@@ -35,7 +34,7 @@ class BranchComparisonCard extends StatelessWidget {
           Container(
             width: AppSizes.borderWidth,
             height: AppSizes.p48 * 3,
-            color: AppColors.border,
+            color: Theme.of(context).colorScheme.outline,
             margin: const EdgeInsets.symmetric(horizontal: AppSizes.p12),
           ),
           Expanded(child: _BranchColumn(
@@ -47,26 +46,26 @@ class BranchComparisonCard extends StatelessWidget {
     );
   }
 
-  Widget _buildSkeleton() {
+  Widget _buildSkeleton(BuildContext context) {
     return SectionCard(
       title: AppStrings.branchComparison,
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Expanded(child: _skeletonColumn()),
+          Expanded(child: _skeletonColumn(context)),
           Container(
             width: AppSizes.borderWidth,
             height: AppSizes.p48 * 3,
-            color: AppColors.border,
+            color: Theme.of(context).colorScheme.outline,
             margin: const EdgeInsets.symmetric(horizontal: AppSizes.p12),
           ),
-          Expanded(child: _skeletonColumn()),
+          Expanded(child: _skeletonColumn(context)),
         ],
       ),
     );
   }
 
-  Widget _skeletonColumn() {
+  Widget _skeletonColumn(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: List.generate(3, (_) => Padding(
@@ -74,9 +73,9 @@ class BranchComparisonCard extends StatelessWidget {
         child: Container(
           height: AppSizes.skeletonLabelHeight,
           width: AppSizes.skeletonLabelWidth,
-          decoration: const BoxDecoration(
-            color: AppColors.border,
-            borderRadius: BorderRadius.all(Radius.circular(AppSizes.r4)),
+          decoration: BoxDecoration(
+            color: Theme.of(context).colorScheme.outline,
+            borderRadius: const BorderRadius.all(Radius.circular(AppSizes.r4)),
           ),
         ),
       )),
@@ -94,23 +93,23 @@ class _BranchColumn extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(name, style: AppTextStyles.bodyBold.copyWith(color: AppColors.primary)),
+        Text(name, style: AppTextStyles.bodyBold.copyWith(color: Theme.of(context).colorScheme.primary)),
         const SizedBox(height: AppSizes.p12),
-        _row(AppStrings.patients, '${metrics.totalPatients}'),
+        _row(context, AppStrings.patients, '${metrics.totalPatients}'),
         const SizedBox(height: AppSizes.p8),
-        _row(AppStrings.appointments, '${metrics.totalAppointments}'),
+        _row(context, AppStrings.appointments, '${metrics.totalAppointments}'),
         const SizedBox(height: AppSizes.p8),
-        _row(AppStrings.revenue, '$metrics.grossIncome'),
+        _row(context, AppStrings.revenue, '$metrics.grossIncome'),
       ],
     );
   }
 
-  Widget _row(String label, String value) {
+  Widget _row(BuildContext context, String label, String value) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text(label, style: AppTextStyles.caption.copyWith(color: AppColors.textSecondary)),
-        Text(value, style: AppTextStyles.bodyBold.copyWith(color: AppColors.textPrimary)),
+        Text(label, style: AppTextStyles.caption.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant)),
+        Text(value, style: AppTextStyles.bodyBold.copyWith(color: Theme.of(context).colorScheme.onSurface)),
       ],
     );
   }

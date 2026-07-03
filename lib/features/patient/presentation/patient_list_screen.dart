@@ -13,7 +13,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import 'package:spine_clinic_app/core/constants/app_colors.dart';
 import 'package:spine_clinic_app/core/constants/app_sizes.dart';
 import 'package:spine_clinic_app/core/constants/app_strings.dart';
 import 'package:spine_clinic_app/core/constants/app_text_styles.dart';
@@ -178,7 +177,7 @@ class _PatientListScreenState extends ConsumerState<PatientListScreen> {
     final clinicFilter = ref.watch(patientListProvider.notifier).currentClinicFilter;
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: SafeArea(
         child: Column(
           children: [
@@ -231,7 +230,7 @@ class _PatientListScreenState extends ConsumerState<PatientListScreen> {
                   alignment: Alignment.centerLeft,
                   child: Text(
                     'Total Patients: ${ref.watch(patientListProvider.notifier).totalCount}',
-                    style: AppTextStyles.captionBold.copyWith(color: AppColors.textSecondary),
+                    style: AppTextStyles.captionBold.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
                   ),
                 ),
               ),
@@ -276,7 +275,7 @@ class _PatientListScreenState extends ConsumerState<PatientListScreen> {
 
                   return RefreshIndicator(
                     onRefresh: _onRefresh,
-                    color: AppColors.primary,
+                    color: Theme.of(context).colorScheme.primary,
                     child: ListView.builder(
                       controller: _scrollCtrl,
                       padding: const EdgeInsets.only(
@@ -316,8 +315,8 @@ class _PatientListScreenState extends ConsumerState<PatientListScreen> {
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () => context.push(AppRoutes.newPatient),
-        backgroundColor: AppColors.primary,
-        foregroundColor: AppColors.textOnPrimary,
+        backgroundColor: Theme.of(context).colorScheme.primary,
+        foregroundColor: Theme.of(context).colorScheme.onPrimary,
         shape: const CircleBorder(),
         child: const Icon(Icons.add),
       ),
@@ -371,10 +370,10 @@ class _PatientListScreenState extends ConsumerState<PatientListScreen> {
   Widget _buildLoadMore() {
     final n = ref.read(patientListProvider.notifier);
     if (!n.hasMore) return const SizedBox.shrink();
-    return const Padding(
-      padding: EdgeInsets.all(AppSizes.p16),
+    return Padding(
+      padding: const EdgeInsets.all(AppSizes.p16),
       child: Center(
-        child: CircularProgressIndicator(color: AppColors.primary),
+        child: CircularProgressIndicator(color: Theme.of(context).colorScheme.primary),
       ),
     );
   }

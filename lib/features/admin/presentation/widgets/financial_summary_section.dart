@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:spine_clinic_app/core/constants/clinic_colors.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:spine_clinic_app/core/constants/app_colors.dart';
 import 'package:spine_clinic_app/core/constants/app_sizes.dart';
 import 'package:spine_clinic_app/core/constants/app_strings.dart';
 import 'package:spine_clinic_app/core/errors/app_exception.dart';
@@ -27,7 +27,7 @@ class FinancialSummarySection extends ConsumerWidget {
         exception: error is AppException ? error : AppException.fromSupabaseException(error),
         onRetry: () => ref.invalidate(financialSummaryProvider),
       ),
-      data: (data) => _buildData(data),
+      data: (data) => _buildData(context, data),
     );
   }
 
@@ -41,7 +41,7 @@ class FinancialSummarySection extends ConsumerWidget {
     );
   }
 
-  Widget _buildData(FinancialSummary data) {
+  Widget _buildData(BuildContext context, FinancialSummary data) {
     final bool isEmpty = data.totalRevenue == 0 && data.packageSalesCount == 0;
 
     if (isEmpty) {
@@ -55,9 +55,9 @@ class FinancialSummarySection extends ConsumerWidget {
       children: [
         StatsMetricCard(title: AppStrings.totalRevenue, value: revenueFormatted, icon: Icons.trending_up_rounded),
         const SizedBox(height: AppSizes.p16),
-        BreakdownListCard(title: AppStrings.revenueByPaymentType, data: _formatPaymentTypes(data.revenueByPaymentType), barColor: AppColors.success),
+        BreakdownListCard(title: AppStrings.revenueByPaymentType, data: _formatPaymentTypes(data.revenueByPaymentType), barColor: ClinicColors.of(context).success),
         const SizedBox(height: AppSizes.p16),
-        BreakdownListCard(title: AppStrings.revenueByBranch, data: _formatBranchRevenue(data.revenueByBranch), barColor: AppColors.info),
+        BreakdownListCard(title: AppStrings.revenueByBranch, data: _formatBranchRevenue(data.revenueByBranch), barColor: ClinicColors.of(context).info),
         const SizedBox(height: AppSizes.p16),
         Row(
           children: [

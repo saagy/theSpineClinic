@@ -37,6 +37,7 @@ class _AppNavRailState extends State<AppNavRail> {
     final tabs = NavTabs.forRole(widget.userRole);
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
+    final Color transparent = colorScheme.surface.withAlpha(0);
     final double sidebarWidth = _isCollapsed ? 64.0 : AppSizes.navDrawerWidth;
 
     return AnimatedContainer(
@@ -92,7 +93,7 @@ class _AppNavRailState extends State<AppNavRail> {
                     decoration: BoxDecoration(
                       color: isSelected
                           ? colorScheme.primaryContainer.withAlpha(120)
-                          : Colors.transparent,
+                          : transparent,
                       borderRadius: const BorderRadius.all(
                         Radius.circular(AppSizes.r8),
                       ),
@@ -103,7 +104,7 @@ class _AppNavRailState extends State<AppNavRail> {
                         Radius.circular(AppSizes.r8),
                       ),
                       splashColor: colorScheme.primary.withAlpha(20),
-                      highlightColor: Colors.transparent,
+                      highlightColor: transparent,
                       child: Padding(
                         padding: const EdgeInsets.symmetric(
                           horizontal: AppSizes.p12,
@@ -171,10 +172,10 @@ class _AppNavRailState extends State<AppNavRail> {
             // Collapse Toggle at Bottom
             Container(
               margin: const EdgeInsets.all(AppSizes.p8),
-              decoration: const BoxDecoration(
+              decoration: BoxDecoration(
                 border: Border(
                   top: BorderSide(
-                    color: Colors.transparent,
+                    color: transparent,
                   ),
                 ),
               ),

@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_form_builder/flutter_form_builder.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:spine_clinic_app/core/constants/app_colors.dart';
 import 'package:spine_clinic_app/core/constants/app_sizes.dart';
 import 'package:spine_clinic_app/core/constants/app_strings.dart';
 import 'package:spine_clinic_app/core/constants/app_text_styles.dart';
@@ -34,14 +33,14 @@ class RecordPaymentScreen extends ConsumerWidget {
     final asyncUser = ref.watch(currentUserProvider);
 
     return asyncUser.when(
-      loading: () => const Scaffold(
-        backgroundColor: AppColors.background,
+      loading: () => Scaffold(
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         body: Center(
-          child: CircularProgressIndicator(color: AppColors.primary),
+          child: CircularProgressIndicator(color: Theme.of(context).colorScheme.primary),
         ),
       ),
       error: (error, _) => Scaffold(
-        backgroundColor: AppColors.background,
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         body: ErrorView(
           exception: error is AppException
               ? error
@@ -51,9 +50,9 @@ class RecordPaymentScreen extends ConsumerWidget {
       ),
       data: (user) {
         if (user == null || user.role == UserRole.doctor) {
-          return const Scaffold(
-            backgroundColor: AppColors.background,
-            body: ErrorView(
+          return Scaffold(
+            backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+            body: const ErrorView(
               exception: UnknownException(
                 message: AppStrings.doctorAccessBlocked,
                 code: 'security/blocked',
@@ -158,7 +157,7 @@ class _RecordPaymentFormState extends ConsumerState<_RecordPaymentForm> {
         children: [
           AppAvatar(
             name: patient.fullName,
-            color: AppColors.primaryLight,
+            color: Theme.of(context).colorScheme.primaryContainer,
             radius: AppSizes.p24,
           ),
           const SizedBox(width: AppSizes.p16),
@@ -168,12 +167,12 @@ class _RecordPaymentFormState extends ConsumerState<_RecordPaymentForm> {
               children: [
                 Text(
                   patient.fullName,
-                  style: AppTextStyles.bodyBold.copyWith(color: AppColors.textPrimary),
+                  style: AppTextStyles.bodyBold.copyWith(color: Theme.of(context).colorScheme.onSurface),
                 ),
                 const SizedBox(height: AppSizes.p4),
                 Text(
                   patient.phoneNumber,
-                  style: AppTextStyles.bodySecondary.copyWith(color: AppColors.textSecondary),
+                  style: AppTextStyles.bodySecondary.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
                 ),
               ],
             ),
@@ -190,9 +189,9 @@ class _RecordPaymentFormState extends ConsumerState<_RecordPaymentForm> {
     final controllerState = ref.watch(recordPaymentControllerProvider);
 
     return asyncPatient.when(
-      loading: () => const Scaffold(
-        backgroundColor: AppColors.background,
-        body: Center(child: CircularProgressIndicator(color: AppColors.primary)),
+      loading: () => Scaffold(
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+        body: Center(child: CircularProgressIndicator(color: Theme.of(context).colorScheme.primary)),
       ),
       error: (error, _) => Scaffold(
         appBar: AppBar(title: const Text(AppStrings.recordPayment)),
@@ -205,14 +204,14 @@ class _RecordPaymentFormState extends ConsumerState<_RecordPaymentForm> {
       ),
       data: (patient) => asyncPackages.when(
         loading: () => Scaffold(
-          backgroundColor: AppColors.background,
+          backgroundColor: Theme.of(context).scaffoldBackgroundColor,
           appBar: AppBar(
-            backgroundColor: AppColors.surface,
-            foregroundColor: AppColors.textPrimary,
+            backgroundColor: Theme.of(context).colorScheme.surface,
+            foregroundColor: Theme.of(context).colorScheme.onSurface,
             elevation: 0,
             title: const Text(AppStrings.recordPayment),
           ),
-          body: const Center(child: CircularProgressIndicator(color: AppColors.primary)),
+          body: Center(child: CircularProgressIndicator(color: Theme.of(context).colorScheme.primary)),
         ),
         error: (error, _) => Scaffold(
           appBar: AppBar(title: const Text(AppStrings.recordPayment)),
@@ -224,10 +223,10 @@ class _RecordPaymentFormState extends ConsumerState<_RecordPaymentForm> {
           ),
         ),
         data: (packages) => Scaffold(
-          backgroundColor: AppColors.background,
+          backgroundColor: Theme.of(context).scaffoldBackgroundColor,
           appBar: AppBar(
-            backgroundColor: AppColors.surface,
-            foregroundColor: AppColors.textPrimary,
+            backgroundColor: Theme.of(context).colorScheme.surface,
+            foregroundColor: Theme.of(context).colorScheme.onSurface,
             elevation: 0,
             title: const Text(AppStrings.recordPayment),
           ),

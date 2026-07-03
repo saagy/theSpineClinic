@@ -7,7 +7,6 @@ library;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'package:spine_clinic_app/core/constants/app_colors.dart';
 import 'package:spine_clinic_app/core/constants/app_sizes.dart';
 import 'package:spine_clinic_app/core/constants/app_strings.dart';
 import 'package:spine_clinic_app/core/constants/app_text_styles.dart';
@@ -107,7 +106,7 @@ class _ReceptionistAllTabState extends ConsumerState<ReceptionistAllTab> {
             alignment: Alignment.centerLeft,
             child: Text(
               'Total Appointments: ${ref.read(allAppointmentsProvider.notifier).totalCount}',
-              style: AppTextStyles.captionBold.copyWith(color: AppColors.textSecondary),
+              style: AppTextStyles.captionBold.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
             ),
           ),
         ),
@@ -134,7 +133,7 @@ class _ReceptionistAllTabState extends ConsumerState<ReceptionistAllTab> {
     final bool loadingMore = ref.watch(isLoadingMoreProvider);
     final list = buildDateGroupedList(items);
     return RefreshIndicator(
-      color: AppColors.primary,
+      color: Theme.of(context).colorScheme.primary,
       onRefresh: () async =>
           ref.read(allAppointmentsProvider.notifier).refresh(),
       child: ListView.builder(
@@ -144,15 +143,15 @@ class _ReceptionistAllTabState extends ConsumerState<ReceptionistAllTab> {
         itemCount: list.length + (loadingMore ? 1 : 0),
         itemBuilder: (_, i) {
           if (i == list.length) {
-            return const Padding(
-              padding: EdgeInsets.symmetric(vertical: AppSizes.p16),
+            return Padding(
+              padding: const EdgeInsets.symmetric(vertical: AppSizes.p16),
               child: Center(
                 child: SizedBox(
                   width: AppSizes.iconDefault,
                   height: AppSizes.iconDefault,
                   child: CircularProgressIndicator(
                     strokeWidth: AppSizes.strokeWidthThin,
-                    color: AppColors.primary,
+                    color: Theme.of(context).colorScheme.primary,
                   ),
                 ),
               ),
@@ -167,7 +166,7 @@ class _ReceptionistAllTabState extends ConsumerState<ReceptionistAllTab> {
               child: Text(
                 item.title,
                 style: AppTextStyles.captionBold.copyWith(
-                  color: AppColors.textSecondary,
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
                 ),
               ),
             );

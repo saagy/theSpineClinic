@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:spine_clinic_app/core/constants/app_colors.dart';
+import 'package:spine_clinic_app/core/constants/clinic_colors.dart';
 import 'package:spine_clinic_app/core/constants/app_sizes.dart';
 import 'package:spine_clinic_app/core/constants/app_strings.dart';
 import 'package:spine_clinic_app/core/constants/app_text_styles.dart';
@@ -34,10 +34,10 @@ class ClinicPackageCard extends StatelessWidget {
         PackageKind.combined => AppStrings.packageKindCombined,
       };
 
-  Color _kindColor() => switch (package.kind) {
-        PackageKind.session => AppColors.primary,
-        PackageKind.traction => AppColors.warning,
-        PackageKind.combined => AppColors.info,
+  Color _kindColor(BuildContext context) => switch (package.kind) {
+        PackageKind.session => Theme.of(context).colorScheme.primary,
+        PackageKind.traction => ClinicColors.of(context).warning,
+        PackageKind.combined => ClinicColors.of(context).info,
       };
 
   String _countSummary() {
@@ -53,6 +53,8 @@ class ClinicPackageCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final Color kindColor = _kindColor(context);
+
     return SectionCard(
       child: Row(
         children: [
@@ -66,7 +68,7 @@ class ClinicPackageCard extends StatelessWidget {
                       child: Text(
                         package.name,
                         style: AppTextStyles.bodyBold.copyWith(
-                          color: AppColors.textPrimary,
+                          color: Theme.of(context).colorScheme.onSurface,
                         ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
@@ -79,14 +81,14 @@ class ClinicPackageCard extends StatelessWidget {
                         vertical: AppSizes.p2,
                       ),
                       decoration: BoxDecoration(
-                        color: _kindColor().withAlpha(20),
+                        color: kindColor.withAlpha(20),
                         borderRadius:
                             const BorderRadius.all(Radius.circular(AppSizes.r999)),
                       ),
                       child: Text(
                         _kindLabel(),
                         style: AppTextStyles.caption.copyWith(
-                          color: _kindColor(),
+                          color: kindColor,
                           fontWeight: FontWeight.w700,
                           fontSize: 10,
                         ),
@@ -98,14 +100,14 @@ class ClinicPackageCard extends StatelessWidget {
                 Text(
                   _countSummary(),
                   style: AppTextStyles.caption.copyWith(
-                    color: AppColors.textSecondary,
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
                   ),
                 ),
                 const SizedBox(height: AppSizes.p2),
                 Text(
                   package.price.toCurrencyString(),
                   style: AppTextStyles.captionMedium.copyWith(
-                    color: AppColors.primary,
+                    color: Theme.of(context).colorScheme.primary,
                     fontWeight: FontWeight.w700,
                   ),
                 ),
@@ -116,17 +118,17 @@ class ClinicPackageCard extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             children: [
               IconButton(
-                icon: const Icon(
+                icon: Icon(
                   Icons.edit_rounded,
-                  color: AppColors.textSecondary,
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
                   size: AppSizes.iconDefault,
                 ),
                 onPressed: onEdit,
               ),
               IconButton(
-                icon: const Icon(
+                icon: Icon(
                   Icons.delete_outline_rounded,
-                  color: AppColors.error,
+                  color: Theme.of(context).colorScheme.error,
                   size: AppSizes.iconDefault,
                 ),
                 onPressed: onDelete,

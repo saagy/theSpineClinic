@@ -3,7 +3,7 @@
 library;
 
 import 'package:flutter/material.dart';
-import 'package:spine_clinic_app/core/constants/app_colors.dart';
+import 'package:spine_clinic_app/core/constants/clinic_colors.dart';
 import 'package:spine_clinic_app/core/constants/app_sizes.dart';
 import 'package:spine_clinic_app/core/constants/app_text_styles.dart';
 
@@ -31,15 +31,15 @@ class BookingSlotsPreview extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(AppSizes.p16),
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: Theme.of(context).colorScheme.surface,
         borderRadius: const BorderRadius.all(Radius.circular(AppSizes.r16)),
-        border: Border.all(color: AppColors.border, width: AppSizes.borderWidth),
-        boxShadow: const [AppColors.cardShadow],
+        border: Border.all(color: Theme.of(context).colorScheme.outline, width: AppSizes.borderWidth),
+        boxShadow: [ClinicColors.of(context).cardShadow],
       ),
       child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
         // Header
         Text('Session Ledger',
-            style: AppTextStyles.captionBold.copyWith(color: AppColors.textSecondary, letterSpacing: 0.5)),
+            style: AppTextStyles.captionBold.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant, letterSpacing: 0.5)),
         const SizedBox(height: AppSizes.p12),
         // Per-session rows
         ...slots.asMap().entries.map((e) {
@@ -49,10 +49,10 @@ class BookingSlotsPreview extends StatelessWidget {
             padding: const EdgeInsets.symmetric(vertical: AppSizes.p4),
             child: Row(children: [
               Text('${e.key + 1}. ${m[d.month - 1]} ${d.day}',
-                  style: AppTextStyles.body.copyWith(color: AppColors.textPrimary)),
+                  style: AppTextStyles.body.copyWith(color: Theme.of(context).colorScheme.onSurface)),
               const Spacer(),
               Text(timeStr,
-                  style: AppTextStyles.body.copyWith(color: AppColors.textSecondary)),
+                  style: AppTextStyles.body.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant)),
             ]),
           );
         }),
@@ -74,9 +74,9 @@ class _Row extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Row(children: [
-      Text(label, style: AppTextStyles.caption.copyWith(color: AppColors.textSecondary)),
+      Text(label, style: AppTextStyles.caption.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant)),
       const Spacer(),
-      Text(value, style: AppTextStyles.number.copyWith(color: AppColors.textPrimary)),
+      Text(value, style: AppTextStyles.number.copyWith(color: Theme.of(context).colorScheme.onSurface)),
     ]);
   }
 }
@@ -85,9 +85,9 @@ class _ThinDivider extends StatelessWidget {
   const _ThinDivider();
   @override
   Widget build(BuildContext context) {
-    return const Padding(
-      padding: EdgeInsets.symmetric(vertical: AppSizes.p8),
-      child: Divider(height: 1, thickness: 0.5, color: AppColors.border),
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: AppSizes.p8),
+      child: Divider(height: 1, thickness: 0.5, color: Theme.of(context).colorScheme.outline),
     );
   }
 }

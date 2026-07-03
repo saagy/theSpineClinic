@@ -10,7 +10,6 @@ library;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'package:spine_clinic_app/core/constants/app_colors.dart';
 import 'package:spine_clinic_app/core/constants/app_sizes.dart';
 import 'package:spine_clinic_app/core/constants/app_strings.dart';
 import 'package:spine_clinic_app/core/constants/app_text_styles.dart';
@@ -201,7 +200,7 @@ class _AllAppointmentsScreenState extends ConsumerState<AllAppointmentsScreen> {
     final Staff? user = ref.watch(currentUserProvider).value;
     if (user == null || (user.role != UserRole.superAdmin && user.role != UserRole.receptionist)) {
       return Scaffold(
-        backgroundColor: AppColors.background,
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         body: const ErrorView(
           exception: UnknownException(message: AppStrings.accessDeniedAdminReceptionOnly),
         ),
@@ -216,10 +215,10 @@ class _AllAppointmentsScreenState extends ConsumerState<AllAppointmentsScreen> {
     final AllAppointmentsNotifier notifier = ref.read(allAppointmentsProvider.notifier);
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: AppColors.surface,
-        foregroundColor: AppColors.textPrimary,
+        backgroundColor: Theme.of(context).colorScheme.surface,
+        foregroundColor: Theme.of(context).colorScheme.onSurface,
         elevation: 0,
         title: Text(AppStrings.allAppointments, style: AppTextStyles.headingSmall),
       ),
@@ -251,7 +250,7 @@ class _AllAppointmentsScreenState extends ConsumerState<AllAppointmentsScreen> {
                 alignment: Alignment.centerLeft,
                 child: Text(
                   'Total Appointments: ${ref.watch(allAppointmentsProvider.notifier).totalCount}',
-                  style: AppTextStyles.captionBold.copyWith(color: AppColors.textSecondary),
+                  style: AppTextStyles.captionBold.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
                 ),
               ),
             ),
@@ -263,7 +262,7 @@ class _AllAppointmentsScreenState extends ConsumerState<AllAppointmentsScreen> {
 
   Widget _buildBody(AsyncValue<List<AppointmentWithPatient>> async) {
     return async.when(
-      loading: () => const Center(child: CircularProgressIndicator(color: AppColors.primary)),
+      loading: () => Center(child: CircularProgressIndicator(color: Theme.of(context).colorScheme.primary)),
       error: (Object error, StackTrace _) {
         final AppException ex = error is AppException
             ? error
@@ -311,15 +310,15 @@ class _AllAppointmentsScreenState extends ConsumerState<AllAppointmentsScreen> {
             itemCount: listItems.length + (loadingMore ? 1 : 0),
             itemBuilder: (_, int index) {
               if (index == listItems.length) {
-                return const Padding(
-                  padding: EdgeInsets.symmetric(vertical: AppSizes.p16),
+                return Padding(
+                  padding: const EdgeInsets.symmetric(vertical: AppSizes.p16),
                   child: Center(
                     child: SizedBox(
                       width: AppSizes.iconDefault,
                       height: AppSizes.iconDefault,
                       child: CircularProgressIndicator(
                         strokeWidth: AppSizes.strokeWidthThin,
-                        color: AppColors.primary,
+                        color: Theme.of(context).colorScheme.primary,
                       ),
                     ),
                   ),
@@ -332,7 +331,7 @@ class _AllAppointmentsScreenState extends ConsumerState<AllAppointmentsScreen> {
                   child: Text(
                     listItem.title,
                     style: AppTextStyles.captionBold.copyWith(
-                      color: AppColors.textSecondary,
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
                     ),
                   ),
                 );

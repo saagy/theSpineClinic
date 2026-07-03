@@ -94,7 +94,7 @@ class _AppointmentDetailScreenState
       backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
         backgroundColor: theme.scaffoldBackgroundColor,
-        surfaceTintColor: Colors.transparent,
+        surfaceTintColor: theme.colorScheme.surface.withAlpha(0),
         leading: const AppBackButton(),
         centerTitle: false,
         title: patientName != null

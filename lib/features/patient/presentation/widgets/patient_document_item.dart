@@ -149,7 +149,7 @@ class _PatientDocumentItemState extends ConsumerState<PatientDocumentItem> {
       child: ClipRRect(
         borderRadius: BorderRadius.circular(AppSizes.r16),
         child: Material(
-          color: Colors.transparent,
+          color: Theme.of(context).colorScheme.surface.withAlpha(0),
           child: InkWell(
             onTap: _isDeleting ? null : _handleOpen,
             child: Column(

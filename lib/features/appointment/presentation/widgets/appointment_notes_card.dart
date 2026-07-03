@@ -4,8 +4,8 @@
 library;
 
 import 'package:flutter/material.dart';
+import 'package:spine_clinic_app/core/constants/clinic_colors.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:spine_clinic_app/core/constants/app_colors.dart';
 import 'package:spine_clinic_app/core/constants/app_sizes.dart';
 import 'package:spine_clinic_app/core/constants/app_strings.dart';
 import 'package:spine_clinic_app/core/constants/app_text_styles.dart';
@@ -41,10 +41,10 @@ class AppointmentNotesCard extends ConsumerWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         noteAsync.when(
-          loading: () => const Padding(
-            padding: EdgeInsets.symmetric(vertical: AppSizes.p16),
+          loading: () => Padding(
+            padding: const EdgeInsets.symmetric(vertical: AppSizes.p16),
             child: Center(
-              child: CircularProgressIndicator(color: AppColors.primary),
+              child: CircularProgressIndicator(color: Theme.of(context).colorScheme.primary),
             ),
           ),
           error: (error, stack) {
@@ -55,7 +55,7 @@ class AppointmentNotesCard extends ConsumerWidget {
               padding: const EdgeInsets.symmetric(vertical: AppSizes.p16),
               child: Text(
                 AppStrings.fromKey(ex.userMessageKey),
-                style: AppTextStyles.body.copyWith(color: AppColors.error),
+                style: AppTextStyles.body.copyWith(color: Theme.of(context).colorScheme.error),
               ),
             );
           },
@@ -104,25 +104,25 @@ class AppointmentNotesCard extends ConsumerWidget {
                       padding: const EdgeInsets.symmetric(vertical: AppSizes.p14),
                       decoration: BoxDecoration(
                         border: Border.all(
-                          color: AppColors.border,
+                          color: Theme.of(context).colorScheme.outline,
                           width: 1.0,
                         ),
                         borderRadius: const BorderRadius.all(Radius.circular(AppSizes.r12)),
-                        color: AppColors.neutralBg.withValues(alpha: 0.2),
+                        color: ClinicColors.of(context).neutralContainer.withValues(alpha: 0.2),
                       ),
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           Icon(
                             Icons.add_rounded,
-                            color: AppColors.textSecondary,
+                            color: Theme.of(context).colorScheme.onSurfaceVariant,
                             size: AppSizes.iconSmall,
                           ),
                           const SizedBox(width: AppSizes.p8),
                           Text(
                             'Add visit note...',
                             style: AppTextStyles.bodySecondary.copyWith(
-                              color: AppColors.textSecondary,
+                              color: Theme.of(context).colorScheme.onSurfaceVariant,
                             ),
                           ),
                         ],
@@ -201,7 +201,7 @@ class _NoteActions extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       children: [
         IconButton(
-          icon: const Icon(Icons.edit_outlined, size: 22),
+          icon: Icon(Icons.edit_outlined, size: 22),
           color: cs.onSurfaceVariant,
           tooltip: AppStrings.edit,
           padding: EdgeInsets.zero,
@@ -210,7 +210,7 @@ class _NoteActions extends StatelessWidget {
         ),
         const SizedBox(width: AppSizes.p4),
         IconButton(
-          icon: const Icon(Icons.delete_outline_rounded, size: 22),
+          icon: Icon(Icons.delete_outline_rounded, size: 22),
           color: cs.error,
           tooltip: AppStrings.delete,
           padding: EdgeInsets.zero,

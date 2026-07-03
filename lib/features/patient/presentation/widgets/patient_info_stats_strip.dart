@@ -149,7 +149,7 @@ class _InfoStatItem extends StatelessWidget {
     return Semantics(
       button: true,
       child: Material(
-        color: Colors.transparent,
+        color: Theme.of(context).colorScheme.surface.withAlpha(0),
         child: InkWell(
           borderRadius: const BorderRadius.all(Radius.circular(AppSizes.r12)),
           onTap: stat.onTap,

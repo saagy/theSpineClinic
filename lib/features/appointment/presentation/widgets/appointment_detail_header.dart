@@ -5,9 +5,9 @@
 library;
 
 import 'package:flutter/material.dart';
+import 'package:spine_clinic_app/core/constants/clinic_colors.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:spine_clinic_app/core/constants/app_colors.dart';
 import 'package:spine_clinic_app/core/constants/app_sizes.dart';
 import 'package:spine_clinic_app/core/constants/app_strings.dart';
 import 'package:spine_clinic_app/core/constants/app_text_styles.dart';
@@ -77,7 +77,7 @@ class AppointmentDetailHeader extends ConsumerWidget {
                             Text(
                               patient.fullName,
                               style: AppTextStyles.headingSmall.copyWith(
-                                color: AppColors.textPrimary,
+                                color: Theme.of(context).colorScheme.onSurface,
                                 fontWeight: FontWeight.w600,
                                 fontSize: 16,
                               ),
@@ -86,7 +86,7 @@ class AppointmentDetailHeader extends ConsumerWidget {
                             Text(
                               patient.clinic.displayLabel,
                               style: AppTextStyles.captionMedium.copyWith(
-                                color: AppColors.textSecondary,
+                                color: Theme.of(context).colorScheme.onSurfaceVariant,
                               ),
                             ),
                           ],
@@ -94,11 +94,11 @@ class AppointmentDetailHeader extends ConsumerWidget {
                       ),
                       const SizedBox(width: AppSizes.p8),
                       if (enabled)
-                        const Icon(Icons.chevron_right_rounded,
-                            color: AppColors.textMuted, size: AppSizes.iconDefault)
+                        Icon(Icons.chevron_right_rounded,
+                            color: ClinicColors.of(context).textMuted, size: AppSizes.iconDefault)
                       else
-                        const Icon(Icons.lock_outline_rounded,
-                            color: AppColors.textMuted, size: AppSizes.iconDefault),
+                        Icon(Icons.lock_outline_rounded,
+                            color: ClinicColors.of(context).textMuted, size: AppSizes.iconDefault),
                     ],
                   ),
                 ),
@@ -106,9 +106,9 @@ class AppointmentDetailHeader extends ConsumerWidget {
             ),
           ),
         ),
-        const Padding(
-          padding: EdgeInsets.symmetric(horizontal: AppSizes.p24),
-          child: Divider(color: AppColors.border, height: 1.0, thickness: 0.5),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: AppSizes.p24),
+          child: Divider(color: Theme.of(context).colorScheme.outline, height: 1.0, thickness: 0.5),
         ),
       ],
     );

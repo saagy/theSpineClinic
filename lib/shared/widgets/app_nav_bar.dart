@@ -27,7 +27,7 @@ class AppNavBar extends StatelessWidget {
 
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
-    final isDark = theme.brightness == Brightness.dark;
+    final Color transparent = colorScheme.surface.withAlpha(0);
 
     return Container(
       // Modern spacious base height (74px) + device safe area padding
@@ -37,7 +37,7 @@ class AppNavBar extends StatelessWidget {
         border: Border(
           top: BorderSide(
             // Extremely soft, thin border separator
-            color: isDark ? const Color(0xFF374151) : const Color(0xFFE5E7EB),
+            color: colorScheme.outlineVariant,
             width: 0.8,
           ),
         ),
@@ -56,9 +56,9 @@ class AppNavBar extends StatelessWidget {
                 child: InkWell(
                   onTap: () => onTabSelected(index),
                   // Disable Android splash ripples to match iOS/Airbnb premium feel
-                  splashColor: Colors.transparent,
-                  highlightColor: Colors.transparent,
-                  hoverColor: Colors.transparent,
+                  splashColor: transparent,
+                  highlightColor: transparent,
+                  hoverColor: transparent,
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.start,
                     children: [
@@ -72,11 +72,11 @@ class AppNavBar extends StatelessWidget {
                           curve: Curves.easeOutCubic,
                           tween: ColorTween(
                             begin: isSelected
-                                ? const Color(0xFF6B7280) // Inactive slate-grey
+                                ? colorScheme.onSurfaceVariant
                                 : colorScheme.primary,
                             end: isSelected
                                 ? colorScheme.primary
-                                : const Color(0xFF6B7280),
+                                : colorScheme.onSurfaceVariant,
                           ),
                           builder: (context, color, child) {
                             return Icon(
@@ -99,7 +99,7 @@ class AppNavBar extends StatelessWidget {
                           letterSpacing: 0.4,
                           color: isSelected
                               ? colorScheme.primary
-                              : const Color(0xFF6B7280),
+                              : colorScheme.onSurfaceVariant,
                         ),
                         child: Text(tab.label),
                       ),
@@ -114,4 +114,3 @@ class AppNavBar extends StatelessWidget {
     );
   }
 }
-

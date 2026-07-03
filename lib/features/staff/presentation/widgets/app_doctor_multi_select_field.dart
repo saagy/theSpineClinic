@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:spine_clinic_app/core/constants/clinic_colors.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:spine_clinic_app/core/constants/app_colors.dart';
 import 'package:spine_clinic_app/core/constants/app_sizes.dart';
 import 'package:spine_clinic_app/core/constants/app_strings.dart';
 import 'package:spine_clinic_app/core/constants/app_text_styles.dart';
@@ -92,7 +92,7 @@ class _AppDoctorMultiSelectFieldWidgetState
     final border = OutlineInputBorder(
       borderRadius: const BorderRadius.all(Radius.circular(AppSizes.r12)),
       borderSide: BorderSide(
-        color: widget.state.hasError ? AppColors.error : AppColors.border,
+        color: widget.state.hasError ? Theme.of(context).colorScheme.error : Theme.of(context).colorScheme.outline,
         width: AppSizes.borderWidth,
       ),
     );
@@ -111,18 +111,17 @@ class _AppDoctorMultiSelectFieldWidgetState
           decoration: InputDecoration(
             isDense: true,
             filled: true,
-            fillColor: AppColors.surface,
+            fillColor: Theme.of(context).colorScheme.surface,
             labelText: AppStrings.searchAndAssignDoctors,
             hintText: AppStrings.typeDoctorName,
             suffixIcon: isLoading
-                ? const SizedBox(
+                ? SizedBox(
                     width: AppSizes.iconDefault,
                     height: AppSizes.iconDefault,
-                    child: Padding(
+                    child: const Padding(
                       padding: EdgeInsets.all(AppSizes.p8),
                       child: CircularProgressIndicator(
                         strokeWidth: 2,
-                        color: AppColors.primary,
                       ),
                     ),
                   )
@@ -130,15 +129,15 @@ class _AppDoctorMultiSelectFieldWidgetState
                     ? GestureDetector(
                         onTap: () =>
                             ref.invalidate(activeDoctorsProvider),
-                        child: const Icon(Icons.refresh_rounded,
-                            color: AppColors.error,
+                        child: Icon(Icons.refresh_rounded,
+                            color: Theme.of(context).colorScheme.error,
                             size: AppSizes.iconDefault),
                       )
                     : const Icon(Icons.search_rounded),
             enabledBorder: border,
             focusedBorder: border.copyWith(
-              borderSide: const BorderSide(
-                color: AppColors.borderStrong,
+              borderSide: BorderSide(
+                color: ClinicColors.of(context).outlineStrong,
                 width: AppSizes.borderWidthFocused,
               ),
             ),
@@ -150,7 +149,7 @@ class _AppDoctorMultiSelectFieldWidgetState
             padding: const EdgeInsets.only(top: AppSizes.p6),
             child: Text(
               AppStrings.unableToLoadDoctors,
-              style: AppTextStyles.caption.copyWith(color: AppColors.error),
+              style: AppTextStyles.caption.copyWith(color: Theme.of(context).colorScheme.error),
             ),
           ),
         if (selected.isNotEmpty) ...[
@@ -172,7 +171,7 @@ class _AppDoctorMultiSelectFieldWidgetState
           const SizedBox(height: AppSizes.p6),
           Text(
             widget.state.errorText ?? '',
-            style: AppTextStyles.caption.copyWith(color: AppColors.error),
+            style: AppTextStyles.caption.copyWith(color: Theme.of(context).colorScheme.error),
           ),
         ],
       ],

@@ -5,7 +5,7 @@
 library;
 
 import 'package:flutter/material.dart';
-import 'package:spine_clinic_app/core/constants/app_colors.dart';
+import 'package:spine_clinic_app/core/constants/clinic_colors.dart';
 import 'package:spine_clinic_app/core/constants/app_sizes.dart';
 import 'package:spine_clinic_app/core/constants/app_strings.dart';
 import 'package:spine_clinic_app/core/constants/app_text_styles.dart';
@@ -52,9 +52,9 @@ class BookingFormFields extends StatelessWidget {
       Container(
         padding: const EdgeInsets.all(AppSizes.p16),
         decoration: BoxDecoration(
-          color: AppColors.surface,
+          color: Theme.of(context).colorScheme.surface,
           borderRadius: const BorderRadius.all(Radius.circular(AppSizes.r16)),
-          border: Border.all(color: AppColors.border, width: AppSizes.borderWidth),
+          border: Border.all(color: Theme.of(context).colorScheme.outline, width: AppSizes.borderWidth),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -74,9 +74,9 @@ class BookingFormFields extends StatelessWidget {
       Container(
         padding: const EdgeInsets.all(AppSizes.p16),
         decoration: BoxDecoration(
-          color: AppColors.surface,
+          color: Theme.of(context).colorScheme.surface,
           borderRadius: const BorderRadius.all(Radius.circular(AppSizes.r16)),
-          border: Border.all(color: AppColors.border, width: AppSizes.borderWidth),
+          border: Border.all(color: Theme.of(context).colorScheme.outline, width: AppSizes.borderWidth),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -120,7 +120,7 @@ class BookingFormFields extends StatelessWidget {
             // Recurring toggle
             if (showRecurringToggle) ...[
               const SizedBox(height: AppSizes.p16),
-              const Divider(color: AppColors.border, height: 1, thickness: 0.5),
+              Divider(color: Theme.of(context).colorScheme.outline, height: 1, thickness: 0.5),
               const SizedBox(height: AppSizes.p12),
               Row(
                 children: [
@@ -130,7 +130,7 @@ class BookingFormFields extends StatelessWidget {
                     child: Checkbox(
                       value: isRecurring,
                       onChanged: (v) => onRecurringChanged(v ?? false),
-                      activeColor: AppColors.primary,
+                      activeColor: Theme.of(context).colorScheme.primary,
                     ),
                   ),
                   const SizedBox(width: AppSizes.p8),
@@ -139,7 +139,7 @@ class BookingFormFields extends StatelessWidget {
                     child: Text(
                       'Recurring booking',
                       style: AppTextStyles.body.copyWith(
-                        color: AppColors.textPrimary,
+                        color: Theme.of(context).colorScheme.onSurface,
                         fontWeight: FontWeight.w500,
                       ),
                     ),
@@ -196,9 +196,9 @@ class SegmentedAppointmentTypeSelector extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.border,
+        color: Theme.of(context).colorScheme.outline,
         borderRadius: const BorderRadius.all(Radius.circular(AppSizes.r12)),
-        border: Border.all(color: AppColors.border, width: AppSizes.borderWidth),
+        border: Border.all(color: Theme.of(context).colorScheme.outline, width: AppSizes.borderWidth),
       ),
       child: ClipRRect(
         borderRadius: const BorderRadius.all(Radius.circular(AppSizes.r12 - 1)),
@@ -210,13 +210,13 @@ class SegmentedAppointmentTypeSelector extends StatelessWidget {
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    Expanded(child: _buildCell(AppointmentType.normalPtSession)),
+                    Expanded(child: _buildCell(context, AppointmentType.normalPtSession)),
                     const SizedBox(width: 0.5),
-                    Expanded(child: _buildCell(AppointmentType.spinalTractionSession)),
+                    Expanded(child: _buildCell(context, AppointmentType.spinalTractionSession)),
                     const SizedBox(width: 0.5),
-                    Expanded(child: _buildCell(AppointmentType.initialAssessment)),
+                    Expanded(child: _buildCell(context, AppointmentType.initialAssessment)),
                     const SizedBox(width: 0.5),
-                    Expanded(child: _buildCell(AppointmentType.reassessment)),
+                    Expanded(child: _buildCell(context, AppointmentType.reassessment)),
                   ],
                 ),
               );
@@ -228,9 +228,9 @@ class SegmentedAppointmentTypeSelector extends StatelessWidget {
                     child: Row(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        Expanded(child: _buildCell(AppointmentType.normalPtSession)),
+                        Expanded(child: _buildCell(context, AppointmentType.normalPtSession)),
                         const SizedBox(width: 0.5),
-                        Expanded(child: _buildCell(AppointmentType.spinalTractionSession)),
+                        Expanded(child: _buildCell(context, AppointmentType.spinalTractionSession)),
                       ],
                     ),
                   ),
@@ -239,9 +239,9 @@ class SegmentedAppointmentTypeSelector extends StatelessWidget {
                     child: Row(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        Expanded(child: _buildCell(AppointmentType.initialAssessment)),
+                        Expanded(child: _buildCell(context, AppointmentType.initialAssessment)),
                         const SizedBox(width: 0.5),
-                        Expanded(child: _buildCell(AppointmentType.reassessment)),
+                        Expanded(child: _buildCell(context, AppointmentType.reassessment)),
                       ],
                     ),
                   ),
@@ -254,10 +254,10 @@ class SegmentedAppointmentTypeSelector extends StatelessWidget {
     );
   }
 
-  Widget _buildCell(AppointmentType type) {
+  Widget _buildCell(BuildContext context, AppointmentType type) {
     final bool active = selectedType == type;
     return Material(
-      color: AppColors.surface,
+      color: Theme.of(context).colorScheme.surface,
       child: InkWell(
         onTap: () => onTypeChanged(type),
         child: Container(
@@ -267,9 +267,9 @@ class SegmentedAppointmentTypeSelector extends StatelessWidget {
             alignment: Alignment.center,
             padding: const EdgeInsets.symmetric(vertical: AppSizes.p12, horizontal: AppSizes.p4),
             decoration: BoxDecoration(
-              color: active ? AppColors.primaryLight : Colors.transparent,
+              color: active ? Theme.of(context).colorScheme.primaryContainer : Theme.of(context).colorScheme.surface.withAlpha(0),
               border: Border.all(
-                color: active ? AppColors.primary : Colors.transparent,
+                color: active ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.surface.withAlpha(0),
                 width: 1.0,
               ),
               borderRadius: const BorderRadius.all(Radius.circular(AppSizes.r8)),
@@ -278,7 +278,7 @@ class SegmentedAppointmentTypeSelector extends StatelessWidget {
               type.displayLabel,
               textAlign: TextAlign.center,
               style: (active ? AppTextStyles.bodyBold : AppTextStyles.body).copyWith(
-                color: active ? AppColors.primaryDeep : AppColors.textSecondary,
+                color: active ? Theme.of(context).colorScheme.onPrimaryContainer : Theme.of(context).colorScheme.onSurfaceVariant,
                 fontSize: 12,
               ),
             ),
@@ -303,7 +303,7 @@ class _PatientCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: Theme.of(context).colorScheme.surfaceContainerHighest.withAlpha(100),
         borderRadius: const BorderRadius.all(Radius.circular(AppSizes.r16)),
-        border: Border.all(color: AppColors.border, width: AppSizes.borderWidth),
+        border: Border.all(color: Theme.of(context).colorScheme.outline, width: AppSizes.borderWidth),
       ),
       child: Row(children: [
         AppAvatar(name: patient.fullName, radius: 22),
@@ -315,11 +315,11 @@ class _PatientCard extends StatelessWidget {
             children: [
               Text(patient.fullName, style: AppTextStyles.bodyBold),
               const SizedBox(height: AppSizes.p2),
-              Text(patient.phoneNumber, style: AppTextStyles.caption.copyWith(color: AppColors.textSecondary)),
+              Text(patient.phoneNumber, style: AppTextStyles.caption.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant)),
             ],
           ),
         ),
-        Text('ID: $shortId', style: AppTextStyles.caption.copyWith(color: AppColors.textMuted, fontSize: 10)),
+        Text('ID: $shortId', style: AppTextStyles.caption.copyWith(color: ClinicColors.of(context).textMuted, fontSize: 10)),
       ]),
     );
   }
@@ -336,14 +336,14 @@ class _PatientSearchField extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: AppSizes.p16, vertical: AppSizes.p14),
         decoration: BoxDecoration(
-          color: AppColors.primaryLight.withAlpha(80),
+          color: Theme.of(context).colorScheme.primaryContainer.withAlpha(80),
           borderRadius: const BorderRadius.all(Radius.circular(AppSizes.r16)),
-          border: Border.all(color: AppColors.primary.withAlpha(60), width: 1),
+          border: Border.all(color: Theme.of(context).colorScheme.primary.withAlpha(60), width: 1),
         ),
         child: Row(children: [
-          const Icon(Icons.search_rounded, color: AppColors.primary, size: AppSizes.iconDefault),
+          Icon(Icons.search_rounded, color: Theme.of(context).colorScheme.primary, size: AppSizes.iconDefault),
           const SizedBox(width: AppSizes.p12),
-          Text('Select Patient…', style: AppTextStyles.body.copyWith(color: AppColors.textSecondary)),
+          Text('Select Patient…', style: AppTextStyles.body.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant)),
         ]),
       ),
     );
@@ -355,7 +355,7 @@ class _SectionLabel extends StatelessWidget {
   final String text;
   @override
   Widget build(BuildContext context) {
-    return Text(text, style: AppTextStyles.captionMedium.copyWith(color: AppColors.textSecondary));
+    return Text(text, style: AppTextStyles.captionMedium.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant));
   }
 }
 
@@ -369,7 +369,7 @@ class _PickerField extends StatelessWidget {
   Widget build(BuildContext context) {
     final bool err = errorText != null;
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      Text(label, style: AppTextStyles.captionMedium.copyWith(color: AppColors.textSecondary)),
+      Text(label, style: AppTextStyles.captionMedium.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant)),
       const SizedBox(height: AppSizes.p6),
       InkWell(
         onTap: onTap,
@@ -377,18 +377,44 @@ class _PickerField extends StatelessWidget {
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: AppSizes.p12, vertical: AppSizes.p12),
           decoration: BoxDecoration(
-            color: AppColors.surface,
+            color: Theme.of(context).colorScheme.surface,
             borderRadius: const BorderRadius.all(Radius.circular(AppSizes.r12)),
-            border: Border.all(color: err ? AppColors.error : AppColors.border, width: AppSizes.borderWidth),
+            border: Border.all(
+              color: err
+                  ? Theme.of(context).colorScheme.error
+                  : Theme.of(context).colorScheme.outline,
+              width: AppSizes.borderWidth,
+            ),
           ),
           child: Row(children: [
-            Icon(icon, size: AppSizes.iconDefault, color: AppColors.textMuted),
+            Icon(
+              icon,
+              size: AppSizes.iconDefault,
+              color: ClinicColors.of(context).textMuted,
+            ),
             const SizedBox(width: AppSizes.p8),
-            Expanded(child: Text(valueText, style: AppTextStyles.body.copyWith(color: valueText == 'Select' ? AppColors.textMuted : AppColors.textPrimary))),
+            Expanded(
+              child: Text(
+                valueText,
+                style: AppTextStyles.body.copyWith(
+                  color: valueText == 'Select'
+                      ? ClinicColors.of(context).textMuted
+                      : Theme.of(context).colorScheme.onSurface,
+                ),
+              ),
+            ),
           ]),
         ),
       ),
-      if (err) ...[const SizedBox(height: AppSizes.p4), Text(errorText!, style: AppTextStyles.caption.copyWith(color: AppColors.error))],
+      if (err) ...[
+        const SizedBox(height: AppSizes.p4),
+        Text(
+          errorText!,
+          style: AppTextStyles.caption.copyWith(
+            color: Theme.of(context).colorScheme.error,
+          ),
+        ),
+      ],
     ]);
   }
 }

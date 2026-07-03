@@ -5,7 +5,6 @@
 library;
 import 'package:flutter/material.dart';
 
-import 'package:spine_clinic_app/core/constants/app_colors.dart';
 import 'package:spine_clinic_app/core/constants/app_sizes.dart';
 import 'package:spine_clinic_app/core/errors/app_exception.dart';
 import 'package:spine_clinic_app/features/appointment/domain/appointment_repository.dart';
@@ -72,7 +71,7 @@ class _ReceptionistTodayTabState extends State<ReceptionistTodayTab> {
     int animIdx = 0;
 
     return RefreshIndicator(
-      color: AppColors.primary,
+      color: Theme.of(context).colorScheme.primary,
       onRefresh: () async => widget.onRefresh.call(),
       child: ListView(
         physics: const AlwaysScrollableScrollPhysics(),

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:spine_clinic_app/core/constants/clinic_colors.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:spine_clinic_app/core/constants/app_colors.dart';
 import 'package:spine_clinic_app/core/constants/app_sizes.dart';
 import 'package:spine_clinic_app/core/constants/app_strings.dart';
 import 'package:spine_clinic_app/core/constants/app_text_styles.dart';
@@ -37,18 +37,18 @@ class AppointmentBalanceDiagnostics extends ConsumerWidget {
       return Container(
         padding: const EdgeInsets.all(AppSizes.p16),
         decoration: BoxDecoration(
-          color: AppColors.infoBg,
-          border: Border.all(color: AppColors.info, width: AppSizes.borderWidthMedium),
+          color: ClinicColors.of(context).infoContainer,
+          border: Border.all(color: ClinicColors.of(context).info, width: AppSizes.borderWidthMedium),
           borderRadius: const BorderRadius.all(Radius.circular(AppSizes.r16)),
         ),
         child: Row(
           children: [
-            const Icon(Icons.info_outline_rounded, color: AppColors.info),
+            Icon(Icons.info_outline_rounded, color: ClinicColors.of(context).info),
             const SizedBox(width: AppSizes.p12),
             Expanded(
               child: Text(
                 AppStrings.assessmentPaidSeparatelyCaption,
-                style: AppTextStyles.bodySecondary.copyWith(color: AppColors.textPrimary),
+                style: AppTextStyles.bodySecondary.copyWith(color: Theme.of(context).colorScheme.onSurface),
               ),
             ),
           ],
@@ -80,16 +80,18 @@ class AppointmentBalanceDiagnostics extends ConsumerWidget {
 
     if (isLoading) {
       return _wrapContainer(
-        AppColors.surface,
-        const Center(child: CircularProgressIndicator(color: AppColors.primary)),
+        context,
+        Theme.of(context).colorScheme.surface,
+        Center(child: CircularProgressIndicator(color: Theme.of(context).colorScheme.primary)),
       );
     }
     if (hasError) {
       return _wrapContainer(
-        AppColors.surface,
+        context,
+        Theme.of(context).colorScheme.surface,
         Text(
           AppStrings.errorLoadingPackageMetrics,
-          style: AppTextStyles.bodySecondary.copyWith(color: AppColors.error),
+          style: AppTextStyles.bodySecondary.copyWith(color: Theme.of(context).colorScheme.error),
           textAlign: TextAlign.center,
         ),
       );
@@ -103,9 +105,9 @@ class AppointmentBalanceDiagnostics extends ConsumerWidget {
     final bool isDeficit = requestedCount > netAvailable;
     final int leftover = netAvailable - requestedCount;
 
-    final Color cardBorderColor = isDeficit ? AppColors.error : AppColors.success;
-    final Color cardBgColor = isDeficit ? AppColors.errorBg : AppColors.successBg;
-    final Color statusTextColor = isDeficit ? AppColors.error : AppColors.success;
+    final Color cardBorderColor = isDeficit ? Theme.of(context).colorScheme.error : ClinicColors.of(context).success;
+    final Color cardBgColor = isDeficit ? Theme.of(context).colorScheme.errorContainer : ClinicColors.of(context).successContainer;
+    final Color statusTextColor = isDeficit ? Theme.of(context).colorScheme.error : ClinicColors.of(context).success;
     final IconData statusIcon = isDeficit ? Icons.error_outline : Icons.check_circle_outline;
 
     return Container(
@@ -131,11 +133,11 @@ class AppointmentBalanceDiagnostics extends ConsumerWidget {
             ],
           ),
           const SizedBox(height: AppSizes.p12),
-          _buildRow(AppStrings.currentBucket, '$baseline'),
-          _buildRow(AppStrings.upcomingInBucket, '-$futureCommitments'),
-          _buildRow(AppStrings.netAvailableLabel, '$netAvailable', isBold: true),
-          _buildRow(AppStrings.thisOrderCount, '$requestedCount',
-              valueColor: requestedCount > 0 ? AppColors.warning : AppColors.textSecondary,
+          _buildRow(context, AppStrings.currentBucket, '$baseline'),
+          _buildRow(context, AppStrings.upcomingInBucket, '-$futureCommitments'),
+          _buildRow(context, AppStrings.netAvailableLabel, '$netAvailable', isBold: true),
+          _buildRow(context, AppStrings.thisOrderCount, '$requestedCount',
+              valueColor: requestedCount > 0 ? ClinicColors.of(context).warning : Theme.of(context).colorScheme.onSurfaceVariant,
               isBold: requestedCount > 0),
           const SizedBox(height: AppSizes.p8),
           Text(
@@ -143,21 +145,21 @@ class AppointmentBalanceDiagnostics extends ConsumerWidget {
                 ? AppStrings.packageDeficitMessage(requestedCount - netAvailable)
                 : AppStrings.projectedLeftoverMessage(leftover),
             style: AppTextStyles.bodySecondary.copyWith(
-              color: isDeficit ? AppColors.error : AppColors.textSecondary,
+              color: isDeficit ? Theme.of(context).colorScheme.error : Theme.of(context).colorScheme.onSurfaceVariant,
             ),
           ),
           if (baseline < 0) ...[
             const SizedBox(height: AppSizes.p8),
             Row(
               children: [
-                const Icon(Icons.warning_amber_rounded,
-                    size: AppSizes.iconSmall, color: AppColors.warning),
+                Icon(Icons.warning_amber_rounded,
+                    size: AppSizes.iconSmall, color: ClinicColors.of(context).warning),
                 const SizedBox(width: AppSizes.p8),
                 Expanded(
                   child: Text(
                     AppStrings.negativeBalanceOutstanding,
                     style: AppTextStyles.bodySecondary
-                        .copyWith(color: AppColors.warning),
+                        .copyWith(color: ClinicColors.of(context).warning),
                   ),
                 ),
               ],
@@ -168,7 +170,7 @@ class AppointmentBalanceDiagnostics extends ConsumerWidget {
             Text(
               AppStrings.insufficientPackageBalance,
               style: AppTextStyles.bodySecondary
-                  .copyWith(color: AppColors.error),
+                  .copyWith(color: Theme.of(context).colorScheme.error),
             ),
           ],
         ],
@@ -176,19 +178,20 @@ class AppointmentBalanceDiagnostics extends ConsumerWidget {
     );
   }
 
-  Widget _wrapContainer(Color bg, Widget child) {
+  Widget _wrapContainer(BuildContext context, Color bg, Widget child) {
     return Container(
       padding: const EdgeInsets.all(AppSizes.p16),
       decoration: BoxDecoration(
         color: bg,
         borderRadius: const BorderRadius.all(Radius.circular(AppSizes.r16)),
-        border: Border.all(color: AppColors.border),
+        border: Border.all(color: Theme.of(context).colorScheme.outline),
       ),
       child: child,
     );
   }
 
   Widget _buildRow(
+    BuildContext context,
     String label,
     String value, {
     Color? valueColor,
@@ -201,12 +204,12 @@ class AppointmentBalanceDiagnostics extends ConsumerWidget {
         children: [
           Text(
             label,
-            style: AppTextStyles.bodySecondary.copyWith(color: AppColors.textSecondary),
+            style: AppTextStyles.bodySecondary.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
           ),
           Text(
             value,
             style: (isBold ? AppTextStyles.bodyBold : AppTextStyles.bodySecondary).copyWith(
-              color: valueColor ?? AppColors.textPrimary,
+              color: valueColor ?? Theme.of(context).colorScheme.onSurface,
             ),
           ),
         ],

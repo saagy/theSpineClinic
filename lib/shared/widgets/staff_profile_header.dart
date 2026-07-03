@@ -8,7 +8,7 @@
 /// Rule 7 — all strings via [AppStrings].
 /// Rule 13 — `EdgeInsets.all(20)` and `BorderRadius.circular(16)`.
 /// Rule 15/16 — colors resolved from [Theme.of(context).colorScheme]
-///              plus static [AppColors] surface tokens.
+///              plus static theme surface tokens.
 /// Rule 17 — reuses [AppAvatar] for initials fallback.
 /// Rule 20 — [AppAvatar] handles edge cases (digits, empty, single).
 library;

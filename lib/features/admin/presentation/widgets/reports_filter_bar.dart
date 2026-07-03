@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:spine_clinic_app/core/constants/app_colors.dart';
 import 'package:spine_clinic_app/core/constants/app_sizes.dart';
 import 'package:spine_clinic_app/core/constants/app_strings.dart';
 import 'package:spine_clinic_app/core/constants/app_text_styles.dart';
@@ -19,13 +18,15 @@ class ReportsFilterBar extends ConsumerWidget {
       firstDate: DateTime(2025),
       lastDate: DateTime.now().add(const Duration(days: 365)),
       builder: (context, child) {
+        final ThemeData theme = Theme.of(context);
+        final ColorScheme cs = theme.colorScheme;
         return Theme(
-          data: Theme.of(context).copyWith(
-            colorScheme: const ColorScheme.light(
-              primary: AppColors.primary,
-              onPrimary: AppColors.textOnPrimary,
-              surface: AppColors.surface,
-              onSurface: AppColors.textPrimary,
+          data: theme.copyWith(
+            colorScheme: cs.copyWith(
+              primary: cs.primary,
+              onPrimary: cs.onPrimary,
+              surface: cs.surface,
+              onSurface: cs.onSurface,
             ),
           ),
           child: child!,
@@ -47,7 +48,7 @@ class ReportsFilterBar extends ConsumerWidget {
     final ReportsFilter filter = ref.watch(reportsFilterStateProvider);
 
     return Container(
-      color: AppColors.surface,
+      color: Theme.of(context).colorScheme.surface,
       padding: const EdgeInsets.symmetric(
         horizontal: AppSizes.p16,
         vertical: AppSizes.p12,
@@ -62,13 +63,13 @@ class ReportsFilterBar extends ConsumerWidget {
                   initialValue: filter.clinic,
                   decoration: InputDecoration(
                     labelText: AppStrings.clinic,
-                    labelStyle: AppTextStyles.captionMedium.copyWith(color: AppColors.textSecondary),
+                    labelStyle: AppTextStyles.captionMedium.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
                     floatingLabelBehavior: FloatingLabelBehavior.always,
                     isDense: true,
                     contentPadding: AppSizes.paddingCell,
-                    border: const OutlineInputBorder(
-                      borderRadius: BorderRadius.all(Radius.circular(AppSizes.r6)),
-                      borderSide: BorderSide(color: AppColors.border),
+                    border: OutlineInputBorder(
+                      borderRadius: const BorderRadius.all(Radius.circular(AppSizes.r6)),
+                      borderSide: BorderSide(color: Theme.of(context).colorScheme.outline),
                     ),
                   ),
                   items: const [
@@ -153,15 +154,15 @@ class _FilterChipItem extends StatelessWidget {
     return ChoiceChip(
       label: Text(label),
       selected: selected,
-      selectedColor: AppColors.primaryLight,
+      selectedColor: Theme.of(context).colorScheme.primaryContainer,
       labelStyle: AppTextStyles.captionMedium.copyWith(
-        color: selected ? AppColors.primary : AppColors.textSecondary,
+        color: selected ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.onSurfaceVariant,
       ),
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.all(Radius.circular(AppSizes.r6)),
       ),
       side: BorderSide(
-        color: selected ? AppColors.primary : AppColors.border,
+        color: selected ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.outline,
         width: AppSizes.borderWidth,
       ),
       showCheckmark: false,

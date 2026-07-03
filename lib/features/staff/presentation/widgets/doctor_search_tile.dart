@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:spine_clinic_app/core/constants/app_colors.dart';
+import 'package:spine_clinic_app/core/constants/clinic_colors.dart';
 import 'package:spine_clinic_app/core/constants/app_sizes.dart';
 import 'package:spine_clinic_app/core/constants/app_strings.dart';
 import 'package:spine_clinic_app/core/constants/app_text_styles.dart';
@@ -27,7 +27,7 @@ class DoctorSearchTile extends StatelessWidget {
       leading: AppAvatar(
         name: doctor.fullName,
         radius: 18,
-        color: doctor.isActive ? AppColors.primary : AppColors.textMuted,
+        color: doctor.isActive ? Theme.of(context).colorScheme.primary : ClinicColors.of(context).textMuted,
       ),
       title: Row(children: [
         Flexible(
@@ -42,7 +42,7 @@ class DoctorSearchTile extends StatelessWidget {
           Text(
             AppStrings.deactivated,
             style: AppTextStyles.caption.copyWith(
-              color: AppColors.warning,
+              color: ClinicColors.of(context).warning,
               fontWeight: FontWeight.w600,
             ),
           ),
@@ -50,10 +50,10 @@ class DoctorSearchTile extends StatelessWidget {
       ]),
       subtitle: Text(doctor.email, style: AppTextStyles.caption),
       trailing: isSelected
-          ? const Icon(Icons.check_circle,
-              color: AppColors.primary, size: AppSizes.iconDefault)
-          : const Icon(Icons.circle_outlined,
-              color: AppColors.textMuted, size: AppSizes.iconDefault),
+          ? Icon(Icons.check_circle,
+              color: Theme.of(context).colorScheme.primary, size: AppSizes.iconDefault)
+          : Icon(Icons.circle_outlined,
+              color: ClinicColors.of(context).textMuted, size: AppSizes.iconDefault),
       onTap: onTap,
     );
   }

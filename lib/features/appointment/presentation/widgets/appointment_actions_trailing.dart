@@ -1,14 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:spine_clinic_app/shared/widgets/app_badge.dart';
-import 'package:spine_clinic_app/core/constants/app_colors.dart';
 import 'package:spine_clinic_app/core/constants/app_sizes.dart';
 import 'package:spine_clinic_app/core/constants/app_strings.dart';
 import 'package:spine_clinic_app/core/constants/app_text_styles.dart';
+import 'package:spine_clinic_app/core/constants/clinic_colors.dart';
 import 'package:spine_clinic_app/features/appointment/domain/appointment.dart';
 import 'package:spine_clinic_app/features/appointment/domain/appointment_status.dart';
 import 'package:spine_clinic_app/features/appointment/presentation/all_appointments_providers.dart';
 import 'package:spine_clinic_app/features/appointment/presentation/appointment_providers.dart';
+import 'package:spine_clinic_app/features/appointment/presentation/widgets/appointment_badge_colors.dart';
 import 'package:spine_clinic_app/features/appointment/presentation/doctor_schedule_providers.dart';
 import 'package:spine_clinic_app/features/auth/domain/user_role.dart';
 import 'package:spine_clinic_app/features/auth/presentation/auth_providers.dart';
@@ -87,15 +88,16 @@ class _AppointmentActionsTrailingState
 
   /// Three-dot context menu whose items adapt to [status].
   Widget _buildContextMenu(AppointmentStatus status) {
+    final ColorScheme cs = Theme.of(context).colorScheme;
     return PopupMenuButton<String>(
-      icon: const Icon(
+      icon: Icon(
         Icons.more_horiz_rounded,
-        color: AppColors.textSecondary,
+        color: cs.onSurfaceVariant,
       ),
       padding: EdgeInsets.zero,
       constraints: const BoxConstraints(),
       splashRadius: AppSizes.iconDefault,
-      color: AppColors.surface,
+      color: cs.surface,
       shape: RoundedRectangleBorder(
         borderRadius: const BorderRadius.all(Radius.circular(AppSizes.r12)),
       ),
@@ -119,25 +121,27 @@ class _AppointmentActionsTrailingState
   }
 
   List<PopupMenuItem<String>> _buildMenuItems(AppointmentStatus status) {
+    final ColorScheme cs = Theme.of(context).colorScheme;
+    final ClinicColors clinic = ClinicColors.of(context);
     switch (status) {
       case AppointmentStatus.scheduled:
         return [
           _menuItem('check_in', Icons.check_circle_outline_rounded,
-              AppColors.success, AppStrings.checkIn),
+              clinic.success, AppStrings.checkIn),
           _menuItem('cancel', Icons.close_rounded,
-              AppColors.error, AppStrings.cancelAppointment),
+              cs.error, AppStrings.cancelAppointment),
         ];
       case AppointmentStatus.checkedIn:
         return [
           _menuItem('revert', Icons.undo_rounded,
-              AppColors.textSecondary, 'Revert to Scheduled'),
+              cs.onSurfaceVariant, 'Revert to Scheduled'),
           _menuItem('cancel', Icons.close_rounded,
-              AppColors.error, AppStrings.cancelAppointment),
+              cs.error, AppStrings.cancelAppointment),
         ];
       case AppointmentStatus.cancelled:
         return [
           _menuItem('restore', Icons.refresh_rounded,
-              AppColors.success, 'Restore Appointment'),
+              clinic.success, 'Restore Appointment'),
         ];
       default:
         return [];
@@ -150,6 +154,7 @@ class _AppointmentActionsTrailingState
     Color iconColor,
     String label,
   ) {
+    final ColorScheme cs = Theme.of(context).colorScheme;
     return PopupMenuItem<String>(
       value: value,
       height: AppSizes.buttonHeightSmall,
@@ -160,7 +165,7 @@ class _AppointmentActionsTrailingState
           const SizedBox(width: AppSizes.p8),
           Text(label,
               style: AppTextStyles.bodyMedium.copyWith(
-                color: AppColors.textPrimary,
+                color: cs.onSurface,
               )),
         ],
       ),
@@ -169,10 +174,11 @@ class _AppointmentActionsTrailingState
 
   /// Status badge for terminal / non-actionable statuses.
   Widget _badge(AppointmentStatus status) {
+    final AppointmentBadgeColors badge = status.badgeColors(context);
     return AppBadge(
       label: status.displayLabel,
-      textColor: status.textColor,
-      backgroundColor: status.backgroundColor,
+      textColor: badge.textColor,
+      backgroundColor: badge.backgroundColor,
     );
   }
 

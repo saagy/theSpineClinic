@@ -15,7 +15,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import 'package:spine_clinic_app/core/constants/app_colors.dart';
 import 'package:spine_clinic_app/core/constants/app_sizes.dart';
 import 'package:spine_clinic_app/core/constants/app_strings.dart';
 import 'package:spine_clinic_app/core/errors/app_exception.dart';
@@ -38,16 +37,18 @@ class AdminHubScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final asyncUser = ref.watch(currentUserProvider);
+    final ColorScheme cs = Theme.of(context).colorScheme;
+    final Color background = Theme.of(context).scaffoldBackgroundColor;
 
     return asyncUser.when(
-      loading: () => const Scaffold(
-        backgroundColor: AppColors.background,
+      loading: () => Scaffold(
+        backgroundColor: background,
         body: Center(
-          child: CircularProgressIndicator(color: AppColors.primary),
+          child: CircularProgressIndicator(color: cs.primary),
         ),
       ),
       error: (error, _) => Scaffold(
-        backgroundColor: AppColors.background,
+        backgroundColor: background,
         body: ErrorView(
           exception: error is AppException
               ? error
@@ -57,9 +58,9 @@ class AdminHubScreen extends ConsumerWidget {
       ),
       data: (user) {
         if (user == null || user.role != UserRole.superAdmin) {
-          return const Scaffold(
-            backgroundColor: AppColors.background,
-            body: ErrorView(
+          return Scaffold(
+            backgroundColor: background,
+            body: const ErrorView(
               exception: UnknownException(
                 message: AppStrings.errorDatabasePermissionDenied,
                 code: 'security/blocked',

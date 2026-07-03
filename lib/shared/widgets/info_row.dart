@@ -42,7 +42,7 @@ class InfoRow extends StatelessWidget {
   /// The data value displayed (e.g. '+20 101...').
   final String value;
 
-  /// If true, turns the value text down to AppColors.textMuted.
+  /// If true, turns the value text down to ClinicColors.of(context).textMuted.
   final bool isMuted;
 
   /// When true, uses a fixed-width label column via [AppSizes.labelColumnWidth].

@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:spine_clinic_app/core/constants/app_colors.dart';
 import 'package:spine_clinic_app/core/constants/app_sizes.dart';
 import 'package:spine_clinic_app/core/constants/app_strings.dart';
 import 'package:spine_clinic_app/core/constants/app_text_styles.dart';
@@ -155,7 +154,7 @@ class _MyPatientsScreenState extends ConsumerState<MyPatientsScreen> {
     }
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: SafeArea(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -202,7 +201,7 @@ class _MyPatientsScreenState extends ConsumerState<MyPatientsScreen> {
                 child: Text(
                   '${patients.length} ${patients.length == 1 ? 'Patient' : 'Patients'}',
                   style: AppTextStyles.bodyBold.copyWith(
-                    color: AppColors.textSecondary,
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
                   ),
                 ),
               ),
@@ -237,7 +236,7 @@ class _MyPatientsScreenState extends ConsumerState<MyPatientsScreen> {
                   }
 
                   return RefreshIndicator(
-                    color: AppColors.primary,
+                    color: Theme.of(context).colorScheme.primary,
                     onRefresh: () async =>
                         ref.invalidate(myPatientsControllerProvider),
                     child: ListView.builder(
