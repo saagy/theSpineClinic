@@ -17,6 +17,7 @@ import 'package:spine_clinic_app/core/constants/app_strings.dart';
 import 'package:spine_clinic_app/core/errors/app_exception.dart';
 import 'package:spine_clinic_app/core/errors/result.dart';
 import 'package:spine_clinic_app/core/network/app_routes.dart';
+import 'package:spine_clinic_app/features/appointment/presentation/appointment_refresh.dart';
 import 'package:spine_clinic_app/features/patient/domain/patient.dart';
 import 'package:spine_clinic_app/features/patient/domain/patient_document.dart';
 import 'package:spine_clinic_app/features/patient/presentation/patient_documents_providers.dart';
@@ -44,9 +45,11 @@ class _PatientQuickActionsFabState
     extends ConsumerState<PatientQuickActionsFab> {
   bool _isUploading = false;
 
-  void _onBookAppointment() {
+  Future<void> _onBookAppointment() async {
     Navigator.of(context, rootNavigator: true).pop();
-    context.push(AppRoutes.newAppointment, extra: widget.patient);
+    await context.push(AppRoutes.newAppointment, extra: widget.patient);
+    if (!mounted) return;
+    AppointmentRefresh.patientAndDashboards(ref, patientId: widget.patient.id);
   }
 
   void _onCollectPayment() {

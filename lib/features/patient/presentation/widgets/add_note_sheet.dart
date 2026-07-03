@@ -6,12 +6,13 @@ library;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:spine_clinic_app/core/constants/app_colors.dart';
 import 'package:spine_clinic_app/core/constants/app_sizes.dart';
 import 'package:spine_clinic_app/core/constants/app_strings.dart';
 import 'package:spine_clinic_app/core/constants/app_text_styles.dart';
 import 'package:spine_clinic_app/features/medical_records/presentation/medical_records_providers.dart';
+import 'package:spine_clinic_app/features/medical_records/presentation/patient_notes_list_notifier.dart';
 import 'package:spine_clinic_app/shared/widgets/app_button.dart';
+import 'package:spine_clinic_app/shared/widgets/app_snackbar.dart';
 
 /// Bottom sheet for adding or editing a patient note.
 class AddNoteSheet extends ConsumerStatefulWidget {
@@ -56,11 +57,10 @@ class _AddNoteSheetState extends ConsumerState<AddNoteSheet> {
   Future<void> _save() async {
     final text = _ctrl.text.trim();
     if (text.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(AppStrings.cannotSaveEmptyNote),
-          backgroundColor: AppColors.error,
-        ),
+      AppSnackbar.show(
+        context,
+        message: AppStrings.cannotSaveEmptyNote,
+        variant: AppSnackbarVariant.error,
       );
       return;
     }
@@ -85,22 +85,20 @@ class _AddNoteSheetState extends ConsumerState<AddNoteSheet> {
             .addNote(noteText: text, appointmentId: widget.appointmentId);
       }
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Note saved'),
-            backgroundColor: AppColors.success,
-          ),
-        );
+        ref.invalidate(patientNotesListProvider(widget.patientId));
+        ref.invalidate(patientNotesNotifierProvider(widget.patientId));
+        if (widget.appointmentId != null) {
+          ref.invalidate(appointmentNoteProvider(widget.appointmentId!));
+        }
         Navigator.of(context).pop();
       }
-    } catch (e) {
+    } catch (_) {
       if (mounted) {
         setState(() => _saving = false);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Failed to save: $e'),
-            backgroundColor: AppColors.error,
-          ),
+        AppSnackbar.show(
+          context,
+          message: AppStrings.errorUnknown,
+          variant: AppSnackbarVariant.error,
         );
       }
     }
@@ -109,15 +107,22 @@ class _AddNoteSheetState extends ConsumerState<AddNoteSheet> {
   @override
   Widget build(BuildContext context) {
     final bottom = MediaQuery.of(context).viewInsets.bottom;
+    final cs = Theme.of(context).colorScheme;
     return Padding(
       padding: EdgeInsets.fromLTRB(
-          AppSizes.p24, AppSizes.p24, AppSizes.p24, AppSizes.p24 + bottom),
+        AppSizes.p24,
+        AppSizes.p24,
+        AppSizes.p24,
+        AppSizes.p24 + bottom,
+      ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Text(widget.isEditing ? 'Edit Note' : 'Add Note',
-              style: AppTextStyles.headingSmall),
+          Text(
+            widget.isEditing ? AppStrings.editNotesTooltip : AppStrings.addNote,
+            style: AppTextStyles.headingSmall,
+          ),
           const SizedBox(height: AppSizes.p16),
           // Constrain the text field height so it doesn't stretch/glitch
           // when the iOS keyboard first appears (Task #4).
@@ -134,18 +139,20 @@ class _AddNoteSheetState extends ConsumerState<AddNoteSheet> {
               keyboardType: TextInputType.multiline,
               enabled: !_saving,
               style: AppTextStyles.body,
-              decoration: const InputDecoration(
-                hintText: 'Type your note here...',
-                hintStyle: TextStyle(color: AppColors.textMuted),
+              decoration: InputDecoration(
+                hintText: AppStrings.notes,
+                hintStyle: AppTextStyles.bodySecondary.copyWith(
+                  color: cs.onSurfaceVariant,
+                ),
                 isDense: true,
-                contentPadding: EdgeInsets.all(AppSizes.p12),
-                border: OutlineInputBorder(),
+                contentPadding: const EdgeInsets.all(AppSizes.p12),
+                border: const OutlineInputBorder(),
               ),
             ),
           ),
           const SizedBox(height: AppSizes.p20),
           AppButton(
-            labelText: 'Save Note',
+            labelText: AppStrings.save,
             onPressed: () => _save(),
             debounceMs: 1000,
             shape: AppButtonShape.pill,

@@ -10,6 +10,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:spine_clinic_app/core/constants/app_sizes.dart';
 import 'package:spine_clinic_app/core/constants/app_strings.dart';
 import 'package:spine_clinic_app/features/auth/presentation/auth_providers.dart';
+import 'package:spine_clinic_app/features/patient/presentation/patient_providers.dart';
 import 'package:spine_clinic_app/features/patient/presentation/widgets/collect_due_sheet.dart';
 import 'package:spine_clinic_app/features/patient/presentation/widgets/edit_payment_sheet.dart';
 import 'package:spine_clinic_app/features/patient/presentation/widgets/payment_ledger_box.dart';
@@ -135,11 +136,15 @@ class PaymentRow extends ConsumerWidget {
         .deletePayment(paymentId: payment.id, patientId: patientId);
     if (!context.mounted) return;
     result.when(
-      success: (_) => AppSnackbar.show(
-        context,
-        message: AppStrings.paymentDeleted,
-        variant: AppSnackbarVariant.success,
-      ),
+      success: (_) {
+        ref.invalidate(patientDetailProvider(patientId));
+        ref.invalidate(patientPaymentsProvider(patientId));
+        AppSnackbar.show(
+          context,
+          message: AppStrings.paymentDeleted,
+          variant: AppSnackbarVariant.success,
+        );
+      },
       failure: (error) => AppSnackbar.show(
         context,
         message: error.message,

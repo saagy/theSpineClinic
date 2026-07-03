@@ -40,7 +40,7 @@ class PaymentRowHeader extends StatelessWidget {
       children: [
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          crossAxisAlignment: CrossAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             Expanded(
               child: Text(
@@ -51,69 +51,35 @@ class PaymentRowHeader extends StatelessWidget {
               ),
             ),
             const SizedBox(width: AppSizes.p12),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.end,
+            Row(
               mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      payment.amount.toCurrencyString(),
-                      style: AppTextStyles.numberLarge.copyWith(
-                        fontSize: 18,
-                        color: cs.onSurface,
-                      ),
-                    ),
-                    if (isAdmin) ...[
-                      const SizedBox(width: AppSizes.p4),
-                      PaymentActionsMenu(
-                        onEdit: onEdit,
-                        onDelete: onDelete,
-                      ),
-                    ],
-                  ],
+                Text(
+                  payment.amount.toCurrencyString(),
+                  style: AppTextStyles.numberLarge.copyWith(
+                    fontSize: 18,
+                    color: cs.onSurface,
+                  ),
                 ),
-                const SizedBox(height: AppSizes.p4),
-                _buildStatusBadge(cs),
+                if (isAdmin) ...[
+                  const SizedBox(width: AppSizes.p4),
+                  PaymentActionsMenu(
+                    onEdit: onEdit,
+                    onDelete: onDelete,
+                  ),
+                ],
               ],
             ),
           ],
         ),
-        const SizedBox(height: AppSizes.p4),
-        _buildFullWidthMetadata(cs),
+        const SizedBox(height: AppSizes.p6),
+        _buildMetadataRow(cs),
       ],
     );
   }
 
-  Widget _buildStatusBadge(ColorScheme cs) {
-    final bool hasDue = payment.hasOutstandingDue;
-    final String label = hasDue
-        ? AppStrings.dueAmountLabel(payment.remainingDue.toCurrencyString())
-        : AppStrings.paidInFull;
-
-    final Color bg = hasDue ? cs.errorContainer : cs.primaryContainer.withAlpha(80);
-    final Color fg = hasDue ? cs.error : cs.primary;
-
-    return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppSizes.p8,
-        vertical: AppSizes.p2,
-      ),
-      decoration: BoxDecoration(
-        color: bg,
-        borderRadius: BorderRadius.circular(AppSizes.r6),
-      ),
-      child: Text(
-        label,
-        style: AppTextStyles.captionBold.copyWith(
-          color: fg,
-        ),
-      ),
-    );
-  }
-
-  Widget _buildFullWidthMetadata(ColorScheme cs) {
+  Widget _buildMetadataRow(ColorScheme cs) {
     final dateStr = payment.recordedAt.toDateTimeString();
     final staffText = recordedByAsync?.when(
           data: (staff) => staff.fullName,
@@ -126,14 +92,44 @@ class PaymentRowHeader extends StatelessWidget {
         ? '$dateStr  •  ${AppStrings.recordedBy} $staffText'
         : dateStr;
 
-    return Text(
-      text,
-      style: AppTextStyles.caption.copyWith(
-        color: cs.onSurfaceVariant,
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        Expanded(
+          child: Text(
+            text,
+            style: AppTextStyles.caption.copyWith(
+              color: cs.onSurfaceVariant,
+            ),
+            maxLines: 2,
+            softWrap: true,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ),
+        if (!payment.hasOutstandingDue) ...[
+          const SizedBox(width: AppSizes.p8),
+          _buildFullyPaidBadge(cs),
+        ],
+      ],
+    );
+  }
+
+  Widget _buildFullyPaidBadge(ColorScheme cs) {
+    return Container(
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSizes.p8,
+        vertical: AppSizes.p2,
       ),
-      maxLines: 2,
-      softWrap: true,
-      overflow: TextOverflow.ellipsis,
+      decoration: BoxDecoration(
+        color: cs.primaryContainer.withAlpha(80),
+        borderRadius: BorderRadius.circular(AppSizes.r6),
+      ),
+      child: Text(
+        AppStrings.paidInFull,
+        style: AppTextStyles.captionBold.copyWith(
+          color: cs.primary,
+        ),
+      ),
     );
   }
 }

@@ -4,6 +4,7 @@ import 'package:spine_clinic_app/core/constants/app_sizes.dart';
 import 'package:spine_clinic_app/core/constants/app_strings.dart';
 import 'package:spine_clinic_app/core/errors/result.dart';
 import 'package:spine_clinic_app/core/utils/formatters.dart';
+import 'package:spine_clinic_app/features/patient/presentation/patient_providers.dart';
 import 'package:spine_clinic_app/features/payments/domain/payment_record.dart';
 import 'package:spine_clinic_app/features/payments/presentation/record_payment_controller.dart';
 import 'package:spine_clinic_app/features/payments/presentation/widgets/payment_due_summary_card.dart';
@@ -94,6 +95,8 @@ class _CollectDueSheetState extends ConsumerState<CollectDueSheet> {
       setState(() => _submitting = false);
       return _err(saveResult.exception.message);
     }
+    ref.invalidate(patientDetailProvider(widget.patientId));
+    ref.invalidate(patientPaymentsProvider(widget.patientId));
     AppSnackbar.show(
       context,
       message: AppStrings.collectionRecordedSuccess,

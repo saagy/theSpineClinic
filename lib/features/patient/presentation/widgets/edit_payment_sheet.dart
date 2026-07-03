@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:spine_clinic_app/core/constants/app_strings.dart';
 import 'package:spine_clinic_app/core/errors/result.dart';
 import 'package:spine_clinic_app/core/utils/formatters.dart';
+import 'package:spine_clinic_app/features/patient/presentation/patient_providers.dart';
 import 'package:spine_clinic_app/features/patient/presentation/widgets/edit_payment_content.dart';
 import 'package:spine_clinic_app/features/payments/domain/payment_record.dart';
 import 'package:spine_clinic_app/features/payments/presentation/record_payment_controller.dart';
@@ -139,6 +140,8 @@ class _EditPaymentSheetState extends ConsumerState<EditPaymentSheet> {
       setState(() => _submitting = false);
       return _err(result.exception.message);
     }
+    ref.invalidate(patientDetailProvider(widget.patientId));
+    ref.invalidate(patientPaymentsProvider(widget.patientId));
     AppSnackbar.show(
       context,
       message: AppStrings.paymentUpdated,

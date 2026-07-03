@@ -11,6 +11,7 @@ import 'package:go_router/go_router.dart';
 import 'package:spine_clinic_app/core/constants/app_strings.dart';
 import 'package:spine_clinic_app/features/appointment/domain/appointment.dart';
 import 'package:spine_clinic_app/features/appointment/domain/appointment_status.dart';
+import 'package:spine_clinic_app/features/appointment/presentation/appointment_refresh.dart';
 import 'package:spine_clinic_app/features/appointment/presentation/edit_appointment_controller.dart';
 import 'package:spine_clinic_app/shared/widgets/app_snackbar.dart';
 import 'package:spine_clinic_app/shared/widgets/confirmation_dialog.dart';
@@ -50,6 +51,11 @@ Future<bool> deleteAppointmentWithConfirmation(
   result.when(
     success: (_) {
       success = true;
+      AppointmentRefresh.patientAndDashboards(
+        ref,
+        patientId: appointment.patientId,
+        appointmentId: appointment.id,
+      );
       AppSnackbar.show(
         context,
         message: AppStrings.appointmentDeleted,

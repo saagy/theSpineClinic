@@ -1,12 +1,16 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:spine_clinic_app/core/errors/result.dart';
 import 'package:spine_clinic_app/features/appointment/domain/appointment.dart';
+import 'package:spine_clinic_app/features/appointment/domain/appointment_type.dart';
 import 'package:spine_clinic_app/features/appointment/presentation/all_appointments_providers.dart';
 import 'package:spine_clinic_app/features/appointment/presentation/appointment_providers.dart';
 import 'package:spine_clinic_app/features/appointment/presentation/doctor_schedule_providers.dart';
-import 'package:spine_clinic_app/features/auth/presentation/auth_providers.dart';
-import 'package:spine_clinic_app/features/patient/presentation/patient_list_providers.dart';
 import 'package:spine_clinic_app/features/appointment/presentation/receptionist_appointments_providers.dart';
+import 'package:spine_clinic_app/features/auth/presentation/auth_providers.dart';
+import 'package:spine_clinic_app/features/patient/presentation/patient_appointments_notifier.dart'
+    as patient_tab;
+import 'package:spine_clinic_app/features/patient/presentation/patient_list_providers.dart';
+import 'package:spine_clinic_app/features/patient/presentation/patient_providers.dart';
 
 part 'edit_appointment_controller.g.dart';
 
@@ -34,11 +38,7 @@ class EditAppointmentController extends _$EditAppointmentController {
     );
     if (docResult is Failure<void>) return docResult;
 
-    Future.microtask(() {
-      try {
-        _invalidateCaches(appointment.id, appointment.patientId);
-      } catch (_) {}
-    });
+    if (ref.mounted) _invalidateCaches(appointment.id, appointment.patientId);
 
     return const Result.success(null);
   }
@@ -53,11 +53,7 @@ class EditAppointmentController extends _$EditAppointmentController {
     final Result<void> result = await repo.deleteAppointment(appointmentId);
     if (result is Failure<void>) return result;
 
-    Future.microtask(() {
-      try {
-        _invalidateCaches(appointmentId, patientId);
-      } catch (_) {}
-    });
+    if (ref.mounted) _invalidateCaches(appointmentId, patientId);
 
     return const Result.success(null);
   }
@@ -66,8 +62,21 @@ class EditAppointmentController extends _$EditAppointmentController {
     ref.invalidate(todayAppointmentsProvider);
     ref.read(allAppointmentsProvider.notifier).refresh();
     ref.invalidate(patientAppointmentsProvider(patientId));
+    ref.invalidate(patient_tab.patientAppointmentsProvider(patientId));
+    ref.invalidate(patientDetailProvider(patientId));
     ref.invalidate(futureScheduledAppointmentsCountProvider(patientId));
     ref.invalidate(availablePackageBalanceProvider(patientId));
+    for (final AppointmentType type in AppointmentType.values) {
+      ref.invalidate(
+        futureScheduledAppointmentsCountForTypeProvider((
+          patientId: patientId,
+          type: type,
+        )),
+      );
+      ref.invalidate(
+        availableBalanceForTypeProvider((patientId: patientId, type: type)),
+      );
+    }
     ref.invalidate(doctorScheduleProvider);
     ref.invalidate(patientListProvider);
     ref.invalidate(singleAppointmentProvider(appointmentId));

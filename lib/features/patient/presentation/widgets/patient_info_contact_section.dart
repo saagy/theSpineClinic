@@ -61,6 +61,7 @@ class _ContactRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Icon(icon, size: AppSizes.iconDefault, color: cs.primary),
         const SizedBox(width: AppSizes.p12),
@@ -78,8 +79,6 @@ class _ContactRow extends StatelessWidget {
           child: Text(
             value,
             style: AppTextStyles.bodyBold.copyWith(color: cs.onSurface),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
           ),
         ),
       ],
