@@ -47,7 +47,9 @@ class ReceptionistAppointmentCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final AppointmentStatus status = item.appointment.status;
-    final AppointmentStatusStyle style = AppointmentStatusStyle.forStatus(status);
+    final AppointmentStatusStyle style = AppointmentStatusStyle.forStatus(
+      status,
+    );
     final bool isCancelled = status == AppointmentStatus.cancelled;
     final bool applyFade = faded || isCancelled;
 
@@ -57,33 +59,56 @@ class ReceptionistAppointmentCard extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
         if (showDate)
-          Text(DateFormat('MMM d').format(t), maxLines: 1, softWrap: false,
-              style: AppTextStyles.caption.copyWith(color: style.timeColor, fontSize: 11)),
-        Text(DateFormat('hh:mm').format(t), maxLines: 1, softWrap: false,
-            style: AppTextStyles.captionBold.copyWith(color: style.timeColor, fontSize: 13)),
-        Text(DateFormat('a').format(t), maxLines: 1, softWrap: false,
-            style: AppTextStyles.caption.copyWith(color: style.timeColor, fontSize: 10)),
+          Text(
+            DateFormat('MMM d').format(t),
+            maxLines: 1,
+            softWrap: false,
+            style: AppTextStyles.caption.copyWith(
+              color: style.timeColor,
+              fontSize: 11,
+            ),
+          ),
+        Text(
+          DateFormat('hh:mm').format(t),
+          maxLines: 1,
+          softWrap: false,
+          style: AppTextStyles.captionBold.copyWith(
+            color: style.timeColor,
+            fontSize: 13,
+          ),
+        ),
+        Text(
+          DateFormat('a').format(t),
+          maxLines: 1,
+          softWrap: false,
+          style: AppTextStyles.caption.copyWith(
+            color: style.timeColor,
+            fontSize: 10,
+          ),
+        ),
       ],
     );
 
     final Widget card = Container(
       decoration: BoxDecoration(
         color: style.bg,
-        borderRadius:
-            const BorderRadius.all(Radius.circular(AppSizes.r16)),
+        borderRadius: const BorderRadius.all(Radius.circular(AppSizes.r16)),
         border: Border.all(color: style.border, width: 0.5),
       ),
       child: Material(
         color: Colors.transparent,
-        borderRadius:
-            const BorderRadius.all(Radius.circular(AppSizes.r16)),
+        borderRadius: const BorderRadius.all(Radius.circular(AppSizes.r16)),
         child: InkWell(
-          borderRadius:
-              const BorderRadius.all(Radius.circular(AppSizes.r16)),
-          onTap: () => context.push(
-            AppRoutes.appointmentDetail
-                .replaceAll(':id', item.appointment.id),
-          ),
+          borderRadius: const BorderRadius.all(Radius.circular(AppSizes.r16)),
+          onTap: () async {
+            await context.push(
+              AppRoutes.appointmentDetail.replaceAll(
+                ':id',
+                item.appointment.id,
+              ),
+            );
+            if (context.mounted) onStatusChanged?.call();
+          },
           // Rule 13 — minimum 16 px internal padding.
           child: Padding(
             padding: const EdgeInsets.all(AppSizes.p16),
@@ -128,8 +153,9 @@ class ReceptionistAppointmentCard extends StatelessWidget {
                             child: Text(
                               item.appointment.type.displayLabel,
                               style: AppTextStyles.caption.copyWith(
-                                color: Theme.of(context)
-                                    .colorScheme.onSurfaceVariant,
+                                color: Theme.of(
+                                  context,
+                                ).colorScheme.onSurfaceVariant,
                               ),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
@@ -163,10 +189,10 @@ class ReceptionistAppointmentCard extends StatelessWidget {
     // Vertical spacing between cards: 6 px top + 6 px bottom = 12 px gap.
     final Widget padded = Padding(
       padding: const EdgeInsets.symmetric(
-          horizontal: AppSizes.p16, vertical: AppSizes.p6),
-      child: applyFade
-          ? Opacity(opacity: 0.6, child: card)
-          : card,
+        horizontal: AppSizes.p16,
+        vertical: AppSizes.p6,
+      ),
+      child: applyFade ? Opacity(opacity: 0.6, child: card) : card,
     );
     return padded;
   }
@@ -179,13 +205,24 @@ class _StatusDot extends StatelessWidget {
   final String label;
   @override
   Widget build(BuildContext context) {
-    return Row(mainAxisSize: MainAxisSize.min, children: [
-      Container(width: AppSizes.p6, height: AppSizes.p6,
-          decoration: BoxDecoration(color: color, shape: BoxShape.circle)),
-      const SizedBox(width: AppSizes.p4),
-      Text(label,
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          width: AppSizes.p6,
+          height: AppSizes.p6,
+          decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+        ),
+        const SizedBox(width: AppSizes.p4),
+        Text(
+          label,
           style: AppTextStyles.caption.copyWith(
-              color: color, fontSize: 11, fontWeight: FontWeight.w600)),
-    ]);
+            color: color,
+            fontSize: 11,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      ],
+    );
   }
 }
