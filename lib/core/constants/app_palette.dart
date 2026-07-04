@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 class AppPalette {
   const AppPalette({
     required this.primary,
+    required this.onPrimary,
     required this.primaryContainer,
     required this.onPrimaryContainer,
     required this.background,
@@ -18,6 +19,7 @@ class AppPalette {
   });
 
   final Color primary;
+  final Color onPrimary;
   final Color primaryContainer;
   final Color onPrimaryContainer;
   final Color background;
@@ -33,6 +35,7 @@ class AppPalette {
 /// Light-mode clinical-blue palette.
 const AppPalette clinicalBluePaletteLight = AppPalette(
   primary: Color(0xFF2563EB),
+  onPrimary: Color(0xFFFFFFFF),
   primaryContainer: Color(0xFFDBEAFE),
   onPrimaryContainer: Color(0xFF1E3A8A),
   background: Color(0xFFF8FAFC),
@@ -47,15 +50,16 @@ const AppPalette clinicalBluePaletteLight = AppPalette(
 
 /// Dark-mode clinical-blue palette.
 const AppPalette clinicalBluePaletteDark = AppPalette(
-  primary: Color(0xFF93C5FD),
-  primaryContainer: Color(0xFF1E3A8A),
-  onPrimaryContainer: Color(0xFFDBEAFE),
-  background: Color(0xFF0F172A),
-  surface: Color(0xFF111827),
-  surfaceContainer: Color(0xFF1E293B),
-  textPrimary: Color(0xFFF8FAFC),
-  textSecondary: Color(0xFFCBD5E1),
-  textMuted: Color(0xFF94A3B8),
-  outline: Color(0xFF334155),
-  outlineStrong: Color(0xFF475569),
+  primary: Color(0xFF3B82F6),
+  onPrimary: Color(0xFF06111F),
+  primaryContainer: Color(0xFF172554),
+  onPrimaryContainer: Color(0xFFBFDBFE),
+  background: Color(0xFF09090B),
+  surface: Color(0xFF121417),
+  surfaceContainer: Color(0xFF1C1F24),
+  textPrimary: Color(0xFFF4F4F5),
+  textSecondary: Color(0xFFC9CDD5),
+  textMuted: Color(0xFF8F96A3),
+  outline: Color(0xFF30343B),
+  outlineStrong: Color(0xFF444B57),
 );

@@ -28,7 +28,7 @@ abstract final class AppThemeComponents {
       bodySmall: AppTextStyles.bodySecondary.copyWith(
         color: palette.textSecondary,
       ),
-      labelLarge: AppTextStyles.button.copyWith(color: Colors.white),
+      labelLarge: AppTextStyles.button.copyWith(color: palette.onPrimary),
       labelMedium: AppTextStyles.bodyMedium.copyWith(
         color: palette.textPrimary,
       ),

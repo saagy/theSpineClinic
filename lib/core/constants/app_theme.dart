@@ -24,6 +24,9 @@ abstract final class AppTheme {
     final Color error = isDark
         ? const Color(0xFFFB7185)
         : const Color(0xFFE11D48);
+    final Color onError = isDark
+        ? const Color(0xFF450A0A)
+        : Colors.white;
     final Color errorContainer = isDark
         ? const Color(0xFF881337)
         : const Color(0xFFFFF1F2);
@@ -36,7 +39,7 @@ abstract final class AppTheme {
           brightness: brightness,
         ).copyWith(
           primary: palette.primary,
-          onPrimary: Colors.white,
+          onPrimary: palette.onPrimary,
           primaryContainer: palette.primaryContainer,
           onPrimaryContainer: palette.onPrimaryContainer,
           surface: palette.surface,
@@ -45,8 +48,9 @@ abstract final class AppTheme {
           surfaceContainerHighest: palette.surfaceContainer,
           onSurfaceVariant: palette.textSecondary,
           outline: palette.outline,
+          outlineVariant: palette.outline,
           error: error,
-          onError: Colors.white,
+          onError: onError,
           errorContainer: errorContainer,
           onErrorContainer: onErrorContainer,
           shadow: Colors.black,
