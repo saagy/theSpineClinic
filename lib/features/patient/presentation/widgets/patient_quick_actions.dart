@@ -32,9 +32,11 @@ class PatientQuickActionsFab extends ConsumerStatefulWidget {
     super.key,
     required this.patient,
     required this.isDoctor,
+    required this.canHandlePayments,
   });
   final Patient patient;
   final bool isDoctor;
+  final bool canHandlePayments;
 
   @override
   ConsumerState<PatientQuickActionsFab> createState() =>
@@ -142,6 +144,7 @@ class _PatientQuickActionsFabState
               ),
               builder: (_) => QuickActionsSheet(
                 isDoctor: widget.isDoctor,
+                canHandlePayments: widget.canHandlePayments,
                 onBookAppointment: _onBookAppointment,
                 onCollectPayment: _onCollectPayment,
                 onAddNote: _onAddNote,

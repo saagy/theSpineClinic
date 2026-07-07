@@ -10,7 +10,6 @@ import 'package:spine_clinic_app/core/constants/app_sizes.dart';
 import 'package:spine_clinic_app/core/constants/app_strings.dart';
 import 'package:spine_clinic_app/core/constants/app_text_styles.dart';
 import 'package:spine_clinic_app/core/errors/app_exception.dart';
-import 'package:spine_clinic_app/features/auth/domain/user_role.dart';
 import 'package:spine_clinic_app/features/auth/presentation/auth_providers.dart';
 import 'package:spine_clinic_app/features/patient/domain/patient.dart';
 import 'package:spine_clinic_app/features/patient/presentation/widgets/payment_row.dart';
@@ -28,9 +27,7 @@ class PatientTabPayments extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final cs = Theme.of(context).colorScheme;
     final user = ref.watch(currentUserProvider).value;
-    final isDoctor = user?.role == UserRole.doctor;
-    final isAdmin = user?.role == UserRole.superAdmin ||
-        user?.role == UserRole.receptionist;
+    final bool canManagePayments = user?.canHandlePayments ?? false;
     final asyncPayments = ref.watch(patientPaymentsProvider(patient.id));
 
     return asyncPayments.when(
@@ -41,14 +38,20 @@ class PatientTabPayments extends ConsumerWidget {
       error: (error, _) => ErrorView(
         exception: error is AppException
             ? error
-            : const UnknownException(message: AppStrings.errorDatabaseQueryFailed),
+            : const UnknownException(
+                message: AppStrings.errorDatabaseQueryFailed,
+              ),
         onRetry: () => ref.invalidate(patientPaymentsProvider(patient.id)),
       ),
       data: (payments) {
-        final double totalSum =
-            payments.fold(0.0, (sum, pmt) => sum + pmt.amount);
-        final double totalOutstanding =
-            payments.fold(0.0, (sum, pmt) => sum + pmt.remainingDue);
+        final double totalSum = payments.fold(
+          0.0,
+          (sum, pmt) => sum + pmt.amount,
+        );
+        final double totalOutstanding = payments.fold(
+          0.0,
+          (sum, pmt) => sum + pmt.remainingDue,
+        );
 
         return RefreshIndicator(
           onRefresh: () async {
@@ -66,7 +69,7 @@ class PatientTabPayments extends ConsumerWidget {
                 PaymentSummaryHeader(
                   totalPaid: totalSum,
                   totalOutstanding: totalOutstanding,
-                  isDoctor: isDoctor,
+                  canManagePayments: canManagePayments,
                   patient: patient,
                 ),
                 const SizedBox(height: AppSizes.p24),
@@ -74,15 +77,23 @@ class PatientTabPayments extends ConsumerWidget {
                   EmptyState(
                     message: AppStrings.noPaymentsRecorded,
                     icon: Icons.receipt_long_outlined,
-                    actionLabel: isDoctor ? null : AppStrings.recordPayment,
-                    onActionPressed: isDoctor ? null : () => ref.invalidate(patientPaymentsProvider(patient.id)),
+                    actionLabel: canManagePayments
+                        ? AppStrings.recordPayment
+                        : null,
+                    onActionPressed: canManagePayments
+                        ? () => ref.invalidate(
+                            patientPaymentsProvider(patient.id),
+                          )
+                        : null,
                   )
                 else ...[
                   Padding(
                     padding: const EdgeInsets.only(bottom: AppSizes.p12),
                     child: Text(
                       AppStrings.paymentHistory,
-                      style: AppTextStyles.headingSmall.copyWith(color: cs.onSurface),
+                      style: AppTextStyles.headingSmall.copyWith(
+                        color: cs.onSurface,
+                      ),
                     ),
                   ),
                   ...payments.asMap().entries.map((entry) {
@@ -90,7 +101,7 @@ class PatientTabPayments extends ConsumerWidget {
                     final pmt = entry.value;
                     return PaymentRow(
                       payment: pmt,
-                      isAdmin: isAdmin,
+                      isAdmin: canManagePayments,
                       patientId: patient.id,
                     ).animate().fadeIn(duration: 250.ms, delay: (idx * 30).ms);
                   }),

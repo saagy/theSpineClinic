@@ -1,101 +1,190 @@
--- =============================================================================
--- Trigger sanity tests covering the redesigned balance flow.
--- Run manually with:
+-- Trigger sanity tests for appointment and payment balance sync.
+-- Run manually against a disposable database or development project:
 --   psql "$DATABASE_URL" -f test/trigger_sanity.sql
--- =============================================================================
--- Each test simulates a small workflow and asserts the patient balances
--- change (or not) in exactly the expected way. The script rolls back at the
--- end so the mock data is preserved.
--- =============================================================================
+--
+-- The script creates synthetic rows inside one transaction and always rolls
+-- back. Any failed expectation raises an exception.
 
 \set ON_ERROR_STOP on
 
-\set test_patient `SELECT id FROM public.patients ORDER BY created_at LIMIT 1`
-
 BEGIN;
 
-  -- Snapshot the starting balances for the test patient.
-  SELECT session_balance AS s, traction_balance AS t
-  FROM public.patients
-  WHERE id = :'test_patient' \gset baseline_
-
-  --------------------------------------------------------------------
-  -- Test 1: completing a normal_pt_session decreases session_balance.
-  --------------------------------------------------------------------
-  INSERT INTO public.appointments (patient_id, type, scheduled_at, use_package)
-  VALUES (:'test_patient', 'normal_pt_session'::public.appointment_type, NOW(), true)
-  RETURNING id AS appt1_id \gset
-
-  UPDATE public.appointments SET status = 'completed'
-  WHERE id = :'appt1_id';
-
-  -- Expected: session_balance dropped by 1; traction_balance unchanged.
-
-  --------------------------------------------------------------------
-  -- Test 2: completing a spinal_traction_session decreases traction_balance.
-  --------------------------------------------------------------------
-  INSERT INTO public.appointments (patient_id, type, scheduled_at, use_package)
-  VALUES (:'test_patient', 'spinal_traction_session'::public.appointment_type, NOW(), true)
-  RETURNING id AS appt2_id \gset
-
-  UPDATE public.appointments SET status = 'completed'
-  WHERE id = :'appt2_id';
-
-  -- Expected: traction_balance dropped by 1; session_balance unchanged
-  -- from post-Test-1 value.
-
-  --------------------------------------------------------------------
-  -- Test 3: completing an initial_assessment NEVER changes any balance.
-  --------------------------------------------------------------------
-  INSERT INTO public.appointments (patient_id, type, scheduled_at, use_package)
-  VALUES (:'test_patient', 'initial_assessment'::public.appointment_type, NOW(), true)
-  RETURNING id AS appt3_id \gset
-
-  UPDATE public.appointments SET status = 'completed'
-  WHERE id = :'appt3_id';
-
-  -- Expected: session_balance and traction_balance both unchanged
-  -- relative to post-Test-2 values.
-
-  --------------------------------------------------------------------
-  -- Test 4: undo check-in (checked_in → scheduled) refunds the bucket.
-  --------------------------------------------------------------------
-  INSERT INTO public.appointments (patient_id, type, scheduled_at, use_package)
-  VALUES (:'test_patient', 'normal_pt_session'::public.appointment_type, NOW() + INTERVAL '1 hour', true)
-  RETURNING id AS appt4_id \gset
-
-  UPDATE public.appointments SET status = 'checked_in' WHERE id = :'appt4_id';
-  UPDATE public.appointments SET status = 'scheduled' WHERE id = :'appt4_id';
-
-  -- Expected: session_balance restored to its post-Test-2 value (the
-  -- undoing of the checked-in transition added it back).
-
-  --------------------------------------------------------------------
-  -- Test 5: cancel a completed traction refunds the bucket.
-  --------------------------------------------------------------------
-  -- appt2_id is currently 'completed' (set in Test 2).
-  UPDATE public.appointments SET status = 'cancelled' WHERE id = :'appt2_id';
-
-  -- Expected: traction_balance restored to its baseline value (no
-  -- net change from before the test runner began).
-
-  --------------------------------------------------------------------
-  -- Test 6: paying for a combined package credits both buckets.
-  --------------------------------------------------------------------
-  INSERT INTO public.payment_records (
-    patient_id, amount, reason,
-    session_balance_added, traction_balance_added,
-    recorded_at
-  )
+DO $$
+DECLARE
+  v_doctor_id uuid := gen_random_uuid();
+  v_patient_id uuid := gen_random_uuid();
+  v_appt_id uuid;
+  v_payment_id uuid;
+  v_session_balance integer;
+  v_traction_balance integer;
+BEGIN
+  INSERT INTO public.staff (id, full_name, email, role, is_active)
   VALUES (
-    :'test_patient', 1000, 'Package (Test Combined)',
-    8, 4, NOW()
+    v_doctor_id,
+    'Trigger Test Doctor',
+    'trigger-test-doctor@example.test',
+    'doctor'::public.user_role,
+    true
   );
 
-  -- Expected: session_balance +8 and traction_balance +4 vs the value
-  -- they had right before this insert.
+  INSERT INTO public.patients (
+    id,
+    full_name,
+    phone_number,
+    clinic,
+    session_balance,
+    traction_balance
+  )
+  VALUES (
+    v_patient_id,
+    'Trigger Test Patient',
+    '0000000000',
+    'tagamoa'::public.clinic_location,
+    10,
+    5
+  );
+
+  INSERT INTO public.patient_doctors (patient_id, doctor_id)
+  VALUES (v_patient_id, v_doctor_id);
+
+  INSERT INTO public.appointments (patient_id, type, scheduled_at, use_package)
+  VALUES (
+    v_patient_id,
+    'normal_pt_session'::public.appointment_type,
+    now(),
+    true
+  )
+  RETURNING id INTO v_appt_id;
+
+  UPDATE public.appointments SET status = 'completed'
+  WHERE id = v_appt_id;
+
+  SELECT session_balance, traction_balance
+  INTO v_session_balance, v_traction_balance
+  FROM public.patients
+  WHERE id = v_patient_id;
+
+  IF v_session_balance != 9 OR v_traction_balance != 5 THEN
+    RAISE EXCEPTION 'Normal session deduction failed: session %, traction %',
+      v_session_balance, v_traction_balance;
+  END IF;
+
+  INSERT INTO public.appointments (patient_id, type, scheduled_at, use_package)
+  VALUES (
+    v_patient_id,
+    'spinal_traction_session'::public.appointment_type,
+    now() + interval '1 hour',
+    true
+  )
+  RETURNING id INTO v_appt_id;
+
+  UPDATE public.appointments SET status = 'checked_in'
+  WHERE id = v_appt_id;
+
+  SELECT traction_balance INTO v_traction_balance
+  FROM public.patients
+  WHERE id = v_patient_id;
+
+  IF v_traction_balance != 4 THEN
+    RAISE EXCEPTION 'Traction deduction failed: traction %',
+      v_traction_balance;
+  END IF;
+
+  UPDATE public.appointments SET status = 'cancelled'
+  WHERE id = v_appt_id;
+
+  SELECT traction_balance INTO v_traction_balance
+  FROM public.patients
+  WHERE id = v_patient_id;
+
+  IF v_traction_balance != 5 THEN
+    RAISE EXCEPTION 'Traction refund failed: traction %',
+      v_traction_balance;
+  END IF;
+
+  INSERT INTO public.appointments (patient_id, type, scheduled_at, use_package)
+  VALUES (
+    v_patient_id,
+    'initial_assessment'::public.appointment_type,
+    now() + interval '2 hours',
+    true
+  )
+  RETURNING id INTO v_appt_id;
+
+  UPDATE public.appointments SET status = 'completed'
+  WHERE id = v_appt_id;
+
+  SELECT session_balance, traction_balance
+  INTO v_session_balance, v_traction_balance
+  FROM public.patients
+  WHERE id = v_patient_id;
+
+  IF v_session_balance != 9 OR v_traction_balance != 5 THEN
+    RAISE EXCEPTION 'Assessment should not change balances: session %, traction %',
+      v_session_balance, v_traction_balance;
+  END IF;
+
+  INSERT INTO public.appointments (patient_id, type, scheduled_at, use_package)
+  VALUES (
+    v_patient_id,
+    'normal_pt_session'::public.appointment_type,
+    now() + interval '3 hours',
+    false
+  )
+  RETURNING id INTO v_appt_id;
+
+  UPDATE public.appointments SET status = 'completed'
+  WHERE id = v_appt_id;
+
+  SELECT session_balance INTO v_session_balance
+  FROM public.patients
+  WHERE id = v_patient_id;
+
+  IF v_session_balance != 9 THEN
+    RAISE EXCEPTION 'Non-package appointment should not deduct: session %',
+      v_session_balance;
+  END IF;
+
+  INSERT INTO public.payment_records (
+    patient_id,
+    amount,
+    reason,
+    session_balance_added,
+    traction_balance_added
+  )
+  VALUES (
+    v_patient_id,
+    1000,
+    'Package test payment',
+    8,
+    4
+  )
+  RETURNING id INTO v_payment_id;
+
+  SELECT session_balance, traction_balance
+  INTO v_session_balance, v_traction_balance
+  FROM public.patients
+  WHERE id = v_patient_id;
+
+  IF v_session_balance != 17 OR v_traction_balance != 9 THEN
+    RAISE EXCEPTION 'Payment credit failed: session %, traction %',
+      v_session_balance, v_traction_balance;
+  END IF;
+
+  DELETE FROM public.payment_records WHERE id = v_payment_id;
+
+  SELECT session_balance, traction_balance
+  INTO v_session_balance, v_traction_balance
+  FROM public.patients
+  WHERE id = v_patient_id;
+
+  IF v_session_balance != 9 OR v_traction_balance != 5 THEN
+    RAISE EXCEPTION 'Payment delete reversal failed: session %, traction %',
+      v_session_balance, v_traction_balance;
+  END IF;
+END;
+$$;
 
 ROLLBACK;
 
-\echo 'Trigger sanity tests completed (rolled back).'
-\echo 'Inspect patient balances inside the BEGIN block if a specific test fails.'
+\echo 'Trigger sanity tests passed and rolled back.'

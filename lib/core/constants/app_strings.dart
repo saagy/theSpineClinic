@@ -310,7 +310,7 @@ abstract final class AppStrings {
   static const String paymentLoginRequired =
       'Must be logged in to manage payments.';
   static const String paymentAccessDenied =
-      'Only super admins and receptionists can manage payments.';
+      'Only super admins and payment-enabled receptionists can manage payments.';
   static const String sessionBalanceAddedField = 'PT Sessions Added';
   static const String tractionBalanceAddedField = 'Traction Sessions Added';
   static const String packageContentsLabelPrefix = 'Includes';
@@ -420,17 +420,60 @@ abstract final class AppStrings {
   static const String staffManagement = 'Staff Management';
   static const String addStaff = 'Add Staff';
   static const String editStaff = 'Edit Staff';
+  static const String staffApplications = 'Staff Applications';
   static const String superAdmin = 'Super Admin';
+  static const String superAdmins = 'Super Admins';
   static const String receptionist = 'Receptionist';
+  static const String receptionists = 'Receptionists';
   static const String role = 'Role';
+  static const String identity = 'Identity';
+  static const String access = 'Access';
+  static const String account = 'Account';
+  static const String accountStatus = 'Account Status';
+  static const String accountEnabled = 'Account enabled';
+  static const String accountEnabledHint = 'Staff member can sign in';
+  static const String accountDisabledHint = 'Staff member cannot sign in';
   static const String password = 'Password';
   static const String confirmPassword = 'Confirm Password';
   static const String isActive = 'Is Active';
+  static const String canManagePayments = 'Can manage payments';
   static const String active = 'Active';
+  static const String pendingApproval = 'Pending Approval';
   static const String deactivated = 'Deactivated';
   static const String changePassword = 'Change Password';
+  static const String staffAdminPermissionDenied =
+      'Only super admins can manage staff accounts.';
+  static const String staffSearchHint = 'Search staff by name or email';
+  static const String noPhone = 'No phone';
+  static const String noBranch = 'No branch';
+  static const String sortNameAsc = 'Name (A to Z)';
+  static const String sortNameDesc = 'Name (Z to A)';
+  static const String sortRole = 'Role';
+  static const String sortNewest = 'Newest';
+  static const String filterByRole = 'Filter by Role';
+  static const String allRoles = 'All Roles';
+  static const String approveStaff = 'Approve Staff';
+  static const String approveApplication = 'Approve Application';
+  static const String rejectApplication = 'Reject Application';
+  static const String rejectAndDelete = 'Reject & Delete';
+  static const String keepActive = 'Keep Active';
+  static const String deactivateAccount = 'Deactivate Account';
+  static const String staffApprovedSuccess = 'Staff application approved.';
+  static const String staffRejectedSuccess =
+      'Application rejected and deleted.';
+  static const String staffMissingUserId =
+      'Cannot reject application: this staff member has no user account.';
+  static const String staffPasswordMissingUserId =
+      'Cannot update password: this staff member has no user account.';
   static const String deactivateStaffConfirm =
       'Deactivate this staff member? They will no longer be able to log in.';
+  static String approveStaffMessage(String name) =>
+      'Approve $name? They will be able to sign in immediately.';
+  static String rejectStaffMessage(String name) =>
+      'Reject and delete $name? This permanently deletes the account and profile.';
+  static String deactivateStaffWarning(int count) =>
+      'This staff member has $count upcoming appointment(s). '
+      'Deactivating will not cancel them, but the account will no longer be able to sign in.';
   static const String selfDeactivationError =
       'You cannot deactivate your own account.';
   static const String staffCreateSuccess = 'Staff member created successfully.';
@@ -439,9 +482,16 @@ abstract final class AppStrings {
   static const String passwordsDoNotMatch = 'Passwords do not match';
   static const String passwordMinLength =
       'Password must be at least 8 characters';
+  static const String passwordHint = 'Enter password';
+  static const String confirmPasswordHint = 'Confirm password';
   static const String emailRequired = 'Email is required';
   static const String emailInvalid = 'Invalid email format';
+  static const String emailHint = 'Enter email address';
   static const String fullNameRequired = 'Full name is required';
+  static const String fullNameHint = 'Enter full name';
+  static const String fullNameMinLength = 'Min 3 characters required';
+  static const String phoneOptionalHint = 'Enter phone number (optional)';
+  static const String roleHint = 'Select staff role';
   static const String roleRequired = 'Role is required';
 
   // Admin Hub Strings
@@ -449,14 +499,15 @@ abstract final class AppStrings {
   static const String doctorApplications = 'Doctor Applications';
   static const String clinicSettings = 'Clinic Settings';
   static const String reportsAndAnalytics = 'Reports & Analytics';
-  static const String manageDoctorsLabel = 'Review and approve new doctors';
+  static const String manageDoctorsLabel = 'Review and approve staff accounts';
   static const String manageStaffLabel =
       'Manage receptionist and admin accounts';
   static const String configureClinicLabel =
       'Set up session packages and pricing';
-  static const String noPendingApplications = 'No pending applications found.';
+  static const String noPendingApplications =
+      'No pending staff applications found.';
   static const String pending = 'Pending';
-  static const String allApplications = 'All Applications';
+  static const String allApplications = 'All Accounts';
 
   // Clinic Packages Strings
   static const String addPackage = 'Add Package';

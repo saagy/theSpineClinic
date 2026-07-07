@@ -35,7 +35,6 @@ import 'package:spine_clinic_app/features/staff/presentation/staff_form_screen.d
 import 'package:spine_clinic_app/features/staff/presentation/staff_list_screen.dart';
 import 'package:spine_clinic_app/features/admin/presentation/admin_hub_screen.dart';
 import 'package:spine_clinic_app/features/admin/presentation/analytics_screen.dart';
-import 'package:spine_clinic_app/features/admin/presentation/doctor_applications_screen.dart';
 import 'package:spine_clinic_app/features/admin/presentation/clinic_settings_screen.dart';
 
 part 'router.g.dart';
@@ -280,10 +279,6 @@ List<RouteBase> _buildRoutes(Ref ref) {
           pageBuilder: (_, __) => const NoTransitionPage(child: StaffListScreen()),
         ),
         GoRoute(
-          path: AppRoutes.doctorApplications,
-          pageBuilder: (_, __) => const NoTransitionPage(child: DoctorApplicationsScreen()),
-        ),
-        GoRoute(
           path: AppRoutes.clinicSettings,
           pageBuilder: (_, __) => const NoTransitionPage(child: ClinicSettingsScreen()),
         ),
@@ -304,7 +299,6 @@ int _resolveActiveIndex(String role, String location) {
       if (location == AppRoutes.adminHub ||
           location == AppRoutes.doctorHistory ||
           location == AppRoutes.staffList ||
-          location == AppRoutes.doctorApplications ||
           location == AppRoutes.clinicSettings ||
           location.startsWith('/admin/')) {
         return 4;
@@ -349,7 +343,6 @@ bool _isSubPage(String location) {
   }
   if (location == AppRoutes.doctorHistory ||
       location == AppRoutes.staffList ||
-      location == AppRoutes.doctorApplications ||
       location == AppRoutes.clinicSettings) {
     return true;
   }

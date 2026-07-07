@@ -18,12 +18,12 @@ class PaymentSummaryHeader extends StatelessWidget {
     super.key,
     required this.totalPaid,
     required this.totalOutstanding,
-    required this.isDoctor,
+    required this.canManagePayments,
     required this.patient,
   });
   final double totalPaid;
   final double totalOutstanding;
-  final bool isDoctor;
+  final bool canManagePayments;
   final Patient patient;
 
   @override
@@ -110,7 +110,7 @@ class PaymentSummaryHeader extends StatelessWidget {
                   ],
                 ),
         ),
-        if (!isDoctor) ...[
+        if (canManagePayments) ...[
           const SizedBox(height: AppSizes.p16),
           AppButton(
             labelText: AppStrings.recordPayment,

@@ -3,7 +3,7 @@ import 'package:spine_clinic_app/core/constants/app_strings.dart';
 import 'package:spine_clinic_app/shared/widgets/app_button.dart';
 import 'package:spine_clinic_app/shared/widgets/responsive_button_row.dart';
 
-/// Renders a touch-friendly Approve/Reject button row for pending doctor applications.
+/// Renders a touch-friendly Approve/Reject row for pending staff applications.
 class ApplicationActionButtons extends StatelessWidget {
   /// Creates an [ApplicationActionButtons] instance.
   const ApplicationActionButtons({

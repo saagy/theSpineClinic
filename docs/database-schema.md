@@ -1,291 +1,163 @@
-# Spine Clinic — Database Schema Reference
+# Database Schema Reference
 
-> Canonical DDL: `supabase/full_schema.sql`  
-> Active DB project: `ujketpugttdqpcixrnga` (Supabase)
+This document provides the complete, 100% verified reference for the Spine Clinic backend database running on Supabase Postgres (Project ID: `ujketpugttdqpcixrnga`).
 
----
+## 1. Custom Enum Types
 
-## Enums
+### `user_role`
+Values:
+- `super_admin`: System administrator with unrestricted management permissions.
+- `receptionist`: Front-desk staff managing patients and appointments. Payment writes require `can_manage_payments`.
+- `doctor`: Physical therapist handling patient sessions and clinical notes.
 
-| Type | Values |
-|------|--------|
-| `user_role` | `super_admin` · `receptionist` · `doctor` |
-| `clinic_location` | `tagamoa` · `masr_elgedida` |
-| `appointment_type` | `normal_pt_session` · `spinal_traction_session` · `check_up` · `initial_assessment` · `reassessment` |
-| `appointment_status` | `scheduled` · `checked_in` · `completed` · `cancelled` · `no_show` |
+### `clinic_location`
+Values:
+- `tagamoa`: Tagamoa branch location.
+- `masr_elgedida`: Masr El-Gedida branch location.
 
----
+### `appointment_type`
+Values:
+- `normal_pt_session`: Standard physical therapy treatment session.
+- `spinal_traction_session`: Specialized spinal traction treatment session.
+- `check_up`: Follow-up check-up visit.
+- `initial_assessment`: First-time patient assessment (never deducts session/traction balance).
+- `reassessment`: Periodic progress re-evaluation (never deducts session/traction balance).
 
-## Tables
-
-### staff
-All clinic personnel. Links to `auth.users` via `user_id`.
-
-| Column | Type | Nullable | Default | Notes |
-|--------|------|----------|---------|-------|
-| `id` | `uuid` | NO | `gen_random_uuid()` | PK |
-| `user_id` | `uuid` | YES | — | FK `auth.users(id)`, UNIQUE |
-| `full_name` | `text` | NO | — | |
-| `email` | `text` | NO | — | UNIQUE |
-| `role` | `user_role` | NO | — | |
-| `is_active` | `boolean` | NO | `true` | Soft-delete/disabling |
-| `created_at` | `timestamptz` | NO | `now()` | |
-| `phone` | `text` | YES | — | |
-| `branch` | `clinic_location` | YES | — | |
-| `deactivated_at` | `timestamptz` | YES | — | Disambiguates pending vs deactivated |
-
-**RLS:** Active staff can SELECT all. Users can read/update own row. Only super_admins can modify others. Self-registration allowed with `is_active=false`.
+### `appointment_status`
+Values:
+- `scheduled`: Appointment booked for a future date/time.
+- `checked_in`: Patient arrived at clinic (deducts session/traction balance if `use_package` is true).
+- `completed`: Treatment completed (deducts session/traction balance if `use_package` is true).
+- `cancelled`: Appointment cancelled (refunds deducted balance if previously checked_in/completed).
+- `no_show`: Patient missed appointment without cancellation.
 
 ---
 
-### patients
-Patient registry. Balance columns are synced by triggers (not direct writes).
+## 2. Core Database Tables
 
-| Column | Type | Nullable | Default | Notes |
-|--------|------|----------|---------|-------|
-| `id` | `uuid` | NO | `gen_random_uuid()` | PK |
-| `full_name` | `text` | NO | — | |
-| `phone_number` | `text` | NO | — | |
-| `program` | `text` | YES | — | |
-| `clinic` | `clinic_location` | NO | — | |
-| `session_balance` | `integer` | NO | `0` | PT sessions remaining |
-| `traction_balance` | `integer` | NO | `0` | Traction sessions remaining |
-| `created_by` | `uuid` | YES | — | FK `staff(id)` |
-| `created_at` | `timestamptz` | NO | `now()` | |
+### `staff`
+Stores staff user profiles linked to Supabase Auth (`auth.users`).
+- `id` (`uuid`, PK, Default: `gen_random_uuid()`)
+- `user_id` (`uuid`, UNIQUE, FK -> `auth.users(id)` `ON DELETE CASCADE`, Nullable)
+- `full_name` (`text`, NOT NULL)
+- `email` (`text`, UNIQUE, NOT NULL)
+- `role` (`user_role`, NOT NULL)
+- `is_active` (`boolean`, NOT NULL, Default: `true`)
+- `can_manage_payments` (`boolean`, NOT NULL, Default: `false`)
+- `created_at` (`timestamptz`, NOT NULL, Default: `now()`)
+- `phone` (`text`, Nullable)
+- `branch` (`clinic_location`, Nullable)
+- `deactivated_at` (`timestamptz`, Nullable)
 
-**RLS:** Super_admins/receptionists have full access. Doctors see only assigned/replacement/appointment patients.
+### `patients`
+Central patient registry and session/traction package balances.
+- `id` (`uuid`, PK, Default: `gen_random_uuid()`)
+- `full_name` (`text`, NOT NULL)
+- `phone_number` (`text`, NOT NULL)
+- `program` (`text`, Nullable)
+- `clinic` (`clinic_location`, NOT NULL)
+- `session_balance` (`integer`, NOT NULL, Default: `0`)
+- `traction_balance` (`integer`, NOT NULL, Default: `0`)
+- `created_by` (`uuid`, FK -> `staff(id)` `ON DELETE SET NULL`, Nullable)
+- `created_at` (`timestamptz`, NOT NULL, Default: `now()`)
 
----
+### `patient_doctors`
+M:N long-term doctor assignments for patients. Enforced by trigger `tr_check_patient_has_doctors`.
+- `patient_id` (`uuid`, PK/FK -> `patients(id)` `ON DELETE CASCADE`, NOT NULL)
+- `doctor_id` (`uuid`, PK/FK -> `staff(id)` `ON DELETE CASCADE`, NOT NULL)
+- `assigned_at` (`timestamptz`, NOT NULL, Default: `now()`)
 
-### patient_doctors
-M:N junction: which doctors are assigned to which patients.
+### `appointments`
+Patient visit schedule and status.
+- `id` (`uuid`, PK, Default: `gen_random_uuid()`)
+- `patient_id` (`uuid`, FK -> `patients(id)` `ON DELETE CASCADE`, NOT NULL)
+- `type` (`appointment_type`, NOT NULL)
+- `status` (`appointment_status`, NOT NULL, Default: `'scheduled'`)
+- `use_package` (`boolean`, NOT NULL, Default: `true`)
+- `scheduled_at` (`timestamptz`, NOT NULL, Default: `now()`)
+- `created_by` (`uuid`, FK -> `staff(id)` `ON DELETE SET NULL`, Nullable)
+- `created_at` (`timestamptz`, NOT NULL, Default: `now()`)
 
-| Column | Type | Nullable | Default | Notes |
-|--------|------|----------|---------|-------|
-| `patient_id` | `uuid` | NO | — | FK `patients(id)`, PK |
-| `doctor_id` | `uuid` | NO | — | FK `staff(id)`, PK |
-| `assigned_at` | `timestamptz` | NO | `now()` | |
+### `appointment_doctors`
+Appointment-level doctor assignments and temporary doctor replacements.
+- `id` (`uuid`, PK, Default: `gen_random_uuid()`)
+- `appointment_id` (`uuid`, FK -> `appointments(id)` `ON DELETE CASCADE`, NOT NULL)
+- `doctor_id` (`uuid`, FK -> `staff(id)` `ON DELETE RESTRICT`, NOT NULL)
+- `is_replacement` (`boolean`, NOT NULL, Default: `false`)
+- `replaced_doctor_id` (`uuid`, FK -> `staff(id)` `ON DELETE SET NULL`, Nullable)
+- `is_active` (`boolean`, NOT NULL, Default: `true`)
+- `added_by` (`uuid`, FK -> `staff(id)` `ON DELETE SET NULL`, Nullable)
+- `added_at` (`timestamptz`, NOT NULL, Default: `now()`)
 
-**RLS:** All active staff can read. Only super_admin/receptionist can write.
+### `patient_documents`
+Metadata for uploaded clinical files stored in Supabase Storage (`patient-documents` bucket).
+- `id` (`uuid`, PK, Default: `gen_random_uuid()`)
+- `patient_id` (`uuid`, FK -> `patients(id)` `ON DELETE CASCADE`, NOT NULL)
+- `file_url` (`text`, NOT NULL)
+- `file_name` (`text`, NOT NULL)
+- `thumbnail_url` (`text`, Nullable)
+- `uploaded_by` (`uuid`, FK -> `staff(id)` `ON DELETE SET NULL`, Nullable)
+- `uploaded_at` (`timestamptz`, NOT NULL, Default: `now()`)
 
-**Trigger:** `tr_check_patient_has_doctors` — prevents leaving a patient with 0 doctors.
+### `patient_notes`
+Clinical progress notes created by doctors or staff.
+- `id` (`uuid`, PK, Default: `gen_random_uuid()`)
+- `patient_id` (`uuid`, FK -> `patients(id)` `ON DELETE CASCADE`, NOT NULL)
+- `appointment_id` (`uuid`, FK -> `appointments(id)` `ON DELETE SET NULL`, Nullable)
+- `created_by` (`uuid`, FK -> `staff(id)` `ON DELETE RESTRICT`, NOT NULL)
+- `note_text` (`text`, NOT NULL)
+- `created_at` (`timestamptz`, NOT NULL, Default: `now()`)
+- `updated_at` (`timestamptz`, NOT NULL, Default: `now()`)
 
----
+### `payment_records`
+Financial transactions and package balance top-ups.
+- `id` (`uuid`, PK, Default: `gen_random_uuid()`)
+- `patient_id` (`uuid`, FK -> `patients(id)` `ON DELETE CASCADE`, NOT NULL)
+- `amount` (`numeric`, NOT NULL)
+- `total_price` (`numeric`, Nullable)
+- `reason` (`text`, NOT NULL)
+- `session_balance_added` (`integer`, NOT NULL, Default: `0`)
+- `traction_balance_added` (`integer`, NOT NULL, Default: `0`)
+- `recorded_by` (`uuid`, FK -> `staff(id)` `ON DELETE SET NULL`, Nullable)
+- `recorded_at` (`timestamptz`, NOT NULL, Default: `now()`)
 
-### appointments
-Scheduled patient visits.
+### `clinic_settings`
+System-wide configuration (package pricing & session rules) stored as JSONB.
+- `id` (`uuid`, PK, Default: `gen_random_uuid()`)
+- `packages` (`jsonb`, NOT NULL)
+- `updated_by` (`uuid`, FK -> `staff(id)` `ON DELETE SET NULL`, Nullable)
+- `updated_at` (`timestamptz`, NOT NULL, Default: `now()`)
 
-| Column | Type | Nullable | Default | Notes |
-|--------|------|----------|---------|-------|
-| `id` | `uuid` | NO | `gen_random_uuid()` | PK |
-| `patient_id` | `uuid` | NO | — | FK `patients(id)` |
-| `type` | `appointment_type` | NO | — | |
-| `status` | `appointment_status` | NO | `'scheduled'` | |
-| `use_package` | `boolean` | NO | `true` | Deduct from balance? |
-| `created_by` | `uuid` | YES | — | FK `staff(id)` |
-| `created_at` | `timestamptz` | NO | `now()` | |
-| `scheduled_at` | `timestamptz` | NO | `now()` | |
-
-**RLS:** All active staff can read/write.
-
-**Trigger:** `trigger_appointment_package_deduction` — auto-deducts/refunds patient balance on status change.
-
----
-
-### appointment_doctors
-M:N junction: which doctors are assigned to which appointments (with soft-delete & replacement tracking).
-
-| Column | Type | Nullable | Default | Notes |
-|--------|------|----------|---------|-------|
-| `id` | `uuid` | NO | `gen_random_uuid()` | PK |
-| `appointment_id` | `uuid` | NO | — | FK `appointments(id)` |
-| `doctor_id` | `uuid` | NO | — | FK `staff(id)` |
-| `is_replacement` | `boolean` | NO | `false` | Is this a covering doctor? |
-| `replaced_doctor_id` | `uuid` | YES | — | FK `staff(id)` |
-| `is_active` | `boolean` | NO | `true` | Soft-delete |
-| `added_by` | `uuid` | YES | — | FK `staff(id)` |
-| `added_at` | `timestamptz` | NO | `now()` | |
-
-**RLS:** All active staff can read/write.
-
----
-
-### patient_documents
-File uploads per patient. Files stored in `patient-documents` storage bucket.
-
-| Column | Type | Nullable | Default | Notes |
-|--------|------|----------|---------|-------|
-| `id` | `uuid` | NO | `gen_random_uuid()` | PK |
-| `patient_id` | `uuid` | NO | — | FK `patients(id)` |
-| `file_url` | `text` | NO | — | |
-| `file_name` | `text` | NO | — | |
-| `uploaded_by` | `uuid` | YES | — | FK `staff(id)` |
-| `uploaded_at` | `timestamptz` | NO | `now()` | |
-| `thumbnail_url` | `text` | YES | — | 320x320 JPEG thumbnail |
-
-**RLS:** Super_admin/receptionist: full access. Doctors: only their own patients' documents. Update: only super_admin/receptionist.
-
----
-
-### patient_notes
-Clinical notes, optionally linked to an appointment.
-
-| Column | Type | Nullable | Default | Notes |
-|--------|------|----------|---------|-------|
-| `id` | `uuid` | NO | `gen_random_uuid()` | PK |
-| `patient_id` | `uuid` | NO | — | FK `patients(id)` |
-| `appointment_id` | `uuid` | YES | — | FK `appointments(id)` |
-| `created_by` | `uuid` | NO | — | FK `staff(id)` |
-| `note_text` | `text` | NO | — | |
-| `created_at` | `timestamptz` | NO | `now()` | |
-| `updated_at` | `timestamptz` | NO | `now()` | |
-
-**RLS:** Same pattern as documents — super_admin/receptionist see all, doctors see their patients.
-
----
-
-### payment_records
-Financial transactions. Balance changes synced to `patients` via trigger.
-
-| Column | Type | Nullable | Default | Notes |
-|--------|------|----------|---------|-------|
-| `id` | `uuid` | NO | `gen_random_uuid()` | PK |
-| `patient_id` | `uuid` | NO | — | FK `patients(id)` |
-| `amount` | `numeric` | NO | — | |
-| `reason` | `text` | NO | — | |
-| `recorded_by` | `uuid` | YES | — | FK `staff(id)` |
-| `recorded_at` | `timestamptz` | NO | `now()` | |
-| `session_balance_added` | `integer` | NO | `0` | |
-| `traction_balance_added` | `integer` | NO | `0` | |
-| `total_price` | `numeric` | YES | `NULL` | Full service cost. NULL if paid in full. |
-
-**RLS:** All active staff can read. Only super_admin/receptionist can insert/update/delete.
-
-**Triggers:** `trigger_payment_insert_package_sync` (adds balance), `trigger_payment_delete_package_sync` (subtracts balance on delete).
+### `doctor_replacements`
+Daily absent doctor coverage records.
+- `id` (`uuid`, PK, Default: `gen_random_uuid()`)
+- `absent_doctor_id` (`uuid`, FK -> `staff(id)` `ON DELETE CASCADE`, NOT NULL)
+- `covering_doctor_id` (`uuid`, FK -> `staff(id)` `ON DELETE CASCADE`, NOT NULL)
+- `replacement_date` (`date`, NOT NULL)
+- `initiated_by` (`uuid`, FK -> `staff(id)` `ON DELETE SET NULL`, Nullable)
+- `created_at` (`timestamptz`, NOT NULL, Default: `now()`)
 
 ---
 
-### clinic_settings
-Single-row configuration store. Packages defined as JSONB array.
+## 3. Database Functions & RPCs
 
-| Column | Type | Nullable | Default | Notes |
-|--------|------|----------|---------|-------|
-| `id` | `uuid` | NO | `gen_random_uuid()` | PK |
-| `packages` | `jsonb` | NO | — | Array of `ClinicPackage` objects |
-| `updated_by` | `uuid` | YES | — | FK `staff(id)` |
-| `updated_at` | `timestamptz` | NO | `now()` | |
-
-**RLS:** All active staff can read. Only super_admin can write.
-
-**JSONB structure (`packages`):**
-```json
-[{
-  "name": "6 Sessions",
-  "kind": "session" | "traction" | "combined",
-  "sessionCount": 6,
-  "tractionsCount": 0,
-  "price": 1500
-}]
-```
+1. `get_auth_staff_profile()`: Returns `(staff_id uuid, staff_role user_role, staff_active boolean)` for `auth.uid()`. Used internally by all RLS policies.
+2. `create_patient_with_doctors(...)`: Atomically registers a patient and inserts assigned doctor records in `patient_doctors`.
+3. `update_patient_doctors(...)`: Safely updates a patient's long-term assigned doctors while ensuring at least one active doctor remains.
+4. `create_staff_user(...)`: Creates an `auth.users` row and linked `staff` record for super admin staff onboarding.
+5. `update_user_password(...)`: Enables super admins to reset a staff user's encrypted password.
+6. `delete_doctor_user(...)`: Enables super admins to reject/delete doctor auth users (cascades to `staff`).
+7. `book_recurring_appointments(...)`: Books multiple recurring appointments and doctor assignments in a single transaction.
+8. `handle_package_deduction()`: Trigger function on `appointments` status update that deducts or refunds package balance.
+9. `handle_payment_package_sync()`: Trigger function on `payment_records` insert/delete that adds or subtracts purchased package credits.
+10. `check_patient_has_doctors()`: Trigger function on `patient_doctors` delete/update that prevents leaving a patient with 0 assigned doctors.
+11. `sync_staff_email_to_auth_users()`: Trigger function on `staff` email update that syncs email changes to `auth.users`.
+12. `verify_staff_update_permissions()`: Trigger function on `staff` update that prevents staff members from altering their own role, active status, or payment access.
 
 ---
 
-### doctor_replacements
-Daily replacement coverage when a doctor is absent.
+## 4. Storage Bucket Configuration
 
-| Column | Type | Nullable | Default | Notes |
-|--------|------|----------|---------|-------|
-| `id` | `uuid` | NO | `gen_random_uuid()` | PK |
-| `absent_doctor_id` | `uuid` | NO | — | FK `staff(id)` |
-| `covering_doctor_id` | `uuid` | NO | — | FK `staff(id)` |
-| `replacement_date` | `date` | NO | — | |
-| `initiated_by` | `uuid` | YES | — | FK `staff(id)` |
-| `created_at` | `timestamptz` | NO | `now()` | |
-
-**RLS:** All active staff can read/create.
-
----
-
-## Relationships Diagram
-
-```
-staff ──┬── patients (created_by)
-        ├── patient_doctors (doctor_id)
-        ├── appointment_doctors (doctor_id / replaced_doctor_id / added_by)
-        ├── patient_documents (uploaded_by)
-        ├── patient_notes (created_by)
-        ├── payment_records (recorded_by)
-        ├── clinic_settings (updated_by)
-        └── doctor_replacements (absent/covering/initiated_by)
-
-patients ──┬── patient_doctors (patient_id)
-           ├── appointments (patient_id)
-           ├── patient_documents (patient_id)
-           ├── patient_notes (patient_id)
-           └── payment_records (patient_id)
-
-appointments ──┬── appointment_doctors (appointment_id)
-               └── patient_notes (appointment_id)
-```
-
----
-
-## Key Functions (RPCs)
-
-| Function | Returns | Called From | Purpose |
-|----------|---------|-------------|---------|
-| `get_auth_staff_profile()` | TABLE | Internal (RLS) | Returns (staff_id, staff_role, staff_active) for current user |
-| `create_patient_with_doctors(...)` | `patients` | Receptionist/Admin screen | Atomic patient + doctor assignments |
-| `update_patient_doctors(...)` | void | Patient edit screen | Reassign doctors atomically |
-| `create_staff_user(...)` | uuid | Admin → Staff management | Creates auth user + staff record |
-| `update_user_password(...)` | void | Admin → Staff management | Updates auth password |
-| `delete_doctor_user(...)` | void | Admin → Staff management | Deletes auth user (cascades to staff) |
-
-**All RPCs are `SECURITY DEFINER`** — they run with owner privileges and enforce their own auth checks internally.
-
----
-
-## Business Rules (Enforced in DB)
-
-1. **Patient must have ≥1 doctor** — `tr_check_patient_has_doctors` constraint trigger blocks any operation that would leave a patient with zero assigned doctors.
-2. **Package deduction** — Appointment check-in/completion deducts 1 from the patient's balance (session or traction). Reverting to scheduled/cancelled refunds it. Assessments never deduct.
-3. **Payment → balance sync** — Inserting a payment with `session_balance_added > 0` or `traction_balance_added > 0` automatically increments the patient's balance. Deleting the payment decrements it.
-4. **Staff self-registration** — New signups insert with `is_active=false`. Super_admin must activate them.
-5. **Email sync** — Changing `staff.email` propagates to `auth.users` automatically.
-6. **No self-promotion** — Staff cannot change their own `role` or `is_active` status (enforced by `verify_staff_update_permissions` trigger).
-
----
-
-## Dart Model ↔ Table Mapping
-
-| Dart Model | File | DB Table |
-|-----------|------|----------|
-| `Staff` | `lib/features/auth/domain/staff.dart` | `staff` |
-| `Patient` | `lib/features/patient/domain/patient.dart` | `patients` |
-| `PatientDocument` | `lib/features/patient/domain/patient_document.dart` | `patient_documents` |
-| `Appointment` | `lib/features/appointment/domain/appointment.dart` | `appointments` |
-| `AppointmentDoctor` | `lib/features/appointment/domain/appointment_doctor.dart` | `appointment_doctors` |
-| `PaymentRecord` | `lib/features/payments/domain/payment_record.dart` | `payment_records` |
-| `ClinicSettings` | `lib/features/payments/domain/clinic_settings.dart` | `clinic_settings` |
-| `ClinicPackage` | `lib/features/payments/domain/clinic_package.dart` | (JSONB inside `clinic_settings.packages`) |
-| `PatientNote` | `lib/features/medical_records/domain/patient_note.dart` | `patient_notes` |
-| *(none)* | — | `doctor_replacements` |
-
----
-
-## DB Recreation
-
-To recreate the schema on a fresh project:
-
-```bash
-# Option 1: Apply the full schema directly
-supabase db execute --file supabase/full_schema.sql
-
-# Option 2: Run against a project
-psql "$DATABASE_URL" -f supabase/full_schema.sql
-
-# Option 3: Use the Supabase SQL editor
-# Paste the contents of supabase/full_schema.sql
-```
-
-Then create the `patient-documents` storage bucket (public: false) via the Supabase dashboard.
+- Bucket Name: `patient-documents`
+- Public Access: `false` (Private bucket)
+- RLS Policies: Controlled via `storage.objects` policies matching `patient_documents` permissions for authenticated staff and scoped doctors.

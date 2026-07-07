@@ -39,7 +39,7 @@ final class StaffListProvider
   StaffList create() => StaffList();
 }
 
-String _$staffListHash() => r'19fe24e462b5e768ee35d560a16f4f8e831f34ad';
+String _$staffListHash() => r'07668598e34b4460f1f955acc2b53c844b05a9b9';
 
 /// Notifier providing the reactive list of all clinic staff members (including doctors).
 /// Enforces Super Admin role-based access check on build.
@@ -61,107 +61,6 @@ abstract class _$StaffList extends $AsyncNotifier<List<Staff>> {
     element.handleCreate(ref, build);
   }
 }
-
-/// Provider for the selected role filter on the staff list screen.
-
-@ProviderFor(StaffFilter)
-final staffFilterProvider = StaffFilterProvider._();
-
-/// Provider for the selected role filter on the staff list screen.
-final class StaffFilterProvider extends $NotifierProvider<StaffFilter, String> {
-  /// Provider for the selected role filter on the staff list screen.
-  StaffFilterProvider._()
-    : super(
-        from: null,
-        argument: null,
-        retry: null,
-        name: r'staffFilterProvider',
-        isAutoDispose: true,
-        dependencies: null,
-        $allTransitiveDependencies: null,
-      );
-
-  @override
-  String debugGetCreateSourceHash() => _$staffFilterHash();
-
-  @$internal
-  @override
-  StaffFilter create() => StaffFilter();
-
-  /// {@macro riverpod.override_with_value}
-  Override overrideWithValue(String value) {
-    return $ProviderOverride(
-      origin: this,
-      providerOverride: $SyncValueProvider<String>(value),
-    );
-  }
-}
-
-String _$staffFilterHash() => r'137aa72dec8aefa332726cc337fa22b1f8f29084';
-
-/// Provider for the selected role filter on the staff list screen.
-
-abstract class _$StaffFilter extends $Notifier<String> {
-  String build();
-  @$mustCallSuper
-  @override
-  void runBuild() {
-    final ref = this.ref as $Ref<String, String>;
-    final element =
-        ref.element
-            as $ClassProviderElement<
-              AnyNotifier<String, String>,
-              String,
-              Object?,
-              Object?
-            >;
-    element.handleCreate(ref, build);
-  }
-}
-
-/// Computes the filtered roster of clinic staff members based on the selected filter.
-
-@ProviderFor(filteredStaff)
-final filteredStaffProvider = FilteredStaffProvider._();
-
-/// Computes the filtered roster of clinic staff members based on the selected filter.
-
-final class FilteredStaffProvider
-    extends
-        $FunctionalProvider<
-          AsyncValue<List<Staff>>,
-          List<Staff>,
-          FutureOr<List<Staff>>
-        >
-    with $FutureModifier<List<Staff>>, $FutureProvider<List<Staff>> {
-  /// Computes the filtered roster of clinic staff members based on the selected filter.
-  FilteredStaffProvider._()
-    : super(
-        from: null,
-        argument: null,
-        retry: null,
-        name: r'filteredStaffProvider',
-        isAutoDispose: true,
-        dependencies: null,
-        $allTransitiveDependencies: null,
-      );
-
-  @override
-  String debugGetCreateSourceHash() => _$filteredStaffHash();
-
-  @$internal
-  @override
-  $FutureProviderElement<List<Staff>> $createElement(
-    $ProviderPointer pointer,
-  ) => $FutureProviderElement(pointer);
-
-  @override
-  FutureOr<List<Staff>> create(Ref ref) {
-    return filteredStaff(ref);
-  }
-}
-
-String _$filteredStaffHash() => r'55a678f0224ffd90e91419405fcfadcd46750dc9';
 
 /// Controller managing staff account registration and modifications.
 
@@ -200,7 +99,7 @@ final class StaffFormControllerProvider
 }
 
 String _$staffFormControllerHash() =>
-    r'd863eecb040b90967ab7f762ea128adb4065d7ab';
+    r'01711ae51302d00f059474be7d90fe4181690dee';
 
 /// Controller managing staff account registration and modifications.
 

@@ -48,7 +48,9 @@ app.*.map.json
 SKILL.md
 
 # Secrets, API Keys & Signing (CRITICAL)
-.env*
+.env
+.env.*
+!.env.example
 key.properties
 *.jks
 *.keystore
@@ -56,6 +58,7 @@ key.properties
 # Cloud & Hosting
 .vercel/
 .firebase/
+supabase/.temp/
 
 # Additional Flutter & Platform Build Artifacts
 .flutter-plugins

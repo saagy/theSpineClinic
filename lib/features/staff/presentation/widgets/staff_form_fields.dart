@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:spine_clinic_app/core/constants/clinic_colors.dart';
 import 'package:flutter_form_builder/flutter_form_builder.dart';
 import 'package:form_builder_validators/form_builder_validators.dart';
 import 'package:spine_clinic_app/core/constants/app_sizes.dart';
@@ -7,30 +6,24 @@ import 'package:spine_clinic_app/core/constants/app_strings.dart';
 import 'package:spine_clinic_app/core/constants/app_text_styles.dart';
 import 'package:spine_clinic_app/features/auth/domain/staff.dart';
 import 'package:spine_clinic_app/features/auth/domain/user_role.dart';
-import 'package:spine_clinic_app/shared/widgets/password_visibility_toggle.dart';
+import 'package:spine_clinic_app/features/patient/domain/clinic_location.dart';
+import 'package:spine_clinic_app/features/staff/presentation/widgets/staff_form_controls.dart';
+import 'package:spine_clinic_app/features/staff/presentation/widgets/staff_password_fields.dart';
+import 'package:spine_clinic_app/shared/widgets/section_card.dart';
 
-/// Isolated form fields for creating or editing staff members.
 class StaffFormFields extends StatefulWidget {
-  /// Creates a [StaffFormFields].
   const StaffFormFields({
     super.key,
     required this.enabled,
     required this.isSelf,
-    this.staff,
     required this.formKey,
+    this.staff,
   });
 
-  /// Whether the fields are interactive.
   final bool enabled;
-
-  /// Whether the edited profile belongs to the currently logged-in user.
   final bool isSelf;
-
-  /// The staff profile being edited (null for creation mode).
-  final Staff? staff;
-
-  /// The state key of the parent FormBuilder.
   final GlobalKey<FormBuilderState> formKey;
+  final Staff? staff;
 
   @override
   State<StaffFormFields> createState() => _StaffFormFieldsState();
@@ -38,195 +31,168 @@ class StaffFormFields extends StatefulWidget {
 
 class _StaffFormFieldsState extends State<StaffFormFields> {
   bool _changePassword = false;
-  bool _obscurePassword = true;
-  bool _obscureConfirm = true;
+  UserRole? _selectedRole;
 
-  InputDecoration _buildDecoration({required String labelText, String? hintText, Widget? suffixIcon}) {
-    final OutlineInputBorder borderBase = OutlineInputBorder(
-      borderRadius: const BorderRadius.all(Radius.circular(AppSizes.r6)),
-      borderSide: BorderSide(color: Theme.of(context).colorScheme.outline, width: AppSizes.borderWidth),
-    );
-
-    return InputDecoration(
-      labelText: labelText,
-      labelStyle: AppTextStyles.captionMedium.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
-      floatingLabelBehavior: FloatingLabelBehavior.always,
-      isDense: true,
-      filled: true,
-      fillColor: widget.enabled ? Theme.of(context).colorScheme.surface : Theme.of(context).scaffoldBackgroundColor,
-      hintText: hintText,
-      hintStyle: AppTextStyles.bodySecondary.copyWith(color: ClinicColors.of(context).textMuted),
-      contentPadding: AppSizes.paddingCell,
-      enabledBorder: borderBase,
-      disabledBorder: borderBase,
-      focusedBorder: borderBase.copyWith(
-        borderSide: BorderSide(color: ClinicColors.of(context).outlineStrong, width: AppSizes.borderWidthFocused),
-      ),
-      errorBorder: borderBase.copyWith(
-        borderSide: BorderSide(color: Theme.of(context).colorScheme.error, width: AppSizes.borderWidth),
-      ),
-      focusedErrorBorder: borderBase.copyWith(
-        borderSide: BorderSide(color: Theme.of(context).colorScheme.error, width: AppSizes.borderWidthFocused),
-      ),
-      errorStyle: AppTextStyles.caption.copyWith(color: Theme.of(context).colorScheme.error),
-      suffixIcon: suffixIcon,
-    );
+  @override
+  void initState() {
+    super.initState();
+    _selectedRole = widget.staff?.role;
   }
 
   @override
   Widget build(BuildContext context) {
-    final isEdit = widget.staff != null;
-    final showPasswordFields = !isEdit || _changePassword;
+    final bool isEdit = widget.staff != null;
+    final bool showPasswords = !isEdit || _changePassword;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        // ── Full Name ──
-        FormBuilderTextField(
-          name: 'full_name',
-          enabled: widget.enabled,
-          initialValue: widget.staff?.fullName,
-          textCapitalization: TextCapitalization.words,
-          decoration: _buildDecoration(labelText: AppStrings.fullName, hintText: 'Enter full name'),
-          validator: FormBuilderValidators.compose([
-            FormBuilderValidators.required(errorText: AppStrings.fullNameRequired),
-            FormBuilderValidators.minLength(3, errorText: 'Min 3 characters required'),
-          ]),
-        ),
+        _section(AppStrings.identity, _identityFields),
         const SizedBox(height: AppSizes.p16),
-
-        // ── Email ──
-        FormBuilderTextField(
-          name: 'email',
-          enabled: widget.enabled && !isEdit,
-          initialValue: widget.staff?.email,
-          keyboardType: TextInputType.emailAddress,
-          decoration: _buildDecoration(labelText: AppStrings.email, hintText: 'Enter email address'),
-          validator: FormBuilderValidators.compose([
-            FormBuilderValidators.required(errorText: AppStrings.emailRequired),
-            FormBuilderValidators.email(errorText: AppStrings.emailInvalid),
-          ]),
-        ),
+        _section(AppStrings.access, _accessFields),
         const SizedBox(height: AppSizes.p16),
-
-        // ── Phone ──
-        FormBuilderTextField(
-          name: 'phone',
-          enabled: widget.enabled,
-          initialValue: widget.staff?.phone,
-          keyboardType: TextInputType.phone,
-          decoration: _buildDecoration(labelText: AppStrings.phone, hintText: 'Enter phone number (optional)'),
-        ),
-        const SizedBox(height: AppSizes.p16),
-
-        // ── Role Dropdown ──
-        FormBuilderDropdown<UserRole>(
-          name: 'role',
-          enabled: widget.enabled && !widget.isSelf,
-          initialValue: widget.staff?.role,
-          decoration: _buildDecoration(labelText: AppStrings.role, hintText: 'Select staff role'),
-          validator: FormBuilderValidators.required(errorText: AppStrings.roleRequired),
-          items: const [
-            DropdownMenuItem(
-              value: UserRole.superAdmin,
-              child: Text(AppStrings.superAdmin),
-            ),
-            DropdownMenuItem(
-              value: UserRole.receptionist,
-              child: Text(AppStrings.receptionist),
-            ),
-            DropdownMenuItem(
-              value: UserRole.doctor,
-              child: Text(AppStrings.doctor),
+        _section(AppStrings.account, [
+          if (isEdit) ..._accountFields,
+          if (showPasswords) ...[
+            if (isEdit) const SizedBox(height: AppSizes.p8),
+            StaffPasswordFields(
+              enabled: widget.enabled,
+              formKey: widget.formKey,
             ),
           ],
-        ),
-        const SizedBox(height: AppSizes.p16),
-
-        // ── Is Active Toggle ──
-        if (isEdit) ...[
-          FormBuilderSwitch(
-            name: 'is_active',
-            initialValue: widget.staff?.isActive ?? true,
-            title: Text(
-              AppStrings.isActive,
-              style: AppTextStyles.body.copyWith(
-                color: widget.enabled && !widget.isSelf ? Theme.of(context).colorScheme.onSurface : ClinicColors.of(context).textMuted,
-              ),
-            ),
-            enabled: widget.enabled && !widget.isSelf,
-            decoration: const InputDecoration(border: InputBorder.none),
-          ),
-          const SizedBox(height: AppSizes.p8),
-        ],
-
-        // ── Change Password Toggle (Edit mode only) ──
-        if (isEdit) ...[
-          FormBuilderCheckbox(
-            name: 'change_password',
-            initialValue: false,
-            title: Text(
-              AppStrings.changePassword,
-              style: AppTextStyles.body.copyWith(color: Theme.of(context).colorScheme.onSurface),
-            ),
-            enabled: widget.enabled,
-            decoration: const InputDecoration(border: InputBorder.none),
-            onChanged: (val) {
-              setState(() {
-                _changePassword = val ?? false;
-              });
-            },
-          ),
-          const SizedBox(height: AppSizes.p8),
-        ],
-
-        // ── Password fields ──
-        if (showPasswordFields) ...[
-          FormBuilderTextField(
-            name: 'password',
-            enabled: widget.enabled,
-            obscureText: _obscurePassword,
-            decoration: _buildDecoration(
-              labelText: AppStrings.password,
-              hintText: 'Enter password',
-              suffixIcon: PasswordVisibilityToggle(
-                isObscured: _obscurePassword,
-                onToggle: () =>
-                    setState(() => _obscurePassword = !_obscurePassword),
-              ),
-            ),
-            validator: FormBuilderValidators.compose([
-              FormBuilderValidators.required(errorText: AppStrings.passwordRequired),
-              FormBuilderValidators.minLength(8, errorText: AppStrings.passwordMinLength),
-            ]),
-          ),
-          const SizedBox(height: AppSizes.p16),
-          FormBuilderTextField(
-            name: 'confirm_password',
-            enabled: widget.enabled,
-            obscureText: _obscureConfirm,
-            decoration: _buildDecoration(
-              labelText: AppStrings.confirmPassword,
-              hintText: 'Confirm password',
-              suffixIcon: PasswordVisibilityToggle(
-                isObscured: _obscureConfirm,
-                onToggle: () =>
-                    setState(() => _obscureConfirm = !_obscureConfirm),
-              ),
-            ),
-            validator: (val) {
-              if (val == null || val.isEmpty) {
-                return AppStrings.passwordRequired;
-              }
-              final password = widget.formKey.currentState?.fields['password']?.value as String?;
-              if (val != password) {
-                return AppStrings.passwordsDoNotMatch;
-              }
-              return null;
-            },
-          ),
-        ],
+        ]),
       ],
+    );
+  }
+
+  List<Widget> get _identityFields => [
+    StaffTextField(
+      name: 'full_name',
+      label: AppStrings.fullName,
+      hint: AppStrings.fullNameHint,
+      enabled: widget.enabled,
+      initialValue: widget.staff?.fullName,
+      textCapitalization: TextCapitalization.words,
+      validator: FormBuilderValidators.compose([
+        FormBuilderValidators.required(errorText: AppStrings.fullNameRequired),
+        FormBuilderValidators.minLength(
+          3,
+          errorText: AppStrings.fullNameMinLength,
+        ),
+      ]),
+    ),
+    const SizedBox(height: AppSizes.p16),
+    StaffTextField(
+      name: 'email',
+      label: AppStrings.email,
+      hint: AppStrings.emailHint,
+      enabled: widget.enabled,
+      initialValue: widget.staff?.email,
+      keyboardType: TextInputType.emailAddress,
+      validator: FormBuilderValidators.compose([
+        FormBuilderValidators.required(errorText: AppStrings.emailRequired),
+        FormBuilderValidators.email(errorText: AppStrings.emailInvalid),
+      ]),
+    ),
+    const SizedBox(height: AppSizes.p16),
+    StaffTextField(
+      name: 'phone',
+      label: AppStrings.phone,
+      hint: AppStrings.phoneOptionalHint,
+      enabled: widget.enabled,
+      initialValue: widget.staff?.phone,
+      keyboardType: TextInputType.phone,
+    ),
+  ];
+
+  List<Widget> get _accessFields => [
+    FormBuilderDropdown<UserRole>(
+      name: 'role',
+      enabled: widget.enabled && !widget.isSelf,
+      initialValue: widget.staff?.role,
+      decoration: staffInputDecoration(
+        context,
+        AppStrings.role,
+        enabled: widget.enabled,
+        hint: AppStrings.roleHint,
+      ),
+      validator: FormBuilderValidators.required(
+        errorText: AppStrings.roleRequired,
+      ),
+      onChanged: (role) => setState(() => _selectedRole = role),
+      items: const [
+        DropdownMenuItem(
+          value: UserRole.superAdmin,
+          child: Text(AppStrings.superAdmin),
+        ),
+        DropdownMenuItem(
+          value: UserRole.receptionist,
+          child: Text(AppStrings.receptionist),
+        ),
+        DropdownMenuItem(
+          value: UserRole.doctor,
+          child: Text(AppStrings.doctor),
+        ),
+      ],
+    ),
+    if (_selectedRole == UserRole.receptionist) ...[
+      const SizedBox(height: AppSizes.p16),
+      FormBuilderDropdown<ClinicLocation>(
+        name: 'branch',
+        enabled: widget.enabled,
+        initialValue: widget.staff?.branch,
+        decoration: staffInputDecoration(
+          context,
+          AppStrings.branch,
+          enabled: widget.enabled,
+          hint: AppStrings.selectBranch,
+        ),
+        items: ClinicLocation.values
+            .map(
+              (branch) => DropdownMenuItem(
+                value: branch,
+                child: Text(branch.displayLabel),
+              ),
+            )
+            .toList(),
+      ),
+      const SizedBox(height: AppSizes.p8),
+      FormBuilderSwitch(
+        name: 'can_manage_payments',
+        initialValue: widget.staff?.canManagePayments ?? false,
+        title: Text(AppStrings.canManagePayments, style: AppTextStyles.body),
+        enabled: widget.enabled,
+        decoration: const InputDecoration(border: InputBorder.none),
+      ),
+    ],
+  ];
+
+  List<Widget> get _accountFields => [
+    FormBuilderSwitch(
+      name: 'is_active',
+      initialValue: widget.staff?.isActive ?? true,
+      title: Text(AppStrings.accountEnabled, style: AppTextStyles.body),
+      enabled: widget.enabled && !widget.isSelf,
+      decoration: const InputDecoration(border: InputBorder.none),
+    ),
+    const SizedBox(height: AppSizes.p8),
+    FormBuilderCheckbox(
+      name: 'change_password',
+      initialValue: false,
+      title: Text(AppStrings.changePassword, style: AppTextStyles.body),
+      enabled: widget.enabled,
+      decoration: const InputDecoration(border: InputBorder.none),
+      onChanged: (value) => setState(() => _changePassword = value ?? false),
+    ),
+  ];
+
+  Widget _section(String title, List<Widget> children) {
+    return SectionCard(
+      title: title,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: children,
+      ),
     );
   }
 }

@@ -1,13 +1,25 @@
--- Migration: Fix create_staff_user RPC — remove deprecated confirmed_at column
--- and set token columns to empty strings so GoTrue doesn't crash on NULL scan.
--- GoTrue's Go code scans confirmation_token etc. into Go strings, which
--- cannot represent NULL — the scan errors with:
---   "converting NULL to string is unsupported"
-CREATE OR REPLACE FUNCTION public.create_staff_user(new_email text, new_password text, new_full_name text, new_role user_role, new_phone text DEFAULT NULL::text)
+DROP FUNCTION IF EXISTS public.create_staff_user(
+  text,
+  text,
+  text,
+  public.user_role,
+  text,
+  boolean
+);
+
+CREATE OR REPLACE FUNCTION public.create_staff_user(
+  new_email text,
+  new_password text,
+  new_full_name text,
+  new_role public.user_role,
+  new_phone text DEFAULT NULL::text,
+  new_can_manage_payments boolean DEFAULT false,
+  new_branch public.clinic_location DEFAULT NULL::public.clinic_location
+)
  RETURNS uuid
  LANGUAGE plpgsql
  SECURITY DEFINER
-AS $$
+AS $function$
 DECLARE
     new_user_id uuid;
 BEGIN
@@ -39,9 +51,15 @@ BEGIN
         '', '', '', ''
     );
 
-    INSERT INTO public.staff (user_id, full_name, email, phone, role, is_active)
-    VALUES (new_user_id, new_full_name, new_email, new_phone, new_role, true);
+    INSERT INTO public.staff (
+        user_id, full_name, email, phone, role, is_active, can_manage_payments, branch
+    )
+    VALUES (
+        new_user_id, new_full_name, new_email, new_phone, new_role, true,
+        CASE WHEN new_role = 'receptionist'::user_role THEN new_can_manage_payments ELSE false END,
+        CASE WHEN new_role = 'receptionist'::user_role THEN new_branch ELSE NULL END
+    );
 
     RETURN new_user_id;
 END;
-$$;
+$function$;

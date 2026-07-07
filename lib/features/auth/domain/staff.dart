@@ -15,6 +15,8 @@ part 'staff.g.dart';
 /// Represents a single staff member (doctor, receptionist, or super admin).
 @freezed
 abstract class Staff with _$Staff {
+  const Staff._();
+
   /// Creates a [Staff] instance.
   const factory Staff({
     /// Primary key (`uuid`).
@@ -38,8 +40,16 @@ abstract class Staff with _$Staff {
     /// Whether the account has been approved by an admin.
     @JsonKey(name: 'is_active') @Default(true) bool isActive,
 
+    /// Whether a receptionist can record, edit, collect, or delete payments.
+    @JsonKey(name: 'can_manage_payments')
+    @Default(false)
+    bool canManagePayments,
+
     /// The primary clinic location/branch for this staff member (synced preference).
     @JsonKey(name: 'branch') ClinicLocation? branch,
+
+    /// Timestamp set when an account is intentionally deactivated.
+    @JsonKey(name: 'deactivated_at') DateTime? deactivatedAt,
 
     /// Row creation timestamp.
     @JsonKey(name: 'created_at') required DateTime createdAt,
@@ -47,4 +57,9 @@ abstract class Staff with _$Staff {
 
   /// Deserialises a JSON map (e.g. from a Supabase query) into [Staff].
   factory Staff.fromJson(Map<String, dynamic> json) => _$StaffFromJson(json);
+
+  /// Super admins always manage payments; receptionists need explicit access.
+  bool get canHandlePayments =>
+      role == UserRole.superAdmin ||
+      (role == UserRole.receptionist && canManagePayments);
 }

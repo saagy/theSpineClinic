@@ -43,16 +43,16 @@ class AdminHubScreen extends ConsumerWidget {
     return asyncUser.when(
       loading: () => Scaffold(
         backgroundColor: background,
-        body: Center(
-          child: CircularProgressIndicator(color: cs.primary),
-        ),
+        body: Center(child: CircularProgressIndicator(color: cs.primary)),
       ),
       error: (error, _) => Scaffold(
         backgroundColor: background,
         body: ErrorView(
           exception: error is AppException
               ? error
-              : const UnknownException(message: AppStrings.errorDatabaseQueryFailed),
+              : const UnknownException(
+                  message: AppStrings.errorDatabaseQueryFailed,
+                ),
           onRetry: () => ref.invalidate(currentUserProvider),
         ),
       ),
@@ -111,18 +111,6 @@ class _AdminHubBody extends ConsumerWidget {
                     subtitle: AppStrings.manageStaffLabel,
                     leadingIcon: Icons.people_alt_rounded,
                     onTap: () => context.push(AppRoutes.staffList),
-                  ),
-                  ProfileMenuRow(
-                    title: AppStrings.doctorApplications,
-                    subtitle: AppStrings.manageDoctorsLabel,
-                    leadingIcon: Icons.assignment_ind_rounded,
-                    onTap: () => context.push(AppRoutes.doctorApplications),
-                  ),
-                  ProfileMenuRow(
-                    title: AppStrings.clinicSettings,
-                    subtitle: AppStrings.configureClinicLabel,
-                    leadingIcon: Icons.settings_rounded,
-                    onTap: () => context.push(AppRoutes.clinicSettings),
                   ),
                   ProfileMenuRow(
                     title: AppStrings.theme,

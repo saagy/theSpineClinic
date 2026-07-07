@@ -79,9 +79,6 @@ abstract final class AppRoutes {
   /// Admin central hub dashboard.
   static const String adminHub = '/admin';
 
-  /// Doctor registration applications management (shell sub-page).
-  static const String doctorApplications = '/admin/doctor-applications';
-
   /// Clinic global packages and configuration settings (shell sub-page).
   static const String clinicSettings = '/admin/clinic-settings';
 

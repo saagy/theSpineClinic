@@ -1,5 +1,5 @@
--- Spine Clinic full database schema DDL. Verified 100% against live Supabase project (ujketpugttdqpcixrnga).
--- Run this script to recreate the database schema from scratch.
+-- Spine Clinic database baseline. Verified 100% against live Supabase project (ujketpugttdqpcixrnga).
+-- Use this as the active baseline for new Supabase environments; keep future changes as migrations after this file.
 
 -- Custom Enum Types
 CREATE TYPE public.user_role AS ENUM (
@@ -37,7 +37,6 @@ CREATE TABLE public.staff (
   email           text NOT NULL UNIQUE,
   role            public.user_role NOT NULL,
   is_active       boolean NOT NULL DEFAULT true,
-  can_manage_payments boolean NOT NULL DEFAULT false,
   created_at      timestamptz NOT NULL DEFAULT now(),
   phone           text,
   branch          public.clinic_location,
@@ -163,24 +162,6 @@ BEGIN
     WHERE user_id = auth.uid() 
     LIMIT 1;
 END;
-$function$;
-
-CREATE OR REPLACE FUNCTION public.current_staff_can_manage_payments()
- RETURNS boolean
- LANGUAGE sql
- SECURITY DEFINER
- STABLE
-AS $function$
-  SELECT EXISTS (
-    SELECT 1
-    FROM public.staff
-    WHERE user_id = auth.uid()
-      AND is_active = true
-      AND (
-        role = 'super_admin'::public.user_role
-        OR (role = 'receptionist'::public.user_role AND can_manage_payments = true)
-      )
-  );
 $function$;
 
 CREATE OR REPLACE FUNCTION public.check_patient_has_doctors()
@@ -324,7 +305,7 @@ BEGIN
 END;
 $function$;
 
-CREATE OR REPLACE FUNCTION public.create_staff_user(new_email text, new_password text, new_full_name text, new_role public.user_role, new_phone text DEFAULT NULL::text, new_can_manage_payments boolean DEFAULT false, new_branch public.clinic_location DEFAULT NULL::public.clinic_location)
+CREATE OR REPLACE FUNCTION public.create_staff_user(new_email text, new_password text, new_full_name text, new_role public.user_role, new_phone text DEFAULT NULL::text)
  RETURNS uuid
  LANGUAGE plpgsql
  SECURITY DEFINER
@@ -360,14 +341,8 @@ BEGIN
         '', '', '', ''
     );
 
-    INSERT INTO public.staff (
-        user_id, full_name, email, phone, role, is_active, can_manage_payments, branch
-    )
-    VALUES (
-        new_user_id, new_full_name, new_email, new_phone, new_role, true,
-        CASE WHEN new_role = 'receptionist'::user_role THEN new_can_manage_payments ELSE false END,
-        CASE WHEN new_role = 'receptionist'::user_role THEN new_branch ELSE NULL END
-    );
+    INSERT INTO public.staff (user_id, full_name, email, phone, role, is_active)
+    VALUES (new_user_id, new_full_name, new_email, new_phone, new_role, true);
 
     RETURN new_user_id;
 END;
@@ -525,9 +500,6 @@ BEGIN
     IF NEW.is_active IS DISTINCT FROM OLD.is_active THEN
       RAISE EXCEPTION 'You cannot change your active status.';
     END IF;
-    IF NEW.can_manage_payments IS DISTINCT FROM OLD.can_manage_payments THEN
-      RAISE EXCEPTION 'You cannot change your payment access.';
-    END IF;
     IF NEW.id IS DISTINCT FROM OLD.id OR NEW.user_id IS DISTINCT FROM OLD.user_id THEN
       RAISE EXCEPTION 'You cannot change your ID or User ID.';
     END IF;
@@ -602,7 +574,7 @@ CREATE TRIGGER tr_verify_staff_update_permissions BEFORE UPDATE ON public.staff 
 -- Table RLS Policies
 CREATE POLICY "Active staff members can see the directory" ON public.staff FOR SELECT TO authenticated USING (EXISTS (SELECT 1 FROM public.get_auth_staff_profile() WHERE staff_active = true));
 CREATE POLICY "Allow users to view their own profile" ON public.staff FOR SELECT TO authenticated USING (user_id = auth.uid());
-CREATE POLICY "Allow users to insert their own profile" ON public.staff FOR INSERT TO authenticated WITH CHECK (user_id = auth.uid() AND is_active = false AND can_manage_payments = false AND role = ANY (ARRAY['doctor'::user_role, 'receptionist'::user_role]));
+CREATE POLICY "Allow users to insert their own profile" ON public.staff FOR INSERT TO authenticated WITH CHECK (user_id = auth.uid() AND is_active = false AND role = ANY (ARRAY['doctor'::user_role, 'receptionist'::user_role]));
 CREATE POLICY "Allow users to update their own profile" ON public.staff FOR UPDATE TO authenticated USING (user_id = auth.uid()) WITH CHECK (user_id = auth.uid());
 CREATE POLICY "Only super_admins can modify staff data" ON public.staff FOR ALL TO authenticated USING (EXISTS (SELECT 1 FROM public.get_auth_staff_profile() WHERE staff_role = 'super_admin'::user_role AND staff_active = true));
 
@@ -631,9 +603,9 @@ CREATE POLICY "Update patient_notes policy" ON public.patient_notes FOR UPDATE T
 CREATE POLICY "Delete patient_notes policy" ON public.patient_notes FOR DELETE TO authenticated USING (EXISTS (SELECT 1 FROM public.get_auth_staff_profile() p WHERE p.staff_active = true AND (p.staff_role = ANY (ARRAY['super_admin'::user_role, 'receptionist'::user_role]) OR p.staff_role = 'doctor'::user_role)));
 
 CREATE POLICY "All active staff can view payment history logs" ON public.payment_records FOR SELECT TO authenticated USING (EXISTS (SELECT 1 FROM public.get_auth_staff_profile() WHERE staff_active = true));
-CREATE POLICY "Only payment-enabled staff can record payments" ON public.payment_records FOR INSERT TO authenticated WITH CHECK (public.current_staff_can_manage_payments());
-CREATE POLICY "Only payment-enabled staff can update payments" ON public.payment_records FOR UPDATE TO authenticated USING (public.current_staff_can_manage_payments()) WITH CHECK (public.current_staff_can_manage_payments());
-CREATE POLICY "Only payment-enabled staff can delete payments" ON public.payment_records FOR DELETE TO authenticated USING (public.current_staff_can_manage_payments());
+CREATE POLICY "Only receptionists and admins can record payments" ON public.payment_records FOR INSERT TO authenticated WITH CHECK (EXISTS (SELECT 1 FROM public.get_auth_staff_profile() WHERE staff_role = ANY (ARRAY['super_admin'::user_role, 'receptionist'::user_role]) AND staff_active = true));
+CREATE POLICY "Super admins and receptionists can update payments" ON public.payment_records FOR UPDATE TO authenticated USING (EXISTS (SELECT 1 FROM public.get_auth_staff_profile() p WHERE p.staff_active = true AND p.staff_role = ANY (ARRAY['super_admin'::user_role, 'receptionist'::user_role]))) WITH CHECK (EXISTS (SELECT 1 FROM public.get_auth_staff_profile() p WHERE p.staff_active = true AND p.staff_role = ANY (ARRAY['super_admin'::user_role, 'receptionist'::user_role])));
+CREATE POLICY "Super admins and receptionists can delete payments" ON public.payment_records FOR DELETE TO authenticated USING (EXISTS (SELECT 1 FROM public.get_auth_staff_profile() p WHERE p.staff_active = true AND p.staff_role = ANY (ARRAY['super_admin'::user_role, 'receptionist'::user_role])));
 
 CREATE POLICY "All active staff can read clinic packages" ON public.clinic_settings FOR SELECT TO authenticated USING (EXISTS (SELECT 1 FROM public.get_auth_staff_profile() WHERE staff_active = true));
 CREATE POLICY "Only super admins can modify clinic package settings" ON public.clinic_settings FOR ALL TO authenticated USING (EXISTS (SELECT 1 FROM public.get_auth_staff_profile() WHERE staff_role = 'super_admin'::user_role AND staff_active = true));

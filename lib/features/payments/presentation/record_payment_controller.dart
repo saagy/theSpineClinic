@@ -4,7 +4,6 @@ import 'package:spine_clinic_app/core/errors/app_exception.dart';
 import 'package:spine_clinic_app/core/errors/result.dart';
 import 'package:spine_clinic_app/core/network/supabase_service.dart';
 import 'package:spine_clinic_app/features/auth/domain/staff.dart';
-import 'package:spine_clinic_app/features/auth/domain/user_role.dart';
 import 'package:spine_clinic_app/features/auth/presentation/auth_providers.dart';
 import 'package:spine_clinic_app/features/patient/presentation/patient_providers.dart';
 import 'package:spine_clinic_app/features/payments/data/payment_repository_impl.dart';
@@ -203,8 +202,7 @@ class RecordPaymentController extends _$RecordPaymentController {
         message: AppStrings.paymentLoginRequired,
       );
     }
-    if (user.role == UserRole.superAdmin ||
-        user.role == UserRole.receptionist) {
+    if (user.canHandlePayments) {
       return null;
     }
     return const AuthException(

@@ -99,7 +99,9 @@ class _PatientProfileState extends ConsumerState<_PatientProfile> {
     final isDoctor = widget.isDoctor;
     final cs = Theme.of(context).colorScheme;
     final user = ref.watch(currentUserProvider).value;
-    final canDelete = user?.role == UserRole.superAdmin ||
+    final bool canHandlePayments = user?.canHandlePayments ?? false;
+    final canDelete =
+        user?.role == UserRole.superAdmin ||
         user?.role == UserRole.receptionist;
     final isEmptyAsync = ref.watch(patientIsEmptyProvider(patient.id));
     final bool patientIsEmpty = isEmptyAsync.value ?? false;
@@ -186,6 +188,7 @@ class _PatientProfileState extends ConsumerState<_PatientProfile> {
         floatingActionButton: PatientQuickActionsFab(
           patient: patient,
           isDoctor: isDoctor,
+          canHandlePayments: canHandlePayments,
         ),
       ),
     );
@@ -207,14 +210,18 @@ class _PatientProfileState extends ConsumerState<_PatientProfile> {
     if (!context.mounted) return;
     result.when(
       success: (_) {
-        AppSnackbar.show(context,
-            message: AppStrings.patientDeleted,
-            variant: AppSnackbarVariant.success);
+        AppSnackbar.show(
+          context,
+          message: AppStrings.patientDeleted,
+          variant: AppSnackbarVariant.success,
+        );
         context.pop();
       },
-      failure: (e) => AppSnackbar.show(context,
-          message: AppStrings.fromKey(e.userMessageKey),
-          variant: AppSnackbarVariant.error),
+      failure: (e) => AppSnackbar.show(
+        context,
+        message: AppStrings.fromKey(e.userMessageKey),
+        variant: AppSnackbarVariant.error,
+      ),
     );
   }
 }

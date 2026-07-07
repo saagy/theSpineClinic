@@ -1,10 +1,13 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:spine_clinic_app/core/constants/app_strings.dart';
 import 'package:spine_clinic_app/core/errors/app_exception.dart';
 import 'package:spine_clinic_app/core/errors/result.dart';
 import 'package:spine_clinic_app/features/auth/domain/staff.dart';
 import 'package:spine_clinic_app/features/auth/domain/user_role.dart';
 import 'package:spine_clinic_app/features/auth/presentation/auth_providers.dart';
+import 'package:spine_clinic_app/features/patient/domain/clinic_location.dart';
 import 'package:spine_clinic_app/features/staff/presentation/staff_providers.dart';
+import 'package:spine_clinic_app/features/staff/presentation/widgets/staff_account_status.dart';
 
 part 'staff_management_controller.g.dart';
 
@@ -18,14 +21,14 @@ class StaffList extends _$StaffList {
     if (currentUser == null || currentUser.role != UserRole.superAdmin) {
       throw const AuthException(
         code: 'security/permission-denied',
-        message: 'Only super admins are authorized to view staff accounts.',
+        message: AppStrings.staffAdminPermissionDenied,
       );
     }
 
     final repo = ref.read(staffRepositoryProvider);
     final result = await repo.getAllStaff();
     return result.when(
-      success: (data) => data,
+      success: (data) => data.where((s) => !s.isPendingApplication).toList(),
       failure: (exception) => throw exception,
     );
   }
@@ -36,34 +39,6 @@ class StaffList extends _$StaffList {
     ref.invalidateSelf();
     await future;
   }
-}
-
-/// Provider for the selected role filter on the staff list screen.
-@riverpod
-class StaffFilter extends _$StaffFilter {
-  @override
-  String build() => 'All';
-
-  /// Sets the active role filter.
-  void setFilter(String filter) => state = filter;
-}
-
-/// Computes the filtered roster of clinic staff members based on the selected filter.
-@riverpod
-Future<List<Staff>> filteredStaff(Ref ref) async {
-  final filter = ref.watch(staffFilterProvider);
-  final list = await ref.watch(staffListProvider.future);
-  if (filter == 'All') return list;
-  if (filter == 'super_admin') {
-    return list.where((s) => s.role == UserRole.superAdmin).toList();
-  }
-  if (filter == 'receptionist') {
-    return list.where((s) => s.role == UserRole.receptionist).toList();
-  }
-  if (filter == 'doctor') {
-    return list.where((s) => s.role == UserRole.doctor).toList();
-  }
-  return list;
 }
 
 /// Controller managing staff account registration and modifications.
@@ -78,8 +53,13 @@ class StaffFormController extends _$StaffFormController {
     required String email,
     required UserRole role,
     required String password,
+    required bool canManagePayments,
     String? phone,
+    ClinicLocation? branch,
   }) async {
+    final blocked = _adminGuard();
+    if (blocked != null) return blocked;
+
     state = const AsyncValue.loading();
     final repo = ref.read(staffRepositoryProvider);
     final result = await repo.createStaff(
@@ -87,7 +67,9 @@ class StaffFormController extends _$StaffFormController {
       email: email,
       role: role,
       password: password,
+      canManagePayments: canManagePayments,
       phone: phone,
+      branch: branch,
     );
     if (!ref.mounted) return result;
 
@@ -106,6 +88,9 @@ class StaffFormController extends _$StaffFormController {
     required Staff staff,
     String? newPassword,
   }) async {
+    final blocked = _adminGuard();
+    if (blocked != null) return blocked;
+
     state = const AsyncValue.loading();
     final repo = ref.read(staffRepositoryProvider);
     final result = await repo.updateStaff(
@@ -126,5 +111,16 @@ class StaffFormController extends _$StaffFormController {
       failure: (error) => AsyncValue.error(error, StackTrace.current),
     );
     return result;
+  }
+
+  Result<void>? _adminGuard() {
+    final currentUser = ref.read(currentUserProvider).value;
+    if (currentUser?.role == UserRole.superAdmin) return null;
+    return const Result.failure(
+      AuthException(
+        code: 'security/permission-denied',
+        message: AppStrings.staffAdminPermissionDenied,
+      ),
+    );
   }
 }

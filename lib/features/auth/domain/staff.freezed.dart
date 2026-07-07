@@ -22,8 +22,10 @@ mixin _$Staff {
  String get email;/// Phone number of the staff member.
  String? get phone;/// Access-control tier (super_admin / receptionist / doctor).
  UserRole get role;/// Whether the account has been approved by an admin.
-@JsonKey(name: 'is_active') bool get isActive;/// The primary clinic location/branch for this staff member (synced preference).
-@JsonKey(name: 'branch') ClinicLocation? get branch;/// Row creation timestamp.
+@JsonKey(name: 'is_active') bool get isActive;/// Whether a receptionist can record, edit, collect, or delete payments.
+@JsonKey(name: 'can_manage_payments') bool get canManagePayments;/// The primary clinic location/branch for this staff member (synced preference).
+@JsonKey(name: 'branch') ClinicLocation? get branch;/// Timestamp set when an account is intentionally deactivated.
+@JsonKey(name: 'deactivated_at') DateTime? get deactivatedAt;/// Row creation timestamp.
 @JsonKey(name: 'created_at') DateTime get createdAt;
 /// Create a copy of Staff
 /// with the given fields replaced by the non-null parameter values.
@@ -37,16 +39,16 @@ $StaffCopyWith<Staff> get copyWith => _$StaffCopyWithImpl<Staff>(this as Staff, 
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is Staff&&(identical(other.id, id) || other.id == id)&&(identical(other.userId, userId) || other.userId == userId)&&(identical(other.fullName, fullName) || other.fullName == fullName)&&(identical(other.email, email) || other.email == email)&&(identical(other.phone, phone) || other.phone == phone)&&(identical(other.role, role) || other.role == role)&&(identical(other.isActive, isActive) || other.isActive == isActive)&&(identical(other.branch, branch) || other.branch == branch)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is Staff&&(identical(other.id, id) || other.id == id)&&(identical(other.userId, userId) || other.userId == userId)&&(identical(other.fullName, fullName) || other.fullName == fullName)&&(identical(other.email, email) || other.email == email)&&(identical(other.phone, phone) || other.phone == phone)&&(identical(other.role, role) || other.role == role)&&(identical(other.isActive, isActive) || other.isActive == isActive)&&(identical(other.canManagePayments, canManagePayments) || other.canManagePayments == canManagePayments)&&(identical(other.branch, branch) || other.branch == branch)&&(identical(other.deactivatedAt, deactivatedAt) || other.deactivatedAt == deactivatedAt)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,userId,fullName,email,phone,role,isActive,branch,createdAt);
+int get hashCode => Object.hash(runtimeType,id,userId,fullName,email,phone,role,isActive,canManagePayments,branch,deactivatedAt,createdAt);
 
 @override
 String toString() {
-  return 'Staff(id: $id, userId: $userId, fullName: $fullName, email: $email, phone: $phone, role: $role, isActive: $isActive, branch: $branch, createdAt: $createdAt)';
+  return 'Staff(id: $id, userId: $userId, fullName: $fullName, email: $email, phone: $phone, role: $role, isActive: $isActive, canManagePayments: $canManagePayments, branch: $branch, deactivatedAt: $deactivatedAt, createdAt: $createdAt)';
 }
 
 
@@ -57,7 +59,7 @@ abstract mixin class $StaffCopyWith<$Res>  {
   factory $StaffCopyWith(Staff value, $Res Function(Staff) _then) = _$StaffCopyWithImpl;
 @useResult
 $Res call({
- String id,@JsonKey(name: 'user_id') String? userId,@JsonKey(name: 'full_name') String fullName, String email, String? phone, UserRole role,@JsonKey(name: 'is_active') bool isActive,@JsonKey(name: 'branch') ClinicLocation? branch,@JsonKey(name: 'created_at') DateTime createdAt
+ String id,@JsonKey(name: 'user_id') String? userId,@JsonKey(name: 'full_name') String fullName, String email, String? phone, UserRole role,@JsonKey(name: 'is_active') bool isActive,@JsonKey(name: 'can_manage_payments') bool canManagePayments,@JsonKey(name: 'branch') ClinicLocation? branch,@JsonKey(name: 'deactivated_at') DateTime? deactivatedAt,@JsonKey(name: 'created_at') DateTime createdAt
 });
 
 
@@ -74,7 +76,7 @@ class _$StaffCopyWithImpl<$Res>
 
 /// Create a copy of Staff
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? userId = freezed,Object? fullName = null,Object? email = null,Object? phone = freezed,Object? role = null,Object? isActive = null,Object? branch = freezed,Object? createdAt = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? userId = freezed,Object? fullName = null,Object? email = null,Object? phone = freezed,Object? role = null,Object? isActive = null,Object? canManagePayments = null,Object? branch = freezed,Object? deactivatedAt = freezed,Object? createdAt = null,}) {
   return _then(_self.copyWith(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,userId: freezed == userId ? _self.userId : userId // ignore: cast_nullable_to_non_nullable
@@ -83,8 +85,10 @@ as String,email: null == email ? _self.email : email // ignore: cast_nullable_to
 as String,phone: freezed == phone ? _self.phone : phone // ignore: cast_nullable_to_non_nullable
 as String?,role: null == role ? _self.role : role // ignore: cast_nullable_to_non_nullable
 as UserRole,isActive: null == isActive ? _self.isActive : isActive // ignore: cast_nullable_to_non_nullable
+as bool,canManagePayments: null == canManagePayments ? _self.canManagePayments : canManagePayments // ignore: cast_nullable_to_non_nullable
 as bool,branch: freezed == branch ? _self.branch : branch // ignore: cast_nullable_to_non_nullable
-as ClinicLocation?,createdAt: null == createdAt ? _self.createdAt : createdAt // ignore: cast_nullable_to_non_nullable
+as ClinicLocation?,deactivatedAt: freezed == deactivatedAt ? _self.deactivatedAt : deactivatedAt // ignore: cast_nullable_to_non_nullable
+as DateTime?,createdAt: null == createdAt ? _self.createdAt : createdAt // ignore: cast_nullable_to_non_nullable
 as DateTime,
   ));
 }
@@ -170,10 +174,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id, @JsonKey(name: 'user_id')  String? userId, @JsonKey(name: 'full_name')  String fullName,  String email,  String? phone,  UserRole role, @JsonKey(name: 'is_active')  bool isActive, @JsonKey(name: 'branch')  ClinicLocation? branch, @JsonKey(name: 'created_at')  DateTime createdAt)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id, @JsonKey(name: 'user_id')  String? userId, @JsonKey(name: 'full_name')  String fullName,  String email,  String? phone,  UserRole role, @JsonKey(name: 'is_active')  bool isActive, @JsonKey(name: 'can_manage_payments')  bool canManagePayments, @JsonKey(name: 'branch')  ClinicLocation? branch, @JsonKey(name: 'deactivated_at')  DateTime? deactivatedAt, @JsonKey(name: 'created_at')  DateTime createdAt)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _Staff() when $default != null:
-return $default(_that.id,_that.userId,_that.fullName,_that.email,_that.phone,_that.role,_that.isActive,_that.branch,_that.createdAt);case _:
+return $default(_that.id,_that.userId,_that.fullName,_that.email,_that.phone,_that.role,_that.isActive,_that.canManagePayments,_that.branch,_that.deactivatedAt,_that.createdAt);case _:
   return orElse();
 
 }
@@ -191,10 +195,10 @@ return $default(_that.id,_that.userId,_that.fullName,_that.email,_that.phone,_th
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id, @JsonKey(name: 'user_id')  String? userId, @JsonKey(name: 'full_name')  String fullName,  String email,  String? phone,  UserRole role, @JsonKey(name: 'is_active')  bool isActive, @JsonKey(name: 'branch')  ClinicLocation? branch, @JsonKey(name: 'created_at')  DateTime createdAt)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id, @JsonKey(name: 'user_id')  String? userId, @JsonKey(name: 'full_name')  String fullName,  String email,  String? phone,  UserRole role, @JsonKey(name: 'is_active')  bool isActive, @JsonKey(name: 'can_manage_payments')  bool canManagePayments, @JsonKey(name: 'branch')  ClinicLocation? branch, @JsonKey(name: 'deactivated_at')  DateTime? deactivatedAt, @JsonKey(name: 'created_at')  DateTime createdAt)  $default,) {final _that = this;
 switch (_that) {
 case _Staff():
-return $default(_that.id,_that.userId,_that.fullName,_that.email,_that.phone,_that.role,_that.isActive,_that.branch,_that.createdAt);case _:
+return $default(_that.id,_that.userId,_that.fullName,_that.email,_that.phone,_that.role,_that.isActive,_that.canManagePayments,_that.branch,_that.deactivatedAt,_that.createdAt);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -211,10 +215,10 @@ return $default(_that.id,_that.userId,_that.fullName,_that.email,_that.phone,_th
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id, @JsonKey(name: 'user_id')  String? userId, @JsonKey(name: 'full_name')  String fullName,  String email,  String? phone,  UserRole role, @JsonKey(name: 'is_active')  bool isActive, @JsonKey(name: 'branch')  ClinicLocation? branch, @JsonKey(name: 'created_at')  DateTime createdAt)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id, @JsonKey(name: 'user_id')  String? userId, @JsonKey(name: 'full_name')  String fullName,  String email,  String? phone,  UserRole role, @JsonKey(name: 'is_active')  bool isActive, @JsonKey(name: 'can_manage_payments')  bool canManagePayments, @JsonKey(name: 'branch')  ClinicLocation? branch, @JsonKey(name: 'deactivated_at')  DateTime? deactivatedAt, @JsonKey(name: 'created_at')  DateTime createdAt)?  $default,) {final _that = this;
 switch (_that) {
 case _Staff() when $default != null:
-return $default(_that.id,_that.userId,_that.fullName,_that.email,_that.phone,_that.role,_that.isActive,_that.branch,_that.createdAt);case _:
+return $default(_that.id,_that.userId,_that.fullName,_that.email,_that.phone,_that.role,_that.isActive,_that.canManagePayments,_that.branch,_that.deactivatedAt,_that.createdAt);case _:
   return null;
 
 }
@@ -225,8 +229,8 @@ return $default(_that.id,_that.userId,_that.fullName,_that.email,_that.phone,_th
 /// @nodoc
 @JsonSerializable()
 
-class _Staff implements Staff {
-  const _Staff({required this.id, @JsonKey(name: 'user_id') this.userId, @JsonKey(name: 'full_name') required this.fullName, required this.email, this.phone, required this.role, @JsonKey(name: 'is_active') this.isActive = true, @JsonKey(name: 'branch') this.branch, @JsonKey(name: 'created_at') required this.createdAt});
+class _Staff extends Staff {
+  const _Staff({required this.id, @JsonKey(name: 'user_id') this.userId, @JsonKey(name: 'full_name') required this.fullName, required this.email, this.phone, required this.role, @JsonKey(name: 'is_active') this.isActive = true, @JsonKey(name: 'can_manage_payments') this.canManagePayments = false, @JsonKey(name: 'branch') this.branch, @JsonKey(name: 'deactivated_at') this.deactivatedAt, @JsonKey(name: 'created_at') required this.createdAt}): super._();
   factory _Staff.fromJson(Map<String, dynamic> json) => _$StaffFromJson(json);
 
 /// Primary key (`uuid`).
@@ -243,8 +247,12 @@ class _Staff implements Staff {
 @override final  UserRole role;
 /// Whether the account has been approved by an admin.
 @override@JsonKey(name: 'is_active') final  bool isActive;
+/// Whether a receptionist can record, edit, collect, or delete payments.
+@override@JsonKey(name: 'can_manage_payments') final  bool canManagePayments;
 /// The primary clinic location/branch for this staff member (synced preference).
 @override@JsonKey(name: 'branch') final  ClinicLocation? branch;
+/// Timestamp set when an account is intentionally deactivated.
+@override@JsonKey(name: 'deactivated_at') final  DateTime? deactivatedAt;
 /// Row creation timestamp.
 @override@JsonKey(name: 'created_at') final  DateTime createdAt;
 
@@ -261,16 +269,16 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _Staff&&(identical(other.id, id) || other.id == id)&&(identical(other.userId, userId) || other.userId == userId)&&(identical(other.fullName, fullName) || other.fullName == fullName)&&(identical(other.email, email) || other.email == email)&&(identical(other.phone, phone) || other.phone == phone)&&(identical(other.role, role) || other.role == role)&&(identical(other.isActive, isActive) || other.isActive == isActive)&&(identical(other.branch, branch) || other.branch == branch)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _Staff&&(identical(other.id, id) || other.id == id)&&(identical(other.userId, userId) || other.userId == userId)&&(identical(other.fullName, fullName) || other.fullName == fullName)&&(identical(other.email, email) || other.email == email)&&(identical(other.phone, phone) || other.phone == phone)&&(identical(other.role, role) || other.role == role)&&(identical(other.isActive, isActive) || other.isActive == isActive)&&(identical(other.canManagePayments, canManagePayments) || other.canManagePayments == canManagePayments)&&(identical(other.branch, branch) || other.branch == branch)&&(identical(other.deactivatedAt, deactivatedAt) || other.deactivatedAt == deactivatedAt)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,userId,fullName,email,phone,role,isActive,branch,createdAt);
+int get hashCode => Object.hash(runtimeType,id,userId,fullName,email,phone,role,isActive,canManagePayments,branch,deactivatedAt,createdAt);
 
 @override
 String toString() {
-  return 'Staff(id: $id, userId: $userId, fullName: $fullName, email: $email, phone: $phone, role: $role, isActive: $isActive, branch: $branch, createdAt: $createdAt)';
+  return 'Staff(id: $id, userId: $userId, fullName: $fullName, email: $email, phone: $phone, role: $role, isActive: $isActive, canManagePayments: $canManagePayments, branch: $branch, deactivatedAt: $deactivatedAt, createdAt: $createdAt)';
 }
 
 
@@ -281,7 +289,7 @@ abstract mixin class _$StaffCopyWith<$Res> implements $StaffCopyWith<$Res> {
   factory _$StaffCopyWith(_Staff value, $Res Function(_Staff) _then) = __$StaffCopyWithImpl;
 @override @useResult
 $Res call({
- String id,@JsonKey(name: 'user_id') String? userId,@JsonKey(name: 'full_name') String fullName, String email, String? phone, UserRole role,@JsonKey(name: 'is_active') bool isActive,@JsonKey(name: 'branch') ClinicLocation? branch,@JsonKey(name: 'created_at') DateTime createdAt
+ String id,@JsonKey(name: 'user_id') String? userId,@JsonKey(name: 'full_name') String fullName, String email, String? phone, UserRole role,@JsonKey(name: 'is_active') bool isActive,@JsonKey(name: 'can_manage_payments') bool canManagePayments,@JsonKey(name: 'branch') ClinicLocation? branch,@JsonKey(name: 'deactivated_at') DateTime? deactivatedAt,@JsonKey(name: 'created_at') DateTime createdAt
 });
 
 
@@ -298,7 +306,7 @@ class __$StaffCopyWithImpl<$Res>
 
 /// Create a copy of Staff
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? userId = freezed,Object? fullName = null,Object? email = null,Object? phone = freezed,Object? role = null,Object? isActive = null,Object? branch = freezed,Object? createdAt = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? userId = freezed,Object? fullName = null,Object? email = null,Object? phone = freezed,Object? role = null,Object? isActive = null,Object? canManagePayments = null,Object? branch = freezed,Object? deactivatedAt = freezed,Object? createdAt = null,}) {
   return _then(_Staff(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,userId: freezed == userId ? _self.userId : userId // ignore: cast_nullable_to_non_nullable
@@ -307,8 +315,10 @@ as String,email: null == email ? _self.email : email // ignore: cast_nullable_to
 as String,phone: freezed == phone ? _self.phone : phone // ignore: cast_nullable_to_non_nullable
 as String?,role: null == role ? _self.role : role // ignore: cast_nullable_to_non_nullable
 as UserRole,isActive: null == isActive ? _self.isActive : isActive // ignore: cast_nullable_to_non_nullable
+as bool,canManagePayments: null == canManagePayments ? _self.canManagePayments : canManagePayments // ignore: cast_nullable_to_non_nullable
 as bool,branch: freezed == branch ? _self.branch : branch // ignore: cast_nullable_to_non_nullable
-as ClinicLocation?,createdAt: null == createdAt ? _self.createdAt : createdAt // ignore: cast_nullable_to_non_nullable
+as ClinicLocation?,deactivatedAt: freezed == deactivatedAt ? _self.deactivatedAt : deactivatedAt // ignore: cast_nullable_to_non_nullable
+as DateTime?,createdAt: null == createdAt ? _self.createdAt : createdAt // ignore: cast_nullable_to_non_nullable
 as DateTime,
   ));
 }

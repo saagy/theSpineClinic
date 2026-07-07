@@ -13,12 +13,14 @@ class QuickActionsSheet extends StatelessWidget {
   const QuickActionsSheet({
     super.key,
     required this.isDoctor,
+    required this.canHandlePayments,
     required this.onBookAppointment,
     required this.onCollectPayment,
     required this.onAddNote,
     required this.onAddDocument,
   });
   final bool isDoctor;
+  final bool canHandlePayments;
   final VoidCallback onBookAppointment;
   final VoidCallback onCollectPayment;
   final VoidCallback onAddNote;
@@ -30,27 +32,35 @@ class QuickActionsSheet extends StatelessWidget {
     final actions = <_Action>[];
 
     if (!isDoctor) {
-      actions.addAll([
+      actions.add(
         _Action(
-            icon: Icons.calendar_today_rounded,
-            label: AppStrings.bookAppointment,
-            onTap: onBookAppointment),
+          icon: Icons.calendar_today_rounded,
+          label: AppStrings.bookAppointment,
+          onTap: onBookAppointment,
+        ),
+      );
+    }
+    if (canHandlePayments) {
+      actions.add(
         _Action(
-            icon: Icons.payment_rounded,
-            label: AppStrings.collectPayment,
-            onTap: onCollectPayment),
-      ]);
+          icon: Icons.payment_rounded,
+          label: AppStrings.collectPayment,
+          onTap: onCollectPayment,
+        ),
+      );
     }
 
     actions.addAll([
       _Action(
-          icon: Icons.note_add_rounded,
-          label: AppStrings.addNote,
-          onTap: onAddNote),
+        icon: Icons.note_add_rounded,
+        label: AppStrings.addNote,
+        onTap: onAddNote,
+      ),
       _Action(
-          icon: Icons.attach_file_rounded,
-          label: AppStrings.addDocument,
-          onTap: onAddDocument),
+        icon: Icons.attach_file_rounded,
+        label: AppStrings.addDocument,
+        onTap: onAddDocument,
+      ),
     ]);
 
     return SafeArea(
@@ -72,14 +82,16 @@ class QuickActionsSheet extends StatelessWidget {
             const SizedBox(height: AppSizes.p16),
             Text(AppStrings.quickActions, style: AppTextStyles.headingSmall),
             const SizedBox(height: AppSizes.p20),
-            ...actions.map((a) => Padding(
-                  padding: const EdgeInsets.only(bottom: AppSizes.p12),
-                  child: _ActionTile(
-                    icon: a.icon,
-                    label: a.label,
-                    onTap: a.onTap,
-                  ),
-                )),
+            ...actions.map(
+              (a) => Padding(
+                padding: const EdgeInsets.only(bottom: AppSizes.p12),
+                child: _ActionTile(
+                  icon: a.icon,
+                  label: a.label,
+                  onTap: a.onTap,
+                ),
+              ),
+            ),
           ],
         ),
       ),
@@ -95,7 +107,11 @@ class _Action {
 }
 
 class _ActionTile extends StatelessWidget {
-  const _ActionTile({required this.icon, required this.label, required this.onTap});
+  const _ActionTile({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+  });
   final IconData icon;
   final String label;
   final VoidCallback onTap;
