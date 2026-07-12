@@ -9,22 +9,26 @@ import 'package:supabase_flutter/supabase_flutter.dart' hide StorageException;
 
 import 'package:spine_clinic_app/core/errors/app_exception.dart';
 import 'package:spine_clinic_app/core/errors/result.dart';
+import 'package:spine_clinic_app/core/network/supabase_service.dart';
 
 /// Deletes every object under `{patientId}/` in the patient-documents
 /// bucket using paginated `list()` + batched `remove()` calls.
 ///
 /// Returns success when the folder is empty. Storage layer throws are
 /// surfaced as [AppException] via [Result.failure].
-Future<Result<void>> deletePatientStorageFolderImpl(String patientId) async {
+Future<Result<void>> deletePatientStorageFolderImpl(
+  SupabaseService service,
+  String patientId,
+) async {
   const String bucket = 'patient-documents';
   try {
     const int pageSize = 100;
-    final SupabaseClient client = Supabase.instance.client;
-
     int currentOffset = 0;
     final List<String> allPaths = <String>[];
     while (true) {
-      final List<FileObject> page = await client.storage.from(bucket).list(
+      final List<FileObject> page = await service
+          .storage(bucket)
+          .list(
             path: patientId,
             searchOptions: SearchOptions(
               limit: pageSize,
@@ -42,7 +46,7 @@ Future<Result<void>> deletePatientStorageFolderImpl(String patientId) async {
     // Supabase remove() accepts up to 1000 entries per call.
     for (int i = 0; i < allPaths.length; i += 1000) {
       final int end = i + 1000 > allPaths.length ? allPaths.length : i + 1000;
-      await client.storage.from(bucket).remove(allPaths.sublist(i, end));
+      await service.storage(bucket).remove(allPaths.sublist(i, end));
     }
     return const Result.success(null);
   } on StorageException catch (e) {

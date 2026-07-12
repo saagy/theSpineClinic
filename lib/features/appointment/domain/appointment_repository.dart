@@ -24,7 +24,9 @@ abstract class AppointmentRepository {
   ///
   /// Today is calculated in UTC bounds from 00:00:00 to 23:59:59.
   /// When [clinic] is null, all branches are included (admin override).
-  Future<Result<List<Appointment>>> getAppointmentsForToday(ClinicLocation? clinic);
+  Future<Result<List<Appointment>>> getAppointmentsForToday(
+    ClinicLocation? clinic,
+  );
 
   /// Fetches today's appointments with patient data joined, for the receptionist
   /// dashboard. Results are ordered by [scheduledAt] ascending.
@@ -36,9 +38,8 @@ abstract class AppointmentRepository {
   /// Fetches all future appointments (tomorrow onward) with patient data joined,
   /// ordered by date ascending then time ascending.
   /// When [clinic] is null, all branches are included (admin override).
-  Future<Result<List<AppointmentWithPatient>>> getUpcomingAppointmentsWithPatients(
-    ClinicLocation? clinic,
-  );
+  Future<Result<List<AppointmentWithPatient>>>
+  getUpcomingAppointmentsWithPatients(ClinicLocation? clinic);
 
   /// Updates the status column of an appointment.
   ///
@@ -60,7 +61,9 @@ abstract class AppointmentRepository {
   Future<Result<String>> createAppointment(Appointment appointment);
 
   /// Attaches a doctor to an appointment.
-  Future<Result<void>> createAppointmentDoctor(AppointmentDoctor appointmentDoctor);
+  Future<Result<void>> createAppointmentDoctor(
+    AppointmentDoctor appointmentDoctor,
+  );
 
   /// Resolves the list of active doctors assigned to a patient.
   Future<Result<List<Staff>>> getAssignedDoctors(String patientId);
@@ -172,18 +175,6 @@ abstract class AppointmentRepository {
     List<String> doctorIds,
     String? editorId,
   );
-
-  /// Returns true if there is at least one active [AppointmentDoctor] row
-  /// linking [doctorId] to [patientId] where the joined `appointments.scheduled_at`
-  /// falls inside the patient-access window (default 7 days before / 1 day after).
-  ///
-  /// Examines ALL appointments between the doctor and the patient, not just
-  /// a specific appointment id, so the doctor retains ad-hoc access during
-  /// the window even when viewing an appointment detail screen.
-  Future<Result<bool>> hasDoctorRecentAppointmentWithPatient({
-    required String patientId,
-    required String doctorId,
-  });
 }
 
 /// Helper domain model wrapping a doctor's active appointment assignment

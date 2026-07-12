@@ -61,9 +61,17 @@ class FinancialSummarySection extends ConsumerWidget {
         const SizedBox(height: AppSizes.p16),
         Row(
           children: [
-            Expanded(child: StatsMetricCard(title: AppStrings.outstandingBalances, value: '${data.outstandingBalanceCount}', subtitle: AppStrings.patientsWithNegativeBalance, icon: Icons.warning_amber_rounded)),
+            Expanded(child: StatsMetricCard(title: AppStrings.patientsInOverdraft, value: '${data.outstandingBalanceCount}', subtitle: AppStrings.patientsWithNegativeBalance, icon: Icons.warning_amber_rounded)),
             const SizedBox(width: AppSizes.p12),
             Expanded(child: StatsMetricCard(title: AppStrings.packageSales, value: '${data.packageSalesCount}', subtitle: '${AppStrings.egpPrefix}${data.packageSalesValue.toStringAsFixed(0)}', icon: Icons.inventory_2_rounded)),
+          ],
+        ),
+        const SizedBox(height: AppSizes.p12),
+        Row(
+          children: [
+            Expanded(child: StatsMetricCard(title: AppStrings.ptSessionsOwed, value: '${data.owedSessions}', icon: Icons.calendar_today_rounded)),
+            const SizedBox(width: AppSizes.p12),
+            Expanded(child: StatsMetricCard(title: AppStrings.tractionSessionsOwed, value: '${data.owedTractionSessions}', icon: Icons.flash_on_rounded)),
           ],
         ),
       ],

@@ -8,6 +8,7 @@ import 'package:spine_clinic_app/features/patient/domain/patient.dart';
 import 'package:spine_clinic_app/features/patient/domain/patient_document.dart';
 import 'package:spine_clinic_app/features/patient/domain/patient_documents_repository.dart';
 import 'package:spine_clinic_app/features/patient/presentation/patient_documents_providers.dart';
+import 'package:spine_clinic_app/features/patient/presentation/widgets/patient_document_actions.dart';
 import 'package:spine_clinic_app/features/patient/presentation/widgets/patient_tab_documents.dart';
 
 class FakePatientDocumentsRepository implements PatientDocumentsRepository {
@@ -35,6 +36,21 @@ class FakePatientDocumentsRepository implements PatientDocumentsRepository {
     required String fileName,
   }) async {
     return Result.success(Uint8List(0));
+  }
+
+  @override
+  Future<Result<PatientDocument>> renameDocument({
+    required String documentId,
+    required String fileName,
+  }) async {
+    final int index = mockDocs.indexWhere(
+      (PatientDocument document) => document.id == documentId,
+    );
+    final PatientDocument renamed = mockDocs[index].copyWith(
+      fileName: fileName,
+    );
+    mockDocs[index] = renamed;
+    return Result.success(renamed);
   }
 
   @override
@@ -79,9 +95,7 @@ void main() {
     required double width,
   }) {
     return ProviderScope(
-      overrides: [
-        patientDocumentsRepositoryProvider.overrideWithValue(repo),
-      ],
+      overrides: [patientDocumentsRepositoryProvider.overrideWithValue(repo)],
       child: MaterialApp(
         home: Scaffold(
           body: SizedBox(
@@ -95,7 +109,20 @@ void main() {
   }
 
   group('PatientTabDocuments Responsive Columns Test', () {
-    testWidgets('Uses exactly 2 columns on mobile screen (width < 600)', (tester) async {
+    testWidgets('document actions use the minimum touch target', (
+      WidgetTester tester,
+    ) async {
+      final repo = FakePatientDocumentsRepository(List.of(mockDocs));
+      await tester.pumpWidget(buildTestWidget(repo: repo, width: 375));
+      await tester.pumpAndSettle();
+
+      final Finder actions = find.byType(PatientDocumentActions).first;
+      expect(tester.getSize(actions), const Size(44, 44));
+    });
+
+    testWidgets('Uses exactly 2 columns on mobile screen (width < 600)', (
+      tester,
+    ) async {
       final repo = FakePatientDocumentsRepository(mockDocs);
 
       // Set mobile screen size
@@ -114,13 +141,16 @@ void main() {
       expect(gridFinder, findsOneWidget);
 
       final GridView grid = tester.widget(gridFinder);
-      final delegate = grid.gridDelegate as SliverGridDelegateWithFixedCrossAxisCount;
+      final delegate =
+          grid.gridDelegate as SliverGridDelegateWithFixedCrossAxisCount;
 
       // Verify that it is locked to 2 columns on mobile
       expect(delegate.crossAxisCount, 2);
     });
 
-    testWidgets('Scales columns up on desktop/PC screen (width >= 600)', (tester) async {
+    testWidgets('Scales columns up on desktop/PC screen (width >= 600)', (
+      tester,
+    ) async {
       final repo = FakePatientDocumentsRepository(mockDocs);
 
       // Set desktop screen size
@@ -139,7 +169,8 @@ void main() {
       expect(gridFinder, findsOneWidget);
 
       final GridView grid = tester.widget(gridFinder);
-      final delegate = grid.gridDelegate as SliverGridDelegateWithFixedCrossAxisCount;
+      final delegate =
+          grid.gridDelegate as SliverGridDelegateWithFixedCrossAxisCount;
 
       // At 1200 width, formula is (1200 / 300).floor().clamp(2, 6) = 4 columns
       expect(delegate.crossAxisCount, 4);

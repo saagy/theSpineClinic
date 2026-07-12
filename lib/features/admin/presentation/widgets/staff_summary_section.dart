@@ -5,12 +5,15 @@ import 'package:spine_clinic_app/core/constants/app_strings.dart';
 import 'package:spine_clinic_app/core/errors/app_exception.dart';
 import 'package:spine_clinic_app/features/admin/data/analytics_dtos.dart';
 import 'package:spine_clinic_app/features/admin/presentation/analytics_providers.dart';
-import 'package:spine_clinic_app/features/admin/presentation/widgets/breakdown_list_card.dart';
 import 'package:spine_clinic_app/features/admin/presentation/widgets/stats_metric_card.dart';
 import 'package:spine_clinic_app/shared/widgets/empty_state.dart';
 import 'package:spine_clinic_app/shared/widgets/error_view.dart';
 import 'package:spine_clinic_app/shared/widgets/section_card.dart';
 import 'package:spine_clinic_app/core/constants/app_text_styles.dart';
+import 'package:spine_clinic_app/shared/widgets/app_avatar.dart';
+import 'package:spine_clinic_app/shared/widgets/app_bottom_sheet.dart';
+import 'package:spine_clinic_app/features/admin/presentation/widgets/doctor_performance_sheet.dart';
+import 'package:spine_clinic_app/core/constants/clinic_colors.dart';
 
 /// Section displaying staff KPIs: appointments/doctor, completion rates, top performers.
 /// Loads independently from other analytics sections.
@@ -34,13 +37,7 @@ class StaffSummarySection extends ConsumerWidget {
   Widget _buildLoading(BuildContext context) {
     return Column(
       children: [
-        Row(
-          children: const [
-            Expanded(child: StatsMetricCard(title: '', value: '', icon: Icons.people_alt_rounded, isLoading: true)),
-            SizedBox(width: AppSizes.p12),
-            Expanded(child: StatsMetricCard(title: '', value: '', icon: Icons.person_add_rounded, isLoading: true)),
-          ],
-        ),
+        const StatsMetricCard(title: '', value: '', icon: Icons.people_alt_rounded, isLoading: true),
         const SizedBox(height: AppSizes.p16),
         _skeletonSection(context),
       ],
@@ -49,7 +46,7 @@ class StaffSummarySection extends ConsumerWidget {
 
   Widget _skeletonSection(BuildContext context) {
     return SectionCard(
-      title: AppStrings.topPerformingDoctors,
+      title: AppStrings.staffPerformance,
       child: Column(
         children: List.generate(3, (_) => Padding(
           padding: const EdgeInsets.only(bottom: AppSizes.p8),
@@ -67,61 +64,93 @@ class StaffSummarySection extends ConsumerWidget {
   }
 
   Widget _buildData(BuildContext context, StaffSummary data) {
-    final bool isEmpty = data.appointmentsPerDoctor.isEmpty && data.newStaffInPeriod == 0;
-
-    if (isEmpty) {
+    if (data.doctorPerformances.isEmpty) {
       return const EmptyState(message: AppStrings.noStaffData, icon: Icons.people_alt_rounded);
     }
+
+    final ThemeData theme = Theme.of(context);
+    final ClinicColors clinicColors = ClinicColors.of(context);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
-          children: [
-            Expanded(child: StatsMetricCard(title: AppStrings.activeDoctorsCount, value: '${data.appointmentsPerDoctor.length}', icon: Icons.people_alt_rounded)),
-            const SizedBox(width: AppSizes.p12),
-            Expanded(child: StatsMetricCard(title: AppStrings.newStaffInPeriod, value: '${data.newStaffInPeriod}', icon: Icons.person_add_rounded)),
-          ],
+        StatsMetricCard(
+          title: AppStrings.activeDoctorsCount,
+          value: '${data.doctorPerformances.length}',
+          icon: Icons.people_alt_rounded,
         ),
         const SizedBox(height: AppSizes.p16),
-        if (data.topDoctors.isNotEmpty) _buildTopDoctors(context, data),
-        const SizedBox(height: AppSizes.p16),
-        if (data.appointmentsPerDoctor.isNotEmpty)
-          BreakdownListCard(title: AppStrings.appointmentsPerDoctor, data: data.appointmentsPerDoctor, barColor: Theme.of(context).colorScheme.primary),
-      ],
-    );
-  }
-
-  Widget _buildTopDoctors(BuildContext context, StaffSummary data) {
-    return SectionCard(
-      title: AppStrings.topPerformingDoctors,
-      child: Column(
-        children: data.topDoctors.asMap().entries.map((entry) {
-          final String name = entry.value;
-          final int count = data.appointmentsPerDoctor[name] ?? 0;
-          return Padding(
-            padding: const EdgeInsets.only(bottom: AppSizes.p8),
-            child: Row(
-              children: [
-                Container(
-                  width: AppSizes.iconDefault,
-                  height: AppSizes.iconDefault,
-                  decoration: BoxDecoration(
-                    color: Theme.of(context).colorScheme.primaryContainer,
-                    borderRadius: const BorderRadius.all(Radius.circular(AppSizes.r4)),
-                  ),
-                  child: Center(
-                    child: Text('${entry.key + 1}', style: AppTextStyles.captionBold.copyWith(color: Theme.of(context).colorScheme.primary)),
+        SectionCard(
+          title: AppStrings.staffPerformance,
+          child: Column(
+            children: data.doctorPerformances.map((perf) {
+              return Padding(
+                padding: const EdgeInsets.only(bottom: AppSizes.p12),
+                child: Material(
+                  color: Colors.transparent,
+                  child: InkWell(
+                    borderRadius: const BorderRadius.all(Radius.circular(AppSizes.r16)),
+                    onTap: () {
+                      AppBottomSheet.show(
+                        context: context,
+                        title: perf.fullName,
+                        initialChildSize: 0.8,
+                        builder: (context, scrollController) => DoctorPerformanceSheet(
+                          performance: perf,
+                          scrollController: scrollController,
+                        ),
+                      );
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.all(AppSizes.p16),
+                      decoration: BoxDecoration(
+                        border: Border.all(color: theme.colorScheme.outlineVariant),
+                        borderRadius: const BorderRadius.all(Radius.circular(AppSizes.r16)),
+                      ),
+                      child: Row(
+                        children: [
+                          AppAvatar(name: perf.fullName, radius: AppSizes.p20),
+                          const SizedBox(width: AppSizes.p12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  perf.fullName,
+                                  style: AppTextStyles.bodyBold.copyWith(color: theme.colorScheme.onSurface),
+                                ),
+                                const SizedBox(height: AppSizes.p4),
+                                Text(
+                                  '${AppStrings.activeDays}: ${perf.activeDays} | ${AppStrings.absences}: ${perf.absenceCount}',
+                                  style: AppTextStyles.caption.copyWith(color: clinicColors.textMuted),
+                                ),
+                              ],
+                            ),
+                          ),
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.end,
+                            children: [
+                              Text(
+                                '${perf.completedAppointments}/${perf.totalAppointments}',
+                                style: AppTextStyles.bodyBold.copyWith(color: theme.colorScheme.primary),
+                              ),
+                              const SizedBox(height: AppSizes.p4),
+                              Text(
+                                AppStrings.sessionsCompleted,
+                                style: AppTextStyles.caption.copyWith(color: clinicColors.textMuted),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
                   ),
                 ),
-                const SizedBox(width: AppSizes.p12),
-                Expanded(child: Text(name, style: AppTextStyles.bodyBold.copyWith(color: Theme.of(context).colorScheme.onSurface))),
-                Text('$count ${AppStrings.sessionsCompleted.toLowerCase()}', style: AppTextStyles.caption.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant)),
-              ],
-            ),
-          );
-        }).toList(),
-      ),
+              );
+            }).toList(),
+          ),
+        ),
+      ],
     );
   }
 }

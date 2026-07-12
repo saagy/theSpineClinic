@@ -41,6 +41,12 @@ abstract class PatientDocumentsRepository {
     required String fileName,
   });
 
+  /// Updates only the document's display filename.
+  Future<Result<PatientDocument>> renameDocument({
+    required String documentId,
+    required String fileName,
+  });
+
   /// Deletes a document row and its single linked storage object.
   /// DB row deletion happens first; if it succeeds but the blob
   /// removal fails, the orphan blob is silently tolerated and is

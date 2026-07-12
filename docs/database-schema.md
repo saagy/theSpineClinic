@@ -63,6 +63,7 @@ Central patient registry and session/traction package balances.
 
 ### `patient_doctors`
 M:N long-term doctor assignments for patients. Enforced by trigger `tr_check_patient_has_doctors`.
+- `doctor_id` must reference a `staff` row whose role is `doctor`; Clinic Admin accounts cannot be assigned as doctors.
 - `patient_id` (`uuid`, PK/FK -> `patients(id)` `ON DELETE CASCADE`, NOT NULL)
 - `doctor_id` (`uuid`, PK/FK -> `staff(id)` `ON DELETE CASCADE`, NOT NULL)
 - `assigned_at` (`timestamptz`, NOT NULL, Default: `now()`)
@@ -80,6 +81,7 @@ Patient visit schedule and status.
 
 ### `appointment_doctors`
 Appointment-level doctor assignments and temporary doctor replacements.
+- `doctor_id` and `replaced_doctor_id` must reference `staff` rows whose role is `doctor`.
 - `id` (`uuid`, PK, Default: `gen_random_uuid()`)
 - `appointment_id` (`uuid`, FK -> `appointments(id)` `ON DELETE CASCADE`, NOT NULL)
 - `doctor_id` (`uuid`, FK -> `staff(id)` `ON DELETE RESTRICT`, NOT NULL)
@@ -91,6 +93,8 @@ Appointment-level doctor assignments and temporary doctor replacements.
 
 ### `patient_documents`
 Metadata for uploaded clinical files stored in Supabase Storage (`patient-documents` bucket).
+- Active admins and receptionists have full document access. Doctors have access only through a direct patient assignment or any active appointment-doctor relationship.
+- Authenticated clients may update only `file_name`; Storage object paths and other metadata columns are immutable through document rename.
 - `id` (`uuid`, PK, Default: `gen_random_uuid()`)
 - `patient_id` (`uuid`, FK -> `patients(id)` `ON DELETE CASCADE`, NOT NULL)
 - `file_url` (`text`, NOT NULL)
@@ -130,6 +134,8 @@ System-wide configuration (package pricing & session rules) stored as JSONB.
 
 ### `doctor_replacements`
 Daily absent doctor coverage records.
+- Historical replacement records do not grant patient, note, document, or Storage access.
+- Both doctor references must point to `staff` rows whose role is `doctor`.
 - `id` (`uuid`, PK, Default: `gen_random_uuid()`)
 - `absent_doctor_id` (`uuid`, FK -> `staff(id)` `ON DELETE CASCADE`, NOT NULL)
 - `covering_doctor_id` (`uuid`, FK -> `staff(id)` `ON DELETE CASCADE`, NOT NULL)
@@ -153,6 +159,8 @@ Daily absent doctor coverage records.
 10. `check_patient_has_doctors()`: Trigger function on `patient_doctors` delete/update that prevents leaving a patient with 0 assigned doctors.
 11. `sync_staff_email_to_auth_users()`: Trigger function on `staff` email update that syncs email changes to `auth.users`.
 12. `verify_staff_update_permissions()`: Trigger function on `staff` update that prevents staff members from altering their own role, active status, or payment access.
+13. `enforce_doctor_reference_roles()`: Rejects non-doctor staff IDs in patient, appointment, and replacement doctor references.
+14. `prevent_referenced_doctor_role_change()`: Prevents changing a referenced doctor into another role before reassignment.
 
 ---
 

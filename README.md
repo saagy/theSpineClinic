@@ -56,7 +56,7 @@ Add real app captures before sharing the repository publicly. Recommended set:
 2. Receptionist dashboard or appointment list
 3. Patient detail profile
 4. Payment collection flow
-5. Admin staff or clinic settings view
+5. Admin analytics or staff management view
 
 Store final images under `docs/screenshots/` and reference them here once the
 screens are captured from a clean demo account.

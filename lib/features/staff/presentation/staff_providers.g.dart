@@ -55,12 +55,12 @@ final class StaffRepositoryProvider
 
 String _$staffRepositoryHash() => r'699ba4610d67e407c097cd066f8afce5869443f7';
 
-/// Fetches all active/approved staff members with the role of doctor or super admin.
+/// Fetches all active/approved staff members with the doctor role.
 
 @ProviderFor(activeDoctors)
 final activeDoctorsProvider = ActiveDoctorsProvider._();
 
-/// Fetches all active/approved staff members with the role of doctor or super admin.
+/// Fetches all active/approved staff members with the doctor role.
 
 final class ActiveDoctorsProvider
     extends
@@ -70,7 +70,7 @@ final class ActiveDoctorsProvider
           FutureOr<List<Staff>>
         >
     with $FutureModifier<List<Staff>>, $FutureProvider<List<Staff>> {
-  /// Fetches all active/approved staff members with the role of doctor or super admin.
+  /// Fetches all active/approved staff members with the doctor role.
   ActiveDoctorsProvider._()
     : super(
         from: null,
@@ -99,7 +99,7 @@ final class ActiveDoctorsProvider
 
 String _$activeDoctorsHash() => r'63a8cabbf18d26a853e0e31abf9a215b2536d74b';
 
-/// Fetches all doctors and super admins regardless of active status.
+/// Fetches all doctors regardless of active status.
 ///
 /// Used by filter/search dropdowns (PatientListFilters, UnifiedFilterSheet)
 /// where users need to filter by historical records tied to deactivated staff.
@@ -110,7 +110,7 @@ String _$activeDoctorsHash() => r'63a8cabbf18d26a853e0e31abf9a215b2536d74b';
 @ProviderFor(allDoctorsForFilter)
 final allDoctorsForFilterProvider = AllDoctorsForFilterProvider._();
 
-/// Fetches all doctors and super admins regardless of active status.
+/// Fetches all doctors regardless of active status.
 ///
 /// Used by filter/search dropdowns (PatientListFilters, UnifiedFilterSheet)
 /// where users need to filter by historical records tied to deactivated staff.
@@ -126,7 +126,7 @@ final class AllDoctorsForFilterProvider
           FutureOr<List<Staff>>
         >
     with $FutureModifier<List<Staff>>, $FutureProvider<List<Staff>> {
-  /// Fetches all doctors and super admins regardless of active status.
+  /// Fetches all doctors regardless of active status.
   ///
   /// Used by filter/search dropdowns (PatientListFilters, UnifiedFilterSheet)
   /// where users need to filter by historical records tied to deactivated staff.
@@ -160,7 +160,7 @@ final class AllDoctorsForFilterProvider
 }
 
 String _$allDoctorsForFilterHash() =>
-    r'0d283bfdef4ce1138bc4d02eb7ff55498076e93c';
+    r'cba80831ea1051becd801a017a065a9faf03e233';
 
 /// Controller managing the roster of patients assigned to the logged-in doctor.
 

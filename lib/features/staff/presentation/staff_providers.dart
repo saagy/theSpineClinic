@@ -2,7 +2,7 @@
 ///
 /// Exposes:
 /// - [staffRepositoryProvider] — singleton repository access.
-/// - [activeDoctorsProvider] — active doctors (includes super admins).
+/// - [activeDoctorsProvider] — active doctor accounts.
 /// - [MyPatientsController] — patients assigned to the current doctor.
 ///
 /// Rule 3 — all state via Riverpod.
@@ -24,12 +24,10 @@ part 'staff_providers.g.dart';
 /// Provides a singleton [StaffRepository] instance.
 @Riverpod(keepAlive: true)
 StaffRepository staffRepository(Ref ref) {
-  return StaffRepositoryImpl(
-    supabaseService: SupabaseService.instance,
-  );
+  return StaffRepositoryImpl(supabaseService: SupabaseService.instance);
 }
 
-/// Fetches all active/approved staff members with the role of doctor or super admin.
+/// Fetches all active/approved staff members with the doctor role.
 @riverpod
 Future<List<Staff>> activeDoctors(Ref ref) async {
   final StaffRepository repo = ref.read(staffRepositoryProvider);
@@ -40,7 +38,7 @@ Future<List<Staff>> activeDoctors(Ref ref) async {
   );
 }
 
-/// Fetches all doctors and super admins regardless of active status.
+/// Fetches all doctors regardless of active status.
 ///
 /// Used by filter/search dropdowns (PatientListFilters, UnifiedFilterSheet)
 /// where users need to filter by historical records tied to deactivated staff.
@@ -52,9 +50,8 @@ Future<List<Staff>> allDoctorsForFilter(Ref ref) async {
   final StaffRepository repo = ref.read(staffRepositoryProvider);
   final Result<List<Staff>> result = await repo.getAllStaff();
   return result.when(
-    success: (List<Staff> data) => data
-        .where((s) => s.role == UserRole.doctor || s.role == UserRole.superAdmin)
-        .toList(),
+    success: (List<Staff> data) =>
+        data.where((s) => s.role == UserRole.doctor).toList(),
     failure: (AppException exception) => throw exception,
   );
 }
@@ -67,8 +64,9 @@ class MyPatientsController extends _$MyPatientsController {
     final Staff? user = ref.watch(currentUserProvider).value;
     if (user == null) return const [];
     final StaffRepository repo = ref.read(staffRepositoryProvider);
-    final Result<List<Patient>> result =
-        await repo.getAssignedPatients(doctorId: user.id);
+    final Result<List<Patient>> result = await repo.getAssignedPatients(
+      doctorId: user.id,
+    );
     return result.when(
       success: (List<Patient> data) => data,
       failure: (AppException exception) => throw exception,

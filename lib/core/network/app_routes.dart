@@ -13,7 +13,7 @@ abstract final class AppRoutes {
   /// Public doctor self-registration form.
   static const String register = '/register';
 
-  /// Landing screen for receptionists and super admins.
+  /// Legacy receptionist landing route.
   static const String home = '/home';
 
   /// Landing screen for doctors (daily schedule view).
@@ -78,9 +78,6 @@ abstract final class AppRoutes {
 
   /// Admin central hub dashboard.
   static const String adminHub = '/admin';
-
-  /// Clinic global packages and configuration settings (shell sub-page).
-  static const String clinicSettings = '/admin/clinic-settings';
 
   /// Clinic statistical reports and analytics dashboard.
   static const String reports = '/admin/reports';

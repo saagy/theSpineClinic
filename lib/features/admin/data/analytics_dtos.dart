@@ -11,7 +11,8 @@ class FinancialSummary {
     required this.revenueByPaymentType,
     required this.revenueByBranch,
     required this.outstandingBalanceCount,
-    required this.outstandingBalanceTotal,
+    required this.owedSessions,
+    required this.owedTractionSessions,
     required this.packageSalesCount,
     required this.packageSalesValue,
   });
@@ -20,7 +21,8 @@ class FinancialSummary {
   final Map<String, double> revenueByPaymentType;
   final Map<String, double> revenueByBranch;
   final int outstandingBalanceCount;
-  final double outstandingBalanceTotal;
+  final int owedSessions;
+  final int owedTractionSessions;
   final int packageSalesCount;
   final double packageSalesValue;
 }
@@ -42,19 +44,55 @@ class AppointmentSummary {
   final Map<String, int> byDayOfWeek;
 }
 
+class DoctorDailyLog {
+  const DoctorDailyLog({
+    required this.date,
+    required this.completedAppointments,
+    required this.totalAppointments,
+    required this.isAbsent,
+    this.coveringDoctorName,
+  });
+
+  final DateTime date;
+  final int completedAppointments;
+  final int totalAppointments;
+  final bool isAbsent;
+  final String? coveringDoctorName;
+}
+
+class DoctorPerformance {
+  const DoctorPerformance({
+    required this.id,
+    required this.fullName,
+    required this.totalAppointments,
+    required this.completedAppointments,
+    required this.absenceCount,
+    required this.activeDays,
+    required this.dailyLogs,
+  });
+
+  final String id;
+  final String fullName;
+  final int totalAppointments;
+  final int completedAppointments;
+  final int absenceCount;
+  final int activeDays;
+  final List<DoctorDailyLog> dailyLogs;
+}
+
 /// Aggregated staff performance metrics for a given time range.
 class StaffSummary {
   const StaffSummary({
     required this.appointmentsPerDoctor,
     required this.completionRatePerDoctor,
     required this.topDoctors,
-    required this.newStaffInPeriod,
+    required this.doctorPerformances,
   });
 
   final Map<String, int> appointmentsPerDoctor;
   final Map<String, double> completionRatePerDoctor;
   final List<String> topDoctors;
-  final int newStaffInPeriod;
+  final List<DoctorPerformance> doctorPerformances;
 }
 
 /// Aggregated patient demographics for a given time range.

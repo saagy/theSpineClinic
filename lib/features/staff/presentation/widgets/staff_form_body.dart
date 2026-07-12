@@ -135,9 +135,7 @@ class _StaffFormBodyState extends ConsumerState<StaffFormBody> {
   Future<bool> _blockedByDeactivationWarning(bool newIsActive) async {
     final staff = widget.staff;
     if (staff == null || !staff.isActive || newIsActive) return false;
-    if (staff.role != UserRole.doctor && staff.role != UserRole.superAdmin) {
-      return false;
-    }
+    if (staff.role != UserRole.doctor) return false;
     final countResult = await ref
         .read(staffRepositoryProvider)
         .countUpcomingAppointments(staff.id);

@@ -75,16 +75,18 @@ class _AppointmentDetailScreenState
   @override
   Widget build(BuildContext context) {
     final appointmentId = widget.appointmentId;
-    final AsyncValue<AppointmentDetailState> detailAsync =
-        ref.watch(appointmentDetailControllerProvider(appointmentId));
+    final AsyncValue<AppointmentDetailState> detailAsync = ref.watch(
+      appointmentDetailControllerProvider(appointmentId),
+    );
     final detailState = detailAsync.value;
     final user = ref.watch(currentUserProvider).value;
     final bool showEdit = detailState != null && user != null;
-    final bool showDelete = detailState != null &&
+    final bool showDelete =
+        detailState != null &&
         user != null &&
         user.role != UserRole.doctor &&
         (detailState.appointment.status == AppointmentStatus.scheduled ||
-         detailState.appointment.status == AppointmentStatus.cancelled);
+            detailState.appointment.status == AppointmentStatus.cancelled);
     final String? patientName = detailState?.patient.fullName;
 
     final theme = Theme.of(context);
@@ -115,18 +117,22 @@ class _AppointmentDetailScreenState
         actions: [
           if (showEdit)
             IconButton(
-              icon: Icon(Icons.edit_outlined, color: colorScheme.onSurfaceVariant),
+              icon: Icon(
+                Icons.edit_outlined,
+                color: colorScheme.onSurfaceVariant,
+              ),
               onPressed: () {
                 context.push(
-                  AppRoutes.editAppointment.replaceAll(':id', detailState.appointment.id),
+                  AppRoutes.editAppointment.replaceAll(
+                    ':id',
+                    detailState.appointment.id,
+                  ),
                 );
               },
               tooltip: AppStrings.editDetails,
             ),
           if (showDelete)
-            DetailOverflowButton(
-              appointment: detailState.appointment,
-            ),
+            DetailOverflowButton(appointment: detailState.appointment),
         ],
       ),
       body: detailAsync.when(
@@ -142,8 +148,10 @@ class _AppointmentDetailScreenState
             appointmentDetailControllerProvider(appointmentId),
           ),
         ),
-        data: (AppointmentDetailState state) =>
-            _AppointmentDetailBody(state: state, scrollController: _scrollController),
+        data: (AppointmentDetailState state) => _AppointmentDetailBody(
+          state: state,
+          scrollController: _scrollController,
+        ),
       ),
     );
   }
@@ -169,7 +177,8 @@ class _AppointmentDetailBody extends ConsumerWidget {
       );
     }
 
-    final bool hasActions = state.appointment.status == AppointmentStatus.scheduled ||
+    final bool hasActions =
+        state.appointment.status == AppointmentStatus.scheduled ||
         state.appointment.status == AppointmentStatus.checkedIn ||
         state.appointment.status == AppointmentStatus.cancelled;
 
@@ -178,10 +187,14 @@ class _AppointmentDetailBody extends ConsumerWidget {
         Expanded(
           child: RefreshIndicator(
             onRefresh: () async {
-              ref.invalidate(appointmentDetailControllerProvider(state.appointment.id));
+              ref.invalidate(
+                appointmentDetailControllerProvider(state.appointment.id),
+              );
               try {
                 await ref.read(
-                  appointmentDetailControllerProvider(state.appointment.id).future,
+                  appointmentDetailControllerProvider(
+                    state.appointment.id,
+                  ).future,
                 );
               } catch (_) {}
             },
@@ -192,7 +205,6 @@ class _AppointmentDetailBody extends ConsumerWidget {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   AppointmentDetailHeader(
-                    appointment: state.appointment,
                     patient: state.patient,
                   ).animate().fadeIn(duration: 300.ms),
                   AppointmentStatusBanner(status: state.appointment.status),
@@ -203,7 +215,9 @@ class _AppointmentDetailBody extends ConsumerWidget {
                     inactiveDoctors: state.inactiveDoctors,
                   ),
                   Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: AppSizes.p24),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: AppSizes.p24,
+                    ),
                     child: AppointmentNotesCard(
                       appointmentId: state.appointment.id,
                       patientId: state.appointment.patientId,
@@ -219,11 +233,19 @@ class _AppointmentDetailBody extends ConsumerWidget {
           SafeArea(
             child: Container(
               padding: const EdgeInsets.fromLTRB(
-                  AppSizes.p24, AppSizes.p12, AppSizes.p24, AppSizes.p12),
+                AppSizes.p24,
+                AppSizes.p12,
+                AppSizes.p24,
+                AppSizes.p12,
+              ),
               decoration: BoxDecoration(
                 color: theme.colorScheme.surface,
                 border: Border(
-                    top: BorderSide(color: theme.colorScheme.outlineVariant, width: 0.5)),
+                  top: BorderSide(
+                    color: theme.colorScheme.outlineVariant,
+                    width: 0.5,
+                  ),
+                ),
               ),
               child: AppointmentActionButtons(
                 appointment: state.appointment,

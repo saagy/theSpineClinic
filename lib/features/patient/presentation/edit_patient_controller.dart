@@ -1,6 +1,7 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:spine_clinic_app/core/errors/app_exception.dart';
 import 'package:spine_clinic_app/core/errors/result.dart';
+import 'package:spine_clinic_app/core/constants/app_strings.dart';
 import 'package:spine_clinic_app/features/auth/domain/user_role.dart';
 import 'package:spine_clinic_app/features/auth/presentation/auth_providers.dart';
 import 'package:spine_clinic_app/features/patient/domain/patient.dart';
@@ -46,22 +47,22 @@ class EditPatientController extends _$EditPatientController {
     }
 
     if (currentUser.role == UserRole.doctor) {
-      final Result<bool> isAssignedResult = await repo.isDoctorAssignedOrCovering(
+      final Result<bool> accessResult = await repo.canDoctorAccessPatient(
         patientId: patient.id,
         doctorId: currentUser.id,
       );
       if (!ref.mounted) return false;
 
-      final bool isAssigned = isAssignedResult.when(
+      final bool canAccess = accessResult.when(
         success: (val) => val,
         failure: (_) => false,
       );
 
-      if (!isAssigned) {
+      if (!canAccess) {
         state = AsyncValue.error(
           const DatabaseException(
             code: 'db/rls-violation',
-            message: 'Doctors can only edit info for their assigned or replacement patients.',
+            message: AppStrings.doctorPatientEditDenied,
             userMessageKey: 'error_database_permission_denied',
           ),
           StackTrace.current,
@@ -83,7 +84,8 @@ class EditPatientController extends _$EditPatientController {
     if (currentUser.role != UserRole.doctor) {
       final currentSet = selectedDoctorIds.toSet();
       final initialSet = initialDoctorIds.toSet();
-      final doctorsChanged = currentSet.length != initialSet.length ||
+      final doctorsChanged =
+          currentSet.length != initialSet.length ||
           !currentSet.every(initialSet.contains);
 
       if (doctorsChanged) {

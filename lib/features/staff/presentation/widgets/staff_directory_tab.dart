@@ -75,6 +75,8 @@ class _StaffDirectoryTabState extends ConsumerState<StaffDirectoryTab> {
       ),
       floatingActionButton: FloatingActionButton(
         shape: const CircleBorder(),
+        backgroundColor: Theme.of(context).colorScheme.primary,
+        foregroundColor: Theme.of(context).colorScheme.onPrimary,
         onPressed: () => context.push(AppRoutes.staffForm),
         child: const Icon(Icons.add_rounded),
       ),

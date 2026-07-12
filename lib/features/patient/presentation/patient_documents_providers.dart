@@ -13,6 +13,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import 'package:spine_clinic_app/core/errors/app_exception.dart';
 import 'package:spine_clinic_app/core/errors/result.dart';
+import 'package:spine_clinic_app/core/network/supabase_service.dart';
 import 'package:spine_clinic_app/features/auth/domain/staff.dart';
 import 'package:spine_clinic_app/features/auth/presentation/auth_providers.dart';
 import 'package:spine_clinic_app/features/patient/data/patient_documents_repository.dart';
@@ -24,7 +25,9 @@ part 'patient_documents_providers.g.dart';
 /// Provides a singleton [PatientDocumentsRepository] instance.
 @Riverpod(keepAlive: true)
 PatientDocumentsRepository patientDocumentsRepository(Ref ref) {
-  return PatientDocumentsRepositoryImpl();
+  return PatientDocumentsRepositoryImpl(
+    supabaseService: SupabaseService.instance,
+  );
 }
 
 /// Family AsyncNotifier managing the document list state for a patient.
@@ -33,10 +36,12 @@ class PatientDocumentsNotifierNotifier
     extends _$PatientDocumentsNotifierNotifier {
   @override
   FutureOr<List<PatientDocument>> build(String patientId) async {
-    final PatientDocumentsRepository repo =
-        ref.watch(patientDocumentsRepositoryProvider);
-    final Result<List<PatientDocument>> result =
-        await repo.fetchDocuments(patientId);
+    final PatientDocumentsRepository repo = ref.watch(
+      patientDocumentsRepositoryProvider,
+    );
+    final Result<List<PatientDocument>> result = await repo.fetchDocuments(
+      patientId,
+    );
 
     return result.when(
       success: (List<PatientDocument> data) => data,
@@ -68,8 +73,9 @@ class PatientDocumentsNotifierNotifier
       );
     }
 
-    final PatientDocumentsRepository repo =
-        ref.read(patientDocumentsRepositoryProvider);
+    final PatientDocumentsRepository repo = ref.read(
+      patientDocumentsRepositoryProvider,
+    );
     final Result<PatientDocument> result = await repo.uploadDocument(
       patientId: patientId,
       fileName: fileName,
@@ -86,9 +92,46 @@ class PatientDocumentsNotifierNotifier
         ref.invalidateSelf();
         await future;
       },
-      failure: (AppException exception) async {/* no state mutation */},
+      failure: (AppException exception) async {
+        /* no state mutation */
+      },
     );
 
+    return result;
+  }
+
+  /// Renames document metadata and refreshes the visible list on success.
+  Future<Result<PatientDocument>> renameDocument({
+    required PatientDocument document,
+    required String fileName,
+  }) async {
+    final Staff? currentUser = ref.read(currentUserProvider).value;
+    if (currentUser == null || !currentUser.isActive) {
+      return const Result.failure(
+        AuthException(
+          code: 'auth/unauthorized',
+          message: 'An active staff session is required to rename documents.',
+          userMessageKey: 'error_auth_generic',
+        ),
+      );
+    }
+
+    final PatientDocumentsRepository repo = ref.read(
+      patientDocumentsRepositoryProvider,
+    );
+    final Result<PatientDocument> result = await repo.renameDocument(
+      documentId: document.id,
+      fileName: fileName,
+    );
+    if (!ref.mounted) return result;
+
+    await result.when(
+      success: (_) async {
+        ref.invalidateSelf();
+        await future;
+      },
+      failure: (_) async {},
+    );
     return result;
   }
 
@@ -116,11 +159,10 @@ class PatientDocumentsNotifierNotifier
       );
     }
 
-    final PatientDocumentsRepository repo =
-        ref.read(patientDocumentsRepositoryProvider);
-    final Result<void> result = await repo.deleteDocument(
-      documentId: doc.id,
+    final PatientDocumentsRepository repo = ref.read(
+      patientDocumentsRepositoryProvider,
     );
+    final Result<void> result = await repo.deleteDocument(documentId: doc.id);
     if (!ref.mounted) return result;
 
     await result.when(
@@ -128,7 +170,9 @@ class PatientDocumentsNotifierNotifier
         ref.invalidateSelf();
         await future;
       },
-      failure: (AppException exception) async {/* no state mutation */},
+      failure: (AppException exception) async {
+        /* no state mutation */
+      },
     );
 
     return result;

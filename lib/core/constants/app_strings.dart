@@ -6,6 +6,7 @@ library;
 abstract final class AppStrings {
   // App Identity
   static const String appName = 'Spine Clinic';
+  static const String home = 'Home';
   static const String appTagline = 'Patient & Appointment Manager';
 
   // Error Messages (userMessageKey)
@@ -99,6 +100,8 @@ abstract final class AppStrings {
   static const String cancel = 'Cancel';
   static const String delete = 'Delete';
   static const String edit = 'Edit';
+  static const String rename = 'Rename';
+  static const String moreActions = 'More actions';
   static const String add = 'Add';
   static const String search = 'Search';
   static const String filter = 'Filter';
@@ -131,9 +134,17 @@ abstract final class AppStrings {
   static const String documentUploaded = 'Document uploaded.';
   static const String openingDocument = 'Opening document…';
   static const String documentDeleted = 'Document deleted successfully.';
+  static const String documentRenamed = 'Document renamed successfully.';
+  static const String renameDocument = 'Rename Document';
+  static const String documentName = 'Document name';
+  static const String documentNameRequired = 'Enter a document name.';
+  static const String documentNameTooLong =
+      'Document names cannot exceed 255 characters.';
   static const String deleteDocumentTitle = 'Delete Document';
   static const String confirmDeleteDocument =
       'Are you sure you want to permanently delete this document?';
+  static const String doctorPatientEditDenied =
+      'Doctors can only edit patients assigned to them or linked by an appointment.';
 
   // Patient
   static const String registerPatient = 'Register Patient';
@@ -421,8 +432,8 @@ abstract final class AppStrings {
   static const String addStaff = 'Add Staff';
   static const String editStaff = 'Edit Staff';
   static const String staffApplications = 'Staff Applications';
-  static const String superAdmin = 'Super Admin';
-  static const String superAdmins = 'Super Admins';
+  static const String superAdmin = 'Clinic Admin';
+  static const String superAdmins = 'Clinic Admins';
   static const String receptionist = 'Receptionist';
   static const String receptionists = 'Receptionists';
   static const String role = 'Role';
@@ -599,7 +610,7 @@ abstract final class AppStrings {
   static const String paymentUpdated = 'Payment updated successfully.';
 
   // Role display labels
-  static const String adminRoleLabel = 'Admin';
+  static const String adminRoleLabel = 'Clinic Admin';
   static const String receptionistRoleLabel = 'Receptionist';
   static const String doctorRoleLabel = 'Doctor';
 
@@ -797,6 +808,14 @@ abstract final class AppStrings {
   static const String packagesSold = 'Packages Sold';
   static const String packagesSoldValue = 'Packages Sold Value';
   static const String sessionsCompleted = 'Sessions Completed';
+  static const String patientsInOverdraft = 'Patients in Overdraft';
+  static const String ptSessionsOwed = 'PT Sessions Owed';
+  static const String tractionSessionsOwed = 'Traction Sessions Owed';
+  static const String activeDays = 'Active Days';
+  static const String absences = 'Absences';
+  static const String doctorLog = 'Doctor Log';
+  static const String noActivity = 'No activity recorded';
+  static const String absentCoveredBy = 'Absent (Covered by %s)';
 
   // Package usage filter labels
   static const String packageFilterAll = 'All';
@@ -804,11 +823,5 @@ abstract final class AppStrings {
   static const String packageFilterNoPackage = 'No Package';
 
   // ── Patient Pill Access (appointment detail header) ──
-  static const String patientPillAccessExpired =
-      'Access to this patient has expired. Tap is only allowed within '
-      '7 days before or 1 day after a shared appointment.';
-  static const String patientPillAccessNotAuthenticated =
-      'Sign in to view this patient.';
-
   static const String collapse = 'Collapse';
 }

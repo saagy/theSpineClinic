@@ -24,56 +24,21 @@ class NavTab {
 /// Resolves the navigation tab set for a given [userRole].
 abstract final class NavTabs {
   static List<NavTab> forRole(String role) => switch (role) {
-        'doctor' => const [
-            NavTab(
-              icon: LucideIcons.calendar,
-              label: AppStrings.navMySchedule,
-            ),
-            NavTab(
-              icon: LucideIcons.users,
-              label: AppStrings.navMyPatients,
-            ),
-            NavTab(
-              icon: LucideIcons.user,
-              label: AppStrings.profile,
-            ),
-          ],
-        'super_admin' => const [
-            NavTab(
-              icon: LucideIcons.trending_up,
-              label: AppStrings.navAnalytics,
-            ),
-            NavTab(
-              icon: LucideIcons.calendar_check,
-              label: AppStrings.navAppts,
-            ),
-            NavTab(
-              icon: LucideIcons.calendar,
-              label: AppStrings.navMySchedule,
-            ),
-            NavTab(
-              icon: LucideIcons.users,
-              label: AppStrings.patients,
-            ),
-            NavTab(
-              icon: LucideIcons.settings,
-              label: AppStrings.navAdmin,
-            ),
-          ],
-        _ => const [
-            NavTab(
-              icon: LucideIcons.calendar_check,
-              label: AppStrings.navAppts,
-            ),
-            NavTab(
-              icon: LucideIcons.users,
-              label: AppStrings.patients,
-            ),
-            NavTab(
-              icon: LucideIcons.user,
-              label: AppStrings.profile,
-            ),
-          ],
-      };
+    'doctor' => const [
+      NavTab(icon: LucideIcons.calendar, label: AppStrings.navMySchedule),
+      NavTab(icon: LucideIcons.users, label: AppStrings.navMyPatients),
+      NavTab(icon: LucideIcons.user, label: AppStrings.profile),
+    ],
+    'super_admin' => const [
+      NavTab(icon: LucideIcons.trending_up, label: AppStrings.navAnalytics),
+      NavTab(icon: LucideIcons.calendar_check, label: AppStrings.navAppts),
+      NavTab(icon: LucideIcons.users, label: AppStrings.patients),
+      NavTab(icon: LucideIcons.settings, label: AppStrings.navAdmin),
+    ],
+    _ => const [
+      NavTab(icon: LucideIcons.calendar_check, label: AppStrings.navAppts),
+      NavTab(icon: LucideIcons.users, label: AppStrings.patients),
+      NavTab(icon: LucideIcons.user, label: AppStrings.profile),
+    ],
+  };
 }
-

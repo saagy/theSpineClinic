@@ -1,52 +1,24 @@
 /// Compact patient header block for the appointment detail screen.
 ///
 /// Row: compact avatar | patient name + clinic label | chevron.
-/// Tappable to PatientDetailScreen, gated by [appointmentPatientAccessProvider].
+/// Tappable to PatientDetailScreen. Supabase RLS enforces patient access.
 library;
 
 import 'package:flutter/material.dart';
 import 'package:spine_clinic_app/core/constants/clinic_colors.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:spine_clinic_app/core/constants/app_sizes.dart';
-import 'package:spine_clinic_app/core/constants/app_strings.dart';
 import 'package:spine_clinic_app/core/constants/app_text_styles.dart';
-import 'package:spine_clinic_app/features/appointment/domain/appointment.dart';
 import 'package:spine_clinic_app/features/patient/domain/patient.dart';
-import 'package:spine_clinic_app/features/patient/domain/patient_appointment_access.dart';
-import 'package:spine_clinic_app/features/patient/presentation/appointment_patient_access_provider.dart';
 import 'package:spine_clinic_app/shared/widgets/app_avatar.dart';
 
 /// Compact tappable patient identity block.
-class AppointmentDetailHeader extends ConsumerWidget {
-  const AppointmentDetailHeader({
-    super.key,
-    required this.appointment,
-    required this.patient,
-  });
-  final Appointment appointment;
+class AppointmentDetailHeader extends StatelessWidget {
+  const AppointmentDetailHeader({super.key, required this.patient});
   final Patient patient;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final AsyncValue<PatientAppointmentAccess> accessAsync =
-        ref.watch(appointmentPatientAccessProvider(appointment));
-    final bool enabled =
-        accessAsync.maybeWhen(data: (a) => a is Granted, orElse: () => true);
-
-    final String tooltip = accessAsync.maybeWhen(
-      data: (a) => switch (a) {
-        Granted() => '',
-        AccessExpired() => AppStrings.patientPillAccessExpired,
-        NotAuthenticated() => AppStrings.patientPillAccessNotAuthenticated,
-      },
-      orElse: () => '',
-    );
-
-    final VoidCallback? onTap = enabled
-        ? () => context.push('/patient/${patient.id}')
-        : null;
-
+  Widget build(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -55,60 +27,58 @@ class AppointmentDetailHeader extends ConsumerWidget {
             horizontal: AppSizes.p24,
             vertical: AppSizes.p12,
           ),
-          child: Tooltip(
-            message: tooltip,
-            triggerMode: TooltipTriggerMode.tap,
-            child: InkWell(
-              onTap: onTap,
-              borderRadius: const BorderRadius.all(Radius.circular(AppSizes.r12)),
-              child: Opacity(
-                opacity: enabled ? 1.0 : 0.55,
-                child: Padding(
-                  padding: const EdgeInsets.all(AppSizes.p4),
-                  child: Row(
-                    children: [
-                      AppAvatar(name: patient.fullName, radius: 20),
-                      const SizedBox(width: AppSizes.p12),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Text(
-                              patient.fullName,
-                              style: AppTextStyles.headingSmall.copyWith(
-                                color: Theme.of(context).colorScheme.onSurface,
-                                fontWeight: FontWeight.w600,
-                                fontSize: 16,
-                              ),
-                            ),
-                            const SizedBox(height: AppSizes.p2),
-                            Text(
-                              patient.clinic.displayLabel,
-                              style: AppTextStyles.captionMedium.copyWith(
-                                color: Theme.of(context).colorScheme.onSurfaceVariant,
-                              ),
-                            ),
-                          ],
+          child: InkWell(
+            onTap: () => context.push('/patient/${patient.id}'),
+            borderRadius: const BorderRadius.all(Radius.circular(AppSizes.r12)),
+            child: Padding(
+              padding: const EdgeInsets.all(AppSizes.p4),
+              child: Row(
+                children: [
+                  AppAvatar(name: patient.fullName, radius: 20),
+                  const SizedBox(width: AppSizes.p12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          patient.fullName,
+                          style: AppTextStyles.headingSmall.copyWith(
+                            color: Theme.of(context).colorScheme.onSurface,
+                            fontWeight: FontWeight.w600,
+                            fontSize: 16,
+                          ),
                         ),
-                      ),
-                      const SizedBox(width: AppSizes.p8),
-                      if (enabled)
-                        Icon(Icons.chevron_right_rounded,
-                            color: ClinicColors.of(context).textMuted, size: AppSizes.iconDefault)
-                      else
-                        Icon(Icons.lock_outline_rounded,
-                            color: ClinicColors.of(context).textMuted, size: AppSizes.iconDefault),
-                    ],
+                        const SizedBox(height: AppSizes.p2),
+                        Text(
+                          patient.clinic.displayLabel,
+                          style: AppTextStyles.captionMedium.copyWith(
+                            color: Theme.of(
+                              context,
+                            ).colorScheme.onSurfaceVariant,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                ),
+                  const SizedBox(width: AppSizes.p8),
+                  Icon(
+                    Icons.chevron_right_rounded,
+                    color: ClinicColors.of(context).textMuted,
+                    size: AppSizes.iconDefault,
+                  ),
+                ],
               ),
             ),
           ),
         ),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: AppSizes.p24),
-          child: Divider(color: Theme.of(context).colorScheme.outline, height: 1.0, thickness: 0.5),
+          child: Divider(
+            color: Theme.of(context).colorScheme.outline,
+            height: 1.0,
+            thickness: 0.5,
+          ),
         ),
       ],
     );

@@ -47,9 +47,11 @@ class _PatientTabDocumentsState extends ConsumerState<PatientTabDocuments> {
     if (!mounted) return;
     final Uint8List? bytes = file.bytes;
     if (bytes == null) {
-      AppSnackbar.show(context,
-          message: AppStrings.fromKey('error_doc_file_too_large'),
-          variant: AppSnackbarVariant.error);
+      AppSnackbar.show(
+        context,
+        message: AppStrings.fromKey('error_doc_file_too_large'),
+        variant: AppSnackbarVariant.error,
+      );
       return;
     }
     setState(() => _isUploadingLocal = true);
@@ -59,12 +61,16 @@ class _PatientTabDocumentsState extends ConsumerState<PatientTabDocuments> {
           .uploadDocument(fileName: file.name, fileBytes: bytes);
       if (!mounted) return;
       uploadResult.when(
-        success: (_) => AppSnackbar.show(context,
-            message: AppStrings.documentUploaded,
-            variant: AppSnackbarVariant.success),
-        failure: (AppException error) => AppSnackbar.show(context,
-            message: AppStrings.fromKey(error.userMessageKey),
-            variant: AppSnackbarVariant.error),
+        success: (_) => AppSnackbar.show(
+          context,
+          message: AppStrings.documentUploaded,
+          variant: AppSnackbarVariant.success,
+        ),
+        failure: (AppException error) => AppSnackbar.show(
+          context,
+          message: AppStrings.fromKey(error.userMessageKey),
+          variant: AppSnackbarVariant.error,
+        ),
       );
     } finally {
       if (mounted) setState(() => _isUploadingLocal = false);
@@ -74,14 +80,14 @@ class _PatientTabDocumentsState extends ConsumerState<PatientTabDocuments> {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
-    final documentsAsync =
-        ref.watch(patientDocumentsNotifierProvider(widget.patient.id));
+    final documentsAsync = ref.watch(
+      patientDocumentsNotifierProvider(widget.patient.id),
+    );
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        if (_isUploadingLocal)
-          LinearProgressIndicator(color: cs.primary),
+        if (_isUploadingLocal) LinearProgressIndicator(color: cs.primary),
         Padding(
           padding: const EdgeInsets.all(AppSizes.p16),
           child: AppButton(
@@ -136,9 +142,12 @@ class _PatientTabDocumentsState extends ConsumerState<PatientTabDocuments> {
                 return GridView.builder(
                   physics: const AlwaysScrollableScrollPhysics(),
                   padding: const EdgeInsets.fromLTRB(
-                      AppSizes.p16, 0, AppSizes.p16, AppSizes.p16),
-                  gridDelegate:
-                      SliverGridDelegateWithFixedCrossAxisCount(
+                    AppSizes.p16,
+                    0,
+                    AppSizes.p16,
+                    AppSizes.p16,
+                  ),
+                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                     crossAxisCount: crossAxisCount,
                     crossAxisSpacing: AppSizes.p12,
                     mainAxisSpacing: AppSizes.p12,
@@ -148,11 +157,11 @@ class _PatientTabDocumentsState extends ConsumerState<PatientTabDocuments> {
                   itemBuilder: (context, index) {
                     return PatientDocumentItem(
                       key: ValueKey(docs[index].id),
-                      doc: docs[index],
+                      document: docs[index],
                     ).animate().fadeIn(
-                          duration: 250.ms,
-                          delay: (index * 30).ms,
-                        );
+                      duration: 250.ms,
+                      delay: (index * 30).ms,
+                    );
                   },
                 );
               },

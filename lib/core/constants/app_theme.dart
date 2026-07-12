@@ -61,6 +61,10 @@ abstract final class AppTheme {
       scaffoldBackgroundColor: palette.background,
       useMaterial3: true,
       extensions: [clinic],
+      floatingActionButtonTheme: FloatingActionButtonThemeData(
+        backgroundColor: cs.primary,
+        foregroundColor: cs.onPrimary,
+      ),
       textTheme: AppThemeComponents.textTheme(palette),
       appBarTheme: AppBarTheme(
         backgroundColor: palette.surface,

@@ -49,8 +49,8 @@ abstract class PatientRepository {
     List<String> currentDoctorIds,
   );
 
-  /// Checks if a doctor is actively assigned to a patient, or covering via active replacement today.
-  Future<Result<bool>> isDoctorAssignedOrCovering({
+  /// Checks direct assignment or any active appointment relationship.
+  Future<Result<bool>> canDoctorAccessPatient({
     required String patientId,
     required String doctorId,
   });
@@ -91,4 +91,3 @@ abstract class PatientRepository {
   /// notes, or documents before invoking this method.
   Future<Result<void>> deletePatient(String patientId);
 }
-

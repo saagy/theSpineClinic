@@ -40,20 +40,24 @@ class AnalyticsRepositoryImpl implements AnalyticsRepository {
       final negative = patients.where((r) {
         final int s = (r['session_balance'] as int?) ?? 0;
         final int t = (r['traction_balance'] as int?) ?? 0;
-        return (s + t) < 0;
+        return s < 0 || t < 0;
       }).toList();
-      final double outstandingTotal = negative.fold<double>(0, (s, r) {
-        final int sb = (r['session_balance'] as int?) ?? 0;
-        final int tb = (r['traction_balance'] as int?) ?? 0;
-        return s + (sb + tb).toDouble();
-      });
+      int owedSessions = 0;
+      int owedTraction = 0;
+      for (final r in negative) {
+        final int s = (r['session_balance'] as int?) ?? 0;
+        final int t = (r['traction_balance'] as int?) ?? 0;
+        if (s < 0) owedSessions += s.abs();
+        if (t < 0) owedTraction += t.abs();
+      }
       final pkgRows = payments.where((r) => ((r['reason'] as String? ?? '').toLowerCase()).contains('package'));
       return Result.success(FinancialSummary(
         totalRevenue: total,
         revenueByPaymentType: byType,
         revenueByBranch: byBranch,
         outstandingBalanceCount: negative.length,
-        outstandingBalanceTotal: outstandingTotal,
+        owedSessions: owedSessions,
+        owedTractionSessions: owedTraction,
         packageSalesCount: pkgRows.length,
         packageSalesValue: pkgRows.fold<double>(0, (s, r) => s + ((r['amount'] as num?)?.toDouble() ?? 0)),
       ));
@@ -105,40 +109,119 @@ class AnalyticsRepositoryImpl implements AnalyticsRepository {
     try {
       final apptRows = await _service.guardQuery(() => _service
           .from('appointments')
-          .select('id, status, appointment_doctors!inner(doctor_id, is_active)')
+          .select('id, status, scheduled_at, appointment_doctors!inner(doctor_id, is_active, is_replacement, replaced_doctor_id)')
           .gte('scheduled_at', range.start.toIso8601String())
           .lte('scheduled_at', range.end.toIso8601String()));
-      final Map<String, int> apptsPerDoc = <String, int>{};
-      final Map<String, int> completedPerDoc = <String, int>{};
+      
       final docRows = await _service.guardQuery(
-        () => _service.from('staff').select('id, full_name').eq('role', 'doctor'),
+        () => _service.from('staff').select('id, full_name, role, is_active'),
       );
       final Map<String, String> docNames = {for (final r in docRows) r['id'] as String: r['full_name'] as String};
-      for (final appt in apptRows) {
-        final bool done = (appt['status'] as String?) == 'completed';
-        for (final d in (appt['appointment_doctors'] as List<dynamic>?) ?? <dynamic>[]) {
-          final Map<String, dynamic> dm = d as Map<String, dynamic>;
-          if (dm['is_active'] != true) continue;
-          final String name = docNames[dm['doctor_id'] as String] ?? (dm['doctor_id'] as String);
-          apptsPerDoc[name] = (apptsPerDoc[name] ?? 0) + 1;
-          if (done) completedPerDoc[name] = (completedPerDoc[name] ?? 0) + 1;
+      
+      final Map<String, Map<String, _DailyAccumulator>> doctorDays = <String, Map<String, _DailyAccumulator>>{};
+      for (final r in docRows) {
+        if (r['role'] == 'doctor' && r['is_active'] == true) {
+          doctorDays[r['id'] as String] = <String, _DailyAccumulator>{};
         }
       }
+
+      for (final appt in apptRows) {
+        final String? scheduledStr = appt['scheduled_at'] as String?;
+        if (scheduledStr == null) continue;
+        final DateTime scheduledDate = DateTime.parse(scheduledStr);
+        final String dateKey = scheduledDate.toIso8601String().substring(0, 10);
+        final bool isCompleted = (appt['status'] as String?) == 'completed';
+
+        final docsList = (appt['appointment_doctors'] as List<dynamic>?) ?? <dynamic>[];
+        for (final doc in docsList) {
+          final Map<String, dynamic> dm = doc as Map<String, dynamic>;
+          final String doctorId = dm['doctor_id'] as String;
+          final bool isActiveAssignment = dm['is_active'] == true;
+          final bool isReplacement = dm['is_replacement'] == true;
+          final String? replacedId = dm['replaced_doctor_id'] as String?;
+
+          if (isActiveAssignment) {
+            final Map<String, _DailyAccumulator> days = doctorDays.putIfAbsent(doctorId, () => <String, _DailyAccumulator>{});
+            final _DailyAccumulator acc = days.putIfAbsent(dateKey, () => _DailyAccumulator());
+            acc.total += 1;
+            if (isCompleted) {
+              acc.completed += 1;
+            }
+          }
+
+          if (isReplacement && replacedId != null) {
+            final Map<String, _DailyAccumulator> days = doctorDays.putIfAbsent(replacedId, () => <String, _DailyAccumulator>{});
+            final _DailyAccumulator acc = days.putIfAbsent(dateKey, () => _DailyAccumulator());
+            acc.isAbsent = true;
+            acc.coveringDoctorName = docNames[doctorId] ?? doctorId;
+          }
+        }
+      }
+
+      final List<DoctorPerformance> performanceList = <DoctorPerformance>[];
+      final Map<String, int> apptsPerDoc = <String, int>{};
+      final Map<String, int> completedPerDoc = <String, int>{};
+
+      doctorDays.forEach((doctorId, daysMap) {
+        final String name = docNames[doctorId] ?? doctorId;
+        int totalAppts = 0;
+        int completedAppts = 0;
+        int absenceCount = 0;
+        int activeDays = 0;
+        final List<DoctorDailyLog> dailyLogs = <DoctorDailyLog>[];
+
+        daysMap.forEach((dateStr, acc) {
+          final DateTime dayDate = DateTime.parse(dateStr);
+          dailyLogs.add(DoctorDailyLog(
+            date: dayDate,
+            completedAppointments: acc.completed,
+            totalAppointments: acc.total,
+            isAbsent: acc.isAbsent,
+            coveringDoctorName: acc.coveringDoctorName,
+          ));
+
+          if (acc.isAbsent) {
+            absenceCount++;
+          } else {
+            if (acc.total > 0) {
+              activeDays++;
+              totalAppts += acc.total;
+              completedAppts += acc.completed;
+            }
+          }
+        });
+
+        dailyLogs.sort((a, b) => a.date.compareTo(b.date));
+
+        apptsPerDoc[name] = totalAppts;
+        completedPerDoc[name] = completedAppts;
+
+        final staffRole = docRows.firstWhere((r) => r['id'] == doctorId, orElse: () => <String, dynamic>{})['role'] as String?;
+        if (staffRole == 'doctor') {
+          performanceList.add(DoctorPerformance(
+            id: doctorId,
+            fullName: name,
+            totalAppointments: totalAppts,
+            completedAppointments: completedAppts,
+            absenceCount: absenceCount,
+            activeDays: activeDays,
+            dailyLogs: dailyLogs,
+          ));
+        }
+      });
+
       final Map<String, double> ratePerDoc = <String, double>{};
       for (final e in apptsPerDoc.entries) {
         final int cdone = completedPerDoc[e.key] ?? 0;
         ratePerDoc[e.key] = e.value > 0 ? cdone / e.value : 0;
       }
+      
       final sorted = apptsPerDoc.entries.toList()..sort((a, b) => b.value.compareTo(a.value));
-      final newStaffRows = await _service.guardQuery(() => _service
-          .from('staff').select('id').eq('role', 'doctor').eq('is_active', true)
-          .gte('created_at', range.start.toIso8601String())
-          .lte('created_at', range.end.toIso8601String()));
       return Result.success(StaffSummary(
         appointmentsPerDoctor: apptsPerDoc,
         completionRatePerDoctor: ratePerDoc,
         topDoctors: sorted.take(5).map((e) => e.key).toList(),
-        newStaffInPeriod: newStaffRows.length,
+        doctorPerformances: performanceList,
       ));
     } on AppException catch (e) {
       return Result.failure(e);
@@ -191,4 +274,11 @@ class AnalyticsRepositoryImpl implements AnalyticsRepository {
       return Result.failure(AppException.fromSupabaseException(e));
     }
   }
+}
+
+class _DailyAccumulator {
+  int total = 0;
+  int completed = 0;
+  bool isAbsent = false;
+  String? coveringDoctorName;
 }

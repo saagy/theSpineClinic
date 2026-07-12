@@ -1,7 +1,6 @@
 import 'package:spine_clinic_app/core/errors/app_exception.dart';
 import 'package:spine_clinic_app/core/errors/result.dart';
 import 'package:spine_clinic_app/core/network/supabase_service.dart';
-import 'package:spine_clinic_app/features/appointment/data/appointment_repository_recent_access.dart';
 import 'package:spine_clinic_app/features/appointment/domain/appointment.dart';
 import 'package:spine_clinic_app/features/appointment/domain/appointment_doctor.dart';
 import 'package:spine_clinic_app/features/appointment/domain/appointment_repository.dart';
@@ -9,13 +8,15 @@ import 'package:spine_clinic_app/features/appointment/domain/appointment_status.
 import 'package:spine_clinic_app/features/appointment/domain/appointment_type.dart';
 import 'package:spine_clinic_app/features/auth/domain/staff.dart';
 import 'package:spine_clinic_app/features/patient/domain/patient.dart';
-import 'package:supabase_flutter/supabase_flutter.dart' show PostgrestFilterBuilder;
+import 'package:supabase_flutter/supabase_flutter.dart'
+    show PostgrestFilterBuilder;
 
 import 'package:spine_clinic_app/features/patient/domain/clinic_location.dart';
 
 /// Supabase-backed implementation of [AppointmentRepository].
 class AppointmentRepositoryImpl implements AppointmentRepository {
-  AppointmentRepositoryImpl({required SupabaseService supabaseService}) : _service = supabaseService;
+  AppointmentRepositoryImpl({required SupabaseService supabaseService})
+    : _service = supabaseService;
   final SupabaseService _service;
 
   static const String _appointmentsTable = 'appointments';
@@ -33,13 +34,20 @@ class AppointmentRepositoryImpl implements AppointmentRepository {
   }
 
   @override
-  Future<Result<List<Appointment>>> getAppointmentsForToday(ClinicLocation? clinic) {
+  Future<Result<List<Appointment>>> getAppointmentsForToday(
+    ClinicLocation? clinic,
+  ) {
     return _run(() async {
       final DateTime localNow = DateTime.now();
-      final DateTime todayStart = DateTime(localNow.year, localNow.month, localNow.day).toUtc();
+      final DateTime todayStart = DateTime(
+        localNow.year,
+        localNow.month,
+        localNow.day,
+      ).toUtc();
       final DateTime tomorrowStart = todayStart.add(const Duration(days: 1));
 
-      var query = _service.from(_appointmentsTable)
+      var query = _service
+          .from(_appointmentsTable)
           .select('*, patient:patients!inner(clinic)');
       if (clinic != null) {
         query = query.eq('patient.clinic', clinic.dbValue);
@@ -58,8 +66,11 @@ class AppointmentRepositoryImpl implements AppointmentRepository {
   ) {
     return _run(() async {
       final DateTime localNow = DateTime.now();
-      final DateTime todayStart =
-          DateTime(localNow.year, localNow.month, localNow.day).toUtc();
+      final DateTime todayStart = DateTime(
+        localNow.year,
+        localNow.month,
+        localNow.day,
+      ).toUtc();
       final DateTime tomorrowStart = todayStart.add(const Duration(days: 1));
 
       var query = _service
@@ -77,16 +88,15 @@ class AppointmentRepositoryImpl implements AppointmentRepository {
   }
 
   @override
-  Future<Result<List<AppointmentWithPatient>>> getUpcomingAppointmentsWithPatients(
-    ClinicLocation? clinic,
-  ) {
+  Future<Result<List<AppointmentWithPatient>>>
+  getUpcomingAppointmentsWithPatients(ClinicLocation? clinic) {
     return _run(() async {
       final DateTime localNow = DateTime.now();
       final DateTime tomorrowStart = DateTime(
-            localNow.year,
-            localNow.month,
-            localNow.day,
-          ).add(const Duration(days: 1)).toUtc();
+        localNow.year,
+        localNow.month,
+        localNow.day,
+      ).add(const Duration(days: 1)).toUtc();
 
       var query = _service
           .from(_appointmentsTable)
@@ -109,14 +119,28 @@ class AppointmentRepositoryImpl implements AppointmentRepository {
   }
 
   @override
-  Future<Result<void>> updateAppointmentStatus(String appointmentId, AppointmentStatus status) {
-    return _run(() => _service.from(_appointmentsTable).update({'status': status.dbValue}).eq('id', appointmentId));
+  Future<Result<void>> updateAppointmentStatus(
+    String appointmentId,
+    AppointmentStatus status,
+  ) {
+    return _run(
+      () => _service
+          .from(_appointmentsTable)
+          .update({'status': status.dbValue})
+          .eq('id', appointmentId),
+    );
   }
 
   @override
-  Future<Result<List<AppointmentDoctor>>> getAppointmentDoctors(String appointmentId) {
+  Future<Result<List<AppointmentDoctor>>> getAppointmentDoctors(
+    String appointmentId,
+  ) {
     return _run(() async {
-      final List<Map<String, dynamic>> rows = await _service.from(_appointmentDoctorsTable).select().eq('appointment_id', appointmentId).eq('is_active', true);
+      final List<Map<String, dynamic>> rows = await _service
+          .from(_appointmentDoctorsTable)
+          .select()
+          .eq('appointment_id', appointmentId)
+          .eq('is_active', true);
       return rows.map(AppointmentDoctor.fromJson).toList();
     });
   }
@@ -126,13 +150,19 @@ class AppointmentRepositoryImpl implements AppointmentRepository {
     return _run(() async {
       final Map<String, dynamic> appointmentJson = appointment.toJson();
       if (appointment.id.isEmpty) appointmentJson.remove('id');
-      final Map<String, dynamic> row = await _service.from(_appointmentsTable).insert(appointmentJson).select('id').single();
+      final Map<String, dynamic> row = await _service
+          .from(_appointmentsTable)
+          .insert(appointmentJson)
+          .select('id')
+          .single();
       return row['id'] as String;
     });
   }
 
   @override
-  Future<Result<void>> createAppointmentDoctor(AppointmentDoctor appointmentDoctor) {
+  Future<Result<void>> createAppointmentDoctor(
+    AppointmentDoctor appointmentDoctor,
+  ) {
     return _run(() async {
       final Map<String, dynamic> docJson = appointmentDoctor.toJson();
       if (appointmentDoctor.id.isEmpty) docJson.remove('id');
@@ -143,7 +173,8 @@ class AppointmentRepositoryImpl implements AppointmentRepository {
   @override
   Future<Result<List<Staff>>> getAssignedDoctors(String patientId) {
     return _run(() async {
-      final List<Map<String, dynamic>> rows = await _service.from('patient_doctors')
+      final List<Map<String, dynamic>> rows = await _service
+          .from('patient_doctors')
           .select('staff:staff!doctor_id (*)')
           .eq('patient_id', patientId);
       // Returns ALL assigned doctors regardless of active status.
@@ -161,9 +192,15 @@ class AppointmentRepositoryImpl implements AppointmentRepository {
   }
 
   @override
-  Future<Result<List<Appointment>>> getAppointmentsForPatient(String patientId) {
+  Future<Result<List<Appointment>>> getAppointmentsForPatient(
+    String patientId,
+  ) {
     return _run(() async {
-      final List<Map<String, dynamic>> rows = await _service.from(_appointmentsTable).select().eq('patient_id', patientId).order('scheduled_at', ascending: true);
+      final List<Map<String, dynamic>> rows = await _service
+          .from(_appointmentsTable)
+          .select()
+          .eq('patient_id', patientId)
+          .order('scheduled_at', ascending: true);
       return rows.map(Appointment.fromJson).toList();
     });
   }
@@ -240,7 +277,10 @@ class AppointmentRepositoryImpl implements AppointmentRepository {
     DateTime? dateTo,
     bool? usePackageFilter,
   }) {
-    var builder = _service.from(_appointmentsTable).select().eq('patient_id', patientId);
+    var builder = _service
+        .from(_appointmentsTable)
+        .select()
+        .eq('patient_id', patientId);
     if (dateFrom != null) {
       builder = builder.gte('scheduled_at', dateFrom.toUtc().toIso8601String());
     }
@@ -248,10 +288,16 @@ class AppointmentRepositoryImpl implements AppointmentRepository {
       builder = builder.lt('scheduled_at', dateTo.toUtc().toIso8601String());
     }
     if (statusFilter != null && statusFilter.isNotEmpty) {
-      builder = builder.inFilter('status', statusFilter.map((s) => s.dbValue).toList());
+      builder = builder.inFilter(
+        'status',
+        statusFilter.map((s) => s.dbValue).toList(),
+      );
     }
     if (typeFilter != null && typeFilter.isNotEmpty) {
-      builder = builder.inFilter('type', typeFilter.map((t) => t.dbValue).toList());
+      builder = builder.inFilter(
+        'type',
+        typeFilter.map((t) => t.dbValue).toList(),
+      );
     }
     if (usePackageFilter != null) {
       builder = builder.eq('use_package', usePackageFilter);
@@ -302,15 +348,24 @@ class AppointmentRepositoryImpl implements AppointmentRepository {
   @override
   Future<Result<Appointment>> getAppointmentById(String appointmentId) {
     return _run(() async {
-      final Map<String, dynamic> row = await _service.from(_appointmentsTable).select().eq('id', appointmentId).single();
+      final Map<String, dynamic> row = await _service
+          .from(_appointmentsTable)
+          .select()
+          .eq('id', appointmentId)
+          .single();
       return Appointment.fromJson(row);
     });
   }
 
   @override
-  Future<Result<List<AppointmentDoctor>>> getAllAppointmentDoctors(String appointmentId) {
+  Future<Result<List<AppointmentDoctor>>> getAllAppointmentDoctors(
+    String appointmentId,
+  ) {
     return _run(() async {
-      final List<Map<String, dynamic>> rows = await _service.from(_appointmentDoctorsTable).select().eq('appointment_id', appointmentId);
+      final List<Map<String, dynamic>> rows = await _service
+          .from(_appointmentDoctorsTable)
+          .select()
+          .eq('appointment_id', appointmentId);
       return rows.map(AppointmentDoctor.fromJson).toList();
     });
   }
@@ -333,27 +388,39 @@ class AppointmentRepositoryImpl implements AppointmentRepository {
 
       final List<DoctorScheduleItem> items = [];
       for (final Map<String, dynamic> row in rows) {
-        final AppointmentDoctor appointmentDoctor = AppointmentDoctor.fromJson(row);
-        final Map<String, dynamic>? appointmentMap = row['appointment'] as Map<String, dynamic>?;
+        final AppointmentDoctor appointmentDoctor = AppointmentDoctor.fromJson(
+          row,
+        );
+        final Map<String, dynamic>? appointmentMap =
+            row['appointment'] as Map<String, dynamic>?;
         if (appointmentMap == null) continue;
 
         final Appointment appointment = Appointment.fromJson(appointmentMap);
-        final Map<String, dynamic>? patientMap = appointmentMap['patient'] as Map<String, dynamic>?;
+        final Map<String, dynamic>? patientMap =
+            appointmentMap['patient'] as Map<String, dynamic>?;
         if (patientMap == null) continue;
 
         final Patient patient = Patient.fromJson(patientMap);
-        final Map<String, dynamic>? replacedDoctorMap = row['replaced_doctor'] as Map<String, dynamic>?;
-        final Staff? replacedDoctor = replacedDoctorMap != null ? Staff.fromJson(replacedDoctorMap) : null;
+        final Map<String, dynamic>? replacedDoctorMap =
+            row['replaced_doctor'] as Map<String, dynamic>?;
+        final Staff? replacedDoctor = replacedDoctorMap != null
+            ? Staff.fromJson(replacedDoctorMap)
+            : null;
 
-        items.add(DoctorScheduleItem(
-          appointment: appointment,
-          appointmentDoctor: appointmentDoctor,
-          patient: patient,
-          replacedDoctor: replacedDoctor,
-        ));
+        items.add(
+          DoctorScheduleItem(
+            appointment: appointment,
+            appointmentDoctor: appointmentDoctor,
+            patient: patient,
+            replacedDoctor: replacedDoctor,
+          ),
+        );
       }
 
-      items.sort((a, b) => a.appointment.scheduledAt.compareTo(b.appointment.scheduledAt));
+      items.sort(
+        (a, b) =>
+            a.appointment.scheduledAt.compareTo(b.appointment.scheduledAt),
+      );
       return items;
     });
   }
@@ -373,7 +440,9 @@ class AppointmentRepositoryImpl implements AppointmentRepository {
   }) {
     return _run(() async {
       final List<String>? doctorIds = await _resolveDoctorIds(doctorId);
-      if (doctorIds != null && doctorIds.isEmpty) return <AppointmentWithPatient>[];
+      if (doctorIds != null && doctorIds.isEmpty) {
+        return <AppointmentWithPatient>[];
+      }
 
       final builder = _applyFilters(
         doctorIds: doctorIds,
@@ -390,10 +459,12 @@ class AppointmentRepositoryImpl implements AppointmentRepository {
           .range(offset, offset + limit - 1);
       return rows
           .where((r) => r['patient'] != null)
-          .map((r) => AppointmentWithPatient(
-                appointment: Appointment.fromJson(r),
-                patient: Patient.fromJson(r['patient'] as Map<String, dynamic>),
-              ))
+          .map(
+            (r) => AppointmentWithPatient(
+              appointment: Appointment.fromJson(r),
+              patient: Patient.fromJson(r['patient'] as Map<String, dynamic>),
+            ),
+          )
           .toList();
     });
   }
@@ -451,9 +522,15 @@ class AppointmentRepositoryImpl implements AppointmentRepository {
     String? type,
     String? patientQuery,
   }) {
-    var builder = _service.from(_appointmentsTable).select('*, patient:patients!inner(*)');
-    if (dateFrom != null) builder = builder.gte('scheduled_at', dateFrom.toUtc().toIso8601String());
-    if (dateTo != null) builder = builder.lt('scheduled_at', dateTo.toUtc().toIso8601String());
+    var builder = _service
+        .from(_appointmentsTable)
+        .select('*, patient:patients!inner(*)');
+    if (dateFrom != null) {
+      builder = builder.gte('scheduled_at', dateFrom.toUtc().toIso8601String());
+    }
+    if (dateTo != null) {
+      builder = builder.lt('scheduled_at', dateTo.toUtc().toIso8601String());
+    }
     if (status != null) builder = builder.eq('status', status);
     if (clinic != null) builder = builder.eq('patient.clinic', clinic);
     if (type != null) builder = builder.eq('type', type);
@@ -483,22 +560,23 @@ class AppointmentRepositoryImpl implements AppointmentRepository {
 
   @override
   Future<Result<void>> updateAppointment(Appointment appointment) {
-    return _run(() => _service
-        .from(_appointmentsTable)
-        .update({
-          'scheduled_at': appointment.scheduledAt.toIso8601String(),
-          'type': appointment.type.dbValue,
-          'use_package': appointment.usePackage,
-        })
-        .eq('id', appointment.id));
+    return _run(
+      () => _service
+          .from(_appointmentsTable)
+          .update({
+            'scheduled_at': appointment.scheduledAt.toIso8601String(),
+            'type': appointment.type.dbValue,
+            'use_package': appointment.usePackage,
+          })
+          .eq('id', appointment.id),
+    );
   }
 
   @override
   Future<Result<void>> deleteAppointment(String appointmentId) {
-    return _run(() => _service
-        .from(_appointmentsTable)
-        .delete()
-        .eq('id', appointmentId));
+    return _run(
+      () => _service.from(_appointmentsTable).delete().eq('id', appointmentId),
+    );
   }
 
   @override
@@ -513,7 +591,7 @@ class AppointmentRepositoryImpl implements AppointmentRepository {
           .from(_appointmentDoctorsTable)
           .select()
           .eq('appointment_id', appointmentId);
-      
+
       final List<String> currentActiveDoctorIds = allRows
           .where((row) => row['is_active'] as bool == true)
           .map((row) => row['doctor_id'] as String)
@@ -536,7 +614,11 @@ class AppointmentRepositoryImpl implements AppointmentRepository {
 
       // 4. Identify doctor IDs to insert: in new doctorIds but not in active or inactive lists
       final List<String> toInsert = doctorIds
-          .where((id) => !currentActiveDoctorIds.contains(id) && !currentInactiveDoctorIds.contains(id))
+          .where(
+            (id) =>
+                !currentActiveDoctorIds.contains(id) &&
+                !currentInactiveDoctorIds.contains(id),
+          )
           .toList();
 
       // 5. Perform deactivations (set is_active = false)
@@ -563,7 +645,9 @@ class AppointmentRepositoryImpl implements AppointmentRepository {
 
       // 7. Perform insertions (insert new rows with is_active = true)
       if (toInsert.isNotEmpty) {
-        final List<Map<String, dynamic>> rowsToInsert = toInsert.map((doctorId) {
+        final List<Map<String, dynamic>> rowsToInsert = toInsert.map((
+          doctorId,
+        ) {
           return {
             'appointment_id': appointmentId,
             'doctor_id': doctorId,
@@ -589,26 +673,17 @@ class AppointmentRepositoryImpl implements AppointmentRepository {
     required List<String> doctorIds,
   }) {
     return _run(() async {
-      await _service.rpc('book_recurring_appointments', params: {
-        'p_patient_id': patientId,
-        'p_type': type.dbValue,
-        'p_slots': slots.map((s) => s.toUtc().toIso8601String()).toList(),
-        'p_use_package': type.affectsPackageBalance ? usePackage : false,
-        'p_creator_id': creatorId,
-        'p_doctor_ids': doctorIds,
-      });
+      await _service.rpc(
+        'book_recurring_appointments',
+        params: {
+          'p_patient_id': patientId,
+          'p_type': type.dbValue,
+          'p_slots': slots.map((s) => s.toUtc().toIso8601String()).toList(),
+          'p_use_package': type.affectsPackageBalance ? usePackage : false,
+          'p_creator_id': creatorId,
+          'p_doctor_ids': doctorIds,
+        },
+      );
     });
-  }
-
-  @override
-  Future<Result<bool>> hasDoctorRecentAppointmentWithPatient({
-    required String patientId,
-    required String doctorId,
-  }) {
-    return checkRecentDoctorPatientAppointment(
-      service: _service,
-      patientId: patientId,
-      doctorId: doctorId,
-    );
   }
 }

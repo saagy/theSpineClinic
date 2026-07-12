@@ -41,7 +41,7 @@ class StaffRepositoryImpl implements StaffRepository {
         () => _service
             .from('staff')
             .select()
-            .or('role.eq.doctor,role.eq.super_admin')
+            .eq('role', UserRole.doctor.dbValue)
             .eq('is_active', true)
             .order('full_name'),
       );

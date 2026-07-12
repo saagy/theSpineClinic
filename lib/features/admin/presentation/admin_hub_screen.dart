@@ -29,7 +29,7 @@ import 'package:spine_clinic_app/shared/widgets/error_view.dart';
 import 'package:spine_clinic_app/shared/widgets/profile_menu_row.dart';
 import 'package:spine_clinic_app/shared/widgets/staff_profile_header.dart';
 
-/// Super-admin hub rendered as the "Admin" tab sub-page.
+/// Clinic Admin hub rendered as the "Admin" tab sub-page.
 class AdminHubScreen extends ConsumerWidget {
   /// Creates an [AdminHubScreen].
   const AdminHubScreen({super.key});
@@ -100,12 +100,6 @@ class _AdminHubBody extends ConsumerWidget {
                     onEditProfile: () => EditProfileSheet.show(context, user),
                   ),
                   const SizedBox(height: AppSizes.p16),
-                  ProfileMenuRow(
-                    title: AppStrings.appointmentHistory,
-                    subtitle: AppStrings.appointmentHistorySubtitle,
-                    leadingIcon: Icons.history_rounded,
-                    onTap: () => context.push(AppRoutes.doctorHistory),
-                  ),
                   ProfileMenuRow(
                     title: AppStrings.staffManagement,
                     subtitle: AppStrings.manageStaffLabel,

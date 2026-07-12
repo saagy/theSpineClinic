@@ -43,7 +43,7 @@ final class EditPatientControllerProvider
 }
 
 String _$editPatientControllerHash() =>
-    r'354573b660785641415ed8669ad62ff67d139fc0';
+    r'a9e6a8fb6af816df8684294460740a7859fd4761';
 
 /// Riverpod presentation controller coordinating patient updates.
 ///

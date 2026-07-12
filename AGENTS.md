@@ -188,4 +188,4 @@ Target aesthetic: Medics Medical App UI Kit vibe.
 - **Auth Brand Component Extraction**: Reusable `ClinicBrandMark` widget layout is currently duplicated in `splash_screen.dart`, `login_screen.dart`, and `register_screen.dart`. Should be refactored into a single shared widget in `lib/shared/widgets/clinic_brand_mark.dart`.
 - **Forgot Password Flow**: Secure and free password recovery is supported by the Supabase backend (`resetPasswordForEmail`), but the frontend views (Forgot/Reset screens and routing) are deferred.
 - **Progressive Onboarding**: The registration form has 6+ fields and should eventually be broken into a 2-step wizard (identity details → credentials) to minimize form fatigue.
-
+- **Clinic Package Settings Product Definition**: The existing Clinic Settings management UI is intentionally unrouted. Before reconnecting it, define who may change packages, how changes affect existing balances and payments, what audit/version history is required, and the final admin UX. The `clinic_settings` data and payment package-reading flow remain active.

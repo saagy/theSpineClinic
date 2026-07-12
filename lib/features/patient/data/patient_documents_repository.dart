@@ -1,29 +1,20 @@
-/// Supabase-backed implementation of [PatientDocumentsRepository].
-///
-/// Communicates directly with Supabase Storage and the
-/// `public.patient_documents` table. Wraps all async returns in
-/// [Result] to satisfy Rule 4.
-///
-/// Storage model: each upload writes a single object to
-/// `patient-documents/{patientId}/{timestamp}_{fileName}`. Bytes pass
-/// through unchanged — no client-side compression.
-library;
-
 import 'dart:typed_data';
-import 'package:supabase_flutter/supabase_flutter.dart' hide StorageException;
 
+import 'package:supabase_flutter/supabase_flutter.dart' hide StorageException;
 import 'package:spine_clinic_app/core/errors/app_exception.dart';
 import 'package:spine_clinic_app/core/errors/result.dart';
+import 'package:spine_clinic_app/core/network/supabase_service.dart';
+import 'package:spine_clinic_app/features/patient/data/patient_document_storage.dart';
 import 'package:spine_clinic_app/features/patient/data/patient_storage_cleanup.dart';
 import 'package:spine_clinic_app/features/patient/domain/patient_document.dart';
 import 'package:spine_clinic_app/features/patient/domain/patient_documents_repository.dart';
 
-/// Supabase-backed implementation of [PatientDocumentsRepository].
+/// Supabase-backed patient document metadata and Storage operations.
 class PatientDocumentsRepositoryImpl implements PatientDocumentsRepository {
-  /// Creates a [PatientDocumentsRepositoryImpl].
-  PatientDocumentsRepositoryImpl();
+  PatientDocumentsRepositoryImpl({required SupabaseService supabaseService})
+    : _service = supabaseService;
 
-  SupabaseClient get _client => Supabase.instance.client;
+  final SupabaseService _service;
 
   static const String _bucket = 'patient-documents';
   static const int _maxBytes = 10 * 1024 * 1024;
@@ -32,16 +23,16 @@ class PatientDocumentsRepositoryImpl implements PatientDocumentsRepository {
   @override
   Future<Result<List<PatientDocument>>> fetchDocuments(String patientId) async {
     try {
-      final List<Map<String, dynamic>> rows = await _client
+      final List<Map<String, dynamic>> rows = await _service
           .from('patient_documents')
           .select()
           .eq('patient_id', patientId)
           .order('uploaded_at', ascending: false);
       return Result.success(rows.map(PatientDocument.fromJson).toList());
-    } on PostgrestException catch (e) {
-      return Result.failure(AppException.fromSupabaseException(e));
-    } on Exception catch (e) {
-      return Result.failure(AppException.fromSupabaseException(e));
+    } on PostgrestException catch (error) {
+      return Result.failure(AppException.fromSupabaseException(error));
+    } on Exception catch (error) {
+      return Result.failure(AppException.fromSupabaseException(error));
     }
   }
 
@@ -52,7 +43,7 @@ class PatientDocumentsRepositoryImpl implements PatientDocumentsRepository {
     required Uint8List fileBytes,
     required String uploadedBy,
   }) =>
-      _uploadImpl(
+      _upload(
         patientId: patientId,
         fileName: fileName,
         fileBytes: fileBytes,
@@ -68,7 +59,7 @@ class PatientDocumentsRepositoryImpl implements PatientDocumentsRepository {
         ),
       );
 
-  Future<Result<PatientDocument>> _uploadImpl({
+  Future<Result<PatientDocument>> _upload({
     required String patientId,
     required String fileName,
     required Uint8List fileBytes,
@@ -87,14 +78,11 @@ class PatientDocumentsRepositoryImpl implements PatientDocumentsRepository {
 
       final String stamp = DateTime.now().millisecondsSinceEpoch.toString();
       final String storagePath = '$patientId/${stamp}_$fileName';
-      await _client.storage
-          .from(_bucket)
-          .uploadBinary(storagePath, fileBytes);
-
-      final String fileUrl =
-          _client.storage.from(_bucket).getPublicUrl(storagePath);
-
-      final Map<String, dynamic> row = await _client
+      await _service.storage(_bucket).uploadBinary(storagePath, fileBytes);
+      final String fileUrl = _service
+          .storage(_bucket)
+          .getPublicUrl(storagePath);
+      final Map<String, dynamic> row = await _service
           .from('patient_documents')
           .insert({
             'patient_id': patientId,
@@ -105,15 +93,11 @@ class PatientDocumentsRepositoryImpl implements PatientDocumentsRepository {
           })
           .select()
           .single();
-
       return Result.success(PatientDocument.fromJson(row));
-    } on StorageException catch (e) {
-      return Result.failure(AppException.fromSupabaseException(e));
-    } on PostgrestException catch (e) {
-      return Result.failure(AppException.fromSupabaseException(e));
-      // ignore: avoid_catches_without_on_clauses
-    } catch (e) {
-      return Result.failure(UnknownException(message: e.toString()));
+    } on PostgrestException catch (error) {
+      return Result.failure(AppException.fromSupabaseException(error));
+    } on Exception catch (error) {
+      return Result.failure(AppException.fromSupabaseException(error));
     }
   }
 
@@ -123,7 +107,7 @@ class PatientDocumentsRepositoryImpl implements PatientDocumentsRepository {
     required String fileName,
   }) async {
     try {
-      final String? storagePath = _storagePathFromUrl(fileUrl);
+      final String? storagePath = patientDocumentStoragePath(fileUrl);
       if (storagePath == null || storagePath.isEmpty) {
         return const Result.failure(
           DatabaseException(
@@ -133,77 +117,55 @@ class PatientDocumentsRepositoryImpl implements PatientDocumentsRepository {
           ),
         );
       }
-      final Uint8List bytes =
-          await _client.storage.from(_bucket).download(storagePath);
-      return Result.success(bytes);
-    } on StorageException catch (e) {
-      return Result.failure(AppException.fromSupabaseException(e));
-    } on Exception catch (e) {
-      return Result.failure(AppException.fromSupabaseException(e));
+      return Result.success(
+        await _service.storage(_bucket).download(storagePath),
+      );
+    } on Exception catch (error) {
+      return Result.failure(AppException.fromSupabaseException(error));
     }
   }
 
   @override
-  Future<Result<void>> deleteDocument({required String documentId}) async {
+  Future<Result<PatientDocument>> renameDocument({
+    required String documentId,
+    required String fileName,
+  }) async {
     try {
-      final Map<String, dynamic>? row = await _client
-          .from('patient_documents')
-          .select('file_url, thumbnail_url')
-          .eq('id', documentId)
-          .maybeSingle();
-
-      // DB row FIRST. If this fails (e.g. RLS denies) no storage
-      // object is touched — the original bug is "blob gone, row
-      // remains, broken UI"; this ordering prevents it.
-      await _client.from('patient_documents').delete().eq('id', documentId);
-
-      // Storage sweep is best-effort. The DB row is the source of
-      // truth for the UI; a transient blob-removal failure leaves
-      // an orphan that is reaped by [deletePatientStorageFolder]
-      // when the patient is later deleted.
-      if (row != null) {
-        final List<String> paths = <String>[];
-        final String? main = _storagePathFromUrl(row['file_url'] as String?);
-        if (main != null && main.isNotEmpty) paths.add(main);
-        final String? thumb =
-            _storagePathFromUrl(row['thumbnail_url'] as String?);
-        if (thumb != null && thumb.isNotEmpty) paths.add(thumb);
-        if (paths.isNotEmpty) {
-          // Storage sweep is best-effort. The DB row is the source
-          // of truth for the UI; a transient blob-removal failure
-          // leaves an orphan that is reaped by [deletePatient] ->
-          // [deletePatientStorageFolder] when the patient is
-          // later deleted. Swallow with try/catch (returning the
-          // empty list silences the analyzer).
-          try {
-            await _client.storage.from(_bucket).remove(paths);
-            // ignore: unused_result
-          } on StorageException {
-            // Orphan tolerated; see comment above.
-          }
-        }
+      final String trimmed = fileName.trim();
+      if (trimmed.isEmpty ||
+          trimmed.length > 255 ||
+          trimmed.contains(RegExp(r'[\x00-\x1F\x7F]'))) {
+        return const Result.failure(
+          DatabaseException(
+            code: 'db/invalid-document-name',
+            message: 'Document name must be 1-255 printable characters.',
+            userMessageKey: 'error_database_validation_failed',
+          ),
+        );
       }
-      return const Result.success(null);
-    } on PostgrestException catch (e) {
-      return Result.failure(AppException.fromSupabaseException(e));
-    } on Exception catch (e) {
-      return Result.failure(AppException.fromSupabaseException(e));
+      final Map<String, dynamic> row = await _service
+          .from('patient_documents')
+          .update({'file_name': trimmed})
+          .eq('id', documentId)
+          .select()
+          .single();
+      return Result.success(PatientDocument.fromJson(row));
+    } on PostgrestException catch (error) {
+      return Result.failure(AppException.fromSupabaseException(error));
+    } on Exception catch (error) {
+      return Result.failure(AppException.fromSupabaseException(error));
     }
   }
+
+  @override
+  Future<Result<void>> deleteDocument({required String documentId}) =>
+      deleteStoredPatientDocument(
+        service: _service,
+        bucket: _bucket,
+        documentId: documentId,
+      );
 
   @override
   Future<Result<void>> deletePatientStorageFolder(String patientId) =>
-      deletePatientStorageFolderImpl(patientId);
-
-  /// Extracts the relative storage path from a public URL.
-  ///
-  /// Works for any URL prefix (`object/public/...`,
-  /// `object/sign/...`, `rendition/...`, etc.).
-  static String? _storagePathFromUrl(String? url) {
-    if (url == null) return null;
-    const String key = 'patient-documents/';
-    final int idx = url.indexOf(key);
-    if (idx == -1) return null;
-    return Uri.decodeComponent(url.substring(idx + key.length));
-  }
+      deletePatientStorageFolderImpl(_service, patientId);
 }

@@ -46,7 +46,8 @@ class AppShell extends StatelessWidget {
     return LoadingOverlay(
       isLoading: isGlobalLoading,
       child: LayoutBuilder(
-        builder: (context, constraints) => constraints.maxWidth >= _wideBreakpoint
+        builder: (context, constraints) =>
+            constraints.maxWidth >= _wideBreakpoint
             ? _buildWide(context)
             : _buildNarrow(context),
       ),
@@ -55,21 +56,23 @@ class AppShell extends StatelessWidget {
 
   Widget _buildWide(BuildContext context) {
     return Scaffold(
-      body: Row(children: [
-        AppNavRail(
-          currentIndex: currentTabIndex,
-          onTabSelected: onTabSelected,
-          userRole: userRole,
-        ),
-        Expanded(
-          child: Scaffold(
-            appBar: showBrandedAppBar
-                ? _BrandedAppBar(userRole: userRole, actions: actions)
-                : null,
-            body: child,
+      body: Row(
+        children: [
+          AppNavRail(
+            currentIndex: currentTabIndex,
+            onTabSelected: onTabSelected,
+            userRole: userRole,
           ),
-        ),
-      ]),
+          Expanded(
+            child: Scaffold(
+              appBar: showBrandedAppBar
+                  ? _BrandedAppBar(userRole: userRole, actions: actions)
+                  : null,
+              body: child,
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -107,32 +110,40 @@ class _BrandedAppBar extends StatelessWidget implements PreferredSizeWidget {
         bottom: false,
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: AppSizes.p20),
-          child: Row(children: [
-            Container(
-              width: AppSizes.iconDefault + AppSizes.p4,
-              height: AppSizes.iconDefault + AppSizes.p4,
-              decoration: BoxDecoration(
-                color: cs.primary,
-                borderRadius: BorderRadius.circular(AppSizes.r8),
+          child: Row(
+            children: [
+              Container(
+                width: AppSizes.iconDefault + AppSizes.p4,
+                height: AppSizes.iconDefault + AppSizes.p4,
+                decoration: BoxDecoration(
+                  color: cs.primary,
+                  borderRadius: BorderRadius.circular(AppSizes.r8),
+                ),
+                child: Icon(
+                  Icons.spa_rounded,
+                  color: cs.onPrimary,
+                  size: AppSizes.iconDefault,
+                ),
               ),
-              child: Icon(Icons.spa_rounded,
-                  color: cs.onPrimary, size: AppSizes.iconDefault),
-            ),
-            const SizedBox(width: AppSizes.p12),
-            Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(AppStrings.appName, style: AppTextStyles.brand),
-                Text(AppStrings.appTagline,
-                    style: AppTextStyles.caption
-                        .copyWith(color: cs.onSurfaceVariant)),
-              ],
-            ),
-            const Spacer(),
-            _HomeButton(userRole: userRole),
-            if (actions != null && actions!.isNotEmpty) ...actions!,
-          ]),
+              const SizedBox(width: AppSizes.p12),
+              Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(AppStrings.appName, style: AppTextStyles.brand),
+                  Text(
+                    AppStrings.appTagline,
+                    style: AppTextStyles.caption.copyWith(
+                      color: cs.onSurfaceVariant,
+                    ),
+                  ),
+                ],
+              ),
+              const Spacer(),
+              _HomeButton(userRole: userRole),
+              if (actions != null && actions!.isNotEmpty) ...actions!,
+            ],
+          ),
         ),
       ),
     );
@@ -146,16 +157,18 @@ class _HomeButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return IconButton(
-      icon: Icon(Icons.home_rounded,
-          color: Theme.of(context).colorScheme.primary),
-      tooltip: 'Home',
+      icon: Icon(
+        Icons.home_rounded,
+        color: Theme.of(context).colorScheme.primary,
+      ),
+      tooltip: AppStrings.home,
       onPressed: () => context.go(_homeRoute),
     );
   }
 
   String get _homeRoute => switch (userRole) {
-        'doctor' => AppRoutes.schedule,
-        'super_admin' => AppRoutes.schedule,
-        _ => AppRoutes.allAppointments,
-      };
+    'doctor' => AppRoutes.schedule,
+    'super_admin' => AppRoutes.reports,
+    _ => AppRoutes.allAppointments,
+  };
 }
