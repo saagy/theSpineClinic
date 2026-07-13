@@ -22,8 +22,7 @@ Future<bool> deleteAppointmentWithConfirmation(
   WidgetRef ref,
   Appointment appointment,
 ) async {
-  if (appointment.status == AppointmentStatus.checkedIn ||
-      appointment.status == AppointmentStatus.completed) {
+  if (appointment.status == AppointmentStatus.checkedIn) {
     return false;
   }
 

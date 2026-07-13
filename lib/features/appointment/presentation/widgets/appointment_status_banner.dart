@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:spine_clinic_app/core/constants/app_sizes.dart';
+import 'package:spine_clinic_app/core/constants/app_strings.dart';
 import 'package:spine_clinic_app/core/constants/app_text_styles.dart';
 import 'package:spine_clinic_app/features/appointment/domain/appointment_status.dart';
 
@@ -18,7 +19,6 @@ class AppointmentStatusBanner extends StatelessWidget {
     final Color bg;
     final Color fg;
     final IconData icon;
-    final String title;
     final String description;
 
     switch (status) {
@@ -26,36 +26,19 @@ class AppointmentStatusBanner extends StatelessWidget {
         bg = colorScheme.onSurface.withValues(alpha: 0.05);
         fg = colorScheme.onSurfaceVariant;
         icon = Icons.schedule_rounded;
-        title = 'Scheduled';
-        description = 'Patient expected.';
+        description = AppStrings.patientExpected;
         break;
       case AppointmentStatus.checkedIn:
         bg = colorScheme.primaryContainer;
         fg = colorScheme.onPrimaryContainer;
         icon = Icons.check_circle_outline_rounded;
-        title = 'Checked In';
-        description = 'Patient has arrived.';
+        description = AppStrings.patientArrived;
         break;
       case AppointmentStatus.cancelled:
         bg = colorScheme.errorContainer;
         fg = colorScheme.error;
         icon = Icons.cancel_outlined;
-        title = 'Cancelled';
-        description = 'Appointment cancelled.';
-        break;
-      case AppointmentStatus.completed:
-        bg = colorScheme.surface;
-        fg = colorScheme.onSurfaceVariant;
-        icon = Icons.task_alt_rounded;
-        title = 'Completed';
-        description = 'Session finished.';
-        break;
-      case AppointmentStatus.noShow:
-        bg = colorScheme.tertiaryContainer;
-        fg = colorScheme.onTertiaryContainer;
-        icon = Icons.person_off_rounded;
-        title = 'No Show';
-        description = 'Patient did not arrive.';
+        description = AppStrings.appointmentCancelledDescription;
         break;
     }
 
@@ -67,26 +50,19 @@ class AppointmentStatusBanner extends StatelessWidget {
       decoration: BoxDecoration(
         color: bg,
         border: Border(
-          left: BorderSide(
-            color: fg,
-            width: 4.0,
-          ),
+          left: BorderSide(color: fg, width: AppSizes.p4),
         ),
       ),
       child: Row(
         children: [
-          Icon(
-            icon,
-            color: fg,
-            size: AppSizes.iconDefault,
-          ),
+          Icon(icon, color: fg, size: AppSizes.iconDefault),
           const SizedBox(width: AppSizes.p12),
           Expanded(
             child: Text.rich(
               TextSpan(
                 children: [
                   TextSpan(
-                    text: '$title: ',
+                    text: '${status.displayLabel}: ',
                     style: AppTextStyles.bodyBold.copyWith(color: fg),
                   ),
                   TextSpan(

@@ -18,7 +18,7 @@ enum UserRole {
   /// Front-desk operations — patients, appointments, payments.
   receptionist('receptionist'),
 
-  /// Clinical operations — schedule, notes, own replacements.
+  /// Clinical operations — schedule and notes.
   doctor('doctor');
 
   const UserRole(this.dbValue);

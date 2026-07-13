@@ -9,7 +9,7 @@ library;
 import 'package:spine_clinic_app/features/patient/domain/patient.dart';
 
 /// Returns the latest [scheduled_at] among [appointmentRows] whose
-/// [status] is `checked_in` or `completed`, or `null` if none qualify.
+/// [status] is `checked_in`, or `null` if none qualify.
 ///
 /// Dates in the future are silently ignored — a checked-in session
 /// scheduled for tomorrow cannot be a "last visit" that already happened.
@@ -17,12 +17,14 @@ import 'package:spine_clinic_app/features/patient/domain/patient.dart';
 /// Each row is expected to have at least:
 /// - `scheduled_at`: ISO‑8601 timestamp string
 /// - `status`: one of the `appointment_status` enum values
-DateTime? computeLastAppointmentDate(List<Map<String, dynamic>> appointmentRows) {
+DateTime? computeLastAppointmentDate(
+  List<Map<String, dynamic>> appointmentRows,
+) {
   final DateTime now = DateTime.now();
   DateTime? latest;
   for (final row in appointmentRows) {
     final String? status = row['status'] as String?;
-    if (status != 'checked_in' && status != 'completed') continue;
+    if (status != 'checked_in') continue;
     final String? scheduledAt = row['scheduled_at'] as String?;
     if (scheduledAt == null) continue;
     final DateTime date;

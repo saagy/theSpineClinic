@@ -24,9 +24,7 @@ CREATE TYPE public.appointment_type AS ENUM (
 CREATE TYPE public.appointment_status AS ENUM (
   'scheduled',
   'checked_in',
-  'completed',
-  'cancelled',
-  'no_show'
+  'cancelled'
 );
 
 -- Core Tables
@@ -82,8 +80,6 @@ CREATE TABLE public.appointment_doctors (
   id                 uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   appointment_id     uuid NOT NULL REFERENCES public.appointments(id) ON DELETE CASCADE,
   doctor_id          uuid NOT NULL REFERENCES public.staff(id) ON DELETE RESTRICT,
-  is_replacement     boolean NOT NULL DEFAULT false,
-  replaced_doctor_id uuid REFERENCES public.staff(id) ON DELETE SET NULL,
   is_active          boolean NOT NULL DEFAULT true,
   added_by           uuid REFERENCES public.staff(id) ON DELETE SET NULL,
   added_at           timestamptz NOT NULL DEFAULT now()
@@ -125,29 +121,10 @@ CREATE TABLE public.payment_records (
 );
 ALTER TABLE public.payment_records ENABLE ROW LEVEL SECURITY;
 
-CREATE TABLE public.clinic_settings (
-  id          uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  packages    jsonb NOT NULL,
-  updated_by  uuid REFERENCES public.staff(id) ON DELETE SET NULL,
-  updated_at  timestamptz NOT NULL DEFAULT now()
-);
-ALTER TABLE public.clinic_settings ENABLE ROW LEVEL SECURITY;
-
-CREATE TABLE public.doctor_replacements (
-  id                  uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  absent_doctor_id    uuid NOT NULL REFERENCES public.staff(id) ON DELETE CASCADE,
-  covering_doctor_id  uuid NOT NULL REFERENCES public.staff(id) ON DELETE CASCADE,
-  replacement_date    date NOT NULL,
-  initiated_by        uuid REFERENCES public.staff(id) ON DELETE SET NULL,
-  created_at          timestamptz NOT NULL DEFAULT now()
-);
-ALTER TABLE public.doctor_replacements ENABLE ROW LEVEL SECURITY;
-
 -- Indexes
 CREATE UNIQUE INDEX unique_active_appointment_doctor ON public.appointment_doctors USING btree (appointment_id, doctor_id) WHERE (is_active = true);
 CREATE INDEX idx_appointments_patient_status_scheduled ON public.appointments USING btree (patient_id, status, scheduled_at DESC);
 CREATE INDEX idx_appointments_scheduled_at ON public.appointments USING btree (scheduled_at);
-CREATE UNIQUE INDEX unique_absent_doctor_date ON public.doctor_replacements USING btree (absent_doctor_id, replacement_date);
 CREATE INDEX idx_patient_notes_patient ON public.patient_notes USING btree (patient_id);
 
 -- Functions & RPCs
@@ -246,11 +223,7 @@ BEGIN
        EXISTS (SELECT 1 FROM public.patient_doctors WHERE doctor_id = OLD.id)
        OR EXISTS (
          SELECT 1 FROM public.appointment_doctors
-         WHERE doctor_id = OLD.id OR replaced_doctor_id = OLD.id
-       )
-       OR EXISTS (
-         SELECT 1 FROM public.doctor_replacements
-         WHERE absent_doctor_id = OLD.id OR covering_doctor_id = OLD.id
+         WHERE doctor_id = OLD.id
        )
      ) THEN
     RAISE EXCEPTION 'Reassign this doctor before changing their role.'
@@ -487,17 +460,15 @@ BEGIN
     RETURN NEW;
   END IF;
 
-  IF TG_OP = 'UPDATE'
-     AND OLD.status = 'scheduled'
-     AND NEW.status IN ('checked_in', 'completed')
+  IF OLD.status = 'scheduled'
+     AND NEW.status = 'checked_in'
      AND NEW.use_package = true THEN
     EXECUTE format(
       'UPDATE public.patients SET %I = %I - 1 WHERE id = $1',
       bucket, bucket
     ) USING NEW.patient_id;
 
-  ELSIF TG_OP = 'UPDATE'
-     AND OLD.status IN ('checked_in', 'completed')
+  ELSIF OLD.status = 'checked_in'
      AND NEW.status IN ('scheduled', 'cancelled')
      AND OLD.use_package = true THEN
     EXECUTE format(
@@ -634,13 +605,11 @@ BEGIN
       INSERT INTO public.appointment_doctors (
         appointment_id,
         doctor_id,
-        is_replacement,
         is_active,
         added_by
       ) VALUES (
         v_appt_id,
         v_doc_id,
-        false,
         true,
         p_creator_id
       );
@@ -658,8 +627,7 @@ CREATE TRIGGER trigger_sync_staff_email AFTER UPDATE ON public.staff FOR EACH RO
 CREATE TRIGGER tr_verify_staff_update_permissions BEFORE UPDATE ON public.staff FOR EACH ROW EXECUTE FUNCTION verify_staff_update_permissions();
 CREATE TRIGGER tr_prevent_referenced_doctor_role_change BEFORE UPDATE OF role ON public.staff FOR EACH ROW EXECUTE FUNCTION prevent_referenced_doctor_role_change();
 CREATE TRIGGER tr_enforce_patient_doctor_role BEFORE INSERT OR UPDATE OF doctor_id ON public.patient_doctors FOR EACH ROW EXECUTE FUNCTION enforce_doctor_reference_roles('doctor_id');
-CREATE TRIGGER tr_enforce_appointment_doctor_roles BEFORE INSERT OR UPDATE OF doctor_id, replaced_doctor_id ON public.appointment_doctors FOR EACH ROW EXECUTE FUNCTION enforce_doctor_reference_roles('doctor_id', 'replaced_doctor_id');
-CREATE TRIGGER tr_enforce_replacement_doctor_roles BEFORE INSERT OR UPDATE OF absent_doctor_id, covering_doctor_id ON public.doctor_replacements FOR EACH ROW EXECUTE FUNCTION enforce_doctor_reference_roles('absent_doctor_id', 'covering_doctor_id');
+CREATE TRIGGER tr_enforce_appointment_doctor_roles BEFORE INSERT OR UPDATE OF doctor_id ON public.appointment_doctors FOR EACH ROW EXECUTE FUNCTION enforce_doctor_reference_roles('doctor_id');
 
 -- Table RLS Policies
 CREATE POLICY "Active staff members can see the directory" ON public.staff FOR SELECT TO authenticated USING (EXISTS (SELECT 1 FROM public.get_auth_staff_profile() WHERE staff_active = true));
@@ -699,12 +667,6 @@ CREATE POLICY "All active staff can view payment history logs" ON public.payment
 CREATE POLICY "Only payment-enabled staff can record payments" ON public.payment_records FOR INSERT TO authenticated WITH CHECK (public.current_staff_can_manage_payments());
 CREATE POLICY "Only payment-enabled staff can update payments" ON public.payment_records FOR UPDATE TO authenticated USING (public.current_staff_can_manage_payments()) WITH CHECK (public.current_staff_can_manage_payments());
 CREATE POLICY "Only payment-enabled staff can delete payments" ON public.payment_records FOR DELETE TO authenticated USING (public.current_staff_can_manage_payments());
-
-CREATE POLICY "All active staff can read clinic packages" ON public.clinic_settings FOR SELECT TO authenticated USING (EXISTS (SELECT 1 FROM public.get_auth_staff_profile() WHERE staff_active = true));
-CREATE POLICY "Only super admins can modify clinic package settings" ON public.clinic_settings FOR ALL TO authenticated USING (EXISTS (SELECT 1 FROM public.get_auth_staff_profile() WHERE staff_role = 'super_admin'::user_role AND staff_active = true));
-
-CREATE POLICY "All active staff can view doctor replacements" ON public.doctor_replacements FOR SELECT TO authenticated USING (EXISTS (SELECT 1 FROM public.get_auth_staff_profile() WHERE staff_active = true));
-CREATE POLICY "All active staff can create doctor replacements" ON public.doctor_replacements FOR INSERT TO authenticated WITH CHECK (EXISTS (SELECT 1 FROM public.get_auth_staff_profile() WHERE staff_active = true));
 
 -- Storage Configuration & Policies
 INSERT INTO storage.buckets (id, name, public) VALUES ('patient-documents', 'patient-documents', false) ON CONFLICT (id) DO NOTHING;

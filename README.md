@@ -3,7 +3,7 @@
 A production-style clinic management app built with Flutter, Riverpod, and
 Supabase. The app supports role-based workflows for receptionists, doctors, and
 admins across patient registration, appointments, clinical notes, documents,
-payments, packages, and staff management.
+payments, package balances, and staff management.
 
 This repository is intentionally structured like a handoff-ready product, not a
 Flutter starter project: feature modules are layered, Supabase access is kept
@@ -18,7 +18,7 @@ RPCs, and storage policy setup.
 - Appointment scheduling with package-balance deduction and refund triggers.
 - Recurring appointment booking through a transactional Supabase RPC.
 - Payment tracking with package credit sync and due-balance support.
-- Staff activation, doctor assignment, and replacement coverage workflows.
+- Staff activation and direct doctor assignment workflows.
 - Firebase Hosting deploy path for Flutter web.
 
 ## Tech Stack
@@ -86,16 +86,15 @@ asset files to users, so runtime configuration must be passed through
 
 ## Database
 
-The active pre-delivery database baseline is:
+The database is recreated from the baseline plus later migrations:
 
 ```text
 supabase/migrations/20260705000000_baseline.sql
+supabase/migrations/20260713010000_remove_dormant_workflows.sql
 ```
 
-It includes the public schema, RLS policies, trigger functions, app RPCs, and
-the `patient-documents` storage bucket policy setup. The old migration chain was
-squashed because the app has not shipped yet and replayability from a clean
-baseline matters more than preserving noisy development history.
+`supabase/full_schema.sql` is the canonical final-state DDL. The migration chain
+preserves existing pre-production rows while keeping clean replayability.
 
 Read more:
 

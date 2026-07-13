@@ -13,15 +13,14 @@ abstract class AnalyticsRepository {
     String? branchId,
   });
 
-  /// Appointment metrics: volume, completion/cancellation rates, by-status,
+  /// Appointment metrics: volume, attendance/cancellation rates, by-status,
   /// by-day-of-week breakdowns.
   Future<Result<AppointmentSummary>> getAppointmentSummary({
     required DateTimeRange range,
     String? branchId,
   });
 
-  /// Staff metrics: appointments per doctor, completion rates, top performers,
-  /// new hires in period.
+  /// Staff metrics: appointments per doctor, attendance rates, top performers.
   Future<Result<StaffSummary>> getStaffSummary({
     required DateTimeRange range,
   });

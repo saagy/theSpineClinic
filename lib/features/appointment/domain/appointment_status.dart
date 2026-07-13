@@ -1,6 +1,6 @@
 /// Appointment status enum mapping to Supabase `appointment_status` type.
 ///
-/// Values: `'scheduled'` | `'checked_in'` | `'completed'` | `'cancelled'` | `'no_show'` (AGENT_CONTEXT §3).
+/// Values: `'scheduled'` | `'checked_in'` | `'cancelled'`.
 /// Display labels come from [AppStrings] (Rule 7).
 library;
 
@@ -16,14 +16,8 @@ enum AppointmentStatus {
   /// Patient has arrived and checked in.
   checkedIn('checked_in'),
 
-  /// Appointment has been completed by the attending doctor.
-  completed('completed'),
-
   /// Appointment was cancelled.
-  cancelled('cancelled'),
-
-  /// Patient did not show up.
-  noShow('no_show');
+  cancelled('cancelled');
 
   const AppointmentStatus(this.dbValue);
 
@@ -34,9 +28,6 @@ enum AppointmentStatus {
   String get displayLabel => switch (this) {
     AppointmentStatus.scheduled => AppStrings.scheduled,
     AppointmentStatus.checkedIn => AppStrings.checkedIn,
-    AppointmentStatus.completed => AppStrings.completed,
     AppointmentStatus.cancelled => AppStrings.cancelled,
-    AppointmentStatus.noShow => AppStrings.noShow,
   };
-
 }

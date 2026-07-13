@@ -16,7 +16,7 @@ import 'package:spine_clinic_app/shared/widgets/info_row.dart';
 import 'package:spine_clinic_app/shared/widgets/section_card.dart';
 import 'package:spine_clinic_app/shared/widgets/app_back_button.dart';
 
-/// Pushed full-screen route for viewing completed clinical visit notes.
+/// Pushed full-screen route for viewing checked-in clinical visit notes.
 class VisitDetailScreen extends ConsumerWidget {
   /// Creates a [VisitDetailScreen].
   const VisitDetailScreen({super.key, required this.appointmentId});
@@ -52,10 +52,14 @@ class VisitDetailScreen extends ConsumerWidget {
         ],
       ),
       body: stateAsync.when(
-        loading: () => Center(child: CircularProgressIndicator(color: cs.primary)),
+        loading: () =>
+            Center(child: CircularProgressIndicator(color: cs.primary)),
         error: (err, stack) => ErrorView(
-          exception: err is AppException ? err : AppException.fromSupabaseException(err),
-          onRetry: () => ref.invalidate(visitDetailControllerProvider(appointmentId)),
+          exception: err is AppException
+              ? err
+              : AppException.fromSupabaseException(err),
+          onRetry: () =>
+              ref.invalidate(visitDetailControllerProvider(appointmentId)),
         ),
         data: (state) => SingleChildScrollView(
           padding: const EdgeInsets.all(AppSizes.p24),
@@ -76,23 +80,30 @@ class VisitDetailScreen extends ConsumerWidget {
 
   Widget _buildInfoSection(BuildContext context, VisitDetailState state) {
     final ColorScheme cs = Theme.of(context).colorScheme;
-    final AppointmentBadgeColors typeBadge =
-        state.appointment.type.badgeColors(context);
-    final AppointmentBadgeColors statusBadge =
-        state.appointment.status.badgeColors(context);
+    final AppointmentBadgeColors typeBadge = state.appointment.type.badgeColors(
+      context,
+    );
+    final AppointmentBadgeColors statusBadge = state.appointment.status
+        .badgeColors(context);
 
     return SectionCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           InkWell(
-            onTap: () => context.push(AppRoutes.patientDetail.replaceAll(':id', state.patient.id)),
+            onTap: () => context.push(
+              AppRoutes.patientDetail.replaceAll(':id', state.patient.id),
+            ),
             borderRadius: const BorderRadius.all(Radius.circular(AppSizes.r4)),
             child: Padding(
               padding: const EdgeInsets.symmetric(vertical: AppSizes.p4),
               child: Row(
                 children: [
-                  Icon(Icons.person_rounded, color: cs.primary, size: AppSizes.iconDefault),
+                  Icon(
+                    Icons.person_rounded,
+                    color: cs.primary,
+                    size: AppSizes.iconDefault,
+                  ),
                   const SizedBox(width: AppSizes.p8),
                   Expanded(
                     child: Text(
@@ -108,8 +119,14 @@ class VisitDetailScreen extends ConsumerWidget {
             ),
           ),
           Divider(height: AppSizes.p24),
-          InfoRow(label: AppStrings.date, value: Formatters.formatDateMedium(state.appointment.scheduledAt)),
-          InfoRow(label: AppStrings.time, value: Formatters.formatTime(state.appointment.scheduledAt)),
+          InfoRow(
+            label: AppStrings.date,
+            value: Formatters.formatDateMedium(state.appointment.scheduledAt),
+          ),
+          InfoRow(
+            label: AppStrings.time,
+            value: Formatters.formatTime(state.appointment.scheduledAt),
+          ),
           const SizedBox(height: AppSizes.p12),
           Row(
             children: [
@@ -138,12 +155,13 @@ class VisitDetailScreen extends ConsumerWidget {
     return SectionCard(
       title: AppStrings.attendingStaff,
       child: state.activeDoctors.isEmpty
-          ? Text(AppStrings.noStaffAssignedToSession, style: AppTextStyles.caption)
+          ? Text(
+              AppStrings.noStaffAssignedToSession,
+              style: AppTextStyles.caption,
+            )
           : Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: state.activeDoctors.map((docDetail) {
-                final bool isReplacement = docDetail.assignment.isReplacement;
-                final String? replacedDoctorName = docDetail.replacedDoctor?.fullName;
                 final bool isActive = docDetail.doctor.isActive;
                 return Padding(
                   padding: const EdgeInsets.symmetric(vertical: AppSizes.p4),
@@ -160,18 +178,13 @@ class VisitDetailScreen extends ConsumerWidget {
                           text: TextSpan(
                             style: AppTextStyles.body,
                             children: [
-                              TextSpan(text: docDetail.doctor.fullName, style: AppTextStyles.bodyMedium),
+                              TextSpan(
+                                text: docDetail.doctor.fullName,
+                                style: AppTextStyles.bodyMedium,
+                              ),
                               if (!isActive)
                                 TextSpan(
                                   text: ' (${AppStrings.deactivated})',
-                                  style: AppTextStyles.caption.copyWith(
-                                    color: clinic.warning,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                              if (isReplacement && replacedDoctorName != null)
-                                TextSpan(
-                                  text: ' (Covering $replacedDoctorName)',
                                   style: AppTextStyles.caption.copyWith(
                                     color: clinic.warning,
                                     fontWeight: FontWeight.w600,
@@ -196,10 +209,14 @@ class VisitDetailScreen extends ConsumerWidget {
     return SectionCard(
       title: 'Clinical Visit Notes',
       child: Text(
-        noteText?.isNotEmpty == true ? noteText! : 'No visit notes recorded for this session.',
+        noteText?.isNotEmpty == true
+            ? noteText!
+            : 'No visit notes recorded for this session.',
         style: AppTextStyles.body.copyWith(
           color: noteText?.isNotEmpty == true ? cs.onSurface : clinic.textMuted,
-          fontStyle: noteText?.isNotEmpty == true ? FontStyle.normal : FontStyle.italic,
+          fontStyle: noteText?.isNotEmpty == true
+              ? FontStyle.normal
+              : FontStyle.italic,
         ),
       ),
     );

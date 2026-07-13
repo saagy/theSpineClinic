@@ -3,7 +3,6 @@ import 'package:flutter_form_builder/flutter_form_builder.dart';
 import 'package:form_builder_validators/form_builder_validators.dart';
 import 'package:spine_clinic_app/core/constants/app_sizes.dart';
 import 'package:spine_clinic_app/core/constants/app_strings.dart';
-import 'package:spine_clinic_app/features/payments/domain/clinic_package.dart';
 import 'package:spine_clinic_app/features/payments/presentation/widgets/payment_form_amount_section.dart';
 import 'package:spine_clinic_app/features/payments/presentation/widgets/payment_form_package_section.dart';
 import 'package:spine_clinic_app/features/payments/presentation/widgets/payment_input_decoration.dart';
@@ -13,13 +12,11 @@ import 'package:spine_clinic_app/features/payments/presentation/widgets/payment_
 class PaymentFormFields extends StatefulWidget {
   const PaymentFormFields({
     required this.enabled,
-    required this.packages,
     required this.formKey,
     super.key,
   });
 
   final bool enabled;
-  final List<ClinicPackage> packages;
   final GlobalKey<FormBuilderState> formKey;
 
   @override
@@ -44,9 +41,6 @@ class _PaymentFormFieldsState extends State<PaymentFormFields> {
     });
     final fields = widget.formKey.currentState?.fields;
     fields?['add_to_package']?.didChange(_addToPackage);
-    if (type != AppStrings.paymentReasonPackage) {
-      fields?['package']?.didChange(null);
-    }
     if (type != AppStrings.paymentReasonOther) {
       fields?['custom_reason']?.didChange(null);
     }
@@ -54,27 +48,6 @@ class _PaymentFormFieldsState extends State<PaymentFormFields> {
       fields?['session_added']?.didChange('0');
       fields?['traction_added']?.didChange('0');
     }
-  }
-
-  void _seedAddersFromPackage(ClinicPackage package) {
-    final fields = widget.formKey.currentState?.fields;
-    if (_isPartial) {
-      fields?['total_price']?.didChange(package.price.toString());
-      fields?['amount']?.didChange('');
-    } else {
-      fields?['amount']?.didChange(package.price.toString());
-    }
-    fields?['session_added']?.didChange(
-      package.kind.creditsSessionBalance
-          ? package.sessionCount.toString()
-          : '0',
-    );
-    fields?['traction_added']?.didChange(
-      package.kind.creditsTractionBalance
-          ? package.tractionsCount.toString()
-          : '0',
-    );
-    setState(() {});
   }
 
   void _handlePartialChanged(bool isPartial) {
@@ -93,8 +66,6 @@ class _PaymentFormFieldsState extends State<PaymentFormFields> {
 
   @override
   Widget build(BuildContext context) {
-    final bool isPackage =
-        _selectedReasonType == AppStrings.paymentReasonPackage;
     final bool isOther = _selectedReasonType == AppStrings.paymentReasonOther;
     final bool isAssessment = _isAssessment(_selectedReasonType);
 
@@ -127,14 +98,6 @@ class _PaymentFormFieldsState extends State<PaymentFormFields> {
             );
           },
         ),
-        if (isPackage) ...[
-          const SizedBox(height: AppSizes.p24),
-          PaymentFormPackageDropdown(
-            enabled: widget.enabled,
-            packages: widget.packages,
-            onChanged: _seedAddersFromPackage,
-          ),
-        ],
         if (isOther) ...[
           const SizedBox(height: AppSizes.p24),
           FormBuilderTextField(

@@ -8,15 +8,15 @@ part of 'visit_detail_controller.dart';
 
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // ignore_for_file: type=lint, type=warning
-/// Controller managing a single completed visit's detail state.
+/// Controller managing a single checked-in visit's detail state.
 
 @ProviderFor(VisitDetailController)
 final visitDetailControllerProvider = VisitDetailControllerFamily._();
 
-/// Controller managing a single completed visit's detail state.
+/// Controller managing a single checked-in visit's detail state.
 final class VisitDetailControllerProvider
     extends $AsyncNotifierProvider<VisitDetailController, VisitDetailState> {
-  /// Controller managing a single completed visit's detail state.
+  /// Controller managing a single checked-in visit's detail state.
   VisitDetailControllerProvider._({
     required VisitDetailControllerFamily super.from,
     required String super.argument,
@@ -54,9 +54,9 @@ final class VisitDetailControllerProvider
 }
 
 String _$visitDetailControllerHash() =>
-    r'ef4dbab4b8c68b867bdd9bc1bdbe628cd31fd2ca';
+    r'18cce9795caa218a95c2e0a794b0a772956feb1a';
 
-/// Controller managing a single completed visit's detail state.
+/// Controller managing a single checked-in visit's detail state.
 
 final class VisitDetailControllerFamily extends $Family
     with
@@ -76,7 +76,7 @@ final class VisitDetailControllerFamily extends $Family
         isAutoDispose: true,
       );
 
-  /// Controller managing a single completed visit's detail state.
+  /// Controller managing a single checked-in visit's detail state.
 
   VisitDetailControllerProvider call(String appointmentId) =>
       VisitDetailControllerProvider._(argument: appointmentId, from: this);
@@ -85,7 +85,7 @@ final class VisitDetailControllerFamily extends $Family
   String toString() => r'visitDetailControllerProvider';
 }
 
-/// Controller managing a single completed visit's detail state.
+/// Controller managing a single checked-in visit's detail state.
 
 abstract class _$VisitDetailController
     extends $AsyncNotifier<VisitDetailState> {

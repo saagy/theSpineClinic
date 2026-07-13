@@ -18,6 +18,8 @@ import 'package:spine_clinic_app/features/patient/presentation/patient_providers
 import 'package:spine_clinic_app/shared/widgets/app_snackbar.dart';
 import 'package:spine_clinic_app/shared/widgets/confirmation_dialog.dart';
 
+part 'appointment_actions_trailing_handlers.dart';
+
 /// Trailing actions for appointment rows.
 ///
 /// Always renders a status badge alongside a three-dot context menu (when the
@@ -27,7 +29,6 @@ import 'package:spine_clinic_app/shared/widgets/confirmation_dialog.dart';
 /// - **Scheduled**: Check In (green) | Cancel (red, with confirmation)
 /// - **Checked In**: Revert to Scheduled (gray) | Cancel (red, with confirmation)
 /// - **Cancelled**: Restore Appointment (green)
-/// - **Completed / No Show**: badge only, no menu
 ///
 /// Rule 1 — keep files under 200 lines.
 class AppointmentActionsTrailing extends ConsumerStatefulWidget {
@@ -56,21 +57,22 @@ class AppointmentActionsTrailing extends ConsumerStatefulWidget {
 }
 
 class _AppointmentActionsTrailingState
-    extends ConsumerState<AppointmentActionsTrailing> {
-  bool _isProcessing = false;
-
+    extends ConsumerState<AppointmentActionsTrailing>
+    with _AppointmentActionsTrailingHandlers {
   @override
   Widget build(BuildContext context) {
     final user = ref.watch(currentUserProvider).value;
-    final bool isAuthorizedStaff = user != null &&
+    final bool isAuthorizedStaff =
+        user != null &&
         (user.role == UserRole.receptionist ||
-         user.role == UserRole.superAdmin ||
-         user.role == UserRole.doctor);
+            user.role == UserRole.superAdmin ||
+            user.role == UserRole.doctor);
     final AppointmentStatus status = widget.appointment.status;
-    final bool hasMenu = isAuthorizedStaff &&
+    final bool hasMenu =
+        isAuthorizedStaff &&
         (status == AppointmentStatus.scheduled ||
-         status == AppointmentStatus.checkedIn ||
-         status == AppointmentStatus.cancelled);
+            status == AppointmentStatus.checkedIn ||
+            status == AppointmentStatus.cancelled);
 
     if (!hasMenu && !widget.showBadge) return const SizedBox.shrink();
 
@@ -90,10 +92,7 @@ class _AppointmentActionsTrailingState
   Widget _buildContextMenu(AppointmentStatus status) {
     final ColorScheme cs = Theme.of(context).colorScheme;
     return PopupMenuButton<String>(
-      icon: Icon(
-        Icons.more_horiz_rounded,
-        color: cs.onSurfaceVariant,
-      ),
+      icon: Icon(Icons.more_horiz_rounded, color: cs.onSurfaceVariant),
       padding: EdgeInsets.zero,
       constraints: const BoxConstraints(),
       splashRadius: AppSizes.iconDefault,
@@ -126,25 +125,43 @@ class _AppointmentActionsTrailingState
     switch (status) {
       case AppointmentStatus.scheduled:
         return [
-          _menuItem('check_in', Icons.check_circle_outline_rounded,
-              clinic.success, AppStrings.checkIn),
-          _menuItem('cancel', Icons.close_rounded,
-              cs.error, AppStrings.cancelAppointment),
+          _menuItem(
+            'check_in',
+            Icons.check_circle_outline_rounded,
+            clinic.success,
+            AppStrings.checkIn,
+          ),
+          _menuItem(
+            'cancel',
+            Icons.close_rounded,
+            cs.error,
+            AppStrings.cancelAppointment,
+          ),
         ];
       case AppointmentStatus.checkedIn:
         return [
-          _menuItem('revert', Icons.undo_rounded,
-              cs.onSurfaceVariant, 'Revert to Scheduled'),
-          _menuItem('cancel', Icons.close_rounded,
-              cs.error, AppStrings.cancelAppointment),
+          _menuItem(
+            'revert',
+            Icons.undo_rounded,
+            cs.onSurfaceVariant,
+            AppStrings.revertToScheduled,
+          ),
+          _menuItem(
+            'cancel',
+            Icons.close_rounded,
+            cs.error,
+            AppStrings.cancelAppointment,
+          ),
         ];
       case AppointmentStatus.cancelled:
         return [
-          _menuItem('restore', Icons.refresh_rounded,
-              clinic.success, 'Restore Appointment'),
+          _menuItem(
+            'restore',
+            Icons.refresh_rounded,
+            clinic.success,
+            AppStrings.restoreAppointment,
+          ),
         ];
-      default:
-        return [];
     }
   }
 
@@ -163,10 +180,10 @@ class _AppointmentActionsTrailingState
         children: [
           Icon(icon, size: 18, color: iconColor),
           const SizedBox(width: AppSizes.p8),
-          Text(label,
-              style: AppTextStyles.bodyMedium.copyWith(
-                color: cs.onSurface,
-              )),
+          Text(
+            label,
+            style: AppTextStyles.bodyMedium.copyWith(color: cs.onSurface),
+          ),
         ],
       ),
     );
@@ -186,149 +203,4 @@ class _AppointmentActionsTrailingState
   ///
   /// The [_isProcessing] flag prevents double-taps from firing
   /// two concurrent writes.
-  Future<void> _handleCheckIn() async {
-    if (_isProcessing) return;
-    setState(() => _isProcessing = true);
-
-    try {
-      final result = await ref
-          .read(appointmentRepositoryProvider)
-          .updateAppointmentStatus(
-              widget.appointment.id, AppointmentStatus.checkedIn);
-
-      if (!mounted) return;
-
-      result.when(
-        success: (_) {
-          _invalidateCaches();
-          AppSnackbar.show(
-            context,
-            message: AppStrings.statusUpdateSuccess,
-            variant: AppSnackbarVariant.success,
-          );
-        },
-        failure: (error) {
-          AppSnackbar.show(
-            context,
-            message: AppStrings.fromKey(error.userMessageKey),
-            variant: AppSnackbarVariant.error,
-          );
-        },
-      );
-    } finally {
-      if (mounted) setState(() => _isProcessing = false);
-    }
-  }
-
-  /// Cancel with destructive confirmation dialog.
-  Future<void> _handleCancel() async {
-    if (_isProcessing) return;
-    final bool? confirmed = await showDialog<bool>(
-      context: context,
-      builder: (_) => ConfirmationDialog(
-        title: AppStrings.cancelAppointment,
-        message: AppStrings.confirmCancel,
-        isDestructive: true,
-      ),
-    );
-
-    if (confirmed != true || !mounted) return;
-
-    setState(() => _isProcessing = true);
-    try {
-      final result = await ref
-          .read(appointmentRepositoryProvider)
-          .updateAppointmentStatus(
-              widget.appointment.id, AppointmentStatus.cancelled);
-
-      if (!mounted) return;
-
-      result.when(
-        success: (_) {
-          _invalidateCaches();
-          AppSnackbar.show(
-            context,
-            message: AppStrings.statusUpdateSuccess,
-            variant: AppSnackbarVariant.success,
-          );
-        },
-        failure: (error) {
-          AppSnackbar.show(
-            context,
-            message: AppStrings.fromKey(error.userMessageKey),
-            variant: AppSnackbarVariant.error,
-          );
-        },
-      );
-    } finally {
-      if (mounted) setState(() => _isProcessing = false);
-    }
-  }
-
-  /// Revert a checked-in appointment back to scheduled.
-  Future<void> _handleRevertToScheduled() async {
-    if (_isProcessing) return;
-    setState(() => _isProcessing = true);
-    try {
-      final result = await ref
-          .read(appointmentRepositoryProvider)
-          .updateAppointmentStatus(widget.appointment.id, AppointmentStatus.scheduled);
-      if (!mounted) return;
-      result.when(
-        success: (_) {
-          _invalidateCaches();
-          AppSnackbar.show(context,
-              message: AppStrings.statusUpdateSuccess,
-              variant: AppSnackbarVariant.success);
-        },
-        failure: (error) {
-          AppSnackbar.show(context,
-              message: AppStrings.fromKey(error.userMessageKey),
-              variant: AppSnackbarVariant.error);
-        },
-      );
-    } finally {
-      if (mounted) setState(() => _isProcessing = false);
-    }
-  }
-
-  /// Restore a cancelled appointment back to scheduled.
-  Future<void> _handleRestore() async {
-    if (_isProcessing) return;
-    setState(() => _isProcessing = true);
-    try {
-      final result = await ref
-          .read(appointmentRepositoryProvider)
-          .updateAppointmentStatus(widget.appointment.id, AppointmentStatus.scheduled);
-      if (!mounted) return;
-      result.when(
-        success: (_) {
-          _invalidateCaches();
-          AppSnackbar.show(context,
-              message: AppStrings.statusUpdateSuccess,
-              variant: AppSnackbarVariant.success);
-        },
-        failure: (error) {
-          AppSnackbar.show(context,
-              message: AppStrings.fromKey(error.userMessageKey),
-              variant: AppSnackbarVariant.error);
-        },
-      );
-    } finally {
-      if (mounted) setState(() => _isProcessing = false);
-    }
-  }
-
-  void _invalidateCaches() {
-    final String pid = widget.appointment.patientId;
-    ref.invalidate(todayAppointmentsProvider);
-    ref.read(allAppointmentsProvider.notifier).refresh();
-    ref.invalidate(patientAppointmentsProvider(pid));
-    ref.invalidate(patientDetailProvider(pid));
-    ref.invalidate(futureScheduledAppointmentsCountProvider(pid));
-    ref.invalidate(availablePackageBalanceProvider(pid));
-    ref.invalidate(doctorScheduleProvider);
-    ref.invalidate(patientListProvider);
-    widget.onStatusChanged?.call();
-  }
 }

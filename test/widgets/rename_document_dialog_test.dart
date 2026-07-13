@@ -3,6 +3,7 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:spine_clinic_app/core/constants/app_sizes.dart';
 import 'package:spine_clinic_app/core/constants/app_strings.dart';
 import 'package:spine_clinic_app/core/errors/app_exception.dart';
 import 'package:spine_clinic_app/core/errors/result.dart';
@@ -136,7 +137,21 @@ void main() {
     expect(find.byType(AlertDialog), findsOneWidget);
     expect(find.text('.pdf'), findsOneWidget);
     expect(find.text('scan'), findsOneWidget);
-    expect(tester.widget<AppButton>(renameButton()).onPressed, isNull);
+    final Finder cancelButton = find.byWidgetPredicate(
+      (Widget widget) =>
+          widget is AppButton && widget.labelText == AppStrings.cancel,
+    );
+    final AppButton cancel = tester.widget<AppButton>(cancelButton);
+    final AppButton rename = tester.widget<AppButton>(renameButton());
+    expect(cancel.variant, AppButtonVariant.secondary);
+    expect(cancel.shape, AppButtonShape.pill);
+    expect(rename.shape, AppButtonShape.pill);
+    expect(rename.onPressed, isNull);
+    expect(
+      tester.getTopLeft(renameButton()).dx -
+          tester.getTopRight(cancelButton).dx,
+      AppSizes.p12,
+    );
   });
 
   testWidgets('submits the renamed base with the original extension', (

@@ -31,14 +31,14 @@ class FinancialSummary {
 class AppointmentSummary {
   const AppointmentSummary({
     required this.totalAppointments,
-    required this.completionRate,
+    required this.attendanceRate,
     required this.cancellationRate,
     required this.byStatus,
     required this.byDayOfWeek,
   });
 
   final int totalAppointments;
-  final double completionRate;
+  final double attendanceRate;
   final double cancellationRate;
   final Map<String, int> byStatus;
   final Map<String, int> byDayOfWeek;
@@ -47,35 +47,29 @@ class AppointmentSummary {
 class DoctorDailyLog {
   const DoctorDailyLog({
     required this.date,
-    required this.completedAppointments,
-    required this.totalAppointments,
-    required this.isAbsent,
-    this.coveringDoctorName,
+    required this.checkedInAppointments,
+    required this.eligibleAppointments,
   });
 
   final DateTime date;
-  final int completedAppointments;
-  final int totalAppointments;
-  final bool isAbsent;
-  final String? coveringDoctorName;
+  final int checkedInAppointments;
+  final int eligibleAppointments;
 }
 
 class DoctorPerformance {
   const DoctorPerformance({
     required this.id,
     required this.fullName,
-    required this.totalAppointments,
-    required this.completedAppointments,
-    required this.absenceCount,
+    required this.eligibleAppointments,
+    required this.checkedInAppointments,
     required this.activeDays,
     required this.dailyLogs,
   });
 
   final String id;
   final String fullName;
-  final int totalAppointments;
-  final int completedAppointments;
-  final int absenceCount;
+  final int eligibleAppointments;
+  final int checkedInAppointments;
   final int activeDays;
   final List<DoctorDailyLog> dailyLogs;
 }
@@ -84,13 +78,13 @@ class DoctorPerformance {
 class StaffSummary {
   const StaffSummary({
     required this.appointmentsPerDoctor,
-    required this.completionRatePerDoctor,
+    required this.attendanceRatePerDoctor,
     required this.topDoctors,
     required this.doctorPerformances,
   });
 
   final Map<String, int> appointmentsPerDoctor;
-  final Map<String, double> completionRatePerDoctor;
+  final Map<String, double> attendanceRatePerDoctor;
   final List<String> topDoctors;
   final List<DoctorPerformance> doctorPerformances;
 }

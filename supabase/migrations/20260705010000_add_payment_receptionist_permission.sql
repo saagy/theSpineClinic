@@ -134,6 +134,9 @@ WITH CHECK (
 DROP POLICY IF EXISTS "Only receptionists and admins can record payments" ON public.payment_records;
 DROP POLICY IF EXISTS "Super admins and receptionists can update payments" ON public.payment_records;
 DROP POLICY IF EXISTS "Super admins and receptionists can delete payments" ON public.payment_records;
+DROP POLICY IF EXISTS "Only payment-enabled staff can record payments" ON public.payment_records;
+DROP POLICY IF EXISTS "Only payment-enabled staff can update payments" ON public.payment_records;
+DROP POLICY IF EXISTS "Only payment-enabled staff can delete payments" ON public.payment_records;
 
 CREATE POLICY "Only payment-enabled staff can record payments"
 ON public.payment_records

@@ -7,7 +7,6 @@ import 'package:spine_clinic_app/features/auth/domain/staff.dart';
 import 'package:spine_clinic_app/features/auth/presentation/auth_providers.dart';
 import 'package:spine_clinic_app/features/patient/presentation/patient_providers.dart';
 import 'package:spine_clinic_app/features/payments/data/payment_repository_impl.dart';
-import 'package:spine_clinic_app/features/payments/domain/clinic_package.dart';
 import 'package:spine_clinic_app/features/payments/domain/payment_record.dart';
 import 'package:spine_clinic_app/features/payments/domain/payment_repository.dart';
 
@@ -17,17 +16,6 @@ part 'record_payment_controller.g.dart';
 @Riverpod(keepAlive: true)
 PaymentRepository paymentRepository(Ref ref) {
   return PaymentRepositoryImpl(supabaseService: SupabaseService.instance);
-}
-
-/// Provider fetching available clinic packages.
-@riverpod
-Future<List<ClinicPackage>> clinicPackages(Ref ref) async {
-  final PaymentRepository repo = ref.watch(paymentRepositoryProvider);
-  final Result<List<ClinicPackage>> result = await repo.getClinicPackages();
-  return result.when(
-    success: (packages) => packages,
-    failure: (AppException exception) => throw exception,
-  );
 }
 
 /// Provider fetching payment records for a patient.

@@ -41,7 +41,5 @@ const _$AppointmentTypeEnumMap = {
 const _$AppointmentStatusEnumMap = {
   AppointmentStatus.scheduled: 'scheduled',
   AppointmentStatus.checkedIn: 'checked_in',
-  AppointmentStatus.completed: 'completed',
   AppointmentStatus.cancelled: 'cancelled',
-  AppointmentStatus.noShow: 'no_show',
 };

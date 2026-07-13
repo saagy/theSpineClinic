@@ -23,7 +23,9 @@ class AppointmentsSummarySection extends ConsumerWidget {
     return asyncData.when(
       loading: () => _buildLoading(),
       error: (error, _) => ErrorView(
-        exception: error is AppException ? error : AppException.fromSupabaseException(error),
+        exception: error is AppException
+            ? error
+            : AppException.fromSupabaseException(error),
         onRetry: () => ref.invalidate(appointmentSummaryProvider),
       ),
       data: (data) => _buildData(context, data),
@@ -35,17 +37,45 @@ class AppointmentsSummarySection extends ConsumerWidget {
       children: [
         Row(
           children: const [
-            Expanded(child: StatsMetricCard(title: '', value: '', icon: Icons.calendar_today_rounded, isLoading: true)),
+            Expanded(
+              child: StatsMetricCard(
+                title: '',
+                value: '',
+                icon: Icons.calendar_today_rounded,
+                isLoading: true,
+              ),
+            ),
             SizedBox(width: AppSizes.p12),
-            Expanded(child: StatsMetricCard(title: '', value: '', icon: Icons.check_circle_rounded, isLoading: true)),
+            Expanded(
+              child: StatsMetricCard(
+                title: '',
+                value: '',
+                icon: Icons.check_circle_rounded,
+                isLoading: true,
+              ),
+            ),
           ],
         ),
         const SizedBox(height: AppSizes.p12),
         Row(
           children: const [
-            Expanded(child: StatsMetricCard(title: '', value: '', icon: Icons.cancel_rounded, isLoading: true)),
+            Expanded(
+              child: StatsMetricCard(
+                title: '',
+                value: '',
+                icon: Icons.cancel_rounded,
+                isLoading: true,
+              ),
+            ),
             SizedBox(width: AppSizes.p12),
-            Expanded(child: StatsMetricCard(title: '', value: '', icon: Icons.today_rounded, isLoading: true)),
+            Expanded(
+              child: StatsMetricCard(
+                title: '',
+                value: '',
+                icon: Icons.today_rounded,
+                isLoading: true,
+              ),
+            ),
           ],
         ),
       ],
@@ -56,11 +86,16 @@ class AppointmentsSummarySection extends ConsumerWidget {
     final bool isEmpty = data.totalAppointments == 0;
 
     if (isEmpty) {
-      return const EmptyState(message: AppStrings.noAppointmentData, icon: Icons.calendar_today_rounded);
+      return const EmptyState(
+        message: AppStrings.noAppointmentData,
+        icon: Icons.calendar_today_rounded,
+      );
     }
 
-    final String compRate = '${(data.completionRate * 100).toStringAsFixed(0)}%';
-    final String cancRate = '${(data.cancellationRate * 100).toStringAsFixed(0)}%';
+    final String attendanceRate =
+        '${(data.attendanceRate * 100).toStringAsFixed(0)}%';
+    final String cancRate =
+        '${(data.cancellationRate * 100).toStringAsFixed(0)}%';
     final String busiestDay = _findBusiestDay(data.byDayOfWeek);
 
     return Column(
@@ -68,23 +103,56 @@ class AppointmentsSummarySection extends ConsumerWidget {
       children: [
         Row(
           children: [
-            Expanded(child: StatsMetricCard(title: AppStrings.totalAppointments, value: '${data.totalAppointments}', icon: Icons.calendar_today_rounded)),
+            Expanded(
+              child: StatsMetricCard(
+                title: AppStrings.totalAppointments,
+                value: '${data.totalAppointments}',
+                icon: Icons.calendar_today_rounded,
+              ),
+            ),
             const SizedBox(width: AppSizes.p12),
-            Expanded(child: StatsMetricCard(title: AppStrings.completionRate, value: compRate, icon: Icons.check_circle_rounded, subtitle: AppStrings.sessionsCompleted)),
+            Expanded(
+              child: StatsMetricCard(
+                title: AppStrings.attendanceRate,
+                value: attendanceRate,
+                icon: Icons.check_circle_rounded,
+                subtitle: AppStrings.sessionsCheckedIn,
+              ),
+            ),
           ],
         ),
         const SizedBox(height: AppSizes.p12),
         Row(
           children: [
-            Expanded(child: StatsMetricCard(title: AppStrings.cancellationRate, value: cancRate, icon: Icons.cancel_rounded)),
+            Expanded(
+              child: StatsMetricCard(
+                title: AppStrings.cancellationRate,
+                value: cancRate,
+                icon: Icons.cancel_rounded,
+              ),
+            ),
             const SizedBox(width: AppSizes.p12),
-            Expanded(child: StatsMetricCard(title: AppStrings.busiestDay, value: busiestDay, icon: Icons.today_rounded)),
+            Expanded(
+              child: StatsMetricCard(
+                title: AppStrings.busiestDay,
+                value: busiestDay,
+                icon: Icons.today_rounded,
+              ),
+            ),
           ],
         ),
         const SizedBox(height: AppSizes.p16),
-        BreakdownListCard(title: AppStrings.appointmentsByStatus, data: data.byStatus, barColor: ClinicColors.of(context).success),
+        BreakdownListCard(
+          title: AppStrings.appointmentsByStatus,
+          data: data.byStatus,
+          barColor: ClinicColors.of(context).success,
+        ),
         const SizedBox(height: AppSizes.p16),
-        BreakdownListCard(title: AppStrings.appointmentsByDay, data: data.byDayOfWeek, barColor: ClinicColors.of(context).info),
+        BreakdownListCard(
+          title: AppStrings.appointmentsByDay,
+          data: data.byDayOfWeek,
+          barColor: ClinicColors.of(context).info,
+        ),
       ],
     );
   }

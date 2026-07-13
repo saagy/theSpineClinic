@@ -1,52 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_form_builder/flutter_form_builder.dart';
-import 'package:form_builder_validators/form_builder_validators.dart';
 import 'package:spine_clinic_app/core/constants/app_sizes.dart';
 import 'package:spine_clinic_app/core/constants/app_strings.dart';
 import 'package:spine_clinic_app/core/constants/app_text_styles.dart';
-import 'package:spine_clinic_app/core/utils/formatters.dart';
-import 'package:spine_clinic_app/features/payments/domain/clinic_package.dart';
 import 'package:spine_clinic_app/features/payments/presentation/widgets/payment_input_decoration.dart';
-
-class PaymentFormPackageDropdown extends StatelessWidget {
-  const PaymentFormPackageDropdown({
-    super.key,
-    required this.enabled,
-    required this.packages,
-    required this.onChanged,
-  });
-
-  final bool enabled;
-  final List<ClinicPackage> packages;
-  final ValueChanged<ClinicPackage> onChanged;
-
-  @override
-  Widget build(BuildContext context) {
-    return FormBuilderDropdown<ClinicPackage>(
-      name: 'package',
-      enabled: enabled,
-      decoration: paymentInputDecoration(
-        context,
-        labelText: AppStrings.selectPackage,
-        hintText: AppStrings.chooseClinicPackage,
-      ),
-      validator: FormBuilderValidators.required(
-        errorText: AppStrings.packageSelectionRequired,
-      ),
-      items: packages
-          .map(
-            (pkg) => DropdownMenuItem<ClinicPackage>(
-              value: pkg,
-              child: Text('${pkg.name} (${pkg.price.toCurrencyString()})'),
-            ),
-          )
-          .toList(),
-      onChanged: (ClinicPackage? pkg) {
-        if (pkg != null) onChanged(pkg);
-      },
-    );
-  }
-}
 
 class PaymentFormBalanceSection extends StatelessWidget {
   const PaymentFormBalanceSection({

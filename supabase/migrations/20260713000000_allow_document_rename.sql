@@ -3,6 +3,8 @@
 
 DROP POLICY IF EXISTS "Doctors can view assigned or replacement patients only" ON public.patients;
 DROP POLICY IF EXISTS "Doctors can update their assigned or replacement/appointment patients" ON public.patients;
+DROP POLICY IF EXISTS "Doctors can view assigned or appointment patients" ON public.patients;
+DROP POLICY IF EXISTS "Doctors can update assigned or appointment patients" ON public.patients;
 DROP POLICY IF EXISTS "Select patient_documents policy" ON public.patient_documents;
 DROP POLICY IF EXISTS "Insert patient_documents policy" ON public.patient_documents;
 DROP POLICY IF EXISTS "Update patient_documents policy" ON public.patient_documents;

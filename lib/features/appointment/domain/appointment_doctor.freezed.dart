@@ -18,13 +18,9 @@ mixin _$AppointmentDoctor {
 /// Primary key (`uuid`).
  String get id;/// FK references `appointments(id)`.
 @JsonKey(name: 'appointment_id') String get appointmentId;/// FK references `staff(id)` (role must be doctor).
-@JsonKey(name: 'doctor_id') String get doctorId;/// Whether this doctor is covering for another doctor.
-@JsonKey(name: 'is_replacement') bool get isReplacement;/// FK references `staff(id)` representing the doctor who is absent.
+@JsonKey(name: 'doctor_id') String get doctorId;/// Whether this assignment is currently active.
 ///
-/// Set to null when [isReplacement] is false.
-@JsonKey(name: 'replaced_doctor_id') String? get replacedDoctorId;/// Whether this assignment is currently active.
-///
-/// Swapped out/replaced doctors are kept but marked as inactive (`false`).
+/// Removed doctors are kept but marked as inactive (`false`).
 @JsonKey(name: 'is_active') bool get isActive;/// FK references `staff(id)` representing the person who added this doctor assignment.
 @JsonKey(name: 'added_by') String? get addedBy;/// Row creation timestamp.
 @JsonKey(name: 'added_at') DateTime get addedAt;
@@ -40,16 +36,16 @@ $AppointmentDoctorCopyWith<AppointmentDoctor> get copyWith => _$AppointmentDocto
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is AppointmentDoctor&&(identical(other.id, id) || other.id == id)&&(identical(other.appointmentId, appointmentId) || other.appointmentId == appointmentId)&&(identical(other.doctorId, doctorId) || other.doctorId == doctorId)&&(identical(other.isReplacement, isReplacement) || other.isReplacement == isReplacement)&&(identical(other.replacedDoctorId, replacedDoctorId) || other.replacedDoctorId == replacedDoctorId)&&(identical(other.isActive, isActive) || other.isActive == isActive)&&(identical(other.addedBy, addedBy) || other.addedBy == addedBy)&&(identical(other.addedAt, addedAt) || other.addedAt == addedAt));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is AppointmentDoctor&&(identical(other.id, id) || other.id == id)&&(identical(other.appointmentId, appointmentId) || other.appointmentId == appointmentId)&&(identical(other.doctorId, doctorId) || other.doctorId == doctorId)&&(identical(other.isActive, isActive) || other.isActive == isActive)&&(identical(other.addedBy, addedBy) || other.addedBy == addedBy)&&(identical(other.addedAt, addedAt) || other.addedAt == addedAt));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,appointmentId,doctorId,isReplacement,replacedDoctorId,isActive,addedBy,addedAt);
+int get hashCode => Object.hash(runtimeType,id,appointmentId,doctorId,isActive,addedBy,addedAt);
 
 @override
 String toString() {
-  return 'AppointmentDoctor(id: $id, appointmentId: $appointmentId, doctorId: $doctorId, isReplacement: $isReplacement, replacedDoctorId: $replacedDoctorId, isActive: $isActive, addedBy: $addedBy, addedAt: $addedAt)';
+  return 'AppointmentDoctor(id: $id, appointmentId: $appointmentId, doctorId: $doctorId, isActive: $isActive, addedBy: $addedBy, addedAt: $addedAt)';
 }
 
 
@@ -60,7 +56,7 @@ abstract mixin class $AppointmentDoctorCopyWith<$Res>  {
   factory $AppointmentDoctorCopyWith(AppointmentDoctor value, $Res Function(AppointmentDoctor) _then) = _$AppointmentDoctorCopyWithImpl;
 @useResult
 $Res call({
- String id,@JsonKey(name: 'appointment_id') String appointmentId,@JsonKey(name: 'doctor_id') String doctorId,@JsonKey(name: 'is_replacement') bool isReplacement,@JsonKey(name: 'replaced_doctor_id') String? replacedDoctorId,@JsonKey(name: 'is_active') bool isActive,@JsonKey(name: 'added_by') String? addedBy,@JsonKey(name: 'added_at') DateTime addedAt
+ String id,@JsonKey(name: 'appointment_id') String appointmentId,@JsonKey(name: 'doctor_id') String doctorId,@JsonKey(name: 'is_active') bool isActive,@JsonKey(name: 'added_by') String? addedBy,@JsonKey(name: 'added_at') DateTime addedAt
 });
 
 
@@ -77,14 +73,12 @@ class _$AppointmentDoctorCopyWithImpl<$Res>
 
 /// Create a copy of AppointmentDoctor
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? appointmentId = null,Object? doctorId = null,Object? isReplacement = null,Object? replacedDoctorId = freezed,Object? isActive = null,Object? addedBy = freezed,Object? addedAt = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? appointmentId = null,Object? doctorId = null,Object? isActive = null,Object? addedBy = freezed,Object? addedAt = null,}) {
   return _then(_self.copyWith(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,appointmentId: null == appointmentId ? _self.appointmentId : appointmentId // ignore: cast_nullable_to_non_nullable
 as String,doctorId: null == doctorId ? _self.doctorId : doctorId // ignore: cast_nullable_to_non_nullable
-as String,isReplacement: null == isReplacement ? _self.isReplacement : isReplacement // ignore: cast_nullable_to_non_nullable
-as bool,replacedDoctorId: freezed == replacedDoctorId ? _self.replacedDoctorId : replacedDoctorId // ignore: cast_nullable_to_non_nullable
-as String?,isActive: null == isActive ? _self.isActive : isActive // ignore: cast_nullable_to_non_nullable
+as String,isActive: null == isActive ? _self.isActive : isActive // ignore: cast_nullable_to_non_nullable
 as bool,addedBy: freezed == addedBy ? _self.addedBy : addedBy // ignore: cast_nullable_to_non_nullable
 as String?,addedAt: null == addedAt ? _self.addedAt : addedAt // ignore: cast_nullable_to_non_nullable
 as DateTime,
@@ -172,10 +166,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id, @JsonKey(name: 'appointment_id')  String appointmentId, @JsonKey(name: 'doctor_id')  String doctorId, @JsonKey(name: 'is_replacement')  bool isReplacement, @JsonKey(name: 'replaced_doctor_id')  String? replacedDoctorId, @JsonKey(name: 'is_active')  bool isActive, @JsonKey(name: 'added_by')  String? addedBy, @JsonKey(name: 'added_at')  DateTime addedAt)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id, @JsonKey(name: 'appointment_id')  String appointmentId, @JsonKey(name: 'doctor_id')  String doctorId, @JsonKey(name: 'is_active')  bool isActive, @JsonKey(name: 'added_by')  String? addedBy, @JsonKey(name: 'added_at')  DateTime addedAt)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _AppointmentDoctor() when $default != null:
-return $default(_that.id,_that.appointmentId,_that.doctorId,_that.isReplacement,_that.replacedDoctorId,_that.isActive,_that.addedBy,_that.addedAt);case _:
+return $default(_that.id,_that.appointmentId,_that.doctorId,_that.isActive,_that.addedBy,_that.addedAt);case _:
   return orElse();
 
 }
@@ -193,10 +187,10 @@ return $default(_that.id,_that.appointmentId,_that.doctorId,_that.isReplacement,
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id, @JsonKey(name: 'appointment_id')  String appointmentId, @JsonKey(name: 'doctor_id')  String doctorId, @JsonKey(name: 'is_replacement')  bool isReplacement, @JsonKey(name: 'replaced_doctor_id')  String? replacedDoctorId, @JsonKey(name: 'is_active')  bool isActive, @JsonKey(name: 'added_by')  String? addedBy, @JsonKey(name: 'added_at')  DateTime addedAt)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id, @JsonKey(name: 'appointment_id')  String appointmentId, @JsonKey(name: 'doctor_id')  String doctorId, @JsonKey(name: 'is_active')  bool isActive, @JsonKey(name: 'added_by')  String? addedBy, @JsonKey(name: 'added_at')  DateTime addedAt)  $default,) {final _that = this;
 switch (_that) {
 case _AppointmentDoctor():
-return $default(_that.id,_that.appointmentId,_that.doctorId,_that.isReplacement,_that.replacedDoctorId,_that.isActive,_that.addedBy,_that.addedAt);case _:
+return $default(_that.id,_that.appointmentId,_that.doctorId,_that.isActive,_that.addedBy,_that.addedAt);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -213,10 +207,10 @@ return $default(_that.id,_that.appointmentId,_that.doctorId,_that.isReplacement,
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id, @JsonKey(name: 'appointment_id')  String appointmentId, @JsonKey(name: 'doctor_id')  String doctorId, @JsonKey(name: 'is_replacement')  bool isReplacement, @JsonKey(name: 'replaced_doctor_id')  String? replacedDoctorId, @JsonKey(name: 'is_active')  bool isActive, @JsonKey(name: 'added_by')  String? addedBy, @JsonKey(name: 'added_at')  DateTime addedAt)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id, @JsonKey(name: 'appointment_id')  String appointmentId, @JsonKey(name: 'doctor_id')  String doctorId, @JsonKey(name: 'is_active')  bool isActive, @JsonKey(name: 'added_by')  String? addedBy, @JsonKey(name: 'added_at')  DateTime addedAt)?  $default,) {final _that = this;
 switch (_that) {
 case _AppointmentDoctor() when $default != null:
-return $default(_that.id,_that.appointmentId,_that.doctorId,_that.isReplacement,_that.replacedDoctorId,_that.isActive,_that.addedBy,_that.addedAt);case _:
+return $default(_that.id,_that.appointmentId,_that.doctorId,_that.isActive,_that.addedBy,_that.addedAt);case _:
   return null;
 
 }
@@ -228,7 +222,7 @@ return $default(_that.id,_that.appointmentId,_that.doctorId,_that.isReplacement,
 @JsonSerializable()
 
 class _AppointmentDoctor implements AppointmentDoctor {
-  const _AppointmentDoctor({required this.id, @JsonKey(name: 'appointment_id') required this.appointmentId, @JsonKey(name: 'doctor_id') required this.doctorId, @JsonKey(name: 'is_replacement') this.isReplacement = false, @JsonKey(name: 'replaced_doctor_id') this.replacedDoctorId, @JsonKey(name: 'is_active') this.isActive = true, @JsonKey(name: 'added_by') this.addedBy, @JsonKey(name: 'added_at') required this.addedAt});
+  const _AppointmentDoctor({required this.id, @JsonKey(name: 'appointment_id') required this.appointmentId, @JsonKey(name: 'doctor_id') required this.doctorId, @JsonKey(name: 'is_active') this.isActive = true, @JsonKey(name: 'added_by') this.addedBy, @JsonKey(name: 'added_at') required this.addedAt});
   factory _AppointmentDoctor.fromJson(Map<String, dynamic> json) => _$AppointmentDoctorFromJson(json);
 
 /// Primary key (`uuid`).
@@ -237,15 +231,9 @@ class _AppointmentDoctor implements AppointmentDoctor {
 @override@JsonKey(name: 'appointment_id') final  String appointmentId;
 /// FK references `staff(id)` (role must be doctor).
 @override@JsonKey(name: 'doctor_id') final  String doctorId;
-/// Whether this doctor is covering for another doctor.
-@override@JsonKey(name: 'is_replacement') final  bool isReplacement;
-/// FK references `staff(id)` representing the doctor who is absent.
-///
-/// Set to null when [isReplacement] is false.
-@override@JsonKey(name: 'replaced_doctor_id') final  String? replacedDoctorId;
 /// Whether this assignment is currently active.
 ///
-/// Swapped out/replaced doctors are kept but marked as inactive (`false`).
+/// Removed doctors are kept but marked as inactive (`false`).
 @override@JsonKey(name: 'is_active') final  bool isActive;
 /// FK references `staff(id)` representing the person who added this doctor assignment.
 @override@JsonKey(name: 'added_by') final  String? addedBy;
@@ -265,16 +253,16 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _AppointmentDoctor&&(identical(other.id, id) || other.id == id)&&(identical(other.appointmentId, appointmentId) || other.appointmentId == appointmentId)&&(identical(other.doctorId, doctorId) || other.doctorId == doctorId)&&(identical(other.isReplacement, isReplacement) || other.isReplacement == isReplacement)&&(identical(other.replacedDoctorId, replacedDoctorId) || other.replacedDoctorId == replacedDoctorId)&&(identical(other.isActive, isActive) || other.isActive == isActive)&&(identical(other.addedBy, addedBy) || other.addedBy == addedBy)&&(identical(other.addedAt, addedAt) || other.addedAt == addedAt));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _AppointmentDoctor&&(identical(other.id, id) || other.id == id)&&(identical(other.appointmentId, appointmentId) || other.appointmentId == appointmentId)&&(identical(other.doctorId, doctorId) || other.doctorId == doctorId)&&(identical(other.isActive, isActive) || other.isActive == isActive)&&(identical(other.addedBy, addedBy) || other.addedBy == addedBy)&&(identical(other.addedAt, addedAt) || other.addedAt == addedAt));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,appointmentId,doctorId,isReplacement,replacedDoctorId,isActive,addedBy,addedAt);
+int get hashCode => Object.hash(runtimeType,id,appointmentId,doctorId,isActive,addedBy,addedAt);
 
 @override
 String toString() {
-  return 'AppointmentDoctor(id: $id, appointmentId: $appointmentId, doctorId: $doctorId, isReplacement: $isReplacement, replacedDoctorId: $replacedDoctorId, isActive: $isActive, addedBy: $addedBy, addedAt: $addedAt)';
+  return 'AppointmentDoctor(id: $id, appointmentId: $appointmentId, doctorId: $doctorId, isActive: $isActive, addedBy: $addedBy, addedAt: $addedAt)';
 }
 
 
@@ -285,7 +273,7 @@ abstract mixin class _$AppointmentDoctorCopyWith<$Res> implements $AppointmentDo
   factory _$AppointmentDoctorCopyWith(_AppointmentDoctor value, $Res Function(_AppointmentDoctor) _then) = __$AppointmentDoctorCopyWithImpl;
 @override @useResult
 $Res call({
- String id,@JsonKey(name: 'appointment_id') String appointmentId,@JsonKey(name: 'doctor_id') String doctorId,@JsonKey(name: 'is_replacement') bool isReplacement,@JsonKey(name: 'replaced_doctor_id') String? replacedDoctorId,@JsonKey(name: 'is_active') bool isActive,@JsonKey(name: 'added_by') String? addedBy,@JsonKey(name: 'added_at') DateTime addedAt
+ String id,@JsonKey(name: 'appointment_id') String appointmentId,@JsonKey(name: 'doctor_id') String doctorId,@JsonKey(name: 'is_active') bool isActive,@JsonKey(name: 'added_by') String? addedBy,@JsonKey(name: 'added_at') DateTime addedAt
 });
 
 
@@ -302,14 +290,12 @@ class __$AppointmentDoctorCopyWithImpl<$Res>
 
 /// Create a copy of AppointmentDoctor
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? appointmentId = null,Object? doctorId = null,Object? isReplacement = null,Object? replacedDoctorId = freezed,Object? isActive = null,Object? addedBy = freezed,Object? addedAt = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? appointmentId = null,Object? doctorId = null,Object? isActive = null,Object? addedBy = freezed,Object? addedAt = null,}) {
   return _then(_AppointmentDoctor(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,appointmentId: null == appointmentId ? _self.appointmentId : appointmentId // ignore: cast_nullable_to_non_nullable
 as String,doctorId: null == doctorId ? _self.doctorId : doctorId // ignore: cast_nullable_to_non_nullable
-as String,isReplacement: null == isReplacement ? _self.isReplacement : isReplacement // ignore: cast_nullable_to_non_nullable
-as bool,replacedDoctorId: freezed == replacedDoctorId ? _self.replacedDoctorId : replacedDoctorId // ignore: cast_nullable_to_non_nullable
-as String?,isActive: null == isActive ? _self.isActive : isActive // ignore: cast_nullable_to_non_nullable
+as String,isActive: null == isActive ? _self.isActive : isActive // ignore: cast_nullable_to_non_nullable
 as bool,addedBy: freezed == addedBy ? _self.addedBy : addedBy // ignore: cast_nullable_to_non_nullable
 as String?,addedAt: null == addedAt ? _self.addedAt : addedAt // ignore: cast_nullable_to_non_nullable
 as DateTime,

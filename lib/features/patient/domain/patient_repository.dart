@@ -16,7 +16,7 @@ abstract class PatientRepository {
   /// Searches patients by name or phone number with optional clinic filter.
   ///
   /// The Supabase RLS policies enforce role-scoped visibility:
-  /// doctors only see their assigned or replacement-covered patients;
+  /// doctors only see their assigned or appointment-related patients;
   /// admins and receptionists see all patients.
   ///
   /// Results are ordered by `full_name` ascending and capped at 50.

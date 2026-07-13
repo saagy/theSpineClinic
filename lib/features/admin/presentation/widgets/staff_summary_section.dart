@@ -15,7 +15,7 @@ import 'package:spine_clinic_app/shared/widgets/app_bottom_sheet.dart';
 import 'package:spine_clinic_app/features/admin/presentation/widgets/doctor_performance_sheet.dart';
 import 'package:spine_clinic_app/core/constants/clinic_colors.dart';
 
-/// Section displaying staff KPIs: appointments/doctor, completion rates, top performers.
+/// Section displaying staff KPIs: appointments, attendance, and top performers.
 /// Loads independently from other analytics sections.
 class StaffSummarySection extends ConsumerWidget {
   const StaffSummarySection({super.key});
@@ -27,7 +27,9 @@ class StaffSummarySection extends ConsumerWidget {
     return asyncData.when(
       loading: () => _buildLoading(context),
       error: (error, _) => ErrorView(
-        exception: error is AppException ? error : AppException.fromSupabaseException(error),
+        exception: error is AppException
+            ? error
+            : AppException.fromSupabaseException(error),
         onRetry: () => ref.invalidate(staffSummaryProvider),
       ),
       data: (data) => _buildData(context, data),
@@ -37,7 +39,12 @@ class StaffSummarySection extends ConsumerWidget {
   Widget _buildLoading(BuildContext context) {
     return Column(
       children: [
-        const StatsMetricCard(title: '', value: '', icon: Icons.people_alt_rounded, isLoading: true),
+        const StatsMetricCard(
+          title: '',
+          value: '',
+          icon: Icons.people_alt_rounded,
+          isLoading: true,
+        ),
         const SizedBox(height: AppSizes.p16),
         _skeletonSection(context),
       ],
@@ -48,24 +55,32 @@ class StaffSummarySection extends ConsumerWidget {
     return SectionCard(
       title: AppStrings.staffPerformance,
       child: Column(
-        children: List.generate(3, (_) => Padding(
-          padding: const EdgeInsets.only(bottom: AppSizes.p8),
-          child: Container(
-            height: AppSizes.skeletonLabelHeight,
-            width: double.infinity,
-            decoration: BoxDecoration(
-              color: Theme.of(context).colorScheme.outline,
-              borderRadius: const BorderRadius.all(Radius.circular(AppSizes.r4)),
+        children: List.generate(
+          3,
+          (_) => Padding(
+            padding: const EdgeInsets.only(bottom: AppSizes.p8),
+            child: Container(
+              height: AppSizes.skeletonLabelHeight,
+              width: double.infinity,
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.outline,
+                borderRadius: const BorderRadius.all(
+                  Radius.circular(AppSizes.r4),
+                ),
+              ),
             ),
           ),
-        )),
+        ),
       ),
     );
   }
 
   Widget _buildData(BuildContext context, StaffSummary data) {
     if (data.doctorPerformances.isEmpty) {
-      return const EmptyState(message: AppStrings.noStaffData, icon: Icons.people_alt_rounded);
+      return const EmptyState(
+        message: AppStrings.noStaffData,
+        icon: Icons.people_alt_rounded,
+      );
     }
 
     final ThemeData theme = Theme.of(context);
@@ -89,23 +104,30 @@ class StaffSummarySection extends ConsumerWidget {
                 child: Material(
                   color: Colors.transparent,
                   child: InkWell(
-                    borderRadius: const BorderRadius.all(Radius.circular(AppSizes.r16)),
+                    borderRadius: const BorderRadius.all(
+                      Radius.circular(AppSizes.r16),
+                    ),
                     onTap: () {
                       AppBottomSheet.show(
                         context: context,
                         title: perf.fullName,
                         initialChildSize: 0.8,
-                        builder: (context, scrollController) => DoctorPerformanceSheet(
-                          performance: perf,
-                          scrollController: scrollController,
-                        ),
+                        builder: (context, scrollController) =>
+                            DoctorPerformanceSheet(
+                              performance: perf,
+                              scrollController: scrollController,
+                            ),
                       );
                     },
                     child: Container(
                       padding: const EdgeInsets.all(AppSizes.p16),
                       decoration: BoxDecoration(
-                        border: Border.all(color: theme.colorScheme.outlineVariant),
-                        borderRadius: const BorderRadius.all(Radius.circular(AppSizes.r16)),
+                        border: Border.all(
+                          color: theme.colorScheme.outlineVariant,
+                        ),
+                        borderRadius: const BorderRadius.all(
+                          Radius.circular(AppSizes.r16),
+                        ),
                       ),
                       child: Row(
                         children: [
@@ -117,12 +139,16 @@ class StaffSummarySection extends ConsumerWidget {
                               children: [
                                 Text(
                                   perf.fullName,
-                                  style: AppTextStyles.bodyBold.copyWith(color: theme.colorScheme.onSurface),
+                                  style: AppTextStyles.bodyBold.copyWith(
+                                    color: theme.colorScheme.onSurface,
+                                  ),
                                 ),
                                 const SizedBox(height: AppSizes.p4),
                                 Text(
-                                  '${AppStrings.activeDays}: ${perf.activeDays} | ${AppStrings.absences}: ${perf.absenceCount}',
-                                  style: AppTextStyles.caption.copyWith(color: clinicColors.textMuted),
+                                  '${AppStrings.activeDays}: ${perf.activeDays}',
+                                  style: AppTextStyles.caption.copyWith(
+                                    color: clinicColors.textMuted,
+                                  ),
                                 ),
                               ],
                             ),
@@ -131,13 +157,17 @@ class StaffSummarySection extends ConsumerWidget {
                             crossAxisAlignment: CrossAxisAlignment.end,
                             children: [
                               Text(
-                                '${perf.completedAppointments}/${perf.totalAppointments}',
-                                style: AppTextStyles.bodyBold.copyWith(color: theme.colorScheme.primary),
+                                '${perf.checkedInAppointments}/${perf.eligibleAppointments}',
+                                style: AppTextStyles.bodyBold.copyWith(
+                                  color: theme.colorScheme.primary,
+                                ),
                               ),
                               const SizedBox(height: AppSizes.p4),
                               Text(
-                                AppStrings.sessionsCompleted,
-                                style: AppTextStyles.caption.copyWith(color: clinicColors.textMuted),
+                                AppStrings.sessionsCheckedIn,
+                                style: AppTextStyles.caption.copyWith(
+                                  color: clinicColors.textMuted,
+                                ),
                               ),
                             ],
                           ),

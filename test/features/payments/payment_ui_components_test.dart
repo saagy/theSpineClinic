@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:flutter_form_builder/flutter_form_builder.dart';
 import 'package:spine_clinic_app/core/constants/app_strings.dart';
+import 'package:spine_clinic_app/features/payments/presentation/widgets/payment_form_fields.dart';
 import 'package:spine_clinic_app/features/payments/presentation/widgets/payment_live_summary_strip.dart';
 import 'package:spine_clinic_app/features/payments/presentation/widgets/payment_mode_selector.dart';
 import 'package:spine_clinic_app/features/payments/presentation/widgets/payment_package_credit_section.dart';
@@ -89,6 +91,26 @@ void main() {
 
     expect(find.text(AppStrings.addBalanceAssessmentDisabled), findsOneWidget);
     expect(find.text(AppStrings.sessionBalanceAddedField), findsNothing);
+  });
+
+  testWidgets('package payments use manual credits without a preset dropdown', (
+    tester,
+  ) async {
+    final formKey = GlobalKey<FormBuilderState>();
+    await tester.pumpWidget(
+      _Host(
+        child: FormBuilder(
+          key: formKey,
+          child: PaymentFormFields(enabled: true, formKey: formKey),
+        ),
+      ),
+    );
+
+    await tester.tap(find.text(AppStrings.paymentReasonPackage));
+    await tester.pump();
+
+    expect(find.text(AppStrings.sessionBalanceAddedField), findsOneWidget);
+    expect(find.text(AppStrings.tractionBalanceAddedField), findsOneWidget);
   });
 }
 

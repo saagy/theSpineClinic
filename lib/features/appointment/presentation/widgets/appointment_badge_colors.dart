@@ -22,19 +22,17 @@ extension AppointmentStatusBadgeColors on AppointmentStatus {
 
     return switch (this) {
       AppointmentStatus.scheduled => AppointmentBadgeColors(
-          textColor: clinic.neutral,
-          backgroundColor: clinic.neutralContainer,
-        ),
-      AppointmentStatus.checkedIn || AppointmentStatus.completed =>
-        AppointmentBadgeColors(
-          textColor: clinic.success,
-          backgroundColor: clinic.successContainer,
-        ),
-      AppointmentStatus.cancelled || AppointmentStatus.noShow =>
-        AppointmentBadgeColors(
-          textColor: cs.onErrorContainer,
-          backgroundColor: cs.errorContainer,
-        ),
+        textColor: clinic.neutral,
+        backgroundColor: clinic.neutralContainer,
+      ),
+      AppointmentStatus.checkedIn => AppointmentBadgeColors(
+        textColor: clinic.success,
+        backgroundColor: clinic.successContainer,
+      ),
+      AppointmentStatus.cancelled => AppointmentBadgeColors(
+        textColor: cs.onErrorContainer,
+        backgroundColor: cs.errorContainer,
+      ),
     };
   }
 }
@@ -46,18 +44,18 @@ extension AppointmentTypeBadgeColors on AppointmentType {
 
     return switch (this) {
       AppointmentType.normalPtSession => AppointmentBadgeColors(
-          textColor: cs.onPrimaryContainer,
-          backgroundColor: cs.primaryContainer,
-        ),
+        textColor: cs.onPrimaryContainer,
+        backgroundColor: cs.primaryContainer,
+      ),
       AppointmentType.spinalTractionSession => AppointmentBadgeColors(
-          textColor: clinic.warning,
-          backgroundColor: clinic.warningContainer,
-        ),
-      AppointmentType.initialAssessment || AppointmentType.reassessment =>
-        AppointmentBadgeColors(
-          textColor: clinic.info,
-          backgroundColor: clinic.infoContainer,
-        ),
+        textColor: clinic.warning,
+        backgroundColor: clinic.warningContainer,
+      ),
+      AppointmentType.initialAssessment ||
+      AppointmentType.reassessment => AppointmentBadgeColors(
+        textColor: clinic.info,
+        backgroundColor: clinic.infoContainer,
+      ),
     };
   }
 }

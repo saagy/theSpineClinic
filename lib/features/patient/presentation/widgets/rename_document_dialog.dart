@@ -125,18 +125,27 @@ class _RenameDocumentDialogState extends ConsumerState<RenameDocumentDialog> {
         AppSizes.p24,
       ),
       actions: [
-        AppButton(
-          labelText: AppStrings.cancel,
-          onPressed: _isSaving ? null : () => Navigator.of(context).pop(false),
-          variant: AppButtonVariant.secondary,
-          fullWidth: false,
-        ),
-        AppButton(
-          labelText: AppStrings.rename,
-          onPressed: _canSave ? _save : null,
-          isLoading: _isSaving,
-          shape: AppButtonShape.pill,
-          fullWidth: false,
+        Row(
+          mainAxisAlignment: MainAxisAlignment.end,
+          children: [
+            AppButton(
+              labelText: AppStrings.cancel,
+              onPressed: _isSaving
+                  ? null
+                  : () => Navigator.of(context).pop(false),
+              variant: AppButtonVariant.secondary,
+              shape: AppButtonShape.pill,
+              fullWidth: false,
+            ),
+            const SizedBox(width: AppSizes.p12),
+            AppButton(
+              labelText: AppStrings.rename,
+              onPressed: _canSave ? _save : null,
+              isLoading: _isSaving,
+              shape: AppButtonShape.pill,
+              fullWidth: false,
+            ),
+          ],
         ),
       ],
     );

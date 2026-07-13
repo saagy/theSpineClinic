@@ -6,7 +6,6 @@ import 'package:spine_clinic_app/core/constants/app_strings.dart';
 import 'package:spine_clinic_app/core/errors/app_exception.dart';
 import 'package:spine_clinic_app/features/patient/domain/patient.dart';
 import 'package:spine_clinic_app/features/patient/presentation/patient_providers.dart';
-import 'package:spine_clinic_app/features/payments/domain/clinic_package.dart';
 import 'package:spine_clinic_app/features/payments/presentation/record_payment_controller.dart';
 import 'package:spine_clinic_app/features/payments/presentation/widgets/payment_form_fields.dart';
 import 'package:spine_clinic_app/features/payments/presentation/widgets/record_payment_patient_header.dart';
@@ -67,8 +66,6 @@ class _RecordPaymentFormState extends ConsumerState<RecordPaymentForm> {
     String reasonType,
   ) {
     final String reason = switch (reasonType) {
-      AppStrings.paymentReasonPackage =>
-        'Package (${(values['package'] as ClinicPackage).name})',
       AppStrings.paymentReasonOther => values['custom_reason'] as String,
       _ => reasonType,
     };
@@ -96,7 +93,6 @@ class _RecordPaymentFormState extends ConsumerState<RecordPaymentForm> {
   @override
   Widget build(BuildContext context) {
     final asyncPatient = ref.watch(patientDetailProvider(widget.patientId));
-    final asyncPackages = ref.watch(clinicPackagesProvider);
     final controllerState = ref.watch(recordPaymentControllerProvider);
     return asyncPatient.when(
       loading: () => _loadingScaffold(context),
@@ -104,20 +100,11 @@ class _RecordPaymentFormState extends ConsumerState<RecordPaymentForm> {
         error,
         () => ref.invalidate(patientDetailProvider(widget.patientId)),
       ),
-      data: (patient) => asyncPackages.when(
-        loading: () => _loadingScaffold(context, appBar: true),
-        error: (error, _) =>
-            _errorScaffold(error, () => ref.invalidate(clinicPackagesProvider)),
-        data: (packages) => _formScaffold(patient, packages, controllerState),
-      ),
+      data: (patient) => _formScaffold(patient, controllerState),
     );
   }
 
-  Widget _formScaffold(
-    Patient patient,
-    List<ClinicPackage> packages,
-    AsyncValue<void> controllerState,
-  ) {
+  Widget _formScaffold(Patient patient, AsyncValue<void> controllerState) {
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: _appBar(context),
@@ -134,7 +121,6 @@ class _RecordPaymentFormState extends ConsumerState<RecordPaymentForm> {
                 const SizedBox(height: AppSizes.p24),
                 PaymentFormFields(
                   enabled: !controllerState.isLoading,
-                  packages: packages,
                   formKey: _formKey,
                 ),
                 const SizedBox(height: AppSizes.p32),

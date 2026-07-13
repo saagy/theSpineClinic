@@ -1,6 +1,6 @@
 # Database Schema Reference
 
-This document provides the complete, 100% verified reference for the Spine Clinic backend database running on Supabase Postgres (Project ID: `ujketpugttdqpcixrnga`).
+This document provides the complete reference for the Spine Clinic Supabase Postgres schema represented by `supabase/full_schema.sql`.
 
 ## 1. Custom Enum Types
 
@@ -27,9 +27,7 @@ Values:
 Values:
 - `scheduled`: Appointment booked for a future date/time.
 - `checked_in`: Patient arrived at clinic (deducts session/traction balance if `use_package` is true).
-- `completed`: Treatment completed (deducts session/traction balance if `use_package` is true).
-- `cancelled`: Appointment cancelled (refunds deducted balance if previously checked_in/completed).
-- `no_show`: Patient missed appointment without cancellation.
+- `cancelled`: Appointment cancelled (refunds deducted balance if previously checked in).
 
 ---
 
@@ -80,13 +78,11 @@ Patient visit schedule and status.
 - `created_at` (`timestamptz`, NOT NULL, Default: `now()`)
 
 ### `appointment_doctors`
-Appointment-level doctor assignments and temporary doctor replacements.
-- `doctor_id` and `replaced_doctor_id` must reference `staff` rows whose role is `doctor`.
+Appointment-level doctor assignments with inactive rows retained as history.
+- `doctor_id` must reference a `staff` row whose role is `doctor`.
 - `id` (`uuid`, PK, Default: `gen_random_uuid()`)
 - `appointment_id` (`uuid`, FK -> `appointments(id)` `ON DELETE CASCADE`, NOT NULL)
 - `doctor_id` (`uuid`, FK -> `staff(id)` `ON DELETE RESTRICT`, NOT NULL)
-- `is_replacement` (`boolean`, NOT NULL, Default: `false`)
-- `replaced_doctor_id` (`uuid`, FK -> `staff(id)` `ON DELETE SET NULL`, Nullable)
 - `is_active` (`boolean`, NOT NULL, Default: `true`)
 - `added_by` (`uuid`, FK -> `staff(id)` `ON DELETE SET NULL`, Nullable)
 - `added_at` (`timestamptz`, NOT NULL, Default: `now()`)
@@ -125,24 +121,6 @@ Financial transactions and package balance top-ups.
 - `recorded_by` (`uuid`, FK -> `staff(id)` `ON DELETE SET NULL`, Nullable)
 - `recorded_at` (`timestamptz`, NOT NULL, Default: `now()`)
 
-### `clinic_settings`
-System-wide configuration (package pricing & session rules) stored as JSONB.
-- `id` (`uuid`, PK, Default: `gen_random_uuid()`)
-- `packages` (`jsonb`, NOT NULL)
-- `updated_by` (`uuid`, FK -> `staff(id)` `ON DELETE SET NULL`, Nullable)
-- `updated_at` (`timestamptz`, NOT NULL, Default: `now()`)
-
-### `doctor_replacements`
-Daily absent doctor coverage records.
-- Historical replacement records do not grant patient, note, document, or Storage access.
-- Both doctor references must point to `staff` rows whose role is `doctor`.
-- `id` (`uuid`, PK, Default: `gen_random_uuid()`)
-- `absent_doctor_id` (`uuid`, FK -> `staff(id)` `ON DELETE CASCADE`, NOT NULL)
-- `covering_doctor_id` (`uuid`, FK -> `staff(id)` `ON DELETE CASCADE`, NOT NULL)
-- `replacement_date` (`date`, NOT NULL)
-- `initiated_by` (`uuid`, FK -> `staff(id)` `ON DELETE SET NULL`, Nullable)
-- `created_at` (`timestamptz`, NOT NULL, Default: `now()`)
-
 ---
 
 ## 3. Database Functions & RPCs
@@ -159,7 +137,7 @@ Daily absent doctor coverage records.
 10. `check_patient_has_doctors()`: Trigger function on `patient_doctors` delete/update that prevents leaving a patient with 0 assigned doctors.
 11. `sync_staff_email_to_auth_users()`: Trigger function on `staff` email update that syncs email changes to `auth.users`.
 12. `verify_staff_update_permissions()`: Trigger function on `staff` update that prevents staff members from altering their own role, active status, or payment access.
-13. `enforce_doctor_reference_roles()`: Rejects non-doctor staff IDs in patient, appointment, and replacement doctor references.
+13. `enforce_doctor_reference_roles()`: Rejects non-doctor staff IDs in patient and appointment doctor references.
 14. `prevent_referenced_doctor_role_change()`: Prevents changing a referenced doctor into another role before reassignment.
 
 ---

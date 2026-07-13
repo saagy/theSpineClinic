@@ -362,7 +362,7 @@ final class AppointmentDoctorsDetailsProvider
 }
 
 String _$appointmentDoctorsDetailsHash() =>
-    r'7dd664f217aa97fb872082e870da3401a41e8da3';
+    r'0790a5cf2e1538fc8c6ff2df244819da3850f655';
 
 /// Family provider resolving the detailed doctor assignments for an appointment.
 

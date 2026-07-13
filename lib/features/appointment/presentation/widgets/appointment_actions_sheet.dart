@@ -28,10 +28,12 @@ class AppointmentActionsSheet extends ConsumerStatefulWidget {
   final Appointment appointment;
 
   @override
-  ConsumerState<AppointmentActionsSheet> createState() => _AppointmentActionsSheetState();
+  ConsumerState<AppointmentActionsSheet> createState() =>
+      _AppointmentActionsSheetState();
 }
 
-class _AppointmentActionsSheetState extends ConsumerState<AppointmentActionsSheet> {
+class _AppointmentActionsSheetState
+    extends ConsumerState<AppointmentActionsSheet> {
   bool _isLoading = false;
 
   Future<void> _updateStatus(AppointmentStatus targetStatus) async {
@@ -47,7 +49,9 @@ class _AppointmentActionsSheetState extends ConsumerState<AppointmentActionsShee
     result.when(
       success: (_) {
         ref.invalidate(todayAppointmentsProvider);
-        ref.invalidate(patientAppointmentsProvider(widget.appointment.patientId));
+        ref.invalidate(
+          patientAppointmentsProvider(widget.appointment.patientId),
+        );
         ref.invalidate(patientDetailProvider(widget.appointment.patientId));
         Navigator.pop(context);
         AppSnackbar.show(
@@ -71,10 +75,15 @@ class _AppointmentActionsSheetState extends ConsumerState<AppointmentActionsShee
     final ColorScheme cs = Theme.of(context).colorScheme;
     final ClinicColors clinic = ClinicColors.of(context);
     final appointment = widget.appointment;
-    final String timeStr = Formatters.formatTime(appointment.scheduledAt.toLocal());
-    final AppointmentBadgeColors typeBadge = appointment.type.badgeColors(context);
-    final AppointmentBadgeColors statusBadge =
-        appointment.status.badgeColors(context);
+    final String timeStr = Formatters.formatTime(
+      appointment.scheduledAt.toLocal(),
+    );
+    final AppointmentBadgeColors typeBadge = appointment.type.badgeColors(
+      context,
+    );
+    final AppointmentBadgeColors statusBadge = appointment.status.badgeColors(
+      context,
+    );
 
     return LoadingOverlay(
       isLoading: _isLoading,
@@ -123,18 +132,14 @@ class _AppointmentActionsSheetState extends ConsumerState<AppointmentActionsShee
                   onPressed: () => _updateStatus(AppointmentStatus.cancelled),
                   debounceMs: 1000,
                 ),
-              ] else if (appointment.status == AppointmentStatus.checkedIn) ...[
-                AppButton(
-                  labelText: AppStrings.markAsCompleted,
-                  onPressed: () => _updateStatus(AppointmentStatus.completed),
-                  debounceMs: 1000,
-                ),
               ] else ...[
                 Container(
                   padding: const EdgeInsets.all(AppSizes.p16),
                   decoration: BoxDecoration(
                     color: Theme.of(context).scaffoldBackgroundColor,
-                    borderRadius: const BorderRadius.all(Radius.circular(AppSizes.r6)),
+                    borderRadius: const BorderRadius.all(
+                      Radius.circular(AppSizes.r6),
+                    ),
                     border: Border.all(color: cs.outline),
                   ),
                   child: Text(

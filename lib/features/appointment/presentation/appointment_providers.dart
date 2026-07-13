@@ -26,15 +26,11 @@ import 'package:spine_clinic_app/features/patient/domain/clinic_location.dart';
 
 part 'appointment_providers.g.dart';
 
-
 /// Provides the singleton [AppointmentRepository] backed by Supabase.
 @Riverpod(keepAlive: true)
 AppointmentRepository appointmentRepository(Ref ref) {
-  return AppointmentRepositoryImpl(
-    supabaseService: SupabaseService.instance,
-  );
+  return AppointmentRepositoryImpl(supabaseService: SupabaseService.instance);
 }
-
 
 /// Reactive notifier holding today's schedule of appointments.
 ///
@@ -46,7 +42,9 @@ class TodayAppointments extends _$TodayAppointments {
   Future<List<Appointment>> build() async {
     final ClinicLocation clinic = ref.watch(activeBranchProvider);
     final AppointmentRepository repo = ref.read(appointmentRepositoryProvider);
-    final Result<List<Appointment>> result = await repo.getAppointmentsForToday(clinic);
+    final Result<List<Appointment>> result = await repo.getAppointmentsForToday(
+      clinic,
+    );
 
     switch (result) {
       case Success<List<Appointment>>(:final data):
@@ -65,10 +63,13 @@ class TodayAppointments extends _$TodayAppointments {
 
 /// Family provider that resolves active doctor assignments for a specific appointment.
 @riverpod
-Future<List<AppointmentDoctor>> appointmentDoctors(Ref ref, String appointmentId) async {
+Future<List<AppointmentDoctor>> appointmentDoctors(
+  Ref ref,
+  String appointmentId,
+) async {
   final AppointmentRepository repo = ref.read(appointmentRepositoryProvider);
-  final Result<List<AppointmentDoctor>> result =
-      await repo.getAppointmentDoctors(appointmentId);
+  final Result<List<AppointmentDoctor>> result = await repo
+      .getAppointmentDoctors(appointmentId);
 
   switch (result) {
     case Success<List<AppointmentDoctor>>(:final data):
@@ -82,21 +83,17 @@ Future<List<AppointmentDoctor>> appointmentDoctors(Ref ref, String appointmentId
 class AppointmentDoctorDetail {
   final AppointmentDoctor assignment;
   final Staff doctor;
-  final Staff? replacedDoctor;
 
-  AppointmentDoctorDetail({
-    required this.assignment,
-    required this.doctor,
-    this.replacedDoctor,
-  });
+  AppointmentDoctorDetail({required this.assignment, required this.doctor});
 }
 
 /// Family provider resolving all appointments for a patient.
 @riverpod
 Future<List<Appointment>> patientAppointments(Ref ref, String patientId) async {
   final AppointmentRepository repo = ref.read(appointmentRepositoryProvider);
-  final Result<List<Appointment>> result =
-      await repo.getAppointmentsForPatient(patientId);
+  final Result<List<Appointment>> result = await repo.getAppointmentsForPatient(
+    patientId,
+  );
 
   switch (result) {
     case Success<List<Appointment>>(:final data):
@@ -113,30 +110,21 @@ Future<List<AppointmentDoctorDetail>> appointmentDoctorsDetails(
   String appointmentId,
 ) async {
   final AppointmentRepository repo = ref.read(appointmentRepositoryProvider);
-  final Result<List<AppointmentDoctor>> assignmentsResult =
-      await repo.getAppointmentDoctors(appointmentId);
+  final Result<List<AppointmentDoctor>> assignmentsResult = await repo
+      .getAppointmentDoctors(appointmentId);
 
   final List<AppointmentDoctor> assignments = assignmentsResult.when(
     success: (data) => data,
     failure: (error) => throw error,
   );
 
-  // Concurrently resolve all doctor and replaced doctor profile requests.
-  final List<Future<AppointmentDoctorDetail>> detailFutures = assignments.map((assignment) async {
-    final Future<Staff> doctorFuture = ref.read(staffProfileProvider(assignment.doctorId).future);
-    final Future<Staff?> replacedDoctorFuture = assignment.replacedDoctorId != null
-        ? ref.read(staffProfileProvider(assignment.replacedDoctorId!).future)
-        : Future.value(null);
-
-    final List<Object?> results = await Future.wait([doctorFuture, replacedDoctorFuture]);
-    final Staff doctorResult = results[0] as Staff;
-    final Staff? replacedDoctorResult = results[1] as Staff?;
-
-    return AppointmentDoctorDetail(
-      assignment: assignment,
-      doctor: doctorResult,
-      replacedDoctor: replacedDoctorResult,
+  final List<Future<AppointmentDoctorDetail>> detailFutures = assignments.map((
+    assignment,
+  ) async {
+    final Staff doctor = await ref.read(
+      staffProfileProvider(assignment.doctorId).future,
     );
+    return AppointmentDoctorDetail(assignment: assignment, doctor: doctor);
   }).toList();
 
   return Future.wait(detailFutures);
@@ -146,7 +134,9 @@ Future<List<AppointmentDoctorDetail>> appointmentDoctorsDetails(
 @riverpod
 Future<int> futureScheduledAppointmentsCount(Ref ref, String patientId) async {
   final AppointmentRepository repo = ref.read(appointmentRepositoryProvider);
-  final Result<int> result = await repo.getFutureScheduledAppointmentsCount(patientId);
+  final Result<int> result = await repo.getFutureScheduledAppointmentsCount(
+    patientId,
+  );
 
   switch (result) {
     case Success<int>(:final data):
@@ -165,16 +155,13 @@ Future<int> futureScheduledAppointmentsCountForType(
   ({String patientId, AppointmentType type}) args,
 ) async {
   final AppointmentRepository repo = ref.read(appointmentRepositoryProvider);
-  final Result<int> result =
-      await repo.getFutureScheduledAppointmentsCountForType(
-    patientId: args.patientId,
-    type: args.type,
-  );
+  final Result<int> result = await repo
+      .getFutureScheduledAppointmentsCountForType(
+        patientId: args.patientId,
+        type: args.type,
+      );
 
-  return result.when(
-    success: (data) => data,
-    failure: (err) => throw err,
-  );
+  return result.when(success: (data) => data, failure: (err) => throw err);
 }
 
 /// Family provider evaluating: Current Balance - Future Commitments for a
@@ -184,14 +171,18 @@ Future<int> futureScheduledAppointmentsCountForType(
 /// (no balance impact at all), so callers can render a "paid separately"
 /// surface instead of a numeric balance.
 @riverpod
-Future<int?> availableBalanceForType(Ref ref, ({String patientId, AppointmentType type}) args) async {
+Future<int?> availableBalanceForType(
+  Ref ref,
+  ({String patientId, AppointmentType type}) args,
+) async {
   if (!args.type.affectsPackageBalance) return null;
   final patient = await ref.watch(patientDetailProvider(args.patientId).future);
   final repo = ref.read(appointmentRepositoryProvider);
-  final Result<int> commitmentsResult = await repo.getFutureScheduledAppointmentsCountForType(
-    patientId: args.patientId,
-    type: args.type,
-  );
+  final Result<int> commitmentsResult = await repo
+      .getFutureScheduledAppointmentsCountForType(
+        patientId: args.patientId,
+        type: args.type,
+      );
   final int futureCommitments = commitmentsResult.when(
     success: (data) => data,
     failure: (err) => throw err,
@@ -209,10 +200,12 @@ Future<int?> availableBalanceForType(Ref ref, ({String patientId, AppointmentTyp
 /// Normal PT bucket — new code should pass the appointment type explicitly.
 @riverpod
 Future<int> availablePackageBalance(Ref ref, String patientId) async {
-  final int? value = await ref.watch(availableBalanceForTypeProvider((
-    patientId: patientId,
-    type: AppointmentType.normalPtSession,
-  )).future);
+  final int? value = await ref.watch(
+    availableBalanceForTypeProvider((
+      patientId: patientId,
+      type: AppointmentType.normalPtSession,
+    )).future,
+  );
   return value ?? 0;
 }
 
@@ -221,10 +214,5 @@ Future<int> availablePackageBalance(Ref ref, String patientId) async {
 Future<Appointment> singleAppointment(Ref ref, String appointmentId) async {
   final repo = ref.watch(appointmentRepositoryProvider);
   final result = await repo.getAppointmentById(appointmentId);
-  return result.when(
-    success: (data) => data,
-    failure: (err) => throw err,
-  );
+  return result.when(success: (data) => data, failure: (err) => throw err);
 }
-
-

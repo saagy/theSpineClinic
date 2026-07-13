@@ -115,7 +115,6 @@ FROM (VALUES
   ('10000000-0000-0000-0000-000000000002'::uuid, 'reception@test.local'),
   ('10000000-0000-0000-0000-000000000003'::uuid, 'assigned@test.local'),
   ('10000000-0000-0000-0000-000000000004'::uuid, 'appointment@test.local'),
-  ('10000000-0000-0000-0000-000000000005'::uuid, 'replacement@test.local'),
   ('10000000-0000-0000-0000-000000000006'::uuid, 'unrelated@test.local'),
   ('10000000-0000-0000-0000-000000000007'::uuid, 'inactive@test.local')
 ) AS users(id, email);
@@ -126,7 +125,6 @@ VALUES
   ('20000000-0000-0000-0000-000000000002', '10000000-0000-0000-0000-000000000002', 'Reception', 'reception@test.local', 'receptionist', true),
   ('20000000-0000-0000-0000-000000000003', '10000000-0000-0000-0000-000000000003', 'Assigned', 'assigned@test.local', 'doctor', true),
   ('20000000-0000-0000-0000-000000000004', '10000000-0000-0000-0000-000000000004', 'Appointment', 'appointment@test.local', 'doctor', true),
-  ('20000000-0000-0000-0000-000000000005', '10000000-0000-0000-0000-000000000005', 'Replacement', 'replacement@test.local', 'doctor', true),
   ('20000000-0000-0000-0000-000000000006', '10000000-0000-0000-0000-000000000006', 'Unrelated', 'unrelated@test.local', 'doctor', true),
   ('20000000-0000-0000-0000-000000000007', '10000000-0000-0000-0000-000000000007', 'Inactive', 'inactive@test.local', 'doctor', false);
 
@@ -140,8 +138,6 @@ INSERT INTO public.appointments (id, patient_id, type, scheduled_at)
 VALUES ('40000000-0000-0000-0000-000000000001', '30000000-0000-0000-0000-000000000001', 'normal_pt_session', now() - interval '3 years');
 INSERT INTO public.appointment_doctors (appointment_id, doctor_id, is_active)
 VALUES ('40000000-0000-0000-0000-000000000001', '20000000-0000-0000-0000-000000000004', true);
-INSERT INTO public.doctor_replacements (absent_doctor_id, covering_doctor_id, replacement_date)
-VALUES ('20000000-0000-0000-0000-000000000003', '20000000-0000-0000-0000-000000000005', current_date);
 INSERT INTO public.patient_documents (id, patient_id, file_url, file_name, uploaded_by)
 VALUES ('50000000-0000-0000-0000-000000000001', '30000000-0000-0000-0000-000000000001', 'https://example.test/shared.pdf', 'shared.pdf', '20000000-0000-0000-0000-000000000001');
 
@@ -150,7 +146,6 @@ SELECT pg_temp.assert_document_crud('10000000-0000-0000-0000-000000000001', '200
 SELECT pg_temp.assert_document_crud('10000000-0000-0000-0000-000000000002', '20000000-0000-0000-0000-000000000002', '30000000-0000-0000-0000-000000000001');
 SELECT pg_temp.assert_document_crud('10000000-0000-0000-0000-000000000003', '20000000-0000-0000-0000-000000000003', '30000000-0000-0000-0000-000000000001');
 SELECT pg_temp.assert_document_crud('10000000-0000-0000-0000-000000000004', '20000000-0000-0000-0000-000000000004', '30000000-0000-0000-0000-000000000001');
-SELECT pg_temp.assert_document_denied('10000000-0000-0000-0000-000000000005', '50000000-0000-0000-0000-000000000001');
 SELECT pg_temp.assert_document_denied('10000000-0000-0000-0000-000000000006', '50000000-0000-0000-0000-000000000001');
 SELECT pg_temp.assert_document_denied('10000000-0000-0000-0000-000000000007', '50000000-0000-0000-0000-000000000001');
 

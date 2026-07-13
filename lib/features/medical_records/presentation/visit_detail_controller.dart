@@ -24,7 +24,7 @@ typedef VisitDetailState = ({
   bool canEditNotes,
 });
 
-/// Controller managing a single completed visit's detail state.
+/// Controller managing a single checked-in visit's detail state.
 @riverpod
 class VisitDetailController extends _$VisitDetailController {
   @override
@@ -32,35 +32,41 @@ class VisitDetailController extends _$VisitDetailController {
     final AppointmentRepository repo = ref.read(appointmentRepositoryProvider);
 
     // 1. Fetch appointment
-    final Result<Appointment> appointmentResult =
-        await repo.getAppointmentById(appointmentId);
+    final Result<Appointment> appointmentResult = await repo.getAppointmentById(
+      appointmentId,
+    );
     final Appointment appointment = switch (appointmentResult) {
       Success<Appointment>(:final data) => data,
       Failure<Appointment>(:final exception) => throw exception,
     };
 
     // 2. Fetch patient
-    final Patient patient =
-        await ref.watch(patientDetailProvider(appointment.patientId).future);
+    final Patient patient = await ref.watch(
+      patientDetailProvider(appointment.patientId).future,
+    );
 
     // 3. Fetch active attending doctor assignments (is_active == true)
-    final Result<List<AppointmentDoctor>> assignmentsResult =
-        await repo.getAppointmentDoctors(appointmentId);
-    final List<AppointmentDoctor> activeAssignments = switch (assignmentsResult) {
-      Success<List<AppointmentDoctor>>(:final data) => data,
-      Failure<List<AppointmentDoctor>>(:final exception) => throw exception,
-    };
+    final Result<List<AppointmentDoctor>> assignmentsResult = await repo
+        .getAppointmentDoctors(appointmentId);
+    final List<AppointmentDoctor> activeAssignments =
+        switch (assignmentsResult) {
+          Success<List<AppointmentDoctor>>(:final data) => data,
+          Failure<List<AppointmentDoctor>>(:final exception) => throw exception,
+        };
 
     // 4. Resolve staff profile info for each assignment concurrently
-    final List<AppointmentDoctorDetail> activeDoctors =
-        await Future.wait(activeAssignments.map(_resolveDetail));
+    final List<AppointmentDoctorDetail> activeDoctors = await Future.wait(
+      activeAssignments.map(_resolveDetail),
+    );
 
     // 5. Fetch linked note from patient_notes
-    final PatientNote? note = await ref.watch(appointmentNoteProvider(appointmentId).future);
+    final PatientNote? note = await ref.watch(
+      appointmentNoteProvider(appointmentId).future,
+    );
 
     // 6. Evaluate notes editing access (Rule 6).
     // Super admins can always edit. Doctors can edit if they are the
-    // attending doctor AND the appointment is checked-in or completed.
+    // attending doctor and the appointment is checked in.
     final Staff? currentUser = ref.watch(currentUserProvider).value;
     bool canEditNotes = false;
 
@@ -68,13 +74,12 @@ class VisitDetailController extends _$VisitDetailController {
       if (currentUser.role == UserRole.superAdmin) {
         canEditNotes = true;
       } else if (currentUser.role == UserRole.doctor) {
-        final bool isAttendingDoctor =
-            activeDoctors.any((d) => d.doctor.id == currentUser.id);
-        final bool isCorrectStatus =
-            appointment.status == AppointmentStatus.checkedIn ||
-                appointment.status == AppointmentStatus.completed;
-
-        canEditNotes = isAttendingDoctor && isCorrectStatus;
+        final bool isAttendingDoctor = activeDoctors.any(
+          (d) => d.doctor.id == currentUser.id,
+        );
+        canEditNotes =
+            isAttendingDoctor &&
+            appointment.status == AppointmentStatus.checkedIn;
       }
     }
 
@@ -90,18 +95,10 @@ class VisitDetailController extends _$VisitDetailController {
   Future<AppointmentDoctorDetail> _resolveDetail(
     AppointmentDoctor assignment,
   ) async {
-    final Staff doctor =
-        await ref.read(staffProfileProvider(assignment.doctorId).future);
-
-    final Staff? replacedDoctor = assignment.replacedDoctorId != null
-        ? await ref
-            .read(staffProfileProvider(assignment.replacedDoctorId!).future)
-        : null;
-
-    return AppointmentDoctorDetail(
-      assignment: assignment,
-      doctor: doctor,
-      replacedDoctor: replacedDoctor,
+    final Staff doctor = await ref.read(
+      staffProfileProvider(assignment.doctorId).future,
     );
+
+    return AppointmentDoctorDetail(assignment: assignment, doctor: doctor);
   }
 }

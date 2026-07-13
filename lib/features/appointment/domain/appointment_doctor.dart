@@ -22,17 +22,9 @@ abstract class AppointmentDoctor with _$AppointmentDoctor {
     /// FK references `staff(id)` (role must be doctor).
     @JsonKey(name: 'doctor_id') required String doctorId,
 
-    /// Whether this doctor is covering for another doctor.
-    @JsonKey(name: 'is_replacement') @Default(false) bool isReplacement,
-
-    /// FK references `staff(id)` representing the doctor who is absent.
-    ///
-    /// Set to null when [isReplacement] is false.
-    @JsonKey(name: 'replaced_doctor_id') String? replacedDoctorId,
-
     /// Whether this assignment is currently active.
     ///
-    /// Swapped out/replaced doctors are kept but marked as inactive (`false`).
+    /// Removed doctors are kept but marked as inactive (`false`).
     @JsonKey(name: 'is_active') @Default(true) bool isActive,
 
     /// FK references `staff(id)` representing the person who added this doctor assignment.

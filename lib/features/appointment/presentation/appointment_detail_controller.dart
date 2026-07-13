@@ -42,34 +42,39 @@ class AppointmentDetailController extends _$AppointmentDetailController {
     final AppointmentRepository repo = ref.read(appointmentRepositoryProvider);
 
     // 1. Fetch appointment
-    final Result<Appointment> appointmentResult =
-        await repo.getAppointmentById(appointmentId);
+    final Result<Appointment> appointmentResult = await repo.getAppointmentById(
+      appointmentId,
+    );
     final Appointment appointment = switch (appointmentResult) {
       Success<Appointment>(:final data) => data,
       Failure<Appointment>(:final exception) => throw exception,
     };
 
     // 2. Fetch patient
-    final Patient patient =
-        await ref.watch(patientDetailProvider(appointment.patientId).future);
+    final Patient patient = await ref.watch(
+      patientDetailProvider(appointment.patientId).future,
+    );
 
     // 3. Fetch ALL doctor assignments (active + inactive)
-    final Result<List<AppointmentDoctor>> allDoctorsResult =
-        await repo.getAllAppointmentDoctors(appointmentId);
+    final Result<List<AppointmentDoctor>> allDoctorsResult = await repo
+        .getAllAppointmentDoctors(appointmentId);
     final List<AppointmentDoctor> allAssignments = switch (allDoctorsResult) {
       Success<List<AppointmentDoctor>>(:final data) => data,
       Failure<List<AppointmentDoctor>>(:final exception) => throw exception,
     };
 
     // 4. Resolve staff profiles for each assignment concurrently
-    final List<AppointmentDoctorDetail> details =
-        await Future.wait(allAssignments.map(_resolveDetail));
+    final List<AppointmentDoctorDetail> details = await Future.wait(
+      allAssignments.map(_resolveDetail),
+    );
 
     // 5. Split into active / inactive lists
-    final List<AppointmentDoctorDetail> active =
-        details.where((d) => d.assignment.isActive).toList();
-    final List<AppointmentDoctorDetail> inactive =
-        details.where((d) => !d.assignment.isActive).toList();
+    final List<AppointmentDoctorDetail> active = details
+        .where((d) => d.assignment.isActive)
+        .toList();
+    final List<AppointmentDoctorDetail> inactive = details
+        .where((d) => !d.assignment.isActive)
+        .toList();
 
     return (
       appointment: appointment,
@@ -83,19 +88,11 @@ class AppointmentDetailController extends _$AppointmentDetailController {
   Future<AppointmentDoctorDetail> _resolveDetail(
     AppointmentDoctor assignment,
   ) async {
-    final Staff doctor =
-        await ref.read(staffProfileProvider(assignment.doctorId).future);
-
-    final Staff? replacedDoctor = assignment.replacedDoctorId != null
-        ? await ref
-            .read(staffProfileProvider(assignment.replacedDoctorId!).future)
-        : null;
-
-    return AppointmentDoctorDetail(
-      assignment: assignment,
-      doctor: doctor,
-      replacedDoctor: replacedDoctor,
+    final Staff doctor = await ref.read(
+      staffProfileProvider(assignment.doctorId).future,
     );
+
+    return AppointmentDoctorDetail(assignment: assignment, doctor: doctor);
   }
 
   /// Transitions appointment status to [AppointmentStatus.checkedIn].

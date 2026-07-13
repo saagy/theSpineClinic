@@ -8,20 +8,19 @@ the only enforcement layer.
 
 | Role | Access Model |
 | --- | --- |
-| `super_admin` | Full administrative access, staff management, settings, payments. |
+| `super_admin` | Full administrative access, staff management, and payments. |
 | `receptionist` | Operational access for patients, appointments, and documents. Payment writes require `can_manage_payments`. |
-| `doctor` | Clinical access to assigned, replacement, or appointment-related patients. |
+| `doctor` | Clinical access to assigned or appointment-related patients. |
 
 ## RLS Principles
 
 - Every app table has row-level security enabled.
 - Staff access flows through `get_auth_staff_profile()`.
 - Inactive staff should not gain operational access.
-- Doctors are scoped to patients they are assigned to, covering for, or booked
-  with through active appointment assignments.
+- Doctors are scoped to patients they are assigned to or booked with through
+  active appointment assignments.
 - Payment writes are limited to super admins and receptionists with
   `can_manage_payments = true`.
-- Clinic package settings are writeable only by super admins.
 - Document storage policies mirror document metadata access rules.
 
 ## Security Fixes Captured In Baseline

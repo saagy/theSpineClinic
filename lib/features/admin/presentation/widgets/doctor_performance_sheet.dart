@@ -45,28 +45,15 @@ class DoctorPerformanceSheet extends StatelessWidget {
               const SizedBox(width: AppSizes.p12),
               Expanded(
                 child: _MetricItem(
-                  label: AppStrings.absences,
-                  value: '${performance.absenceCount}',
-                  icon: Icons.warning_amber_rounded,
-                  color: theme.colorScheme.error,
-                ),
-              ),
-              const SizedBox(width: AppSizes.p12),
-              Expanded(
-                child: _MetricItem(
-                  label: AppStrings.completed,
-                  value: '${performance.completedAppointments}/${performance.totalAppointments}',
+                  label: AppStrings.checkedIn,
+                  value:
+                      '${performance.checkedInAppointments}/${performance.eligibleAppointments}',
                   icon: Icons.check_circle_rounded,
                   color: clinicColors.success,
                 ),
               ),
             ],
           ),
-        ),
-        const SizedBox(height: AppSizes.p16),
-        const Padding(
-          padding: EdgeInsets.symmetric(horizontal: AppSizes.p20),
-          child: Divider(),
         ),
         const SizedBox(height: AppSizes.p8),
         Expanded(
@@ -77,7 +64,10 @@ class DoctorPerformanceSheet extends StatelessWidget {
                 )
               : ListView.builder(
                   controller: scrollController,
-                  padding: const EdgeInsets.symmetric(horizontal: AppSizes.p20, vertical: AppSizes.p8),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppSizes.p20,
+                    vertical: AppSizes.p8,
+                  ),
                   itemCount: performance.dailyLogs.length,
                   itemBuilder: (context, index) {
                     final log = performance.dailyLogs[index];
@@ -86,31 +76,26 @@ class DoctorPerformanceSheet extends StatelessWidget {
                       child: Container(
                         padding: const EdgeInsets.all(AppSizes.p16),
                         decoration: BoxDecoration(
-                          color: theme.colorScheme.surfaceContainerHighest.withAlpha(50),
-                          borderRadius: const BorderRadius.all(Radius.circular(AppSizes.r16)),
+                          color: theme.colorScheme.surfaceContainerHighest
+                              .withAlpha(50),
+                          borderRadius: const BorderRadius.all(
+                            Radius.circular(AppSizes.r16),
+                          ),
                         ),
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             Text(
                               log.date.toMediumDateString(),
-                              style: AppTextStyles.bodyBold.copyWith(color: theme.colorScheme.onSurface),
-                            ),
-                            if (log.isAbsent)
-                              StatusBadge(
-                                label: AppStrings.absentCoveredBy.replaceAll('%s', log.coveringDoctorName ?? AppStrings.unknownFallback),
-                                variant: StatusVariant.cancelled,
-                              )
-                            else if (log.totalAppointments > 0)
-                              StatusBadge(
-                                label: '${log.completedAppointments}/${log.totalAppointments} ${AppStrings.completed.toLowerCase()}',
-                                variant: StatusVariant.completed,
-                              )
-                            else
-                              Text(
-                                AppStrings.noActivity,
-                                style: AppTextStyles.caption.copyWith(color: clinicColors.textMuted),
+                              style: AppTextStyles.bodyBold.copyWith(
+                                color: theme.colorScheme.onSurface,
                               ),
+                            ),
+                            StatusBadge(
+                              label:
+                                  '${log.checkedInAppointments}/${log.eligibleAppointments} ${AppStrings.checkedIn.toLowerCase()}',
+                              variant: StatusVariant.completed,
+                            ),
                           ],
                         ),
                       ),
@@ -154,14 +139,18 @@ class _MetricItem extends StatelessWidget {
           const SizedBox(height: AppSizes.p8),
           Text(
             label,
-            style: AppTextStyles.caption.copyWith(color: clinicColors.textMuted),
+            style: AppTextStyles.caption.copyWith(
+              color: clinicColors.textMuted,
+            ),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
           ),
           const SizedBox(height: AppSizes.p4),
           Text(
             value,
-            style: AppTextStyles.bodyBold.copyWith(color: theme.colorScheme.onSurface),
+            style: AppTextStyles.bodyBold.copyWith(
+              color: theme.colorScheme.onSurface,
+            ),
           ),
         ],
       ),

@@ -117,6 +117,7 @@ class _PatientTabAppointmentsState
               child: AppButton(
                 labelText: AppStrings.bookAppointment,
                 onPressed: _openNewAppointment,
+                shape: AppButtonShape.pill,
               ),
             ),
           ],

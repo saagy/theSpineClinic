@@ -7,7 +7,7 @@
 | `user_role` | `super_admin`, `receptionist`, `doctor` |
 | `clinic_location` | `tagamoa`, `masr_elgedida` |
 | `appointment_type` | `normal_pt_session`, `spinal_traction_session`, `check_up`, `initial_assessment`, `reassessment` |
-| `appointment_status` | `scheduled`, `checked_in`, `completed`, `cancelled`, `no_show` |
+| `appointment_status` | `scheduled`, `checked_in`, `cancelled` |
 
 ## Tables
 
@@ -17,12 +17,10 @@
 | `patients` | Patient registry, clinic branch, package balances, creator. |
 | `patient_doctors` | Long-term doctor assignments for each patient. |
 | `appointments` | Patient visits, type, status, schedule, package use. |
-| `appointment_doctors` | Appointment-level doctor assignments and replacements. |
+| `appointment_doctors` | Current and historical appointment-level doctor assignments. |
 | `patient_documents` | Uploaded document metadata and optional thumbnails. |
 | `patient_notes` | Clinical notes, optionally tied to an appointment. |
 | `payment_records` | Payment history, due tracking, and package credits. |
-| `clinic_settings` | JSONB package configuration. |
-| `doctor_replacements` | Daily absence and covering-doctor records. |
 
 ## Key Relationships
 
@@ -35,7 +33,6 @@ patients -> appointments.patient_id
 patients -> patient_notes.patient_id
 patients -> patient_documents.patient_id
 patients -> payment_records.patient_id
-clinic_settings.packages -> app ClinicPackage model
 ```
 
 ## Key RPCs
@@ -54,8 +51,8 @@ clinic_settings.packages -> app ClinicPackage model
 ## Triggered Business Rules
 
 - A patient cannot be left without at least one assigned doctor.
-- Completing or checking in a package-backed PT session deducts session balance.
-- Completing or checking in a traction session deducts traction balance.
+- Checking in a package-backed PT session deducts session balance.
+- Checking in a traction session deducts traction balance.
 - Reverting a deducted appointment back to scheduled or cancelled refunds the
   correct balance bucket.
 - Assessment appointment types never deduct package balance.

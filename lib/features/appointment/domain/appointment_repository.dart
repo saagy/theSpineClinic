@@ -60,11 +60,6 @@ abstract class AppointmentRepository {
   /// Creates a new appointment and returns its assigned ID.
   Future<Result<String>> createAppointment(Appointment appointment);
 
-  /// Attaches a doctor to an appointment.
-  Future<Result<void>> createAppointmentDoctor(
-    AppointmentDoctor appointmentDoctor,
-  );
-
   /// Resolves the list of active doctors assigned to a patient.
   Future<Result<List<Staff>>> getAssignedDoctors(String patientId);
 
@@ -177,19 +172,16 @@ abstract class AppointmentRepository {
   );
 }
 
-/// Helper domain model wrapping a doctor's active appointment assignment
-/// along with patient and covering details.
+/// Helper domain model wrapping a doctor's active appointment assignment.
 class DoctorScheduleItem {
   final Appointment appointment;
   final AppointmentDoctor appointmentDoctor;
   final Patient patient;
-  final Staff? replacedDoctor;
 
   const DoctorScheduleItem({
     required this.appointment,
     required this.appointmentDoctor,
     required this.patient,
-    this.replacedDoctor,
   });
 }
 

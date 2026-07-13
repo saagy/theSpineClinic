@@ -60,52 +60,6 @@ final class PaymentRepositoryProvider
 
 String _$paymentRepositoryHash() => r'6a0f5ada6b16c29802c1f4b384899e78c5e01498';
 
-/// Provider fetching available clinic packages.
-
-@ProviderFor(clinicPackages)
-final clinicPackagesProvider = ClinicPackagesProvider._();
-
-/// Provider fetching available clinic packages.
-
-final class ClinicPackagesProvider
-    extends
-        $FunctionalProvider<
-          AsyncValue<List<ClinicPackage>>,
-          List<ClinicPackage>,
-          FutureOr<List<ClinicPackage>>
-        >
-    with
-        $FutureModifier<List<ClinicPackage>>,
-        $FutureProvider<List<ClinicPackage>> {
-  /// Provider fetching available clinic packages.
-  ClinicPackagesProvider._()
-    : super(
-        from: null,
-        argument: null,
-        retry: null,
-        name: r'clinicPackagesProvider',
-        isAutoDispose: true,
-        dependencies: null,
-        $allTransitiveDependencies: null,
-      );
-
-  @override
-  String debugGetCreateSourceHash() => _$clinicPackagesHash();
-
-  @$internal
-  @override
-  $FutureProviderElement<List<ClinicPackage>> $createElement(
-    $ProviderPointer pointer,
-  ) => $FutureProviderElement(pointer);
-
-  @override
-  FutureOr<List<ClinicPackage>> create(Ref ref) {
-    return clinicPackages(ref);
-  }
-}
-
-String _$clinicPackagesHash() => r'5699c652cc63775975570c5cca744d2babe56c7c';
-
 /// Provider fetching payment records for a patient.
 
 @ProviderFor(patientPayments)

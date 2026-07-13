@@ -1,7 +1,6 @@
 /// Doctors section for the appointment detail screen.
 ///
-/// Renders active doctors with replacement labels and a collapsible
-/// audit trail section for inactive (swapped-out) doctor assignments.
+/// Renders active doctors and a collapsible audit trail of past assignments.
 ///
 /// Uses the shared [DoctorRow] widget for active doctor rows.
 library;
@@ -26,7 +25,6 @@ class AppointmentDoctorsSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
     return Padding(
       padding: const EdgeInsets.fromLTRB(
         AppSizes.p24,
@@ -37,15 +35,11 @@ class AppointmentDoctorsSection extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const EyebrowLabel(
-            text: AppStrings.doctors,
-            isUppercase: false,
-          ),
+          const EyebrowLabel(text: AppStrings.doctors, isUppercase: false),
           const SizedBox(height: AppSizes.p8),
           activeDoctors.isEmpty
               ? Padding(
-                  padding:
-                      const EdgeInsets.symmetric(vertical: AppSizes.p8),
+                  padding: const EdgeInsets.symmetric(vertical: AppSizes.p8),
                   child: Text(
                     AppStrings.noAssignedDoctors,
                     style: AppTextStyles.bodySecondary,
@@ -57,22 +51,15 @@ class AppointmentDoctorsSection extends StatelessWidget {
           if (inactiveDoctors.isNotEmpty)
             _InactiveDoctorsExpansion(inactiveDoctors: inactiveDoctors),
           const SizedBox(height: AppSizes.p16),
-          Divider(color: cs.outlineVariant, height: 1, thickness: 0.5),
         ],
       ),
     );
   }
 
   Widget _buildActiveDoctorRow(AppointmentDoctorDetail detail) {
-    final String? subtitle =
-        detail.assignment.isReplacement && detail.replacedDoctor != null
-            ? '${AppStrings.coveringDr} ${detail.replacedDoctor!.fullName}'
-            : null;
-
     return DoctorRow(
       name: detail.doctor.fullName,
       isActive: detail.doctor.isActive,
-      subtitle: subtitle,
     );
   }
 }
@@ -92,17 +79,22 @@ class _InactiveDoctorsExpansion extends StatelessWidget {
       iconColor: cs.onSurfaceVariant,
       collapsedIconColor: cs.outline,
       title: Text(
-        AppStrings.originalDoctors,
+        AppStrings.previousDoctors,
         style: AppTextStyles.captionMedium.copyWith(
           color: cs.onSurfaceVariant,
           fontWeight: FontWeight.w500,
         ),
       ),
-      children: inactiveDoctors.map((d) => _buildInactiveRow(context, d)).toList(),
+      children: inactiveDoctors
+          .map((d) => _buildInactiveRow(context, d))
+          .toList(),
     );
   }
 
-  Widget _buildInactiveRow(BuildContext context, AppointmentDoctorDetail detail) {
+  Widget _buildInactiveRow(
+    BuildContext context,
+    AppointmentDoctorDetail detail,
+  ) {
     final cs = Theme.of(context).colorScheme;
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: AppSizes.p4),
@@ -116,8 +108,7 @@ class _InactiveDoctorsExpansion extends StatelessWidget {
           const SizedBox(width: AppSizes.p8),
           Text(
             detail.doctor.fullName,
-            style: AppTextStyles.caption
-                .copyWith(color: cs.onSurfaceVariant),
+            style: AppTextStyles.caption.copyWith(color: cs.onSurfaceVariant),
           ),
         ],
       ),

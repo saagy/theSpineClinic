@@ -1,5 +1,5 @@
 /// Shared doctor row — avatar, name, optional deactivated badge,
-/// optional subtitle (e.g. "Covering Dr. X").
+/// optional contextual subtitle.
 ///
 /// Used by both appointment detail and patient info tab.
 /// When [isActive] is false, the row dims to 50% opacity and shows

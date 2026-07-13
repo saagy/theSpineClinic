@@ -154,11 +154,7 @@ class _PatientAppointmentFilterContentState
         Wrap(
           spacing: AppSizes.p8,
           runSpacing: AppSizes.p8,
-          children: AppointmentStatus.values
-              .where((status) =>
-                  status != AppointmentStatus.completed &&
-                  status != AppointmentStatus.noShow)
-              .map((status) {
+          children: AppointmentStatus.values.map((status) {
             final isSelected = _statusFilter.contains(status);
             return AppFilterChip(
               label: status.displayLabel,

@@ -56,7 +56,7 @@ BEGIN
   )
   RETURNING id INTO v_appt_id;
 
-  UPDATE public.appointments SET status = 'completed'
+  UPDATE public.appointments SET status = 'checked_in'
   WHERE id = v_appt_id;
 
   SELECT session_balance, traction_balance
@@ -111,7 +111,7 @@ BEGIN
   )
   RETURNING id INTO v_appt_id;
 
-  UPDATE public.appointments SET status = 'completed'
+  UPDATE public.appointments SET status = 'checked_in'
   WHERE id = v_appt_id;
 
   SELECT session_balance, traction_balance
@@ -133,7 +133,7 @@ BEGIN
   )
   RETURNING id INTO v_appt_id;
 
-  UPDATE public.appointments SET status = 'completed'
+  UPDATE public.appointments SET status = 'checked_in'
   WHERE id = v_appt_id;
 
   SELECT session_balance INTO v_session_balance

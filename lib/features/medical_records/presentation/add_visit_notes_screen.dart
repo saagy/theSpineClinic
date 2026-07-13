@@ -23,23 +23,33 @@ class AddVisitNotesScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final stateAsync = ref.watch(addVisitNotesControllerProvider(appointmentId));
+    final stateAsync = ref.watch(
+      addVisitNotesControllerProvider(appointmentId),
+    );
 
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        title: Text(AppStrings.addVisitNotes, style: AppTextStyles.headingSmall),
+        title: Text(
+          AppStrings.addVisitNotes,
+          style: AppTextStyles.headingSmall,
+        ),
         backgroundColor: Theme.of(context).colorScheme.surface,
         surfaceTintColor: Theme.of(context).colorScheme.surface.withAlpha(0),
         leading: const AppBackButton(),
       ),
       body: stateAsync.when(
         loading: () => Center(
-          child: CircularProgressIndicator(color: Theme.of(context).colorScheme.primary),
+          child: CircularProgressIndicator(
+            color: Theme.of(context).colorScheme.primary,
+          ),
         ),
         error: (Object error, StackTrace stack) => ErrorView(
-          exception: error is AppException ? error : AppException.fromSupabaseException(error),
-          onRetry: () => ref.invalidate(addVisitNotesControllerProvider(appointmentId)),
+          exception: error is AppException
+              ? error
+              : AppException.fromSupabaseException(error),
+          onRetry: () =>
+              ref.invalidate(addVisitNotesControllerProvider(appointmentId)),
         ),
         data: (state) {
           if (!state.isAuthorized) {
@@ -56,14 +66,21 @@ class AddVisitNotesScreen extends ConsumerWidget {
                   child: SectionCard(
                     child: Column(
                       children: [
-                        InfoRow(label: 'Patient', value: state.patient.fullName),
+                        InfoRow(
+                          label: 'Patient',
+                          value: state.patient.fullName,
+                        ),
                         InfoRow(
                           label: AppStrings.date,
-                          value: Formatters.formatDateMedium(state.appointment.scheduledAt),
+                          value: Formatters.formatDateMedium(
+                            state.appointment.scheduledAt,
+                          ),
                         ),
                         InfoRow(
                           label: AppStrings.time,
-                          value: Formatters.formatTime(state.appointment.scheduledAt),
+                          value: Formatters.formatTime(
+                            state.appointment.scheduledAt,
+                          ),
                         ),
                       ],
                     ),
@@ -72,7 +89,6 @@ class AddVisitNotesScreen extends ConsumerWidget {
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: AppSizes.p24),
                   child: NotesForm(
-                    appointment: state.appointment,
                     note: state.note,
                     appointmentId: appointmentId,
                   ),
