@@ -6,6 +6,7 @@ import 'package:spine_clinic_app/features/appointment/presentation/all_appointme
 import 'package:spine_clinic_app/features/appointment/presentation/appointment_providers.dart';
 import 'package:spine_clinic_app/features/appointment/presentation/doctor_schedule_providers.dart';
 import 'package:spine_clinic_app/features/appointment/presentation/receptionist_appointments_providers.dart';
+import 'package:spine_clinic_app/features/appointment/presentation/booking_workboard_provider.dart';
 import 'package:spine_clinic_app/features/auth/presentation/auth_providers.dart';
 import 'package:spine_clinic_app/features/patient/presentation/patient_appointments_notifier.dart'
     as patient_tab;
@@ -85,6 +86,6 @@ class EditAppointmentController extends _$EditAppointmentController {
 
     // Refresh the receptionist dashboard queues immediately
     ref.read(receptionistAppointmentsProvider.notifier).loadToday();
-    ref.read(receptionistAppointmentsProvider.notifier).loadUpcoming();
+    ref.read(bookingWorkboardProvider.notifier).refresh();
   }
 }

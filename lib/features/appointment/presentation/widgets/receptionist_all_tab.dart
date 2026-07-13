@@ -27,7 +27,7 @@ import 'package:spine_clinic_app/shared/widgets/animated_list_item.dart';
 
 /// The "All" tab for the receptionist dashboard. Mirrors the standalone
 /// [AllAppointmentsScreen] but embeds as a tab and uses [ReceptionistAppointmentCard]
-/// for visual consistency with the Today / Upcoming tabs.
+/// for visual consistency with the Today / Booking tabs.
 class ReceptionistAllTab extends ConsumerStatefulWidget {
   /// Creates a [ReceptionistAllTab].
   const ReceptionistAllTab({super.key, required this.onStatusChanged});
@@ -54,7 +54,8 @@ class _ReceptionistAllTabState extends ConsumerState<ReceptionistAllTab> {
   }
 
   void _onScroll() {
-    if (_scrollCtrl.position.pixels >= _scrollCtrl.position.maxScrollExtent - 200) {
+    if (_scrollCtrl.position.pixels >=
+        _scrollCtrl.position.maxScrollExtent - 200) {
       ref.read(allAppointmentsProvider.notifier).loadMore();
     }
   }
@@ -62,7 +63,9 @@ class _ReceptionistAllTabState extends ConsumerState<ReceptionistAllTab> {
   // ── Sort ────────────────────────────────────────────────────────────────────
 
   String get _sortLabel {
-    return ref.read(allAppointmentsProvider.notifier).isAscending ? 'Date ↑' : 'Date ↓';
+    return ref.read(allAppointmentsProvider.notifier).isAscending
+        ? 'Date ↑'
+        : 'Date ↓';
   }
 
   Future<void> _showSortSheet() async {
@@ -72,8 +75,16 @@ class _ReceptionistAllTabState extends ConsumerState<ReceptionistAllTab> {
       context: context,
       title: 'Sort by Date',
       options: const [
-        SortOption(value: 'newest', label: 'Date (Newest)', buttonLabel: 'Date ↓'),
-        SortOption(value: 'oldest', label: 'Date (Oldest)', buttonLabel: 'Date ↑'),
+        SortOption(
+          value: 'newest',
+          label: 'Date (Newest)',
+          buttonLabel: 'Date ↓',
+        ),
+        SortOption(
+          value: 'oldest',
+          label: 'Date (Oldest)',
+          buttonLabel: 'Date ↑',
+        ),
       ],
       selected: currentAsc ? 'oldest' : 'newest',
     );
@@ -91,36 +102,61 @@ class _ReceptionistAllTabState extends ConsumerState<ReceptionistAllTab> {
       _animatedIndices.clear();
     }
     final n = ref.read(allAppointmentsProvider.notifier);
-    return Column(children: [
-      Padding(
-        padding: const EdgeInsets.fromLTRB(AppSizes.p16, AppSizes.p12, AppSizes.p16, AppSizes.p4),
-        child: AppSearchBar(hintText: AppStrings.searchByPatientNameHint, onChanged: n.searchPatient),
-      ),
-      SortFilterBar(sortLabel: 'Sort: $_sortLabel', onSortTap: _showSortSheet,
-        activeFilterCount: _chips.length, onFilterTap: () => _openFilterSheet(context)),
-      ActiveFilterChipsRow(chips: _chips, onClearAll: () => ref.read(allAppointmentsProvider.notifier).clearAll()),
-      if (async.value != null && !async.isLoading)
+    return Column(
+      children: [
         Padding(
-          padding: const EdgeInsets.fromLTRB(AppSizes.p20, AppSizes.p8, AppSizes.p20, AppSizes.p4),
-          child: Align(
-            alignment: Alignment.centerLeft,
-            child: Text(
-              'Total Appointments: ${ref.read(allAppointmentsProvider.notifier).totalCount}',
-              style: AppTextStyles.captionBold.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
-            ),
+          padding: const EdgeInsets.fromLTRB(
+            AppSizes.p16,
+            AppSizes.p12,
+            AppSizes.p16,
+            AppSizes.p4,
+          ),
+          child: AppSearchBar(
+            hintText: AppStrings.searchByPatientNameHint,
+            onChanged: n.searchPatient,
           ),
         ),
-      Expanded(
-        child: AppAsyncStateHandler<List<AppointmentWithPatient>>(
-          asyncValue: async,
-          onRetry: () => ref.read(allAppointmentsProvider.notifier).refresh(),
-          emptyMessage: AppStrings.noAppointmentsFound,
-          emptyIcon: Icons.event_busy_rounded,
-          skeletonCount: 6,
-          onData: (items) => _buildDataView(items),
+        SortFilterBar(
+          sortLabel: 'Sort: $_sortLabel',
+          onSortTap: _showSortSheet,
+          activeFilterCount: _chips.length,
+          onFilterTap: () => _openFilterSheet(context),
         ),
-      ),
-    ]);
+        ActiveFilterChipsRow(
+          chips: _chips,
+          onClearAll: () =>
+              ref.read(allAppointmentsProvider.notifier).clearAll(),
+        ),
+        if (async.value != null && !async.isLoading)
+          Padding(
+            padding: const EdgeInsets.fromLTRB(
+              AppSizes.p20,
+              AppSizes.p8,
+              AppSizes.p20,
+              AppSizes.p4,
+            ),
+            child: Align(
+              alignment: Alignment.centerLeft,
+              child: Text(
+                'Total Appointments: ${ref.read(allAppointmentsProvider.notifier).totalCount}',
+                style: AppTextStyles.captionBold.copyWith(
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
+              ),
+            ),
+          ),
+        Expanded(
+          child: AppAsyncStateHandler<List<AppointmentWithPatient>>(
+            asyncValue: async,
+            onRetry: () => ref.read(allAppointmentsProvider.notifier).refresh(),
+            emptyMessage: AppStrings.noAppointmentsFound,
+            emptyIcon: Icons.event_busy_rounded,
+            skeletonCount: 6,
+            onData: (items) => _buildDataView(items),
+          ),
+        ),
+      ],
+    );
   }
 
   Widget _buildDataView(List<AppointmentWithPatient> items) {
@@ -161,7 +197,10 @@ class _ReceptionistAllTabState extends ConsumerState<ReceptionistAllTab> {
           if (item is AllHeaderItem) {
             return Padding(
               padding: const EdgeInsets.fromLTRB(
-                AppSizes.p20, AppSizes.p16, AppSizes.p20, AppSizes.p8,
+                AppSizes.p20,
+                AppSizes.p16,
+                AppSizes.p20,
+                AppSizes.p8,
               ),
               child: Text(
                 item.title,
@@ -187,7 +226,11 @@ class _ReceptionistAllTabState extends ConsumerState<ReceptionistAllTab> {
   }
 
   void _openFilterSheet(BuildContext context) {
-    AppBottomSheet.show(context: context, title: 'Advanced Filters',
-      builder: (ctx, scrollCtrl) => AppointmentFilterContent(scrollController: scrollCtrl));
+    AppBottomSheet.show(
+      context: context,
+      title: 'Advanced Filters',
+      builder: (ctx, scrollCtrl) =>
+          AppointmentFilterContent(scrollController: scrollCtrl),
+    );
   }
 }

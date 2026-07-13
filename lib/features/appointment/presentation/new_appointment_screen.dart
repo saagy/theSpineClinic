@@ -12,10 +12,19 @@ import 'package:spine_clinic_app/shared/widgets/app_back_button.dart';
 /// Screen container for booking a new single or recurring appointment.
 class NewAppointmentScreen extends ConsumerWidget {
   /// Creates a [NewAppointmentScreen].
-  const NewAppointmentScreen({super.key, this.preselectedPatientId});
+  const NewAppointmentScreen({
+    super.key,
+    this.preselectedPatientId,
+    this.preselectedDate,
+    this.preselectedDoctorId,
+    this.expectedNextVisitDate,
+  });
 
   /// Optional patient ID to pre-populate.
   final String? preselectedPatientId;
+  final DateTime? preselectedDate;
+  final String? preselectedDoctorId;
+  final DateTime? expectedNextVisitDate;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -23,9 +32,13 @@ class NewAppointmentScreen extends ConsumerWidget {
     final user = asyncUser.value;
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!asyncUser.isLoading && (user == null || user.role == UserRole.doctor)) {
-        AppSnackbar.show(context,
-            message: AppStrings.accessDenied, variant: AppSnackbarVariant.error);
+      if (!asyncUser.isLoading &&
+          (user == null || user.role == UserRole.doctor)) {
+        AppSnackbar.show(
+          context,
+          message: AppStrings.accessDenied,
+          variant: AppSnackbarVariant.error,
+        );
         context.pop();
       }
     });
@@ -33,7 +46,11 @@ class NewAppointmentScreen extends ConsumerWidget {
     if (asyncUser.isLoading || user == null || user.role == UserRole.doctor) {
       return Scaffold(
         backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-        body: Center(child: CircularProgressIndicator(color: Theme.of(context).colorScheme.primary)),
+        body: Center(
+          child: CircularProgressIndicator(
+            color: Theme.of(context).colorScheme.primary,
+          ),
+        ),
       );
     }
 
@@ -46,7 +63,12 @@ class NewAppointmentScreen extends ConsumerWidget {
         elevation: 0,
         leading: const AppBackButton(),
       ),
-      body: NewAppointmentForm(preselectedPatientId: preselectedPatientId),
+      body: NewAppointmentForm(
+        preselectedPatientId: preselectedPatientId,
+        preselectedDate: preselectedDate,
+        preselectedDoctorId: preselectedDoctorId,
+        expectedNextVisitDate: expectedNextVisitDate,
+      ),
     );
   }
 }

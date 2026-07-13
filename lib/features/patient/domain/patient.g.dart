@@ -16,6 +16,9 @@ _Patient _$PatientFromJson(Map<String, dynamic> json) => _Patient(
   tractionBalance: (json['traction_balance'] as num?)?.toInt() ?? 0,
   createdBy: json['created_by'] as String?,
   createdAt: DateTime.parse(json['created_at'] as String),
+  nextVisitDate: json['next_visit_date'] == null
+      ? null
+      : DateTime.parse(json['next_visit_date'] as String),
 );
 
 Map<String, dynamic> _$PatientToJson(_Patient instance) => <String, dynamic>{
@@ -28,6 +31,7 @@ Map<String, dynamic> _$PatientToJson(_Patient instance) => <String, dynamic>{
   'traction_balance': instance.tractionBalance,
   'created_by': instance.createdBy,
   'created_at': instance.createdAt.toIso8601String(),
+  'next_visit_date': instance.nextVisitDate?.toIso8601String(),
 };
 
 const _$ClinicLocationEnumMap = {

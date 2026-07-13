@@ -24,48 +24,38 @@ import 'package:spine_clinic_app/features/patient/domain/clinic_location.dart';
 class ReceptionistAppointmentsState {
   const ReceptionistAppointmentsState({
     this.today = const [],
-    this.upcoming = const [],
     this.todayLoading = true,
-    this.upcomingLoading = true,
     this.todayError,
-    this.upcomingError,
   });
 
   final List<AppointmentWithPatient> today;
-  final List<AppointmentWithPatient> upcoming;
   final bool todayLoading;
-  final bool upcomingLoading;
   final Object? todayError;
-  final Object? upcomingError;
 
-  int get scheduledCount =>
-      today.where((a) => a.appointment.status == AppointmentStatus.scheduled).length;
+  int get scheduledCount => today
+      .where((a) => a.appointment.status == AppointmentStatus.scheduled)
+      .length;
 
-  int get checkedInCount =>
-      today.where((a) => a.appointment.status == AppointmentStatus.checkedIn).length;
+  int get checkedInCount => today
+      .where((a) => a.appointment.status == AppointmentStatus.checkedIn)
+      .length;
 
-  int get cancelledCount =>
-      today.where((a) => a.appointment.status == AppointmentStatus.cancelled).length;
+  int get cancelledCount => today
+      .where((a) => a.appointment.status == AppointmentStatus.cancelled)
+      .length;
 
   /// Returns a copy with the given fields replaced. Omitted fields keep their
   /// current value — never a constructor default.
   ReceptionistAppointmentsState copyWith({
     List<AppointmentWithPatient>? today,
-    List<AppointmentWithPatient>? upcoming,
     bool? todayLoading,
-    bool? upcomingLoading,
     Object? todayError,
     bool clearTodayError = false,
-    Object? upcomingError,
-    bool clearUpcomingError = false,
   }) {
     return ReceptionistAppointmentsState(
       today: today ?? this.today,
-      upcoming: upcoming ?? this.upcoming,
       todayLoading: todayLoading ?? this.todayLoading,
-      upcomingLoading: upcomingLoading ?? this.upcomingLoading,
       todayError: clearTodayError ? null : (todayError ?? this.todayError),
-      upcomingError: clearUpcomingError ? null : (upcomingError ?? this.upcomingError),
     );
   }
 }
@@ -75,10 +65,10 @@ class ReceptionistAppointmentsState {
 class ReceptionistAppointmentsNotifier
     extends Notifier<ReceptionistAppointmentsState> {
   @override
-  ReceptionistAppointmentsState build() => const ReceptionistAppointmentsState();
+  ReceptionistAppointmentsState build() =>
+      const ReceptionistAppointmentsState();
 
-  AppointmentRepository get _repo =>
-      ref.read(appointmentRepositoryProvider);
+  AppointmentRepository get _repo => ref.read(appointmentRepositoryProvider);
 
   /// Returns the effective clinic filter.
   ///
@@ -102,38 +92,15 @@ class ReceptionistAppointmentsNotifier
   Future<void> loadToday() async {
     state = state.copyWith(todayLoading: true, clearTodayError: true);
 
-    final Result<List<AppointmentWithPatient>> result =
-        await _repo.getTodayAppointmentsWithPatients(_clinic);
+    final Result<List<AppointmentWithPatient>> result = await _repo
+        .getTodayAppointmentsWithPatients(_clinic);
 
     result.when(
       success: (List<AppointmentWithPatient> data) {
         state = state.copyWith(today: data, todayLoading: false);
       },
       failure: (AppException exception) {
-        state = state.copyWith(
-          todayError: exception,
-          todayLoading: false,
-        );
-      },
-    );
-  }
-
-  /// Loads upcoming (future) appointments from the repository.
-  Future<void> loadUpcoming() async {
-    state = state.copyWith(upcomingLoading: true, clearUpcomingError: true);
-
-    final Result<List<AppointmentWithPatient>> result =
-        await _repo.getUpcomingAppointmentsWithPatients(_clinic);
-
-    result.when(
-      success: (List<AppointmentWithPatient> data) {
-        state = state.copyWith(upcoming: data, upcomingLoading: false);
-      },
-      failure: (AppException exception) {
-        state = state.copyWith(
-          upcomingError: exception,
-          upcomingLoading: false,
-        );
+        state = state.copyWith(todayError: exception, todayLoading: false);
       },
     );
   }
@@ -143,16 +110,18 @@ class ReceptionistAppointmentsNotifier
     String appointmentId,
     AppointmentStatus newStatus,
   ) async {
-    final Result<void> result =
-        await _repo.updateAppointmentStatus(appointmentId, newStatus);
+    final Result<void> result = await _repo.updateAppointmentStatus(
+      appointmentId,
+      newStatus,
+    );
 
     result.when(
       success: (_) {
-        final List<AppointmentWithPatient> updated =
-            state.today.map((a) {
+        final List<AppointmentWithPatient> updated = state.today.map((a) {
           if (a.appointment.id == appointmentId) {
-            final Appointment updatedAppt =
-                a.appointment.copyWith(status: newStatus);
+            final Appointment updatedAppt = a.appointment.copyWith(
+              status: newStatus,
+            );
             return AppointmentWithPatient(
               appointment: updatedAppt,
               patient: a.patient,
@@ -172,6 +141,7 @@ class ReceptionistAppointmentsNotifier
 
 /// Provider for the receptionist appointments notifier.
 final receptionistAppointmentsProvider =
-    NotifierProvider<ReceptionistAppointmentsNotifier, ReceptionistAppointmentsState>(
-  ReceptionistAppointmentsNotifier.new,
-);
+    NotifierProvider<
+      ReceptionistAppointmentsNotifier,
+      ReceptionistAppointmentsState
+    >(ReceptionistAppointmentsNotifier.new);

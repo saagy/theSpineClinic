@@ -14,6 +14,35 @@ class PatientRepositoryQueries {
   final SupabaseService _service;
   static const String _table = 'patients';
 
+  Future<Result<List<Patient>>> getDuePatients({
+    required DateTime date,
+    String? doctorId,
+    required ClinicLocation clinic,
+  }) async {
+    try {
+      final List<Map<String, dynamic>> rows = await _service.guardQuery(
+        () => _service.rpc(
+          'get_due_patients',
+          params: <String, dynamic>{
+            'p_due_on': _dateOnly(date),
+            'p_doctor_id': doctorId,
+            'p_clinic': clinic.dbValue,
+          },
+        ),
+      );
+      return Result.success(rows.map(Patient.fromJson).toList());
+    } on AppException catch (e) {
+      return Result.failure(e);
+    } catch (e) {
+      return Result.failure(AppException.fromSupabaseException(e));
+    }
+  }
+
+  String _dateOnly(DateTime date) =>
+      '${date.year.toString().padLeft(4, '0')}-'
+      '${date.month.toString().padLeft(2, '0')}-'
+      '${date.day.toString().padLeft(2, '0')}';
+
   Future<Result<List<Patient>>> getAllPatients({
     String? query,
     String? doctorId,
@@ -26,15 +55,34 @@ class PatientRepositoryQueries {
     try {
       final List<Map<String, dynamic>> rows = await _service.guardQuery(() {
         final base = doctorId != null
-            ? _service.from(_table).select('*, patient_doctors!inner(), appointments(scheduled_at, status)').eq('patient_doctors.doctor_id', doctorId)
-            : _service.from(_table).select('*, appointments(scheduled_at, status)');
-        final withClinic = clinic != null ? base.eq('clinic', clinic.dbValue) : base;
+            ? _service
+                  .from(_table)
+                  .select(
+                    '*, patient_doctors!inner(), appointments(scheduled_at, status)',
+                  )
+                  .eq('patient_doctors.doctor_id', doctorId)
+            : _service
+                  .from(_table)
+                  .select('*, appointments(scheduled_at, status)');
+        final withClinic = clinic != null
+            ? base.eq('clinic', clinic.dbValue)
+            : base;
         if (query != null && query.trim().isNotEmpty) {
-          final tokens = query.trim().split(RegExp(r'\s+')).where((t) => t.isNotEmpty);
-          final built = tokens.fold(withClinic, (q, t) => q.or('full_name.ilike.%$t%,phone_number.ilike.%$t%'));
-          return built.order(orderBy, ascending: ascending).range(offset, offset + limit - 1);
+          final tokens = query
+              .trim()
+              .split(RegExp(r'\s+'))
+              .where((t) => t.isNotEmpty);
+          final built = tokens.fold(
+            withClinic,
+            (q, t) => q.or('full_name.ilike.%$t%,phone_number.ilike.%$t%'),
+          );
+          return built
+              .order(orderBy, ascending: ascending)
+              .range(offset, offset + limit - 1);
         }
-        return withClinic.order(orderBy, ascending: ascending).range(offset, offset + limit - 1);
+        return withClinic
+            .order(orderBy, ascending: ascending)
+            .range(offset, offset + limit - 1);
       });
       return Result.success(rows.map(parsePatientRowWithLastAppt).toList());
     } on AppException catch (e) {
@@ -52,13 +100,24 @@ class PatientRepositoryQueries {
     try {
       final List<Map<String, dynamic>> rows = await _service.guardQuery(() {
         final base = doctorId != null
-            ? _service.from(_table).select('id, patient_doctors!inner(doctor_id)').eq('patient_doctors.doctor_id', doctorId)
+            ? _service
+                  .from(_table)
+                  .select('id, patient_doctors!inner(doctor_id)')
+                  .eq('patient_doctors.doctor_id', doctorId)
             : _service.from(_table).select('id');
-        final withClinic = clinic != null ? base.eq('clinic', clinic.dbValue) : base;
+        final withClinic = clinic != null
+            ? base.eq('clinic', clinic.dbValue)
+            : base;
         if (query != null && query.trim().isNotEmpty) {
-          final tokens = query.trim().split(RegExp(r'\s+')).where((t) => t.isNotEmpty);
+          final tokens = query
+              .trim()
+              .split(RegExp(r'\s+'))
+              .where((t) => t.isNotEmpty);
           final dynamic queryBuilder = withClinic;
-          return tokens.fold<dynamic>(queryBuilder, (q, t) => q.or('full_name.ilike.%$t%,phone_number.ilike.%$t%'));
+          return tokens.fold<dynamic>(
+            queryBuilder,
+            (q, t) => q.or('full_name.ilike.%$t%,phone_number.ilike.%$t%'),
+          );
         }
         return withClinic;
       });

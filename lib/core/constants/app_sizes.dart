@@ -86,24 +86,29 @@ abstract final class AppSizes {
   static const double h48 = 48.0;
 
   /// Pre-built [BorderRadius] for badges and chips.
-  static const BorderRadius borderRadiusBadge =
-      BorderRadius.all(Radius.circular(r4));
+  static const BorderRadius borderRadiusBadge = BorderRadius.all(
+    Radius.circular(r4),
+  );
 
   /// Pre-built [BorderRadius] for inputs and dropdowns.
-  static const BorderRadius borderRadiusInput =
-      BorderRadius.all(Radius.circular(r24));
+  static const BorderRadius borderRadiusInput = BorderRadius.all(
+    Radius.circular(r24),
+  );
 
   /// Pre-built [BorderRadius] for cards and containers.
-  static const BorderRadius borderRadiusCard =
-      BorderRadius.all(Radius.circular(r16));
+  static const BorderRadius borderRadiusCard = BorderRadius.all(
+    Radius.circular(r16),
+  );
 
   /// Pre-built [BorderRadius] for modals and dialogs.
-  static const BorderRadius borderRadiusDialog =
-      BorderRadius.all(Radius.circular(r16));
+  static const BorderRadius borderRadiusDialog = BorderRadius.all(
+    Radius.circular(r16),
+  );
 
   /// Pre-built [BorderRadius] for pill-shaped elements.
-  static const BorderRadius borderRadiusPill =
-      BorderRadius.all(Radius.circular(r999));
+  static const BorderRadius borderRadiusPill = BorderRadius.all(
+    Radius.circular(r999),
+  );
 
   // ──────────────── Component Dimensions ────────────────
 
@@ -130,6 +135,17 @@ abstract final class AppSizes {
 
   /// Maximum content width for centered page layouts.
   static const double maxContentWidth = 1080.0;
+
+  static const double appointmentWorkspaceBreakpoint = 900.0;
+
+  static const double adaptiveModalBreakpoint = 600.0;
+
+  static const double adaptiveDialogMaxWidth = 720.0;
+  static const double adaptiveDialogMaxHeight = 720.0;
+
+  static const double appointmentFormMaxWidth = 600.0;
+
+  static const double sheetInitialLarge = 0.9;
 
   /// Maximum content width for profile / settings surfaces that should
   /// read as a single column on wide monitors (e.g. Admin Hub, profile
@@ -179,15 +195,18 @@ abstract final class AppSizes {
   // ──────────────── Convenience EdgeInsets ────────────────
 
   /// Symmetric horizontal screen padding (24 px).
-  static const EdgeInsets paddingScreenH =
-      EdgeInsets.symmetric(horizontal: p24);
+  static const EdgeInsets paddingScreenH = EdgeInsets.symmetric(
+    horizontal: p24,
+  );
 
   /// Standard card inner padding (20 px all sides).
   static const EdgeInsets paddingCard = EdgeInsets.all(p20);
 
   /// Compact cell padding (12 px vertical, 16 px horizontal).
-  static const EdgeInsets paddingCell =
-      EdgeInsets.symmetric(horizontal: p16, vertical: p12);
+  static const EdgeInsets paddingCell = EdgeInsets.symmetric(
+    horizontal: p16,
+    vertical: p12,
+  );
 
   /// Dialog body padding (20 px all sides).
   static const EdgeInsets paddingDialog = EdgeInsets.all(p20);

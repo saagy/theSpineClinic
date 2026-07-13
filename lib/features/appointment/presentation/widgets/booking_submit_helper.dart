@@ -20,6 +20,7 @@ abstract final class BookingSubmitHelper {
     required String? creatorId,
     required List<Staff> doctors,
     required bool usePackage,
+    DateTime? expectedNextVisitDate,
   }) async {
     try {
       final List<DateTime> scheduledSlots = slots.map((slot) {
@@ -41,6 +42,7 @@ abstract final class BookingSubmitHelper {
         usePackage: usePackage,
         creatorId: creatorId,
         doctorIds: doctorIds,
+        expectedNextVisitDate: expectedNextVisitDate,
       );
     } on AppException catch (error) {
       return Result.failure(error);

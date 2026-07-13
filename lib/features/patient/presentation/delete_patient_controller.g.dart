@@ -34,7 +34,7 @@ final class DeletePatientControllerProvider
 }
 
 String _$deletePatientControllerHash() =>
-    r'6a6586f3af060d151cfea8bd980762bdcbeaa8c9';
+    r'72df1960801f8a0e15b83e23d82cabb778d03046';
 
 abstract class _$DeletePatientController extends $AsyncNotifier<void> {
   FutureOr<void> build();

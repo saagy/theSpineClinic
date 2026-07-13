@@ -9,6 +9,7 @@ import 'package:spine_clinic_app/features/appointment/domain/appointment.dart';
 import 'package:spine_clinic_app/features/appointment/domain/appointment_doctor.dart';
 import 'package:spine_clinic_app/features/appointment/domain/appointment_status.dart';
 import 'package:spine_clinic_app/features/appointment/domain/appointment_type.dart';
+import 'package:spine_clinic_app/features/appointment/domain/bulk_doctor_replacement_result.dart';
 import 'package:spine_clinic_app/features/auth/domain/staff.dart';
 
 import 'package:spine_clinic_app/features/patient/domain/patient.dart';
@@ -34,12 +35,6 @@ abstract class AppointmentRepository {
   Future<Result<List<AppointmentWithPatient>>> getTodayAppointmentsWithPatients(
     ClinicLocation? clinic,
   );
-
-  /// Fetches all future appointments (tomorrow onward) with patient data joined,
-  /// ordered by date ascending then time ascending.
-  /// When [clinic] is null, all branches are included (admin override).
-  Future<Result<List<AppointmentWithPatient>>>
-  getUpcomingAppointmentsWithPatients(ClinicLocation? clinic);
 
   /// Updates the status column of an appointment.
   ///
@@ -161,6 +156,14 @@ abstract class AppointmentRepository {
     required bool usePackage,
     required String? creatorId,
     required List<String> doctorIds,
+    DateTime? expectedNextVisitDate,
+  });
+
+  Future<Result<BulkDoctorReplacementResult>> bulkReplaceDoctor({
+    required String absentDoctorId,
+    required List<String> replacementDoctorIds,
+    required List<String> appointmentIds,
+    required DateTime day,
   });
 
   /// Updates doctor assignments for an appointment.

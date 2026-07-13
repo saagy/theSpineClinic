@@ -46,8 +46,19 @@ List<RouteBase> _buildRoutes(Ref ref) => [
           (state.extra is Patient
               ? (state.extra as Patient).id
               : (state.extra is String ? state.extra as String : null));
+      final DateTime? date = DateTime.tryParse(
+        state.uri.queryParameters['date'] ?? '',
+      );
+      final DateTime? expectedNextVisitDate = DateTime.tryParse(
+        state.uri.queryParameters['dueDate'] ?? '',
+      );
       return NoTransitionPage(
-        child: NewAppointmentScreen(preselectedPatientId: patientId),
+        child: NewAppointmentScreen(
+          preselectedPatientId: patientId,
+          preselectedDate: date,
+          preselectedDoctorId: state.uri.queryParameters['doctorId'],
+          expectedNextVisitDate: expectedNextVisitDate,
+        ),
       );
     },
   ),

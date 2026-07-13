@@ -2,6 +2,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:spine_clinic_app/core/errors/app_exception.dart';
 import 'package:spine_clinic_app/core/errors/result.dart';
 import 'package:spine_clinic_app/features/appointment/presentation/appointment_providers.dart';
+import 'package:spine_clinic_app/features/appointment/presentation/booking_workboard_provider.dart';
 import 'package:spine_clinic_app/features/appointment/presentation/receptionist_appointments_providers.dart';
 import 'package:spine_clinic_app/features/auth/domain/user_role.dart';
 import 'package:spine_clinic_app/features/auth/presentation/auth_providers.dart';
@@ -25,7 +26,8 @@ class DeletePatientController extends _$DeletePatientController {
         ),
       );
     }
-    if (user.role != UserRole.superAdmin && user.role != UserRole.receptionist) {
+    if (user.role != UserRole.superAdmin &&
+        user.role != UserRole.receptionist) {
       return const Result.failure(
         AuthException(
           code: 'security/permission-denied',
@@ -48,7 +50,7 @@ class DeletePatientController extends _$DeletePatientController {
     ref.read(patientListProvider.notifier).refresh();
     ref.invalidate(todayAppointmentsProvider);
     ref.read(receptionistAppointmentsProvider.notifier).loadToday();
-    ref.read(receptionistAppointmentsProvider.notifier).loadUpcoming();
+    ref.read(bookingWorkboardProvider.notifier).refresh();
 
     state = const AsyncData(null);
     return const Result.success(null);

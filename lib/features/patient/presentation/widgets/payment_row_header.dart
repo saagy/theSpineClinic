@@ -9,6 +9,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:spine_clinic_app/core/constants/app_sizes.dart';
 import 'package:spine_clinic_app/core/constants/app_strings.dart';
 import 'package:spine_clinic_app/core/constants/app_text_styles.dart';
+import 'package:spine_clinic_app/core/constants/clinic_colors.dart';
 import 'package:spine_clinic_app/core/utils/formatters.dart';
 import 'package:spine_clinic_app/features/auth/domain/staff.dart';
 import 'package:spine_clinic_app/features/patient/presentation/widgets/payment_actions_menu.dart';
@@ -34,6 +35,7 @@ class PaymentRowHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
+    final ClinicColors clinic = ClinicColors.of(context);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -45,9 +47,7 @@ class PaymentRowHeader extends StatelessWidget {
             Expanded(
               child: Text(
                 payment.reason,
-                style: AppTextStyles.cardTitle.copyWith(
-                  color: cs.onSurface,
-                ),
+                style: AppTextStyles.cardTitle.copyWith(color: cs.onSurface),
               ),
             ),
             const SizedBox(width: AppSizes.p12),
@@ -64,24 +64,22 @@ class PaymentRowHeader extends StatelessWidget {
                 ),
                 if (isAdmin) ...[
                   const SizedBox(width: AppSizes.p4),
-                  PaymentActionsMenu(
-                    onEdit: onEdit,
-                    onDelete: onDelete,
-                  ),
+                  PaymentActionsMenu(onEdit: onEdit, onDelete: onDelete),
                 ],
               ],
             ),
           ],
         ),
         const SizedBox(height: AppSizes.p6),
-        _buildMetadataRow(cs),
+        _buildMetadataRow(cs, clinic),
       ],
     );
   }
 
-  Widget _buildMetadataRow(ColorScheme cs) {
+  Widget _buildMetadataRow(ColorScheme cs, ClinicColors clinic) {
     final dateStr = payment.recordedAt.toDateTimeString();
-    final staffText = recordedByAsync?.when(
+    final staffText =
+        recordedByAsync?.when(
           data: (staff) => staff.fullName,
           loading: () => null,
           error: (_, __) => null,
@@ -98,9 +96,7 @@ class PaymentRowHeader extends StatelessWidget {
         Expanded(
           child: Text(
             text,
-            style: AppTextStyles.caption.copyWith(
-              color: cs.onSurfaceVariant,
-            ),
+            style: AppTextStyles.caption.copyWith(color: cs.onSurfaceVariant),
             maxLines: 2,
             softWrap: true,
             overflow: TextOverflow.ellipsis,
@@ -108,27 +104,25 @@ class PaymentRowHeader extends StatelessWidget {
         ),
         if (!payment.hasOutstandingDue) ...[
           const SizedBox(width: AppSizes.p8),
-          _buildFullyPaidBadge(cs),
+          _buildFullyPaidBadge(clinic),
         ],
       ],
     );
   }
 
-  Widget _buildFullyPaidBadge(ColorScheme cs) {
+  Widget _buildFullyPaidBadge(ClinicColors clinic) {
     return Container(
       padding: const EdgeInsets.symmetric(
         horizontal: AppSizes.p8,
         vertical: AppSizes.p2,
       ),
       decoration: BoxDecoration(
-        color: cs.primaryContainer.withAlpha(80),
+        color: clinic.successContainer,
         borderRadius: BorderRadius.circular(AppSizes.r6),
       ),
       child: Text(
         AppStrings.paidInFull,
-        style: AppTextStyles.captionBold.copyWith(
-          color: cs.primary,
-        ),
+        style: AppTextStyles.captionBold.copyWith(color: clinic.success),
       ),
     );
   }

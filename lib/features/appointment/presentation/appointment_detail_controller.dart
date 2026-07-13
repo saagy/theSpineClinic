@@ -9,6 +9,7 @@ library;
 
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
+import 'package:spine_clinic_app/core/errors/app_exception.dart';
 import 'package:spine_clinic_app/core/errors/result.dart';
 import 'package:spine_clinic_app/features/appointment/domain/appointment.dart';
 import 'package:spine_clinic_app/features/appointment/domain/appointment_doctor.dart';
@@ -17,10 +18,12 @@ import 'package:spine_clinic_app/features/appointment/domain/appointment_status.
 import 'package:spine_clinic_app/features/appointment/presentation/all_appointments_providers.dart';
 import 'package:spine_clinic_app/features/appointment/presentation/appointment_providers.dart';
 import 'package:spine_clinic_app/features/appointment/presentation/receptionist_appointments_providers.dart';
+import 'package:spine_clinic_app/features/appointment/presentation/booking_workboard_provider.dart';
 import 'package:spine_clinic_app/features/appointment/presentation/doctor_schedule_providers.dart';
 import 'package:spine_clinic_app/features/auth/domain/staff.dart';
 import 'package:spine_clinic_app/features/auth/presentation/auth_providers.dart';
 import 'package:spine_clinic_app/features/patient/domain/patient.dart';
+import 'package:spine_clinic_app/features/patient/domain/patient_repository.dart';
 import 'package:spine_clinic_app/features/patient/presentation/patient_list_providers.dart';
 import 'package:spine_clinic_app/features/patient/presentation/patient_providers.dart';
 
@@ -149,6 +152,28 @@ class AppointmentDetailController extends _$AppointmentDetailController {
     }
   }
 
+  Future<Result<void>> updateNextVisit(DateTime? date) async {
+    final Staff? user = ref.read(currentUserProvider).value;
+    final String? patientId = state.value?.appointment.patientId;
+    if (user == null || !user.isActive || patientId == null) {
+      return const Result.failure(
+        DatabaseException(
+          code: 'db/permission-denied',
+          message: 'Access denied.',
+          userMessageKey: 'error_database_permission_denied',
+        ),
+      );
+    }
+    final PatientRepository repo = ref.read(patientRepositoryProvider);
+    final Result<void> result = await repo.updateNextVisitDate(patientId, date);
+    if (result is Failure<void> || !ref.mounted) return result;
+    ref.invalidate(patientDetailProvider(patientId));
+    await ref.read(bookingWorkboardProvider.notifier).refresh();
+    ref.invalidateSelf();
+    await future;
+    return result;
+  }
+
   void _invalidateCaches() {
     final patientId = state.value?.appointment.patientId;
     ref.invalidate(todayAppointmentsProvider);
@@ -164,6 +189,6 @@ class AppointmentDetailController extends _$AppointmentDetailController {
 
     // Refresh the receptionist dashboard queues immediately
     ref.read(receptionistAppointmentsProvider.notifier).loadToday();
-    ref.read(receptionistAppointmentsProvider.notifier).loadUpcoming();
+    ref.read(bookingWorkboardProvider.notifier).refresh();
   }
 }

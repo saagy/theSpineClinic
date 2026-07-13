@@ -43,6 +43,7 @@ Stores staff user profiles linked to Supabase Auth (`auth.users`).
 - `is_active` (`boolean`, NOT NULL, Default: `true`)
 - `can_manage_payments` (`boolean`, NOT NULL, Default: `false`)
 - `created_at` (`timestamptz`, NOT NULL, Default: `now()`)
+- `next_visit_date` (`date`, Nullable): Date on which reception should contact and book the patient.
 - `phone` (`text`, Nullable)
 - `branch` (`clinic_location`, Nullable)
 - `deactivated_at` (`timestamptz`, Nullable)
@@ -131,7 +132,7 @@ Financial transactions and package balance top-ups.
 4. `create_staff_user(...)`: Creates an `auth.users` row and linked `staff` record for super admin staff onboarding.
 5. `update_user_password(...)`: Enables super admins to reset a staff user's encrypted password.
 6. `delete_doctor_user(...)`: Enables super admins to reject/delete doctor auth users (cascades to `staff`).
-7. `book_recurring_appointments(...)`: Books multiple recurring appointments and doctor assignments in a single transaction.
+7. `book_recurring_appointments(...)`: Books appointments atomically and optionally verifies that a due patient has not already been booked.
 8. `handle_package_deduction()`: Trigger function on `appointments` status update that deducts or refunds package balance.
 9. `handle_payment_package_sync()`: Trigger function on `payment_records` insert/delete that adds or subtracts purchased package credits.
 10. `check_patient_has_doctors()`: Trigger function on `patient_doctors` delete/update that prevents leaving a patient with 0 assigned doctors.
@@ -139,6 +140,9 @@ Financial transactions and package balance top-ups.
 12. `verify_staff_update_permissions()`: Trigger function on `staff` update that prevents staff members from altering their own role, active status, or payment access.
 13. `enforce_doctor_reference_roles()`: Rejects non-doctor staff IDs in patient and appointment doctor references.
 14. `prevent_referenced_doctor_role_change()`: Prevents changing a referenced doctor into another role before reassignment.
+15. `clinic_timezone()`: Single v1 calendar-timezone configuration point (`Africa/Cairo`).
+16. `get_due_patients(...)`: Returns branch-scoped due patients, optionally filtered by assigned doctor.
+17. `bulk_replace_appointment_doctor(...)`: Transactionally replaces an absent doctor on selected appointments.
 
 ---
 

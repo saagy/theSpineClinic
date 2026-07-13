@@ -23,18 +23,18 @@ class AppDoctorMultiSelectField extends FormField<List<Staff>> {
     super.validator,
     bool enabled = true,
   }) : super(
-          initialValue: initialValue,
-          onSaved: onSavedDoctors == null
-              ? null
-              : (val) => onSavedDoctors(val ?? []),
-          builder: (FormFieldState<List<Staff>> state) {
-            return _AppDoctorMultiSelectFieldWidget(
-              state: state,
-              onChanged: onChanged,
-              enabled: enabled,
-            );
-          },
-        );
+         initialValue: initialValue,
+         onSaved: onSavedDoctors == null
+             ? null
+             : (val) => onSavedDoctors(val ?? []),
+         builder: (FormFieldState<List<Staff>> state) {
+           return _AppDoctorMultiSelectFieldWidget(
+             state: state,
+             onChanged: onChanged,
+             enabled: enabled,
+           );
+         },
+       );
 }
 
 class _AppDoctorMultiSelectFieldWidget extends ConsumerStatefulWidget {
@@ -63,15 +63,13 @@ class _AppDoctorMultiSelectFieldWidgetState
   }
 
   void _openDoctorSheet(List<Staff> activeDoctors) {
-    showModalBottomSheet(
+    showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
+      showDragHandle: true,
       builder: (_) => DoctorSearchSheet(
         activeDoctors: activeDoctors,
-        selectedDoctors: widget.state.value ?? [],
+        selectedDoctors: widget.state.value ?? const [],
         onSelectionChanged: (updated) {
           widget.state.didChange(updated);
           widget.onChanged?.call(updated);
@@ -92,7 +90,9 @@ class _AppDoctorMultiSelectFieldWidgetState
     final border = OutlineInputBorder(
       borderRadius: const BorderRadius.all(Radius.circular(AppSizes.r12)),
       borderSide: BorderSide(
-        color: widget.state.hasError ? Theme.of(context).colorScheme.error : Theme.of(context).colorScheme.outline,
+        color: widget.state.hasError
+            ? Theme.of(context).colorScheme.error
+            : Theme.of(context).colorScheme.outline,
         width: AppSizes.borderWidth,
       ),
     );
@@ -120,20 +120,19 @@ class _AppDoctorMultiSelectFieldWidgetState
                     height: AppSizes.iconDefault,
                     child: const Padding(
                       padding: EdgeInsets.all(AppSizes.p8),
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                      ),
+                      child: CircularProgressIndicator(strokeWidth: 2),
                     ),
                   )
                 : hasError
-                    ? GestureDetector(
-                        onTap: () =>
-                            ref.invalidate(activeDoctorsProvider),
-                        child: Icon(Icons.refresh_rounded,
-                            color: Theme.of(context).colorScheme.error,
-                            size: AppSizes.iconDefault),
-                      )
-                    : const Icon(Icons.search_rounded),
+                ? GestureDetector(
+                    onTap: () => ref.invalidate(activeDoctorsProvider),
+                    child: Icon(
+                      Icons.refresh_rounded,
+                      color: Theme.of(context).colorScheme.error,
+                      size: AppSizes.iconDefault,
+                    ),
+                  )
+                : const Icon(Icons.search_rounded),
             enabledBorder: border,
             focusedBorder: border.copyWith(
               borderSide: BorderSide(
@@ -149,29 +148,39 @@ class _AppDoctorMultiSelectFieldWidgetState
             padding: const EdgeInsets.only(top: AppSizes.p6),
             child: Text(
               AppStrings.unableToLoadDoctors,
-              style: AppTextStyles.caption.copyWith(color: Theme.of(context).colorScheme.error),
+              style: AppTextStyles.caption.copyWith(
+                color: Theme.of(context).colorScheme.error,
+              ),
             ),
           ),
         if (selected.isNotEmpty) ...[
           const SizedBox(height: AppSizes.p12),
           Column(
-            children: selected.map((doc) => SelectedDoctorRow(
-              doctor: doc,
-              showRemove: widget.enabled,
-              onRemove: () {
-                final updated = selected.where((d) => d.id != doc.id).toList();
-                widget.state.didChange(updated);
-                widget.onChanged?.call(updated);
-                widget.state.validate();
-              },
-            )).toList(),
+            children: selected
+                .map(
+                  (doc) => SelectedDoctorRow(
+                    doctor: doc,
+                    showRemove: widget.enabled,
+                    onRemove: () {
+                      final updated = selected
+                          .where((d) => d.id != doc.id)
+                          .toList();
+                      widget.state.didChange(updated);
+                      widget.onChanged?.call(updated);
+                      widget.state.validate();
+                    },
+                  ),
+                )
+                .toList(),
           ),
         ],
         if (widget.state.hasError) ...[
           const SizedBox(height: AppSizes.p6),
           Text(
             widget.state.errorText ?? '',
-            style: AppTextStyles.caption.copyWith(color: Theme.of(context).colorScheme.error),
+            style: AppTextStyles.caption.copyWith(
+              color: Theme.of(context).colorScheme.error,
+            ),
           ),
         ],
       ],

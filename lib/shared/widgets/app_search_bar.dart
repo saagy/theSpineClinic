@@ -21,6 +21,7 @@ class AppSearchBar extends StatefulWidget {
     required this.onChanged,
     this.onClear,
     this.enabled = true,
+    this.autofocus = false,
   });
 
   /// Placeholder text displayed inside the field.
@@ -34,6 +35,9 @@ class AppSearchBar extends StatefulWidget {
 
   /// Whether the search bar is interactive.
   final bool enabled;
+
+  /// Whether the field receives focus as soon as it is shown.
+  final bool autofocus;
 
   @override
   State<AppSearchBar> createState() => _AppSearchBarState();
@@ -99,6 +103,7 @@ class _AppSearchBarState extends State<AppSearchBar> {
         controller: _controller,
         onChanged: _onTextChanged,
         enabled: widget.enabled,
+        autofocus: widget.autofocus,
         style: AppTextStyles.body.copyWith(
           color: widget.enabled ? cs.onSurface : clinic.textMuted,
         ),

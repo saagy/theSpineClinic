@@ -74,6 +74,7 @@ abstract final class AppStrings {
     'error_doc_pdf_too_large': errorDocPdfTooLarge,
     'error_doc_file_too_large': errorDocFileTooLarge,
     'error_attachment_partial_fail': errorAttachmentPartialFail,
+    'due_booking_changed': dueBookingChanged,
   };
 
   // Form Labels & Search
@@ -244,6 +245,15 @@ abstract final class AppStrings {
   static const String dateRequired = 'Date is required.';
   static const String timeRequired = 'Time is required.';
   static const String sessionsRequired = 'Number of sessions is required.';
+  static const String recurrencePattern = 'Recurrence Pattern';
+  static const String sessionsRangeError =
+      'Number of sessions must be between 1 and 24.';
+  static const String sessionsRangeValidator =
+      'Must be between 1 and 24 sessions';
+  static const String doctorListTimeout =
+      'Doctor list took too long. Select manually.';
+  static const String providerAndBilling = 'Provider & Billing';
+  static const String loadingAssignedDoctors = 'Loading assigned doctors...';
   static const String daysRequired = 'At least one day must be selected.';
   static const String noAssignedDoctors =
       'No assigned doctors found for this patient.';
@@ -765,4 +775,60 @@ abstract final class AppStrings {
 
   // ── Patient Pill Access (appointment detail header) ──
   static const String collapse = 'Collapse';
+
+  // Booking workboard
+  static const String booking = 'Booking';
+  static const String duePatients = 'Due patients';
+  static const String schedule = 'Schedule';
+  static const String selectDoctor = 'Select doctor';
+  static const String chooseBranchToStart = 'Choose a branch to start booking.';
+  static const String noDuePatients = 'No patients are due for this date.';
+  static const String noScheduleForDate =
+      'No appointments booked for this date.';
+  static const String previousDay = 'Previous day';
+  static const String nextDay = 'Next day';
+  static const String chooseDate = 'Choose date';
+  static const String call = 'Call';
+  static const String copyPhone = 'Copy phone';
+  static const String phoneCopied = 'Phone number copied.';
+  static const String book = 'Book';
+  static const String remindLater = 'Remind later';
+  static const String stopFollowUp = 'Stop follow-up';
+  static const String stopFollowUpTitle = 'Stop following up?';
+  static const String stopFollowUpMessage =
+      'This patient will no longer appear in the booking list.';
+  static const String nextVisit = 'Next visit';
+  static const String setNextVisit = 'Set next visit';
+  static const String clearNextVisit = 'Clear next visit';
+  static const String nextVisitUpdated = 'Next visit updated.';
+  static const String noNextVisitSet = 'No next visit set.';
+  static const String change = 'Change';
+  static const String dueBookingChanged =
+      'This patient was already booked or their next visit changed. Refresh and try again.';
+  static const String pastScheduledNeedsAction =
+      'Past scheduled - Needs action';
+
+  // Doctor replacement
+  static const String replaceDoctor = 'Replace doctor';
+  static const String replacementDoctors = 'Replacement doctors';
+  static const String selectReplacementDoctors = 'Select replacement doctors';
+  static const String affectedAppointments = 'Affected appointments';
+  static const String selectAll = 'Select all';
+  static const String noReplaceableAppointments =
+      'No replaceable appointments remain.';
+  static const String replacementSelectionRequired =
+      'Select at least one doctor and appointment.';
+  static String replaceDoctorTitle(String name) => 'Replace $name';
+  static String replaceOnAppointments(int count) =>
+      'Replace on $count appointment${count == 1 ? '' : 's'}';
+  static String replacementSucceeded(int replaced, int remaining) =>
+      '$replaced appointment${replaced == 1 ? '' : 's'} reassigned. '
+      '$remaining remain.';
+  static String dueOn(String date) => 'Due $date';
+  static String overdueSince(String date) => 'Overdue since $date';
+  static String sectionCount(String label, int count) => '$label ($count)';
+  static String doctorsSelected(int count) =>
+      '$count doctor${count == 1 ? '' : 's'} selected';
+  static String replacementSummary(String date, int count) =>
+      '$date, $count affected appointment${count == 1 ? '' : 's'}';
 }

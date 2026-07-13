@@ -27,6 +27,7 @@ import 'package:spine_clinic_app/shared/widgets/empty_state.dart';
 import 'package:spine_clinic_app/shared/widgets/error_view.dart';
 import 'package:spine_clinic_app/shared/widgets/skeleton_loader.dart';
 import 'package:spine_clinic_app/features/appointment/presentation/widgets/appointment_notes_card.dart';
+import 'package:spine_clinic_app/features/appointment/presentation/widgets/appointment_next_visit_card.dart';
 import 'package:spine_clinic_app/features/appointment/presentation/widgets/appointment_schedule_card.dart';
 import 'package:spine_clinic_app/shared/widgets/app_back_button.dart';
 import 'package:go_router/go_router.dart';
@@ -207,9 +208,17 @@ class _AppointmentDetailBody extends ConsumerWidget {
                   AppointmentDetailHeader(
                     patient: state.patient,
                   ).animate().fadeIn(duration: 300.ms),
-                  AppointmentStatusBanner(status: state.appointment.status),
+                  AppointmentStatusBanner(
+                    status: state.appointment.status,
+                    scheduledAt: state.appointment.scheduledAt,
+                  ),
                   const SizedBox(height: AppSizes.p8),
                   AppointmentScheduleCard(appointment: state.appointment),
+                  AppointmentNextVisitCard(
+                    appointmentId: state.appointment.id,
+                    patient: state.patient,
+                  ),
+                  const SizedBox(height: AppSizes.p16),
                   AppointmentDoctorsSection(
                     activeDoctors: state.activeDoctors,
                     inactiveDoctors: state.inactiveDoctors,

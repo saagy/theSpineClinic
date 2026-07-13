@@ -24,7 +24,9 @@ abstract class Patient with _$Patient {
     @JsonKey(name: 'traction_balance') @Default(0) int tractionBalance,
     @JsonKey(name: 'created_by') String? createdBy,
     @JsonKey(name: 'created_at') required DateTime createdAt,
-    @JsonKey(includeFromJson: false, includeToJson: false) DateTime? lastAppointmentDate,
+    @JsonKey(name: 'next_visit_date') DateTime? nextVisitDate,
+    @JsonKey(includeFromJson: false, includeToJson: false)
+    DateTime? lastAppointmentDate,
   }) = _Patient;
 
   /// Deserialises from a Supabase JSON row.

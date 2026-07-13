@@ -46,9 +46,7 @@ sealed class AppException implements Exception {
 
     if (error is supabase.PostgrestException) {
       if (error.code == 'PGRST116') {
-        return NotFoundException(
-          message: error.message,
-        );
+        return NotFoundException(message: error.message);
       }
       return DatabaseException._fromPostgrest(error);
     }
@@ -64,9 +62,7 @@ sealed class AppException implements Exception {
       return StorageException._fromStorage(error);
     }
 
-    return UnknownException(
-      message: error.toString(),
-    );
+    return UnknownException(message: error.toString());
   }
 
   @override
@@ -129,10 +125,7 @@ class AuthException extends AppException {
       );
     }
 
-    return AuthException(
-      code: 'auth/unknown',
-      message: error.message,
-    );
+    return AuthException(code: 'auth/unknown', message: error.message);
   }
 }
 
@@ -148,10 +141,16 @@ class DatabaseException extends AppException {
   /// The raw Postgres error code (e.g. '23503', '42501') when available.
   final String? pgCode;
 
-  factory DatabaseException._fromPostgrest(
-    supabase.PostgrestException error,
-  ) {
+  factory DatabaseException._fromPostgrest(supabase.PostgrestException error) {
     final String? pgCode = error.code;
+    if (error.message.contains('no longer due for booking')) {
+      return DatabaseException(
+        code: 'db/due-booking-changed',
+        message: error.message,
+        userMessageKey: 'due_booking_changed',
+        pgCode: pgCode,
+      );
+    }
 
     // HTTP 401 Unauthorized — no active session / RLS blocked
     final int? httpStatus = int.tryParse('${error.code}');

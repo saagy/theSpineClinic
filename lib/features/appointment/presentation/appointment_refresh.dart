@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:spine_clinic_app/features/appointment/domain/appointment_type.dart';
 import 'package:spine_clinic_app/features/appointment/presentation/all_appointments_providers.dart';
+import 'package:spine_clinic_app/features/appointment/presentation/booking_workboard_provider.dart';
 import 'package:spine_clinic_app/features/appointment/presentation/appointment_providers.dart'
     as appointment_cache;
 import 'package:spine_clinic_app/features/appointment/presentation/doctor_schedule_providers.dart';
@@ -63,6 +64,6 @@ abstract final class AppointmentRefresh {
 
     final receptionist = ref.read(receptionistAppointmentsProvider.notifier);
     unawaited(receptionist.loadToday());
-    unawaited(receptionist.loadUpcoming());
+    unawaited(ref.read(bookingWorkboardProvider.notifier).refresh());
   }
 }

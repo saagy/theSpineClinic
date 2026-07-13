@@ -80,6 +80,44 @@ class PatientRepositoryImpl implements PatientRepository {
   }
 
   @override
+  Future<Result<List<Patient>>> getDuePatients({
+    required DateTime date,
+    String? doctorId,
+    required ClinicLocation clinic,
+  }) {
+    return _queries.getDuePatients(
+      date: date,
+      doctorId: doctorId,
+      clinic: clinic,
+    );
+  }
+
+  @override
+  Future<Result<void>> updateNextVisitDate(
+    String patientId,
+    DateTime? nextVisitDate,
+  ) async {
+    try {
+      final String? value = nextVisitDate == null
+          ? null
+          : '${nextVisitDate.year.toString().padLeft(4, '0')}-'
+                '${nextVisitDate.month.toString().padLeft(2, '0')}-'
+                '${nextVisitDate.day.toString().padLeft(2, '0')}';
+      await _service.guardQuery(
+        () => _service
+            .from(_table)
+            .update(<String, dynamic>{'next_visit_date': value})
+            .eq('id', patientId),
+      );
+      return const Result.success(null);
+    } on AppException catch (e) {
+      return Result.failure(e);
+    } catch (e) {
+      return Result.failure(AppException.fromSupabaseException(e));
+    }
+  }
+
+  @override
   Future<Result<Patient>> createPatient(
     Patient patient,
     List<String> assignedDoctorIds,

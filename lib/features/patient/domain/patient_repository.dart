@@ -28,6 +28,17 @@ abstract class PatientRepository {
   /// Fetches a single patient record by its unique ID.
   Future<Result<Patient>> getPatientById(String id);
 
+  Future<Result<List<Patient>>> getDuePatients({
+    required DateTime date,
+    String? doctorId,
+    required ClinicLocation clinic,
+  });
+
+  Future<Result<void>> updateNextVisitDate(
+    String patientId,
+    DateTime? nextVisitDate,
+  );
+
   /// Creates a new patient and assigns the given doctors.
   ///
   /// Inserts the patient row, retrieves the generated UUID, then
