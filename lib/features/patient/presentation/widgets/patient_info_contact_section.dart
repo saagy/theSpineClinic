@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:spine_clinic_app/core/constants/app_sizes.dart';
 import 'package:spine_clinic_app/core/constants/app_strings.dart';
 import 'package:spine_clinic_app/core/constants/app_text_styles.dart';
+import 'package:spine_clinic_app/core/utils/formatters.dart';
 import 'package:spine_clinic_app/features/patient/domain/patient.dart';
 import 'package:spine_clinic_app/shared/widgets/eyebrow_label.dart';
 
@@ -39,6 +40,14 @@ class PatientInfoContactSection extends StatelessWidget {
             icon: Icons.medical_services_outlined,
             label: AppStrings.program,
             value: patient.program ?? AppStrings.programNone,
+          ),
+          const SizedBox(height: AppSizes.p12),
+          _ContactRow(
+            icon: Icons.event_outlined,
+            label: AppStrings.lastVisit,
+            value: patient.lastAppointmentDate != null
+                ? Formatters.formatDateMedium(patient.lastAppointmentDate!)
+                : AppStrings.noVisitsYet,
           ),
         ],
       ),

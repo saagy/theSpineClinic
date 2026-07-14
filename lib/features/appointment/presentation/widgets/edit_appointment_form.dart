@@ -147,12 +147,64 @@ class _EditAppointmentFormState extends ConsumerState<EditAppointmentForm> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
+                  if (!isScheduled) ...[
+                    Container(
+                      padding: const EdgeInsets.all(AppSizes.p16),
+                      decoration: BoxDecoration(
+                        color: ClinicColors.of(context).warningContainer,
+                        borderRadius: const BorderRadius.all(
+                          Radius.circular(AppSizes.r16),
+                        ),
+                        border: Border.all(
+                          color: ClinicColors.of(context).warning.withAlpha(40),
+                          width: AppSizes.borderWidth,
+                        ),
+                      ),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Icon(
+                            Icons.warning_amber_rounded,
+                            color: ClinicColors.of(context).warning,
+                            size: AppSizes.iconDefault,
+                          ),
+                          const SizedBox(width: AppSizes.p12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Checked-In Appointment',
+                                  style: AppTextStyles.bodyBold.copyWith(
+                                    color: ClinicColors.of(context).warning,
+                                  ),
+                                ),
+                                const SizedBox(height: AppSizes.p4),
+                                Text(
+                                  'To change the appointment type or billing options, undo the check-in first.',
+                                  style: AppTextStyles.caption.copyWith(
+                                    color: Theme.of(context).colorScheme.onSurface,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: AppSizes.p16),
+                  ],
                   BookingFormFields(
                     preselectedPatient: widget.patient,
                     onPatientTap: null,
                     selectedType: _selectedType,
                     onTypeChanged: (type) =>
-                        setState(() => _selectedType = type),
+                        setState(() {
+                          _selectedType = type;
+                          if (!type.affectsPackageBalance) {
+                            _usePackage = false;
+                          }
+                        }),
                     isRecurring: false,
                     onRecurringChanged: (_) {},
                     selectedDate: _selectedDate,
@@ -162,6 +214,7 @@ class _EditAppointmentFormState extends ConsumerState<EditAppointmentForm> {
                     dateErrorText: _dateErrorText,
                     timeErrorText: _timeErrorText,
                     showRecurringToggle: false,
+                    enabled: isScheduled,
                   ),
                   const SizedBox(height: AppSizes.p16),
                   
@@ -195,34 +248,66 @@ class _EditAppointmentFormState extends ConsumerState<EditAppointmentForm> {
                           },
                         ),
                         const SizedBox(height: AppSizes.p16),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(AppStrings.usePackageBalance,
-                                      style: AppTextStyles.body.copyWith(
-                                          color: Theme.of(context).colorScheme.onSurface)),
-                                  if (!isScheduled) ...[
-                                    const SizedBox(height: AppSizes.p4),
-                                    Text(AppStrings.usePackageChangeWarning,
-                                        style: AppTextStyles.caption.copyWith(
-                                            color: ClinicColors.of(context).warning)),
+                        if (_selectedType.affectsPackageBalance)
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(AppStrings.usePackageBalance,
+                                        style: AppTextStyles.body.copyWith(
+                                            color: Theme.of(context).colorScheme.onSurface)),
+                                    if (!isScheduled) ...[
+                                      const SizedBox(height: AppSizes.p4),
+                                      Text(AppStrings.usePackageChangeWarning,
+                                          style: AppTextStyles.caption.copyWith(
+                                              color: ClinicColors.of(context).warning)),
+                                    ],
                                   ],
-                                ],
+                                ),
+                              ),
+                              Switch(
+                                value: _usePackage,
+                                onChanged: isScheduled
+                                    ? (v) => setState(() => _usePackage = v)
+                                    : null,
+                                activeThumbColor: Theme.of(context).colorScheme.primary,
+                              ),
+                            ],
+                          )
+                        else
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: AppSizes.p12,
+                              vertical: AppSizes.p8,
+                            ),
+                            decoration: BoxDecoration(
+                              color: ClinicColors.of(context).infoContainer,
+                              borderRadius: const BorderRadius.all(
+                                Radius.circular(AppSizes.r12),
                               ),
                             ),
-                            Switch(
-                              value: _usePackage,
-                              onChanged: isScheduled
-                                  ? (v) => setState(() => _usePackage = v)
-                                  : null,
-                              activeThumbColor: Theme.of(context).colorScheme.primary,
+                            child: Row(
+                              children: [
+                                Icon(
+                                  Icons.info_outline_rounded,
+                                  size: AppSizes.iconSmall,
+                                  color: ClinicColors.of(context).info,
+                                ),
+                                const SizedBox(width: AppSizes.p8),
+                                Expanded(
+                                  child: Text(
+                                    AppStrings.paidSeparately,
+                                    style: AppTextStyles.bodySecondary.copyWith(
+                                      color: Theme.of(context).colorScheme.onSurface,
+                                    ),
+                                  ),
+                                ),
+                              ],
                             ),
-                          ],
-                        ),
+                          ),
                       ],
                     ),
                   ),

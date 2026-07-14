@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:spine_clinic_app/core/constants/app_strings.dart';
 import 'package:spine_clinic_app/core/errors/result.dart';
 import 'package:spine_clinic_app/features/appointment/domain/appointment.dart';
@@ -11,6 +12,7 @@ import 'package:spine_clinic_app/features/auth/domain/staff.dart';
 import 'package:spine_clinic_app/features/auth/domain/user_role.dart';
 import 'package:spine_clinic_app/features/patient/domain/clinic_location.dart';
 import 'package:spine_clinic_app/features/patient/domain/patient.dart';
+import 'package:spine_clinic_app/features/staff/presentation/staff_providers.dart';
 
 void main() {
   testWidgets('replacement preselects all and submits the chosen subset', (
@@ -25,19 +27,27 @@ void main() {
     ];
 
     await tester.pumpWidget(
-      MaterialApp(
-        home: DoctorReplacementModal(
-          absentDoctor: _doctor('absent', 'Dr Absent'),
-          availableDoctors: [_doctor('replacement', 'Dr Replacement')],
-          appointments: appointments,
-          day: DateTime(2026, 7, 14),
-          onSubmit: (doctorIds, appointmentIds) async {
-            submittedDoctors = doctorIds;
-            submittedAppointments = appointmentIds;
-            return const Result.success(
-              BulkDoctorReplacementResult(replacedCount: 1, remainingCount: 1),
-            );
-          },
+      ProviderScope(
+        overrides: [
+          allDoctorsForFilterProvider.overrideWith((ref) => [
+            _doctor('replacement', 'Dr Replacement'),
+            _doctor('absent', 'Dr Absent'),
+          ]),
+        ],
+        child: MaterialApp(
+          home: DoctorReplacementModal(
+            absentDoctor: _doctor('absent', 'Dr Absent'),
+            availableDoctors: [_doctor('replacement', 'Dr Replacement')],
+            appointments: appointments,
+            day: DateTime(2026, 7, 14),
+            onSubmit: (doctorIds, appointmentIds) async {
+              submittedDoctors = doctorIds;
+              submittedAppointments = appointmentIds;
+              return const Result.success(
+                BulkDoctorReplacementResult(replacedCount: 1, remainingCount: 1),
+              );
+            },
+          ),
         ),
       ),
     );
@@ -50,9 +60,13 @@ void main() {
 
     await tester.tap(find.text(AppStrings.selectReplacementDoctors));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Dr Replacement'));
+
+    // Focus the textfield to show results
+    await tester.tap(find.byType(TextField));
     await tester.pumpAndSettle();
-    await tester.binding.handlePopRoute();
+
+    // Select Dr Replacement
+    await tester.tap(find.text('Dr Replacement'));
     await tester.pumpAndSettle();
 
     await tester.tap(find.byType(Checkbox).last);

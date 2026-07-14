@@ -41,7 +41,7 @@ final class BookingWorkboardProvider
   }
 }
 
-String _$bookingWorkboardHash() => r'57a054eb2cb9a96f49933d6c92c9ae9104db295f';
+String _$bookingWorkboardHash() => r'd40c73156d8504b03590b98086c2957e706eec71';
 
 abstract class _$BookingWorkboard extends $Notifier<BookingWorkboardState> {
   BookingWorkboardState build();

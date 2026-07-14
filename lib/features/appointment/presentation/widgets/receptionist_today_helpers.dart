@@ -1,5 +1,4 @@
-/// Helper widgets for [ReceptionistTodayTab]: stats strip, search field,
-/// and section header.
+/// Helper widgets for [ReceptionistTodayTab]: search field.
 ///
 /// Extracted to keep the parent file under 200 lines.
 ///
@@ -7,64 +6,8 @@
 library;
 
 import 'package:flutter/material.dart';
-import 'package:spine_clinic_app/core/constants/clinic_colors.dart';
 import 'package:spine_clinic_app/core/constants/app_sizes.dart';
 import 'package:spine_clinic_app/core/constants/app_text_styles.dart';
-import 'package:spine_clinic_app/features/appointment/presentation/receptionist_appointments_providers.dart';
-
-/// Stats strip: Scheduled | Checked In | Cancelled.
-class TodayStatsStrip extends StatelessWidget {
-  const TodayStatsStrip({super.key, required this.state});
-  final ReceptionistAppointmentsState state;
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(
-          horizontal: AppSizes.p20, vertical: AppSizes.p12),
-      child: Row(
-        children: [
-          _Stat(label: 'Scheduled', count: state.scheduledCount,
-              color: Theme.of(context).colorScheme.onSurfaceVariant),
-          SizedBox(
-            height: AppSizes.iconDefault,
-            child: VerticalDivider(width: AppSizes.p24, color: Theme.of(context).colorScheme.outline),
-          ),
-          _Stat(label: 'Checked In', count: state.checkedInCount,
-              color: ClinicColors.of(context).success),
-          SizedBox(
-            height: AppSizes.iconDefault,
-            child: VerticalDivider(width: AppSizes.p24, color: Theme.of(context).colorScheme.outline),
-          ),
-          _Stat(label: 'Cancelled', count: state.cancelledCount,
-              color: Theme.of(context).colorScheme.error),
-        ],
-      ),
-    );
-  }
-}
-
-class _Stat extends StatelessWidget {
-  const _Stat({required this.label, required this.count, required this.color});
-  final String label;
-  final int count;
-  final Color color;
-
-  @override
-  Widget build(BuildContext context) {
-    return Expanded(
-      child: Column(
-        children: [
-          Text(count.toString(),
-              style: AppTextStyles.headingMedium.copyWith(color: color)),
-          const SizedBox(height: AppSizes.p2),
-          Text(label,
-              style: AppTextStyles.caption.copyWith(color: ClinicColors.of(context).textMuted)),
-        ],
-      ),
-    );
-  }
-}
 
 /// Search field for the today tab.
 class TodaySearchField extends StatelessWidget {
@@ -87,26 +30,6 @@ class TodaySearchField extends StatelessWidget {
           contentPadding: const EdgeInsets.symmetric(
               horizontal: AppSizes.p12, vertical: AppSizes.p8),
         ),
-      ),
-    );
-  }
-}
-
-/// Section header for grouped appointment lists.
-class TodaySectionHeader extends StatelessWidget {
-  const TodaySectionHeader({super.key, required this.title, required this.count});
-  final String title;
-  final int count;
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(
-          AppSizes.p20, AppSizes.p16, AppSizes.p20, AppSizes.p8),
-      child: Text(
-        '$title · $count',
-        style: AppTextStyles.captionBold
-            .copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
       ),
     );
   }

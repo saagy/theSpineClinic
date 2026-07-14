@@ -15,7 +15,6 @@ class BookingWorkboardControls extends StatelessWidget {
     required this.onNextDay,
     required this.onChooseDate,
     required this.onFilterDoctor,
-    this.onReplaceDoctor,
   });
 
   final DateTime date;
@@ -24,7 +23,6 @@ class BookingWorkboardControls extends StatelessWidget {
   final VoidCallback onNextDay;
   final VoidCallback onChooseDate;
   final VoidCallback onFilterDoctor;
-  final VoidCallback? onReplaceDoctor;
 
   @override
   Widget build(BuildContext context) {
@@ -41,7 +39,6 @@ class BookingWorkboardControls extends StatelessWidget {
         final Widget doctorControl = _DoctorControl(
           doctor: doctor,
           onTap: onFilterDoctor,
-          onReplace: onReplaceDoctor,
         );
         if (wide) {
           return Row(
@@ -120,65 +117,49 @@ class _DoctorControl extends StatelessWidget {
   const _DoctorControl({
     required this.doctor,
     required this.onTap,
-    this.onReplace,
   });
   final Staff? doctor;
   final VoidCallback onTap;
-  final VoidCallback? onReplace;
 
   @override
   Widget build(BuildContext context) {
     final ColorScheme colors = Theme.of(context).colorScheme;
-    return Row(
-      children: [
-        Expanded(
-          child: Material(
-            color: colors.surface,
-            shape: RoundedRectangleBorder(
-              borderRadius: AppSizes.borderRadiusInput,
-              side: BorderSide(color: colors.outline),
-            ),
-            child: InkWell(
-              onTap: onTap,
-              borderRadius: AppSizes.borderRadiusInput,
-              child: SizedBox(
-                height: AppSizes.inputHeight,
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: AppSizes.p12),
-                  child: Row(
-                    children: [
-                      if (doctor != null) ...[
-                        AppAvatar(
-                          name: doctor!.fullName,
-                          radius: AppSizes.avatarSmall / 2,
-                        ),
-                        const SizedBox(width: AppSizes.p12),
-                      ] else
-                        const Icon(Icons.filter_list_rounded),
-                      Expanded(
-                        child: Text(
-                          doctor?.fullName ?? AppStrings.allDoctors,
-                          style: AppTextStyles.bodyBold,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                      const Icon(Icons.tune_rounded),
-                    ],
+    return Material(
+      color: colors.surface,
+      shape: RoundedRectangleBorder(
+        borderRadius: AppSizes.borderRadiusInput,
+        side: BorderSide(color: colors.outline),
+      ),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: AppSizes.borderRadiusInput,
+        child: SizedBox(
+          height: AppSizes.inputHeight,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: AppSizes.p12),
+            child: Row(
+              children: [
+                if (doctor != null) ...[
+                  AppAvatar(
+                    name: doctor!.fullName,
+                    radius: AppSizes.avatarSmall / 2,
+                  ),
+                  const SizedBox(width: AppSizes.p12),
+                ] else
+                  const Icon(Icons.filter_list_rounded),
+                Expanded(
+                  child: Text(
+                    doctor?.fullName ?? AppStrings.allDoctors,
+                    style: AppTextStyles.bodyBold,
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ),
-              ),
+                const Icon(Icons.tune_rounded),
+              ],
             ),
           ),
         ),
-        if (onReplace != null) ...[
-          const SizedBox(width: AppSizes.p8),
-          FilledButton.tonalIcon(
-            onPressed: onReplace,
-            icon: const Icon(Icons.swap_horiz_rounded),
-            label: const Text(AppStrings.replaceDoctor),
-          ),
-        ],
-      ],
+      ),
     );
   }
 }

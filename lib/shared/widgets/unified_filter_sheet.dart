@@ -24,6 +24,9 @@ class UnifiedFilterSheet extends ConsumerStatefulWidget {
     this.onReset,
     this.additionalFilters = const [],
     this.scrollController,
+    this.showActions = true,
+    this.showDeactivated = true,
+    this.excludeDoctorIds,
     super.key,
   });
 
@@ -51,6 +54,15 @@ class UnifiedFilterSheet extends ConsumerStatefulWidget {
   /// Scroll controller passed down from DraggableScrollableSheet container.
   final ScrollController? scrollController;
 
+  /// Whether to show the bottom apply/reset action buttons (defaults to true).
+  final bool showActions;
+
+  /// Whether to show deactivated doctors (defaults to true).
+  final bool showDeactivated;
+
+  /// Optional list of doctor IDs to exclude from selection.
+  final List<String>? excludeDoctorIds;
+
   @override
   ConsumerState<UnifiedFilterSheet> createState() => _UnifiedFilterSheetState();
 }
@@ -68,6 +80,7 @@ class _UnifiedFilterSheetState extends ConsumerState<UnifiedFilterSheet> {
     super.initState();
     _selectedDoctorId = widget.initialDoctorId;
     _clinic = widget.initialClinic;
+    _showResults = !widget.showActions;
     _searchFocus.addListener(() {
       if (_searchFocus.hasFocus) {
         setState(() => _showResults = true);
@@ -83,6 +96,10 @@ class _UnifiedFilterSheetState extends ConsumerState<UnifiedFilterSheet> {
   }
 
   void _selectDoctor(Staff doctor) {
+    if (!widget.showActions) {
+      widget.onApplied(doctor.id, _clinic);
+      return;
+    }
     setState(() {
       _selectedDoctorId = doctor.id;
       _selectedDoctorName = doctor.isActive
@@ -118,9 +135,16 @@ class _UnifiedFilterSheetState extends ConsumerState<UnifiedFilterSheet> {
 
   List<Staff> _filter(List<Staff> doctors) {
     final q = _searchCtrl.text.toLowerCase();
+    Iterable<Staff> list = doctors;
+    if (widget.excludeDoctorIds != null) {
+      list = list.where((d) => !widget.excludeDoctorIds!.contains(d.id));
+    }
+    if (!widget.showDeactivated) {
+      list = list.where((d) => d.isActive);
+    }
     final filtered = q.isEmpty
-        ? doctors
-        : doctors.where((d) => d.fullName.toLowerCase().contains(q)).toList();
+        ? list.toList()
+        : list.where((d) => d.fullName.toLowerCase().contains(q)).toList();
     // Active doctors first, deactivated at the end.
     filtered.sort((a, b) {
       if (a.isActive == b.isActive) return a.fullName.compareTo(b.fullName);
@@ -267,29 +291,30 @@ class _UnifiedFilterSheetState extends ConsumerState<UnifiedFilterSheet> {
         ),
 
         // ── Pinned actions row at the bottom ──
-        Padding(
-          padding: const EdgeInsets.fromLTRB(
-            AppSizes.p20,
-            AppSizes.p8,
-            AppSizes.p20,
-            AppSizes.p16,
+        if (widget.showActions)
+          Padding(
+            padding: const EdgeInsets.fromLTRB(
+              AppSizes.p20,
+              AppSizes.p8,
+              AppSizes.p20,
+              AppSizes.p16,
+            ),
+            child: ResponsiveButtonRow(
+              children: [
+                AppButton(
+                  labelText: 'Reset',
+                  onPressed: _clearAll,
+                  variant: AppButtonVariant.secondary,
+                  shape: AppButtonShape.pill,
+                ),
+                AppButton(
+                  labelText: AppStrings.applyFilters,
+                  onPressed: () => widget.onApplied(_selectedDoctorId, _clinic),
+                  shape: AppButtonShape.pill,
+                ),
+              ],
+            ),
           ),
-          child: ResponsiveButtonRow(
-            children: [
-              AppButton(
-                labelText: 'Reset',
-                onPressed: _clearAll,
-                variant: AppButtonVariant.secondary,
-                shape: AppButtonShape.pill,
-              ),
-              AppButton(
-                labelText: AppStrings.applyFilters,
-                onPressed: () => widget.onApplied(_selectedDoctorId, _clinic),
-                shape: AppButtonShape.pill,
-              ),
-            ],
-          ),
-        ),
       ],
     );
   }

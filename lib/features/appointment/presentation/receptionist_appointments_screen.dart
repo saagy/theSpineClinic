@@ -1,6 +1,6 @@
-/// Receptionist appointments dashboard with Today / Booking / All tabs.
+/// Receptionist appointments dashboard with Schedule / Booking / All tabs.
 ///
-/// Today tab: stats strip, search bar, and appointments grouped by status.
+/// Schedule tab: stats strip, search bar, and appointments grouped by status.
 /// Booking tab: due-patient and doctor-schedule workboard.
 /// All tab: full appointment archive with search, sort, and filter controls.
 ///

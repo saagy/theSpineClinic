@@ -147,7 +147,7 @@ class ReceptionistAppointmentsTabStrip extends StatelessWidget {
         indicatorColor: Theme.of(context).colorScheme.primary,
         indicatorWeight: 2,
         tabs: const [
-          Tab(text: AppStrings.today),
+          Tab(text: AppStrings.schedule),
           Tab(text: AppStrings.booking),
           Tab(text: AppStrings.all),
         ],

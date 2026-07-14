@@ -8,7 +8,8 @@ import 'package:spine_clinic_app/features/appointment/domain/appointment_reposit
 import 'package:spine_clinic_app/features/appointment/domain/bulk_doctor_replacement_result.dart';
 import 'package:spine_clinic_app/features/appointment/presentation/widgets/doctor_replacement_appointment_row.dart';
 import 'package:spine_clinic_app/features/auth/domain/staff.dart';
-import 'package:spine_clinic_app/features/staff/presentation/widgets/doctor_search_sheet.dart';
+import 'package:spine_clinic_app/shared/widgets/app_bottom_sheet.dart';
+import 'package:spine_clinic_app/shared/widgets/unified_filter_sheet.dart';
 import 'package:spine_clinic_app/shared/widgets/app_button.dart';
 import 'package:spine_clinic_app/shared/widgets/app_snackbar.dart';
 
@@ -50,18 +51,46 @@ class _DoctorReplacementModalState extends State<DoctorReplacementModal> {
   }
 
   Future<void> _chooseDoctors() async {
-    await showModalBottomSheet<void>(
+    String? chosenDoctorId;
+    await AppBottomSheet.show<void>(
       context: context,
-      isScrollControlled: true,
-      showDragHandle: true,
-      builder: (_) => DoctorSearchSheet(
-        activeDoctors: widget.availableDoctors,
-        selectedDoctors: _doctors,
-        onSelectionChanged: (selected) {
-          if (mounted) setState(() => _doctors = selected);
+      title: AppStrings.selectReplacementDoctors,
+      builder: (sheetContext, scrollController) => UnifiedFilterSheet(
+        initialDoctorId: _doctors.firstOrNull?.id,
+        initialClinic: null,
+        showBranchFilter: false,
+        showActions: false,
+        showDeactivated: false,
+        excludeDoctorIds: [widget.absentDoctor.id],
+        scrollController: scrollController,
+        onApplied: (doctorId, _) {
+          chosenDoctorId = doctorId;
+          Navigator.of(sheetContext).pop();
         },
       ),
     );
+
+    if (chosenDoctorId == null || !mounted) return;
+
+    if (chosenDoctorId == widget.absentDoctor.id) {
+      AppSnackbar.show(
+        context,
+        message: AppStrings.cannotReplaceWithSelf,
+        variant: AppSnackbarVariant.error,
+      );
+      return;
+    }
+
+    final Staff? replacementDoctor = widget.availableDoctors.cast<Staff?>().firstWhere(
+          (d) => d?.id == chosenDoctorId,
+          orElse: () => null,
+        );
+
+    if (replacementDoctor != null) {
+      setState(() {
+        _doctors = [replacementDoctor];
+      });
+    }
   }
 
   Future<void> _submit() async {
@@ -130,7 +159,7 @@ class _DoctorReplacementModalState extends State<DoctorReplacementModal> {
                     label: Text(
                       _doctors.isEmpty
                           ? AppStrings.selectReplacementDoctors
-                          : AppStrings.doctorsSelected(_doctors.length),
+                          : _doctors.first.fullName,
                     ),
                   ),
                   const SizedBox(height: AppSizes.p16),

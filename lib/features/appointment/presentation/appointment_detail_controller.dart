@@ -9,7 +9,6 @@ library;
 
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
-import 'package:spine_clinic_app/core/errors/app_exception.dart';
 import 'package:spine_clinic_app/core/errors/result.dart';
 import 'package:spine_clinic_app/features/appointment/domain/appointment.dart';
 import 'package:spine_clinic_app/features/appointment/domain/appointment_doctor.dart';
@@ -23,7 +22,6 @@ import 'package:spine_clinic_app/features/appointment/presentation/doctor_schedu
 import 'package:spine_clinic_app/features/auth/domain/staff.dart';
 import 'package:spine_clinic_app/features/auth/presentation/auth_providers.dart';
 import 'package:spine_clinic_app/features/patient/domain/patient.dart';
-import 'package:spine_clinic_app/features/patient/domain/patient_repository.dart';
 import 'package:spine_clinic_app/features/patient/presentation/patient_list_providers.dart';
 import 'package:spine_clinic_app/features/patient/presentation/patient_providers.dart';
 
@@ -150,28 +148,6 @@ class AppointmentDetailController extends _$AppointmentDetailController {
       case Failure<void>(:final exception):
         throw exception;
     }
-  }
-
-  Future<Result<void>> updateNextVisit(DateTime? date) async {
-    final Staff? user = ref.read(currentUserProvider).value;
-    final String? patientId = state.value?.appointment.patientId;
-    if (user == null || !user.isActive || patientId == null) {
-      return const Result.failure(
-        DatabaseException(
-          code: 'db/permission-denied',
-          message: 'Access denied.',
-          userMessageKey: 'error_database_permission_denied',
-        ),
-      );
-    }
-    final PatientRepository repo = ref.read(patientRepositoryProvider);
-    final Result<void> result = await repo.updateNextVisitDate(patientId, date);
-    if (result is Failure<void> || !ref.mounted) return result;
-    ref.invalidate(patientDetailProvider(patientId));
-    await ref.read(bookingWorkboardProvider.notifier).refresh();
-    ref.invalidateSelf();
-    await future;
-    return result;
   }
 
   void _invalidateCaches() {

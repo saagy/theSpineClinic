@@ -6,6 +6,7 @@ import 'package:spine_clinic_app/features/appointment/domain/appointment_reposit
 import 'package:spine_clinic_app/features/appointment/domain/bulk_doctor_replacement_result.dart';
 import 'package:spine_clinic_app/features/appointment/presentation/appointment_providers.dart';
 import 'package:spine_clinic_app/features/appointment/presentation/booking_workboard_state.dart';
+import 'package:spine_clinic_app/features/appointment/presentation/receptionist_appointments_providers.dart';
 import 'package:spine_clinic_app/features/auth/domain/user_role.dart';
 import 'package:spine_clinic_app/features/auth/presentation/auth_providers.dart';
 import 'package:spine_clinic_app/features/patient/domain/clinic_location.dart';
@@ -154,16 +155,16 @@ class BookingWorkboard extends _$BookingWorkboard {
   }
 
   Future<Result<BulkDoctorReplacementResult>> replaceDoctor({
+    required String absentDoctorId,
+    required DateTime day,
     required List<String> replacementDoctorIds,
     required List<String> appointmentIds,
   }) async {
     final user = ref.read(currentUserProvider).value;
-    final String? absentDoctorId = state.doctorId;
     if (user == null ||
         !user.isActive ||
         (user.role != UserRole.receptionist &&
-            user.role != UserRole.superAdmin) ||
-        absentDoctorId == null) {
+            user.role != UserRole.superAdmin)) {
       return Result.failure(
         const DatabaseException(
           code: 'db/permission-denied',
@@ -178,9 +179,13 @@ class BookingWorkboard extends _$BookingWorkboard {
           absentDoctorId: absentDoctorId,
           replacementDoctorIds: replacementDoctorIds,
           appointmentIds: appointmentIds,
-          day: state.date,
+          day: day,
         );
-    if (result is Success<BulkDoctorReplacementResult>) await refresh();
+    if (result is Success<BulkDoctorReplacementResult>) {
+      await refresh();
+      // Keep the today-tab list in sync.
+      await ref.read(receptionistAppointmentsProvider.notifier).loadToday();
+    }
     return result;
   }
 }

@@ -214,10 +214,7 @@ class _AppointmentDetailBody extends ConsumerWidget {
                   ),
                   const SizedBox(height: AppSizes.p8),
                   AppointmentScheduleCard(appointment: state.appointment),
-                  AppointmentNextVisitCard(
-                    appointmentId: state.appointment.id,
-                    patient: state.patient,
-                  ),
+                  AppointmentNextVisitContext(patient: state.patient),
                   const SizedBox(height: AppSizes.p16),
                   AppointmentDoctorsSection(
                     activeDoctors: state.activeDoctors,

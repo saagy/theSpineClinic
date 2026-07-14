@@ -23,45 +23,86 @@ import 'package:spine_clinic_app/features/patient/domain/clinic_location.dart';
 /// Holds the combined state for the receptionist appointments dashboard.
 class ReceptionistAppointmentsState {
   const ReceptionistAppointmentsState({
-    this.today = const [],
-    this.todayLoading = true,
-    this.todayError,
+    this.allItems = const [],
+    this.selectedDate,
+    this.loading = true,
+    this.error,
+    this.filterDoctorId,
   });
 
-  final List<AppointmentWithPatient> today;
-  final bool todayLoading;
-  final Object? todayError;
+  final List<AppointmentWithPatient> allItems;
+  final DateTime? selectedDate;
+  final bool loading;
+  final Object? error;
+  final String? filterDoctorId;
 
-  int get scheduledCount => today
-      .where((a) => a.appointment.status == AppointmentStatus.scheduled)
-      .length;
+  /// Items for the selected date in strict chronological order.
+  List<AppointmentWithPatient> get itemsForSelectedDay {
+    if (selectedDate == null) return [];
+    final day = DateTime(selectedDate!.year, selectedDate!.month, selectedDate!.day);
+    final nextDay = day.add(const Duration(days: 1));
 
-  int get checkedInCount => today
-      .where((a) => a.appointment.status == AppointmentStatus.checkedIn)
-      .length;
+    final matching = allItems.where((item) {
+      final d = item.appointment.scheduledAt.toLocal();
+      return !d.isBefore(day) && d.isBefore(nextDay);
+    }).toList()
+      ..sort((a, b) => a.appointment.scheduledAt.compareTo(b.appointment.scheduledAt));
 
-  int get cancelledCount => today
-      .where((a) => a.appointment.status == AppointmentStatus.cancelled)
-      .length;
+    return matching;
+  }
+
+  /// Whether today is the selected date.
+  bool get isToday {
+    if (selectedDate == null) return false;
+    final now = DateTime.now();
+    return selectedDate!.year == now.year &&
+        selectedDate!.month == now.month &&
+        selectedDate!.day == now.day;
+  }
+
+  /// Count of non-cancelled appointments for each day of the current week.
+  Map<int, int> get dayAppointmentCounts {
+    final counts = <int, int>{};
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    // Week starts on Saturday: (weekday + 1) % 7 gives 0 for Saturday.
+    final weekStart = today.subtract(Duration(days: (now.weekday + 1) % 7));
+    for (int i = 0; i < 7; i++) {
+      counts[i] = 0;
+    }
+    for (final item in allItems) {
+      if (item.appointment.status == AppointmentStatus.cancelled) continue;
+      final d = item.appointment.scheduledAt.toLocal();
+      final dayOnly = DateTime(d.year, d.month, d.day);
+      final diff = dayOnly.difference(weekStart).inDays;
+      if (diff >= 0 && diff < 7) counts[diff] = (counts[diff] ?? 0) + 1;
+    }
+    return counts;
+  }
 
   /// Returns a copy with the given fields replaced. Omitted fields keep their
   /// current value — never a constructor default.
   ReceptionistAppointmentsState copyWith({
-    List<AppointmentWithPatient>? today,
-    bool? todayLoading,
-    Object? todayError,
-    bool clearTodayError = false,
+    List<AppointmentWithPatient>? allItems,
+    DateTime? selectedDate,
+    bool? loading,
+    Object? error,
+    bool clearError = false,
+    String? filterDoctorId,
+    bool clearDoctorFilter = false,
   }) {
     return ReceptionistAppointmentsState(
-      today: today ?? this.today,
-      todayLoading: todayLoading ?? this.todayLoading,
-      todayError: clearTodayError ? null : (todayError ?? this.todayError),
+      allItems: allItems ?? this.allItems,
+      selectedDate: selectedDate ?? this.selectedDate,
+      loading: loading ?? this.loading,
+      error: clearError ? null : (error ?? this.error),
+      filterDoctorId: clearDoctorFilter ? null : (filterDoctorId ?? this.filterDoctorId),
     );
   }
 }
 
-/// Notifier managing today's and upcoming appointment lists for the receptionist
-/// dashboard. Handles status transitions with immediate optimistic updates.
+/// Notifier managing appointments for the receptionist dashboard.
+/// Loads the current week (from Saturday to Friday) and filters by selected date.
 class ReceptionistAppointmentsNotifier
     extends Notifier<ReceptionistAppointmentsState> {
   @override
@@ -71,36 +112,50 @@ class ReceptionistAppointmentsNotifier
   AppointmentRepository get _repo => ref.read(appointmentRepositoryProvider);
 
   /// Returns the effective clinic filter.
-  ///
-  /// For admin users, respects [adminBranchFilterProvider]:
-  /// - `null` → "All Branches" (no clinic filter)
-  /// - a dbValue string → filters to that specific branch
-  /// For non-admin users, uses the active branch as-is.
   ClinicLocation? get _clinic {
     final user = ref.read(currentUserProvider).value;
     if (user?.role == UserRole.superAdmin) {
       final String? override = ref.read(adminBranchFilterProvider);
       if (override == null) return null; // All Branches
-      // Map dbValue back to enum
       if (override == 'tagamoa') return ClinicLocation.tagamoa;
       if (override == 'masr_elgedida') return ClinicLocation.masrElgedida;
     }
     return ref.read(activeBranchProvider);
   }
 
-  /// Loads today's appointments from the repository.
+  /// Loads the entire week's appointments (Saturday to Friday) from the repository.
   Future<void> loadToday() async {
-    state = state.copyWith(todayLoading: true, clearTodayError: true);
+    state = state.copyWith(loading: true, clearError: true);
+    final user = ref.read(currentUserProvider).value;
+    if (user == null) return;
+
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    // Week starts on Saturday: (weekday + 1) % 7 gives 0 for Saturday.
+    final weekStart = today.subtract(Duration(days: (now.weekday + 1) % 7));
+    final weekEnd = weekStart.add(const Duration(days: 7)); // Next Saturday
 
     final Result<List<AppointmentWithPatient>> result = await _repo
-        .getTodayAppointmentsWithPatients(_clinic);
+        .getAllAppointments(
+          dateFrom: weekStart,
+          dateTo: weekEnd,
+          doctorId: state.filterDoctorId,
+          clinic: _clinic?.dbValue,
+          offset: 0,
+          limit: 1000,
+          ascending: true,
+        );
 
     result.when(
       success: (List<AppointmentWithPatient> data) {
-        state = state.copyWith(today: data, todayLoading: false);
+        state = state.copyWith(
+          allItems: data,
+          selectedDate: state.selectedDate ?? today,
+          loading: false,
+        );
       },
       failure: (AppException exception) {
-        state = state.copyWith(todayError: exception, todayLoading: false);
+        state = state.copyWith(error: exception, loading: false);
       },
     );
   }
@@ -117,7 +172,7 @@ class ReceptionistAppointmentsNotifier
 
     result.when(
       success: (_) {
-        final List<AppointmentWithPatient> updated = state.today.map((a) {
+        final List<AppointmentWithPatient> updated = state.allItems.map((a) {
           if (a.appointment.id == appointmentId) {
             final Appointment updatedAppt = a.appointment.copyWith(
               status: newStatus,
@@ -130,12 +185,29 @@ class ReceptionistAppointmentsNotifier
           return a;
         }).toList();
 
-        state = state.copyWith(today: updated);
+        state = state.copyWith(allItems: updated);
       },
       failure: (AppException exception) {
         throw exception;
       },
     );
+  }
+
+  /// Sets the selected date in the week selector.
+  void selectDate(DateTime date) {
+    state = state.copyWith(
+      selectedDate: DateTime(date.year, date.month, date.day),
+    );
+  }
+
+  /// Sets or clears the doctor filter on the schedule.
+  void setDoctorFilter(String? doctorId) {
+    if (doctorId == null) {
+      state = state.copyWith(clearDoctorFilter: true);
+    } else {
+      state = state.copyWith(filterDoctorId: doctorId);
+    }
+    loadToday();
   }
 }
 

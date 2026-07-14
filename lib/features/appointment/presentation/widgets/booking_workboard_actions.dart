@@ -149,18 +149,22 @@ abstract final class BookingWorkboardActions {
     final appointments = state.schedule
         .where((item) => item.appointment.status != AppointmentStatus.cancelled)
         .toList();
+    final String absentDoctorId = absentDoctor.id;
+    final DateTime day = state.date;
     return AppAdaptiveModal.show<bool>(
       context: context,
       child: DoctorReplacementModal(
         absentDoctor: absentDoctor,
         availableDoctors: doctors
-            .where((doctor) => doctor.id != absentDoctor.id)
+            .where((doctor) => doctor.id != absentDoctorId)
             .toList(),
         appointments: appointments,
-        day: state.date,
+        day: day,
         onSubmit: (doctorIds, appointmentIds) => ref
             .read(bookingWorkboardProvider.notifier)
             .replaceDoctor(
+              absentDoctorId: absentDoctorId,
+              day: day,
               replacementDoctorIds: doctorIds,
               appointmentIds: appointmentIds,
             ),

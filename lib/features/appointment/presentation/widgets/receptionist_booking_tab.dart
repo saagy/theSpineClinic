@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:spine_clinic_app/core/constants/app_sizes.dart';
 import 'package:spine_clinic_app/core/constants/app_strings.dart';
 import 'package:spine_clinic_app/features/admin/presentation/branch_providers.dart';
-import 'package:spine_clinic_app/features/appointment/domain/appointment_status.dart';
 import 'package:spine_clinic_app/features/appointment/presentation/booking_workboard_provider.dart';
 import 'package:spine_clinic_app/features/appointment/presentation/widgets/booking_workboard_actions.dart';
 import 'package:spine_clinic_app/features/appointment/presentation/widgets/booking_workboard_controls.dart';
@@ -47,9 +46,6 @@ class ReceptionistBookingTab extends ConsumerWidget {
             ref.read(bookingWorkboardProvider.notifier).setDoctorFilter(null),
       );
     }
-    final List<Staff> replacementDoctors =
-        doctors.where((doctor) => doctor.isActive).toList()
-          ..sort((a, b) => a.fullName.compareTo(b.fullName));
     return Padding(
       padding: const EdgeInsets.fromLTRB(
         AppSizes.p16,
@@ -85,21 +81,6 @@ class ReceptionistBookingTab extends ConsumerWidget {
                           ref,
                           state,
                         ),
-                    onReplaceDoctor:
-                        selected != null &&
-                            state.schedule.any(
-                              (item) =>
-                                  item.appointment.status !=
-                                  AppointmentStatus.cancelled,
-                            )
-                        ? () => BookingWorkboardActions.replaceDoctor(
-                            context,
-                            ref,
-                            selected,
-                            replacementDoctors,
-                            state,
-                          )
-                        : null,
                   ),
                   const SizedBox(height: AppSizes.p16),
                   Expanded(

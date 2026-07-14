@@ -831,4 +831,38 @@ abstract final class AppStrings {
       '$count doctor${count == 1 ? '' : 's'} selected';
   static String replacementSummary(String date, int count) =>
       '$date, $count affected appointment${count == 1 ? '' : 's'}';
+
+  // Doctor replacement — day picker step (added between absent-doctor
+  // selection and the appointment fetch).
+  static const String replacementDayPickerTitle = 'Which day?';
+  static String replacementDayPickerSubtitle(String name) =>
+      '$name will be away on:';
+  static const String dayToday = 'Today';
+  static const String dayTomorrow = 'Tomorrow';
+  static const String pickADay = 'Pick a day';
+  static const String dayPickerContinue = 'Continue';
+
+  // Next-visit follow-up surface (patient detail + appointment detail)
+  static const String manage = 'Manage';
+  static const String patientFollowUp = 'Patient\'s next expected visit';
+  static const String nextVisitOptions = 'Next visit options';
+  static const String nextVisitChangeAction = 'Change date';
+  static const String nextVisitClearAction = 'Clear date';
+  static const String tapToSetNextVisit = 'Tap to set next visit';
+  static const String clearFollowUpTitle = 'Clear follow-up date?';
+  static String clearFollowUpConfirmBody(String patientName) =>
+      'This will clear the next visit date for $patientName. '
+      'They will no longer appear on the booking due list.';
+
+  // Today-tab Replace Doctor banner
+  static const String replaceDoctorTodayBannerTitle = 'Replace doctor';
+  static const String replaceDoctorTodayBannerSubtitle =
+      'Move a doctor\u2019s appointments to another doctor today.';
+  static const String selectAbsentDoctor = 'Pick the absent doctor';
+  static const String selectAbsentDoctorSubtitle =
+      'Choose which doctor\u2019s day you need to reassign.';
+  static const String noDoctorsWithTodayLoad =
+      'No doctors have appointments today.';
+  static const String cannotReplaceWithSelf =
+      'A doctor cannot cover for themselves.';
 }

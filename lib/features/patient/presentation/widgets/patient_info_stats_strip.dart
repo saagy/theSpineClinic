@@ -13,11 +13,14 @@ class PatientInfoStatsStrip extends StatelessWidget {
     super.key,
     required this.apptCount,
     required this.apptLoading,
-    required this.lastVisitText,
+    required this.nextVisitText,
+    required this.nextVisitSet,
+    required this.nextVisitIsMutating,
     required this.amountDue,
     required this.paymentsLoading,
     required this.isDoctor,
     required this.onAppointmentsTap,
+    required this.onNextVisitTap,
     required this.onPaymentsTap,
   });
 
@@ -25,11 +28,14 @@ class PatientInfoStatsStrip extends StatelessWidget {
 
   final int apptCount;
   final bool apptLoading;
-  final String lastVisitText;
+  final String nextVisitText;
+  final bool nextVisitSet;
+  final bool nextVisitIsMutating;
   final double amountDue;
   final bool paymentsLoading;
   final bool isDoctor;
   final VoidCallback onAppointmentsTap;
+  final VoidCallback onNextVisitTap;
   final VoidCallback? onPaymentsTap;
 
   @override
@@ -41,7 +47,15 @@ class PatientInfoStatsStrip extends StatelessWidget {
         label: AppStrings.totalAppointments,
         onTap: onAppointmentsTap,
       ),
-      _InfoStat(value: lastVisitText, label: AppStrings.lastVisit),
+      _InfoStat(
+        value: nextVisitText,
+        label: AppStrings.nextVisit,
+        onTap: nextVisitIsMutating ? null : onNextVisitTap,
+        trailingIcon: nextVisitSet
+            ? _TrailingIcon.chevron
+            : _TrailingIcon.edit,
+        muted: !nextVisitSet,
+      ),
     ];
     if (!isDoctor) {
       stats.add(
@@ -77,18 +91,24 @@ class PatientInfoStatsStrip extends StatelessWidget {
   }
 }
 
+enum _TrailingIcon { chevron, edit, none }
+
 class _InfoStat {
   const _InfoStat({
     required this.value,
     required this.label,
     this.onTap,
     this.isWarning = false,
+    this.muted = false,
+    this.trailingIcon = _TrailingIcon.none,
   });
 
   final String value;
   final String label;
   final VoidCallback? onTap;
   final bool isWarning;
+  final bool muted;
+  final _TrailingIcon trailingIcon;
 }
 
 class _InfoStatItem extends StatelessWidget {
@@ -100,6 +120,44 @@ class _InfoStatItem extends StatelessWidget {
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     final bool isTappable = stat.onTap != null;
+    final Color valueColor = stat.isWarning
+        ? cs.error
+        : (stat.muted ? cs.onSurfaceVariant : cs.onSurface);
+
+    Widget valueRow;
+    if (stat.trailingIcon != _TrailingIcon.none) {
+      final IconData iconData = stat.trailingIcon == _TrailingIcon.chevron
+          ? Icons.chevron_right_rounded
+          : Icons.edit_outlined;
+      valueRow = Row(
+        mainAxisSize: MainAxisSize.min,
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Flexible(
+            child: Text(
+              stat.value,
+              style: AppTextStyles.numberLarge.copyWith(color: valueColor),
+              overflow: TextOverflow.ellipsis,
+              textAlign: TextAlign.center,
+              maxLines: 1,
+            ),
+          ),
+          const SizedBox(width: AppSizes.p4),
+          Icon(
+            iconData,
+            size: AppSizes.iconSmall,
+            color: cs.onSurfaceVariant,
+          ),
+        ],
+      );
+    } else {
+      valueRow = Text(
+        stat.value,
+        style: AppTextStyles.numberLarge.copyWith(color: valueColor),
+        maxLines: 1,
+      );
+    }
+
     final Widget content = ConstrainedBox(
       constraints: const BoxConstraints(minHeight: AppSizes.tappableMin),
       child: Column(
@@ -108,38 +166,17 @@ class _InfoStatItem extends StatelessWidget {
         children: [
           FittedBox(
             fit: BoxFit.scaleDown,
-            child: Text(
-              stat.value,
-              style: AppTextStyles.numberLarge.copyWith(
-                color: stat.isWarning ? cs.error : cs.onSurface,
-              ),
-              maxLines: 1,
-            ),
+            child: valueRow,
           ),
           const SizedBox(height: AppSizes.p4),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Flexible(
-                child: Text(
-                  stat.label,
-                  style: AppTextStyles.captionMedium.copyWith(
-                    color: cs.onSurfaceVariant,
-                  ),
-                  textAlign: TextAlign.center,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-              if (isTappable) ...[
-                const SizedBox(width: AppSizes.p2),
-                Icon(
-                  Icons.chevron_right_rounded,
-                  size: AppSizes.iconSmall,
-                  color: cs.primary,
-                ),
-              ],
-            ],
+          Text(
+            stat.label,
+            style: AppTextStyles.captionMedium.copyWith(
+              color: cs.onSurfaceVariant,
+            ),
+            textAlign: TextAlign.center,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
           ),
         ],
       ),
@@ -149,7 +186,7 @@ class _InfoStatItem extends StatelessWidget {
     return Semantics(
       button: true,
       child: Material(
-        color: Theme.of(context).colorScheme.surface.withAlpha(0),
+        color: cs.surface.withAlpha(0),
         child: InkWell(
           borderRadius: const BorderRadius.all(Radius.circular(AppSizes.r12)),
           onTap: stat.onTap,

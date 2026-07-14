@@ -10,6 +10,7 @@ import 'package:spine_clinic_app/features/appointment/presentation/widgets/booki
 import 'package:spine_clinic_app/features/appointment/presentation/widgets/receptionist_appointment_card.dart';
 import 'package:spine_clinic_app/features/patient/domain/clinic_location.dart';
 import 'package:spine_clinic_app/features/patient/domain/patient.dart';
+import 'package:spine_clinic_app/shared/widgets/segmented_count_tabs.dart';
 
 void main() {
   test('copyWith preserves workboard lists and can clear the doctor', () {
@@ -91,10 +92,9 @@ void main() {
     (tester) async {
       await _pumpLists(tester, width: 390, wide: false);
 
-      expect(
-        find.byType(SegmentedButton<BookingWorkboardView>),
-        findsOneWidget,
-      );
+      expect(find.byType(SegmentedCountTabs), findsOneWidget);
+      expect(find.text(AppStrings.duePatients), findsOneWidget);
+      expect(find.text(AppStrings.schedule), findsOneWidget);
       expect(find.text(AppStrings.noDuePatients), findsOneWidget);
       expect(tester.takeException(), isNull);
     },
@@ -105,7 +105,7 @@ void main() {
   ) async {
     await _pumpLists(tester, width: 1200, wide: true);
 
-    expect(find.byType(SegmentedButton<BookingWorkboardView>), findsNothing);
+    expect(find.byType(SegmentedCountTabs), findsNothing);
     expect(find.text(AppStrings.noDuePatients), findsOneWidget);
     expect(find.text(AppStrings.noScheduleForDate), findsOneWidget);
     expect(tester.takeException(), isNull);

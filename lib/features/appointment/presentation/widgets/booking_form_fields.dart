@@ -29,6 +29,7 @@ class BookingFormFields extends StatelessWidget {
     required this.dateErrorText,
     required this.timeErrorText,
     this.showRecurringToggle = true,
+    this.enabled = true,
   });
 
   final Patient? preselectedPatient;
@@ -44,6 +45,7 @@ class BookingFormFields extends StatelessWidget {
   final String? dateErrorText;
   final String? timeErrorText;
   final bool showRecurringToggle;
+  final bool enabled;
 
   @override
   Widget build(BuildContext context) {
@@ -86,6 +88,7 @@ class BookingFormFields extends StatelessWidget {
             SegmentedAppointmentTypeSelector(
               selectedType: selectedType,
               onTypeChanged: onTypeChanged,
+              enabled: enabled,
             ),
             const SizedBox(height: AppSizes.p20),
             
@@ -99,7 +102,7 @@ class BookingFormFields extends StatelessWidget {
                     valueText: selectedDate != null ? _fmt(selectedDate!) : 'Select',
                     icon: Icons.calendar_today,
                     errorText: dateErrorText,
-                    onTap: () => _pickDate(context),
+                    onTap: enabled ? () => _pickDate(context) : () {},
                   ),
                 ),
                 const SizedBox(width: AppSizes.p12),
@@ -111,7 +114,7 @@ class BookingFormFields extends StatelessWidget {
                         : 'Select',
                     icon: Icons.access_time,
                     errorText: timeErrorText,
-                    onTap: () => _pickTime(context),
+                    onTap: enabled ? () => _pickTime(context) : () {},
                   ),
                 ),
               ],
@@ -129,13 +132,13 @@ class BookingFormFields extends StatelessWidget {
                     width: 24,
                     child: Checkbox(
                       value: isRecurring,
-                      onChanged: (v) => onRecurringChanged(v ?? false),
+                      onChanged: enabled ? (v) => onRecurringChanged(v ?? false) : null,
                       activeColor: Theme.of(context).colorScheme.primary,
                     ),
                   ),
                   const SizedBox(width: AppSizes.p8),
                   GestureDetector(
-                    onTap: () => onRecurringChanged(!isRecurring),
+                    onTap: enabled ? () => onRecurringChanged(!isRecurring) : null,
                     child: Text(
                       'Recurring booking',
                       style: AppTextStyles.body.copyWith(
@@ -187,68 +190,73 @@ class SegmentedAppointmentTypeSelector extends StatelessWidget {
     super.key,
     required this.selectedType,
     required this.onTypeChanged,
+    this.enabled = true,
   });
 
   final AppointmentType selectedType;
   final ValueChanged<AppointmentType> onTypeChanged;
+  final bool enabled;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.outline,
-        borderRadius: const BorderRadius.all(Radius.circular(AppSizes.r12)),
-        border: Border.all(color: Theme.of(context).colorScheme.outline, width: AppSizes.borderWidth),
-      ),
-      child: ClipRRect(
-        borderRadius: const BorderRadius.all(Radius.circular(AppSizes.r12 - 1)),
-        child: LayoutBuilder(
-          builder: (context, constraints) {
-            final bool isWide = constraints.maxWidth > 480;
-            if (isWide) {
-              return IntrinsicHeight(
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
+    return Opacity(
+      opacity: enabled ? 1.0 : 0.6,
+      child: Container(
+        decoration: BoxDecoration(
+          color: Theme.of(context).colorScheme.outline,
+          borderRadius: const BorderRadius.all(Radius.circular(AppSizes.r12)),
+          border: Border.all(color: Theme.of(context).colorScheme.outline, width: AppSizes.borderWidth),
+        ),
+        child: ClipRRect(
+          borderRadius: const BorderRadius.all(Radius.circular(AppSizes.r12 - 1)),
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              final bool isWide = constraints.maxWidth > 480;
+              if (isWide) {
+                return IntrinsicHeight(
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Expanded(child: _buildCell(context, AppointmentType.normalPtSession)),
+                      const SizedBox(width: 0.5),
+                      Expanded(child: _buildCell(context, AppointmentType.spinalTractionSession)),
+                      const SizedBox(width: 0.5),
+                      Expanded(child: _buildCell(context, AppointmentType.initialAssessment)),
+                      const SizedBox(width: 0.5),
+                      Expanded(child: _buildCell(context, AppointmentType.reassessment)),
+                    ],
+                  ),
+                );
+              } else {
+                return Column(
+                  mainAxisSize: MainAxisSize.min,
                   children: [
-                    Expanded(child: _buildCell(context, AppointmentType.normalPtSession)),
-                    const SizedBox(width: 0.5),
-                    Expanded(child: _buildCell(context, AppointmentType.spinalTractionSession)),
-                    const SizedBox(width: 0.5),
-                    Expanded(child: _buildCell(context, AppointmentType.initialAssessment)),
-                    const SizedBox(width: 0.5),
-                    Expanded(child: _buildCell(context, AppointmentType.reassessment)),
+                    IntrinsicHeight(
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          Expanded(child: _buildCell(context, AppointmentType.normalPtSession)),
+                          const SizedBox(width: 0.5),
+                          Expanded(child: _buildCell(context, AppointmentType.spinalTractionSession)),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 0.5),
+                    IntrinsicHeight(
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          Expanded(child: _buildCell(context, AppointmentType.initialAssessment)),
+                          const SizedBox(width: 0.5),
+                          Expanded(child: _buildCell(context, AppointmentType.reassessment)),
+                        ],
+                      ),
+                    ),
                   ],
-                ),
-              );
-            } else {
-              return Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  IntrinsicHeight(
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        Expanded(child: _buildCell(context, AppointmentType.normalPtSession)),
-                        const SizedBox(width: 0.5),
-                        Expanded(child: _buildCell(context, AppointmentType.spinalTractionSession)),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 0.5),
-                  IntrinsicHeight(
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        Expanded(child: _buildCell(context, AppointmentType.initialAssessment)),
-                        const SizedBox(width: 0.5),
-                        Expanded(child: _buildCell(context, AppointmentType.reassessment)),
-                      ],
-                    ),
-                  ),
-                ],
-              );
-            }
-          },
+                );
+              }
+            },
+          ),
         ),
       ),
     );
@@ -259,7 +267,7 @@ class SegmentedAppointmentTypeSelector extends StatelessWidget {
     return Material(
       color: Theme.of(context).colorScheme.surface,
       child: InkWell(
-        onTap: () => onTypeChanged(type),
+        onTap: enabled ? () => onTypeChanged(type) : null,
         child: Container(
           padding: const EdgeInsets.all(4.0),
           child: AnimatedContainer(

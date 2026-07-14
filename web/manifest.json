@@ -1,6 +1,6 @@
 {
-    "name": "spine_clinic_app",
-    "short_name": "spine_clinic_app",
+    "name": "Spine Clinic",
+    "short_name": "Spine Clinic",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",

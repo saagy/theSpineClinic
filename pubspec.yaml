@@ -41,6 +41,7 @@ dependencies:
   meta: ^1.18.0
   url_launcher: ^6.3.1
 
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
@@ -51,6 +52,7 @@ dev_dependencies:
   freezed: ^3.0.0-dev.1
   json_serializable: ^6.9.0
   riverpod_generator: ^4.0.3
+  flutter_launcher_icons: ^0.13.1
 
 # This separate structural root configuration block maps out Flutter system assets
 flutter:
@@ -80,3 +82,8 @@ flutter:
           weight: 600
         - asset: assets/fonts/PlusJakartaSans-VariableFont_wght.ttf
           weight: 700
+
+flutter_launcher_icons:
+  android: "launcher_icon"
+  ios: true
+  image_path: "assets/app_icon.png"

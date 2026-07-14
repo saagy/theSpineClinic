@@ -1,14 +1,17 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:spine_clinic_app/core/constants/app_sizes.dart';
 import 'package:spine_clinic_app/core/constants/app_strings.dart';
 import 'package:spine_clinic_app/core/constants/app_text_styles.dart';
 import 'package:spine_clinic_app/core/errors/app_exception.dart';
+import 'package:spine_clinic_app/core/network/app_routes.dart';
 import 'package:spine_clinic_app/features/appointment/presentation/booking_workboard_state.dart';
 import 'package:spine_clinic_app/features/appointment/presentation/widgets/due_patient_card.dart';
 import 'package:spine_clinic_app/features/appointment/presentation/widgets/receptionist_appointment_card.dart';
 import 'package:spine_clinic_app/features/patient/domain/patient.dart';
 import 'package:spine_clinic_app/shared/widgets/empty_state.dart';
 import 'package:spine_clinic_app/shared/widgets/error_view.dart';
+import 'package:spine_clinic_app/shared/widgets/segmented_count_tabs.dart';
 import 'package:spine_clinic_app/shared/widgets/skeleton_loader.dart';
 
 class BookingWorkboardLists extends StatelessWidget {
@@ -43,7 +46,7 @@ class BookingWorkboardLists extends StatelessWidget {
             child: _Pane(
               title: AppStrings.duePatients,
               count: state.duePatients.length,
-              child: _dueContent(),
+              child: _dueContent(context),
             ),
           ),
           const SizedBox(width: AppSizes.p16),
@@ -59,47 +62,41 @@ class BookingWorkboardLists extends StatelessWidget {
     }
     return Column(
       children: [
-        SizedBox(
-          width: double.infinity,
-          child: SegmentedButton<BookingWorkboardView>(
-            segments: [
-              ButtonSegment(
-                value: BookingWorkboardView.due,
-                label: Text(
-                  AppStrings.sectionCount(
-                    AppStrings.duePatients,
-                    state.duePatients.length,
-                  ),
-                ),
+        if (state.dueLoading || state.scheduleLoading)
+          const _SegmentedTabsSkeleton()
+        else
+          SegmentedCountTabs(
+            items: [
+              SegmentedCountTabItem(
+                icon: Icons.groups_2_outlined,
+                label: AppStrings.duePatients,
+                count: state.duePatients.length,
+                isActive: state.view == BookingWorkboardView.due,
+                onTap: () => onViewChanged(BookingWorkboardView.due),
               ),
-              ButtonSegment(
-                value: BookingWorkboardView.schedule,
-                label: Text(
-                  AppStrings.sectionCount(
-                    AppStrings.schedule,
-                    state.schedule.length,
-                  ),
-                ),
+              SegmentedCountTabItem(
+                icon: Icons.event_outlined,
+                label: AppStrings.schedule,
+                count: state.schedule.length,
+                isActive: state.view == BookingWorkboardView.schedule,
+                onTap: () => onViewChanged(BookingWorkboardView.schedule),
               ),
             ],
-            selected: {state.view},
-            onSelectionChanged: (values) => onViewChanged(values.single),
           ),
-        ),
         const SizedBox(height: AppSizes.p12),
         Expanded(
           child: state.view == BookingWorkboardView.due
-              ? _dueContent()
+              ? _dueContent(context)
               : _scheduleContent(),
         ),
       ],
     );
   }
 
-  Widget _dueContent() {
+  Widget _dueContent(BuildContext context) {
     if (state.dueLoading) return const SkeletonTileList(count: 5);
     if (state.dueError != null) return _error(state.dueError!);
-    return _dueList();
+    return _dueList(context);
   }
 
   Widget _scheduleContent() {
@@ -117,7 +114,7 @@ class BookingWorkboardLists extends StatelessWidget {
     );
   }
 
-  Widget _dueList() {
+  Widget _dueList(BuildContext context) {
     if (state.duePatients.isEmpty) {
       return _refreshableEmpty(
         AppStrings.noDuePatients,
@@ -139,6 +136,9 @@ class BookingWorkboardLists extends StatelessWidget {
             onBook: () => onBook(patient),
             onRemindLater: () => onRemind(patient),
             onStopFollowUp: () => onStop(patient),
+            onTap: () => context.push(
+              AppRoutes.patientDetail.replaceAll(':id', patient.id),
+            ),
           );
         },
       ),
@@ -200,6 +200,27 @@ class _Pane extends StatelessWidget {
         const SizedBox(height: AppSizes.p12),
         Expanded(child: child),
       ],
+    );
+  }
+}
+
+class _SegmentedTabsSkeleton extends StatelessWidget {
+  const _SegmentedTabsSkeleton();
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSizes.p16,
+        vertical: AppSizes.p12,
+      ),
+      child: Row(
+        children: const [
+          Expanded(child: SkeletonBox(height: 44, borderRadius: 999)),
+          SizedBox(width: AppSizes.p12),
+          Expanded(child: SkeletonBox(height: 44, borderRadius: 999)),
+        ],
+      ),
     );
   }
 }

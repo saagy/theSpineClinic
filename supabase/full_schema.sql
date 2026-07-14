@@ -777,6 +777,14 @@ BEGIN
       AND doctor_id = p_absent_doctor_id AND is_active = true;
 
     FOREACH v_doctor_id IN ARRAY p_replacement_doctor_ids LOOP
+      IF EXISTS (
+        SELECT 1 FROM public.appointment_doctors
+        WHERE appointment_id = v_appointment_id
+          AND doctor_id = v_doctor_id AND is_active = true
+      ) THEN
+        CONTINUE;
+      END IF;
+
       UPDATE public.appointment_doctors
       SET is_active = true, added_by = v_editor_id, added_at = now()
       WHERE id = (
