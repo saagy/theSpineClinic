@@ -46,7 +46,11 @@ class PatientTabInfo extends ConsumerWidget {
         ) ??
         0.0;
     final DateTime? nextVisitDate = patient.nextVisitDate;
-    final bool canEditNextVisit = !isDoctor && user?.isActive == true;
+    final bool canEditNextVisit = user?.isActive == true;
+    final DateTime now = DateTime.now();
+    final DateTime today = DateTime(now.year, now.month, now.day);
+    final bool nextVisitInPast = nextVisitDate != null &&
+        DateUtils.dateOnly(nextVisitDate).isBefore(today);
 
     return RefreshIndicator(
       onRefresh: () async {
@@ -72,6 +76,7 @@ class PatientTabInfo extends ConsumerWidget {
                   : AppStrings.noNextVisitSet,
               nextVisitSet: nextVisitDate != null,
               nextVisitIsMutating: nextVisitState.isMutating,
+              nextVisitInPast: nextVisitInPast,
               amountDue: amountDue,
               paymentsLoading: paymentsAsync.isLoading,
               isDoctor: isDoctor,

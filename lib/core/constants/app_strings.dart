@@ -98,6 +98,8 @@ abstract final class AppStrings {
   // Actions
   static const String save = 'Save';
   static const String cancel = 'Cancel';
+  static const String showCancelled = 'Show Cancelled';
+  static const String hideCancelled = 'Hide Cancelled';
   static const String delete = 'Delete';
   static const String edit = 'Edit';
   static const String rename = 'Rename';
@@ -711,6 +713,7 @@ abstract final class AppStrings {
   static const String collectPayment = 'Collect Payment';
   static const String contact = 'Contact';
   static const String lastVisit = 'Last Visit';
+  static const String lastVisitLabelShort = 'Last:';
   static const String noVisitsYet = 'No visits yet';
   static const String programNone = 'None';
   static const String recordedBy = 'Recorded by';
@@ -806,7 +809,7 @@ abstract final class AppStrings {
   static const String dueBookingChanged =
       'This patient was already booked or their next visit changed. Refresh and try again.';
   static const String pastScheduledNeedsAction =
-      'Past scheduled - Needs action';
+      'Missed appointment';
 
   // Doctor replacement
   static const String replaceDoctor = 'Replace doctor';

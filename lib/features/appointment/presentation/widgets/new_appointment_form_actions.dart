@@ -12,13 +12,9 @@ extension _NewAppointmentFormActions on _NewAppointmentFormState {
       if (!mounted) return;
       result.when(
         success: (docs) {
-          final activeDocs = docs.where((s) => s.isActive).toList()
-            ..sort((a, b) {
-              if (a.id == widget.preselectedDoctorId) return -1;
-              if (b.id == widget.preselectedDoctorId) return 1;
-              return a.fullName.compareTo(b.fullName);
-            });
-          _doctorFieldKey.currentState?.didChange(activeDocs);
+          final activeDocs = docs.where((s) => s.isActive).toList();
+          _assignedDoctorsCache = activeDocs;
+          _prepopulateDoctorsForBundling();
           _mutate(() {
             _isFetchingDoctors = false;
             _doctorFieldEnabled = true;
@@ -56,8 +52,39 @@ extension _NewAppointmentFormActions on _NewAppointmentFormState {
     }
   }
 
+  void _prepopulateDoctorsForBundling() {
+    final docs = _assignedDoctorsCache;
+    final primaryIsPT = _selectedType == AppointmentType.normalPtSession ||
+        _selectedType == AppointmentType.spinalTractionSession;
+    final secondaryIsPT = _bundleSecondarySession &&
+        (_secondaryType == AppointmentType.normalPtSession ||
+            _secondaryType == AppointmentType.spinalTractionSession);
+
+    final sorted = List<Staff>.from(docs)
+      ..sort((a, b) {
+        if (a.id == widget.preselectedDoctorId) return -1;
+        if (b.id == widget.preselectedDoctorId) return 1;
+        return a.fullName.compareTo(b.fullName);
+      });
+
+    if (primaryIsPT) {
+      _doctorFieldKey.currentState?.didChange(sorted);
+      if (_bundleSecondarySession) {
+        _secondaryDoctorFieldKey.currentState?.didChange([]);
+      }
+    } else {
+      _doctorFieldKey.currentState?.didChange([]);
+      if (secondaryIsPT) {
+        _secondaryDoctorFieldKey.currentState?.didChange(sorted);
+      } else {
+        _secondaryDoctorFieldKey.currentState?.didChange([]);
+      }
+    }
+  }
+
   void _onPatientSelected(Patient patient) {
     _doctorFieldKey.currentState?.didChange([]);
+    _secondaryDoctorFieldKey.currentState?.didChange([]);
     _mutate(() {
       _patientId = patient.id;
       _doctorFieldEnabled = false;
@@ -81,6 +108,9 @@ extension _NewAppointmentFormActions on _NewAppointmentFormState {
     _mutate(() {
       _dateErrorText = _selectedDate == null ? AppStrings.dateRequired : null;
       _timeErrorText = _selectedTime == null ? AppStrings.timeRequired : null;
+      _secondaryTimeErrorText = _bundleSecondarySession && _secondaryTime == null
+          ? AppStrings.timeRequired
+          : null;
       _daysErrorText = _isRecurring && _selectedWeekdays.isEmpty
           ? AppStrings.daysRequired
           : null;
@@ -99,6 +129,7 @@ extension _NewAppointmentFormActions on _NewAppointmentFormState {
     if (!isFormValid ||
         _dateErrorText != null ||
         _timeErrorText != null ||
+        _secondaryTimeErrorText != null ||
         _daysErrorText != null) {
       return;
     }
@@ -115,6 +146,17 @@ extension _NewAppointmentFormActions on _NewAppointmentFormState {
       AppSnackbar.show(
         context,
         message: AppStrings.noAssignedDoctors,
+        variant: AppSnackbarVariant.error,
+      );
+      return;
+    }
+    final secondaryDoctors = _bundleSecondarySession
+        ? (_secondaryDoctorFieldKey.currentState?.value ?? [])
+        : const <Staff>[];
+    if (_bundleSecondarySession && secondaryDoctors.isEmpty) {
+      AppSnackbar.show(
+        context,
+        message: 'Secondary doctor is required',
         variant: AppSnackbarVariant.error,
       );
       return;
@@ -143,25 +185,75 @@ extension _NewAppointmentFormActions on _NewAppointmentFormState {
       expectedNextVisitDate: widget.expectedNextVisitDate,
     );
     if (!mounted) return;
-    _mutate(() => _isSubmitting = false);
-    result.when(
-      success: (_) {
-        _invalidateBookingData();
-        AppSnackbar.show(
+    if (result.isFailure) {
+      _mutate(() => _isSubmitting = false);
+      result.when(
+        success: (_) {},
+        failure: (e) => AppSnackbar.show(
           context,
-          message: _isRecurring
-              ? AppStrings.bookingRecurringSuccess
-              : AppStrings.bookingSuccess,
-          variant: AppSnackbarVariant.success,
-        );
-        context.pop();
-      },
-      failure: (e) => AppSnackbar.show(
-        context,
-        message: AppStrings.fromKey(e.userMessageKey),
-        variant: AppSnackbarVariant.error,
-      ),
-    );
+          message: AppStrings.fromKey(e.userMessageKey),
+          variant: AppSnackbarVariant.error,
+        ),
+      );
+      return;
+    }
+    if (_bundleSecondarySession) {
+      final secondaryResult = await BookingSubmitHelper.executeBooking(
+        repo: ref.read(appointmentRepositoryProvider),
+        patientId: _patientId!,
+        type: _secondaryType,
+        slots: _computedSlots,
+        time: _secondaryTime!,
+        creatorId: creator.id,
+        doctors: secondaryDoctors,
+        usePackage: _secondaryUsePackage,
+        expectedNextVisitDate: null,
+      );
+      if (!mounted) return;
+      _mutate(() => _isSubmitting = false);
+      secondaryResult.when(
+        success: (_) {
+          _invalidateBookingData();
+          ref.invalidate(
+            availableBalanceForTypeProvider((
+              patientId: _patientId!,
+              type: _secondaryType,
+            )),
+          );
+          AppSnackbar.show(
+            context,
+            message: 'Bundled sessions booked successfully!',
+            variant: AppSnackbarVariant.success,
+          );
+          context.pop();
+        },
+        failure: (e) {
+          _invalidateBookingData();
+          AppSnackbar.show(
+            context,
+            message: 'Primary booked, but secondary failed: ${AppStrings.fromKey(e.userMessageKey)}',
+            variant: AppSnackbarVariant.error,
+          );
+          context.pop();
+        },
+      );
+    } else {
+      _mutate(() => _isSubmitting = false);
+      result.when(
+        success: (_) {
+          _invalidateBookingData();
+          AppSnackbar.show(
+            context,
+            message: _isRecurring
+                ? AppStrings.bookingRecurringSuccess
+                : AppStrings.bookingSuccess,
+            variant: AppSnackbarVariant.success,
+          );
+          context.pop();
+        },
+        failure: (_) {},
+      );
+    }
   }
 
   void _invalidateBookingData() {

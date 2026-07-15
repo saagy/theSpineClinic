@@ -16,6 +16,7 @@ class PatientInfoStatsStrip extends StatelessWidget {
     required this.nextVisitText,
     required this.nextVisitSet,
     required this.nextVisitIsMutating,
+    required this.nextVisitInPast,
     required this.amountDue,
     required this.paymentsLoading,
     required this.isDoctor,
@@ -31,6 +32,7 @@ class PatientInfoStatsStrip extends StatelessWidget {
   final String nextVisitText;
   final bool nextVisitSet;
   final bool nextVisitIsMutating;
+  final bool nextVisitInPast;
   final double amountDue;
   final bool paymentsLoading;
   final bool isDoctor;
@@ -46,6 +48,7 @@ class PatientInfoStatsStrip extends StatelessWidget {
         value: apptLoading ? _emptyValue : '$apptCount',
         label: AppStrings.totalAppointments,
         onTap: onAppointmentsTap,
+        trailingIcon: _TrailingIcon.chevron,
       ),
       _InfoStat(
         value: nextVisitText,
@@ -55,6 +58,7 @@ class PatientInfoStatsStrip extends StatelessWidget {
             ? _TrailingIcon.chevron
             : _TrailingIcon.edit,
         muted: !nextVisitSet,
+        isWarning: nextVisitInPast,
       ),
     ];
     if (!isDoctor) {
@@ -64,6 +68,7 @@ class PatientInfoStatsStrip extends StatelessWidget {
           label: AppStrings.amountDue,
           onTap: onPaymentsTap,
           isWarning: amountDue > 0,
+          trailingIcon: _TrailingIcon.chevron,
         ),
       );
     }

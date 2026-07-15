@@ -38,6 +38,7 @@ class DoctorScheduleScreen extends ConsumerWidget {
                     state: state,
                     onDateSelected: notifier.selectDate,
                     onStatusChanged: notifier.refresh,
+                    onToggleCancelled: notifier.toggleShowCancelled,
                   ).animate().fadeIn(duration: 350.ms),
       ),
     );
@@ -49,10 +50,12 @@ class _Content extends StatelessWidget {
     required this.state,
     required this.onDateSelected,
     required this.onStatusChanged,
+    required this.onToggleCancelled,
   });
   final DoctorScheduleState state;
   final ValueChanged<DateTime> onDateSelected;
   final VoidCallback onStatusChanged;
+  final VoidCallback onToggleCancelled;
 
   @override
   Widget build(BuildContext context) {
@@ -68,6 +71,7 @@ class _Content extends StatelessWidget {
           child: DoctorDayList(
             state: state,
             onStatusChanged: onStatusChanged,
+            onToggleCancelled: onToggleCancelled,
             onRefresh: () async => onStatusChanged.call(),
           ),
         ),

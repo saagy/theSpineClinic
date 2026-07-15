@@ -12,14 +12,33 @@ extension _NewAppointmentFormView on _NewAppointmentFormState {
             )),
           )
         : null;
-    final int proposedCount = _usePackage ? _computedSlots.length : 0;
-    final bool isSubmissionBlocked =
-        isPatientValid &&
-        proposedCount > 0 &&
-        (availableAsync == null ||
-            availableAsync.isLoading ||
-            availableAsync.hasError ||
-            proposedCount > (availableAsync.value ?? 0));
+    final int proposedCount =
+        (_selectedType.affectsPackageBalance && _usePackage) ? _computedSlots.length : 0;
+
+    final secondaryAvailableAsync = isPatientValid && _bundleSecondarySession
+        ? ref.watch(
+            availableBalanceForTypeProvider((
+              patientId: _patientId!,
+              type: _secondaryType,
+            )),
+          )
+        : null;
+    final int secondaryProposedCount =
+        (_bundleSecondarySession && _secondaryType.affectsPackageBalance && _secondaryUsePackage)
+            ? _computedSlots.length
+            : 0;
+
+    final bool isSubmissionBlocked = isPatientValid &&
+        ((proposedCount > 0 &&
+            (availableAsync == null ||
+                availableAsync.isLoading ||
+                availableAsync.hasError ||
+                proposedCount > (availableAsync.value ?? 0))) ||
+        (secondaryProposedCount > 0 &&
+            (secondaryAvailableAsync == null ||
+                secondaryAvailableAsync.isLoading ||
+                secondaryAvailableAsync.hasError ||
+                secondaryProposedCount > (secondaryAvailableAsync.value ?? 0))));
 
     return LoadingOverlay(
       isLoading: _isSubmitting,
@@ -44,19 +63,47 @@ extension _NewAppointmentFormView on _NewAppointmentFormState {
                     onTypeChanged: (type) => _mutate(() {
                       _selectedType = type;
                       if (!type.affectsPackageBalance) _usePackage = false;
+                      
+                      if (type != AppointmentType.normalPtSession &&
+                          type != AppointmentType.spinalTractionSession) {
+                        _bundleSecondarySession = false;
+                      } else {
+                        _secondaryType = AppointmentType.initialAssessment;
+                      }
+                      _prepopulateDoctorsForBundling();
                     }),
                     isRecurring: _isRecurring,
                     onRecurringChanged: (value) =>
-                        _mutate(() => _isRecurring = value),
+                        _mutate(() {
+                          _isRecurring = value;
+                          if (value) {
+                            _bundleSecondarySession = false;
+                          }
+                        }),
                     selectedDate: _selectedDate,
                     onDateChanged: (date) =>
                         _mutate(() => _selectedDate = date),
                     selectedTime: _selectedTime,
                     onTimeChanged: (time) =>
-                        _mutate(() => _selectedTime = time),
+                        _mutate(() {
+                          _selectedTime = time;
+                          _secondaryTime = time;
+                        }),
                     dateErrorText: _dateErrorText,
                     timeErrorText: _timeErrorText,
+                    showRecurringToggle: !_bundleSecondarySession,
                   ),
+                  if (_selectedType == AppointmentType.normalPtSession ||
+                      _selectedType == AppointmentType.spinalTractionSession) ...[
+                    if (!_isRecurring) ...[
+                      const SizedBox(height: AppSizes.p16),
+                      _buildBundlingToggle(context),
+                      if (_bundleSecondarySession) ...[
+                        const SizedBox(height: AppSizes.p16),
+                        _buildSecondarySessionFields(context),
+                      ],
+                    ],
+                  ],
                   if (_isRecurring) ...[
                     const SizedBox(height: AppSizes.p16),
                     _buildRecurrenceSection(context),
@@ -96,5 +143,263 @@ extension _NewAppointmentFormView on _NewAppointmentFormState {
         ),
       ),
     );
+  }
+
+  Widget _buildBundlingToggle(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: AppSizes.p16, vertical: AppSizes.p8),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surface,
+        borderRadius: const BorderRadius.all(Radius.circular(AppSizes.r16)),
+        border: Border.all(
+          color: Theme.of(context).colorScheme.outline,
+          width: AppSizes.borderWidth,
+        ),
+      ),
+      child: SwitchListTile(
+        contentPadding: EdgeInsets.zero,
+        title: Text(
+          'Bundle with assessment',
+          style: AppTextStyles.bodyBold.copyWith(
+            color: Theme.of(context).colorScheme.onSurface,
+          ),
+        ),
+        subtitle: Text(
+          'Book an assessment session alongside this treatment',
+          style: AppTextStyles.caption.copyWith(
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
+          ),
+        ),
+        value: _bundleSecondarySession,
+        activeThumbColor: Theme.of(context).colorScheme.primary,
+        onChanged: (val) => _mutate(() {
+          _bundleSecondarySession = val;
+          if (val) {
+            _isRecurring = false;
+          }
+          _prepopulateDoctorsForBundling();
+        }),
+      ),
+    );
+  }
+
+  Widget _buildSecondarySessionFields(BuildContext context) {
+    final theme = Theme.of(context);
+    final clinic = ClinicColors.of(context);
+
+    final List<AppointmentType> allowedSecondaryTypes = [
+      AppointmentType.initialAssessment,
+      AppointmentType.reassessment,
+    ];
+
+    return Container(
+      padding: const EdgeInsets.all(AppSizes.p16),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surface,
+        borderRadius: const BorderRadius.all(Radius.circular(AppSizes.r16)),
+        border: Border.all(
+          color: theme.colorScheme.outline,
+          width: AppSizes.borderWidth,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Secondary Session Settings',
+            style: AppTextStyles.captionMedium.copyWith(
+              color: theme.colorScheme.onSurfaceVariant,
+            ),
+          ),
+          const SizedBox(height: AppSizes.p12),
+          Container(
+            decoration: BoxDecoration(
+              color: theme.colorScheme.outline,
+              borderRadius: const BorderRadius.all(Radius.circular(AppSizes.r12)),
+            ),
+            child: ClipRRect(
+              borderRadius: const BorderRadius.all(Radius.circular(AppSizes.r12 - 1)),
+              child: Row(
+                children: allowedSecondaryTypes.map((type) {
+                  return Expanded(
+                    child: _buildSecondaryCell(context, type),
+                  );
+                }).toList(),
+              ),
+            ),
+          ),
+          const SizedBox(height: AppSizes.p16),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Secondary Time',
+                      style: AppTextStyles.captionMedium.copyWith(
+                        color: theme.colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                    const SizedBox(height: AppSizes.p6),
+                    InkWell(
+                      onTap: () => _pickSecondaryTime(context),
+                      borderRadius: const BorderRadius.all(Radius.circular(AppSizes.r12)),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: AppSizes.p12,
+                          vertical: AppSizes.p12,
+                        ),
+                        decoration: BoxDecoration(
+                          color: theme.colorScheme.surface,
+                          borderRadius: const BorderRadius.all(
+                            Radius.circular(AppSizes.r12),
+                          ),
+                          border: Border.all(
+                            color: _secondaryTimeErrorText != null
+                                ? theme.colorScheme.error
+                                : theme.colorScheme.outline,
+                            width: AppSizes.borderWidth,
+                          ),
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(
+                              Icons.access_time,
+                              size: AppSizes.iconDefault,
+                              color: clinic.textMuted,
+                            ),
+                            const SizedBox(width: AppSizes.p8),
+                            Expanded(
+                              child: Text(
+                                _secondaryTime != null
+                                    ? '${_secondaryTime!.hour.toString().padLeft(2, '0')}:${_secondaryTime!.minute.toString().padLeft(2, '0')}'
+                                    : 'Select',
+                                style: AppTextStyles.body.copyWith(
+                                  color: theme.colorScheme.onSurface,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    if (_secondaryTimeErrorText != null) ...[
+                      const SizedBox(height: AppSizes.p4),
+                      Text(
+                        _secondaryTimeErrorText!,
+                        style: AppTextStyles.caption.copyWith(
+                          color: theme.colorScheme.error,
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: AppSizes.p16),
+          Text(
+            'Secondary Session Doctors',
+            style: AppTextStyles.captionMedium.copyWith(
+              color: theme.colorScheme.onSurfaceVariant,
+            ),
+          ),
+          const SizedBox(height: AppSizes.p6),
+          AppDoctorMultiSelectField(
+            key: _secondaryDoctorFieldKey,
+            initialValue: const [],
+            enabled: _doctorFieldEnabled,
+            onSavedDoctors: (_) {},
+            onChanged: (_) {},
+            validator: (doctors) => doctors == null || doctors.isEmpty
+                ? AppStrings.atLeastOneDoctorRequired
+                : null,
+          ),
+          if (_secondaryType.affectsPackageBalance) ...[
+            const SizedBox(height: AppSizes.p16),
+            Divider(color: theme.colorScheme.outline, height: 1, thickness: 0.5),
+            const SizedBox(height: AppSizes.p12),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'Use package balance for secondary session',
+                  style: AppTextStyles.body.copyWith(
+                    color: theme.colorScheme.onSurface,
+                  ),
+                ),
+                Switch(
+                  value: _secondaryUsePackage,
+                  onChanged: (value) => _mutate(() => _secondaryUsePackage = value),
+                  activeThumbColor: theme.colorScheme.primary,
+                ),
+              ],
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSecondaryCell(BuildContext context, AppointmentType type) {
+    final theme = Theme.of(context);
+    final bool active = _secondaryType == type;
+    return Material(
+      color: theme.colorScheme.surface,
+      child: InkWell(
+        onTap: () => _mutate(() {
+          _secondaryType = type;
+          _prepopulateDoctorsForBundling();
+        }),
+        child: Container(
+          padding: const EdgeInsets.all(4.0),
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 150),
+            alignment: Alignment.center,
+            padding: const EdgeInsets.symmetric(
+              vertical: AppSizes.p12,
+              horizontal: AppSizes.p4,
+            ),
+            decoration: BoxDecoration(
+              color: active
+                  ? theme.colorScheme.primaryContainer
+                  : theme.colorScheme.surface.withAlpha(0),
+              border: Border.all(
+                color: active
+                    ? theme.colorScheme.primary
+                    : theme.colorScheme.surface.withAlpha(0),
+                width: 1.0,
+              ),
+              borderRadius: const BorderRadius.all(Radius.circular(AppSizes.r8)),
+            ),
+            child: Text(
+              type.displayLabel,
+              textAlign: TextAlign.center,
+              style: (active ? AppTextStyles.bodyBold : AppTextStyles.body).copyWith(
+                color: active
+                    ? theme.colorScheme.onPrimaryContainer
+                    : theme.colorScheme.onSurfaceVariant,
+                fontSize: 12,
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _pickSecondaryTime(BuildContext context) async {
+    final picked = await showTimePicker(
+      context: context,
+      initialTime: _secondaryTime ?? const TimeOfDay(hour: 10, minute: 0),
+    );
+    if (picked != null) {
+      _mutate(() {
+        _secondaryTime = picked;
+        _secondaryTimeErrorText = null;
+      });
+    }
   }
 }

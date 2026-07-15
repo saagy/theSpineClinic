@@ -56,8 +56,8 @@ class PatientListTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final String lastVisitText = lastVisitDate != null
-        ? DateFormat('MMM d').format(lastVisitDate!.toLocal())
-        : AppStrings.noVisitsYet;
+        ? '${AppStrings.lastVisitLabelShort} ${DateFormat('MMM d').format(lastVisitDate!.toLocal())}'
+        : '${AppStrings.lastVisitLabelShort} ${AppStrings.noVisitsYet}';
     final ColorScheme cs = Theme.of(context).colorScheme;
     final ClinicColors clinic = ClinicColors.of(context);
 

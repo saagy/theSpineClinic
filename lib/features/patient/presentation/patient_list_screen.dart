@@ -53,7 +53,9 @@ enum PatientSortOption {
   nameDesc,
   lastVisitNewest,
   lastVisitOldest,
-  dateAddedNewest;
+  dateAddedNewest,
+  nextVisitSoonest,
+  nextVisitLatest;
 
   String get displayLabel => switch (this) {
     PatientSortOption.nameAsc => 'Name (A → Z)',
@@ -61,6 +63,8 @@ enum PatientSortOption {
     PatientSortOption.lastVisitNewest => 'Last Visit (Newest)',
     PatientSortOption.lastVisitOldest => 'Last Visit (Oldest)',
     PatientSortOption.dateAddedNewest => 'Date Added (Newest)',
+    PatientSortOption.nextVisitSoonest => 'Next Visit (Soonest)',
+    PatientSortOption.nextVisitLatest => 'Next Visit (Latest)',
   };
 
   String get buttonLabel => switch (this) {
@@ -69,6 +73,8 @@ enum PatientSortOption {
     PatientSortOption.lastVisitNewest => 'Last Visit (Newest)',
     PatientSortOption.lastVisitOldest => 'Last Visit (Oldest)',
     PatientSortOption.dateAddedNewest => 'Date Added',
+    PatientSortOption.nextVisitSoonest => 'Next Visit (Soonest)',
+    PatientSortOption.nextVisitLatest => 'Next Visit (Latest)',
   };
 }
 
@@ -109,6 +115,11 @@ class _PatientListScreenState extends ConsumerState<PatientListScreen> {
       return n.isAscending
           ? PatientSortOption.lastVisitOldest
           : PatientSortOption.lastVisitNewest;
+    }
+    if (n.orderBy == 'next_visit_date') {
+      return n.isAscending
+          ? PatientSortOption.nextVisitSoonest
+          : PatientSortOption.nextVisitLatest;
     }
     if (n.orderBy == 'created_at') {
       return PatientSortOption.dateAddedNewest;
@@ -163,6 +174,8 @@ class _PatientListScreenState extends ConsumerState<PatientListScreen> {
         PatientSortOption.lastVisitNewest => ('last_appointment_date', false),
         PatientSortOption.lastVisitOldest => ('last_appointment_date', true),
         PatientSortOption.dateAddedNewest => ('created_at', false),
+        PatientSortOption.nextVisitSoonest => ('next_visit_date', true),
+        PatientSortOption.nextVisitLatest => ('next_visit_date', false),
       };
       ref.read(patientListProvider.notifier).setSort(orderBy, ascending);
     }

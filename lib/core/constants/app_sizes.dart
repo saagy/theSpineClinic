@@ -25,6 +25,9 @@ abstract final class AppSizes {
   /// 8 px — compact cell padding, inline gaps.
   static const double p8 = 8.0;
 
+  /// 10 px — custom horizontal padding.
+  static const double p10 = 10.0;
+
   /// 12 px — inner card padding, form field spacing.
   static const double p12 = 12.0;
 

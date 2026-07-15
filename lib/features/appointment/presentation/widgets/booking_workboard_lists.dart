@@ -211,13 +211,13 @@ class _SegmentedTabsSkeleton extends StatelessWidget {
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.symmetric(
-        horizontal: AppSizes.p16,
-        vertical: AppSizes.p12,
+        horizontal: AppSizes.p12,
+        vertical: AppSizes.p8,
       ),
       child: Row(
         children: const [
           Expanded(child: SkeletonBox(height: 44, borderRadius: 999)),
-          SizedBox(width: AppSizes.p12),
+          SizedBox(width: AppSizes.p8),
           Expanded(child: SkeletonBox(height: 44, borderRadius: 999)),
         ],
       ),

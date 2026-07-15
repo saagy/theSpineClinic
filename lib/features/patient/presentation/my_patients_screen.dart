@@ -34,13 +34,17 @@ enum MyPatientSortOption {
   nameAsc,
   nameDesc,
   lastVisitNewest,
-  lastVisitOldest;
+  lastVisitOldest,
+  nextVisitSoonest,
+  nextVisitLatest;
 
   String get displayLabel => switch (this) {
     MyPatientSortOption.nameAsc => 'Name (A → Z)',
     MyPatientSortOption.nameDesc => 'Name (Z → A)',
     MyPatientSortOption.lastVisitNewest => 'Last Visit (Newest)',
     MyPatientSortOption.lastVisitOldest => 'Last Visit (Oldest)',
+    MyPatientSortOption.nextVisitSoonest => 'Next Visit (Soonest)',
+    MyPatientSortOption.nextVisitLatest => 'Next Visit (Latest)',
   };
 
   String get buttonLabel => switch (this) {
@@ -48,6 +52,8 @@ enum MyPatientSortOption {
     MyPatientSortOption.nameDesc => 'Name Z→A',
     MyPatientSortOption.lastVisitNewest => 'Last Visit ↓',
     MyPatientSortOption.lastVisitOldest => 'Last Visit ↑',
+    MyPatientSortOption.nextVisitSoonest => 'Next Visit ↑',
+    MyPatientSortOption.nextVisitLatest => 'Next Visit ↓',
   };
 }
 
@@ -106,6 +112,20 @@ class _MyPatientsScreenState extends ConsumerState<MyPatientsScreen> {
           if (a.lastAppointmentDate == null) return 1;
           if (b.lastAppointmentDate == null) return -1;
           return a.lastAppointmentDate!.compareTo(b.lastAppointmentDate!);
+        });
+      case MyPatientSortOption.nextVisitSoonest:
+        list.sort((a, b) {
+          if (a.nextVisitDate == null && b.nextVisitDate == null) return 0;
+          if (a.nextVisitDate == null) return 1;
+          if (b.nextVisitDate == null) return -1;
+          return a.nextVisitDate!.compareTo(b.nextVisitDate!);
+        });
+      case MyPatientSortOption.nextVisitLatest:
+        list.sort((a, b) {
+          if (a.nextVisitDate == null && b.nextVisitDate == null) return 0;
+          if (a.nextVisitDate == null) return 1;
+          if (b.nextVisitDate == null) return -1;
+          return b.nextVisitDate!.compareTo(a.nextVisitDate!);
         });
     }
     return list;

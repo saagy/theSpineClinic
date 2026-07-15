@@ -70,6 +70,15 @@ class _NewAppointmentFormState extends ConsumerState<NewAppointmentForm> {
   String? _daysErrorText;
   String? _patientId;
 
+  // Bundling state variables
+  bool _bundleSecondarySession = false;
+  AppointmentType _secondaryType = AppointmentType.normalPtSession;
+  final _secondaryDoctorFieldKey = GlobalKey<FormFieldState<List<Staff>>>();
+  TimeOfDay? _secondaryTime = const TimeOfDay(hour: 9, minute: 0);
+  String? _secondaryTimeErrorText;
+  bool _secondaryUsePackage = true;
+  List<Staff> _assignedDoctorsCache = const [];
+
   static const Duration _fetchTimeout = Duration(seconds: 15);
 
   @override

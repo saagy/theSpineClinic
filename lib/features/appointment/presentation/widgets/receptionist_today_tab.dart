@@ -125,6 +125,9 @@ class ReceptionistTodayTab extends ConsumerWidget {
             state: state,
             searchQuery: searchQuery,
             onStatusChanged: onStatusChanged,
+            onToggleCancelled: () => ref
+                .read(receptionistAppointmentsProvider.notifier)
+                .toggleShowCancelled(),
             onRefresh: () async => onRefresh(),
           ),
         ),

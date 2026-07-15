@@ -21,11 +21,13 @@ class DoctorDayList extends StatelessWidget {
     super.key,
     required this.state,
     this.onStatusChanged,
+    this.onToggleCancelled,
     this.onRefresh,
   });
 
   final DoctorScheduleState state;
   final VoidCallback? onStatusChanged;
+  final VoidCallback? onToggleCancelled;
   final Future<void> Function()? onRefresh;
 
   @override
@@ -38,7 +40,11 @@ class DoctorDayList extends StatelessWidget {
         physics: const AlwaysScrollableScrollPhysics(),
         padding: const EdgeInsets.only(bottom: AppSizes.p32),
         children: [
-          _DateHeader(state: state, count: 0),
+          _DateHeader(
+            state: state,
+            count: 0,
+            onToggleCancelled: onToggleCancelled,
+          ),
           const SizedBox(height: AppSizes.p48),
           Center(
             child: Text(
@@ -71,7 +77,11 @@ class DoctorDayList extends StatelessWidget {
       itemCount: totalCount,
       itemBuilder: (_, index) {
         if (index == 0) {
-          return _DateHeader(state: state, count: items.length);
+          return _DateHeader(
+            state: state,
+            count: items.length,
+            onToggleCancelled: onToggleCancelled,
+          );
         }
 
         if (hasNow && index - 1 == nowIndex) {
@@ -120,9 +130,15 @@ class DoctorDayList extends StatelessWidget {
 }
 
 class _DateHeader extends StatelessWidget {
-  const _DateHeader({required this.state, required this.count});
+  const _DateHeader({
+    required this.state,
+    required this.count,
+    required this.onToggleCancelled,
+  });
+
   final DoctorScheduleState state;
   final int count;
+  final VoidCallback? onToggleCancelled;
 
   @override
   Widget build(BuildContext context) {
@@ -132,24 +148,43 @@ class _DateHeader extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.fromLTRB(AppSizes.p20, AppSizes.p16, AppSizes.p20, AppSizes.p8),
       child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(formatted, style: AppTextStyles.captionBold.copyWith(color: theme.colorScheme.onSurfaceVariant)),
-          if (state.isToday) ...[
-            const SizedBox(width: AppSizes.p8),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: AppSizes.p6, vertical: AppSizes.p2),
-              decoration: BoxDecoration(
-                color: theme.colorScheme.primaryContainer,
-                borderRadius: BorderRadius.circular(AppSizes.r4),
-              ),
-              child: Text(
-                AppStrings.today.toUpperCase(),
-                style: AppTextStyles.captionBold.copyWith(color: theme.colorScheme.primary, fontSize: 10),
+          Expanded(
+            child: Row(
+              children: [
+                Text(formatted, style: AppTextStyles.captionBold.copyWith(color: theme.colorScheme.onSurfaceVariant)),
+                if (state.isToday) ...[
+                  const SizedBox(width: AppSizes.p8),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: AppSizes.p6, vertical: AppSizes.p2),
+                    decoration: BoxDecoration(
+                      color: theme.colorScheme.primaryContainer,
+                      borderRadius: BorderRadius.circular(AppSizes.r4),
+                    ),
+                    child: Text(
+                      AppStrings.today.toUpperCase(),
+                      style: AppTextStyles.captionBold.copyWith(color: theme.colorScheme.primary, fontSize: 10),
+                    ),
+                  ),
+                ],
+                Text('  ·  $count appointment${count == 1 ? '' : 's'}',
+                    style: AppTextStyles.captionBold.copyWith(color: theme.colorScheme.onSurfaceVariant)),
+              ],
+            ),
+          ),
+          if (onToggleCancelled != null)
+            InkWell(
+              onTap: onToggleCancelled,
+              borderRadius: const BorderRadius.all(Radius.circular(AppSizes.r8)),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: AppSizes.p8, vertical: AppSizes.p4),
+                child: Text(
+                  state.showCancelled ? AppStrings.hideCancelled : AppStrings.showCancelled,
+                  style: AppTextStyles.captionBold.copyWith(color: theme.colorScheme.primary),
+                ),
               ),
             ),
-          ],
-          Text('  ·  $count appointment${count == 1 ? '' : 's'}',
-              style: AppTextStyles.captionBold.copyWith(color: theme.colorScheme.onSurfaceVariant)),
         ],
       ),
     );

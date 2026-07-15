@@ -24,6 +24,7 @@ class DoctorScheduleState {
     this.loading = true,
     this.error,
     this.doctor,
+    this.showCancelled = false,
   });
 
   final List<DoctorScheduleItem> allItems;
@@ -31,6 +32,7 @@ class DoctorScheduleState {
   final bool loading;
   final Object? error;
   final Staff? doctor;
+  final bool showCancelled;
 
   /// Items for the selected date in strict chronological order.
   /// Cancelled appointments stay in their original time slots (faded)
@@ -40,13 +42,17 @@ class DoctorScheduleState {
     final day = DateTime(selectedDate!.year, selectedDate!.month, selectedDate!.day);
     final nextDay = day.add(const Duration(days: 1));
 
-    final matching = allItems.where((item) {
+    Iterable<DoctorScheduleItem> matching = allItems.where((item) {
       final d = item.appointment.scheduledAt.toLocal();
       return !d.isBefore(day) && d.isBefore(nextDay);
-    }).toList()
-      ..sort((a, b) => a.appointment.scheduledAt.compareTo(b.appointment.scheduledAt));
+    });
 
-    return matching;
+    if (!showCancelled) {
+      matching = matching.where((item) => item.appointment.status != AppointmentStatus.cancelled);
+    }
+
+    return matching.toList()
+      ..sort((a, b) => a.appointment.scheduledAt.compareTo(b.appointment.scheduledAt));
   }
 
   /// Whether today is the selected date.
@@ -127,6 +133,10 @@ class DoctorScheduleNotifier extends Notifier<DoctorScheduleState> {
     );
   }
 
+  void toggleShowCancelled() {
+    state = state.copyWith(showCancelled: !state.showCancelled);
+  }
+
   Future<void> refresh() async {
     final user = ref.read(currentUserProvider).value;
     if (user != null) _load(user);
@@ -141,6 +151,7 @@ extension on DoctorScheduleState {
     Object? error,
     bool clearError = false,
     Staff? doctor,
+    bool? showCancelled,
   }) {
     return DoctorScheduleState(
       allItems: allItems ?? this.allItems,
@@ -148,6 +159,7 @@ extension on DoctorScheduleState {
       loading: loading ?? this.loading,
       error: clearError ? null : (error ?? this.error),
       doctor: doctor ?? this.doctor,
+      showCancelled: showCancelled ?? this.showCancelled,
     );
   }
 }

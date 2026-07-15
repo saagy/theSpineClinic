@@ -28,6 +28,7 @@ class ReceptionistAppointmentsState {
     this.loading = true,
     this.error,
     this.filterDoctorId,
+    this.showCancelled = false,
   });
 
   final List<AppointmentWithPatient> allItems;
@@ -35,6 +36,7 @@ class ReceptionistAppointmentsState {
   final bool loading;
   final Object? error;
   final String? filterDoctorId;
+  final bool showCancelled;
 
   /// Items for the selected date in strict chronological order.
   List<AppointmentWithPatient> get itemsForSelectedDay {
@@ -42,13 +44,19 @@ class ReceptionistAppointmentsState {
     final day = DateTime(selectedDate!.year, selectedDate!.month, selectedDate!.day);
     final nextDay = day.add(const Duration(days: 1));
 
-    final matching = allItems.where((item) {
+    Iterable<AppointmentWithPatient> matching = allItems.where((item) {
       final d = item.appointment.scheduledAt.toLocal();
       return !d.isBefore(day) && d.isBefore(nextDay);
-    }).toList()
+    });
+
+    if (!showCancelled) {
+      matching = matching.where((item) => item.appointment.status != AppointmentStatus.cancelled);
+    }
+
+    final list = matching.toList()
       ..sort((a, b) => a.appointment.scheduledAt.compareTo(b.appointment.scheduledAt));
 
-    return matching;
+    return list;
   }
 
   /// Whether today is the selected date.
@@ -90,6 +98,7 @@ class ReceptionistAppointmentsState {
     bool clearError = false,
     String? filterDoctorId,
     bool clearDoctorFilter = false,
+    bool? showCancelled,
   }) {
     return ReceptionistAppointmentsState(
       allItems: allItems ?? this.allItems,
@@ -97,6 +106,7 @@ class ReceptionistAppointmentsState {
       loading: loading ?? this.loading,
       error: clearError ? null : (error ?? this.error),
       filterDoctorId: clearDoctorFilter ? null : (filterDoctorId ?? this.filterDoctorId),
+      showCancelled: showCancelled ?? this.showCancelled,
     );
   }
 }
@@ -193,6 +203,41 @@ class ReceptionistAppointmentsNotifier
     );
   }
 
+  /// Updates multiple appointments' statuses and immediately refreshes the local list.
+  Future<void> changeGroupStatus(
+    List<String> appointmentIds,
+    AppointmentStatus newStatus,
+  ) async {
+    final Set<String> idsSet = appointmentIds.toSet();
+    for (final id in appointmentIds) {
+      final Result<void> result = await _repo.updateAppointmentStatus(
+        id,
+        newStatus,
+      );
+      result.when(
+        success: (_) {},
+        failure: (AppException exception) {
+          throw exception;
+        },
+      );
+    }
+
+    final List<AppointmentWithPatient> updated = state.allItems.map((a) {
+      if (idsSet.contains(a.appointment.id)) {
+        final Appointment updatedAppt = a.appointment.copyWith(
+          status: newStatus,
+        );
+        return AppointmentWithPatient(
+          appointment: updatedAppt,
+          patient: a.patient,
+        );
+      }
+      return a;
+    }).toList();
+
+    state = state.copyWith(allItems: updated);
+  }
+
   /// Sets the selected date in the week selector.
   void selectDate(DateTime date) {
     state = state.copyWith(
@@ -208,6 +253,11 @@ class ReceptionistAppointmentsNotifier
       state = state.copyWith(filterDoctorId: doctorId);
     }
     loadToday();
+  }
+
+  /// Toggles whether cancelled appointments are shown.
+  void toggleShowCancelled() {
+    state = state.copyWith(showCancelled: !state.showCancelled);
   }
 }
 

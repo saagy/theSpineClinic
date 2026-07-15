@@ -11,6 +11,7 @@ import 'package:spine_clinic_app/core/constants/app_sizes.dart';
 import 'package:spine_clinic_app/core/constants/app_text_styles.dart';
 import 'package:spine_clinic_app/features/patient/domain/patient.dart';
 import 'package:spine_clinic_app/features/patient/presentation/widgets/patient_balance_chip.dart';
+import 'package:spine_clinic_app/features/patient/presentation/widgets/patient_phone_options_sheet.dart';
 import 'package:spine_clinic_app/shared/widgets/app_avatar.dart';
 
 class PatientProfileHeader extends StatelessWidget {
@@ -44,7 +45,36 @@ class PatientProfileHeader extends StatelessWidget {
               children: [
                 Text(patient.fullName, style: AppTextStyles.headingMedium),
                 const SizedBox(height: AppSizes.p4),
-                Text(patient.phoneNumber, style: AppTextStyles.bodySecondary),
+                InkWell(
+                  onTap: () => PatientPhoneOptionsSheet.show(
+                    context,
+                    patient.phoneNumber,
+                  ),
+                  borderRadius: BorderRadius.circular(AppSizes.r4),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                      vertical: AppSizes.p2,
+                      horizontal: AppSizes.p4,
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          Icons.phone_outlined,
+                          size: AppSizes.iconSmall,
+                          color: cs.primary,
+                        ),
+                        const SizedBox(width: AppSizes.p4),
+                        Text(
+                          patient.phoneNumber,
+                          style: AppTextStyles.bodySecondary.copyWith(
+                            color: cs.primary,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
                 const SizedBox(height: AppSizes.p8),
                 Wrap(
                   spacing: AppSizes.p8,

@@ -57,13 +57,13 @@ class SegmentedCountTabs extends StatelessWidget {
 
     return Padding(
       padding: const EdgeInsets.symmetric(
-        horizontal: AppSizes.p16,
-        vertical: AppSizes.p12,
+        horizontal: AppSizes.p12,
+        vertical: AppSizes.p8,
       ),
       child: Row(
         children: [
           for (int i = 0; i < items.length; i++) ...[
-            if (i > 0) const SizedBox(width: AppSizes.p12),
+            if (i > 0) const SizedBox(width: AppSizes.p8),
             Expanded(
               child: _SegmentedCountTab(item: items[i], colors: cs),
             ),
@@ -114,19 +114,19 @@ class _SegmentedCountTab extends StatelessWidget {
           child: Container(
             constraints: const BoxConstraints(minHeight: AppSizes.tappableMin),
             padding: const EdgeInsets.symmetric(
-              horizontal: AppSizes.p16,
-              vertical: AppSizes.p12,
+              horizontal: AppSizes.p10,
+              vertical: AppSizes.p8,
             ),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(item.icon, size: AppSizes.iconDefault, color: foreground),
-                const SizedBox(width: AppSizes.p8),
+                Icon(item.icon, size: AppSizes.iconSmall, color: foreground),
+                const SizedBox(width: AppSizes.p4),
                 Flexible(
                   child: Text(
                     item.label,
-                    style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                    style: Theme.of(context).textTheme.labelMedium?.copyWith(
                           color: foreground,
                           fontWeight: FontWeight.w600,
                         ),
@@ -134,11 +134,11 @@ class _SegmentedCountTab extends StatelessWidget {
                     overflow: TextOverflow.ellipsis,
                   ),
                 ),
-                const SizedBox(width: AppSizes.p8),
+                const SizedBox(width: AppSizes.p4),
                 Container(
-                  constraints: const BoxConstraints(minWidth: 24),
+                  constraints: const BoxConstraints(minWidth: 20),
                   padding: const EdgeInsets.symmetric(
-                    horizontal: AppSizes.p8,
+                    horizontal: AppSizes.p6,
                     vertical: AppSizes.p2,
                   ),
                   decoration: BoxDecoration(

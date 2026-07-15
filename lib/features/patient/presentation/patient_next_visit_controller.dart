@@ -75,7 +75,8 @@ class PatientNextVisitController extends _$PatientNextVisitController {
     if (user == null ||
         !user.isActive ||
         (user.role != UserRole.receptionist &&
-            user.role != UserRole.superAdmin)) {
+            user.role != UserRole.superAdmin &&
+            user.role != UserRole.doctor)) {
       return Result.failure(
         const DatabaseException(
           code: 'db/permission-denied',
