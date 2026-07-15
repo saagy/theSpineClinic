@@ -1,3 +1,4 @@
+import 'package:auto_size_text/auto_size_text.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
@@ -189,29 +190,16 @@ class _DateHeader extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Expanded(
-            child: Row(
-              children: [
-                Text(formatted, style: AppTextStyles.captionBold.copyWith(color: theme.colorScheme.onSurfaceVariant)),
-                if (state.isToday) ...[
-                  const SizedBox(width: AppSizes.p8),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: AppSizes.p6, vertical: AppSizes.p2),
-                    decoration: BoxDecoration(
-                      color: theme.colorScheme.primaryContainer,
-                      borderRadius: BorderRadius.circular(AppSizes.r4),
-                    ),
-                    child: Text(
-                      AppStrings.today.toUpperCase(),
-                      style: AppTextStyles.captionBold.copyWith(color: theme.colorScheme.primary, fontSize: 10),
-                    ),
-                  ),
-                ],
-                Text('  ·  $count appointment${count == 1 ? '' : 's'}',
-                    style: AppTextStyles.captionBold.copyWith(color: theme.colorScheme.onSurfaceVariant)),
-              ],
+            child: AutoSizeText(
+              '$formatted  ·  $count appointment${count == 1 ? '' : 's'}',
+              style: AppTextStyles.captionBold.copyWith(color: theme.colorScheme.onSurfaceVariant),
+              maxLines: 1,
+              minFontSize: 10,
+              overflow: TextOverflow.ellipsis,
             ),
           ),
-          if (onToggleCancelled != null)
+          if (onToggleCancelled != null) ...[
+            const SizedBox(width: AppSizes.p8),
             InkWell(
               onTap: onToggleCancelled,
               borderRadius: const BorderRadius.all(Radius.circular(AppSizes.r8)),
@@ -223,6 +211,7 @@ class _DateHeader extends StatelessWidget {
                 ),
               ),
             ),
+          ],
         ],
       ),
     );
