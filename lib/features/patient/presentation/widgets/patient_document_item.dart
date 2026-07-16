@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:path/path.dart' as p;
+import 'package:go_router/go_router.dart';
 import 'package:spine_clinic_app/core/constants/app_sizes.dart';
 import 'package:spine_clinic_app/core/constants/app_strings.dart';
 import 'package:spine_clinic_app/core/constants/app_text_styles.dart';
+import 'package:spine_clinic_app/core/network/app_routes.dart';
 import 'package:spine_clinic_app/core/utils/file_opener_helper.dart';
 import 'package:spine_clinic_app/features/patient/domain/patient_document.dart';
 import 'package:spine_clinic_app/features/patient/presentation/widgets/patient_document_actions.dart';
@@ -27,19 +28,12 @@ class _PatientDocumentItemState extends State<PatientDocumentItem> {
     if (_isOpening) return;
     setState(() => _isOpening = true);
     try {
-      final String extension = p
-          .extension(widget.document.fileName)
-          .toLowerCase();
-      final bool isPdf = extension == '.pdf';
-      final bool isImage =
-          extension == '.png' || extension == '.jpg' || extension == '.jpeg';
-      if (isPdf || isImage) {
-        showAppFileViewer(
-          context,
-          fileUrl: widget.document.fileUrl,
-          fileName: widget.document.fileName,
-          isImage: isImage,
-          isPdf: isPdf,
+      if (isSupportedAppFile(widget.document.fileName)) {
+        context.go(
+          AppRoutes.patientDocumentViewerLocation(
+            patientId: widget.document.patientId,
+            documentId: widget.document.id,
+          ),
         );
       } else {
         await FileOpenerHelper.openFile(

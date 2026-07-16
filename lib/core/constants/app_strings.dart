@@ -136,6 +136,9 @@ abstract final class AppStrings {
   static const String openingDocument = 'Opening document…';
   static const String documentDeleted = 'Document deleted successfully.';
   static const String documentRenamed = 'Document renamed successfully.';
+  static const String documentNotFound = 'Document not found.';
+  static const String unsupportedDocumentType =
+      'This file type is not supported for in-app viewing.';
   static const String renameDocument = 'Rename Document';
   static const String documentName = 'Document name';
   static const String documentNameRequired = 'Enter a document name.';
@@ -627,6 +630,22 @@ abstract final class AppStrings {
   static const String assignedInPeriod = 'Assigned in period';
   static const String allClinics = 'All Clinics';
   static const String today = 'Today';
+  static const String previousWeek = 'Previous week';
+  static const String nextWeek = 'Next week';
+  static const String jumpToDate = 'Jump to date';
+  static const String goodMorning = 'Good morning';
+  static const String goodAfternoon = 'Good afternoon';
+  static const String goodEvening = 'Good evening';
+
+  static String scheduleDaySemantics(
+    String date,
+    int appointmentCount, {
+    required bool selected,
+  }) =>
+      '$date, $appointmentCount appointment${appointmentCount == 1 ? '' : 's'}${selected ? ', selected' : ''}';
+
+  static String appointmentCountForDate(String date, int count) =>
+      '$date  ·  $count appointment${count == 1 ? '' : 's'}';
   static const String thisWeek = 'This Week';
   static const String thisMonth = 'This Month';
   static const String custom = 'Custom';

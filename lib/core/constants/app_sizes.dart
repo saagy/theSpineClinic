@@ -139,6 +139,15 @@ abstract final class AppSizes {
   /// Maximum content width for centered page layouts.
   static const double maxContentWidth = 1080.0;
 
+  /// Maximum width of the seven-day schedule navigator on large windows.
+  static const double scheduleNavigatorMaxWidth = 640.0;
+
+  /// Height of the pageable seven-day row.
+  static const double scheduleWeekHeight = 72.0;
+
+  /// Diameter of the selected/today date marker.
+  static const double scheduleDayMarkerSize = 32.0;
+
   static const double appointmentWorkspaceBreakpoint = 900.0;
 
   static const double adaptiveModalBreakpoint = 600.0;

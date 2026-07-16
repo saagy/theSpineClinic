@@ -1,19 +1,14 @@
-/// 7-day horizontal week strip: Sat–Fri with date numbers, current-day
-/// highlight, and appointment dots beneath days that have appointments.
-///
-/// Rule 1 — under 200 lines.
+/// Shared, pageable seven-day navigator for schedule screens.
 library;
 
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
-
 import 'package:spine_clinic_app/core/constants/app_sizes.dart';
-import 'package:spine_clinic_app/core/constants/app_text_styles.dart';
+import 'package:spine_clinic_app/core/constants/app_strings.dart';
+import 'package:spine_clinic_app/features/appointment/presentation/schedule_week.dart';
+import 'package:spine_clinic_app/features/appointment/presentation/widgets/schedule_day_button.dart';
+import 'package:spine_clinic_app/features/appointment/presentation/widgets/schedule_week_header.dart';
 
-/// A horizontal row of 7 day buttons (Sat–Fri) showing abbreviated day name,
-/// date number, and an appointment dot when the day has appointments.
-class DoctorWeekStrip extends StatelessWidget {
-  /// Creates a [DoctorWeekStrip].
+class DoctorWeekStrip extends StatefulWidget {
   const DoctorWeekStrip({
     super.key,
     required this.dayCounts,
@@ -21,112 +16,145 @@ class DoctorWeekStrip extends StatelessWidget {
     required this.onDateSelected,
   });
 
-  /// Map of day index (0=Sat, 6=Fri) to non-cancelled appointment count.
-  final Map<int, int> dayCounts;
-
-  /// The currently selected date.
+  final Map<DateTime, int> dayCounts;
   final DateTime? selectedDate;
-
-  /// Called when the user taps a day.
   final ValueChanged<DateTime> onDateSelected;
 
   @override
+  State<DoctorWeekStrip> createState() => _DoctorWeekStripState();
+}
+
+class _DoctorWeekStripState extends State<DoctorWeekStrip> {
+  static const int _centerPage = 10000;
+  static const int _datePickerYearSpan = 20;
+  late final PageController _controller;
+  late DateTime _anchorWeek;
+  int _page = _centerPage;
+
+  DateTime get _selected =>
+      ScheduleWeek.day(widget.selectedDate ?? DateTime.now());
+
+  @override
+  void initState() {
+    super.initState();
+    _anchorWeek = ScheduleWeek.start(_selected);
+    _controller = PageController(initialPage: _centerPage);
+  }
+
+  @override
+  void didUpdateWidget(covariant DoctorWeekStrip oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    final DateTime selectedWeek = ScheduleWeek.start(_selected);
+    if (selectedWeek == _weekForPage(_page)) return;
+    _anchorWeek = selectedWeek;
+    _page = _centerPage;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted && _controller.hasClients) {
+        _controller.jumpToPage(_centerPage);
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  DateTime _weekForPage(int page) => _anchorWeek.add(
+    Duration(days: (page - _centerPage) * ScheduleWeek.span.inDays),
+  );
+
+  void _selectPage(int page) {
+    _page = page;
+    final int weekdayOffset = _selected
+        .difference(ScheduleWeek.start(_selected))
+        .inDays;
+    widget.onDateSelected(
+      _weekForPage(page).add(Duration(days: weekdayOffset)),
+    );
+  }
+
+  void _moveWeek(int delta) {
+    _controller.animateToPage(
+      _page + delta,
+      duration: const Duration(milliseconds: 200),
+      curve: Curves.easeOutCubic,
+    );
+  }
+
+  Future<void> _pickDate() async {
+    final DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: _selected,
+      firstDate: DateTime(_selected.year - _datePickerYearSpan),
+      lastDate: DateTime(_selected.year + _datePickerYearSpan, 12, 31),
+      helpText: AppStrings.chooseDate,
+    );
+    if (picked != null) widget.onDateSelected(picked);
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-    final now = DateTime.now();
-    // Week starts on Saturday: (weekday + 1) % 7 gives 0 for Saturday.
-    final weekStart = now.subtract(Duration(days: (now.weekday + 1) % 7));
-
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: AppSizes.p12),
-      child: SizedBox(
-        height: 72,
-        child: ListView.builder(
-          scrollDirection: Axis.horizontal,
-          padding: const EdgeInsets.symmetric(horizontal: AppSizes.p12),
-          itemCount: 7,
-          itemBuilder: (_, i) {
-            final date = weekStart.add(Duration(days: i));
-            final isSelected = selectedDate != null &&
-                date.year == selectedDate!.year &&
-                date.month == selectedDate!.month &&
-                date.day == selectedDate!.day;
-            final isToday = date.year == now.year &&
-                date.month == now.month &&
-                date.day == now.day;
-            final hasApps = (dayCounts[i] ?? 0) > 0;
-
-            final Color backgroundColor;
-            final Border? border;
-            final Color textColor;
-            final Color subtextColor;
-
-            if (isSelected) {
-              backgroundColor = colorScheme.primary;
-              border = null;
-              textColor = colorScheme.onPrimary;
-              subtextColor = colorScheme.onPrimary;
-            } else if (isToday) {
-              backgroundColor = colorScheme.primaryContainer.withValues(alpha: 0.3);
-              border = Border.all(color: colorScheme.primary, width: 1.5);
-              textColor = colorScheme.primary;
-              subtextColor = colorScheme.primary;
-            } else {
-              backgroundColor = colorScheme.surface.withAlpha(0);
-              border = null;
-              textColor = colorScheme.onSurface;
-              subtextColor = colorScheme.onSurfaceVariant;
-            }
-
-            return GestureDetector(
-              onTap: () => onDateSelected(date),
-              child: Container(
-                width: 48,
-                margin: const EdgeInsets.symmetric(horizontal: AppSizes.p4),
-                decoration: BoxDecoration(
-                  color: backgroundColor,
-                  border: border,
-                  borderRadius: const BorderRadius.all(Radius.circular(AppSizes.r12)),
-                ),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text(
-                      DateFormat('E').format(date).substring(0, 2),
-                      style: AppTextStyles.captionMedium.copyWith(
-                        color: subtextColor,
-                        fontWeight: isToday ? FontWeight.bold : null,
-                      ),
+    return LayoutBuilder(
+      builder: (BuildContext context, BoxConstraints constraints) {
+        final bool compact =
+            constraints.maxWidth < AppSizes.adaptiveModalBreakpoint;
+        return Center(
+          child: ConstrainedBox(
+            key: const ValueKey<String>('schedule-week-navigator'),
+            constraints: const BoxConstraints(
+              maxWidth: AppSizes.scheduleNavigatorMaxWidth,
+            ),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: AppSizes.p8),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: <Widget>[
+                  ScheduleWeekHeader(
+                    compact: compact,
+                    selected: _selected,
+                    onPickDate: _pickDate,
+                    onToday: () => widget.onDateSelected(DateTime.now()),
+                    onPrevious: () => _moveWeek(-1),
+                    onNext: () => _moveWeek(1),
+                  ),
+                  SizedBox(
+                    height: AppSizes.scheduleWeekHeight,
+                    child: PageView.builder(
+                      controller: _controller,
+                      onPageChanged: _selectPage,
+                      itemBuilder: (BuildContext context, int page) {
+                        final DateTime weekStart = _weekForPage(page);
+                        return Row(
+                          children: List<Widget>.generate(7, (int index) {
+                            final DateTime date = weekStart.add(
+                              Duration(days: index),
+                            );
+                            final DateTime normalized = ScheduleWeek.day(date);
+                            return Expanded(
+                              child: ScheduleDayButton(
+                                date: date,
+                                appointmentCount:
+                                    widget.dayCounts[normalized] ?? 0,
+                                selected: normalized == _selected,
+                                today:
+                                    normalized ==
+                                    ScheduleWeek.day(DateTime.now()),
+                                onPressed: () => widget.onDateSelected(date),
+                              ),
+                            );
+                          }),
+                        );
+                      },
                     ),
-                    const SizedBox(height: AppSizes.p2),
-                    Text(
-                      date.day.toString(),
-                      style: AppTextStyles.bodyBold.copyWith(
-                        color: textColor,
-                      ),
-                    ),
-                    const SizedBox(height: AppSizes.p4),
-                    if (hasApps)
-                      Container(
-                        width: 4,
-                        height: 4,
-                        decoration: BoxDecoration(
-                          color: isSelected
-                              ? colorScheme.onPrimary
-                              : (isToday ? colorScheme.primary : colorScheme.error),
-                          shape: BoxShape.circle,
-                        ),
-                      )
-                    else
-                      const SizedBox(width: 4, height: 4),
-                  ],
-                ),
+                  ),
+                ],
               ),
-            );
-          },
-        ),
-      ),
+            ),
+          ),
+        );
+      },
     );
   }
 }

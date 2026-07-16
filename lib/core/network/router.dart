@@ -27,6 +27,7 @@ import 'package:spine_clinic_app/features/medical_records/presentation/visit_det
 import 'package:spine_clinic_app/features/patient/domain/patient.dart';
 import 'package:spine_clinic_app/features/patient/presentation/edit_patient_screen.dart';
 import 'package:spine_clinic_app/features/patient/presentation/my_patients_screen.dart';
+import 'package:spine_clinic_app/features/patient/presentation/patient_document_viewer_screen.dart';
 import 'package:spine_clinic_app/features/patient/presentation/new_patient_screen.dart';
 import 'package:spine_clinic_app/features/patient/presentation/patient_detail_screen.dart';
 import 'package:spine_clinic_app/features/patient/presentation/patient_list_screen.dart';
@@ -41,6 +42,8 @@ part 'router_guards.dart';
 part 'router_navigation.dart';
 part 'router_routes.dart';
 
+final GlobalKey<NavigatorState> _rootNavigatorKey = GlobalKey<NavigatorState>();
+
 class _RouterRefreshNotifier extends ChangeNotifier {
   _RouterRefreshNotifier(Ref ref) {
     ref.listen<AsyncValue<Staff?>>(
@@ -54,6 +57,7 @@ class _RouterRefreshNotifier extends ChangeNotifier {
 GoRouter router(Ref ref) {
   final _RouterRefreshNotifier refreshNotifier = _RouterRefreshNotifier(ref);
   final GoRouter goRouter = GoRouter(
+    navigatorKey: _rootNavigatorKey,
     initialLocation: AppRoutes.splash,
     refreshListenable: refreshNotifier,
     redirect: (BuildContext context, GoRouterState state) =>

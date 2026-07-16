@@ -28,6 +28,25 @@ abstract final class AppRoutes {
   /// Patient detail screen (protected, shell sub-page with its own AppBar).
   static const String patientDetail = '/patient/:id';
 
+  /// Full-screen patient document viewer nested under patient detail.
+  static const String patientDocumentViewer = 'document/:documentId';
+
+  /// Builds the browser-safe location for a patient document viewer.
+  static String patientDocumentViewerLocation({
+    required String patientId,
+    required String documentId,
+  }) {
+    final String patientLocation = patientDetail.replaceFirst(
+      ':id',
+      Uri.encodeComponent(patientId),
+    );
+    final String documentLocation = patientDocumentViewer.replaceFirst(
+      ':documentId',
+      Uri.encodeComponent(documentId),
+    );
+    return '$patientLocation/$documentLocation';
+  }
+
   /// Edit patient screen (protected, full-screen without shell).
   static const String editPatient = '/patient/:id/edit';
 

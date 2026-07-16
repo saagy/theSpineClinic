@@ -1,124 +1,97 @@
-/// Riverpod provider for the doctor schedule screen.
-///
-/// Fetches the logged-in doctor's full schedule, groups by date for the
-/// week strip, and filters by selected day for the appointment list.
-///
-/// Rule 3 — all state via Riverpod.
-/// Rule 4 — repository calls return [Result<T>].
+/// Riverpod state for the doctor's pageable weekly schedule.
 library;
 
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'dart:async';
 
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:spine_clinic_app/core/errors/app_exception.dart';
+import 'package:spine_clinic_app/core/errors/result.dart';
 import 'package:spine_clinic_app/features/appointment/domain/appointment_repository.dart';
-import 'package:spine_clinic_app/features/appointment/domain/appointment_status.dart';
 import 'package:spine_clinic_app/features/appointment/presentation/appointment_providers.dart';
+import 'package:spine_clinic_app/features/appointment/presentation/doctor_schedule_state.dart';
+import 'package:spine_clinic_app/features/appointment/presentation/schedule_week.dart';
 import 'package:spine_clinic_app/features/auth/domain/staff.dart';
 import 'package:spine_clinic_app/features/auth/presentation/auth_providers.dart';
 
-/// The full schedule state for the doctor schedule screen.
-class DoctorScheduleState {
-  const DoctorScheduleState({
-    this.allItems = const [],
-    this.selectedDate,
-    this.loading = true,
-    this.error,
-    this.doctor,
-    this.showCancelled = false,
-  });
+export 'doctor_schedule_state.dart';
 
-  final List<DoctorScheduleItem> allItems;
-  final DateTime? selectedDate;
-  final bool loading;
-  final Object? error;
-  final Staff? doctor;
-  final bool showCancelled;
-
-  /// Items for the selected date in strict chronological order.
-  /// Cancelled appointments stay in their original time slots (faded)
-  /// so the now-indicator calculates position correctly.
-  List<DoctorScheduleItem> get itemsForSelectedDay {
-    if (selectedDate == null) return [];
-    final day = DateTime(selectedDate!.year, selectedDate!.month, selectedDate!.day);
-    final nextDay = day.add(const Duration(days: 1));
-
-    Iterable<DoctorScheduleItem> matching = allItems.where((item) {
-      final d = item.appointment.scheduledAt.toLocal();
-      return !d.isBefore(day) && d.isBefore(nextDay);
-    });
-
-    if (!showCancelled) {
-      matching = matching.where((item) => item.appointment.status != AppointmentStatus.cancelled);
-    }
-
-    return matching.toList()
-      ..sort((a, b) => a.appointment.scheduledAt.compareTo(b.appointment.scheduledAt));
-  }
-
-  /// Whether today is the selected date.
-  bool get isToday {
-    if (selectedDate == null) return false;
-    final now = DateTime.now();
-    return selectedDate!.year == now.year &&
-        selectedDate!.month == now.month &&
-        selectedDate!.day == now.day;
-  }
-
-  /// Count of non-cancelled appointments for each day of the current week.
-  Map<int, int> get dayAppointmentCounts {
-    final counts = <int, int>{};
-    final now = DateTime.now();
-    // Strip time components — compare calendar dates, not instants.
-    final today = DateTime(now.year, now.month, now.day);
-    // Week starts on Saturday: (weekday + 1) % 7 gives 0 for Saturday.
-    final weekStart = today.subtract(Duration(days: (now.weekday + 1) % 7));
-    for (int i = 0; i < 7; i++) {
-      counts[i] = 0;
-    }
-    for (final item in allItems) {
-      if (item.appointment.status == AppointmentStatus.cancelled) continue;
-      final d = item.appointment.scheduledAt.toLocal();
-      final dayOnly = DateTime(d.year, d.month, d.day);
-      final diff = dayOnly.difference(weekStart).inDays;
-      if (diff >= 0 && diff < 7) counts[diff] = (counts[diff] ?? 0) + 1;
-    }
-    return counts;
-  }
-}
-
-/// Manages the doctor's schedule: fetches all items, tracks selected day.
 class DoctorScheduleNotifier extends Notifier<DoctorScheduleState> {
+  final Map<DateTime, List<AppointmentWithPatient>> _weekCache =
+      <DateTime, List<AppointmentWithPatient>>{};
   String? _lastUserId;
+  int _requestId = 0;
 
   @override
   DoctorScheduleState build() {
-    final user = ref.watch(currentUserProvider).value;
+    final Staff? user = ref.watch(currentUserProvider).value;
     if (user != null && _lastUserId != user.id) {
       _lastUserId = user.id;
-      Future.microtask(() => _load(user));
-      return DoctorScheduleState(doctor: user);
+      _weekCache.clear();
+      final DateTime today = ScheduleWeek.day(DateTime.now());
+      Future<void>.microtask(() => _loadWeek(user, today, useCache: false));
+      return DoctorScheduleState(doctor: user, selectedDate: today);
     }
-    // Rebuild for same user (e.g. profile edit) — preserve existing
-    // state so loading / allItems / error are not reset to defaults.
     return user != null
         ? state.copyWith(doctor: user)
-        : DoctorScheduleState(loading: false);
+        : DoctorScheduleState(selectedDate: ScheduleWeek.day(DateTime.now()));
   }
 
-  Future<void> _load(Staff user) async {
-    state = state.copyWith(doctor: user, loading: true);
+  Future<void> _loadWeek(
+    Staff user,
+    DateTime date, {
+    required bool useCache,
+  }) async {
+    final DateTime selected = ScheduleWeek.day(date);
+    final DateTime weekStart = ScheduleWeek.start(selected);
+    final List<AppointmentWithPatient>? cached = _weekCache[weekStart];
+    if (useCache && cached != null) {
+      state = state.copyWith(
+        allItems: cached,
+        selectedDate: selected,
+        loading: false,
+        clearError: true,
+      );
+      return;
+    }
 
-    final repo = ref.read(appointmentRepositoryProvider);
-    final result = await repo.getDoctorSchedule(user.id);
+    final int requestId = ++_requestId;
+    state = state.copyWith(
+      allItems: const <AppointmentWithPatient>[],
+      selectedDate: selected,
+      loading: true,
+      clearError: true,
+    );
+    final AppointmentRepository repository = ref.read(
+      appointmentRepositoryProvider,
+    );
+    final Result<List<AppointmentWithPatient>> result = await repository
+        .getAllAppointments(
+          dateFrom: ScheduleWeek.windowStart(selected),
+          dateTo: ScheduleWeek.windowEnd(selected),
+          doctorId: user.id,
+          offset: 0,
+          limit: 1000,
+          ascending: true,
+        );
+    if (requestId != _requestId) return;
 
     result.when(
-      success: (List<DoctorScheduleItem> data) {
-        final today = DateTime.now();
-        final selected = DateTime(today.year, today.month, today.day);
+      success: (List<AppointmentWithPatient> data) {
+        // ponytail: one bounded three-week query avoids cache orchestration;
+        // add per-week in-flight deduplication only if traffic warrants it.
+        _weekCache.addAll(
+          ScheduleWeek.groupWindow<AppointmentWithPatient>(
+            data,
+            around: selected,
+            dateOf: (AppointmentWithPatient item) =>
+                item.appointment.scheduledAt.toLocal(),
+          ),
+        );
         state = state.copyWith(
-          allItems: data,
+          allItems: _weekCache[weekStart] ?? <AppointmentWithPatient>[],
           selectedDate: selected,
           loading: false,
+          clearError: true,
         );
       },
       failure: (AppException exception) {
@@ -128,9 +101,16 @@ class DoctorScheduleNotifier extends Notifier<DoctorScheduleState> {
   }
 
   void selectDate(DateTime date) {
-    state = state.copyWith(
-      selectedDate: DateTime(date.year, date.month, date.day),
-    );
+    final DateTime selected = ScheduleWeek.day(date);
+    final DateTime? current = state.selectedDate;
+    if (current != null && ScheduleWeek.same(current, selected)) {
+      state = state.copyWith(selectedDate: selected);
+      return;
+    }
+    final Staff? user = ref.read(currentUserProvider).value;
+    if (user != null) {
+      unawaited(_loadWeek(user, selected, useCache: true));
+    }
   }
 
   void toggleShowCancelled() {
@@ -138,34 +118,17 @@ class DoctorScheduleNotifier extends Notifier<DoctorScheduleState> {
   }
 
   Future<void> refresh() async {
-    final user = ref.read(currentUserProvider).value;
-    if (user != null) _load(user);
-  }
-}
-
-extension on DoctorScheduleState {
-  DoctorScheduleState copyWith({
-    List<DoctorScheduleItem>? allItems,
-    DateTime? selectedDate,
-    bool? loading,
-    Object? error,
-    bool clearError = false,
-    Staff? doctor,
-    bool? showCancelled,
-  }) {
-    return DoctorScheduleState(
-      allItems: allItems ?? this.allItems,
-      selectedDate: selectedDate ?? this.selectedDate,
-      loading: loading ?? this.loading,
-      error: clearError ? null : (error ?? this.error),
-      doctor: doctor ?? this.doctor,
-      showCancelled: showCancelled ?? this.showCancelled,
+    final Staff? user = ref.read(currentUserProvider).value;
+    if (user == null) return;
+    await _loadWeek(
+      user,
+      state.selectedDate ?? DateTime.now(),
+      useCache: false,
     );
   }
 }
 
-/// Provider for the doctor schedule.
 final doctorScheduleProvider =
     NotifierProvider<DoctorScheduleNotifier, DoctorScheduleState>(
-  DoctorScheduleNotifier.new,
-);
+      DoctorScheduleNotifier.new,
+    );

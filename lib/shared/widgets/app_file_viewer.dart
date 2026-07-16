@@ -1,68 +1,92 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+import 'package:path/path.dart' as p;
 
 import 'package:spine_clinic_app/core/constants/app_sizes.dart';
+import 'package:spine_clinic_app/core/constants/app_strings.dart';
 import 'package:spine_clinic_app/core/constants/app_text_styles.dart';
 import 'package:spine_clinic_app/shared/widgets/image_viewer_view.dart';
 import 'package:spine_clinic_app/shared/widgets/pdf_viewer_view.dart';
 
-/// In-app viewer for images and PDFs.
-///
-/// Both formats render through Flutter-built widgets loaded from
-/// authenticated Supabase bytes (no signed URL, no iframe, no CORS):
-///
-/// * Images → [ImageViewerView] (InteractiveViewer + Image.memory)
-/// * PDFs → [PdfViewerView] (pdfrx → PDFium / WASM PDFium)
-///
-/// This avoids Safari/iOS PWA popup blockers (compared to opening a new
-/// tab) and lets Flutter own rendering so pinch / double-tap zoom and
-/// multi-page scroll behave identically on every platform.
-void showAppFileViewer(
-  BuildContext context, {
-  required String fileUrl,
-  required String fileName,
-  required bool isImage,
-  required bool isPdf,
-}) {
-  showDialog<void>(
-    context: context,
-    barrierDismissible: false,
-    useSafeArea: false,
-    builder: (_) => _AppFileViewerDialog(
-      fileUrl: fileUrl,
-      fileName: fileName,
-      isImage: isImage,
-      isPdf: isPdf,
-    ),
-  );
+/// Whether [fileName] can be rendered by the in-app viewer.
+bool isSupportedAppFile(String fileName) {
+  final String extension = p.extension(fileName).toLowerCase();
+  return extension == '.pdf' ||
+      extension == '.png' ||
+      extension == '.jpg' ||
+      extension == '.jpeg';
 }
 
-// ── Private ──
-
-/// Full-screen dialog rendering the file content.
-class _AppFileViewerDialog extends StatefulWidget {
-  const _AppFileViewerDialog({
+/// Full-screen, route-backed viewer for images and PDFs.
+class AppFileViewer extends StatelessWidget {
+  const AppFileViewer({
     required this.fileUrl,
     required this.fileName,
-    required this.isImage,
-    required this.isPdf,
+    super.key,
   });
 
   final String fileUrl;
   final String fileName;
-  final bool isImage;
-  final bool isPdf;
 
   @override
-  State<_AppFileViewerDialog> createState() => _AppFileViewerDialogState();
+  Widget build(BuildContext context) {
+    final String extension = p.extension(fileName).toLowerCase();
+    final Widget body = switch (extension) {
+      '.png' ||
+      '.jpg' ||
+      '.jpeg' => ImageViewerView(fileUrl: fileUrl, fileName: fileName),
+      '.pdf' => PdfViewerView(fileUrl: fileUrl, fileName: fileName),
+      _ => const _UnsupportedFileView(),
+    };
+
+    return AppFileViewerScaffold(title: fileName, body: body);
+  }
 }
 
-class _AppFileViewerDialogState extends State<_AppFileViewerDialog> {
-  Widget _buildHeader() {
-    final ColorScheme cs = Theme.of(context).colorScheme;
+/// Shared full-screen frame used by viewer loading, error, empty, and data states.
+class AppFileViewerScaffold extends StatelessWidget {
+  const AppFileViewerScaffold({
+    required this.title,
+    required this.body,
+    super.key,
+  });
+
+  final String title;
+  final Widget body;
+
+  @override
+  Widget build(BuildContext context) {
+    final ColorScheme colors = Theme.of(context).colorScheme;
+    return Scaffold(
+      backgroundColor: colors.surface,
+      body: SafeArea(
+        top: false,
+        left: false,
+        right: false,
+        bottom: true,
+        child: Column(
+          children: [
+            _ViewerHeader(title: title),
+            Expanded(child: body),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _ViewerHeader extends StatelessWidget {
+  const _ViewerHeader({required this.title});
+
+  final String title;
+
+  @override
+  Widget build(BuildContext context) {
+    final ColorScheme colors = Theme.of(context).colorScheme;
     return Container(
-      color: cs.surface,
+      color: colors.surface,
       padding: EdgeInsets.only(
-        top: MediaQuery.of(context).padding.top + AppSizes.p8,
+        top: MediaQuery.paddingOf(context).top + AppSizes.p8,
         bottom: AppSizes.p8,
         left: AppSizes.p4,
         right: AppSizes.p12,
@@ -70,15 +94,15 @@ class _AppFileViewerDialogState extends State<_AppFileViewerDialog> {
       child: Row(
         children: [
           IconButton(
-            icon: Icon(Icons.close_rounded, color: cs.onSurface),
-            tooltip: 'Close viewer',
-            onPressed: () => Navigator.of(context).pop(),
+            icon: Icon(Icons.close_rounded, color: colors.onSurface),
+            tooltip: AppStrings.close,
+            onPressed: () => context.pop(),
           ),
           const SizedBox(width: AppSizes.p4),
           Expanded(
             child: Text(
-              widget.fileName,
-              style: AppTextStyles.bodyBold.copyWith(color: cs.onSurface),
+              title,
+              style: AppTextStyles.bodyBold.copyWith(color: colors.onSurface),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
             ),
@@ -87,58 +111,26 @@ class _AppFileViewerDialogState extends State<_AppFileViewerDialog> {
       ),
     );
   }
+}
 
-  Widget _buildImageContent() {
-    return ImageViewerView(
-      fileUrl: widget.fileUrl,
-      fileName: widget.fileName,
-    );
-  }
-
-  Widget _buildPdfContent() {
-    return PdfViewerView(
-      fileUrl: widget.fileUrl,
-      fileName: widget.fileName,
-    );
-  }
-
-  Widget _buildBody() {
-    if (widget.isImage) {
-      return _buildImageContent();
-    }
-    if (widget.isPdf) {
-      return _buildPdfContent();
-    }
-    final ColorScheme cs = Theme.of(context).colorScheme;
-    return Container(
-      color: Theme.of(context).scaffoldBackgroundColor,
-      alignment: Alignment.center,
-      child: Padding(
-        padding: const EdgeInsets.all(AppSizes.p24),
-        child: Text(
-          'This file type is not supported for in-app viewing.',
-          style: AppTextStyles.bodySecondary.copyWith(color: cs.onSurface),
-          textAlign: TextAlign.center,
-        ),
-      ),
-    );
-  }
+class _UnsupportedFileView extends StatelessWidget {
+  const _UnsupportedFileView();
 
   @override
   Widget build(BuildContext context) {
-    final ColorScheme cs = Theme.of(context).colorScheme;
-    return Scaffold(
-      backgroundColor: cs.surface,
-      body: SafeArea(
-        top: false,
-        left: false,
-        right: false,
-        bottom: true,
-        child: Column(
-          children: [
-            _buildHeader(),
-            Expanded(child: _buildBody()),
-          ],
+    final ColorScheme colors = Theme.of(context).colorScheme;
+    return ColoredBox(
+      color: Theme.of(context).scaffoldBackgroundColor,
+      child: Center(
+        child: Padding(
+          padding: const EdgeInsets.all(AppSizes.p24),
+          child: Text(
+            AppStrings.unsupportedDocumentType,
+            style: AppTextStyles.bodySecondary.copyWith(
+              color: colors.onSurface,
+            ),
+            textAlign: TextAlign.center,
+          ),
         ),
       ),
     );

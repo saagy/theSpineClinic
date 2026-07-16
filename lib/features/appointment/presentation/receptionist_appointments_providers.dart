@@ -1,14 +1,9 @@
-/// Riverpod providers for the receptionist appointments screen.
-///
-/// Manages today's and upcoming appointments with real-time status updates.
-/// Supports admin branch override via [adminBranchFilterProvider].
-///
-/// Rule 3 — all state via Riverpod.
-/// Rule 4 — repository calls return [Result<T>].
+/// Riverpod state for the receptionist's pageable weekly schedule.
 library;
 
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'dart:async';
 
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:spine_clinic_app/core/errors/app_exception.dart';
 import 'package:spine_clinic_app/core/errors/result.dart';
 import 'package:spine_clinic_app/features/admin/presentation/branch_providers.dart';
@@ -16,152 +11,110 @@ import 'package:spine_clinic_app/features/appointment/domain/appointment.dart';
 import 'package:spine_clinic_app/features/appointment/domain/appointment_repository.dart';
 import 'package:spine_clinic_app/features/appointment/domain/appointment_status.dart';
 import 'package:spine_clinic_app/features/appointment/presentation/appointment_providers.dart';
+import 'package:spine_clinic_app/features/appointment/presentation/receptionist_appointments_state.dart';
+import 'package:spine_clinic_app/features/appointment/presentation/schedule_week.dart';
+import 'package:spine_clinic_app/features/auth/domain/staff.dart';
 import 'package:spine_clinic_app/features/auth/domain/user_role.dart';
 import 'package:spine_clinic_app/features/auth/presentation/auth_providers.dart';
 import 'package:spine_clinic_app/features/patient/domain/clinic_location.dart';
 
-/// Holds the combined state for the receptionist appointments dashboard.
-class ReceptionistAppointmentsState {
-  const ReceptionistAppointmentsState({
-    this.allItems = const [],
-    this.selectedDate,
-    this.loading = true,
-    this.error,
-    this.filterDoctorId,
-    this.showCancelled = false,
-  });
+export 'receptionist_appointments_state.dart';
 
-  final List<AppointmentWithPatient> allItems;
-  final DateTime? selectedDate;
-  final bool loading;
-  final Object? error;
-  final String? filterDoctorId;
-  final bool showCancelled;
-
-  /// Items for the selected date in strict chronological order.
-  List<AppointmentWithPatient> get itemsForSelectedDay {
-    if (selectedDate == null) return [];
-    final day = DateTime(selectedDate!.year, selectedDate!.month, selectedDate!.day);
-    final nextDay = day.add(const Duration(days: 1));
-
-    Iterable<AppointmentWithPatient> matching = allItems.where((item) {
-      final d = item.appointment.scheduledAt.toLocal();
-      return !d.isBefore(day) && d.isBefore(nextDay);
-    });
-
-    if (!showCancelled) {
-      matching = matching.where((item) => item.appointment.status != AppointmentStatus.cancelled);
-    }
-
-    final list = matching.toList()
-      ..sort((a, b) => a.appointment.scheduledAt.compareTo(b.appointment.scheduledAt));
-
-    return list;
-  }
-
-  /// Whether today is the selected date.
-  bool get isToday {
-    if (selectedDate == null) return false;
-    final now = DateTime.now();
-    return selectedDate!.year == now.year &&
-        selectedDate!.month == now.month &&
-        selectedDate!.day == now.day;
-  }
-
-  /// Count of non-cancelled appointments for each day of the current week.
-  Map<int, int> get dayAppointmentCounts {
-    final counts = <int, int>{};
-    final now = DateTime.now();
-    final today = DateTime(now.year, now.month, now.day);
-    // Week starts on Saturday: (weekday + 1) % 7 gives 0 for Saturday.
-    final weekStart = today.subtract(Duration(days: (now.weekday + 1) % 7));
-    for (int i = 0; i < 7; i++) {
-      counts[i] = 0;
-    }
-    for (final item in allItems) {
-      if (item.appointment.status == AppointmentStatus.cancelled) continue;
-      final d = item.appointment.scheduledAt.toLocal();
-      final dayOnly = DateTime(d.year, d.month, d.day);
-      final diff = dayOnly.difference(weekStart).inDays;
-      if (diff >= 0 && diff < 7) counts[diff] = (counts[diff] ?? 0) + 1;
-    }
-    return counts;
-  }
-
-  /// Returns a copy with the given fields replaced. Omitted fields keep their
-  /// current value — never a constructor default.
-  ReceptionistAppointmentsState copyWith({
-    List<AppointmentWithPatient>? allItems,
-    DateTime? selectedDate,
-    bool? loading,
-    Object? error,
-    bool clearError = false,
-    String? filterDoctorId,
-    bool clearDoctorFilter = false,
-    bool? showCancelled,
-  }) {
-    return ReceptionistAppointmentsState(
-      allItems: allItems ?? this.allItems,
-      selectedDate: selectedDate ?? this.selectedDate,
-      loading: loading ?? this.loading,
-      error: clearError ? null : (error ?? this.error),
-      filterDoctorId: clearDoctorFilter ? null : (filterDoctorId ?? this.filterDoctorId),
-      showCancelled: showCancelled ?? this.showCancelled,
-    );
-  }
-}
-
-/// Notifier managing appointments for the receptionist dashboard.
-/// Loads the current week (from Saturday to Friday) and filters by selected date.
 class ReceptionistAppointmentsNotifier
     extends Notifier<ReceptionistAppointmentsState> {
+  final Map<DateTime, List<AppointmentWithPatient>> _weekCache =
+      <DateTime, List<AppointmentWithPatient>>{};
+  String? _cacheScope;
+  String? _lastUserId;
+  int _requestId = 0;
+
   @override
-  ReceptionistAppointmentsState build() =>
-      const ReceptionistAppointmentsState();
+  ReceptionistAppointmentsState build() {
+    final Staff? user = ref.watch(currentUserProvider).value;
+    final DateTime today = ScheduleWeek.day(DateTime.now());
+    if (user != null && _lastUserId != user.id) {
+      _lastUserId = user.id;
+      _weekCache.clear();
+      Future<void>.microtask(() => _loadWeek(today, useCache: false));
+      return ReceptionistAppointmentsState(selectedDate: today);
+    }
+    return user != null
+        ? state
+        : ReceptionistAppointmentsState(selectedDate: today);
+  }
 
-  AppointmentRepository get _repo => ref.read(appointmentRepositoryProvider);
+  AppointmentRepository get _repository =>
+      ref.read(appointmentRepositoryProvider);
 
-  /// Returns the effective clinic filter.
   ClinicLocation? get _clinic {
-    final user = ref.read(currentUserProvider).value;
+    final Staff? user = ref.read(currentUserProvider).value;
     if (user?.role == UserRole.superAdmin) {
       final String? override = ref.read(adminBranchFilterProvider);
-      if (override == null) return null; // All Branches
+      if (override == null) return null;
       if (override == 'tagamoa') return ClinicLocation.tagamoa;
       if (override == 'masr_elgedida') return ClinicLocation.masrElgedida;
     }
     return ref.read(activeBranchProvider);
   }
 
-  /// Loads the entire week's appointments (Saturday to Friday) from the repository.
-  Future<void> loadToday() async {
-    state = state.copyWith(loading: true, clearError: true);
-    final user = ref.read(currentUserProvider).value;
+  Future<void> _loadWeek(DateTime date, {required bool useCache}) async {
+    final Staff? user = ref.read(currentUserProvider).value;
     if (user == null) return;
+    final DateTime selected = ScheduleWeek.day(date);
+    final DateTime weekStart = ScheduleWeek.start(selected);
+    final ClinicLocation? clinic = _clinic;
+    final String scope =
+        '${user.id}|${state.filterDoctorId}|${clinic?.dbValue ?? 'all'}';
+    if (_cacheScope != scope) {
+      _cacheScope = scope;
+      _weekCache.clear();
+    }
 
-    final now = DateTime.now();
-    final today = DateTime(now.year, now.month, now.day);
-    // Week starts on Saturday: (weekday + 1) % 7 gives 0 for Saturday.
-    final weekStart = today.subtract(Duration(days: (now.weekday + 1) % 7));
-    final weekEnd = weekStart.add(const Duration(days: 7)); // Next Saturday
+    final List<AppointmentWithPatient>? cached = _weekCache[weekStart];
+    if (useCache && cached != null) {
+      state = state.copyWith(
+        allItems: cached,
+        selectedDate: selected,
+        loading: false,
+        clearError: true,
+      );
+      return;
+    }
 
-    final Result<List<AppointmentWithPatient>> result = await _repo
+    final int requestId = ++_requestId;
+    state = state.copyWith(
+      allItems: const <AppointmentWithPatient>[],
+      selectedDate: selected,
+      loading: true,
+      clearError: true,
+    );
+    final Result<List<AppointmentWithPatient>> result = await _repository
         .getAllAppointments(
-          dateFrom: weekStart,
-          dateTo: weekEnd,
+          dateFrom: ScheduleWeek.windowStart(selected),
+          dateTo: ScheduleWeek.windowEnd(selected),
           doctorId: state.filterDoctorId,
-          clinic: _clinic?.dbValue,
+          clinic: clinic?.dbValue,
           offset: 0,
           limit: 1000,
           ascending: true,
         );
+    if (requestId != _requestId) return;
 
     result.when(
       success: (List<AppointmentWithPatient> data) {
+        _weekCache.addAll(
+          ScheduleWeek.groupWindow<AppointmentWithPatient>(
+            data,
+            around: selected,
+            dateOf: (AppointmentWithPatient item) =>
+                item.appointment.scheduledAt.toLocal(),
+          ),
+        );
         state = state.copyWith(
-          allItems: data,
-          selectedDate: state.selectedDate ?? today,
+          allItems: _weekCache[weekStart] ?? <AppointmentWithPatient>[],
+          selectedDate: selected,
           loading: false,
+          clearError: true,
         );
       },
       failure: (AppException exception) {
@@ -170,98 +123,93 @@ class ReceptionistAppointmentsNotifier
     );
   }
 
-  /// Updates an appointment's status and immediately refreshes the local list.
+  Future<void> loadToday() =>
+      _loadWeek(state.selectedDate ?? DateTime.now(), useCache: false);
+
+  void selectDate(DateTime date) {
+    final DateTime selected = ScheduleWeek.day(date);
+    final DateTime? current = state.selectedDate;
+    if (current != null && ScheduleWeek.same(current, selected)) {
+      state = state.copyWith(selectedDate: selected);
+      return;
+    }
+    unawaited(_loadWeek(selected, useCache: true));
+  }
+
   Future<void> changeStatus(
     String appointmentId,
     AppointmentStatus newStatus,
   ) async {
-    final Result<void> result = await _repo.updateAppointmentStatus(
+    final Result<void> result = await _repository.updateAppointmentStatus(
       appointmentId,
       newStatus,
     );
-
     result.when(
       success: (_) {
-        final List<AppointmentWithPatient> updated = state.allItems.map((a) {
-          if (a.appointment.id == appointmentId) {
-            final Appointment updatedAppt = a.appointment.copyWith(
-              status: newStatus,
-            );
-            return AppointmentWithPatient(
-              appointment: updatedAppt,
-              patient: a.patient,
-            );
-          }
-          return a;
-        }).toList();
-
-        state = state.copyWith(allItems: updated);
+        final List<AppointmentWithPatient> updated = state.allItems
+            .map(
+              (AppointmentWithPatient item) =>
+                  item.appointment.id == appointmentId
+                  ? AppointmentWithPatient(
+                      appointment: item.appointment.copyWith(status: newStatus),
+                      patient: item.patient,
+                    )
+                  : item,
+            )
+            .toList();
+        _saveCurrentWeek(updated);
       },
-      failure: (AppException exception) {
-        throw exception;
-      },
+      failure: (AppException exception) => throw exception,
     );
   }
 
-  /// Updates multiple appointments' statuses and immediately refreshes the local list.
   Future<void> changeGroupStatus(
     List<String> appointmentIds,
     AppointmentStatus newStatus,
   ) async {
-    final Set<String> idsSet = appointmentIds.toSet();
-    for (final id in appointmentIds) {
-      final Result<void> result = await _repo.updateAppointmentStatus(
+    final Set<String> ids = appointmentIds.toSet();
+    for (final String id in appointmentIds) {
+      final Result<void> result = await _repository.updateAppointmentStatus(
         id,
         newStatus,
       );
       result.when(
         success: (_) {},
-        failure: (AppException exception) {
-          throw exception;
-        },
+        failure: (AppException exception) => throw exception,
       );
     }
-
-    final List<AppointmentWithPatient> updated = state.allItems.map((a) {
-      if (idsSet.contains(a.appointment.id)) {
-        final Appointment updatedAppt = a.appointment.copyWith(
+    _saveCurrentWeek(
+      state.allItems.map((AppointmentWithPatient item) {
+        if (!ids.contains(item.appointment.id)) return item;
+        final Appointment appointment = item.appointment.copyWith(
           status: newStatus,
         );
         return AppointmentWithPatient(
-          appointment: updatedAppt,
-          patient: a.patient,
+          appointment: appointment,
+          patient: item.patient,
         );
-      }
-      return a;
-    }).toList();
-
-    state = state.copyWith(allItems: updated);
-  }
-
-  /// Sets the selected date in the week selector.
-  void selectDate(DateTime date) {
-    state = state.copyWith(
-      selectedDate: DateTime(date.year, date.month, date.day),
+      }).toList(),
     );
   }
 
-  /// Sets or clears the doctor filter on the schedule.
-  void setDoctorFilter(String? doctorId) {
-    if (doctorId == null) {
-      state = state.copyWith(clearDoctorFilter: true);
-    } else {
-      state = state.copyWith(filterDoctorId: doctorId);
-    }
-    loadToday();
+  void _saveCurrentWeek(List<AppointmentWithPatient> items) {
+    final DateTime selected = state.selectedDate ?? DateTime.now();
+    _weekCache[ScheduleWeek.start(selected)] = items;
+    state = state.copyWith(allItems: items);
   }
 
-  /// Toggles whether cancelled appointments are shown.
+  void setDoctorFilter(String? doctorId) {
+    state = doctorId == null
+        ? state.copyWith(clearDoctorFilter: true)
+        : state.copyWith(filterDoctorId: doctorId);
+    unawaited(loadToday());
+  }
+
   void toggleShowCancelled() {
     state = state.copyWith(showCancelled: !state.showCancelled);
   }
 }
 
-/// Provider for the receptionist appointments notifier.
 final receptionistAppointmentsProvider =
     NotifierProvider<
       ReceptionistAppointmentsNotifier,

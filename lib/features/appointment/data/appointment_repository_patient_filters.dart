@@ -15,7 +15,11 @@ mixin _PatientAppointmentFilters on _AppointmentRepositoryBase {
     bool ascending = false,
   }) {
     return _run(() async {
-      final List<String>? doctorIds = await _resolveDoctorIds(doctorId);
+      final List<String>? doctorIds = await _resolveDoctorIds(
+        doctorId,
+        dateFrom: dateFrom,
+        dateTo: dateTo,
+      );
       if (doctorIds != null && doctorIds.isEmpty) return <Appointment>[];
       final PostgrestFilterBuilder builder = _patientFilters(
         patientId: patientId,
@@ -44,7 +48,11 @@ mixin _PatientAppointmentFilters on _AppointmentRepositoryBase {
     bool? usePackageFilter,
   }) {
     return _run(() async {
-      final List<String>? doctorIds = await _resolveDoctorIds(doctorId);
+      final List<String>? doctorIds = await _resolveDoctorIds(
+        doctorId,
+        dateFrom: dateFrom,
+        dateTo: dateTo,
+      );
       if (doctorIds != null && doctorIds.isEmpty) return 0;
       final List<Map<String, dynamic>> rows = await _patientFilters(
         patientId: patientId,

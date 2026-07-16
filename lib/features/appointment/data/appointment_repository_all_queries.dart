@@ -15,7 +15,11 @@ mixin _AllAppointmentQueries on _AppointmentRepositoryBase {
     bool ascending = false,
   }) {
     return _run(() async {
-      final List<String>? doctorIds = await _resolveDoctorIds(doctorId);
+      final List<String>? doctorIds = await _resolveDoctorIds(
+        doctorId,
+        dateFrom: dateFrom,
+        dateTo: dateTo,
+      );
       if (doctorIds != null && doctorIds.isEmpty) {
         return <AppointmentWithPatient>[];
       }
@@ -54,7 +58,11 @@ mixin _AllAppointmentQueries on _AppointmentRepositoryBase {
     String? patientQuery,
   }) {
     return _run(() async {
-      final List<String>? doctorIds = await _resolveDoctorIds(doctorId);
+      final List<String>? doctorIds = await _resolveDoctorIds(
+        doctorId,
+        dateFrom: dateFrom,
+        dateTo: dateTo,
+      );
       if (doctorIds != null && doctorIds.isEmpty) return 0;
       final List<Map<String, dynamic>> rows = await _filters(
         doctorIds: doctorIds,

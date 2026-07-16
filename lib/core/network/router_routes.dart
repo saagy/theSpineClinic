@@ -151,6 +151,18 @@ final List<RouteBase> _shellRoutes = [
     pageBuilder: (_, GoRouterState state) => NoTransitionPage(
       child: PatientDetailScreen(patientId: state.pathParameters['id'] ?? ''),
     ),
+    routes: [
+      GoRoute(
+        parentNavigatorKey: _rootNavigatorKey,
+        path: AppRoutes.patientDocumentViewer,
+        pageBuilder: (_, GoRouterState state) => NoTransitionPage(
+          child: PatientDocumentViewerScreen(
+            patientId: state.pathParameters['id'] ?? '',
+            documentId: state.pathParameters['documentId'] ?? '',
+          ),
+        ),
+      ),
+    ],
   ),
   GoRoute(
     path: AppRoutes.appointmentDetail,

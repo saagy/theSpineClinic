@@ -14,13 +14,30 @@ mixin _AppointmentRepositoryBase implements AppointmentRepository {
     }
   }
 
-  Future<List<String>?> _resolveDoctorIds(String? doctorId) async {
+  Future<List<String>?> _resolveDoctorIds(
+    String? doctorId, {
+    DateTime? dateFrom,
+    DateTime? dateTo,
+  }) async {
     if (doctorId == null) return null;
-    final List<Map<String, dynamic>> rows = await _service
+    PostgrestFilterBuilder query = _service
         .from(_appointmentDoctorsTable)
-        .select('appointment_id')
+        .select('appointment_id, appointments!inner(scheduled_at)')
         .eq('doctor_id', doctorId)
         .eq('is_active', true);
+    if (dateFrom != null) {
+      query = query.gte(
+        'appointments.scheduled_at',
+        dateFrom.toUtc().toIso8601String(),
+      );
+    }
+    if (dateTo != null) {
+      query = query.lt(
+        'appointments.scheduled_at',
+        dateTo.toUtc().toIso8601String(),
+      );
+    }
+    final List<Map<String, dynamic>> rows = await query;
     return rows.map((row) => row['appointment_id'] as String).toList();
   }
 }

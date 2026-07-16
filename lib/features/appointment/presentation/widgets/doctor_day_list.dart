@@ -89,7 +89,9 @@ class DoctorDayList extends StatelessWidget {
           return const _NowIndicator();
         }
 
-        final cardIndex = hasNow && index - 1 > nowIndex ? index - 2 : index - 1;
+        final cardIndex = hasNow && index - 1 > nowIndex
+            ? index - 2
+            : index - 1;
         return _buildCard(items[cardIndex]);
       },
     );
@@ -104,21 +106,16 @@ class DoctorDayList extends StatelessWidget {
     return list;
   }
 
-  Widget _buildCard(DoctorScheduleItem item) {
-    final appt = item.appointment;
-
+  Widget _buildCard(AppointmentWithPatient item) {
     return ReceptionistAppointmentCard(
-      item: AppointmentWithPatient(
-        appointment: appt,
-        patient: item.patient,
-      ),
+      item: item,
       onStatusChanged: onStatusChanged,
     );
   }
 
   /// Returns insertion index (0..items.length) for `_NowIndicator`.
   /// Returns `-1` if selected day is not today or items is empty.
-  int _getNowIndex(List<DoctorScheduleItem> items) {
+  int _getNowIndex(List<AppointmentWithPatient> items) {
     if (!state.isToday || items.isEmpty) return -1;
     final now = DateTime.now();
     for (int i = 0; i < items.length; i++) {
@@ -147,14 +144,21 @@ class _DateHeader extends StatelessWidget {
     final date = state.selectedDate ?? DateTime.now();
     final formatted = DateFormat('EEEE, MMM d').format(date);
     return Padding(
-      padding: const EdgeInsets.fromLTRB(AppSizes.p20, AppSizes.p16, AppSizes.p20, AppSizes.p8),
+      padding: const EdgeInsets.fromLTRB(
+        AppSizes.p20,
+        AppSizes.p16,
+        AppSizes.p20,
+        AppSizes.p8,
+      ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Expanded(
             child: AutoSizeText(
-              '$formatted  ·  $count appointment${count == 1 ? '' : 's'}',
-              style: AppTextStyles.captionBold.copyWith(color: theme.colorScheme.onSurfaceVariant),
+              AppStrings.appointmentCountForDate(formatted, count),
+              style: AppTextStyles.captionBold.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
               maxLines: 1,
               minFontSize: 10,
               overflow: TextOverflow.ellipsis,
@@ -164,12 +168,21 @@ class _DateHeader extends StatelessWidget {
             const SizedBox(width: AppSizes.p8),
             InkWell(
               onTap: onToggleCancelled,
-              borderRadius: const BorderRadius.all(Radius.circular(AppSizes.r8)),
+              borderRadius: const BorderRadius.all(
+                Radius.circular(AppSizes.r8),
+              ),
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: AppSizes.p8, vertical: AppSizes.p4),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: AppSizes.p8,
+                  vertical: AppSizes.p4,
+                ),
                 child: Text(
-                  state.showCancelled ? AppStrings.hideCancelled : AppStrings.showCancelled,
-                  style: AppTextStyles.captionBold.copyWith(color: theme.colorScheme.primary),
+                  state.showCancelled
+                      ? AppStrings.hideCancelled
+                      : AppStrings.showCancelled,
+                  style: AppTextStyles.captionBold.copyWith(
+                    color: theme.colorScheme.primary,
+                  ),
                 ),
               ),
             ),
@@ -199,10 +212,23 @@ class _NowIndicator extends StatelessWidget {
             width: _timeWidth,
             child: Row(
               children: [
-                Container(width: 6, height: 6, decoration: BoxDecoration(color: errorColor, shape: BoxShape.circle)),
+                Container(
+                  width: 6,
+                  height: 6,
+                  decoration: BoxDecoration(
+                    color: errorColor,
+                    shape: BoxShape.circle,
+                  ),
+                ),
                 const SizedBox(width: AppSizes.p4),
                 Flexible(
-                  child: Text(now, style: AppTextStyles.captionBold.copyWith(color: errorColor), maxLines: 1),
+                  child: Text(
+                    now,
+                    style: AppTextStyles.captionBold.copyWith(
+                      color: errorColor,
+                    ),
+                    maxLines: 1,
+                  ),
                 ),
               ],
             ),

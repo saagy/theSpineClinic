@@ -42,9 +42,6 @@ class _ReceptionistAppointmentsScreenState
     super.initState();
     _tabCtrl = TabController(length: 3, vsync: this);
     _tabCtrl.addListener(_onTabChanged);
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      ref.read(receptionistAppointmentsProvider.notifier).loadToday();
-    });
   }
 
   bool _allFetched = false;
