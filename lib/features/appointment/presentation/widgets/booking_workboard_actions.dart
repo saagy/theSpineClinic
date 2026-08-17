@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:spine_clinic_app/core/constants/app_sizes.dart';
 import 'package:spine_clinic_app/core/constants/app_strings.dart';
 import 'package:spine_clinic_app/core/errors/result.dart';
 import 'package:spine_clinic_app/core/network/app_routes.dart';
@@ -50,6 +51,7 @@ abstract final class BookingWorkboardActions {
     return AppBottomSheet.show<void>(
       context: context,
       title: AppStrings.filters,
+      initialChildSize: AppSizes.sheetMax,
       builder: (sheetContext, scrollController) => UnifiedFilterSheet(
         initialDoctorId: state.doctorId,
         initialClinic: null,

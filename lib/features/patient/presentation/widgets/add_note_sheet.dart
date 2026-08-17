@@ -1,5 +1,4 @@
-/// Bottom sheet for the Quick Action "Add Note" — auto-focused
-/// multi-line text field and save button.
+/// Bottom sheet for the Quick Action "Add Note" with a compact note editor.
 ///
 /// Rule 1 — under 200 lines.
 library;
@@ -36,21 +35,11 @@ class AddNoteSheet extends ConsumerStatefulWidget {
 
 class _AddNoteSheetState extends ConsumerState<AddNoteSheet> {
   late final _ctrl = TextEditingController(text: widget.initialText ?? '');
-  final _focus = FocusNode();
   bool _saving = false;
-
-  @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _focus.requestFocus();
-    });
-  }
 
   @override
   void dispose() {
     _ctrl.dispose();
-    _focus.dispose();
     super.dispose();
   }
 
@@ -124,30 +113,22 @@ class _AddNoteSheetState extends ConsumerState<AddNoteSheet> {
             style: AppTextStyles.headingSmall,
           ),
           const SizedBox(height: AppSizes.p16),
-          // Constrain the text field height so it doesn't stretch/glitch
-          // when the iOS keyboard first appears (Task #4).
-          ConstrainedBox(
-            constraints: BoxConstraints(
-              maxHeight: MediaQuery.of(context).size.height * 0.4,
-            ),
-            child: TextField(
-              controller: _ctrl,
-              focusNode: _focus,
-              maxLines: null,
-              expands: true,
-              textAlignVertical: TextAlignVertical.top,
-              keyboardType: TextInputType.multiline,
-              enabled: !_saving,
-              style: AppTextStyles.body,
-              decoration: InputDecoration(
-                hintText: AppStrings.notes,
-                hintStyle: AppTextStyles.bodySecondary.copyWith(
-                  color: cs.onSurfaceVariant,
-                ),
-                isDense: true,
-                contentPadding: const EdgeInsets.all(AppSizes.p12),
-                border: const OutlineInputBorder(),
+          TextField(
+            controller: _ctrl,
+            minLines: 4,
+            maxLines: 6,
+            textAlignVertical: TextAlignVertical.top,
+            keyboardType: TextInputType.multiline,
+            enabled: !_saving,
+            style: AppTextStyles.body,
+            decoration: InputDecoration(
+              hintText: AppStrings.notes,
+              hintStyle: AppTextStyles.bodySecondary.copyWith(
+                color: cs.onSurfaceVariant,
               ),
+              isDense: true,
+              contentPadding: const EdgeInsets.all(AppSizes.p12),
+              border: const OutlineInputBorder(),
             ),
           ),
           const SizedBox(height: AppSizes.p20),

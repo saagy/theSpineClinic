@@ -88,17 +88,19 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
               child: Center(
                 child: ConstrainedBox(
                   constraints: const BoxConstraints(maxWidth: 400),
-                  child: Form(
-                    key: _formKey,
-                    child: _buildCardContent(context, isLoading)
-                        .animate()
-                        .fadeIn(duration: 600.ms)
-                        .slideY(
-                          begin: 0.04,
-                          end: 0,
-                          duration: 600.ms,
-                          curve: Curves.easeOut,
-                        ),
+                  child: AutofillGroup(
+                    child: Form(
+                      key: _formKey,
+                      child: _buildCardContent(context, isLoading)
+                          .animate()
+                          .fadeIn(duration: 600.ms)
+                          .slideY(
+                            begin: 0.04,
+                            end: 0,
+                            duration: 600.ms,
+                            curve: Curves.easeOut,
+                          ),
+                    ),
                   ),
                 ),
               ),
@@ -206,6 +208,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 validator: AuthValidators.email,
                 enabled: !isLoading,
                 textInputAction: TextInputAction.next,
+                autofillHints: const [AutofillHints.username],
               ),
               const SizedBox(height: AppSizes.p16),
 
@@ -218,6 +221,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 validator: AuthValidators.required,
                 enabled: !isLoading,
                 textInputAction: TextInputAction.done,
+                autofillHints: const [AutofillHints.password],
                 onSubmitted: isLoading ? null : (_) => _handleLogin(),
               ),
               const SizedBox(height: AppSizes.p24),

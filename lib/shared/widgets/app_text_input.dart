@@ -34,6 +34,7 @@ class AppTextInput extends StatefulWidget {
     this.maxLines = 1,
     this.textInputAction,
     this.onSubmitted,
+    this.autofillHints,
   });
 
   /// The controller for this input field.
@@ -82,6 +83,9 @@ class AppTextInput extends StatefulWidget {
   /// Called when the user submits the field.
   final ValueChanged<String>? onSubmitted;
 
+  /// Identifies the field to platform autofill and password managers.
+  final Iterable<String>? autofillHints;
+
   @override
   State<AppTextInput> createState() => _AppTextInputState();
 }
@@ -123,6 +127,7 @@ class _AppTextInputState extends State<AppTextInput> {
           maxLines: widget.maxLines,
           textInputAction: widget.textInputAction,
           onFieldSubmitted: widget.onSubmitted,
+          autofillHints: widget.autofillHints,
           style: AppTextStyles.body,
           decoration: InputDecoration(
             hintText: widget.hintText,

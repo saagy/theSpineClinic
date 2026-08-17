@@ -50,9 +50,6 @@ class _CollectPaymentSheetState extends ConsumerState<CollectPaymentSheet> {
     super.initState();
     _amountCtrl.addListener(_refresh);
     _totalPriceCtrl.addListener(_refresh);
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) FocusScope.of(context).requestFocus(_amountFocus);
-    });
   }
 
   void _refresh() => setState(() {});

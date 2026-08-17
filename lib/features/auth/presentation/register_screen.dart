@@ -109,17 +109,19 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
               child: Center(
                 child: ConstrainedBox(
                   constraints: const BoxConstraints(maxWidth: 400),
-                  child: Form(
-                    key: _formKey,
-                    child: _buildCardContent(context)
-                        .animate()
-                        .fadeIn(duration: 600.ms)
-                        .slideY(
-                          begin: 0.04,
-                          end: 0,
-                          duration: 600.ms,
-                          curve: Curves.easeOut,
-                        ),
+                  child: AutofillGroup(
+                    child: Form(
+                      key: _formKey,
+                      child: _buildCardContent(context)
+                          .animate()
+                          .fadeIn(duration: 600.ms)
+                          .slideY(
+                            begin: 0.04,
+                            end: 0,
+                            duration: 600.ms,
+                            curve: Curves.easeOut,
+                          ),
+                    ),
                   ),
                 ),
               ),
@@ -212,6 +214,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                 validator: AuthValidators.email,
                 enabled: !_isLoading,
                 textInputAction: TextInputAction.next,
+                autofillHints: const [AutofillHints.username],
               ),
               const SizedBox(height: AppSizes.p16),
 
@@ -297,6 +300,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                 validator: AuthValidators.password,
                 enabled: !_isLoading,
                 textInputAction: TextInputAction.next,
+                autofillHints: const [AutofillHints.newPassword],
               ),
               const SizedBox(height: AppSizes.p16),
 
@@ -311,6 +315,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                 ),
                 enabled: !_isLoading,
                 textInputAction: TextInputAction.done,
+                autofillHints: const [AutofillHints.newPassword],
                 onSubmitted: _isLoading ? null : (_) => _handleSubmit(),
               ),
               const SizedBox(height: AppSizes.p24),

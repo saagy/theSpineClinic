@@ -228,7 +228,8 @@ class _ReceptionistAllTabState extends ConsumerState<ReceptionistAllTab> {
   void _openFilterSheet(BuildContext context) {
     AppBottomSheet.show(
       context: context,
-      title: 'Advanced Filters',
+      title: AppStrings.advancedFilters,
+      initialChildSize: AppSizes.sheetMax,
       builder: (ctx, scrollCtrl) =>
           AppointmentFilterContent(scrollController: scrollCtrl),
     );

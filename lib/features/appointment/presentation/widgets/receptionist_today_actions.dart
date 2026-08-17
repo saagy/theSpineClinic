@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:spine_clinic_app/core/constants/app_sizes.dart';
 import 'package:spine_clinic_app/core/constants/app_strings.dart';
 import 'package:spine_clinic_app/core/errors/result.dart';
 import 'package:spine_clinic_app/features/admin/presentation/branch_providers.dart';
@@ -27,6 +28,7 @@ abstract final class ReceptionistTodayActions {
     await AppBottomSheet.show<void>(
       context: context,
       title: AppStrings.filters,
+      initialChildSize: AppSizes.sheetMax,
       builder: (BuildContext sheetContext, ScrollController controller) =>
           UnifiedFilterSheet(
             initialDoctorId: state.filterDoctorId,

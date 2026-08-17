@@ -542,6 +542,7 @@ abstract final class AppStrings {
   static const String noDoctorsMatch = 'No matching doctors';
   static const String allBranches = 'All Branches';
   static const String filters = 'Filters';
+  static const String advancedFilters = 'Advanced Filters';
   static const String sort = 'Sort';
   static const String sortByName = 'Name';
   static const String sortByRecent = 'Recent';

@@ -44,9 +44,6 @@ class _CollectDueSheetState extends ConsumerState<CollectDueSheet> {
     super.initState();
     _amountCtrl.text = widget.payment.remainingDue.toStringAsFixed(2);
     _amountCtrl.addListener(_refresh);
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) FocusScope.of(context).requestFocus(_amountFocus);
-    });
   }
 
   void _refresh() => setState(() {});

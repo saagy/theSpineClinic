@@ -341,7 +341,8 @@ class _PatientListScreenState extends ConsumerState<PatientListScreen> {
 
     AppBottomSheet.show(
       context: context,
-      title: 'Filters',
+      title: AppStrings.filters,
+      initialChildSize: AppSizes.sheetMax,
       builder: (context, scrollController) => UnifiedFilterSheet(
         initialDoctorId: notifier.currentDoctorFilter,
         initialClinic: notifier.currentClinicFilter,

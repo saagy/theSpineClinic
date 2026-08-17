@@ -11,7 +11,7 @@ class AppBottomSheet extends StatelessWidget {
     required this.builder,
     this.initialChildSize = 0.75,
     this.minChildSize = 0.5,
-    this.maxChildSize = 0.95,
+    this.maxChildSize = AppSizes.sheetMax,
     this.maxWidth = AppSizes.profileLayoutMaxWidth,
   });
 
@@ -29,7 +29,7 @@ class AppBottomSheet extends StatelessWidget {
     bool isScrollControlled = true,
     double initialChildSize = 0.75,
     double minChildSize = 0.5,
-    double maxChildSize = 0.95,
+    double maxChildSize = AppSizes.sheetMax,
     double maxWidth = AppSizes.profileLayoutMaxWidth,
   }) {
     return showModalBottomSheet<T>(
@@ -64,7 +64,6 @@ class AppBottomSheet extends StatelessWidget {
           ),
         },
         child: Focus(
-          autofocus: true,
           child: _BottomSheetFrame(
             title: title,
             builder: builder,
@@ -99,30 +98,31 @@ class _BottomSheetFrame extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final ColorScheme cs = Theme.of(context).colorScheme;
-    return DraggableScrollableSheet(
-      initialChildSize: initialChildSize,
-      minChildSize: minChildSize,
-      maxChildSize: maxChildSize,
-      expand: false,
-      builder: (context, scrollController) {
-        return Align(
-          alignment: Alignment.bottomCenter,
-          child: ConstrainedBox(
-            constraints: BoxConstraints(maxWidth: maxWidth),
-            child: Container(
-              decoration: BoxDecoration(
-                color: cs.surface,
-                borderRadius: const BorderRadius.vertical(
-                  top: Radius.circular(AppSizes.r16),
-                ),
-              ),
-              child: SafeArea(
-                top: false,
-                bottom: true,
-                child: Padding(
-                  padding: EdgeInsets.only(
-                    bottom: MediaQuery.of(context).viewInsets.bottom,
+    final double bottomInset = MediaQuery.viewInsetsOf(context).bottom;
+    final bool keyboardVisible = bottomInset > 0;
+    return Padding(
+      padding: EdgeInsets.only(bottom: bottomInset),
+      child: DraggableScrollableSheet(
+        key: ValueKey<bool>(keyboardVisible),
+        initialChildSize: keyboardVisible ? maxChildSize : initialChildSize,
+        minChildSize: minChildSize,
+        maxChildSize: maxChildSize,
+        expand: false,
+        builder: (context, scrollController) {
+          return Align(
+            alignment: Alignment.bottomCenter,
+            child: ConstrainedBox(
+              constraints: BoxConstraints(maxWidth: maxWidth),
+              child: Container(
+                decoration: BoxDecoration(
+                  color: cs.surface,
+                  borderRadius: const BorderRadius.vertical(
+                    top: Radius.circular(AppSizes.r16),
                   ),
+                ),
+                child: SafeArea(
+                  top: false,
+                  bottom: true,
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
@@ -137,9 +137,9 @@ class _BottomSheetFrame extends StatelessWidget {
                 ),
               ),
             ),
-          ),
-        );
-      },
+          );
+        },
+      ),
     );
   }
 }

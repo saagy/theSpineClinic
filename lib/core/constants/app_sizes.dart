@@ -159,6 +159,9 @@ abstract final class AppSizes {
 
   static const double sheetInitialLarge = 0.9;
 
+  /// Maximum standard bottom-sheet height as a viewport fraction.
+  static const double sheetMax = 0.95;
+
   /// Maximum content width for profile / settings surfaces that should
   /// read as a single column on wide monitors (e.g. Admin Hub, profile
   /// menu rows). Phone screens stay unaffected because intrinsic widths

@@ -80,6 +80,7 @@ class _PatientTabAppointmentsState
     AppBottomSheet.show(
       context: context,
       title: AppStrings.filters,
+      initialChildSize: AppSizes.sheetMax,
       builder: (context, scrollController) => PatientAppointmentFilterContent(
         patientId: widget.patient.id,
         scrollController: scrollController,

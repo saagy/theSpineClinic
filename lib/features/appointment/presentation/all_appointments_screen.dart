@@ -387,7 +387,8 @@ class _AllAppointmentsScreenState extends ConsumerState<AllAppointmentsScreen> {
   void _openFilterSheet(BuildContext context) {
     AppBottomSheet.show(
       context: context,
-      title: 'Advanced Filters',
+      title: AppStrings.advancedFilters,
+      initialChildSize: AppSizes.sheetMax,
       builder: (context, scrollController) => AppointmentFilterContent(
         scrollController: scrollController,
       ),
