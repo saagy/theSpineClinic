@@ -5,21 +5,45 @@
 
 An enterprise-grade, multi-role medical clinic management platform engineered with **Flutter**, **Riverpod**, and **Supabase (PostgreSQL)**. Designed for real-world healthcare operations, featuring strict **Clean Architecture**, database-level transactional integrity, and role-based access control (RBAC).
 
+[![Live Demo](https://img.shields.io/badge/Live_Demo-spine--clinic--app.web.app-2BB5A0?style=for-the-badge&logo=google-chrome&logoColor=white)](https://spine-clinic-app.web.app/)
 [![Flutter](https://img.shields.io/badge/Flutter-3.x-02569B?style=for-the-badge&logo=flutter&logoColor=white)](https://flutter.dev)
-[![Dart](https://img.shields.io/badge/Dart-3.x-0175C2?style=for-the-badge&logo=dart&logoColor=white)](https://dart.dev)
 [![Riverpod](https://img.shields.io/badge/State_Management-Riverpod_3-blueviolet?style=for-the-badge)](https://riverpod.dev)
 [![Supabase](https://img.shields.io/badge/Backend-Supabase_PostgreSQL-3ECF8E?style=for-the-badge&logo=supabase&logoColor=white)](https://supabase.com)
-[![Architecture](https://img.shields.io/badge/Architecture-Feature--First_Clean_Arch-teal?style=for-the-badge)](#-system-architecture)
-[![Security](https://img.shields.io/badge/Security-PostgreSQL_RLS_Enforced-red?style=for-the-badge)](#-database--security-engineering)
-[![Platform](https://img.shields.io/badge/Platform-Android%20|%20iOS%20|%20Web-lightgrey?style=for-the-badge)](#)
+[![LinkedIn](https://img.shields.io/badge/Connect-LinkedIn-0A66C2?style=for-the-badge&logo=linkedin&logoColor=white)](https://www.linkedin.com/in/sagy-tamer/)
 
-[Overview](#-executive-overview) •
-[Role Portals](#-role-based-clinical-portals) •
-[Architecture](#-system-architecture) •
-[Database Engineering](#-database--security-engineering) •
-[Tech Stack](#-tech-stack) •
-[Quick Start](#-quick-start--setup) •
-[Testing](#-testing--quality-assurance)
+[🚀 Live Web App](https://spine-clinic-app.web.app/) •
+[📱 UI Preview](#-application-preview) •
+[🏛️ Architecture](#-system-architecture) •
+[💎 Engineering Highlights](#-outstanding-engineering-highlights) •
+[🔒 Database & Security](#-database--security-engineering) •
+[🛠️ Tech Stack](#-tech-stack) •
+[👨‍💻 Author](#-author--connect)
+
+</div>
+
+---
+
+## 🚀 Live Interactive Demo
+
+Experience the full multi-role platform directly in your browser:
+
+👉 **[Launch Live Web Application (spine-clinic-app.web.app)](https://spine-clinic-app.web.app/)**
+
+---
+
+## 📱 Application Preview
+
+<div align="center">
+
+| Doctor Workstation | Longitudinal Patient Dossier |
+| :---: | :---: |
+| <img src="docs/screenshots/doctor_workstation.jpg" width="280" alt="Doctor Workstation"/> | <img src="docs/screenshots/patient_dossier.jpg" width="280" alt="Patient Dossier"/> |
+| *Real-time queue, timeline indicator, & check-in status* | *Longitudinal stats, financial dues, & clinical sub-tabs* |
+
+| Receptionist Schedule Matrix | Due & Overdue Patients Queue |
+| :---: | :---: |
+| <img src="docs/screenshots/receptionist_schedule.jpg" width="280" alt="Receptionist Schedule"/> | <img src="docs/screenshots/receptionist_due_patients.jpg" width="280" alt="Due Patients Queue"/> |
+| *Multi-slot booking, dual sessions, & 300ms debounced search* | *One-tap patient call & rapid booking recovery* |
 
 </div>
 
@@ -27,12 +51,34 @@ An enterprise-grade, multi-role medical clinic management platform engineered wi
 
 ## 📌 Executive Overview
 
-**The Spine Clinic** is a production-style healthcare operations application built to streamline end-to-end clinical workflows across reception desks, treatment rooms, and administrative leadership.
+**The Spine Clinic** is a production-grade healthcare operations platform built to streamline end-to-end clinical workflows across reception desks, treatment rooms, and administrative leadership.
 
-Unlike generic starter templates, this application is engineered like a real-world enterprise product:
-* **Business-Critical Integrity**: Financial ledger updates, package quota deductions, and cancellation refunds are enforced through **atomic PostgreSQL database triggers**.
+Unlike generic starter templates, this application is engineered around enterprise healthcare requirements:
+* **Transactional Ledger & Quota Integrity**: Package credits, financial dues, and cancellation balance rollbacks are strictly governed by **atomic PostgreSQL database triggers**.
 * **Zero UI-Data Coupling**: Presentation widgets contain zero direct database queries—all state transitions and asynchronous I/O flow through type-safe **Riverpod Notifiers** and **Repository interfaces**.
 * **Strict Role-Based Security**: Receptionists, Doctors, and Super Administrators operate within isolated permissions enforced at both the application router and **PostgreSQL Row Level Security (RLS)** layers.
+
+---
+
+## 💎 Outstanding Engineering Highlights
+
+What differentiates this project from typical mobile apps:
+
+### 1. Database-Enforced Financial & Quota Integrity
+* **Atomic PostgreSQL Triggers**: Session status transitions (e.g. marking an appointment `Completed` or `Cancelled`) fire database triggers (`trg_deduct_package_balance`, `trg_sync_package_balance`) that calculate and mutate balances on the server.
+* **ACID Multi-Slot Booking RPCs**: Recurring multi-week appointments execute inside single PostgreSQL stored procedures (`book_recurring_appointments_v1`). If any single doctor slot has a scheduling conflict, the entire batch automatically rolls back.
+
+### 2. Resilient Functional Error Handling (`Result<T>` Monad)
+* **No Unhandled Async Exceptions**: Every repository contract returns a functional `Result<T>` (`Success<T>` | `Failure<AppException>`) instead of throwing unhandled exceptions.
+* **Mandatory 4-State UI Contract**: Every functional screen explicitly renders four discrete states: `Loading`, `Error`, `Empty`, and `Data`, guaranteeing zero infinite spinners or silent white screens.
+
+### 3. Defensive State Architecture & Concurrency Resilience
+* **Immutable Riverpod Code-Gen**: State classes utilize `@freezed` with strict `copyWith` mutations to prevent partial state resets.
+* **Debounced Network Queries**: Interactive search across patient records and real-time filters use a 300ms debounce pipeline, eliminating redundant database strain and race conditions.
+
+### 4. Defense-in-Depth Multi-Role Security
+* **PostgreSQL Row-Level Security (RLS)**: Access control is enforced at the database level. Doctors can only query their assigned patients, receptionists manage daily clinic scheduling, and admins oversee financial ledgers.
+* **Private Encrypted Document Vault**: Medical imaging and sensitive lab reports are isolated in authenticated storage buckets and rendered directly via `pdfrx` with zero local disk leakage.
 
 ---
 
@@ -52,25 +98,9 @@ Unlike generic starter templates, this application is engineered like a real-wor
 └───────────────────┴───────────────────────────┴─────────────────────────┘
 ```
 
-### 🩺 Doctor Workstation
-* **Live Patient Queue**: Real-time daily worklist showing upcoming appointments, check-in statuses, and patient details.
-* **Longitudinal Patient Dossier**: Instant clinical history access, including past visits, diagnostic notes, active treatment plans, and emergency contacts.
-* **SOAP Clinical Notes**: Structured digital charting interface supporting Subjective, Objective, Assessment, and Plan documentation.
-* **Private Medical Document Vault**: In-app encrypted rendering of patient imaging, X-rays, and PDF laboratory reports via `pdfrx` with zero local disk leakage.
-* **Patient Reassignment Safety**: Seamless handoff workflows to assign patients or individual appointments to colleague physicians.
-
-### 📋 Receptionist Operations Desk
-* **Interactive Booking Workboard**: Dynamic schedule matrix displaying single and multi-slot appointments with real-time doctor availability checking.
-* **Recurring Appointment Engine**: Multi-week recurring schedule creation powered by transactional Supabase RPCs with automatic conflict rollback.
-* **Smart Package Balance Deduction**: Automatic detection and verification of prepaid package credits before confirming bookings.
-* **Patient Onboarding & Rapid Search**: Debounced search (300ms) across patient names, phone numbers, and IDs with instant registration.
-* **Point-of-Sale (POS) & Due Tracking**: Collect session payments, record package credit top-ups, and track outstanding patient balances with immutable audit logs.
-
-### 🛡️ Super Admin Control Center
-* **Role-Based Access Control (RBAC)**: Manage user roles across the clinic with instant account activation, deactivation, and role switching.
-* **Granular Financial Permissions**: Explicitly gate payment collection and financial auditing capabilities per staff member.
-* **Clinic Analytics**: Track attendance rates, doctor utilization, appointment status distributions, and revenue flows.
-* **Multi-Branch Segregation**: Organize clinicians, staff, and appointments across multiple physical facility locations.
+* **🩺 Doctor Workstation**: Live patient queue with check-in status indicators, longitudinal patient histories, structured SOAP clinical charting, and encrypted document viewing.
+* **📋 Receptionist Operations Desk**: Interactive booking matrix, multi-week recurring schedule generator, rapid 300ms debounced patient lookup, and POS due collection.
+* **🛡️ Super Admin Control Center**: Granular staff RBAC management, financial capability gating, clinic-wide utilization analytics, and multi-branch configuration.
 
 ---
 
@@ -103,17 +133,9 @@ The codebase follows **Feature-First Clean Architecture**, separating business l
 └────────────────────────────────────────────────────────────────────────┘
 ```
 
-### 💎 Key Software Engineering Pillars
-* **Type-Safe Asynchronous I/O (`Result<T>`)**: Asynchronous repository methods return a functional `Result<T>` (`Success<T>` | `Failure<AppException>`) rather than throwing raw unhandled exceptions.
-* **Immutable State Management**: All domain models and UI states use `@freezed` and `@riverpod` code generation with defensive `copyWith` mutations.
-* **Design Token System**: 100% theme-driven architecture (`AppSizes`, `AppTextStyles`, `Theme.of(context)`). Zero hardcoded dimensions or colors to guarantee seamless Light/Dark mode and responsiveness.
-* **Ergonomic Touch UX**: Adheres to a phone-first interaction model with $\ge 44\text{px}$ touch targets, smooth bottom sheets, and mandatory 4-state UI handling (`Loading`, `Error`, `Empty`, `Data`).
-
 ---
 
 ## 🔒 Database & Security Engineering
-
-The PostgreSQL backend acts as the definitive system of record, embedding business logic directly into database triggers and security policies.
 
 ```mermaid
 sequenceDiagram
@@ -138,11 +160,6 @@ sequenceDiagram
     Trigger->>DB: Decrement patient package_balance by 1
 ```
 
-* **Automated Balance Triggers**: Completing an appointment decrements the patient's package credit; cancelling or deleting automatically restores the balance.
-* **ACID Transactional RPCs**: Complex recurring schedules are booked atomically via stored procedures (`book_recurring_appointments_v1`), rolling back the entire batch if any conflict occurs.
-* **Row-Level Security (RLS)**: Fine-grained policies ensure doctors only read their assigned patients, receptionists manage daily clinic flow, and admins oversee financials.
-* **Private S3-Compatible Storage**: Medical imaging and sensitive lab reports reside in the private `patient-documents` bucket protected by authenticated Supabase storage policies.
-
 ---
 
 ## 🛠️ Tech Stack
@@ -155,7 +172,7 @@ sequenceDiagram
 | **Navigation** | [GoRouter](https://pub.dev/packages/go_router) | Declarative routing with authenticated redirect guards |
 | **Data Modeling** | [Freezed](https://pub.dev/packages/freezed) & `json_serializable` | Immutable value objects and JSON serialization |
 | **Document Rendering** | [Pdfrx](https://pub.dev/packages/pdfrx) | High-performance in-app PDF medical viewer |
-| **UI & Animation** | `flutter_animate`, `flutter_lucide`, `google_fonts` | Smooth transitions and modern Material 3 typography |
+| **UI & Typography** | `flutter_animate`, `flutter_lucide`, `google_fonts` | Material 3 tokenized design system |
 | **Hosting & Delivery** | [Firebase Hosting](https://firebase.google.com/docs/hosting) | Production web distribution |
 
 ---
@@ -192,41 +209,27 @@ supabase/
 * [Flutter SDK](https://docs.flutter.dev/get-started/install) (`>= 3.10.0`)
 * [Supabase CLI](https://supabase.com/docs/guides/cli) or an active Supabase project
 
-### 1. Clone & Install Dependencies
 ```bash
+# 1. Clone & Install Dependencies
 git clone https://github.com/saagy/theSpineClinic.git
 cd theSpineClinic
 flutter pub get
-```
 
-### 2. Configure Environment Variables
-Copy `.env.example` to `.env` and provide your project keys:
-```bash
+# 2. Configure Environment (.env)
 cp .env.example .env
-```
-```env
-SUPABASE_URL=https://your-project.supabase.co
-SUPABASE_ANON_KEY=your-anon-key-here
-```
 
-### 3. Run with Secure Compile-Time Flags
-Pass configuration via `--dart-define` to ensure keys are not bundled in clear-text web assets:
-```bash
+# 3. Run with Secure Compile-Time Flags
 flutter run \
   --dart-define=SUPABASE_URL=https://your-project.supabase.co \
   --dart-define=SUPABASE_ANON_KEY=your-anon-key-here
-```
 
-### 4. Code Generation (When Modifying Models/Providers)
-```bash
+# 4. Code Generation
 dart run build_runner build --delete-conflicting-outputs
 ```
 
 ---
 
 ## 🧪 Testing & Quality Assurance
-
-The codebase enforces strict static analysis and comprehensive automated tests across client logic and database triggers.
 
 ```bash
 # 1. Static Analysis (Zero Warnings / Zero Errors policy)
@@ -241,9 +244,8 @@ psql "$DATABASE_URL" -f test/trigger_sanity.sql
 
 ---
 
-## 📚 In-Depth Technical Documentation
+## 📚 Technical Documentation
 
-For deeper architectural and database specifications, refer to the technical docs:
 * 📖 [Database Overview](docs/database-overview.md) — System of record architecture and data models.
 * 📋 [Schema Reference](docs/schema-reference.md) — Exhaustive table schema, triggers, and RPC documentation.
 * 🔐 [Security & RLS Model](docs/security-model.md) — Role policies, auth tokens, and private storage rules.
@@ -251,7 +253,21 @@ For deeper architectural and database specifications, refer to the technical doc
 
 ---
 
+## 👨‍💻 Author & Connect
+
+**Sagy Tamer** — *Mobile Software Engineer*
+
+[![LinkedIn](https://img.shields.io/badge/LinkedIn-0A66C2?style=for-the-badge&logo=linkedin&logoColor=white)](https://www.linkedin.com/in/sagy-tamer/)
+[![Email](https://img.shields.io/badge/Email-D14836?style=for-the-badge&logo=gmail&logoColor=white)](mailto:sagyelmoghazy1@gmail.com)
+[![Web Demo](https://img.shields.io/badge/Live_App-2BB5A0?style=for-the-badge&logo=googlechrome&logoColor=white)](https://spine-clinic-app.web.app/)
+
+* **LinkedIn**: [linkedin.com/in/sagy-tamer](https://www.linkedin.com/in/sagy-tamer/)
+* **Email**: [sagyelmoghazy1@gmail.com](mailto:sagyelmoghazy1@gmail.com)
+* **Live Web App**: [spine-clinic-app.web.app](https://spine-clinic-app.web.app/)
+
+---
+
 <div align="center">
-  <sub>Built with ❤️ for modern healthcare operations. Designed and engineered for speed, reliability, and clinical clarity.</sub>
+  <sub>Built with ❤️ for modern healthcare operations. Engineered for speed, reliability, and clinical clarity.</sub>
 </div>
 
