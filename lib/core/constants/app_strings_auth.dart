@@ -31,6 +31,20 @@ abstract final class AppStringsAuth {
       'Your application has been submitted. '
       'You will be notified once it is reviewed.';
   static const String backToLogin = 'Back to Login';
+  static const String next = 'Next';
+  static const String back = 'Back';
+  static const String stepIdentity = 'Step 1: Role & Identity';
+  static const String stepCredentials = 'Step 2: Security';
+  static const String passwordStrength = 'Password strength';
+  static const String strengthWeak = 'Weak';
+  static const String strengthFair = 'Fair';
+  static const String strengthGood = 'Good';
+  static const String strengthStrong = 'Strong';
+  static const String reqMinLength = 'At least 8 characters';
+  static const String reqUppercase = 'One uppercase letter';
+  static const String reqLowercase = 'One lowercase letter';
+  static const String reqNumber = 'One number';
+  static const String reqSpecial = 'One special character';
 
   // ──────────────────── Form Validation ────────────────────
 

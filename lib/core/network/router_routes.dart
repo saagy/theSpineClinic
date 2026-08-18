@@ -94,7 +94,6 @@ List<RouteBase> _buildRoutes(Ref ref) => [
             userRole: role,
             currentTabIndex: _resolveActiveIndex(role, state.uri.path),
             onTabSelected: (int index) => _onTabSelected(context, role, index),
-            showBrandedAppBar: !_isSubPage(state.uri.path),
             child: child,
           ),
         ),

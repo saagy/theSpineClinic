@@ -188,17 +188,19 @@ class _AppointmentLinkIndicator extends ConsumerWidget {
       children: [
         Icon(Icons.link_rounded, size: AppSizes.iconSmall, color: ClinicColors.of(context).info),
         const SizedBox(width: AppSizes.p4),
-        appointmentAsync.when(
-          data: (appt) {
-            final apptDate = Formatters.formatDateMedium(appt.scheduledAt);
-            return AppBadge(
-              label: '${AppStrings.onAppointmentPrefix}${appt.type.displayLabel} ($apptDate)',
-              textColor: ClinicColors.of(context).info,
-              backgroundColor: ClinicColors.of(context).infoContainer,
-            );
-          },
-          loading: () => Text(AppStrings.loadingDetails, style: AppTextStyles.caption),
-          error: (_, __) => Text(AppStrings.linkedAppointmentLabel, style: AppTextStyles.caption),
+        Expanded(
+          child: appointmentAsync.when(
+            data: (appt) {
+              final apptDate = Formatters.formatDateMedium(appt.scheduledAt);
+              return AppBadge(
+                label: '${AppStrings.onAppointmentPrefix}${appt.type.displayLabel} ($apptDate)',
+                textColor: ClinicColors.of(context).info,
+                backgroundColor: ClinicColors.of(context).infoContainer,
+              );
+            },
+            loading: () => Text(AppStrings.loadingDetails, style: AppTextStyles.caption),
+            error: (_, __) => Text(AppStrings.linkedAppointmentLabel, style: AppTextStyles.caption),
+          ),
         ),
       ],
     );

@@ -36,20 +36,8 @@ int _resolveActiveIndex(String role, String location) {
   }
 }
 
-bool _isSubPage(String location) {
-  if (location.startsWith('/appointment/') &&
-      !location.endsWith('/edit') &&
-      !location.endsWith('/notes')) {
-    return true;
-  }
-  if (location.startsWith('/visit/')) return true;
-  if (location.startsWith('/patient/') &&
-      !location.endsWith('/edit') &&
-      !location.endsWith('/pay')) {
-    return true;
-  }
-  return location == AppRoutes.doctorHistory || location == AppRoutes.staffList;
-}
+
+
 
 void _onTabSelected(BuildContext context, String role, int index) {
   switch (role) {
