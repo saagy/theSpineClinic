@@ -25,11 +25,6 @@ jobs:
       - name: Generate Code (Riverpod / Freezed)
         run: dart run build_runner build --delete-conflicting-outputs
 
-      - name: Install CocoaPods
-        run: |
-          cd ios
-          pod install --repo-update || pod install
-
       - name: Build iOS (No Codesign)
         run: flutter build ios --release --no-codesign
 
