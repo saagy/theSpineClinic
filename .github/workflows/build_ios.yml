@@ -25,13 +25,28 @@ jobs:
       - name: Generate Code (Riverpod / Freezed)
         run: dart run build_runner build --delete-conflicting-outputs
 
-      - name: Build iOS (No Codesign)
-        run: flutter build ios --release --no-codesign
+      - name: Prepare iOS build settings
+        run: flutter build ios --config-only --release --no-codesign
+
+      - name: Build iOS App with xcodebuild
+        run: |
+          xcodebuild -workspace ios/Runner.xcworkspace \
+            -scheme Runner \
+            -configuration Release \
+            -sdk iphoneos \
+            -destination 'generic/platform=iOS' \
+            -derivedDataPath build/ios \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_IDENTITY="" \
+            build
 
       - name: Package Payload into .ipa
         run: |
+          APP_PATH=$(find build/ios -name "Runner.app" -type d | head -n 1)
+          echo "Found app at: $APP_PATH"
           mkdir Payload
-          cp -r build/ios/iphoneos/Runner.app Payload/
+          cp -r "$APP_PATH" Payload/
           zip -r spine_clinic_app.ipa Payload
 
       - name: Upload IPA Artifact
