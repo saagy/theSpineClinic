@@ -1,5 +1,6 @@
 {
   "projects": {
+    "default": "spine-clinic-app",
     "staging": "spine-clinic-app"
   },
   "targets": {},
