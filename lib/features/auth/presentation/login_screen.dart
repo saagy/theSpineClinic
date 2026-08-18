@@ -4,22 +4,18 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:spine_clinic_app/core/constants/app_sizes.dart';
 import 'package:spine_clinic_app/core/constants/app_strings.dart';
 import 'package:spine_clinic_app/core/constants/app_strings_auth.dart';
-import 'package:spine_clinic_app/core/constants/app_text_styles.dart';
 import 'package:spine_clinic_app/core/errors/app_exception.dart';
 import 'package:spine_clinic_app/features/auth/domain/user_role.dart';
 import 'package:spine_clinic_app/features/auth/presentation/auth_providers.dart';
-import 'package:spine_clinic_app/features/auth/presentation/widgets/login_form.dart';
-import 'package:spine_clinic_app/features/auth/presentation/widgets/register_step_credentials.dart';
-import 'package:spine_clinic_app/features/auth/presentation/widgets/register_step_identity.dart';
+import 'package:spine_clinic_app/features/auth/presentation/widgets/auth_controllers.dart';
+import 'package:spine_clinic_app/features/auth/presentation/widgets/auth_form_switcher.dart';
+import 'package:spine_clinic_app/features/auth/presentation/widgets/frosted_auth_card.dart';
 import 'package:spine_clinic_app/features/auth/presentation/widgets/register_success_view.dart';
 import 'package:spine_clinic_app/features/patient/domain/clinic_location.dart';
 import 'package:spine_clinic_app/shared/widgets/ambient_glow_background.dart';
 import 'package:spine_clinic_app/shared/widgets/app_snackbar.dart';
 import 'package:spine_clinic_app/shared/widgets/clinic_brand_mark.dart';
-import 'package:spine_clinic_app/shared/widgets/frosted_glass_card.dart';
 import 'package:spine_clinic_app/shared/widgets/loading_overlay.dart';
-
-enum _AuthMode { login, registerIdentity, registerCredentials }
 
 /// Unified morphing frosted-glass authentication screen.
 class LoginScreen extends ConsumerStatefulWidget {
@@ -34,20 +30,9 @@ class LoginScreen extends ConsumerStatefulWidget {
 }
 
 class _LoginScreenState extends ConsumerState<LoginScreen> {
-  final GlobalKey<FormState> _loginKey = GlobalKey<FormState>();
-  final GlobalKey<FormState> _regStep1Key = GlobalKey<FormState>();
-  final GlobalKey<FormState> _regStep2Key = GlobalKey<FormState>();
+  final AuthControllers _ctrls = AuthControllers();
 
-  final TextEditingController _loginEmailCtrl = TextEditingController();
-  final TextEditingController _loginPasswordCtrl = TextEditingController();
-
-  final TextEditingController _regNameCtrl = TextEditingController();
-  final TextEditingController _regEmailCtrl = TextEditingController();
-  final TextEditingController _regPhoneCtrl = TextEditingController();
-  final TextEditingController _regPasswordCtrl = TextEditingController();
-  final TextEditingController _regConfirmCtrl = TextEditingController();
-
-  late _AuthMode _mode;
+  late AuthMode _mode;
   UserRole _selectedRole = UserRole.doctor;
   ClinicLocation? _selectedBranch;
   bool _isRegisterLoading = false;
@@ -56,42 +41,34 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   @override
   void initState() {
     super.initState();
-    _mode = widget.initialRegister
-        ? _AuthMode.registerIdentity
-        : _AuthMode.login;
+    _mode = widget.initialRegister ? AuthMode.registerIdentity : AuthMode.login;
   }
 
   @override
   void dispose() {
-    _loginEmailCtrl.dispose();
-    _loginPasswordCtrl.dispose();
-    _regNameCtrl.dispose();
-    _regEmailCtrl.dispose();
-    _regPhoneCtrl.dispose();
-    _regPasswordCtrl.dispose();
-    _regConfirmCtrl.dispose();
+    _ctrls.dispose();
     super.dispose();
   }
 
   Future<void> _handleLogin() async {
-    if (!_loginKey.currentState!.validate()) return;
+    if (!_ctrls.loginKey.currentState!.validate()) return;
     ref.read(currentUserProvider.notifier).clearError();
     await ref.read(currentUserProvider.notifier).login(
-          _loginEmailCtrl.text.trim(),
-          _loginPasswordCtrl.text,
+          _ctrls.loginEmailCtrl.text.trim(),
+          _ctrls.loginPasswordCtrl.text,
         );
   }
 
   Future<void> _handleRegister() async {
-    if (!_regStep2Key.currentState!.validate()) return;
+    if (!_ctrls.regStep2Key.currentState!.validate()) return;
     setState(() => _isRegisterLoading = true);
 
     final result = await ref.read(authRepositoryProvider).registerStaff(
           role: _selectedRole,
-          fullName: _regNameCtrl.text.trim(),
-          email: _regEmailCtrl.text.trim(),
-          phone: _regPhoneCtrl.text.trim(),
-          password: _regPasswordCtrl.text,
+          fullName: _ctrls.regNameCtrl.text.trim(),
+          email: _ctrls.regEmailCtrl.text.trim(),
+          phone: _ctrls.regPhoneCtrl.text.trim(),
+          password: _ctrls.regPasswordCtrl.text,
           branch:
               _selectedRole == UserRole.receptionist ? _selectedBranch : null,
         );
@@ -117,7 +94,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         onBackToLogin: () => setState(() {
           _isRegisterSuccess = false;
           _isRegisterLoading = false;
-          _mode = _AuthMode.login;
+          _mode = AuthMode.login;
         }),
       );
     }
@@ -136,10 +113,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       }
     });
 
-    final bool isLoginLoading = ref.watch(currentUserProvider).isLoading;
-    final bool isBusy = isLoginLoading || _isRegisterLoading;
+    final bool isBusy =
+        ref.watch(currentUserProvider).isLoading || _isRegisterLoading;
     final theme = Theme.of(context);
-    final cs = theme.colorScheme;
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
@@ -149,69 +125,55 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           child: SafeArea(
             child: Center(
               child: SingleChildScrollView(
+                physics: const ClampingScrollPhysics(),
                 padding: const EdgeInsets.symmetric(
-                  horizontal: AppSizes.p24,
-                  vertical: AppSizes.p32,
+                  horizontal: AppSizes.p20,
+                  vertical: AppSizes.p16,
                 ),
                 child: Center(
                   child: ConstrainedBox(
-                    constraints: const BoxConstraints(maxWidth: 420),
+                    constraints: const BoxConstraints(maxWidth: 400),
                     child: AutofillGroup(
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
-                          const Center(child: ClinicBrandMark(width: 230))
+                          const Center(child: ClinicBrandMark(width: 175))
                               .animate()
-                              .fadeIn(duration: 500.ms)
+                              .fadeIn(duration: 400.ms)
                               .scale(
-                                begin: const Offset(0.95, 0.95),
+                                begin: const Offset(0.96, 0.96),
                                 end: const Offset(1, 1),
-                                duration: 500.ms,
+                                duration: 400.ms,
                               ),
-                          const SizedBox(height: AppSizes.p28),
-                          FrostedGlassCard(
-                            child: AnimatedSize(
-                              duration: const Duration(milliseconds: 380),
-                              curve: Curves.easeInOutCubic,
-                              alignment: Alignment.topCenter,
-                              child: AnimatedSwitcher(
-                                duration: const Duration(milliseconds: 300),
-                                transitionBuilder: (child, anim) =>
-                                    FadeTransition(
-                                  opacity: anim,
-                                  child: SlideTransition(
-                                    position: Tween<Offset>(
-                                      begin: const Offset(0.04, 0),
-                                      end: Offset.zero,
-                                    ).animate(anim),
-                                    child: child,
-                                  ),
-                                ),
-                                child: _buildCurrentForm(isBusy),
-                              ),
+                          const SizedBox(height: AppSizes.p16),
+                          FrostedAuthCard(
+                            mode: _mode,
+                            isBusy: isBusy,
+                            ctrls: _ctrls,
+                            selectedRole: _selectedRole,
+                            selectedBranch: _selectedBranch,
+                            onTabChanged: (reg) => setState(() {
+                              _mode = reg
+                                  ? AuthMode.registerIdentity
+                                  : AuthMode.login;
+                            }),
+                            onRoleChanged: (r) =>
+                                setState(() => _selectedRole = r),
+                            onBranchChanged: (b) =>
+                                setState(() => _selectedBranch = b),
+                            onLoginSubmit: _handleLogin,
+                            onNextToCredentials: () {
+                              if (_ctrls.regStep1Key.currentState!.validate()) {
+                                setState(
+                                  () => _mode = AuthMode.registerCredentials,
+                                );
+                              }
+                            },
+                            onBackToIdentity: () => setState(
+                              () => _mode = AuthMode.registerIdentity,
                             ),
-                          ),
-                          const SizedBox(height: AppSizes.p24),
-                          Center(
-                            child: TextButton(
-                              onPressed: isBusy
-                                  ? null
-                                  : () => setState(() {
-                                        _mode = _mode == _AuthMode.login
-                                            ? _AuthMode.registerIdentity
-                                            : _AuthMode.login;
-                                      }),
-                              child: Text(
-                                _mode == _AuthMode.login
-                                    ? AppStringsAuth.register
-                                    : AppStringsAuth.signIn,
-                                style: AppTextStyles.bodyMedium.copyWith(
-                                  color: cs.primary,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                            ),
+                            onRegisterSubmit: _handleRegister,
                           ),
                         ],
                       ),
@@ -225,46 +187,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       ),
     );
   }
-
-  Widget _buildCurrentForm(bool isBusy) {
-    switch (_mode) {
-      case _AuthMode.login:
-        return LoginForm(
-          key: const ValueKey('login'),
-          formKey: _loginKey,
-          emailController: _loginEmailCtrl,
-          passwordController: _loginPasswordCtrl,
-          isLoading: isBusy,
-          onSubmit: _handleLogin,
-        );
-      case _AuthMode.registerIdentity:
-        return RegisterStepIdentity(
-          key: const ValueKey('reg_id'),
-          formKey: _regStep1Key,
-          nameController: _regNameCtrl,
-          emailController: _regEmailCtrl,
-          phoneController: _regPhoneCtrl,
-          selectedRole: _selectedRole,
-          selectedBranch: _selectedBranch,
-          onRoleChanged: (r) => setState(() => _selectedRole = r),
-          onBranchChanged: (b) => setState(() => _selectedBranch = b),
-          onNext: () {
-            if (_regStep1Key.currentState!.validate()) {
-              setState(() => _mode = _AuthMode.registerCredentials);
-            }
-          },
-          isLoading: isBusy,
-        );
-      case _AuthMode.registerCredentials:
-        return RegisterStepCredentials(
-          key: const ValueKey('reg_cred'),
-          formKey: _regStep2Key,
-          passwordController: _regPasswordCtrl,
-          confirmController: _regConfirmCtrl,
-          onBack: () => setState(() => _mode = _AuthMode.registerIdentity),
-          onSubmit: _handleRegister,
-          isLoading: isBusy,
-        );
-    }
-  }
 }
+
+
+
+

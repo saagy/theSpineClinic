@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:spine_clinic_app/core/constants/app_sizes.dart';
 import 'package:spine_clinic_app/core/constants/app_strings.dart';
@@ -46,8 +46,8 @@ class LoginForm extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           Text(
-            'Welcome back',
-            style: theme.textTheme.headlineSmall?.copyWith(
+            AppStringsAuth.welcomeBack,
+            style: theme.textTheme.titleMedium?.copyWith(
               fontWeight: FontWeight.w700,
               color: cs.onSurface,
             ),
@@ -55,13 +55,13 @@ class LoginForm extends StatelessWidget {
           ),
           const SizedBox(height: AppSizes.p4),
           Text(
-            'Sign in to your clinical account',
-            style: theme.textTheme.bodyMedium?.copyWith(
+            AppStringsAuth.signInToContinue,
+            style: theme.textTheme.bodySmall?.copyWith(
               color: cs.onSurfaceVariant,
             ),
             textAlign: TextAlign.center,
           ),
-          const SizedBox(height: AppSizes.p24),
+          const SizedBox(height: AppSizes.p16),
 
           // Email input
           AppTextInput(
@@ -74,7 +74,7 @@ class LoginForm extends StatelessWidget {
             textInputAction: TextInputAction.next,
             autofillHints: const [AutofillHints.username],
           ),
-          const SizedBox(height: AppSizes.p16),
+          const SizedBox(height: AppSizes.p12),
 
           // Password input
           AppTextInput(
@@ -88,7 +88,7 @@ class LoginForm extends StatelessWidget {
             autofillHints: const [AutofillHints.password],
             onSubmitted: isLoading ? null : (_) => onSubmit(),
           ),
-          const SizedBox(height: AppSizes.p24),
+          const SizedBox(height: AppSizes.p16),
 
           // Sign In Action
           AppButton(
@@ -102,3 +102,4 @@ class LoginForm extends StatelessWidget {
     );
   }
 }
+

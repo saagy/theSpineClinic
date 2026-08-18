@@ -63,13 +63,13 @@ class _RegisterStepCredentialsState extends State<RegisterStepCredentials> {
           ),
           const SizedBox(height: AppSizes.p4),
           Text(
-            'Create a strong password for your account',
+            AppStringsAuth.stepCredentialsSubtitle,
             style: theme.textTheme.bodySmall?.copyWith(
               color: cs.onSurfaceVariant,
             ),
             textAlign: TextAlign.center,
           ),
-          const SizedBox(height: AppSizes.p20),
+          const SizedBox(height: AppSizes.p14),
 
           // Password
           AppTextInput(
@@ -89,11 +89,15 @@ class _RegisterStepCredentialsState extends State<RegisterStepCredentials> {
             curve: Curves.easeInOutCubic,
             child: _currentPassword.isNotEmpty
                 ? Padding(
-                    padding: const EdgeInsets.only(bottom: AppSizes.p16),
+                    padding: const EdgeInsets.only(
+                      top: AppSizes.p8,
+                      bottom: AppSizes.p8,
+                    ),
                     child: PasswordStrengthMeter(password: _currentPassword),
                   )
                 : const SizedBox.shrink(),
           ),
+          const SizedBox(height: AppSizes.p10),
 
           // Confirm Password
           AppTextInput(
@@ -109,7 +113,7 @@ class _RegisterStepCredentialsState extends State<RegisterStepCredentials> {
             autofillHints: const [AutofillHints.newPassword],
             onSubmitted: widget.isLoading ? null : (_) => widget.onSubmit(),
           ),
-          const SizedBox(height: AppSizes.p24),
+          const SizedBox(height: AppSizes.p16),
 
           // Actions: Back and Submit
           Row(
@@ -120,7 +124,7 @@ class _RegisterStepCredentialsState extends State<RegisterStepCredentials> {
                   onPressed: widget.isLoading ? null : widget.onBack,
                   style: OutlinedButton.styleFrom(
                     padding: const EdgeInsets.symmetric(
-                      vertical: AppSizes.p16,
+                      vertical: AppSizes.p14,
                     ),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(AppSizes.r999),
@@ -153,3 +157,4 @@ class _RegisterStepCredentialsState extends State<RegisterStepCredentials> {
     );
   }
 }
+

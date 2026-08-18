@@ -34,7 +34,9 @@ abstract final class AppStringsAuth {
   static const String next = 'Next';
   static const String back = 'Back';
   static const String stepIdentity = 'Step 1: Role & Identity';
+  static const String stepIdentitySubtitle = 'Select your role and enter contact info';
   static const String stepCredentials = 'Step 2: Security';
+  static const String stepCredentialsSubtitle = 'Create a strong password for your account';
   static const String passwordStrength = 'Password strength';
   static const String strengthWeak = 'Weak';
   static const String strengthFair = 'Fair';

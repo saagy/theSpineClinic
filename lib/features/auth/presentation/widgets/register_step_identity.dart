@@ -59,13 +59,13 @@ class RegisterStepIdentity extends StatelessWidget {
           ),
           const SizedBox(height: AppSizes.p4),
           Text(
-            'Enter your basic identity and role',
+            AppStringsAuth.stepIdentitySubtitle,
             style: theme.textTheme.bodySmall?.copyWith(
               color: cs.onSurfaceVariant,
             ),
             textAlign: TextAlign.center,
           ),
-          const SizedBox(height: AppSizes.p20),
+          const SizedBox(height: AppSizes.p14),
 
           // Role Selector
           AuthRoleSelector(
@@ -73,7 +73,7 @@ class RegisterStepIdentity extends StatelessWidget {
             onRoleChanged: onRoleChanged,
             enabled: !isLoading,
           ),
-          const SizedBox(height: AppSizes.p16),
+          const SizedBox(height: AppSizes.p10),
 
           // Full Name
           AppTextInput(
@@ -84,7 +84,7 @@ class RegisterStepIdentity extends StatelessWidget {
             enabled: !isLoading,
             textInputAction: TextInputAction.next,
           ),
-          const SizedBox(height: AppSizes.p14),
+          const SizedBox(height: AppSizes.p10),
 
           // Email
           AppTextInput(
@@ -97,7 +97,7 @@ class RegisterStepIdentity extends StatelessWidget {
             textInputAction: TextInputAction.next,
             autofillHints: const [AutofillHints.username],
           ),
-          const SizedBox(height: AppSizes.p14),
+          const SizedBox(height: AppSizes.p10),
 
           // Phone
           AppTextInput(
@@ -109,15 +109,15 @@ class RegisterStepIdentity extends StatelessWidget {
             enabled: !isLoading,
             textInputAction: TextInputAction.done,
           ),
-          const SizedBox(height: AppSizes.p14),
+          const SizedBox(height: AppSizes.p10),
 
           // Branch selector if Receptionist (Animated Expansion)
           AnimatedSize(
-            duration: const Duration(milliseconds: 280),
+            duration: const Duration(milliseconds: 250),
             curve: Curves.easeInOutCubic,
             child: selectedRole == UserRole.receptionist
                 ? Padding(
-                    padding: const EdgeInsets.only(bottom: AppSizes.p14),
+                    padding: const EdgeInsets.only(bottom: AppSizes.p10),
                     child: DropdownButtonFormField<ClinicLocation>(
                       initialValue: selectedBranch,
                       decoration: const InputDecoration(
@@ -141,7 +141,7 @@ class RegisterStepIdentity extends StatelessWidget {
                 : const SizedBox.shrink(),
           ),
 
-          const SizedBox(height: AppSizes.p10),
+          const SizedBox(height: AppSizes.p4),
 
           // Next Step Button
           AppButton(
@@ -154,3 +154,4 @@ class RegisterStepIdentity extends StatelessWidget {
     );
   }
 }
+
