@@ -1,4 +1,4 @@
-﻿name: Build iOS & Deploy Web
+name: Build iOS & Deploy Web
 
 on:
   workflow_dispatch:
@@ -73,6 +73,15 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+
+      - name: Create .env file
+        run: |
+          URL="${{ secrets.SUPABASE_URL }}"
+          KEY="${{ secrets.SUPABASE_ANON_KEY }}"
+          if [ -z "$URL" ]; then URL="https://ujketpugttdqpcixrnga.supabase.co"; fi
+          if [ -z "$KEY" ]; then KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVqa2V0cHVndHRkcXBjaXhybmdhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA1MDczOTAsImV4cCI6MjA5NjA4MzM5MH0.TOUZwiAX6-GMygzXPriHKtYjd-FKGg0zOl8maI5cDa0"; fi
+          echo "SUPABASE_URL=$URL" > .env
+          echo "SUPABASE_ANON_KEY=$KEY" >> .env
 
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
