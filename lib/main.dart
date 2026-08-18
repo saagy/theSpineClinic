@@ -12,6 +12,10 @@ import 'package:spine_clinic_app/core/network/router.dart';
 import 'package:spine_clinic_app/core/utils/local_settings_providers.dart';
 import 'package:spine_clinic_app/core/utils/theme_mode_controller.dart';
 
+const String _defaultSupabaseUrl = 'https://ujketpugttdqpcixrnga.supabase.co';
+const String _defaultSupabaseAnonKey =
+    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVqa2V0cHVndHRkcXBjaXhybmdhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA1MDczOTAsImV4cCI6MjA5NjA4MzM5MH0.TOUZwiAX6-GMygzXPriHKtYjd-FKGg0zOl8maI5cDa0';
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
@@ -20,7 +24,6 @@ void main() async {
   String key = const String.fromEnvironment('SUPABASE_ANON_KEY');
 
   print('MAIN: Initializing Supabase...');
-  print('MAIN: SUPABASE_URL compile-time length: ${url.length}');
 
   if (url.isEmpty || key.isEmpty) {
     print('MAIN: Compile-time variables not found. Loading from .env asset...');
@@ -35,18 +38,19 @@ void main() async {
 
         final String envKey = parts[0].trim();
         final String envValue = parts.sublist(1).join('=').trim();
-        if (envKey == 'SUPABASE_URL') {
+        if (envKey == 'SUPABASE_URL' && envValue.isNotEmpty) {
           url = envValue;
-        } else if (envKey == 'SUPABASE_ANON_KEY') {
+        } else if (envKey == 'SUPABASE_ANON_KEY' && envValue.isNotEmpty) {
           key = envValue;
         }
       }
-      print('MAIN: Loaded from .env asset successfully!');
-      print('MAIN: SUPABASE_URL asset length: ${url.length}');
     } catch (e) {
       print('MAIN: Error loading .env asset: $e');
     }
   }
+
+  if (url.isEmpty) url = _defaultSupabaseUrl;
+  if (key.isEmpty) key = _defaultSupabaseAnonKey;
 
   await Supabase.initialize(url: url, anonKey: key);
   print('MAIN: Supabase initialized successfully!');
