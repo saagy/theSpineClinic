@@ -64,107 +64,102 @@ class ReceptionistTodayTab extends ConsumerWidget {
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: AppSizes.maxContentWidth),
         child: NestedScrollView(
+          floatHeaderSlivers: true,
           headerSliverBuilder: (_, __) => <Widget>[
             SliverToBoxAdapter(
               child: Column(
-                key: const ValueKey<String>('receptionist-schedule-toolbar'),
                 children: [
-                  Row(
-                    children: [
-                      Expanded(
-                        child: TodaySearchField(onChanged: onSearchChanged),
-                      ),
-                      IconButton.filledTonal(
-                        onPressed: () => ReceptionistTodayActions.showFilter(
-                          context,
-                          ref,
-                          state,
-                        ),
-                        icon: const Icon(Icons.filter_list_rounded),
-                        tooltip: AppStrings.filters,
-                      ),
-                      const SizedBox(width: AppSizes.p8),
-                      if (canReplace) ...[
-                        IconButton.filledTonal(
-                          onPressed: () =>
+                  Container(
+                    key: const ValueKey<String>(
+                      'receptionist-schedule-toolbar',
+                    ),
+                    child: Column(
+                      children: [
+                        TodaySearchField(
+                          onChanged: onSearchChanged,
+                          onFilterPressed: () =>
+                              ReceptionistTodayActions.showFilter(
+                                context,
+                                ref,
+                                state,
+                              ),
+                          isFilterActive: filterDoctorId != null,
+                          canReplace: canReplace,
+                          onReplacePressed: () =>
                               ReceptionistTodayActions.replaceDoctor(
                                 context,
                                 ref,
                                 state,
                               ),
-                          icon: const Icon(Icons.swap_horiz_rounded),
-                          tooltip: AppStrings.replaceDoctor,
                         ),
-                        const SizedBox(width: AppSizes.p16),
+                        if (filterDoctorId != null)
+                          ActiveFilterChipsRow(
+                            chips: [
+                              ActiveFilterChip(
+                                label:
+                                    filterDoctorName ??
+                                    AppStrings.unknownDoctorFallback,
+                                onRemove: () => ref
+                                    .read(
+                                      receptionistAppointmentsProvider
+                                          .notifier,
+                                    )
+                                    .setDoctorFilter(null),
+                              ),
+                            ],
+                            onClearAll: () => ref
+                                .read(
+                                  receptionistAppointmentsProvider
+                                      .notifier,
+                                )
+                                .setDoctorFilter(null),
+                          ),
                       ],
-                    ],
-                  ),
-                  if (filterDoctorId != null)
-                    ActiveFilterChipsRow(
-                      chips: [
-                        ActiveFilterChip(
-                          label:
-                              filterDoctorName ??
-                              AppStrings.unknownDoctorFallback,
-                          onRemove: () => ref
-                              .read(receptionistAppointmentsProvider.notifier)
-                              .setDoctorFilter(null),
-                        ),
-                      ],
-                      onClearAll: () => ref
-                          .read(receptionistAppointmentsProvider.notifier)
-                          .setDoctorFilter(null),
                     ),
+                  ),
+                  DoctorWeekStrip(
+                    dayCounts: state.dayAppointmentCounts,
+                    selectedDate: state.selectedDate,
+                    onDateSelected: (date) {
+                      ref
+                          .read(receptionistAppointmentsProvider.notifier)
+                          .selectDate(date);
+                    },
+                  ),
                 ],
               ),
             ),
           ],
-          body: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              DoctorWeekStrip(
-                dayCounts: state.dayAppointmentCounts,
-                selectedDate: state.selectedDate,
-                onDateSelected: (date) {
-                  ref
-                      .read(receptionistAppointmentsProvider.notifier)
-                      .selectDate(date);
-                },
-              ),
-              Expanded(
-                child: AnimatedSwitcher(
-                  duration: const Duration(milliseconds: 250),
-                  switchInCurve: Curves.easeOutCubic,
-                  switchOutCurve: Curves.easeInCubic,
-                  transitionBuilder: (c, a) =>
-                      FadeTransition(opacity: a, child: c),
-                  child: state.loading
-                      ? const KeyedSubtree(
-                          key: ValueKey('today_loading'),
-                          child: SkeletonTileList(count: 5),
-                        )
-                      : state.error != null
-                      ? KeyedSubtree(
-                          key: const ValueKey('today_error'),
-                          child: _buildErrorState(context),
-                        )
-                      : KeyedSubtree(
-                          key: ValueKey(
-                            'today_data_${state.selectedDate}_${state.itemsForSelectedDay.length}',
-                          ),
-                          child: ReceptionistDayList(
-                            state: state,
-                            searchQuery: searchQuery,
-                            onStatusChanged: onStatusChanged,
-                            onToggleCancelled: () => ref
-                                .read(receptionistAppointmentsProvider.notifier)
-                                .toggleShowCancelled(),
-                            onRefresh: () async => onRefresh(),
-                          ),
-                        ),
-                ),
-              ),
-            ],
+          body: AnimatedSwitcher(
+            duration: const Duration(milliseconds: 250),
+            switchInCurve: Curves.easeOutCubic,
+            switchOutCurve: Curves.easeInCubic,
+            transitionBuilder: (c, a) =>
+                FadeTransition(opacity: a, child: c),
+            child: state.loading
+                ? const KeyedSubtree(
+                    key: ValueKey('today_loading'),
+                    child: SkeletonTileList(count: 5),
+                  )
+                : state.error != null
+                ? KeyedSubtree(
+                    key: const ValueKey('today_error'),
+                    child: _buildErrorState(context),
+                  )
+                : KeyedSubtree(
+                    key: ValueKey(
+                      'today_data_${state.selectedDate}_${state.itemsForSelectedDay.length}',
+                    ),
+                    child: ReceptionistDayList(
+                      state: state,
+                      searchQuery: searchQuery,
+                      onStatusChanged: onStatusChanged,
+                      onToggleCancelled: () => ref
+                          .read(receptionistAppointmentsProvider.notifier)
+                          .toggleShowCancelled(),
+                      onRefresh: () async => onRefresh(),
+                    ),
+                  ),
           ),
         ),
       ),
