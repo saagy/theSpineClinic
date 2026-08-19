@@ -4,49 +4,104 @@
 /// Rule 1 — under 200 lines.
 library;
 
-import 'package:auto_size_text/auto_size_text.dart';
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:spine_clinic_app/core/constants/app_sizes.dart';
 import 'package:spine_clinic_app/core/constants/app_strings.dart';
 import 'package:spine_clinic_app/core/constants/app_text_styles.dart';
+import 'package:spine_clinic_app/core/utils/schedule_density_controller.dart';
 import 'package:spine_clinic_app/features/appointment/domain/appointment_repository.dart';
 import 'package:spine_clinic_app/features/appointment/presentation/doctor_schedule_providers.dart';
 import 'package:spine_clinic_app/features/appointment/presentation/widgets/receptionist_appointment_card.dart';
+import 'package:spine_clinic_app/features/appointment/presentation/widgets/receptionist_day_list_helpers.dart';
 
 /// The appointment list for a single day selected in the week strip.
-class DoctorDayList extends StatelessWidget {
+class DoctorDayList extends ConsumerStatefulWidget {
   /// Creates a [DoctorDayList].
   const DoctorDayList({
     super.key,
     required this.state,
     this.onStatusChanged,
-    this.onToggleCancelled,
     this.onRefresh,
   });
 
   final DoctorScheduleState state;
   final VoidCallback? onStatusChanged;
-  final VoidCallback? onToggleCancelled;
   final Future<void> Function()? onRefresh;
+
+  @override
+  ConsumerState<DoctorDayList> createState() => _DoctorDayListState();
+}
+
+class _DoctorDayListState extends ConsumerState<DoctorDayList> {
+  late final ScrollController _scrollController;
+  DateTime? _lastAutoScrolledDate;
+
+  @override
+  void initState() {
+    super.initState();
+    _scrollController = ScrollController();
+    _checkAutoScroll();
+  }
+
+  @override
+  void didUpdateWidget(covariant DoctorDayList oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.state.selectedDate != widget.state.selectedDate) {
+      _checkAutoScroll();
+    }
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  void _checkAutoScroll() {
+    if (!widget.state.isToday) return;
+    if (_lastAutoScrolledDate == widget.state.selectedDate) return;
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted || !_scrollController.hasClients) return;
+      final items = widget.state.itemsForSelectedDay;
+      final nowIndex = _getNowIndex(items);
+
+      if (nowIndex > 0) {
+        final isCompact = ref.read(scheduleCompactControllerProvider);
+        final double itemHeight = isCompact ? 36.0 : 84.0;
+        final double target = (nowIndex * itemHeight - 20.0).clamp(
+          0.0,
+          _scrollController.position.maxScrollExtent,
+        );
+        if (target > 0) {
+          _scrollController.animateTo(
+            target,
+            duration: const Duration(milliseconds: 350),
+            curve: Curves.easeOutCubic,
+          );
+        }
+      }
+      _lastAutoScrolledDate = widget.state.selectedDate;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final items = state.itemsForSelectedDay;
+    final items = widget.state.itemsForSelectedDay;
 
     if (items.isEmpty) {
       final emptyWidget = ListView(
         physics: const AlwaysScrollableScrollPhysics(),
-        padding: const EdgeInsets.only(bottom: AppSizes.p32),
+        padding: const EdgeInsets.fromLTRB(
+          AppSizes.p20,
+          AppSizes.p48,
+          AppSizes.p20,
+          AppSizes.p32,
+        ),
         children: [
-          _DateHeader(
-            state: state,
-            count: 0,
-            onToggleCancelled: onToggleCancelled,
-          ),
-          const SizedBox(height: AppSizes.p48),
           Center(
             child: Text(
               AppStrings.noAppointmentsFound,
@@ -58,10 +113,10 @@ class DoctorDayList extends StatelessWidget {
         ],
       );
 
-      if (onRefresh != null) {
+      if (widget.onRefresh != null) {
         return RefreshIndicator(
           color: theme.colorScheme.primary,
-          onRefresh: onRefresh!,
+          onRefresh: widget.onRefresh!,
           child: emptyWidget,
         );
       }
@@ -70,36 +125,27 @@ class DoctorDayList extends StatelessWidget {
 
     final nowIndex = _getNowIndex(items);
     final hasNow = nowIndex >= 0;
-    final totalCount = items.length + 1 + (hasNow ? 1 : 0);
+    final totalCount = items.length + (hasNow ? 1 : 0);
 
     final list = ListView.builder(
+      controller: _scrollController,
       physics: const AlwaysScrollableScrollPhysics(),
-      padding: const EdgeInsets.only(bottom: AppSizes.p32),
+      padding: const EdgeInsets.fromLTRB(0, AppSizes.p8, 0, AppSizes.p32),
       itemCount: totalCount,
       itemBuilder: (_, index) {
-        if (index == 0) {
-          return _DateHeader(
-            state: state,
-            count: items.length,
-            onToggleCancelled: onToggleCancelled,
-          );
+        if (hasNow && index == nowIndex) {
+          return const ScheduleNowIndicator();
         }
 
-        if (hasNow && index - 1 == nowIndex) {
-          return const _NowIndicator();
-        }
-
-        final cardIndex = hasNow && index - 1 > nowIndex
-            ? index - 2
-            : index - 1;
+        final cardIndex = hasNow && index > nowIndex ? index - 1 : index;
         return _buildCard(items[cardIndex]);
       },
     );
 
-    if (onRefresh != null) {
+    if (widget.onRefresh != null) {
       return RefreshIndicator(
         color: theme.colorScheme.primary,
-        onRefresh: onRefresh!,
+        onRefresh: widget.onRefresh!,
         child: list,
       );
     }
@@ -109,14 +155,12 @@ class DoctorDayList extends StatelessWidget {
   Widget _buildCard(AppointmentWithPatient item) {
     return ReceptionistAppointmentCard(
       item: item,
-      onStatusChanged: onStatusChanged,
+      onStatusChanged: widget.onStatusChanged,
     );
   }
 
-  /// Returns insertion index (0..items.length) for `_NowIndicator`.
-  /// Returns `-1` if selected day is not today or items is empty.
   int _getNowIndex(List<AppointmentWithPatient> items) {
-    if (!state.isToday || items.isEmpty) return -1;
+    if (!widget.state.isToday || items.isEmpty) return -1;
     final now = DateTime.now();
     for (int i = 0; i < items.length; i++) {
       if (now.isBefore(items[i].appointment.scheduledAt)) {
@@ -124,113 +168,5 @@ class DoctorDayList extends StatelessWidget {
       }
     }
     return items.length;
-  }
-}
-
-class _DateHeader extends StatelessWidget {
-  const _DateHeader({
-    required this.state,
-    required this.count,
-    required this.onToggleCancelled,
-  });
-
-  final DoctorScheduleState state;
-  final int count;
-  final VoidCallback? onToggleCancelled;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final date = state.selectedDate ?? DateTime.now();
-    final formatted = DateFormat('EEEE, MMM d').format(date);
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(
-        AppSizes.p20,
-        AppSizes.p16,
-        AppSizes.p20,
-        AppSizes.p8,
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Expanded(
-            child: AutoSizeText(
-              AppStrings.appointmentCountForDate(formatted, count),
-              style: AppTextStyles.captionBold.copyWith(
-                color: theme.colorScheme.onSurfaceVariant,
-              ),
-              maxLines: 1,
-              minFontSize: 10,
-              overflow: TextOverflow.ellipsis,
-            ),
-          ),
-          if (onToggleCancelled != null) ...[
-            const SizedBox(width: AppSizes.p8),
-            IconButton(
-              onPressed: onToggleCancelled,
-              tooltip: state.showCancelled
-                  ? AppStrings.hideCancelled
-                  : AppStrings.showCancelled,
-              color: state.showCancelled
-                  ? theme.colorScheme.primary
-                  : theme.colorScheme.onSurfaceVariant,
-              icon: Icon(
-                state.showCancelled
-                    ? Icons.event_busy_rounded
-                    : Icons.event_busy_outlined,
-              ),
-            ),
-          ],
-        ],
-      ),
-    );
-  }
-}
-
-/// Now indicator: red dot + current time + horizontal red line.
-class _NowIndicator extends StatelessWidget {
-  const _NowIndicator();
-  static const double _timeWidth = 65;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final errorColor = theme.colorScheme.error;
-    final now = DateFormat('h:mm a').format(DateTime.now());
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: AppSizes.p8),
-      child: Row(
-        children: [
-          const SizedBox(width: AppSizes.p16),
-          SizedBox(
-            width: _timeWidth,
-            child: Row(
-              children: [
-                Container(
-                  width: 6,
-                  height: 6,
-                  decoration: BoxDecoration(
-                    color: errorColor,
-                    shape: BoxShape.circle,
-                  ),
-                ),
-                const SizedBox(width: AppSizes.p4),
-                Flexible(
-                  child: Text(
-                    now,
-                    style: AppTextStyles.captionBold.copyWith(
-                      color: errorColor,
-                    ),
-                    maxLines: 1,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(width: AppSizes.p12),
-          Expanded(child: Divider(color: errorColor, thickness: 1, height: 0)),
-        ],
-      ),
-    );
   }
 }

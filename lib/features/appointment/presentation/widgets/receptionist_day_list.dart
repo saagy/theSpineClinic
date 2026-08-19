@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:spine_clinic_app/core/constants/app_sizes.dart';
 import 'package:spine_clinic_app/core/constants/app_strings.dart';
 import 'package:spine_clinic_app/core/constants/app_text_styles.dart';
+import 'package:spine_clinic_app/core/utils/schedule_density_controller.dart';
 import 'package:spine_clinic_app/features/appointment/domain/appointment_repository.dart';
 import 'package:spine_clinic_app/features/appointment/presentation/receptionist_appointments_providers.dart';
 import 'package:spine_clinic_app/features/appointment/presentation/widgets/receptionist_appointment_card.dart';
@@ -19,7 +21,7 @@ class _ScheduleRowItem {
 }
 
 /// The appointment list for a single day selected in the week strip.
-class ReceptionistDayList extends StatelessWidget {
+class ReceptionistDayList extends ConsumerStatefulWidget {
   /// Creates a [ReceptionistDayList].
   const ReceptionistDayList({
     super.key,
@@ -35,9 +37,69 @@ class ReceptionistDayList extends StatelessWidget {
   final Future<void> Function()? onRefresh;
 
   @override
+  ConsumerState<ReceptionistDayList> createState() =>
+      _ReceptionistDayListState();
+}
+
+class _ReceptionistDayListState extends ConsumerState<ReceptionistDayList> {
+  late final ScrollController _scrollController;
+  DateTime? _lastAutoScrolledDate;
+
+  @override
+  void initState() {
+    super.initState();
+    _scrollController = ScrollController();
+    _checkAutoScroll();
+  }
+
+  @override
+  void didUpdateWidget(covariant ReceptionistDayList oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.state.selectedDate != widget.state.selectedDate) {
+      _checkAutoScroll();
+    }
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  void _checkAutoScroll() {
+    if (!widget.state.isToday) return;
+    if (_lastAutoScrolledDate == widget.state.selectedDate) return;
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted || !_scrollController.hasClients) return;
+      final allItems = widget.state.itemsForSelectedDay;
+      final items = _filter(allItems);
+      final rowItems = _buildRowItems(items);
+      final nowIndex = _getNowIndex(rowItems);
+
+      if (nowIndex > 0) {
+        final isCompact = ref.read(scheduleCompactControllerProvider);
+        final double itemHeight = isCompact ? 36.0 : 84.0;
+        final double target = (nowIndex * itemHeight - 20.0).clamp(
+          0.0,
+          _scrollController.position.maxScrollExtent,
+        );
+        if (target > 0) {
+          _scrollController.animateTo(
+            target,
+            duration: const Duration(milliseconds: 350),
+            curve: Curves.easeOutCubic,
+          );
+        }
+      }
+      _lastAutoScrolledDate = widget.state.selectedDate;
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final allItems = state.itemsForSelectedDay;
+    final allItems = widget.state.itemsForSelectedDay;
     final items = _filter(allItems);
 
     if (items.isEmpty) {
@@ -52,7 +114,7 @@ class ReceptionistDayList extends StatelessWidget {
         children: [
           Center(
             child: Text(
-              searchQuery.isNotEmpty
+              widget.searchQuery.isNotEmpty
                   ? AppStrings.noMatchingDoctorsFound
                   : AppStrings.noAppointmentsFound,
               style: AppTextStyles.bodyMedium.copyWith(
@@ -63,42 +125,23 @@ class ReceptionistDayList extends StatelessWidget {
         ],
       );
 
-      if (onRefresh != null) {
+      if (widget.onRefresh != null) {
         return RefreshIndicator(
           color: theme.colorScheme.primary,
-          onRefresh: onRefresh!,
+          onRefresh: widget.onRefresh!,
           child: emptyWidget,
         );
       }
       return emptyWidget;
     }
 
-    // Group items by patient ID for the selected day.
-    final groupedItems = <String, List<AppointmentWithPatient>>{};
-    for (final item in items) {
-      final patientId = item.appointment.patientId;
-      groupedItems.putIfAbsent(patientId, () => []).add(item);
-    }
-
-    // Convert to a list of _ScheduleRowItem while maintaining original sorting.
-    final rowItems = <_ScheduleRowItem>[];
-    final processedPatients = <String>{};
-    for (final item in items) {
-      final patientId = item.appointment.patientId;
-      if (processedPatients.contains(patientId)) continue;
-      processedPatients.add(patientId);
-      final patientAppointments = groupedItems[patientId]!;
-      rowItems.add(_ScheduleRowItem(
-        patient: item.patient,
-        appointments: patientAppointments,
-      ));
-    }
-
+    final rowItems = _buildRowItems(items);
     final nowIndex = _getNowIndex(rowItems);
     final hasNow = nowIndex >= 0;
     final totalCount = rowItems.length + (hasNow ? 1 : 0);
 
     final list = ListView.builder(
+      controller: _scrollController,
       physics: const AlwaysScrollableScrollPhysics(),
       padding: const EdgeInsets.fromLTRB(0, AppSizes.p8, 0, AppSizes.p32),
       itemCount: totalCount,
@@ -113,38 +156,59 @@ class ReceptionistDayList extends StatelessWidget {
         if (rowItem.appointments.length == 1) {
           return ReceptionistAppointmentCard(
             item: rowItem.appointments.first,
-            onStatusChanged: onStatusChanged,
+            onStatusChanged: widget.onStatusChanged,
           );
         } else {
           return ReceptionistGroupedAppointmentCard(
             patient: rowItem.patient,
             items: rowItem.appointments,
-            onStatusChanged: onStatusChanged,
+            onStatusChanged: widget.onStatusChanged,
           );
         }
       },
     );
 
-    if (onRefresh != null) {
+    if (widget.onRefresh != null) {
       return RefreshIndicator(
         color: theme.colorScheme.primary,
-        onRefresh: onRefresh!,
+        onRefresh: widget.onRefresh!,
         child: list,
       );
     }
     return list;
   }
 
-  List<AppointmentWithPatient> _filter(List<AppointmentWithPatient> items) {
-    if (searchQuery.isEmpty) return items;
-    final q = searchQuery.toLowerCase();
-    return items.where((a) => a.patient.fullName.toLowerCase().contains(q)).toList();
+  List<_ScheduleRowItem> _buildRowItems(List<AppointmentWithPatient> items) {
+    final groupedItems = <String, List<AppointmentWithPatient>>{};
+    for (final item in items) {
+      final patientId = item.appointment.patientId;
+      groupedItems.putIfAbsent(patientId, () => []).add(item);
+    }
+
+    final rowItems = <_ScheduleRowItem>[];
+    final processedPatients = <String>{};
+    for (final item in items) {
+      final patientId = item.appointment.patientId;
+      if (processedPatients.contains(patientId)) continue;
+      processedPatients.add(patientId);
+      rowItems.add(_ScheduleRowItem(
+        patient: item.patient,
+        appointments: groupedItems[patientId]!,
+      ));
+    }
+    return rowItems;
   }
 
-  /// Returns insertion index (0..items.length) for `_NowIndicator`.
-  /// Returns `-1` if selected day is not today or items is empty.
+  List<AppointmentWithPatient> _filter(List<AppointmentWithPatient> items) {
+    if (widget.searchQuery.isEmpty) return items;
+    final q = widget.searchQuery.toLowerCase();
+    return items
+        .where((a) => a.patient.fullName.toLowerCase().contains(q))
+        .toList();
+  }
+
   int _getNowIndex(List<_ScheduleRowItem> items) {
-    if (!state.isToday || items.isEmpty) return -1;
+    if (!widget.state.isToday || items.isEmpty) return -1;
     final now = DateTime.now();
     for (int i = 0; i < items.length; i++) {
       final earliest = items[i].appointments.first.appointment.scheduledAt;

@@ -1,11 +1,11 @@
 /// Appointment card with stacked time, auto-scaling name, and premium
-/// dot+text status indicator.
+/// dot+text status indicator. Supports both standard and compact density.
 ///
 ///   LEADING  = stacked hh:mm / AM:PM + avatar
 ///   MIDDLE   = AutoSizeText name / session type + status dot
 ///   TRAILING = three-dot menu (vertically centred)
 ///
-/// Rule 1  — under 200 lines.  Rule 13 — min 16 px internal padding.
+/// Rule 1  — under 200 lines.  Rule 13 — min 16 px internal padding for standard mode.
 library;
 
 import 'package:auto_size_text/auto_size_text.dart';
@@ -19,6 +19,7 @@ import 'package:spine_clinic_app/core/constants/app_strings.dart';
 import 'package:spine_clinic_app/core/constants/app_text_styles.dart';
 import 'package:spine_clinic_app/core/constants/clinic_colors.dart';
 import 'package:spine_clinic_app/core/network/app_routes.dart';
+import 'package:spine_clinic_app/core/utils/schedule_density_controller.dart';
 import 'package:spine_clinic_app/features/appointment/domain/appointment_repository.dart';
 import 'package:spine_clinic_app/features/appointment/domain/appointment_status.dart';
 import 'package:spine_clinic_app/features/appointment/presentation/all_appointments_providers.dart';
@@ -37,6 +38,7 @@ import 'package:spine_clinic_app/shared/widgets/confirmation_dialog.dart';
 
 part 'receptionist_appointment_card_menu.dart';
 part 'receptionist_appointment_card_parts.dart';
+part 'receptionist_appointment_card_row.dart';
 
 /// A single appointment card used across receptionist and doctor screens.
 class ReceptionistAppointmentCard extends ConsumerStatefulWidget {
@@ -46,6 +48,7 @@ class ReceptionistAppointmentCard extends ConsumerStatefulWidget {
     this.showMenu = true,
     this.onStatusChanged,
     this.showDate = false,
+    this.isCompact,
   });
 
   final AppointmentWithPatient item;
@@ -55,6 +58,9 @@ class ReceptionistAppointmentCard extends ConsumerStatefulWidget {
   /// When true the leading section stacks "MMM d" over "hh:mm a".
   /// Defaults to false (time-only).
   final bool showDate;
+
+  /// Optional override for compact vs standard density.
+  final bool? isCompact;
 
   @override
   ConsumerState<ReceptionistAppointmentCard> createState() =>
@@ -66,6 +72,8 @@ class _ReceptionistAppointmentCardState
     with _ReceptionistAppointmentCardMenu {
   @override
   Widget build(BuildContext context) {
+    final bool isCompact =
+        widget.isCompact ?? ref.watch(scheduleCompactControllerProvider);
     final AppointmentStatus status = widget.item.appointment.status;
     final AppointmentStatusStyle style = AppointmentStatusStyle.forStatus(
       context,
@@ -94,10 +102,18 @@ class _ReceptionistAppointmentCardState
     final bool canAccess = canAccessAsync.value ?? !isDoctor;
     final bool enableMenu = widget.showMenu && canAccess;
 
+    final double radius = isCompact ? AppSizes.r12 : AppSizes.r16;
+    final EdgeInsets internalPadding = isCompact
+        ? const EdgeInsets.symmetric(
+            horizontal: AppSizes.p12,
+            vertical: 4.0,
+          )
+        : const EdgeInsets.all(AppSizes.p16);
+
     final Widget card = Container(
       decoration: BoxDecoration(
         color: isPastScheduled ? clinic.warningContainer : style.bg,
-        borderRadius: const BorderRadius.all(Radius.circular(AppSizes.r16)),
+        borderRadius: BorderRadius.all(Radius.circular(radius)),
         border: Border.all(
           color: isPastScheduled ? clinic.warning : style.border,
           width: AppSizes.borderWidth,
@@ -105,7 +121,7 @@ class _ReceptionistAppointmentCardState
       ),
       child: Material(
         color: Theme.of(context).colorScheme.surface.withAlpha(0),
-        borderRadius: const BorderRadius.all(Radius.circular(AppSizes.r16)),
+        borderRadius: BorderRadius.all(Radius.circular(radius)),
         child: GestureDetector(
           onLongPressStart: enableMenu
               ? (details) => showLongPressMenu(details.globalPosition)
@@ -114,8 +130,7 @@ class _ReceptionistAppointmentCardState
               ? (details) => showLongPressMenu(details.globalPosition)
               : null,
           child: InkWell(
-            borderRadius:
-                const BorderRadius.all(Radius.circular(AppSizes.r16)),
+            borderRadius: BorderRadius.all(Radius.circular(radius)),
             onTap: () async {
               if (!canAccess) {
                 AppSnackbar.show(
@@ -133,37 +148,18 @@ class _ReceptionistAppointmentCardState
               );
               if (context.mounted) widget.onStatusChanged?.call();
             },
-            // Rule 13 — minimum 16 px internal padding.
             child: Padding(
-              padding: const EdgeInsets.all(AppSizes.p16),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  // Leading: Time + Avatar
-                  _TimeAvatar(
-                    item: widget.item,
-                    showDate: widget.showDate,
-                    style: style,
-                  ),
-                  const SizedBox(width: AppSizes.p8),
-                  Expanded(
-                    child: _NameStatus(
-                      item: widget.item,
-                      style: style,
-                      statusBadge: statusBadge,
-                      isPastScheduled: isPastScheduled,
-                      clinic: clinic,
-                    ),
-                  ),
-                  if (enableMenu) ...[
-                    const SizedBox(width: AppSizes.p8),
-                    AppointmentActionsTrailing(
-                      appointment: widget.item.appointment,
-                      onStatusChanged: widget.onStatusChanged,
-                      showBadge: false,
-                    ),
-                  ],
-                ],
+              padding: internalPadding,
+              child: _AppointmentCardRow(
+                item: widget.item,
+                showDate: widget.showDate,
+                style: style,
+                statusBadge: statusBadge,
+                isPastScheduled: isPastScheduled,
+                clinic: clinic,
+                enableMenu: enableMenu,
+                isCompact: isCompact,
+                onStatusChanged: widget.onStatusChanged,
               ),
             ),
           ),
@@ -171,14 +167,19 @@ class _ReceptionistAppointmentCardState
       ),
     );
 
-    // Vertical spacing between cards: 6 px top + 6 px bottom = 12 px gap.
-    final Widget padded = Padding(
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppSizes.p16,
-        vertical: AppSizes.p6,
-      ),
+    final EdgeInsets margin = isCompact
+        ? const EdgeInsets.symmetric(
+            horizontal: AppSizes.p16,
+            vertical: 1.5,
+          )
+        : const EdgeInsets.symmetric(
+            horizontal: AppSizes.p16,
+            vertical: AppSizes.p6,
+          );
+
+    return Padding(
+      padding: margin,
       child: applyFade ? Opacity(opacity: 0.6, child: card) : card,
     );
-    return padded;
   }
 }

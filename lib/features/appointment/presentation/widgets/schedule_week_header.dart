@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:spine_clinic_app/core/constants/app_sizes.dart';
 import 'package:spine_clinic_app/core/constants/app_strings.dart';
 import 'package:spine_clinic_app/core/constants/app_text_styles.dart';
 import 'package:spine_clinic_app/features/appointment/presentation/schedule_week.dart';
@@ -50,16 +51,22 @@ class ScheduleWeekHeader extends StatelessWidget {
           ),
         ),
         if (onToggleCancelled != null)
-          IconButton(
-            onPressed: onToggleCancelled,
-            tooltip: showCancelled
-                ? AppStrings.hideCancelled
-                : AppStrings.showCancelled,
-            color: showCancelled ? cs.primary : cs.onSurfaceVariant,
-            icon: Icon(
-              showCancelled
-                  ? Icons.event_busy_rounded
-                  : Icons.event_busy_outlined,
+          InkWell(
+            onTap: onToggleCancelled,
+            borderRadius: const BorderRadius.all(Radius.circular(AppSizes.r8)),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppSizes.p8,
+                vertical: AppSizes.p4,
+              ),
+              child: Text(
+                showCancelled
+                    ? AppStrings.hideCancelled
+                    : AppStrings.showCancelled,
+                style: AppTextStyles.captionBold.copyWith(
+                  color: cs.primary,
+                ),
+              ),
             ),
           ),
         if (compact)

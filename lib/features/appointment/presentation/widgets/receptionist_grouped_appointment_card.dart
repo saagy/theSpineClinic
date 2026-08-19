@@ -8,6 +8,7 @@ import 'package:spine_clinic_app/core/constants/app_strings.dart';
 import 'package:spine_clinic_app/core/constants/app_text_styles.dart';
 import 'package:spine_clinic_app/core/constants/clinic_colors.dart';
 import 'package:spine_clinic_app/core/network/app_routes.dart';
+import 'package:spine_clinic_app/core/utils/schedule_density_controller.dart';
 import 'package:spine_clinic_app/features/appointment/domain/appointment.dart';
 import 'package:spine_clinic_app/features/appointment/domain/appointment_repository.dart';
 import 'package:spine_clinic_app/features/appointment/domain/appointment_status.dart';
@@ -20,9 +21,12 @@ import 'package:spine_clinic_app/features/patient/domain/patient.dart';
 import 'package:spine_clinic_app/shared/widgets/app_avatar.dart';
 import 'package:spine_clinic_app/shared/widgets/app_snackbar.dart';
 import 'package:spine_clinic_app/shared/widgets/confirmation_dialog.dart';
+
 part 'receptionist_grouped_appointment_card_individual_menu.dart';
 part 'receptionist_grouped_appointment_card_menu.dart';
+part 'receptionist_grouped_appointment_card_parts.dart';
 part 'receptionist_grouped_appointment_card_sub_row.dart';
+part 'receptionist_grouped_appointment_card_sub_row_builders.dart';
 
 /// Renders multiple appointments for a patient on the same day as a single,
 /// unified card with a sub-session timeline and batch status options.
@@ -32,11 +36,13 @@ class ReceptionistGroupedAppointmentCard extends ConsumerStatefulWidget {
     required this.patient,
     required this.items,
     this.onStatusChanged,
+    this.isCompact,
   });
 
   final Patient patient;
   final List<AppointmentWithPatient> items;
   final VoidCallback? onStatusChanged;
+  final bool? isCompact;
 
   @override
   ConsumerState<ReceptionistGroupedAppointmentCard> createState() =>
@@ -48,6 +54,8 @@ class _ReceptionistGroupedAppointmentCardState
     with _ReceptionistGroupedAppointmentCardMenu {
   @override
   Widget build(BuildContext context) {
+    final bool isCompact =
+        widget.isCompact ?? ref.watch(scheduleCompactControllerProvider);
     final theme = Theme.of(context);
     final clinic = ClinicColors.of(context);
     final user = ref.watch(currentUserProvider).value;
@@ -86,11 +94,15 @@ class _ReceptionistGroupedAppointmentCardState
     final Color cardBorder = isAnyPastScheduled
         ? clinic.warning
         : (allCheckedIn ? clinic.checkedInOutline : theme.colorScheme.outline);
+    final double radius = isCompact ? AppSizes.r12 : AppSizes.r16;
+    final EdgeInsets internalPadding = isCompact
+        ? const EdgeInsets.symmetric(horizontal: AppSizes.p12, vertical: 6.0)
+        : const EdgeInsets.all(AppSizes.p16);
 
     final Widget card = Container(
       decoration: BoxDecoration(
         color: cardBg,
-        borderRadius: const BorderRadius.all(Radius.circular(AppSizes.r16)),
+        borderRadius: BorderRadius.all(Radius.circular(radius)),
         border: Border.all(
           color: cardBorder,
           width: AppSizes.borderWidth,
@@ -99,79 +111,49 @@ class _ReceptionistGroupedAppointmentCardState
       ),
       child: Material(
         color: Colors.transparent,
-        borderRadius: const BorderRadius.all(Radius.circular(AppSizes.r16)),
+        borderRadius: BorderRadius.all(Radius.circular(radius)),
         child: Padding(
-          padding: const EdgeInsets.all(AppSizes.p16),
+          padding: internalPadding,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  AppAvatar(
-                    name: widget.patient.fullName,
-                    radius: AppSizes.avatarSmall / 2,
-                    color: allCancelled ? clinic.textMuted : null,
-                  ),
-                  const SizedBox(width: AppSizes.p12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        AutoSizeText(
-                          widget.patient.fullName,
-                          style: AppTextStyles.bodyBold.copyWith(
-                            color: allCancelled
-                                ? clinic.textMuted
-                                : theme.colorScheme.onSurface,
-                            decoration: allCancelled
-                                ? TextDecoration.lineThrough
-                                : null,
-                          ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                        const SizedBox(height: AppSizes.p2),
-                        Text(
-                          '$timeStr • ${AppStrings.dualSession}',
-                          style: AppTextStyles.caption.copyWith(
-                            color: allCancelled
-                                ? clinic.textMuted
-                                : theme.colorScheme.onSurfaceVariant,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  if (isAuthorizedStaff)
-                    buildGroupContextMenu(
-                      context: context,
-                      items: widget.items,
-                      hasScheduled: hasScheduled,
-                      hasCheckedIn: hasCheckedIn,
-                      allCancelled: allCancelled,
-                      hasCancellable: hasCancellable,
-                    ),
-                ],
+              _GroupedCardHeader(
+                patient: widget.patient,
+                timeStr: timeStr,
+                allCancelled: allCancelled,
+                isCompact: isCompact,
+                isAuthorizedStaff: isAuthorizedStaff,
+                trailingMenu: isAuthorizedStaff
+                    ? buildGroupContextMenu(
+                        context: context,
+                        items: widget.items,
+                        hasScheduled: hasScheduled,
+                        hasCheckedIn: hasCheckedIn,
+                        allCancelled: allCancelled,
+                        hasCancellable: hasCancellable,
+                      )
+                    : null,
               ),
-              const SizedBox(height: AppSizes.p12),
-              Divider(
-                color: isAnyPastScheduled
-                    ? clinic.warning.withAlpha(80)
-                    : (allCheckedIn
-                        ? clinic.checkedInOutline.withAlpha(120)
-                        : theme.colorScheme.outline),
-                height: 1,
-                thickness: 0.5,
-              ),
-              const SizedBox(height: AppSizes.p8),
+              if (!isCompact) ...[
+                const SizedBox(height: AppSizes.p12),
+                Divider(
+                  color: isAnyPastScheduled
+                      ? clinic.warning.withAlpha(80)
+                      : (allCheckedIn
+                          ? clinic.checkedInOutline.withAlpha(120)
+                          : theme.colorScheme.outline),
+                  height: 1,
+                  thickness: 0.5,
+                ),
+                const SizedBox(height: AppSizes.p8),
+              ] else
+                const SizedBox(height: AppSizes.p4),
               ListView.separated(
                 shrinkWrap: true,
                 physics: const NeverScrollableScrollPhysics(),
                 itemCount: sortedItems.length,
                 separatorBuilder: (_, __) =>
-                    const SizedBox(height: AppSizes.p8),
+                    SizedBox(height: isCompact ? 2.0 : AppSizes.p8),
                 itemBuilder: (context, idx) {
                   final item = sortedItems[idx];
                   return _GroupedSubAppointmentRow(
@@ -188,11 +170,18 @@ class _ReceptionistGroupedAppointmentCardState
       ),
     );
 
+    final EdgeInsets margin = isCompact
+        ? const EdgeInsets.symmetric(
+            horizontal: AppSizes.p16,
+            vertical: 2.0,
+          )
+        : const EdgeInsets.symmetric(
+            horizontal: AppSizes.p16,
+            vertical: AppSizes.p6,
+          );
+
     return Padding(
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppSizes.p16,
-        vertical: AppSizes.p6,
-      ),
+      padding: margin,
       child: allCancelled ? Opacity(opacity: 0.6, child: card) : card,
     );
   }

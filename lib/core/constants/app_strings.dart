@@ -549,6 +549,12 @@ abstract final class AppStrings {
   static const String themeModeLight = 'Light';
   static const String themeModeDark = 'Dark';
   static const String themeModeSystem = 'System';
+  static const String scheduleDensity = 'Schedule View';
+  static const String scheduleDensitySubtitle =
+      'Standard or compact appointment cards';
+  static const String scheduleDensityStandard = 'Standard';
+  static const String scheduleDensityCompact = 'Compact';
+  static const String compactSchedule = 'Compact View';
 
   // Patient List
   static const String allPatients = 'All Patients';

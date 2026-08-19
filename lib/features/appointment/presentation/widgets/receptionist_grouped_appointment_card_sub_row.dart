@@ -15,10 +15,13 @@ class _GroupedSubAppointmentRow extends ConsumerWidget {
   final void Function(Appointment appointment, Offset globalPosition)
       onShowStatusMenu;
 
+  static const double _wideBreakpoint = 500.0;
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final clinic = ClinicColors.of(context);
+    final isCompact = ref.watch(scheduleCompactControllerProvider);
     final subAppt = item.appointment;
     final isCancelled = subAppt.status == AppointmentStatus.cancelled;
     final localTime = subAppt.scheduledAt.toLocal();
@@ -39,7 +42,8 @@ class _GroupedSubAppointmentRow extends ConsumerWidget {
 
     final bool isPastScheduled =
         subAppt.status == AppointmentStatus.scheduled &&
-        DateUtils.dateOnly(localTime).isBefore(DateUtils.dateOnly(DateTime.now()));
+        DateUtils.dateOnly(localTime)
+            .isBefore(DateUtils.dateOnly(DateTime.now()));
 
     final Color dotColor = isPastScheduled
         ? clinic.warning
@@ -49,84 +53,71 @@ class _GroupedSubAppointmentRow extends ConsumerWidget {
             AppointmentStatus.cancelled => theme.colorScheme.error,
           };
 
-    return GestureDetector(
-      onLongPressStart: (details) {
-        if (canInteractWithMenu) {
-          onShowStatusMenu(subAppt, details.globalPosition);
-        }
-      },
-      onSecondaryTapDown: (details) {
-        if (canInteractWithMenu) {
-          onShowStatusMenu(subAppt, details.globalPosition);
-        }
-      },
-      child: InkWell(
-        borderRadius: const BorderRadius.all(Radius.circular(AppSizes.r8)),
-        onTap: () async {
-          if (!canAccess) {
-            AppSnackbar.show(
-              context,
-              message: AppStrings.errorDatabasePermissionDenied,
-              variant: AppSnackbarVariant.error,
-            );
-            return;
-          }
-          await context.push(
-            AppRoutes.appointmentDetail.replaceAll(
-              ':id',
-              subAppt.id,
-            ),
-          );
-          if (context.mounted) onStatusChanged?.call();
-        },
-        child: Padding(
-          padding: const EdgeInsets.symmetric(
-            vertical: AppSizes.p6,
-            horizontal: AppSizes.p4,
-          ),
-          child: Row(
-            children: [
-              Container(
-                width: 8,
-                height: 8,
-                decoration: BoxDecoration(
-                  color: dotColor,
-                  shape: BoxShape.circle,
-                ),
-              ),
-              const SizedBox(width: AppSizes.p8),
-              Text(
-                formattedTime,
-                style: AppTextStyles.captionBold.copyWith(
-                  color: isCancelled
-                      ? clinic.textMuted
-                      : theme.colorScheme.onSurface,
-                  decoration: isCancelled ? TextDecoration.lineThrough : null,
-                ),
-              ),
-              const SizedBox(width: AppSizes.p12),
-              Expanded(
-                child: Text(
-                  subAppt.type.displayLabel,
-                  style: AppTextStyles.bodyMedium.copyWith(
-                    color: isCancelled
-                        ? clinic.textMuted
-                        : theme.colorScheme.onSurface,
-                    decoration: isCancelled ? TextDecoration.lineThrough : null,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-              AppointmentActionsTrailing(
-                appointment: subAppt,
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final bool isWide = constraints.maxWidth >= _wideBreakpoint;
+        final Widget rowContent = isWide
+            ? _GroupedSubAppointmentWideRow(
+                item: item,
+                formattedTime: formattedTime,
+                dotColor: dotColor,
+                isCancelled: isCancelled,
+                isPastScheduled: isPastScheduled,
+                isCompact: isCompact,
+                canInteractWithMenu: canInteractWithMenu,
                 onStatusChanged: onStatusChanged,
-                showBadge: true,
+              )
+            : _GroupedSubAppointmentMobileRow(
+                item: item,
+                formattedTime: formattedTime,
+                dotColor: dotColor,
+                isCancelled: isCancelled,
+                isPastScheduled: isPastScheduled,
+                isCompact: isCompact,
+                canInteractWithMenu: canInteractWithMenu,
+                onStatusChanged: onStatusChanged,
+              );
+
+        return GestureDetector(
+          onLongPressStart: (details) {
+            if (canInteractWithMenu) {
+              onShowStatusMenu(subAppt, details.globalPosition);
+            }
+          },
+          onSecondaryTapDown: (details) {
+            if (canInteractWithMenu) {
+              onShowStatusMenu(subAppt, details.globalPosition);
+            }
+          },
+          child: InkWell(
+            borderRadius: const BorderRadius.all(Radius.circular(AppSizes.r8)),
+            onTap: () async {
+              if (!canAccess) {
+                AppSnackbar.show(
+                  context,
+                  message: AppStrings.errorDatabasePermissionDenied,
+                  variant: AppSnackbarVariant.error,
+                );
+                return;
+              }
+              await context.push(
+                AppRoutes.appointmentDetail.replaceAll(
+                  ':id',
+                  subAppt.id,
+                ),
+              );
+              if (context.mounted) onStatusChanged?.call();
+            },
+            child: Padding(
+              padding: EdgeInsets.symmetric(
+                vertical: isCompact ? AppSizes.p2 : AppSizes.p6,
+                horizontal: AppSizes.p4,
               ),
-            ],
+              child: rowContent,
+            ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 }

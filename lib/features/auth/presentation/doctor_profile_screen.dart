@@ -16,6 +16,7 @@ import 'package:spine_clinic_app/core/constants/app_sizes.dart';
 import 'package:spine_clinic_app/core/constants/app_strings.dart';
 import 'package:spine_clinic_app/core/errors/app_exception.dart';
 import 'package:spine_clinic_app/core/network/app_routes.dart';
+import 'package:spine_clinic_app/core/utils/schedule_density_controller.dart';
 import 'package:spine_clinic_app/core/utils/theme_mode_controller.dart';
 import 'package:spine_clinic_app/features/auth/domain/user_role.dart';
 import 'package:spine_clinic_app/features/auth/presentation/auth_actions.dart';
@@ -93,6 +94,18 @@ class DoctorProfileScreen extends ConsumerWidget {
                     ),
                     onTap: () =>
                         ThemeModeController.pickFromSheet(context, ref),
+                  ),
+                  ProfileMenuRow(
+                    title: AppStrings.scheduleDensity,
+                    subtitle: AppStrings.scheduleDensitySubtitle,
+                    leadingIcon: Icons.view_agenda_outlined,
+                    trailing: Text(
+                      scheduleDensityLabel(
+                        ref.watch(scheduleCompactControllerProvider),
+                      ),
+                    ),
+                    onTap: () =>
+                        ScheduleCompactController.pickFromSheet(context, ref),
                   ),
                   ProfileMenuRow(
                     title: AppStrings.signOut,

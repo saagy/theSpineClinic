@@ -11,6 +11,7 @@ class LocalSettingsService {
   final SharedPreferences _prefs;
   static const String _activeBranchKey = 'active_branch_preference';
   static const String _themeModeKey = 'theme_mode_preference';
+  static const String _scheduleCompactKey = 'schedule_compact_preference';
 
   /// Gets the persisted clinic location preference. Defaults to [ClinicLocation.tagamoa].
   ClinicLocation getActiveBranch() {
@@ -43,5 +44,16 @@ class LocalSettingsService {
   /// Persists the active [ThemeMode].
   Future<bool> setThemeMode(ThemeMode mode) {
     return _prefs.setString(_themeModeKey, mode.name);
+  }
+
+  /// Gets the persisted schedule density preference.
+  /// Returns `true` for compact mode, `false` for standard mode (default).
+  bool isScheduleCompact() {
+    return _prefs.getBool(_scheduleCompactKey) ?? false;
+  }
+
+  /// Persists the active schedule density preference.
+  Future<bool> setScheduleCompact(bool isCompact) {
+    return _prefs.setBool(_scheduleCompactKey, isCompact);
   }
 }

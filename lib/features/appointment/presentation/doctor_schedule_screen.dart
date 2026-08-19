@@ -93,11 +93,12 @@ class _Content extends StatelessWidget {
                     ),
                   )
                 : KeyedSubtree(
-                    key: ValueKey('doc_schedule_data_${state.selectedDate}'),
+                    key: ValueKey(
+                      'doc_schedule_data_${state.selectedDate}_${state.itemsForSelectedDay.length}_${state.showCancelled}',
+                    ),
                     child: DoctorDayList(
                       state: state,
                       onStatusChanged: onStatusChanged,
-                      onToggleCancelled: onToggleCancelled,
                       onRefresh: () async => onStatusChanged.call(),
                     ),
                   ),

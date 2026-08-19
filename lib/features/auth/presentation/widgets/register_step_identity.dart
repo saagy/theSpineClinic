@@ -8,6 +8,7 @@ import 'package:spine_clinic_app/features/auth/presentation/widgets/auth_role_se
 import 'package:spine_clinic_app/features/auth/presentation/widgets/auth_validators.dart';
 import 'package:spine_clinic_app/features/patient/domain/clinic_location.dart';
 import 'package:spine_clinic_app/shared/widgets/app_button.dart';
+import 'package:spine_clinic_app/shared/widgets/app_dropdown.dart';
 import 'package:spine_clinic_app/shared/widgets/app_text_input.dart';
 
 /// Step 1 of registration: Identity details, staff role, and branch selection.
@@ -118,17 +119,11 @@ class RegisterStepIdentity extends StatelessWidget {
             child: selectedRole == UserRole.receptionist
                 ? Padding(
                     padding: const EdgeInsets.only(bottom: AppSizes.p10),
-                    child: DropdownButtonFormField<ClinicLocation>(
-                      initialValue: selectedBranch,
-                      decoration: const InputDecoration(
-                        labelText: AppStrings.branch,
-                        hintText: AppStrings.selectBranch,
-                        prefixIcon: Icon(LucideIcons.map_pin),
-                        contentPadding: EdgeInsets.symmetric(
-                          horizontal: AppSizes.p16,
-                          vertical: AppSizes.p12,
-                        ),
-                      ),
+                    child: AppDropdown<ClinicLocation>(
+                      value: selectedBranch,
+                      labelText: AppStrings.branch,
+                      hintText: AppStrings.selectBranch,
+                      prefixIcon: LucideIcons.map_pin,
                       items: ClinicLocation.values
                           .map((loc) => DropdownMenuItem(
                                 value: loc,
