@@ -42,6 +42,21 @@ class AppShell extends StatelessWidget {
     );
   }
 
+  Widget _buildContent() {
+    return AnimatedSwitcher(
+      duration: const Duration(milliseconds: 200),
+      switchInCurve: Curves.easeOutCubic,
+      switchOutCurve: Curves.easeInCubic,
+      transitionBuilder: (Widget child, Animation<double> animation) {
+        return FadeTransition(opacity: animation, child: child);
+      },
+      child: KeyedSubtree(
+        key: ValueKey<int>(currentTabIndex),
+        child: child,
+      ),
+    );
+  }
+
   Widget _buildWide(BuildContext context) {
     return Scaffold(
       body: Row(
@@ -51,7 +66,7 @@ class AppShell extends StatelessWidget {
             onTabSelected: onTabSelected,
             userRole: userRole,
           ),
-          Expanded(child: child),
+          Expanded(child: _buildContent()),
         ],
       ),
     );
@@ -59,7 +74,7 @@ class AppShell extends StatelessWidget {
 
   Widget _buildNarrow(BuildContext context) {
     return Scaffold(
-      body: child,
+      body: _buildContent(),
       bottomNavigationBar: AppNavBar(
         currentIndex: currentTabIndex,
         onTabSelected: onTabSelected,

@@ -36,14 +36,10 @@ class _PatientTabRecordsState extends ConsumerState<PatientTabRecords> {
 
   bool _onScrollNotification(ScrollNotification notification) {
     if (notification is ScrollEndNotification &&
-        notification.metrics.pixels >=
-            notification.metrics.maxScrollExtent - 200) {
+        notification.metrics.pixels >= notification.metrics.maxScrollExtent - 200) {
       if (!_notifiedLoadMore) {
         _notifiedLoadMore = true;
-        ref
-            .read(patientNotesListProvider(widget.patient.id).notifier)
-            .loadMore()
-            .then((_) => _notifiedLoadMore = false);
+        ref.read(patientNotesListProvider(widget.patient.id).notifier).loadMore().then((_) => _notifiedLoadMore = false);
       }
     }
     return false;
@@ -51,17 +47,11 @@ class _PatientTabRecordsState extends ConsumerState<PatientTabRecords> {
 
   Future<void> _showSortSheet() async {
     final state = ref.read(patientNotesListProvider(widget.patient.id));
-    final notifier =
-        ref.read(patientNotesListProvider(widget.patient.id).notifier);
-
-    final selected =
-        await SortOptionsSheet.show<PatientNotesSortOption>(
+    final notifier = ref.read(patientNotesListProvider(widget.patient.id).notifier);
+    final selected = await SortOptionsSheet.show<PatientNotesSortOption>(
       context: context,
       title: AppStrings.sortOptions,
-      options: PatientNotesSortOption.values
-          .map((o) => SortOption(
-              value: o, label: o.displayLabel, buttonLabel: o.buttonLabel))
-          .toList(),
+      options: PatientNotesSortOption.values.map((o) => SortOption(value: o, label: o.displayLabel, buttonLabel: o.buttonLabel)).toList(),
       selected: state.sort,
     );
     if (selected != null && mounted) notifier.setSort(selected);
@@ -72,15 +62,11 @@ class _PatientTabRecordsState extends ConsumerState<PatientTabRecords> {
       context: context,
       title: AppStrings.filters,
       builder: (context, scrollController) =>
-          PatientNotesFilterContent(
-        patientId: widget.patient.id,
-        scrollController: scrollController,
-      ),
+          PatientNotesFilterContent(patientId: widget.patient.id, scrollController: scrollController),
     );
   }
 
-  List<ActiveFilterChip> _getActiveChips(
-      PatientNotesListState state, PatientNotesList notifier) {
+  List<ActiveFilterChip> _getActiveChips(PatientNotesListState state, PatientNotesList notifier) {
     final chips = <ActiveFilterChip>[];
     if (state.dateFrom != null || state.dateTo != null) {
       final label = state.dateFrom != null && state.dateTo != null
@@ -88,9 +74,7 @@ class _PatientTabRecordsState extends ConsumerState<PatientTabRecords> {
           : state.dateFrom != null
               ? 'From ${Formatters.formatDateShort(state.dateFrom!)}'
               : 'To ${Formatters.formatDateShort(state.dateTo!.subtract(const Duration(days: 1)))}';
-      chips.add(ActiveFilterChip(
-          label: label,
-          onRemove: () => notifier.setDateRange(null, null)));
+      chips.add(ActiveFilterChip(label: label, onRemove: () => notifier.setDateRange(null, null)));
     }
     return chips;
   }
@@ -99,11 +83,8 @@ class _PatientTabRecordsState extends ConsumerState<PatientTabRecords> {
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     final state = ref.watch(patientNotesListProvider(widget.patient.id));
-    if (state.isLoading) {
-      _animatedIndices.clear();
-    }
-    final notifier =
-        ref.read(patientNotesListProvider(widget.patient.id).notifier);
+    if (state.isLoading) _animatedIndices.clear();
+    final notifier = ref.read(patientNotesListProvider(widget.patient.id).notifier);
     final chips = _getActiveChips(state, notifier);
 
     return NotificationListener<ScrollNotification>(
@@ -112,8 +93,7 @@ class _PatientTabRecordsState extends ConsumerState<PatientTabRecords> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Padding(
-            padding: const EdgeInsets.fromLTRB(
-                AppSizes.p16, AppSizes.p8, AppSizes.p16, AppSizes.p4),
+            padding: const EdgeInsets.fromLTRB(AppSizes.p16, AppSizes.p8, AppSizes.p16, AppSizes.p4),
             child: AppButton(
               labelText: AppStrings.addNote,
               onPressed: () => _showAddNoteSheet(context),
@@ -129,66 +109,80 @@ class _PatientTabRecordsState extends ConsumerState<PatientTabRecords> {
             totalCount: state.notes.isNotEmpty ? state.totalCount : null,
           ),
           if (chips.isNotEmpty)
-            ActiveFilterChipsRow(
-                chips: chips, onClearAll: notifier.clearFilters),
+            ActiveFilterChipsRow(chips: chips, onClearAll: notifier.clearFilters),
           Expanded(
-            child: state.isLoading
-                ? const SkeletonTileList(count: 4)
-                : state.errorMessage != null
-                    ? RefreshIndicator(
-                        onRefresh: notifier.refresh,
-                        color: cs.primary,
-                        child: LayoutBuilder(
-                          builder: (context, constraints) =>
-                              SingleChildScrollView(
-                            physics: const AlwaysScrollableScrollPhysics(),
-                            child: SizedBox(
-                              height: constraints.maxHeight,
-                              child: ErrorView(
-                                exception: UnknownException(
-                                    message: state.errorMessage!),
-                                onRetry: notifier.refresh,
+            child: AnimatedSwitcher(
+              duration: const Duration(milliseconds: 250),
+              switchInCurve: Curves.easeOutCubic,
+              switchOutCurve: Curves.easeInCubic,
+              transitionBuilder: (c, a) => FadeTransition(opacity: a, child: c),
+              child: state.isLoading
+                  ? const KeyedSubtree(
+                      key: ValueKey('notes_loading'),
+                      child: SkeletonTileList(count: 4),
+                    )
+                  : state.errorMessage != null
+                      ? KeyedSubtree(
+                          key: const ValueKey('notes_error'),
+                          child: _buildError(cs, state.errorMessage!, notifier),
+                        )
+                      : state.notes.isEmpty
+                          ? const KeyedSubtree(
+                              key: ValueKey('notes_empty'),
+                              child: EmptyState(
+                                message: AppStrings.noNotesRecorded,
+                                icon: Icons.history_edu_rounded,
                               ),
+                            )
+                          : KeyedSubtree(
+                              key: ValueKey('notes_data_${state.notes.length}'),
+                              child: _buildList(cs, state, notifier),
                             ),
-                          ),
-                        ),
-                      )
-                    : state.notes.isEmpty
-                        ? const EmptyState(
-                            message: AppStrings.noNotesRecorded,
-                            icon: Icons.history_edu_rounded)
-                        : RefreshIndicator(
-                            onRefresh: notifier.refresh,
-                            color: cs.primary,
-                            child: ListView.builder(
-                              physics:
-                                  const AlwaysScrollableScrollPhysics(),
-                              padding: const EdgeInsets.only(
-                                  bottom: AppSizes.p16),
-                              itemCount: state.notes.length +
-                                  (state.isLoadingMore ? 1 : 0),
-                              itemBuilder: (context, index) {
-                                if (index == state.notes.length) {
-                                  return const Padding(
-                                    padding: EdgeInsets.symmetric(
-                                        vertical: AppSizes.p16),
-                                    child: Center(
-                                        child: CircularProgressIndicator(
-                                            strokeWidth: AppSizes
-                                                .strokeWidthThin)),
-                                  );
-                                }
-                                final note = state.notes[index];
-                                return AnimatedListItem(
-                                  index: index,
-                                  animatedIndices: _animatedIndices,
-                                  child: PatientNoteItem(note: note),
-                                );
-                              },
-                            ),
-                          ),
+            ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildError(ColorScheme cs, String message, PatientNotesList notifier) {
+    return RefreshIndicator(
+      onRefresh: notifier.refresh,
+      color: cs.primary,
+      child: LayoutBuilder(
+        builder: (context, constraints) => SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          child: SizedBox(
+            height: constraints.maxHeight,
+            child: ErrorView(exception: UnknownException(message: message), onRetry: notifier.refresh),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildList(ColorScheme cs, PatientNotesListState state, PatientNotesList notifier) {
+    return RefreshIndicator(
+      onRefresh: notifier.refresh,
+      color: cs.primary,
+      child: ListView.builder(
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: const EdgeInsets.only(bottom: AppSizes.p16),
+        itemCount: state.notes.length + (state.isLoadingMore ? 1 : 0),
+        itemBuilder: (context, index) {
+          if (index == state.notes.length) {
+            return const Padding(
+              padding: EdgeInsets.symmetric(vertical: AppSizes.p16),
+              child: Center(child: CircularProgressIndicator(strokeWidth: AppSizes.strokeWidthThin)),
+            );
+          }
+          final note = state.notes[index];
+          return AnimatedListItem(
+            index: index,
+            animatedIndices: _animatedIndices,
+            child: PatientNoteItem(note: note),
+          );
+        },
       ),
     );
   }
@@ -197,10 +191,7 @@ class _PatientTabRecordsState extends ConsumerState<PatientTabRecords> {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      shape: const RoundedRectangleBorder(
-        borderRadius:
-            BorderRadius.vertical(top: Radius.circular(AppSizes.r16)),
-      ),
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(AppSizes.r16))),
       builder: (_) => AddNoteSheet(patientId: widget.patient.id),
     );
   }

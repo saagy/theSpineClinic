@@ -80,7 +80,7 @@ abstract final class AppStrings {
   // Form Labels & Search
   static const String email = 'Email';
   static const String fullName = 'Full Name';
-  static const String phone = 'Phone Number';
+  static const String phone = 'Phone';
   static const String searchPatients = 'Search patients\u2026';
   static const String searchPatientsPrompt = 'Search by name or phone number';
   static const String all = 'All';

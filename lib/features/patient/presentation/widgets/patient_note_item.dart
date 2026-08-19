@@ -1,12 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:spine_clinic_app/core/constants/clinic_colors.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:spine_clinic_app/core/constants/app_sizes.dart';
 import 'package:spine_clinic_app/core/constants/app_strings.dart';
 import 'package:spine_clinic_app/core/constants/app_text_styles.dart';
 import 'package:spine_clinic_app/core/utils/formatters.dart';
-import 'package:spine_clinic_app/features/appointment/domain/appointment.dart';
-import 'package:spine_clinic_app/features/appointment/presentation/appointment_providers.dart';
 import 'package:spine_clinic_app/features/auth/domain/staff.dart';
 import 'package:spine_clinic_app/features/auth/domain/user_role.dart';
 import 'package:spine_clinic_app/features/auth/presentation/auth_providers.dart';
@@ -14,111 +11,128 @@ import 'package:spine_clinic_app/features/medical_records/domain/patient_note.da
 import 'package:spine_clinic_app/features/medical_records/presentation/medical_records_providers.dart';
 import 'package:spine_clinic_app/features/medical_records/presentation/patient_notes_list_notifier.dart';
 import 'package:spine_clinic_app/features/patient/presentation/widgets/add_note_sheet.dart';
-import 'package:spine_clinic_app/shared/widgets/app_badge.dart';
+import 'package:spine_clinic_app/features/patient/presentation/widgets/patient_note_appointment_badge.dart';
 import 'package:spine_clinic_app/shared/widgets/app_snackbar.dart';
 import 'package:spine_clinic_app/shared/widgets/confirmation_dialog.dart';
+import 'package:spine_clinic_app/shared/widgets/skeleton_loader.dart';
 
-/// Renders a single [PatientNote] in a chronological notes feed card.
-///
-/// Doctors and admins have full CRUD over all notes (Rule 6). Other staff
-/// can only modify their own notes. Tap to edit, long-press or tap the
-/// delete icon to remove.
+/// Renders a single [PatientNote] in a rounded 16px card.
 class PatientNoteItem extends ConsumerWidget {
-  /// Creates a [PatientNoteItem].
   const PatientNoteItem({super.key, required this.note});
-
-  /// The patient note entity.
   final PatientNote note;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final AsyncValue<Staff> staffAsync = ref.watch(staffProfileProvider(note.createdBy));
+    final staffAsync = ref.watch(staffProfileProvider(note.createdBy));
     final String dateStr = Formatters.formatDateMedium(note.createdAt);
+    final cs = Theme.of(context).colorScheme;
 
-    // Rule 6: Doctors and admins can modify any note; others only their own.
     final Staff? currentUser = ref.watch(currentUserProvider).value;
     final bool canModify = currentUser != null &&
         (currentUser.role == UserRole.doctor ||
          currentUser.role == UserRole.superAdmin ||
          currentUser.id == note.createdBy);
 
-    return Card(
-      elevation: 0,
-      margin: const EdgeInsets.symmetric(horizontal: AppSizes.p16, vertical: AppSizes.p8),
-      shape: RoundedRectangleBorder(
-        borderRadius: const BorderRadius.all(Radius.circular(AppSizes.r8)),
-        side: BorderSide(color: Theme.of(context).colorScheme.outline),
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: AppSizes.p16, vertical: AppSizes.p6),
+      decoration: BoxDecoration(
+        color: cs.surface,
+        borderRadius: AppSizes.borderRadiusCard,
+        border: Border.all(color: cs.outlineVariant.withAlpha(90)),
+        boxShadow: [
+          BoxShadow(
+            color: cs.shadow.withAlpha(8),
+            blurRadius: 6,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
-      color: Theme.of(context).colorScheme.surface,
-      child: InkWell(
-        borderRadius: const BorderRadius.all(Radius.circular(AppSizes.r8)),
-        onTap: canModify ? () => _showEditNoteSheet(context) : null,
-        onLongPress: canModify ? () => _confirmDeleteNote(context, ref) : null,
-        child: Padding(
-          padding: const EdgeInsets.all(AppSizes.p16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  // Author name with role badge — constrained so long names
-                  // don't push the delete icon off screen.
-                  Expanded(
-                    child: staffAsync.when(
-                      data: (staff) {
-                        final String roleName = switch (staff.role) {
-                          UserRole.superAdmin => AppStrings.adminRoleLabel,
-                          UserRole.receptionist => AppStrings.receptionistRoleLabel,
-                          UserRole.doctor => AppStrings.doctorRoleLabel,
-                        };
-                        final String name = staff.isActive
-                            ? '${staff.fullName} ($roleName)'
-                            : '${staff.fullName} ($roleName, ${AppStrings.deactivated})';
-                        return Text(
-                          name,
-                          style: AppTextStyles.bodyBold.copyWith(color: Theme.of(context).colorScheme.onSurface),
-                          softWrap: true,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        );
-                      },
-                      loading: () => Text(AppStrings.loadingAuthor, style: AppTextStyles.bodySecondary),
-                      error: (_, __) => Text(AppStrings.unknownAuthor, style: AppTextStyles.bodySecondary),
-                    ),
-                  ),
-                  Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        dateStr,
-                        style: AppTextStyles.caption.copyWith(color: ClinicColors.of(context).textMuted),
-                      ),
-                      if (canModify) ...[
-                        const SizedBox(width: AppSizes.p8),
-                        GestureDetector(
-                          onTap: () => _confirmDeleteNote(context, ref),
-                          child: Icon(
-                            Icons.delete_outline_rounded,
-                            size: AppSizes.iconSmall,
-                            color: Theme.of(context).colorScheme.error,
+      child: Material(
+        color: Colors.transparent,
+        borderRadius: AppSizes.borderRadiusCard,
+        child: InkWell(
+          borderRadius: AppSizes.borderRadiusCard,
+          onTap: canModify ? () => _showEditNoteSheet(context) : null,
+          onLongPress: canModify ? () => _confirmDeleteNote(context, ref) : null,
+          child: Padding(
+            padding: const EdgeInsets.all(AppSizes.p16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Row(
+                  children: [
+                    Expanded(
+                      child: AnimatedSwitcher(
+                        duration: const Duration(milliseconds: 180),
+                        child: staffAsync.when(
+                          data: (staff) {
+                            final String roleName = switch (staff.role) {
+                              UserRole.superAdmin => AppStrings.adminRoleLabel,
+                              UserRole.receptionist => AppStrings.receptionistRoleLabel,
+                              UserRole.doctor => AppStrings.doctorRoleLabel,
+                            };
+                            return Row(
+                              key: ValueKey('author_${staff.id}'),
+                              children: [
+                                Flexible(
+                                  child: Text(
+                                    staff.fullName,
+                                    style: AppTextStyles.bodyBold.copyWith(color: cs.onSurface),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                                const SizedBox(width: AppSizes.p6),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                  decoration: BoxDecoration(
+                                    color: cs.surfaceContainerHighest,
+                                    borderRadius: BorderRadius.circular(AppSizes.r4),
+                                  ),
+                                  child: Text(
+                                    roleName,
+                                    style: AppTextStyles.captionMedium.copyWith(
+                                      color: cs.onSurfaceVariant,
+                                      fontSize: 10,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            );
+                          },
+                          loading: () => const Align(
+                            alignment: Alignment.centerLeft,
+                            child: SkeletonBox(width: 130, height: 14, borderRadius: AppSizes.r4),
+                          ),
+                          error: (_, __) => Text(
+                            AppStrings.unknownAuthor,
+                            style: AppTextStyles.bodySecondary.copyWith(color: cs.onSurfaceVariant),
                           ),
                         ),
-                      ],
+                      ),
+                    ),
+                    const SizedBox(width: AppSizes.p8),
+                    Text(dateStr, style: AppTextStyles.captionMedium.copyWith(color: cs.onSurfaceVariant)),
+                    if (canModify) ...[
+                      const SizedBox(width: AppSizes.p4),
+                      IconButton(
+                        visualDensity: VisualDensity.compact,
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
+                        icon: Icon(Icons.delete_outline_rounded, size: 18, color: cs.error),
+                        onPressed: () => _confirmDeleteNote(context, ref),
+                      ),
                     ],
-                  ),
+                  ],
+                ),
+                const SizedBox(height: AppSizes.p10),
+                Text(note.noteText, style: AppTextStyles.body.copyWith(color: cs.onSurface, height: 1.4)),
+                if (note.appointmentId != null) ...[
+                  const SizedBox(height: AppSizes.p12),
+                  PatientNoteAppointmentBadge(appointmentId: note.appointmentId!),
                 ],
-              ),
-              const SizedBox(height: AppSizes.p8),
-              Text(
-                note.noteText,
-                style: AppTextStyles.body.copyWith(color: Theme.of(context).colorScheme.onSurface),
-              ),
-              if (note.appointmentId != null) ...[
-                const SizedBox(height: AppSizes.p12),
-                _AppointmentLinkIndicator(appointmentId: note.appointmentId!),
               ],
-            ],
+            ),
           ),
         ),
       ),
@@ -130,7 +144,7 @@ class PatientNoteItem extends ConsumerWidget {
       context: context,
       isScrollControlled: true,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(AppSizes.r16)),
       ),
       builder: (_) => AddNoteSheet(
         patientId: note.patientId,
@@ -157,52 +171,16 @@ class PatientNoteItem extends ConsumerWidget {
       if (context.mounted) {
         result.when(
           success: (_) {
-            AppSnackbar.show(context,
-                message: AppStrings.noteDeleted,
-                variant: AppSnackbarVariant.success);
+            AppSnackbar.show(context, message: AppStrings.noteDeleted, variant: AppSnackbarVariant.success);
             ref.invalidate(patientNotesListProvider(note.patientId));
             ref.invalidate(patientNotesNotifierProvider(note.patientId));
             if (note.appointmentId != null) {
               ref.invalidate(appointmentNoteProvider(note.appointmentId!));
             }
           },
-          failure: (error) {
-            AppSnackbar.show(context,
-                message: error.message, variant: AppSnackbarVariant.error);
-          },
+          failure: (error) => AppSnackbar.show(context, message: error.message, variant: AppSnackbarVariant.error),
         );
       }
     }
-  }
-}
-
-class _AppointmentLinkIndicator extends ConsumerWidget {
-  const _AppointmentLinkIndicator({required this.appointmentId});
-  final String appointmentId;
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final AsyncValue<Appointment> appointmentAsync = ref.watch(singleAppointmentProvider(appointmentId));
-
-    return Row(
-      children: [
-        Icon(Icons.link_rounded, size: AppSizes.iconSmall, color: ClinicColors.of(context).info),
-        const SizedBox(width: AppSizes.p4),
-        Expanded(
-          child: appointmentAsync.when(
-            data: (appt) {
-              final apptDate = Formatters.formatDateMedium(appt.scheduledAt);
-              return AppBadge(
-                label: '${AppStrings.onAppointmentPrefix}${appt.type.displayLabel} ($apptDate)',
-                textColor: ClinicColors.of(context).info,
-                backgroundColor: ClinicColors.of(context).infoContainer,
-              );
-            },
-            loading: () => Text(AppStrings.loadingDetails, style: AppTextStyles.caption),
-            error: (_, __) => Text(AppStrings.linkedAppointmentLabel, style: AppTextStyles.caption),
-          ),
-        ),
-      ],
-    );
   }
 }
