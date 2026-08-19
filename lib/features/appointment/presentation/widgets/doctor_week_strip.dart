@@ -79,14 +79,6 @@ class _DoctorWeekStripState extends State<DoctorWeekStrip> {
     );
   }
 
-  void _moveWeek(int delta) {
-    _controller.animateToPage(
-      _page + delta,
-      duration: const Duration(milliseconds: 200),
-      curve: Curves.easeOutCubic,
-    );
-  }
-
   Future<void> _pickDate() async {
     final DateTime? picked = await showDatePicker(
       context: context,
@@ -120,8 +112,6 @@ class _DoctorWeekStripState extends State<DoctorWeekStrip> {
                     selected: _selected,
                     onPickDate: _pickDate,
                     onToday: () => widget.onDateSelected(DateTime.now()),
-                    onPrevious: () => _moveWeek(-1),
-                    onNext: () => _moveWeek(1),
                     showCancelled: widget.showCancelled,
                     onToggleCancelled: widget.onToggleCancelled,
                   ),

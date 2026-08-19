@@ -45,22 +45,18 @@ class ScheduleDateHeader extends StatelessWidget {
           ),
           if (onToggleCancelled != null) ...[
             const SizedBox(width: AppSizes.p8),
-            InkWell(
-              onTap: onToggleCancelled,
-              borderRadius: const BorderRadius.all(Radius.circular(AppSizes.r8)),
-              child: Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: AppSizes.p8,
-                  vertical: AppSizes.p4,
-                ),
-                child: Text(
-                  showCancelled
-                      ? AppStrings.hideCancelled
-                      : AppStrings.showCancelled,
-                  style: AppTextStyles.captionBold.copyWith(
-                    color: theme.colorScheme.primary,
-                  ),
-                ),
+            IconButton(
+              onPressed: onToggleCancelled,
+              tooltip: showCancelled
+                  ? AppStrings.hideCancelled
+                  : AppStrings.showCancelled,
+              color: showCancelled
+                  ? theme.colorScheme.primary
+                  : theme.colorScheme.onSurfaceVariant,
+              icon: Icon(
+                showCancelled
+                    ? Icons.event_busy_rounded
+                    : Icons.event_busy_outlined,
               ),
             ),
           ],

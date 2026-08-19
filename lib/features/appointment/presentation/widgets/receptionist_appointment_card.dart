@@ -31,6 +31,7 @@ import 'package:spine_clinic_app/features/auth/domain/user_role.dart';
 import 'package:spine_clinic_app/features/auth/presentation/auth_providers.dart';
 import 'package:spine_clinic_app/features/patient/presentation/patient_list_providers.dart';
 import 'package:spine_clinic_app/features/patient/presentation/patient_providers.dart';
+import 'package:spine_clinic_app/shared/widgets/app_avatar.dart';
 import 'package:spine_clinic_app/shared/widgets/app_snackbar.dart';
 import 'package:spine_clinic_app/shared/widgets/confirmation_dialog.dart';
 
@@ -138,23 +139,30 @@ class _ReceptionistAppointmentCardState
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  Expanded(
-                    child: _CompactAppointmentInfo(
-                      item: widget.item,
-                      showDate: widget.showDate,
-                      style: style,
-                    ),
+                  // Leading: Time + Avatar
+                  _TimeAvatar(
+                    item: widget.item,
+                    showDate: widget.showDate,
+                    style: style,
                   ),
                   const SizedBox(width: AppSizes.p8),
-                  _CompactStatusAndActions(
-                    item: widget.item,
-                    style: style,
-                    statusBadge: statusBadge,
-                    isPastScheduled: isPastScheduled,
-                    clinic: clinic,
-                    enableMenu: enableMenu,
-                    onStatusChanged: widget.onStatusChanged,
+                  Expanded(
+                    child: _NameStatus(
+                      item: widget.item,
+                      style: style,
+                      statusBadge: statusBadge,
+                      isPastScheduled: isPastScheduled,
+                      clinic: clinic,
+                    ),
                   ),
+                  if (enableMenu) ...[
+                    const SizedBox(width: AppSizes.p8),
+                    AppointmentActionsTrailing(
+                      appointment: widget.item.appointment,
+                      onStatusChanged: widget.onStatusChanged,
+                      showBadge: false,
+                    ),
+                  ],
                 ],
               ),
             ),
@@ -163,15 +171,14 @@ class _ReceptionistAppointmentCardState
       ),
     );
 
-    // Vertical spacing between cards: 4 px top + 4 px bottom = 8 px gap.
+    // Vertical spacing between cards: 6 px top + 6 px bottom = 12 px gap.
     final Widget padded = Padding(
       padding: const EdgeInsets.symmetric(
         horizontal: AppSizes.p16,
-        vertical: AppSizes.p4,
+        vertical: AppSizes.p6,
       ),
       child: applyFade ? Opacity(opacity: 0.6, child: card) : card,
     );
     return padded;
   }
 }
-

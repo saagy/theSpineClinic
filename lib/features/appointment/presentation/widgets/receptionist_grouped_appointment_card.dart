@@ -17,9 +17,9 @@ import 'package:spine_clinic_app/features/appointment/presentation/widgets/appoi
 import 'package:spine_clinic_app/features/auth/domain/user_role.dart';
 import 'package:spine_clinic_app/features/auth/presentation/auth_providers.dart';
 import 'package:spine_clinic_app/features/patient/domain/patient.dart';
+import 'package:spine_clinic_app/shared/widgets/app_avatar.dart';
 import 'package:spine_clinic_app/shared/widgets/app_snackbar.dart';
 import 'package:spine_clinic_app/shared/widgets/confirmation_dialog.dart';
-part 'receptionist_grouped_appointment_card_header.dart';
 part 'receptionist_grouped_appointment_card_individual_menu.dart';
 part 'receptionist_grouped_appointment_card_menu.dart';
 part 'receptionist_grouped_appointment_card_sub_row.dart';
@@ -77,7 +77,7 @@ class _ReceptionistGroupedAppointmentCardState
     final sortedItems = List<AppointmentWithPatient>.from(widget.items)
       ..sort((a, b) =>
           a.appointment.scheduledAt.compareTo(b.appointment.scheduledAt));
-    final timeStr = DateFormat('h:mm a')
+    final timeStr = DateFormat('hh:mm a')
         .format(sortedItems.first.appointment.scheduledAt.toLocal());
 
     final Color cardBg = isAnyPastScheduled
@@ -105,20 +105,55 @@ class _ReceptionistGroupedAppointmentCardState
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              _GroupedCardHeader(
-                patientName: widget.patient.fullName,
-                timeStr: timeStr,
-                allCancelled: allCancelled,
-                trailing: isAuthorizedStaff
-                    ? buildGroupContextMenu(
-                        context: context,
-                        items: widget.items,
-                        hasScheduled: hasScheduled,
-                        hasCheckedIn: hasCheckedIn,
-                        allCancelled: allCancelled,
-                        hasCancellable: hasCancellable,
-                      )
-                    : null,
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  AppAvatar(
+                    name: widget.patient.fullName,
+                    radius: AppSizes.avatarSmall / 2,
+                    color: allCancelled ? clinic.textMuted : null,
+                  ),
+                  const SizedBox(width: AppSizes.p12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        AutoSizeText(
+                          widget.patient.fullName,
+                          style: AppTextStyles.bodyBold.copyWith(
+                            color: allCancelled
+                                ? clinic.textMuted
+                                : theme.colorScheme.onSurface,
+                            decoration: allCancelled
+                                ? TextDecoration.lineThrough
+                                : null,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        const SizedBox(height: AppSizes.p2),
+                        Text(
+                          '$timeStr • ${AppStrings.dualSession}',
+                          style: AppTextStyles.caption.copyWith(
+                            color: allCancelled
+                                ? clinic.textMuted
+                                : theme.colorScheme.onSurfaceVariant,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  if (isAuthorizedStaff)
+                    buildGroupContextMenu(
+                      context: context,
+                      items: widget.items,
+                      hasScheduled: hasScheduled,
+                      hasCheckedIn: hasCheckedIn,
+                      allCancelled: allCancelled,
+                      hasCancellable: hasCancellable,
+                    ),
+                ],
               ),
               const SizedBox(height: AppSizes.p12),
               Divider(
@@ -156,7 +191,7 @@ class _ReceptionistGroupedAppointmentCardState
     return Padding(
       padding: const EdgeInsets.symmetric(
         horizontal: AppSizes.p16,
-        vertical: AppSizes.p4,
+        vertical: AppSizes.p6,
       ),
       child: allCancelled ? Opacity(opacity: 0.6, child: card) : card,
     );

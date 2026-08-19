@@ -68,6 +68,8 @@ class _Content extends StatelessWidget {
         DoctorWeekStrip(
           dayCounts: state.dayAppointmentCounts,
           selectedDate: state.selectedDate,
+          showCancelled: state.showCancelled,
+          onToggleCancelled: onToggleCancelled,
           onDateSelected: onDateSelected,
         ),
         Expanded(
