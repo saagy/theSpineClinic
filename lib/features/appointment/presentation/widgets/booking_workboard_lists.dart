@@ -85,9 +85,21 @@ class BookingWorkboardLists extends StatelessWidget {
           ),
         const SizedBox(height: AppSizes.p12),
         Expanded(
-          child: state.view == BookingWorkboardView.due
-              ? _dueContent(context)
-              : _scheduleContent(),
+          child: AnimatedSwitcher(
+            duration: const Duration(milliseconds: 250),
+            switchInCurve: Curves.easeOutCubic,
+            switchOutCurve: Curves.easeInCubic,
+            transitionBuilder: (c, a) => FadeTransition(opacity: a, child: c),
+            child: state.view == BookingWorkboardView.due
+                ? KeyedSubtree(
+                    key: ValueKey('workboard_due_${state.dueLoading}'),
+                    child: _dueContent(context),
+                  )
+                : KeyedSubtree(
+                    key: ValueKey('workboard_sched_${state.scheduleLoading}'),
+                    child: _scheduleContent(),
+                  ),
+          ),
         ),
       ],
     );
@@ -105,21 +117,14 @@ class BookingWorkboardLists extends StatelessWidget {
     return _scheduleList();
   }
 
-  Widget _error(Object error) {
-    return ErrorView(
-      exception: error is AppException
-          ? error
-          : UnknownException(message: error.toString()),
-      onRetry: onRefresh,
-    );
-  }
+  Widget _error(Object error) => ErrorView(
+    exception: error is AppException ? error : UnknownException(message: error.toString()),
+    onRetry: onRefresh,
+  );
 
   Widget _dueList(BuildContext context) {
     if (state.duePatients.isEmpty) {
-      return _refreshableEmpty(
-        AppStrings.noDuePatients,
-        Icons.event_available_rounded,
-      );
+      return _refreshableEmpty(AppStrings.noDuePatients, Icons.event_available_rounded);
     }
     return RefreshIndicator(
       onRefresh: onRefresh,
@@ -136,9 +141,7 @@ class BookingWorkboardLists extends StatelessWidget {
             onBook: () => onBook(patient),
             onRemindLater: () => onRemind(patient),
             onStopFollowUp: () => onStop(patient),
-            onTap: () => context.push(
-              AppRoutes.patientDetail.replaceAll(':id', patient.id),
-            ),
+            onTap: () => context.push(AppRoutes.patientDetail.replaceAll(':id', patient.id)),
           );
         },
       ),

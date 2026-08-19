@@ -4,6 +4,7 @@ import 'package:spine_clinic_app/core/constants/app_strings.dart';
 import 'package:spine_clinic_app/features/auth/domain/staff.dart';
 import 'package:spine_clinic_app/features/auth/domain/user_role.dart';
 import 'package:spine_clinic_app/features/staff/presentation/widgets/staff_account_tile.dart';
+import 'package:spine_clinic_app/shared/widgets/animated_list_item.dart';
 import 'package:spine_clinic_app/shared/widgets/section_header.dart';
 
 /// Sealed class to represent different kinds of items in the flat list.
@@ -28,11 +29,15 @@ class StaffGroupedList extends StatelessWidget {
   const StaffGroupedList({
     super.key,
     required this.staffList,
+    required this.animatedIndices,
     this.onTap,
   });
 
   /// The list of staff members to display.
   final List<Staff> staffList;
+
+  /// The set of indices that have already animated.
+  final Set<int> animatedIndices;
 
   /// Optional callback when a staff card is tapped.
   final void Function(Staff)? onTap;
@@ -72,11 +77,15 @@ class StaffGroupedList extends StatelessWidget {
               ),
             );
           case CardItem():
-            return Padding(
-              padding: const EdgeInsets.only(bottom: AppSizes.p12),
-              child: StaffAccountTile(
-                staff: item.staff,
-                onTap: onTap != null ? () => onTap!(item.staff) : null,
+            return AnimatedListItem(
+              index: index,
+              animatedIndices: animatedIndices,
+              child: Padding(
+                padding: const EdgeInsets.only(bottom: AppSizes.p12),
+                child: StaffAccountTile(
+                  staff: item.staff,
+                  onTap: onTap != null ? () => onTap!(item.staff) : null,
+                ),
               ),
             );
         }

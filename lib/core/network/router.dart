@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:spine_clinic_app/core/network/app_page_transitions.dart';
 import 'package:spine_clinic_app/core/network/app_routes.dart';
 import 'package:spine_clinic_app/features/admin/presentation/admin_hub_screen.dart';
 import 'package:spine_clinic_app/features/admin/presentation/analytics_screen.dart';

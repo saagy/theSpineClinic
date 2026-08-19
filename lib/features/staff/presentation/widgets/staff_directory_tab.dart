@@ -6,11 +6,8 @@ import 'package:spine_clinic_app/core/constants/app_strings.dart';
 import 'package:spine_clinic_app/core/errors/app_exception.dart';
 import 'package:spine_clinic_app/core/network/app_routes.dart';
 import 'package:spine_clinic_app/features/auth/domain/staff.dart';
-import 'package:spine_clinic_app/features/auth/domain/user_role.dart';
-import 'package:spine_clinic_app/features/patient/domain/clinic_location.dart';
 import 'package:spine_clinic_app/features/staff/presentation/staff_management_controller.dart';
 import 'package:spine_clinic_app/features/staff/presentation/widgets/staff_active_filter_chips.dart';
-import 'package:spine_clinic_app/features/staff/presentation/widgets/staff_account_status.dart';
 import 'package:spine_clinic_app/features/staff/presentation/widgets/staff_filter_sheet.dart';
 import 'package:spine_clinic_app/features/staff/presentation/widgets/staff_grouped_list.dart';
 import 'package:spine_clinic_app/features/staff/presentation/widgets/staff_list_filter_models.dart';
@@ -18,6 +15,7 @@ import 'package:spine_clinic_app/shared/widgets/active_filter_chips_row.dart';
 import 'package:spine_clinic_app/shared/widgets/app_search_bar.dart';
 import 'package:spine_clinic_app/shared/widgets/empty_state.dart';
 import 'package:spine_clinic_app/shared/widgets/error_view.dart';
+import 'package:spine_clinic_app/shared/widgets/skeleton_loader.dart';
 import 'package:spine_clinic_app/shared/widgets/sort_filter_bar.dart';
 import 'package:spine_clinic_app/shared/widgets/sort_options_sheet.dart';
 
@@ -34,6 +32,12 @@ class _StaffDirectoryTabState extends ConsumerState<StaffDirectoryTab> {
   StaffSortOption _sort = StaffSortOption.nameAsc;
   StaffListFilters _filters = const StaffListFilters();
   String _query = '';
+  final Set<int> _animatedIndices = <int>{};
+
+  void _updateFilter(VoidCallback fn) => setState(() {
+    fn();
+    _animatedIndices.clear();
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -43,15 +47,10 @@ class _StaffDirectoryTabState extends ConsumerState<StaffDirectoryTab> {
       body: Column(
         children: [
           Padding(
-            padding: const EdgeInsets.fromLTRB(
-              AppSizes.p16,
-              AppSizes.p12,
-              AppSizes.p16,
-              AppSizes.p4,
-            ),
+            padding: const EdgeInsets.fromLTRB(AppSizes.p16, AppSizes.p12, AppSizes.p16, AppSizes.p4),
             child: AppSearchBar(
               hintText: AppStrings.staffSearchHint,
-              onChanged: (query) => setState(() => _query = query),
+              onChanged: (q) => _updateFilter(() => _query = q),
             ),
           ),
           SortFilterBar(
@@ -63,12 +62,11 @@ class _StaffDirectoryTabState extends ConsumerState<StaffDirectoryTab> {
           ActiveFilterChipsRow(
             chips: staffActiveFilterChips(
               filters: _filters,
-              onRole: _setRole,
-              onStatus: _setStatus,
-              onBranch: _setBranch,
+              onRole: (r) => _updateFilter(() => _filters = _filters.copyWith(role: () => r)),
+              onStatus: (s) => _updateFilter(() => _filters = _filters.copyWith(status: () => s)),
+              onBranch: (b) => _updateFilter(() => _filters = _filters.copyWith(branch: () => b)),
             ),
-            onClearAll: () =>
-                setState(() => _filters = const StaffListFilters()),
+            onClearAll: () => _updateFilter(() => _filters = const StaffListFilters()),
           ),
           Expanded(child: _content(staffAsync)),
         ],
@@ -84,30 +82,42 @@ class _StaffDirectoryTabState extends ConsumerState<StaffDirectoryTab> {
   }
 
   Widget _content(AsyncValue<List<Staff>> staffAsync) {
-    return RefreshIndicator(
-      onRefresh: () => ref.read(staffListProvider.notifier).refreshStaff(),
-      color: Theme.of(context).colorScheme.primary,
-      backgroundColor: Theme.of(context).colorScheme.surface,
-      child: staffAsync.when(
-        data: (staff) {
-          final display = _filtered(staff);
-          if (display.isEmpty) return _empty();
-          return StaffGroupedList(
+    final Widget body = staffAsync.when(
+      data: (staff) {
+        final display = _filtered(staff);
+        if (display.isEmpty) return KeyedSubtree(key: const ValueKey('staff_empty'), child: _empty());
+        return KeyedSubtree(
+          key: const ValueKey('staff_data'),
+          child: StaffGroupedList(
             staffList: display,
+            animatedIndices: _animatedIndices,
             onTap: (s) => context.push(AppRoutes.staffForm, extra: s),
-          );
-        },
-        loading: () => Center(
-          child: CircularProgressIndicator(
-            color: Theme.of(context).colorScheme.primary,
           ),
-        ),
-        error: (error, _) => ErrorView(
-          exception: error is AppException
-              ? error
-              : AppException.fromSupabaseException(error),
+        );
+      },
+      loading: () => const KeyedSubtree(key: ValueKey('staff_loading'), child: SkeletonTileList(count: 6)),
+      error: (error, _) => KeyedSubtree(
+        key: const ValueKey('staff_error'),
+        child: ErrorView(
+          exception: error is AppException ? error : AppException.fromSupabaseException(error),
           onRetry: () => ref.read(staffListProvider.notifier).refreshStaff(),
         ),
+      ),
+    );
+
+    return RefreshIndicator(
+      onRefresh: () async {
+        _animatedIndices.clear();
+        await ref.read(staffListProvider.notifier).refreshStaff();
+      },
+      color: Theme.of(context).colorScheme.primary,
+      backgroundColor: Theme.of(context).colorScheme.surface,
+      child: AnimatedSwitcher(
+        duration: const Duration(milliseconds: 250),
+        switchInCurve: Curves.easeOutCubic,
+        switchOutCurve: Curves.easeInCubic,
+        transitionBuilder: (c, a) => FadeTransition(opacity: a, child: c),
+        child: body,
       ),
     );
   }
@@ -115,10 +125,7 @@ class _StaffDirectoryTabState extends ConsumerState<StaffDirectoryTab> {
   List<Staff> _filtered(List<Staff> staff) {
     final q = _query.trim().toLowerCase();
     final list = staff.where((s) {
-      final queryMatch =
-          q.isEmpty ||
-          s.fullName.toLowerCase().contains(q) ||
-          s.email.toLowerCase().contains(q);
+      final queryMatch = q.isEmpty || s.fullName.toLowerCase().contains(q) || s.email.toLowerCase().contains(q);
       return queryMatch && _filters.matches(s);
     }).toList();
     switch (_sort) {
@@ -139,21 +146,14 @@ class _StaffDirectoryTabState extends ConsumerState<StaffDirectoryTab> {
       context: context,
       title: AppStrings.sortOptions,
       selected: _sort,
-      options: StaffSortOption.values
-          .map(
-            (option) => SortOption(value: option, label: option.displayLabel),
-          )
-          .toList(),
+      options: StaffSortOption.values.map((o) => SortOption(value: o, label: o.displayLabel)).toList(),
     );
-    if (selected != null && mounted) setState(() => _sort = selected);
+    if (selected != null && mounted) _updateFilter(() => _sort = selected);
   }
 
   Future<void> _showFilterSheet() async {
-    final selected = await StaffFilterSheet.show(
-      context: context,
-      initialFilters: _filters,
-    );
-    if (selected != null && mounted) setState(() => _filters = selected);
+    final selected = await StaffFilterSheet.show(context: context, initialFilters: _filters);
+    if (selected != null && mounted) _updateFilter(() => _filters = selected);
   }
 
   Widget _empty() => const SingleChildScrollView(
@@ -161,18 +161,8 @@ class _StaffDirectoryTabState extends ConsumerState<StaffDirectoryTab> {
     child: Center(
       child: Padding(
         padding: EdgeInsets.only(top: AppSizes.emptyStateTopOffset),
-        child: EmptyState(
-          message: AppStrings.noStaff,
-          icon: Icons.people_alt_rounded,
-        ),
+        child: EmptyState(message: AppStrings.noStaff, icon: Icons.people_alt_rounded),
       ),
     ),
   );
-
-  void _setRole(UserRole? role) =>
-      setState(() => _filters = _filters.copyWith(role: () => role));
-  void _setStatus(StaffAccountStatus? status) =>
-      setState(() => _filters = _filters.copyWith(status: () => status));
-  void _setBranch(ClinicLocation? branch) =>
-      setState(() => _filters = _filters.copyWith(branch: () => branch));
 }

@@ -30,18 +30,24 @@ class PatientTabPayments extends ConsumerWidget {
     final bool canManagePayments = user?.canHandlePayments ?? false;
     final asyncPayments = ref.watch(patientPaymentsProvider(patient.id));
 
-    return asyncPayments.when(
-      loading: () => const Padding(
-        padding: EdgeInsets.all(AppSizes.p16),
-        child: SkeletonTileList(count: 4),
+    final Widget content = asyncPayments.when(
+      loading: () => const KeyedSubtree(
+        key: ValueKey('payments_loading'),
+        child: Padding(
+          padding: EdgeInsets.all(AppSizes.p16),
+          child: SkeletonTileList(count: 4),
+        ),
       ),
-      error: (error, _) => ErrorView(
-        exception: error is AppException
-            ? error
-            : const UnknownException(
-                message: AppStrings.errorDatabaseQueryFailed,
-              ),
-        onRetry: () => ref.invalidate(patientPaymentsProvider(patient.id)),
+      error: (error, _) => KeyedSubtree(
+        key: const ValueKey('payments_error'),
+        child: ErrorView(
+          exception: error is AppException
+              ? error
+              : const UnknownException(
+                  message: AppStrings.errorDatabaseQueryFailed,
+                ),
+          onRetry: () => ref.invalidate(patientPaymentsProvider(patient.id)),
+        ),
       ),
       data: (payments) {
         final double totalSum = payments.fold(
@@ -53,21 +59,23 @@ class PatientTabPayments extends ConsumerWidget {
           (sum, pmt) => sum + pmt.remainingDue,
         );
 
-        return RefreshIndicator(
-          onRefresh: () async {
-            ref.invalidate(patientPaymentsProvider(patient.id));
-            try {
-              await ref.read(patientPaymentsProvider(patient.id).future);
-            } catch (_) {}
-          },
-          child: SingleChildScrollView(
-            physics: const AlwaysScrollableScrollPhysics(),
-            padding: const EdgeInsets.all(AppSizes.p16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                PaymentSummaryHeader(
-                  totalPaid: totalSum,
+        return KeyedSubtree(
+          key: const ValueKey('payments_data'),
+          child: RefreshIndicator(
+            onRefresh: () async {
+              ref.invalidate(patientPaymentsProvider(patient.id));
+              try {
+                await ref.read(patientPaymentsProvider(patient.id).future);
+              } catch (_) {}
+            },
+            child: SingleChildScrollView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              padding: const EdgeInsets.all(AppSizes.p16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  PaymentSummaryHeader(
+                    totalPaid: totalSum,
                   totalOutstanding: totalOutstanding,
                   canManagePayments: canManagePayments,
                   patient: patient,
@@ -109,8 +117,18 @@ class PatientTabPayments extends ConsumerWidget {
               ],
             ).animate().fadeIn(duration: 350.ms),
           ),
-        );
+        ),
+      );
       },
+    );
+
+    return AnimatedSwitcher(
+      duration: const Duration(milliseconds: 250),
+      switchInCurve: Curves.easeOutCubic,
+      switchOutCurve: Curves.easeInCubic,
+      transitionBuilder: (child, animation) =>
+          FadeTransition(opacity: animation, child: child),
+      child: content,
     );
   }
 }

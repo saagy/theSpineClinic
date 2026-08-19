@@ -63,10 +63,32 @@ class AppAsyncStateHandler<T> extends StatelessWidget {
   Widget build(BuildContext context) {
     final AsyncValue<T> value = asyncValue;
 
-    return value.when(
-      loading: () => SkeletonTileList(count: skeletonCount),
-      error: (e, s) => _buildError(context, e),
-      data: onData,
+    final Widget content = value.when(
+      loading: () => KeyedSubtree(
+        key: const ValueKey('async_loading'),
+        child: SkeletonTileList(count: skeletonCount),
+      ),
+      error: (e, s) => KeyedSubtree(
+        key: const ValueKey('async_error'),
+        child: _buildError(context, e),
+      ),
+      data: (data) => KeyedSubtree(
+        key: const ValueKey('async_data'),
+        child: onData(data),
+      ),
+    );
+
+    return AnimatedSwitcher(
+      duration: const Duration(milliseconds: 250),
+      switchInCurve: Curves.easeOutCubic,
+      switchOutCurve: Curves.easeInCubic,
+      transitionBuilder: (child, animation) {
+        return FadeTransition(
+          opacity: animation,
+          child: child,
+        );
+      },
+      child: content,
     );
   }
 

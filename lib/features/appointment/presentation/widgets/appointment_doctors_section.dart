@@ -1,7 +1,7 @@
 /// Doctors section for the appointment detail screen.
 ///
 /// Renders active doctors and a collapsible audit trail of past assignments
-/// in a flat document layout.
+/// inside a standard Material 3 section card.
 ///
 /// Uses the shared [DoctorRow] widget for active doctor rows.
 ///
@@ -12,11 +12,12 @@ import 'package:flutter/material.dart';
 import 'package:spine_clinic_app/core/constants/app_sizes.dart';
 import 'package:spine_clinic_app/core/constants/app_strings.dart';
 import 'package:spine_clinic_app/core/constants/app_text_styles.dart';
+import 'package:spine_clinic_app/core/constants/clinic_colors.dart';
 import 'package:spine_clinic_app/features/appointment/presentation/appointment_providers.dart';
 import 'package:spine_clinic_app/shared/widgets/eyebrow_label.dart';
 import 'package:spine_clinic_app/shared/widgets/doctor_row.dart';
 
-/// Flat document section displaying assigned doctors for an appointment.
+/// Section card displaying assigned doctors for an appointment.
 class AppointmentDoctorsSection extends StatelessWidget {
   const AppointmentDoctorsSection({
     super.key,
@@ -29,20 +30,27 @@ class AppointmentDoctorsSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final clinic = ClinicColors.of(context);
 
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(
-        AppSizes.p16,
-        AppSizes.p12,
-        AppSizes.p16,
-        AppSizes.p16,
+    return Container(
+      margin: const EdgeInsets.symmetric(
+        horizontal: AppSizes.p16,
+        vertical: AppSizes.p8,
+      ),
+      padding: const EdgeInsets.all(AppSizes.p16),
+      decoration: BoxDecoration(
+        color: colorScheme.surface,
+        borderRadius: const BorderRadius.all(Radius.circular(AppSizes.r16)),
+        border: Border.all(color: colorScheme.outlineVariant, width: 0.5),
+        boxShadow: [clinic.cardShadow],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           const EyebrowLabel(text: AppStrings.doctors, isUppercase: false),
-          const SizedBox(height: AppSizes.p6),
+          const SizedBox(height: AppSizes.p8),
           if (activeDoctors.isEmpty)
             Padding(
               padding: const EdgeInsets.symmetric(vertical: AppSizes.p4),

@@ -1,6 +1,6 @@
 /// Compact patient header block for the appointment detail screen.
 ///
-/// Displays patient identity, clinic branch, and next expected visit date.
+/// Displays patient identity, clinic branch, and next expected visit date CTA.
 /// Tappable to PatientDetailScreen.
 ///
 /// Rule 1 — keep files under 200 lines.

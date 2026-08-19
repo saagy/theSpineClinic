@@ -132,19 +132,37 @@ class ReceptionistTodayTab extends ConsumerWidget {
                 },
               ),
               Expanded(
-                child: state.loading
-                    ? const SkeletonTileList(count: 5)
-                    : state.error != null
-                    ? _buildErrorState(context)
-                    : ReceptionistDayList(
-                        state: state,
-                        searchQuery: searchQuery,
-                        onStatusChanged: onStatusChanged,
-                        onToggleCancelled: () => ref
-                            .read(receptionistAppointmentsProvider.notifier)
-                            .toggleShowCancelled(),
-                        onRefresh: () async => onRefresh(),
-                      ),
+                child: AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 250),
+                  switchInCurve: Curves.easeOutCubic,
+                  switchOutCurve: Curves.easeInCubic,
+                  transitionBuilder: (c, a) =>
+                      FadeTransition(opacity: a, child: c),
+                  child: state.loading
+                      ? const KeyedSubtree(
+                          key: ValueKey('today_loading'),
+                          child: SkeletonTileList(count: 5),
+                        )
+                      : state.error != null
+                      ? KeyedSubtree(
+                          key: const ValueKey('today_error'),
+                          child: _buildErrorState(context),
+                        )
+                      : KeyedSubtree(
+                          key: ValueKey(
+                            'today_data_${state.selectedDate}_${state.itemsForSelectedDay.length}',
+                          ),
+                          child: ReceptionistDayList(
+                            state: state,
+                            searchQuery: searchQuery,
+                            onStatusChanged: onStatusChanged,
+                            onToggleCancelled: () => ref
+                                .read(receptionistAppointmentsProvider.notifier)
+                                .toggleShowCancelled(),
+                            onRefresh: () async => onRefresh(),
+                          ),
+                        ),
+                ),
               ),
             ],
           ),

@@ -45,13 +45,31 @@ class PatientDetailScreen extends ConsumerWidget {
     final user = ref.watch(currentUserProvider).value;
     final isDoctor = user?.role == UserRole.doctor;
 
-    return asyncPatient.when(
-      loading: () => const Scaffold(body: PatientProfileSkeleton()),
-      error: (error, _) => PatientErrorScaffold(
-        error: error,
-        onRetry: () => ref.invalidate(patientDetailProvider(patientId)),
+    final Widget content = asyncPatient.when(
+      loading: () => const KeyedSubtree(
+        key: ValueKey('patient_detail_loading'),
+        child: Scaffold(body: PatientProfileSkeleton()),
       ),
-      data: (patient) => _PatientProfile(patient: patient, isDoctor: isDoctor),
+      error: (error, _) => KeyedSubtree(
+        key: const ValueKey('patient_detail_error'),
+        child: PatientErrorScaffold(
+          error: error,
+          onRetry: () => ref.invalidate(patientDetailProvider(patientId)),
+        ),
+      ),
+      data: (patient) => KeyedSubtree(
+        key: ValueKey('patient_detail_data_${patient.id}'),
+        child: _PatientProfile(patient: patient, isDoctor: isDoctor),
+      ),
+    );
+
+    return AnimatedSwitcher(
+      duration: const Duration(milliseconds: 250),
+      switchInCurve: Curves.easeOutCubic,
+      switchOutCurve: Curves.easeInCubic,
+      transitionBuilder: (child, animation) =>
+          FadeTransition(opacity: animation, child: child),
+      child: content,
     );
   }
 }

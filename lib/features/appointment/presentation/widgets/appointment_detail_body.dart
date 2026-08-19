@@ -21,7 +21,7 @@ import 'package:spine_clinic_app/features/appointment/presentation/widgets/appoi
 import 'package:spine_clinic_app/features/auth/presentation/auth_providers.dart';
 import 'package:spine_clinic_app/shared/widgets/empty_state.dart';
 
-/// Data-state body with flat document layout and pinned bottom actions.
+/// Data-state body with structured section cards and pinned bottom actions.
 class AppointmentDetailBody extends ConsumerWidget {
   const AppointmentDetailBody({
     super.key,
@@ -99,6 +99,7 @@ class AppointmentDetailBody extends ConsumerWidget {
                     status: state.appointment.status,
                     scheduledAt: state.appointment.scheduledAt,
                   ),
+                  const SizedBox(height: AppSizes.p8),
                   AppointmentInfoCard(
                     appointment: state.appointment,
                     linkedAppointments: linkedAppointments,
@@ -111,6 +112,7 @@ class AppointmentDetailBody extends ConsumerWidget {
                     activeDoctors: state.activeDoctors,
                     inactiveDoctors: state.inactiveDoctors,
                   ),
+                  const SizedBox(height: AppSizes.p24),
                 ],
               ),
             ),

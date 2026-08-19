@@ -1,4 +1,4 @@
-/// Flat document component showing visit notes for an appointment.
+/// Card component showing visit notes for an appointment.
 ///
 /// Rule 1 — keep files under 200 lines.
 library;
@@ -19,7 +19,7 @@ import 'package:spine_clinic_app/features/patient/presentation/widgets/add_note_
 import 'package:spine_clinic_app/features/appointment/presentation/widgets/appointment_note_actions.dart';
 import 'package:spine_clinic_app/shared/widgets/eyebrow_label.dart';
 
-/// Flat document section for viewing, adding, and editing appointment visit notes.
+/// Section card for viewing, adding, and editing appointment visit notes.
 class AppointmentNotesCard extends ConsumerWidget {
   const AppointmentNotesCard({
     super.key,
@@ -34,140 +34,135 @@ class AppointmentNotesCard extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final noteAsync = ref.watch(appointmentNoteProvider(appointmentId));
     final Staff? currentUser = ref.watch(currentUserProvider).value;
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
+    final colorScheme = Theme.of(context).colorScheme;
     final clinic = ClinicColors.of(context);
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Padding(
-          padding: const EdgeInsets.fromLTRB(
-            AppSizes.p16,
-            AppSizes.p12,
-            AppSizes.p16,
-            AppSizes.p12,
-          ),
-          child: noteAsync.when(
-            loading: () => const Padding(
-              padding: EdgeInsets.symmetric(vertical: AppSizes.p8),
-              child: Center(child: CircularProgressIndicator()),
+    return Container(
+      margin: const EdgeInsets.symmetric(
+        horizontal: AppSizes.p16,
+        vertical: AppSizes.p8,
+      ),
+      padding: const EdgeInsets.all(AppSizes.p16),
+      decoration: BoxDecoration(
+        color: colorScheme.surface,
+        borderRadius: const BorderRadius.all(Radius.circular(AppSizes.r16)),
+        border: Border.all(color: colorScheme.outlineVariant, width: 0.5),
+        boxShadow: [clinic.cardShadow],
+      ),
+      child: noteAsync.when(
+        loading: () => const Padding(
+          padding: EdgeInsets.symmetric(vertical: AppSizes.p8),
+          child: Center(child: CircularProgressIndicator()),
+        ),
+        error: (error, _) {
+          final AppException ex = error is AppException
+              ? error
+              : UnknownException(message: '$error');
+          return Padding(
+            padding: const EdgeInsets.symmetric(vertical: AppSizes.p4),
+            child: Text(
+              AppStrings.fromKey(ex.userMessageKey),
+              style: AppTextStyles.body.copyWith(color: colorScheme.error),
             ),
-            error: (error, _) {
-              final AppException ex = error is AppException
-                  ? error
-                  : UnknownException(message: '$error');
-              return Padding(
-                padding: const EdgeInsets.symmetric(vertical: AppSizes.p4),
-                child: Text(
-                  AppStrings.fromKey(ex.userMessageKey),
-                  style: AppTextStyles.body.copyWith(color: colorScheme.error),
-                ),
-              );
-            },
-            data: (note) {
-              final bool canModify = note != null &&
-                  currentUser != null &&
-                  (currentUser.role == UserRole.doctor ||
-                      currentUser.role == UserRole.superAdmin ||
-                      currentUser.id == note.createdBy);
+          );
+        },
+        data: (note) {
+          final bool canModify = note != null &&
+              currentUser != null &&
+              (currentUser.role == UserRole.doctor ||
+                  currentUser.role == UserRole.superAdmin ||
+                  currentUser.id == note.createdBy);
 
-              return Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  EyebrowLabel(
-                    text: AppStrings.notes,
-                    isUppercase: false,
-                    action: note != null && canModify
-                        ? NoteHeaderActions(
-                            onEdit: () => _showNoteSheet(context, note),
-                            onDelete: () => NoteHeaderActions.confirmAndDelete(
-                              context: context,
-                              ref: ref,
-                              note: note,
-                            ),
-                          )
-                        : null,
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              EyebrowLabel(
+                text: AppStrings.visitNotes,
+                isUppercase: false,
+                action: note != null && canModify
+                    ? NoteHeaderActions(
+                        onEdit: () => _showNoteSheet(context, note),
+                        onDelete: () => NoteHeaderActions.confirmAndDelete(
+                          context: context,
+                          ref: ref,
+                          note: note,
+                        ),
+                      )
+                    : null,
+              ),
+              const SizedBox(height: AppSizes.p8),
+              if (note != null && note.noteText.isNotEmpty)
+                Container(
+                  padding: const EdgeInsets.fromLTRB(
+                    AppSizes.p12,
+                    AppSizes.p8,
+                    AppSizes.p12,
+                    AppSizes.p8,
                   ),
-                  const SizedBox(height: AppSizes.p6),
-                  if (note != null && note.noteText.isNotEmpty)
-                    Container(
-                      padding: const EdgeInsets.fromLTRB(
-                        AppSizes.p12,
-                        AppSizes.p4,
-                        AppSizes.p4,
-                        AppSizes.p4,
+                  decoration: BoxDecoration(
+                    color: clinic.neutralContainer.withValues(alpha: 0.2),
+                    borderRadius: const BorderRadius.all(
+                      Radius.circular(AppSizes.r8),
+                    ),
+                    border: Border(
+                      left: BorderSide(
+                        color: colorScheme.primary,
+                        width: 3.5,
                       ),
-                      decoration: BoxDecoration(
-                        border: Border(
-                          left: BorderSide(
-                            color: colorScheme.primary,
-                            width: 3.5,
-                          ),
-                        ),
+                    ),
+                  ),
+                  child: Text(
+                    note.noteText,
+                    style: AppTextStyles.body.copyWith(
+                      color: colorScheme.onSurface,
+                    ),
+                  ),
+                )
+              else
+                InkWell(
+                  onTap: () => _showNoteSheet(context, null),
+                  borderRadius: const BorderRadius.all(
+                    Radius.circular(AppSizes.r8),
+                  ),
+                  child: Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(
+                      vertical: AppSizes.p12,
+                    ),
+                    decoration: BoxDecoration(
+                      border: Border.all(
+                        color: colorScheme.outlineVariant,
+                        width: 1.0,
                       ),
-                      child: Text(
-                        note.noteText,
-                        style: AppTextStyles.body.copyWith(
-                          color: colorScheme.onSurface,
-                        ),
-                      ),
-                    )
-                  else
-                    InkWell(
-                      onTap: () => _showNoteSheet(context, null),
                       borderRadius: const BorderRadius.all(
                         Radius.circular(AppSizes.r8),
                       ),
-                      child: Container(
-                        width: double.infinity,
-                        padding: const EdgeInsets.symmetric(
-                          vertical: AppSizes.p10,
-                        ),
-                        decoration: BoxDecoration(
-                          border: Border.all(
-                            color: colorScheme.outlineVariant,
-                            width: 1.0,
-                          ),
-                          borderRadius: const BorderRadius.all(
-                            Radius.circular(AppSizes.r8),
-                          ),
-                          color: clinic.neutralContainer.withValues(alpha: 0.1),
-                        ),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(
-                              Icons.add_rounded,
-                              color: colorScheme.primary,
-                              size: AppSizes.iconSmall,
-                            ),
-                            const SizedBox(width: AppSizes.p6),
-                            Text(
-                              AppStrings.addVisitNotePrompt,
-                              style: AppTextStyles.bodyMedium.copyWith(
-                                color: colorScheme.primary,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
+                      color: clinic.neutralContainer.withValues(alpha: 0.1),
                     ),
-                ],
-              );
-            },
-          ),
-        ),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: AppSizes.p16),
-          child: Divider(
-            color: colorScheme.outlineVariant,
-            height: 1.0,
-            thickness: 0.5,
-          ),
-        ),
-      ],
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.add_rounded,
+                          color: colorScheme.primary,
+                          size: AppSizes.iconSmall,
+                        ),
+                        const SizedBox(width: AppSizes.p6),
+                        Text(
+                          AppStrings.addVisitNotePrompt,
+                          style: AppTextStyles.bodyMedium.copyWith(
+                            color: colorScheme.primary,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+            ],
+          );
+        },
+      ),
     );
   }
 
