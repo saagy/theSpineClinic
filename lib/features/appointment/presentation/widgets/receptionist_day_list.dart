@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 
 import 'package:spine_clinic_app/core/constants/app_sizes.dart';
 import 'package:spine_clinic_app/core/constants/app_strings.dart';
@@ -7,6 +6,7 @@ import 'package:spine_clinic_app/core/constants/app_text_styles.dart';
 import 'package:spine_clinic_app/features/appointment/domain/appointment_repository.dart';
 import 'package:spine_clinic_app/features/appointment/presentation/receptionist_appointments_providers.dart';
 import 'package:spine_clinic_app/features/appointment/presentation/widgets/receptionist_appointment_card.dart';
+import 'package:spine_clinic_app/features/appointment/presentation/widgets/receptionist_day_list_helpers.dart';
 import 'package:spine_clinic_app/features/appointment/presentation/widgets/receptionist_grouped_appointment_card.dart';
 import 'package:spine_clinic_app/features/patient/domain/patient.dart';
 
@@ -50,6 +50,15 @@ class ReceptionistDayList extends StatelessWidget {
           AppSizes.p32,
         ),
         children: [
+<<<<<<< HEAD
+=======
+          ScheduleDateHeader(
+            count: 0,
+            showCancelled: state.showCancelled,
+            onToggleCancelled: onToggleCancelled,
+          ),
+          const SizedBox(height: AppSizes.p48),
+>>>>>>> 9e2480a8e672430e8aee05dd7a5b34adbc587e5c
           Center(
             child: Text(
               searchQuery.isNotEmpty
@@ -103,8 +112,21 @@ class ReceptionistDayList extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(0, AppSizes.p8, 0, AppSizes.p32),
       itemCount: totalCount,
       itemBuilder: (_, index) {
+<<<<<<< HEAD
         if (hasNow && index == nowIndex) {
           return const _NowIndicator();
+=======
+        if (index == 0) {
+          return ScheduleDateHeader(
+            count: items.length,
+            showCancelled: state.showCancelled,
+            onToggleCancelled: onToggleCancelled,
+          );
+        }
+
+        if (hasNow && index - 1 == nowIndex) {
+          return const ScheduleNowIndicator();
+>>>>>>> 9e2480a8e672430e8aee05dd7a5b34adbc587e5c
         }
 
         final cardIndex = hasNow && index > nowIndex ? index - 1 : index;
@@ -155,6 +177,7 @@ class ReceptionistDayList extends StatelessWidget {
     return items.length;
   }
 }
+<<<<<<< HEAD
 
 /// Now indicator: red dot + current time + horizontal red line.
 class _NowIndicator extends StatelessWidget {
@@ -201,3 +224,5 @@ class _NowIndicator extends StatelessWidget {
     );
   }
 }
+=======
+>>>>>>> 9e2480a8e672430e8aee05dd7a5b34adbc587e5c

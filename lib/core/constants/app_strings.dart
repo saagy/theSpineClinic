@@ -664,6 +664,8 @@ abstract final class AppStrings {
 
   static String appointmentCountForDate(String date, int count) =>
       '$date  ·  $count appointment${count == 1 ? '' : 's'}';
+  static String appointmentCountSummary(int count) =>
+      '$count appointment${count == 1 ? '' : 's'}';
   static const String thisWeek = 'This Week';
   static const String thisMonth = 'This Month';
   static const String custom = 'Custom';
