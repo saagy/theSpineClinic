@@ -11,6 +11,7 @@ import 'package:spine_clinic_app/core/network/app_routes.dart';
 import 'package:spine_clinic_app/features/appointment/domain/appointment.dart';
 import 'package:spine_clinic_app/features/appointment/domain/appointment_repository.dart';
 import 'package:spine_clinic_app/features/appointment/domain/appointment_status.dart';
+import 'package:spine_clinic_app/features/appointment/presentation/appointment_providers.dart';
 import 'package:spine_clinic_app/features/appointment/presentation/receptionist_appointments_providers.dart';
 import 'package:spine_clinic_app/features/appointment/presentation/widgets/appointment_actions_trailing.dart';
 import 'package:spine_clinic_app/features/auth/domain/user_role.dart';
@@ -19,7 +20,6 @@ import 'package:spine_clinic_app/features/patient/domain/patient.dart';
 import 'package:spine_clinic_app/shared/widgets/app_avatar.dart';
 import 'package:spine_clinic_app/shared/widgets/app_snackbar.dart';
 import 'package:spine_clinic_app/shared/widgets/confirmation_dialog.dart';
-
 part 'receptionist_grouped_appointment_card_individual_menu.dart';
 part 'receptionist_grouped_appointment_card_menu.dart';
 part 'receptionist_grouped_appointment_card_sub_row.dart';
@@ -51,10 +51,12 @@ class _ReceptionistGroupedAppointmentCardState
     final theme = Theme.of(context);
     final clinic = ClinicColors.of(context);
     final user = ref.watch(currentUserProvider).value;
+    final bool isDocOnPatient = user?.role == UserRole.doctor &&
+        (ref.watch(isDoctorAssignedToPatientProvider(widget.patient.id)).value ?? false);
     final bool isAuthorizedStaff = user != null &&
         (user.role == UserRole.receptionist ||
             user.role == UserRole.superAdmin ||
-            user.role == UserRole.doctor);
+            isDocOnPatient);
 
     final statuses = widget.items.map((i) => i.appointment.status).toSet();
     final bool allCancelled =
@@ -75,9 +77,8 @@ class _ReceptionistGroupedAppointmentCardState
     final sortedItems = List<AppointmentWithPatient>.from(widget.items)
       ..sort((a, b) =>
           a.appointment.scheduledAt.compareTo(b.appointment.scheduledAt));
-
-    final tEarliest = sortedItems.first.appointment.scheduledAt.toLocal();
-    final timeStr = DateFormat('hh:mm a').format(tEarliest);
+    final timeStr = DateFormat('hh:mm a')
+        .format(sortedItems.first.appointment.scheduledAt.toLocal());
 
     final Color cardBg = isAnyPastScheduled
         ? clinic.warningContainer

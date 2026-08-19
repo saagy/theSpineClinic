@@ -854,3 +854,211 @@ final class SingleAppointmentFamily extends $Family
   @override
   String toString() => r'singleAppointmentProvider';
 }
+
+/// Checks if the current authenticated user has permission to view and modify
+/// a specific appointment.
+///
+/// Returns `true` if:
+/// - The user is a `receptionist` or `superAdmin`.
+/// - The user is a `doctor` AND (1) the patient is assigned to them in `patient_doctors`,
+///   OR (2) this specific appointment has an active assignment to them in `appointment_doctors`.
+
+@ProviderFor(canAccessAppointment)
+final canAccessAppointmentProvider = CanAccessAppointmentFamily._();
+
+/// Checks if the current authenticated user has permission to view and modify
+/// a specific appointment.
+///
+/// Returns `true` if:
+/// - The user is a `receptionist` or `superAdmin`.
+/// - The user is a `doctor` AND (1) the patient is assigned to them in `patient_doctors`,
+///   OR (2) this specific appointment has an active assignment to them in `appointment_doctors`.
+
+final class CanAccessAppointmentProvider
+    extends $FunctionalProvider<AsyncValue<bool>, bool, FutureOr<bool>>
+    with $FutureModifier<bool>, $FutureProvider<bool> {
+  /// Checks if the current authenticated user has permission to view and modify
+  /// a specific appointment.
+  ///
+  /// Returns `true` if:
+  /// - The user is a `receptionist` or `superAdmin`.
+  /// - The user is a `doctor` AND (1) the patient is assigned to them in `patient_doctors`,
+  ///   OR (2) this specific appointment has an active assignment to them in `appointment_doctors`.
+  CanAccessAppointmentProvider._({
+    required CanAccessAppointmentFamily super.from,
+    required ({String appointmentId, String patientId}) super.argument,
+  }) : super(
+         retry: null,
+         name: r'canAccessAppointmentProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
+
+  @override
+  String debugGetCreateSourceHash() => _$canAccessAppointmentHash();
+
+  @override
+  String toString() {
+    return r'canAccessAppointmentProvider'
+        ''
+        '$argument';
+  }
+
+  @$internal
+  @override
+  $FutureProviderElement<bool> $createElement($ProviderPointer pointer) =>
+      $FutureProviderElement(pointer);
+
+  @override
+  FutureOr<bool> create(Ref ref) {
+    final argument =
+        this.argument as ({String appointmentId, String patientId});
+    return canAccessAppointment(
+      ref,
+      appointmentId: argument.appointmentId,
+      patientId: argument.patientId,
+    );
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is CanAccessAppointmentProvider && other.argument == argument;
+  }
+
+  @override
+  int get hashCode {
+    return argument.hashCode;
+  }
+}
+
+String _$canAccessAppointmentHash() =>
+    r'31cbebab24ab95b41ae56bb466b03e7bb77ee15c';
+
+/// Checks if the current authenticated user has permission to view and modify
+/// a specific appointment.
+///
+/// Returns `true` if:
+/// - The user is a `receptionist` or `superAdmin`.
+/// - The user is a `doctor` AND (1) the patient is assigned to them in `patient_doctors`,
+///   OR (2) this specific appointment has an active assignment to them in `appointment_doctors`.
+
+final class CanAccessAppointmentFamily extends $Family
+    with
+        $FunctionalFamilyOverride<
+          FutureOr<bool>,
+          ({String appointmentId, String patientId})
+        > {
+  CanAccessAppointmentFamily._()
+    : super(
+        retry: null,
+        name: r'canAccessAppointmentProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
+  /// Checks if the current authenticated user has permission to view and modify
+  /// a specific appointment.
+  ///
+  /// Returns `true` if:
+  /// - The user is a `receptionist` or `superAdmin`.
+  /// - The user is a `doctor` AND (1) the patient is assigned to them in `patient_doctors`,
+  ///   OR (2) this specific appointment has an active assignment to them in `appointment_doctors`.
+
+  CanAccessAppointmentProvider call({
+    required String appointmentId,
+    required String patientId,
+  }) => CanAccessAppointmentProvider._(
+    argument: (appointmentId: appointmentId, patientId: patientId),
+    from: this,
+  );
+
+  @override
+  String toString() => r'canAccessAppointmentProvider';
+}
+
+/// Checks if the current doctor is assigned to the given patient in `patient_doctors`.
+/// Non-doctor staff always return `true`.
+
+@ProviderFor(isDoctorAssignedToPatient)
+final isDoctorAssignedToPatientProvider = IsDoctorAssignedToPatientFamily._();
+
+/// Checks if the current doctor is assigned to the given patient in `patient_doctors`.
+/// Non-doctor staff always return `true`.
+
+final class IsDoctorAssignedToPatientProvider
+    extends $FunctionalProvider<AsyncValue<bool>, bool, FutureOr<bool>>
+    with $FutureModifier<bool>, $FutureProvider<bool> {
+  /// Checks if the current doctor is assigned to the given patient in `patient_doctors`.
+  /// Non-doctor staff always return `true`.
+  IsDoctorAssignedToPatientProvider._({
+    required IsDoctorAssignedToPatientFamily super.from,
+    required String super.argument,
+  }) : super(
+         retry: null,
+         name: r'isDoctorAssignedToPatientProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
+
+  @override
+  String debugGetCreateSourceHash() => _$isDoctorAssignedToPatientHash();
+
+  @override
+  String toString() {
+    return r'isDoctorAssignedToPatientProvider'
+        ''
+        '($argument)';
+  }
+
+  @$internal
+  @override
+  $FutureProviderElement<bool> $createElement($ProviderPointer pointer) =>
+      $FutureProviderElement(pointer);
+
+  @override
+  FutureOr<bool> create(Ref ref) {
+    final argument = this.argument as String;
+    return isDoctorAssignedToPatient(ref, argument);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is IsDoctorAssignedToPatientProvider &&
+        other.argument == argument;
+  }
+
+  @override
+  int get hashCode {
+    return argument.hashCode;
+  }
+}
+
+String _$isDoctorAssignedToPatientHash() =>
+    r'08a2a53eecb1a44c95b268ec7964e98274a0e534';
+
+/// Checks if the current doctor is assigned to the given patient in `patient_doctors`.
+/// Non-doctor staff always return `true`.
+
+final class IsDoctorAssignedToPatientFamily extends $Family
+    with $FunctionalFamilyOverride<FutureOr<bool>, String> {
+  IsDoctorAssignedToPatientFamily._()
+    : super(
+        retry: null,
+        name: r'isDoctorAssignedToPatientProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
+  /// Checks if the current doctor is assigned to the given patient in `patient_doctors`.
+  /// Non-doctor staff always return `true`.
+
+  IsDoctorAssignedToPatientProvider call(String patientId) =>
+      IsDoctorAssignedToPatientProvider._(argument: patientId, from: this);
+
+  @override
+  String toString() => r'isDoctorAssignedToPatientProvider';
+}

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:spine_clinic_app/core/constants/app_strings.dart';
 import 'package:spine_clinic_app/features/appointment/domain/appointment.dart';
@@ -45,14 +46,16 @@ void main() {
     );
 
     await tester.pumpWidget(
-      MaterialApp(
-        home: Scaffold(
-          body: ReceptionistAppointmentCard(
-            item: AppointmentWithPatient(
-              appointment: appointment,
-              patient: patient,
+      ProviderScope(
+        child: MaterialApp(
+          home: Scaffold(
+            body: ReceptionistAppointmentCard(
+              item: AppointmentWithPatient(
+                appointment: appointment,
+                patient: patient,
+              ),
+              showMenu: false,
             ),
-            showMenu: false,
           ),
         ),
       ),

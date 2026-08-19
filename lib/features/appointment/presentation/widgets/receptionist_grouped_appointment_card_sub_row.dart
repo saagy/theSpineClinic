@@ -1,7 +1,7 @@
 part of 'receptionist_grouped_appointment_card.dart';
 
 /// Single sub-appointment row inside [ReceptionistGroupedAppointmentCard].
-class _GroupedSubAppointmentRow extends StatelessWidget {
+class _GroupedSubAppointmentRow extends ConsumerWidget {
   const _GroupedSubAppointmentRow({
     required this.item,
     required this.isAuthorizedStaff,
@@ -16,13 +16,26 @@ class _GroupedSubAppointmentRow extends StatelessWidget {
       onShowStatusMenu;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final clinic = ClinicColors.of(context);
     final subAppt = item.appointment;
     final isCancelled = subAppt.status == AppointmentStatus.cancelled;
     final localTime = subAppt.scheduledAt.toLocal();
     final formattedTime = DateFormat('h:mm a').format(localTime);
+
+    final user = ref.watch(currentUserProvider).value;
+    final bool isDoctor = user?.role == UserRole.doctor;
+    final canAccessAsync = isDoctor
+        ? ref.watch(
+            canAccessAppointmentProvider(
+              appointmentId: item.appointment.id,
+              patientId: item.patient.id,
+            ),
+          )
+        : const AsyncValue.data(true);
+    final bool canAccess = canAccessAsync.value ?? !isDoctor;
+    final bool canInteractWithMenu = isAuthorizedStaff && canAccess;
 
     final bool isPastScheduled =
         subAppt.status == AppointmentStatus.scheduled &&
@@ -38,18 +51,26 @@ class _GroupedSubAppointmentRow extends StatelessWidget {
 
     return GestureDetector(
       onLongPressStart: (details) {
-        if (isAuthorizedStaff) {
+        if (canInteractWithMenu) {
           onShowStatusMenu(subAppt, details.globalPosition);
         }
       },
       onSecondaryTapDown: (details) {
-        if (isAuthorizedStaff) {
+        if (canInteractWithMenu) {
           onShowStatusMenu(subAppt, details.globalPosition);
         }
       },
       child: InkWell(
         borderRadius: const BorderRadius.all(Radius.circular(AppSizes.r8)),
         onTap: () async {
+          if (!canAccess) {
+            AppSnackbar.show(
+              context,
+              message: AppStrings.errorDatabasePermissionDenied,
+              variant: AppSnackbarVariant.error,
+            );
+            return;
+          }
           await context.push(
             AppRoutes.appointmentDetail.replaceAll(
               ':id',

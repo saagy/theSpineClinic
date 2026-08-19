@@ -11,11 +11,19 @@ mixin _ReceptionistAppointmentCardMenu
   /// Opens a context menu at [globalPosition] with status actions.
   Future<void> showLongPressMenu(Offset globalPosition) async {
     final user = ref.read(currentUserProvider).value;
-    final bool isAuthorized = user != null &&
-        (user.role == UserRole.receptionist ||
-            user.role == UserRole.superAdmin ||
-            user.role == UserRole.doctor);
-    if (!isAuthorized || _isMenuProcessing) return;
+    if (user == null || _isMenuProcessing) return;
+    if (user.role == UserRole.doctor) {
+      final canAccess = await ref.read(
+        canAccessAppointmentProvider(
+          appointmentId: widget.item.appointment.id,
+          patientId: widget.item.patient.id,
+        ).future,
+      );
+      if (!canAccess || !mounted) return;
+    } else if (user.role != UserRole.receptionist &&
+        user.role != UserRole.superAdmin) {
+      return;
+    }
 
     final status = widget.item.appointment.status;
     final bool hasActions = status == AppointmentStatus.scheduled ||

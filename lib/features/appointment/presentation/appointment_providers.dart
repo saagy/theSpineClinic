@@ -19,6 +19,7 @@ import 'package:spine_clinic_app/features/appointment/domain/appointment_doctor.
 import 'package:spine_clinic_app/features/appointment/domain/appointment_repository.dart';
 import 'package:spine_clinic_app/features/appointment/domain/appointment_type.dart';
 import 'package:spine_clinic_app/features/auth/domain/staff.dart';
+import 'package:spine_clinic_app/features/auth/domain/user_role.dart';
 import 'package:spine_clinic_app/features/auth/presentation/auth_providers.dart';
 import 'package:spine_clinic_app/features/patient/presentation/patient_providers.dart';
 import 'package:spine_clinic_app/features/admin/presentation/branch_providers.dart';
@@ -215,4 +216,52 @@ Future<Appointment> singleAppointment(Ref ref, String appointmentId) async {
   final repo = ref.watch(appointmentRepositoryProvider);
   final result = await repo.getAppointmentById(appointmentId);
   return result.when(success: (data) => data, failure: (err) => throw err);
+}
+
+/// Checks if the current authenticated user has permission to view and modify
+/// a specific appointment.
+///
+/// Returns `true` if:
+/// - The user is a `receptionist` or `superAdmin`.
+/// - The user is a `doctor` AND (1) the patient is assigned to them in `patient_doctors`,
+///   OR (2) this specific appointment has an active assignment to them in `appointment_doctors`.
+@riverpod
+Future<bool> canAccessAppointment(
+  Ref ref, {
+  required String appointmentId,
+  required String patientId,
+}) async {
+  final user = ref.watch(currentUserProvider).value;
+  if (user == null) return false;
+  if (user.role != UserRole.doctor) return true;
+
+  final String doctorId = user.id;
+
+  // 1. Check patient-level assignment (Case 1)
+  final patientDoctors =
+      await ref.watch(patientAssignedDoctorsProvider(patientId).future);
+  if (patientDoctors.any((d) => d.id == doctorId)) {
+    return true;
+  }
+
+  // 2. Check appointment-level assignment (Case 2)
+  final apptDoctors =
+      await ref.watch(appointmentDoctorsProvider(appointmentId).future);
+  if (apptDoctors.any((d) => d.doctorId == doctorId && d.isActive)) {
+    return true;
+  }
+
+  return false;
+}
+
+/// Checks if the current doctor is assigned to the given patient in `patient_doctors`.
+/// Non-doctor staff always return `true`.
+@riverpod
+Future<bool> isDoctorAssignedToPatient(Ref ref, String patientId) async {
+  final user = ref.watch(currentUserProvider).value;
+  if (user == null) return false;
+  if (user.role != UserRole.doctor) return true;
+  final patientDoctors =
+      await ref.watch(patientAssignedDoctorsProvider(patientId).future);
+  return patientDoctors.any((d) => d.id == user.id);
 }

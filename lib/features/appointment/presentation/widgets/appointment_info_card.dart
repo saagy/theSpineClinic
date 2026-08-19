@@ -1,5 +1,5 @@
-/// Card displaying schedule details (date, time, visit type, package status)
-/// and any linked sessions on the same day.
+/// Section displaying schedule details (date, time, visit type, package status)
+/// and any linked sessions on the same day in a flat document layout.
 ///
 /// Rule 1 — keep files under 200 lines.
 library;
@@ -8,12 +8,11 @@ import 'package:flutter/material.dart';
 import 'package:spine_clinic_app/core/constants/app_sizes.dart';
 import 'package:spine_clinic_app/core/constants/app_strings.dart';
 import 'package:spine_clinic_app/core/constants/app_text_styles.dart';
-import 'package:spine_clinic_app/core/constants/clinic_colors.dart';
 import 'package:spine_clinic_app/core/utils/formatters.dart';
 import 'package:spine_clinic_app/features/appointment/domain/appointment.dart';
 import 'package:spine_clinic_app/features/appointment/presentation/widgets/appointment_linked_session_row.dart';
 
-/// Section card displaying appointment schedule information and linked sessions.
+/// Flat document section for appointment schedule information and linked sessions.
 class AppointmentInfoCard extends StatelessWidget {
   const AppointmentInfoCard({
     super.key,
@@ -28,7 +27,6 @@ class AppointmentInfoCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
-    final clinic = ClinicColors.of(context);
 
     final labelStyle = AppTextStyles.captionMedium.copyWith(
       color: colorScheme.onSurfaceVariant,
@@ -44,148 +42,155 @@ class AppointmentInfoCard extends StatelessWidget {
       fontFeatures: const [FontFeature.tabularFigures()],
     );
 
-    return Container(
-      margin: const EdgeInsets.symmetric(
-        horizontal: AppSizes.p16,
-        vertical: AppSizes.p8,
-      ),
-      padding: const EdgeInsets.all(AppSizes.p16),
-      decoration: BoxDecoration(
-        color: colorScheme.surface,
-        borderRadius: const BorderRadius.all(Radius.circular(AppSizes.r16)),
-        border: Border.all(color: colorScheme.outlineVariant, width: 0.5),
-        boxShadow: [clinic.cardShadow],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(AppStrings.date.toUpperCase(), style: labelStyle),
-                    const SizedBox(height: AppSizes.p4),
-                    Text(
-                      Formatters.formatDateMedium(appointment.scheduledAt),
-                      style: valueStyle,
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(width: AppSizes.p16),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(AppStrings.time.toUpperCase(), style: labelStyle),
-                    const SizedBox(height: AppSizes.p4),
-                    Text(
-                      Formatters.formatTime(appointment.scheduledAt),
-                      style: valueStyle,
-                    ),
-                  ],
-                ),
-              ),
-            ],
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(
+            AppSizes.p16,
+            AppSizes.p14,
+            AppSizes.p16,
+            AppSizes.p12,
           ),
-          const SizedBox(height: AppSizes.p16),
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(AppStrings.date.toUpperCase(), style: labelStyle),
+                        const SizedBox(height: AppSizes.p4),
+                        Text(
+                          Formatters.formatDateMedium(appointment.scheduledAt),
+                          style: valueStyle,
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: AppSizes.p16),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(AppStrings.time.toUpperCase(), style: labelStyle),
+                        const SizedBox(height: AppSizes.p4),
+                        Text(
+                          Formatters.formatTime(appointment.scheduledAt),
+                          style: valueStyle,
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: AppSizes.p12),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          AppStrings.visitType.toUpperCase(),
+                          style: labelStyle,
+                        ),
+                        const SizedBox(height: AppSizes.p4),
+                        Text(
+                          appointment.type.displayLabel,
+                          style: AppTextStyles.body.copyWith(
+                            fontWeight: FontWeight.w500,
+                            color: colorScheme.onSurface,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: AppSizes.p16),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          AppStrings.packageStatus.toUpperCase(),
+                          style: labelStyle,
+                        ),
+                        const SizedBox(height: AppSizes.p4),
+                        appointment.usePackage
+                            ? Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Container(
+                                    width: 8,
+                                    height: 8,
+                                    decoration: BoxDecoration(
+                                      color: colorScheme.primary,
+                                      shape: BoxShape.circle,
+                                    ),
+                                  ),
+                                  const SizedBox(width: AppSizes.p6),
+                                  Text(
+                                    AppStrings.usingPackage,
+                                    style: AppTextStyles.body.copyWith(
+                                      fontWeight: FontWeight.w500,
+                                      color: colorScheme.onSurface,
+                                    ),
+                                  ),
+                                ],
+                              )
+                            : Text(
+                                AppStrings.noPackage,
+                                style: AppTextStyles.bodySecondary.copyWith(
+                                  color: colorScheme.onSurfaceVariant,
+                                ),
+                              ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              if (linkedAppointments.isNotEmpty) ...[
+                const SizedBox(height: AppSizes.p14),
+                Row(
                   children: [
-                    Text(AppStrings.visitType.toUpperCase(), style: labelStyle),
-                    const SizedBox(height: AppSizes.p4),
+                    Icon(
+                      Icons.link_rounded,
+                      size: AppSizes.iconSmall,
+                      color: colorScheme.secondary,
+                    ),
+                    const SizedBox(width: AppSizes.p6),
                     Text(
-                      appointment.type.displayLabel,
-                      style: AppTextStyles.body.copyWith(
-                        fontWeight: FontWeight.w500,
-                        color: colorScheme.onSurface,
+                      (linkedAppointments.length > 1
+                              ? AppStrings.linkedSessions
+                              : AppStrings.linkedSession)
+                          .toUpperCase(),
+                      style: labelStyle.copyWith(
+                        color: colorScheme.secondary,
                       ),
                     ),
                   ],
                 ),
-              ),
-              const SizedBox(width: AppSizes.p16),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      AppStrings.packageStatus.toUpperCase(),
-                      style: labelStyle,
-                    ),
-                    const SizedBox(height: AppSizes.p4),
-                    appointment.usePackage
-                        ? Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Container(
-                                width: 8,
-                                height: 8,
-                                decoration: BoxDecoration(
-                                  color: colorScheme.primary,
-                                  shape: BoxShape.circle,
-                                ),
-                              ),
-                              const SizedBox(width: AppSizes.p6),
-                              Text(
-                                AppStrings.usingPackage,
-                                style: AppTextStyles.body.copyWith(
-                                  fontWeight: FontWeight.w500,
-                                  color: colorScheme.onSurface,
-                                ),
-                              ),
-                            ],
-                          )
-                        : Text(
-                            AppStrings.noPackage,
-                            style: AppTextStyles.bodySecondary.copyWith(
-                              color: colorScheme.onSurfaceVariant,
-                            ),
-                          ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          if (linkedAppointments.isNotEmpty) ...[
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: AppSizes.p12),
-              child: Divider(
-                color: colorScheme.outlineVariant,
-                height: 1.0,
-                thickness: 0.5,
-              ),
-            ),
-            Row(
-              children: [
-                Icon(
-                  Icons.link_rounded,
-                  color: colorScheme.secondary,
-                  size: AppSizes.iconSmall,
-                ),
-                const SizedBox(width: AppSizes.p6),
-                Text(
-                  AppStrings.linkedSessions,
-                  style: labelStyle.copyWith(
-                    color: colorScheme.secondary,
-                  ),
+                const SizedBox(height: AppSizes.p6),
+                ...linkedAppointments.map(
+                  (linked) => AppointmentLinkedSessionRow(appointment: linked),
                 ),
               ],
-            ),
-            const SizedBox(height: AppSizes.p8),
-            ...linkedAppointments.map(
-              (linked) => AppointmentLinkedSessionRow(appointment: linked),
-            ),
-          ],
-        ],
-      ),
+            ],
+          ),
+        ),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: AppSizes.p16),
+          child: Divider(
+            color: colorScheme.outlineVariant,
+            height: 1.0,
+            thickness: 0.5,
+          ),
+        ),
+      ],
     );
   }
 }

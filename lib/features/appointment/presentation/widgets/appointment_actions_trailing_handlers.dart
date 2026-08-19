@@ -27,7 +27,9 @@ mixin _AppointmentActionsTrailingHandlers
   }
 
   Future<void> _setStatus(AppointmentStatus status) async {
-    if (_isProcessing || !_canUpdateStatus()) return;
+    if (_isProcessing) return;
+    final bool canUpdate = await _canUpdateStatus();
+    if (!canUpdate) return;
     setState(() => _isProcessing = true);
     try {
       final result = await ref
@@ -54,12 +56,19 @@ mixin _AppointmentActionsTrailingHandlers
     }
   }
 
-  bool _canUpdateStatus() {
+  Future<bool> _canUpdateStatus() async {
     final user = ref.read(currentUserProvider).value;
-    return user != null &&
-        (user.role == UserRole.receptionist ||
-            user.role == UserRole.superAdmin ||
-            user.role == UserRole.doctor);
+    if (user == null) return false;
+    if (user.role == UserRole.doctor) {
+      return ref.read(
+        canAccessAppointmentProvider(
+          appointmentId: widget.appointment.id,
+          patientId: widget.appointment.patientId,
+        ).future,
+      );
+    }
+    return user.role == UserRole.receptionist ||
+        user.role == UserRole.superAdmin;
   }
 
   void _invalidateCaches() {

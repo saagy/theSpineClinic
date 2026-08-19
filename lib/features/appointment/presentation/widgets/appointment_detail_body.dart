@@ -16,13 +16,12 @@ import 'package:spine_clinic_app/features/appointment/presentation/widgets/appoi
 import 'package:spine_clinic_app/features/appointment/presentation/widgets/appointment_detail_header.dart';
 import 'package:spine_clinic_app/features/appointment/presentation/widgets/appointment_doctors_section.dart';
 import 'package:spine_clinic_app/features/appointment/presentation/widgets/appointment_info_card.dart';
-import 'package:spine_clinic_app/features/appointment/presentation/widgets/appointment_next_visit_card.dart';
 import 'package:spine_clinic_app/features/appointment/presentation/widgets/appointment_notes_card.dart';
 import 'package:spine_clinic_app/features/appointment/presentation/widgets/appointment_status_banner.dart';
 import 'package:spine_clinic_app/features/auth/presentation/auth_providers.dart';
 import 'package:spine_clinic_app/shared/widgets/empty_state.dart';
 
-/// Data-state body with structured section cards and pinned bottom actions.
+/// Data-state body with flat document layout and pinned bottom actions.
 class AppointmentDetailBody extends ConsumerWidget {
   const AppointmentDetailBody({
     super.key,
@@ -100,12 +99,10 @@ class AppointmentDetailBody extends ConsumerWidget {
                     status: state.appointment.status,
                     scheduledAt: state.appointment.scheduledAt,
                   ),
-                  const SizedBox(height: AppSizes.p8),
                   AppointmentInfoCard(
                     appointment: state.appointment,
                     linkedAppointments: linkedAppointments,
                   ),
-                  AppointmentNextVisitContext(patient: state.patient),
                   AppointmentNotesCard(
                     appointmentId: state.appointment.id,
                     patientId: state.appointment.patientId,
@@ -114,7 +111,6 @@ class AppointmentDetailBody extends ConsumerWidget {
                     activeDoctors: state.activeDoctors,
                     inactiveDoctors: state.inactiveDoctors,
                   ),
-                  const SizedBox(height: AppSizes.p24),
                 ],
               ),
             ),

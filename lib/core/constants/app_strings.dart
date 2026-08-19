@@ -208,6 +208,7 @@ abstract final class AppStrings {
   static const String noPackage = 'No Package';
   static const String linkedSessionsOnThisDay = 'Linked Sessions on this Day';
   static const String linkedSessions = 'Linked Sessions';
+  static const String linkedSession = 'Linked Session';
   static const String addVisitNotePrompt = 'Add visit note...';
   static const String visitNotes = 'Visit Notes';
   static const String yes = 'Yes';

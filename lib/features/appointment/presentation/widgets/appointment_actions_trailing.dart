@@ -44,7 +44,19 @@ class _AppointmentActionsTrailingState
   @override
   Widget build(BuildContext context) {
     final user = ref.watch(currentUserProvider).value;
+    final bool isDoctor = user?.role == UserRole.doctor;
+    final canAccessAsync = isDoctor
+        ? ref.watch(
+            canAccessAppointmentProvider(
+              appointmentId: widget.appointment.id,
+              patientId: widget.appointment.patientId,
+            ),
+          )
+        : const AsyncValue.data(true);
+    final bool canAccess = canAccessAsync.value ?? !isDoctor;
+
     final bool isAuthorizedStaff = user != null &&
+        canAccess &&
         (user.role == UserRole.receptionist ||
             user.role == UserRole.superAdmin ||
             user.role == UserRole.doctor);
@@ -101,47 +113,24 @@ class _AppointmentActionsTrailingState
   List<PopupMenuItem<String>> _buildMenuItems(AppointmentStatus status) {
     final ColorScheme cs = Theme.of(context).colorScheme;
     final ClinicColors clinic = ClinicColors.of(context);
-    switch (status) {
-      case AppointmentStatus.scheduled:
-        return [
-          _menuItem(
-            'check_in',
-            Icons.check_circle_outline_rounded,
-            clinic.success,
-            AppStrings.checkIn,
-          ),
-          _menuItem(
-            'cancel',
-            Icons.close_rounded,
-            cs.error,
-            AppStrings.cancelAppointment,
-          ),
-        ];
-      case AppointmentStatus.checkedIn:
-        return [
-          _menuItem(
-            'revert',
-            Icons.undo_rounded,
-            cs.onSurfaceVariant,
-            AppStrings.revertToScheduled,
-          ),
-          _menuItem(
-            'cancel',
-            Icons.close_rounded,
-            cs.error,
-            AppStrings.cancelAppointment,
-          ),
-        ];
-      case AppointmentStatus.cancelled:
-        return [
-          _menuItem(
-            'restore',
-            Icons.refresh_rounded,
-            clinic.success,
-            AppStrings.restoreAppointment,
-          ),
-        ];
-    }
+    return switch (status) {
+      AppointmentStatus.scheduled => [
+          _menuItem('check_in', Icons.check_circle_outline_rounded,
+              clinic.success, AppStrings.checkIn),
+          _menuItem('cancel', Icons.close_rounded, cs.error,
+              AppStrings.cancelAppointment),
+        ],
+      AppointmentStatus.checkedIn => [
+          _menuItem('revert', Icons.undo_rounded, cs.onSurfaceVariant,
+              AppStrings.revertToScheduled),
+          _menuItem('cancel', Icons.close_rounded, cs.error,
+              AppStrings.cancelAppointment),
+        ],
+      AppointmentStatus.cancelled => [
+          _menuItem('restore', Icons.refresh_rounded, clinic.success,
+              AppStrings.restoreAppointment),
+        ],
+    };
   }
 
   PopupMenuItem<String> _menuItem(
@@ -170,10 +159,10 @@ class _AppointmentActionsTrailingState
 
   Widget _badge(AppointmentStatus status) {
     final t = widget.appointment.scheduledAt.toLocal();
-    final bool isPastScheduled = status == AppointmentStatus.scheduled &&
+    final bool isPast = status == AppointmentStatus.scheduled &&
         DateUtils.dateOnly(t).isBefore(DateUtils.dateOnly(DateTime.now()));
 
-    if (isPastScheduled) {
+    if (isPast) {
       final ClinicColors clinic = ClinicColors.of(context);
       return AppBadge(
         label: AppStrings.pastScheduledNeedsAction,

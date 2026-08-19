@@ -47,7 +47,7 @@ final class PatientNextVisitControllerProvider
 }
 
 String _$patientNextVisitControllerHash() =>
-    r'b0385fc11ba8da193d4af715f93c25aaaa390ac7';
+    r'23c3de49b1dbe4d4b106d12d31181eccfa4553c5';
 
 /// Controller backing the patient detail's tappable Next-visit stat.
 

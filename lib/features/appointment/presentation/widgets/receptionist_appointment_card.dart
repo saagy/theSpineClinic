@@ -81,6 +81,19 @@ class _ReceptionistAppointmentCardState
         DateUtils.dateOnly(t).isBefore(DateUtils.dateOnly(DateTime.now()));
     final ClinicColors clinic = ClinicColors.of(context);
 
+    final user = ref.watch(currentUserProvider).value;
+    final bool isDoctor = user?.role == UserRole.doctor;
+    final canAccessAsync = isDoctor
+        ? ref.watch(
+            canAccessAppointmentProvider(
+              appointmentId: widget.item.appointment.id,
+              patientId: widget.item.patient.id,
+            ),
+          )
+        : const AsyncValue.data(true);
+    final bool canAccess = canAccessAsync.value ?? !isDoctor;
+    final bool enableMenu = widget.showMenu && canAccess;
+
     final Widget card = Container(
       decoration: BoxDecoration(
         color: isPastScheduled ? clinic.warningContainer : style.bg,
@@ -94,16 +107,24 @@ class _ReceptionistAppointmentCardState
         color: Theme.of(context).colorScheme.surface.withAlpha(0),
         borderRadius: const BorderRadius.all(Radius.circular(AppSizes.r16)),
         child: GestureDetector(
-          onLongPressStart: widget.showMenu
+          onLongPressStart: enableMenu
               ? (details) => showLongPressMenu(details.globalPosition)
               : null,
-          onSecondaryTapDown: widget.showMenu
+          onSecondaryTapDown: enableMenu
               ? (details) => showLongPressMenu(details.globalPosition)
               : null,
           child: InkWell(
             borderRadius:
                 const BorderRadius.all(Radius.circular(AppSizes.r16)),
             onTap: () async {
+              if (!canAccess) {
+                AppSnackbar.show(
+                  context,
+                  message: AppStrings.errorDatabasePermissionDenied,
+                  variant: AppSnackbarVariant.error,
+                );
+                return;
+              }
               await context.push(
                 AppRoutes.appointmentDetail.replaceAll(
                   ':id',
@@ -134,7 +155,7 @@ class _ReceptionistAppointmentCardState
                       clinic: clinic,
                     ),
                   ),
-                  if (widget.showMenu) ...[
+                  if (enableMenu) ...[
                     const SizedBox(width: AppSizes.p8),
                     AppointmentActionsTrailing(
                       appointment: widget.item.appointment,

@@ -7,6 +7,8 @@ import 'package:spine_clinic_app/features/appointment/domain/appointment_type.da
 import 'package:spine_clinic_app/features/appointment/presentation/widgets/appointment_info_card.dart';
 import 'package:spine_clinic_app/features/appointment/presentation/widgets/appointment_linked_session_row.dart';
 
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
 void main() {
   final testAppt = Appointment(
     id: 'appt-1',
@@ -34,9 +36,11 @@ void main() {
     tester,
   ) async {
     await tester.pumpWidget(
-      MaterialApp(
-        home: Scaffold(
-          body: AppointmentInfoCard(appointment: testAppt),
+      ProviderScope(
+        child: MaterialApp(
+          home: Scaffold(
+            body: AppointmentInfoCard(appointment: testAppt),
+          ),
         ),
       ),
     );
@@ -53,17 +57,24 @@ void main() {
     tester,
   ) async {
     await tester.pumpWidget(
-      MaterialApp(
-        home: Scaffold(
-          body: AppointmentInfoCard(
-            appointment: testAppt,
-            linkedAppointments: [linkedAppt],
+      ProviderScope(
+        child: MaterialApp(
+          home: Scaffold(
+            body: SingleChildScrollView(
+              child: AppointmentInfoCard(
+                appointment: testAppt,
+                linkedAppointments: [linkedAppt],
+              ),
+            ),
           ),
         ),
       ),
     );
 
-    expect(find.text(AppStrings.linkedSessions), findsOneWidget);
+    expect(
+      find.text(AppStrings.linkedSession.toUpperCase()),
+      findsOneWidget,
+    );
     expect(find.byType(AppointmentLinkedSessionRow), findsOneWidget);
     expect(find.text(linkedAppt.type.displayLabel), findsOneWidget);
   });
