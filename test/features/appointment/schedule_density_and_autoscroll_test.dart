@@ -12,9 +12,11 @@ import 'package:spine_clinic_app/features/appointment/presentation/widgets/docto
 import 'package:spine_clinic_app/features/appointment/presentation/widgets/receptionist_appointment_card.dart';
 import 'package:spine_clinic_app/features/appointment/presentation/widgets/receptionist_day_list.dart';
 import 'package:spine_clinic_app/features/appointment/presentation/widgets/receptionist_day_list_helpers.dart';
+import 'package:spine_clinic_app/features/appointment/presentation/widgets/due_patient_card.dart';
 import 'package:spine_clinic_app/features/appointment/presentation/widgets/receptionist_grouped_appointment_card.dart';
 import 'package:spine_clinic_app/features/patient/domain/clinic_location.dart';
 import 'package:spine_clinic_app/features/patient/domain/patient.dart';
+import 'package:spine_clinic_app/shared/widgets/app_button.dart';
 
 void main() {
   group('Schedule Density Controller Tests', () {
@@ -360,6 +362,179 @@ void main() {
 
       await tester.pumpAndSettle();
       expect(find.byType(ScheduleNowIndicator), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    });
+  });
+
+  group('DuePatientCard Density & Responsive Layout Tests', () {
+    final patient = Patient(
+      id: 'patient-due-1',
+      fullName: 'Nour El-Din',
+      phoneNumber: '01122334455',
+      clinic: ClinicLocation.tagamoa,
+      createdAt: DateTime(2026),
+      nextVisitDate: DateTime.now().add(const Duration(days: 2)),
+    );
+
+    final overduePatient = Patient(
+      id: 'patient-due-2',
+      fullName: 'Farida Tarek',
+      phoneNumber: '01233445566',
+      clinic: ClinicLocation.tagamoa,
+      createdAt: DateTime(2026),
+      nextVisitDate: DateTime.now().subtract(const Duration(days: 5)),
+    );
+
+    testWidgets('renders standard DuePatientCard with full AppButtons', (
+      tester,
+    ) async {
+      tester.view.physicalSize = const Size(390, 844);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(() {
+        tester.view.resetPhysicalSize();
+        tester.view.resetDevicePixelRatio();
+      });
+
+      await tester.pumpWidget(
+        ProviderScope(
+          child: MaterialApp(
+            home: Scaffold(
+              body: DuePatientCard(
+                patient: patient,
+                referenceDate: DateTime.now(),
+                isCompact: false,
+                onCall: () {},
+                onBook: () {},
+                onRemindLater: () {},
+                onStopFollowUp: () {},
+                onTap: () {},
+              ),
+            ),
+          ),
+        ),
+      );
+
+      expect(find.text('Nour El-Din'), findsOneWidget);
+      expect(find.text('01122334455'), findsOneWidget);
+      expect(find.byType(AppButton), findsNWidgets(2));
+      expect(find.text(AppStrings.call), findsOneWidget);
+      expect(find.text(AppStrings.book), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('renders compact DuePatientCard with single-row quick actions', (
+      tester,
+    ) async {
+      tester.view.physicalSize = const Size(390, 844);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(() {
+        tester.view.resetPhysicalSize();
+        tester.view.resetDevicePixelRatio();
+      });
+
+      bool callTriggered = false;
+      bool bookTriggered = false;
+
+      await tester.pumpWidget(
+        ProviderScope(
+          child: MaterialApp(
+            home: Scaffold(
+              body: DuePatientCard(
+                patient: patient,
+                referenceDate: DateTime.now(),
+                isCompact: true,
+                onCall: () => callTriggered = true,
+                onBook: () => bookTriggered = true,
+                onRemindLater: () {},
+                onStopFollowUp: () {},
+                onTap: () {},
+              ),
+            ),
+          ),
+        ),
+      );
+
+      expect(find.text('Nour El-Din'), findsOneWidget);
+      expect(find.text('01122334455'), findsOneWidget);
+      expect(find.byType(AppButton), findsNothing);
+      expect(find.byIcon(Icons.call_outlined), findsOneWidget);
+      expect(find.byIcon(Icons.event_available_rounded), findsOneWidget);
+
+      await tester.tap(find.byIcon(Icons.call_outlined));
+      expect(callTriggered, isTrue);
+
+      await tester.tap(find.byIcon(Icons.event_available_rounded));
+      expect(bookTriggered, isTrue);
+
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('renders compact overdue patient on narrow mobile screen (360px) cleanly', (
+      tester,
+    ) async {
+      tester.view.physicalSize = const Size(360, 640);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(() {
+        tester.view.resetPhysicalSize();
+        tester.view.resetDevicePixelRatio();
+      });
+
+      await tester.pumpWidget(
+        ProviderScope(
+          child: MaterialApp(
+            home: Scaffold(
+              body: DuePatientCard(
+                patient: overduePatient,
+                referenceDate: DateTime.now(),
+                isCompact: true,
+                onCall: () {},
+                onBook: () {},
+                onRemindLater: () {},
+                onStopFollowUp: () {},
+                onTap: () {},
+              ),
+            ),
+          ),
+        ),
+      );
+
+      expect(find.text('Farida Tarek'), findsOneWidget);
+      expect(find.text('01233445566'), findsOneWidget);
+      expect(find.byIcon(Icons.call_outlined), findsOneWidget);
+      expect(find.byIcon(Icons.event_available_rounded), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('renders compact overdue patient and wide PC view without overflow', (
+      tester,
+    ) async {
+      tester.view.physicalSize = const Size(1200, 800);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(() {
+        tester.view.resetPhysicalSize();
+        tester.view.resetDevicePixelRatio();
+      });
+
+      await tester.pumpWidget(
+        ProviderScope(
+          child: MaterialApp(
+            home: Scaffold(
+              body: DuePatientCard(
+                patient: overduePatient,
+                referenceDate: DateTime.now(),
+                isCompact: true,
+                onCall: () {},
+                onBook: () {},
+                onRemindLater: () {},
+                onStopFollowUp: () {},
+                onTap: () {},
+              ),
+            ),
+          ),
+        ),
+      );
+
+      expect(find.text('Farida Tarek'), findsOneWidget);
       expect(tester.takeException(), isNull);
     });
   });

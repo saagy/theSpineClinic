@@ -1,16 +1,22 @@
+import 'package:auto_size_text/auto_size_text.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:spine_clinic_app/core/constants/app_sizes.dart';
 import 'package:spine_clinic_app/core/constants/app_strings.dart';
 import 'package:spine_clinic_app/core/constants/app_text_styles.dart';
 import 'package:spine_clinic_app/core/constants/clinic_colors.dart';
+import 'package:spine_clinic_app/core/utils/schedule_density_controller.dart';
 import 'package:spine_clinic_app/features/patient/domain/patient.dart';
 import 'package:spine_clinic_app/shared/widgets/app_avatar.dart';
 import 'package:spine_clinic_app/shared/widgets/app_button.dart';
 
-enum DuePatientMenuAction { remindLater, stopFollowUp }
+part 'due_patient_card_compact.dart';
+part 'due_patient_card_menu.dart';
 
-class DuePatientCard extends StatelessWidget {
+/// Patient card for the booking workboard (due patients), supporting both
+/// standard density (full actions) and compact density (single-row quick actions).
+class DuePatientCard extends ConsumerWidget {
   const DuePatientCard({
     super.key,
     required this.patient,
@@ -20,6 +26,7 @@ class DuePatientCard extends StatelessWidget {
     required this.onRemindLater,
     required this.onStopFollowUp,
     required this.onTap,
+    this.isCompact,
   });
 
   final Patient patient;
@@ -30,163 +37,150 @@ class DuePatientCard extends StatelessWidget {
   final VoidCallback onStopFollowUp;
   final VoidCallback onTap;
 
+  /// Optional override for compact vs standard density.
+  final bool? isCompact;
+
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final bool compact =
+        isCompact ?? ref.watch(scheduleCompactControllerProvider);
     final ColorScheme colors = Theme.of(context).colorScheme;
+    final ClinicColors clinic = ClinicColors.of(context);
     final DateTime? due = patient.nextVisitDate;
     final bool overdue =
         due != null &&
         DateUtils.dateOnly(due).isBefore(DateUtils.dateOnly(referenceDate));
+
+    final double radius = compact ? AppSizes.r12 : AppSizes.r16;
+    final EdgeInsets internalPadding = compact
+        ? const EdgeInsets.symmetric(horizontal: AppSizes.p12, vertical: 6.0)
+        : const EdgeInsets.all(AppSizes.p16);
+    final EdgeInsets margin = compact
+        ? const EdgeInsets.only(bottom: AppSizes.p4)
+        : const EdgeInsets.only(bottom: AppSizes.p12);
+
     return Padding(
-      padding: const EdgeInsets.only(bottom: AppSizes.p12),
+      padding: margin,
       child: Container(
         decoration: BoxDecoration(
           color: colors.surface,
-          borderRadius: const BorderRadius.all(Radius.circular(AppSizes.r16)),
-          border: Border.all(color: colors.outlineVariant),
-          boxShadow: [ClinicColors.of(context).cardShadow],
+          borderRadius: BorderRadius.all(Radius.circular(radius)),
+          border: Border.all(
+            color: colors.outlineVariant,
+            width: AppSizes.borderWidth,
+          ),
+          boxShadow: [clinic.cardShadow],
         ),
         child: ClipRRect(
-          borderRadius: const BorderRadius.all(Radius.circular(AppSizes.r16)),
+          borderRadius: BorderRadius.all(Radius.circular(radius)),
           child: Material(
             color: colors.surface,
             child: InkWell(
               onTap: onTap,
               splashColor: colors.primaryContainer,
               child: Padding(
-                padding: const EdgeInsets.all(AppSizes.p16),
-                child: Column(
-                  children: [
-                    Row(
-                      children: [
-                        AppAvatar(
-                          name: patient.fullName,
-                          radius: AppSizes.avatarSmall / 2,
-                        ),
-                        const SizedBox(width: AppSizes.p12),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                patient.fullName,
-                                style: AppTextStyles.bodyBold,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                              const SizedBox(height: AppSizes.p4),
-                              Text(patient.phoneNumber, style: AppTextStyles.caption),
-                              if (due != null)
-                                Text(
-                                  overdue
-                                      ? AppStrings.overdueSince(
-                                          DateFormat('MMM d').format(due),
-                                        )
-                                      : AppStrings.dueOn(
-                                          DateFormat('MMM d').format(due),
-                                        ),
-                                  style: AppTextStyles.caption.copyWith(
-                                    color: overdue
-                                        ? ClinicColors.of(context).warning
-                                        : colors.onSurfaceVariant,
-                                  ),
-                                ),
-                            ],
-                          ),
-                        ),
-                        PopupMenuButton<DuePatientMenuAction>(
-                          icon: Icon(
-                            Icons.more_horiz_rounded,
-                            color: colors.onSurfaceVariant,
-                            size: AppSizes.iconDefault,
-                          ),
-                          padding: EdgeInsets.zero,
-                          constraints: const BoxConstraints(),
-                          splashRadius: AppSizes.iconDefault,
-                          color: colors.surface,
-                          shape: const RoundedRectangleBorder(
-                            borderRadius: BorderRadius.all(Radius.circular(AppSizes.r12)),
-                          ),
-                          elevation: 2,
-                          position: PopupMenuPosition.under,
-                          onSelected: (action) => switch (action) {
-                            DuePatientMenuAction.remindLater => onRemindLater(),
-                            DuePatientMenuAction.stopFollowUp => onStopFollowUp(),
-                          },
-                          itemBuilder: (context) => [
-                            PopupMenuItem(
-                              value: DuePatientMenuAction.remindLater,
-                              height: AppSizes.buttonHeightSmall,
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Icon(
-                                    Icons.notifications_outlined,
-                                    color: colors.primary,
-                                    size: AppSizes.iconSmall,
-                                  ),
-                                  const SizedBox(width: AppSizes.p8),
-                                  Text(
-                                    AppStrings.remindLater,
-                                    style: AppTextStyles.bodyMedium.copyWith(
-                                      color: colors.onSurface,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            PopupMenuItem(
-                              value: DuePatientMenuAction.stopFollowUp,
-                              height: AppSizes.buttonHeightSmall,
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Icon(
-                                    Icons.block_outlined,
-                                    color: colors.error,
-                                    size: AppSizes.iconSmall,
-                                  ),
-                                  const SizedBox(width: AppSizes.p8),
-                                  Text(
-                                    AppStrings.stopFollowUp,
-                                    style: AppTextStyles.bodyMedium.copyWith(
-                                      color: colors.error,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: AppSizes.p12),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: AppButton(
-                            labelText: AppStrings.call,
-                            icon: Icons.call_outlined,
-                            variant: AppButtonVariant.secondary,
-                            onPressed: onCall,
-                          ),
-                        ),
-                        const SizedBox(width: AppSizes.p8),
-                        Expanded(
-                          child: AppButton(
-                            labelText: AppStrings.book,
-                            icon: Icons.event_available_rounded,
-                            onPressed: onBook,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
+                padding: internalPadding,
+                child: compact
+                    ? _DuePatientCompactRow(
+                        patient: patient,
+                        due: due,
+                        overdue: overdue,
+                        colors: colors,
+                        clinic: clinic,
+                        onCall: onCall,
+                        onBook: onBook,
+                        onRemindLater: onRemindLater,
+                        onStopFollowUp: onStopFollowUp,
+                      )
+                    : _buildStandardContent(
+                        context,
+                        colors,
+                        clinic,
+                        due,
+                        overdue,
+                      ),
               ),
             ),
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildStandardContent(
+    BuildContext context,
+    ColorScheme colors,
+    ClinicColors clinic,
+    DateTime? due,
+    bool overdue,
+  ) {
+    return Column(
+      children: [
+        Row(
+          children: [
+            AppAvatar(
+              name: patient.fullName,
+              radius: AppSizes.avatarSmall / 2,
+            ),
+            const SizedBox(width: AppSizes.p12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    patient.fullName,
+                    style: AppTextStyles.bodyBold,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: AppSizes.p4),
+                  Text(patient.phoneNumber, style: AppTextStyles.caption),
+                  if (due != null)
+                    Text(
+                      overdue
+                          ? AppStrings.overdueSince(
+                              DateFormat('MMM d').format(due),
+                            )
+                          : AppStrings.dueOn(
+                              DateFormat('MMM d').format(due),
+                            ),
+                      style: AppTextStyles.caption.copyWith(
+                        color: overdue
+                            ? clinic.warning
+                            : colors.onSurfaceVariant,
+                      ),
+                    ),
+                ],
+              ),
+            ),
+            _DuePatientMenu(
+              onRemindLater: onRemindLater,
+              onStopFollowUp: onStopFollowUp,
+              isCompact: false,
+            ),
+          ],
+        ),
+        const SizedBox(height: AppSizes.p12),
+        Row(
+          children: [
+            Expanded(
+              child: AppButton(
+                labelText: AppStrings.call,
+                icon: Icons.call_outlined,
+                variant: AppButtonVariant.secondary,
+                onPressed: onCall,
+              ),
+            ),
+            const SizedBox(width: AppSizes.p8),
+            Expanded(
+              child: AppButton(
+                labelText: AppStrings.book,
+                icon: Icons.event_available_rounded,
+                onPressed: onBook,
+              ),
+            ),
+          ],
+        ),
+      ],
     );
   }
 }

@@ -551,7 +551,7 @@ abstract final class AppStrings {
   static const String themeModeSystem = 'System';
   static const String scheduleDensity = 'Schedule View';
   static const String scheduleDensitySubtitle =
-      'Standard or compact appointment cards';
+      'Standard or compact schedule and booking cards';
   static const String scheduleDensityStandard = 'Standard';
   static const String scheduleDensityCompact = 'Compact';
   static const String compactSchedule = 'Compact View';
@@ -873,7 +873,7 @@ abstract final class AppStrings {
       '$replaced appointment${replaced == 1 ? '' : 's'} reassigned. '
       '$remaining remain.';
   static String dueOn(String date) => 'Due $date';
-  static String overdueSince(String date) => 'Overdue since $date';
+  static String overdueSince(String date) => 'Overdue $date';
   static String sectionCount(String label, int count) => '$label ($count)';
   static String doctorsSelected(int count) =>
       '$count doctor${count == 1 ? '' : 's'} selected';
