@@ -14,11 +14,15 @@ class DoctorWeekStrip extends StatefulWidget {
     required this.dayCounts,
     required this.selectedDate,
     required this.onDateSelected,
+    this.showCancelled = false,
+    this.onToggleCancelled,
   });
 
   final Map<DateTime, int> dayCounts;
   final DateTime? selectedDate;
   final ValueChanged<DateTime> onDateSelected;
+  final bool showCancelled;
+  final VoidCallback? onToggleCancelled;
 
   @override
   State<DoctorWeekStrip> createState() => _DoctorWeekStripState();
@@ -118,6 +122,8 @@ class _DoctorWeekStripState extends State<DoctorWeekStrip> {
                     onToday: () => widget.onDateSelected(DateTime.now()),
                     onPrevious: () => _moveWeek(-1),
                     onNext: () => _moveWeek(1),
+                    showCancelled: widget.showCancelled,
+                    onToggleCancelled: widget.onToggleCancelled,
                   ),
                   SizedBox(
                     height: AppSizes.scheduleWeekHeight,

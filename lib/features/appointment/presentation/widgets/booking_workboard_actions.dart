@@ -20,12 +20,6 @@ import 'package:spine_clinic_app/shared/widgets/unified_filter_sheet.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 abstract final class BookingWorkboardActions {
-  static void moveDay(WidgetRef ref, DateTime date, int days) {
-    ref
-        .read(bookingWorkboardProvider.notifier)
-        .selectDate(date.add(Duration(days: days)));
-  }
-
   static Future<void> chooseDate(
     BuildContext context,
     WidgetRef ref,

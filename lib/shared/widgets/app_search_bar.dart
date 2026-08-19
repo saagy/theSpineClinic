@@ -20,6 +20,8 @@ class AppSearchBar extends StatefulWidget {
     required this.hintText,
     required this.onChanged,
     this.onClear,
+    this.onFilterTap,
+    this.isFilterActive = false,
     this.enabled = true,
     this.autofocus = false,
   });
@@ -32,6 +34,12 @@ class AppSearchBar extends StatefulWidget {
 
   /// Optional callback fired when the clear button is tapped.
   final VoidCallback? onClear;
+
+  /// Optional callback fired when the filter button is tapped.
+  final VoidCallback? onFilterTap;
+
+  /// Whether an active filter is currently applied.
+  final bool isFilterActive;
 
   /// Whether the search bar is interactive.
   final bool enabled;
@@ -61,7 +69,6 @@ class _AppSearchBarState extends State<AppSearchBar> {
   }
 
   void _onTextChanged(String text) {
-    // Rebuild to evaluate if clear icon should show/hide
     setState(() {});
 
     if (_debounceTimer?.isActive ?? false) {
@@ -80,7 +87,6 @@ class _AppSearchBarState extends State<AppSearchBar> {
     _controller.clear();
     setState(() {});
 
-    // Clear instantly
     widget.onChanged('');
     if (widget.onClear != null) {
       widget.onClear!();
@@ -91,14 +97,61 @@ class _AppSearchBarState extends State<AppSearchBar> {
   Widget build(BuildContext context) {
     final ColorScheme cs = Theme.of(context).colorScheme;
     final ClinicColors clinic = ClinicColors.of(context);
-    // Match AppTextField border styling exactly
     final OutlineInputBorder borderBase = OutlineInputBorder(
-      borderRadius: const BorderRadius.all(Radius.circular(AppSizes.r6)),
+      borderRadius: const BorderRadius.all(Radius.circular(AppSizes.r24)),
       borderSide: BorderSide(color: cs.outline, width: AppSizes.borderWidth),
     );
 
+    final bool hasText = _controller.text.isNotEmpty && widget.enabled;
+    final bool showFilter = widget.onFilterTap != null;
+
+    Widget? suffix;
+    if (hasText && showFilter) {
+      suffix = Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          GestureDetector(
+            onTap: _handleClear,
+            child: Icon(
+              Icons.close,
+              color: cs.onSurfaceVariant,
+              size: AppSizes.iconDefault,
+            ),
+          ),
+          const SizedBox(width: AppSizes.p4),
+          GestureDetector(
+            onTap: widget.onFilterTap,
+            child: Icon(
+              Icons.tune_rounded,
+              color: widget.isFilterActive ? cs.primary : cs.onSurfaceVariant,
+              size: AppSizes.iconDefault,
+            ),
+          ),
+          const SizedBox(width: AppSizes.p8),
+        ],
+      );
+    } else if (hasText) {
+      suffix = GestureDetector(
+        onTap: _handleClear,
+        child: Icon(
+          Icons.close,
+          color: cs.onSurfaceVariant,
+          size: AppSizes.iconDefault,
+        ),
+      );
+    } else if (showFilter) {
+      suffix = GestureDetector(
+        onTap: widget.onFilterTap,
+        child: Icon(
+          Icons.tune_rounded,
+          color: widget.isFilterActive ? cs.primary : cs.onSurfaceVariant,
+          size: AppSizes.iconDefault,
+        ),
+      );
+    }
+
     return SizedBox(
-      height: AppSizes.h48, // Standardized action height (48 px)
+      height: AppSizes.h48,
       child: TextFormField(
         controller: _controller,
         onChanged: _onTextChanged,
@@ -128,30 +181,22 @@ class _AppSearchBarState extends State<AppSearchBar> {
             minWidth: AppSizes.iconDefault + AppSizes.p16,
             minHeight: AppSizes.iconDefault,
           ),
-          suffixIcon: _controller.text.isNotEmpty && widget.enabled
-              ? GestureDetector(
-                  onTap: _handleClear,
-                  child: Icon(
-                    Icons.close,
-                    color: cs.onSurfaceVariant,
-                    size: AppSizes.iconDefault,
-                  ),
-                )
-              : null,
-          suffixIconConstraints: const BoxConstraints(
-            minWidth: AppSizes.iconDefault + AppSizes.p16,
+          suffixIcon: suffix,
+          suffixIconConstraints: BoxConstraints(
+            minWidth: showFilter
+                ? (hasText
+                    ? AppSizes.iconDefault * 2 + AppSizes.p20
+                    : AppSizes.iconDefault + AppSizes.p16)
+                : AppSizes.iconDefault + AppSizes.p16,
             minHeight: AppSizes.iconDefault,
           ),
-          // Default border state
           enabledBorder: borderBase,
-          // Disabled border state
           disabledBorder: borderBase.copyWith(
             borderSide: BorderSide(
               color: cs.outline,
               width: AppSizes.borderWidth,
             ),
           ),
-          // Focus border state (transitions cleanly using Flutter's native focus engine)
           focusedBorder: borderBase.copyWith(
             borderSide: BorderSide(
               color: clinic.outlineStrong,

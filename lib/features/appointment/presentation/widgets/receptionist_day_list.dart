@@ -1,4 +1,3 @@
-import 'package:auto_size_text/auto_size_text.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
@@ -27,14 +26,12 @@ class ReceptionistDayList extends StatelessWidget {
     required this.state,
     required this.searchQuery,
     this.onStatusChanged,
-    this.onToggleCancelled,
     this.onRefresh,
   });
 
   final ReceptionistAppointmentsState state;
   final String searchQuery;
   final VoidCallback? onStatusChanged;
-  final VoidCallback? onToggleCancelled;
   final Future<void> Function()? onRefresh;
 
   @override
@@ -46,18 +43,17 @@ class ReceptionistDayList extends StatelessWidget {
     if (items.isEmpty) {
       final emptyWidget = ListView(
         physics: const AlwaysScrollableScrollPhysics(),
-        padding: const EdgeInsets.only(bottom: AppSizes.p32),
+        padding: const EdgeInsets.fromLTRB(
+          AppSizes.p20,
+          AppSizes.p48,
+          AppSizes.p20,
+          AppSizes.p32,
+        ),
         children: [
-          _DateHeader(
-            state: state,
-            count: 0,
-            onToggleCancelled: onToggleCancelled,
-          ),
-          const SizedBox(height: AppSizes.p48),
           Center(
             child: Text(
               searchQuery.isNotEmpty
-                  ? AppStrings.noMatchingDoctorsFound // Reuse matching fallback
+                  ? AppStrings.noMatchingDoctorsFound
                   : AppStrings.noAppointmentsFound,
               style: AppTextStyles.bodyMedium.copyWith(
                 color: theme.colorScheme.onSurfaceVariant,
@@ -100,26 +96,18 @@ class ReceptionistDayList extends StatelessWidget {
 
     final nowIndex = _getNowIndex(rowItems);
     final hasNow = nowIndex >= 0;
-    final totalCount = rowItems.length + 1 + (hasNow ? 1 : 0);
+    final totalCount = rowItems.length + (hasNow ? 1 : 0);
 
     final list = ListView.builder(
       physics: const AlwaysScrollableScrollPhysics(),
-      padding: const EdgeInsets.only(bottom: AppSizes.p32),
+      padding: const EdgeInsets.fromLTRB(0, AppSizes.p8, 0, AppSizes.p32),
       itemCount: totalCount,
       itemBuilder: (_, index) {
-        if (index == 0) {
-          return _DateHeader(
-            state: state,
-            count: items.length,
-            onToggleCancelled: onToggleCancelled,
-          );
-        }
-
-        if (hasNow && index - 1 == nowIndex) {
+        if (hasNow && index == nowIndex) {
           return const _NowIndicator();
         }
 
-        final cardIndex = hasNow && index - 1 > nowIndex ? index - 2 : index - 1;
+        final cardIndex = hasNow && index > nowIndex ? index - 1 : index;
         final rowItem = rowItems[cardIndex];
 
         if (rowItem.appointments.length == 1) {
@@ -168,56 +156,6 @@ class ReceptionistDayList extends StatelessWidget {
   }
 }
 
-class _DateHeader extends StatelessWidget {
-  const _DateHeader({
-    required this.state,
-    required this.count,
-    required this.onToggleCancelled,
-  });
-
-  final ReceptionistAppointmentsState state;
-  final int count;
-  final VoidCallback? onToggleCancelled;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final date = state.selectedDate ?? DateTime.now();
-    final formatted = DateFormat('EEEE, MMM d').format(date);
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(AppSizes.p20, AppSizes.p16, AppSizes.p20, AppSizes.p8),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Expanded(
-            child: AutoSizeText(
-              '$formatted  ·  $count appointment${count == 1 ? '' : 's'}',
-              style: AppTextStyles.captionBold.copyWith(color: theme.colorScheme.onSurfaceVariant),
-              maxLines: 1,
-              minFontSize: 10,
-              overflow: TextOverflow.ellipsis,
-            ),
-          ),
-          if (onToggleCancelled != null) ...[
-            const SizedBox(width: AppSizes.p8),
-            InkWell(
-              onTap: onToggleCancelled,
-              borderRadius: const BorderRadius.all(Radius.circular(AppSizes.r8)),
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: AppSizes.p8, vertical: AppSizes.p4),
-                child: Text(
-                  state.showCancelled ? AppStrings.hideCancelled : AppStrings.showCancelled,
-                  style: AppTextStyles.captionBold.copyWith(color: theme.colorScheme.primary),
-                ),
-              ),
-            ),
-          ],
-        ],
-      ),
-    );
-  }
-}
-
 /// Now indicator: red dot + current time + horizontal red line.
 class _NowIndicator extends StatelessWidget {
   const _NowIndicator();
@@ -237,10 +175,21 @@ class _NowIndicator extends StatelessWidget {
             width: _timeWidth,
             child: Row(
               children: [
-                Container(width: 6, height: 6, decoration: BoxDecoration(color: errorColor, shape: BoxShape.circle)),
+                Container(
+                  width: 6,
+                  height: 6,
+                  decoration: BoxDecoration(
+                    color: errorColor,
+                    shape: BoxShape.circle,
+                  ),
+                ),
                 const SizedBox(width: AppSizes.p4),
                 Flexible(
-                  child: Text(now, style: AppTextStyles.captionBold.copyWith(color: errorColor), maxLines: 1),
+                  child: Text(
+                    now,
+                    style: AppTextStyles.captionBold.copyWith(color: errorColor),
+                    maxLines: 1,
+                  ),
                 ),
               ],
             ),

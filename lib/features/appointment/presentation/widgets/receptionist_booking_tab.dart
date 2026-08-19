@@ -66,10 +66,6 @@ class ReceptionistBookingTab extends ConsumerWidget {
                   BookingWorkboardControls(
                     date: state.date,
                     doctor: selected,
-                    onPreviousDay: () =>
-                        BookingWorkboardActions.moveDay(ref, state.date, -1),
-                    onNextDay: () =>
-                        BookingWorkboardActions.moveDay(ref, state.date, 1),
                     onChooseDate: () => BookingWorkboardActions.chooseDate(
                       context,
                       ref,

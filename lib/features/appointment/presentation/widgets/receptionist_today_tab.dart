@@ -20,12 +20,12 @@ import 'package:spine_clinic_app/features/auth/domain/user_role.dart';
 import 'package:spine_clinic_app/features/auth/presentation/auth_providers.dart';
 import 'package:spine_clinic_app/features/staff/presentation/staff_providers.dart';
 import 'package:spine_clinic_app/shared/widgets/active_filter_chips_row.dart';
+import 'package:spine_clinic_app/shared/widgets/app_search_bar.dart';
 import 'package:spine_clinic_app/shared/widgets/error_view.dart';
 import 'package:spine_clinic_app/shared/widgets/skeleton_loader.dart';
 
 /// The receptionist dashboard schedule tab content.
 class ReceptionistTodayTab extends ConsumerWidget {
-  /// Creates a [ReceptionistTodayTab].
   const ReceptionistTodayTab({
     super.key,
     required this.state,
@@ -69,35 +69,42 @@ class ReceptionistTodayTab extends ConsumerWidget {
               child: Column(
                 key: const ValueKey<String>('receptionist-schedule-toolbar'),
                 children: [
-                  Row(
-                    children: [
-                      Expanded(
-                        child: TodaySearchField(onChanged: onSearchChanged),
-                      ),
-                      IconButton.filledTonal(
-                        onPressed: () => ReceptionistTodayActions.showFilter(
-                          context,
-                          ref,
-                          state,
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(
+                      AppSizes.p16,
+                      AppSizes.p8,
+                      AppSizes.p16,
+                      AppSizes.p4,
+                    ),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        Expanded(
+                          child: AppSearchBar(
+                            hintText: AppStrings.searchByPatientNameHint,
+                            onChanged: onSearchChanged,
+                            isFilterActive: filterDoctorId != null,
+                            onFilterTap: () =>
+                                ReceptionistTodayActions.showFilter(
+                                  context,
+                                  ref,
+                                  state,
+                                ),
+                          ),
                         ),
-                        icon: const Icon(Icons.filter_list_rounded),
-                        tooltip: AppStrings.filters,
-                      ),
-                      const SizedBox(width: AppSizes.p8),
-                      if (canReplace) ...[
-                        IconButton.filledTonal(
-                          onPressed: () =>
-                              ReceptionistTodayActions.replaceDoctor(
-                                context,
-                                ref,
-                                state,
-                              ),
-                          icon: const Icon(Icons.swap_horiz_rounded),
-                          tooltip: AppStrings.replaceDoctor,
-                        ),
-                        const SizedBox(width: AppSizes.p16),
+                        if (canReplace) ...[
+                          const SizedBox(width: AppSizes.p8),
+                          TodayReplaceDoctorButton(
+                            onPressed: () =>
+                                ReceptionistTodayActions.replaceDoctor(
+                                  context,
+                                  ref,
+                                  state,
+                                ),
+                          ),
+                        ],
                       ],
-                    ],
+                    ),
                   ),
                   if (filterDoctorId != null)
                     ActiveFilterChipsRow(
@@ -125,19 +132,20 @@ class ReceptionistTodayTab extends ConsumerWidget {
               DoctorWeekStrip(
                 dayCounts: state.dayAppointmentCounts,
                 selectedDate: state.selectedDate,
-                onDateSelected: (date) {
-                  ref
-                      .read(receptionistAppointmentsProvider.notifier)
-                      .selectDate(date);
-                },
+                showCancelled: state.showCancelled,
+                onToggleCancelled: () => ref
+                    .read(receptionistAppointmentsProvider.notifier)
+                    .toggleShowCancelled(),
+                onDateSelected: (date) => ref
+                    .read(receptionistAppointmentsProvider.notifier)
+                    .selectDate(date),
               ),
               Expanded(
                 child: AnimatedSwitcher(
                   duration: const Duration(milliseconds: 250),
                   switchInCurve: Curves.easeOutCubic,
                   switchOutCurve: Curves.easeInCubic,
-                  transitionBuilder: (c, a) =>
-                      FadeTransition(opacity: a, child: c),
+                  transitionBuilder: (c, a) => FadeTransition(opacity: a, child: c),
                   child: state.loading
                       ? const KeyedSubtree(
                           key: ValueKey('today_loading'),
@@ -150,15 +158,12 @@ class ReceptionistTodayTab extends ConsumerWidget {
                         )
                       : KeyedSubtree(
                           key: ValueKey(
-                            'today_data_${state.selectedDate}_${state.itemsForSelectedDay.length}',
+                            'today_data_${state.selectedDate}_${state.itemsForSelectedDay.length}_${state.showCancelled}',
                           ),
                           child: ReceptionistDayList(
                             state: state,
                             searchQuery: searchQuery,
                             onStatusChanged: onStatusChanged,
-                            onToggleCancelled: () => ref
-                                .read(receptionistAppointmentsProvider.notifier)
-                                .toggleShowCancelled(),
                             onRefresh: () async => onRefresh(),
                           ),
                         ),
@@ -173,9 +178,8 @@ class ReceptionistTodayTab extends ConsumerWidget {
 
   Widget _buildErrorState(BuildContext context) {
     final Object error = state.error!;
-    final AppException ex = error is AppException
-        ? error
-        : UnknownException(message: '$error');
+    final AppException ex =
+        error is AppException ? error : UnknownException(message: '$error');
     return RefreshIndicator(
       color: Theme.of(context).colorScheme.primary,
       onRefresh: () async => onRefresh(),
