@@ -1,5 +1,6 @@
 // ignore_for_file: avoid_print
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart' show ScrollDirection;
 import 'package:flutter/services.dart' show rootBundle;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -79,6 +80,22 @@ class SpineClinicApp extends ConsumerWidget {
       darkTheme: AppTheme.dark(clinicalBluePaletteDark),
       themeMode: themeMode,
       routerConfig: router,
+      builder: (context, child) {
+        return GestureDetector(
+          behavior: HitTestBehavior.translucent,
+          onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
+          child: NotificationListener<ScrollNotification>(
+            onNotification: (notification) {
+              if (notification is UserScrollNotification &&
+                  notification.direction != ScrollDirection.idle) {
+                FocusManager.instance.primaryFocus?.unfocus();
+              }
+              return false;
+            },
+            child: child ?? const SizedBox.shrink(),
+          ),
+        );
+      },
     );
   }
 }

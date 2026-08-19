@@ -24,14 +24,12 @@ abstract final class AppTheme {
     final Color error = isDark
         ? const Color(0xFFFB7185)
         : const Color(0xFFE11D48);
-    final Color onError = isDark
-        ? const Color(0xFF450A0A)
-        : Colors.white;
+    final Color onError = Colors.white;
     final Color errorContainer = isDark
-        ? const Color(0xFF881337)
+        ? const Color(0xFF3A141D)
         : const Color(0xFFFFF1F2);
     final Color onErrorContainer = isDark
-        ? const Color(0xFFFFDDE5)
+        ? const Color(0xFFFDA4AF)
         : const Color(0xFF9F1239);
     final ColorScheme cs =
         ColorScheme.fromSeed(
@@ -49,7 +47,9 @@ abstract final class AppTheme {
           surface: palette.surface,
           onSurface: palette.textPrimary,
           surfaceContainer: palette.surfaceContainer,
-          surfaceContainerHighest: palette.surfaceContainer,
+          surfaceContainerHighest: isDark
+              ? const Color(0xFF283548)
+              : palette.surfaceContainer,
           onSurfaceVariant: palette.textSecondary,
           outline: palette.outline,
           outlineVariant: palette.outline,
@@ -140,9 +140,20 @@ abstract final class AppTheme {
           color: cs.onSurface,
         ),
       ),
+      bottomSheetTheme: BottomSheetThemeData(
+        backgroundColor: cs.surface,
+        surfaceTintColor: Colors.transparent,
+        shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(
+            top: Radius.circular(AppSizes.r16),
+          ),
+        ),
+      ),
       snackBarTheme: SnackBarThemeData(
-        backgroundColor: cs.onSurface,
-        contentTextStyle: AppTextStyles.body.copyWith(color: cs.surface),
+        backgroundColor: isDark ? cs.surfaceContainer : cs.onSurface,
+        contentTextStyle: AppTextStyles.body.copyWith(
+          color: isDark ? cs.onSurface : cs.surface,
+        ),
         shape: RoundedRectangleBorder(borderRadius: AppSizes.borderRadiusCard),
         behavior: SnackBarBehavior.floating,
       ),
