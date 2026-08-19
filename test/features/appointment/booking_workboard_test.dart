@@ -76,8 +76,6 @@ void main() {
           body: BookingWorkboardControls(
             date: DateTime(2026, 7, 14),
             doctor: null,
-            onPreviousDay: () {},
-            onNextDay: () {},
             onChooseDate: () {},
             onFilterDoctor: () => filterOpened = true,
           ),

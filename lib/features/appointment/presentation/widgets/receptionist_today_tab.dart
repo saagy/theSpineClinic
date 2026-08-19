@@ -64,12 +64,11 @@ class ReceptionistTodayTab extends ConsumerWidget {
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: AppSizes.maxContentWidth),
         child: NestedScrollView(
-          floatHeaderSlivers: true,
           headerSliverBuilder: (_, __) => <Widget>[
             SliverToBoxAdapter(
               child: Column(
+                key: const ValueKey<String>('receptionist-schedule-toolbar'),
                 children: [
-<<<<<<< HEAD
                   Padding(
                     padding: const EdgeInsets.fromLTRB(
                       AppSizes.p16,
@@ -122,70 +121,11 @@ class ReceptionistTodayTab extends ConsumerWidget {
                       onClearAll: () => ref
                           .read(receptionistAppointmentsProvider.notifier)
                           .setDoctorFilter(null),
-=======
-                  Container(
-                    key: const ValueKey<String>(
-                      'receptionist-schedule-toolbar',
                     ),
-                    child: Column(
-                      children: [
-                        TodaySearchField(
-                          onChanged: onSearchChanged,
-                          onFilterPressed: () =>
-                              ReceptionistTodayActions.showFilter(
-                                context,
-                                ref,
-                                state,
-                              ),
-                          isFilterActive: filterDoctorId != null,
-                          canReplace: canReplace,
-                          onReplacePressed: () =>
-                              ReceptionistTodayActions.replaceDoctor(
-                                context,
-                                ref,
-                                state,
-                              ),
-                        ),
-                        if (filterDoctorId != null)
-                          ActiveFilterChipsRow(
-                            chips: [
-                              ActiveFilterChip(
-                                label:
-                                    filterDoctorName ??
-                                    AppStrings.unknownDoctorFallback,
-                                onRemove: () => ref
-                                    .read(
-                                      receptionistAppointmentsProvider
-                                          .notifier,
-                                    )
-                                    .setDoctorFilter(null),
-                              ),
-                            ],
-                            onClearAll: () => ref
-                                .read(
-                                  receptionistAppointmentsProvider
-                                      .notifier,
-                                )
-                                .setDoctorFilter(null),
-                          ),
-                      ],
->>>>>>> 9e2480a8e672430e8aee05dd7a5b34adbc587e5c
-                    ),
-                  ),
-                  DoctorWeekStrip(
-                    dayCounts: state.dayAppointmentCounts,
-                    selectedDate: state.selectedDate,
-                    onDateSelected: (date) {
-                      ref
-                          .read(receptionistAppointmentsProvider.notifier)
-                          .selectDate(date);
-                    },
-                  ),
                 ],
               ),
             ),
           ],
-<<<<<<< HEAD
           body: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
@@ -205,7 +145,8 @@ class ReceptionistTodayTab extends ConsumerWidget {
                   duration: const Duration(milliseconds: 250),
                   switchInCurve: Curves.easeOutCubic,
                   switchOutCurve: Curves.easeInCubic,
-                  transitionBuilder: (c, a) => FadeTransition(opacity: a, child: c),
+                  transitionBuilder: (c, a) =>
+                      FadeTransition(opacity: a, child: c),
                   child: state.loading
                       ? const KeyedSubtree(
                           key: ValueKey('today_loading'),
@@ -230,38 +171,6 @@ class ReceptionistTodayTab extends ConsumerWidget {
                 ),
               ),
             ],
-=======
-          body: AnimatedSwitcher(
-            duration: const Duration(milliseconds: 250),
-            switchInCurve: Curves.easeOutCubic,
-            switchOutCurve: Curves.easeInCubic,
-            transitionBuilder: (c, a) =>
-                FadeTransition(opacity: a, child: c),
-            child: state.loading
-                ? const KeyedSubtree(
-                    key: ValueKey('today_loading'),
-                    child: SkeletonTileList(count: 5),
-                  )
-                : state.error != null
-                ? KeyedSubtree(
-                    key: const ValueKey('today_error'),
-                    child: _buildErrorState(context),
-                  )
-                : KeyedSubtree(
-                    key: ValueKey(
-                      'today_data_${state.selectedDate}_${state.itemsForSelectedDay.length}',
-                    ),
-                    child: ReceptionistDayList(
-                      state: state,
-                      searchQuery: searchQuery,
-                      onStatusChanged: onStatusChanged,
-                      onToggleCancelled: () => ref
-                          .read(receptionistAppointmentsProvider.notifier)
-                          .toggleShowCancelled(),
-                      onRefresh: () async => onRefresh(),
-                    ),
-                  ),
->>>>>>> 9e2480a8e672430e8aee05dd7a5b34adbc587e5c
           ),
         ),
       ),

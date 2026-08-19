@@ -50,15 +50,6 @@ class ReceptionistDayList extends StatelessWidget {
           AppSizes.p32,
         ),
         children: [
-<<<<<<< HEAD
-=======
-          ScheduleDateHeader(
-            count: 0,
-            showCancelled: state.showCancelled,
-            onToggleCancelled: onToggleCancelled,
-          ),
-          const SizedBox(height: AppSizes.p48),
->>>>>>> 9e2480a8e672430e8aee05dd7a5b34adbc587e5c
           Center(
             child: Text(
               searchQuery.isNotEmpty
@@ -112,21 +103,8 @@ class ReceptionistDayList extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(0, AppSizes.p8, 0, AppSizes.p32),
       itemCount: totalCount,
       itemBuilder: (_, index) {
-<<<<<<< HEAD
         if (hasNow && index == nowIndex) {
-          return const _NowIndicator();
-=======
-        if (index == 0) {
-          return ScheduleDateHeader(
-            count: items.length,
-            showCancelled: state.showCancelled,
-            onToggleCancelled: onToggleCancelled,
-          );
-        }
-
-        if (hasNow && index - 1 == nowIndex) {
           return const ScheduleNowIndicator();
->>>>>>> 9e2480a8e672430e8aee05dd7a5b34adbc587e5c
         }
 
         final cardIndex = hasNow && index > nowIndex ? index - 1 : index;
@@ -177,52 +155,3 @@ class ReceptionistDayList extends StatelessWidget {
     return items.length;
   }
 }
-<<<<<<< HEAD
-
-/// Now indicator: red dot + current time + horizontal red line.
-class _NowIndicator extends StatelessWidget {
-  const _NowIndicator();
-  static const double _timeWidth = 65;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final errorColor = theme.colorScheme.error;
-    final now = DateFormat('h:mm a').format(DateTime.now());
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: AppSizes.p8),
-      child: Row(
-        children: [
-          const SizedBox(width: AppSizes.p16),
-          SizedBox(
-            width: _timeWidth,
-            child: Row(
-              children: [
-                Container(
-                  width: 6,
-                  height: 6,
-                  decoration: BoxDecoration(
-                    color: errorColor,
-                    shape: BoxShape.circle,
-                  ),
-                ),
-                const SizedBox(width: AppSizes.p4),
-                Flexible(
-                  child: Text(
-                    now,
-                    style: AppTextStyles.captionBold.copyWith(color: errorColor),
-                    maxLines: 1,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(width: AppSizes.p12),
-          Expanded(child: Divider(color: errorColor, thickness: 1, height: 0)),
-        ],
-      ),
-    );
-  }
-}
-=======
->>>>>>> 9e2480a8e672430e8aee05dd7a5b34adbc587e5c
