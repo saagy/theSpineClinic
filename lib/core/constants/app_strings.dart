@@ -203,6 +203,13 @@ abstract final class AppStrings {
   static const String time = 'Time';
   static const String type = 'Type';
   static const String doctors = 'Doctors';
+  static const String packageStatus = 'Package Status';
+  static const String usingPackage = 'Using Package';
+  static const String noPackage = 'No Package';
+  static const String linkedSessionsOnThisDay = 'Linked Sessions on this Day';
+  static const String linkedSessions = 'Linked Sessions';
+  static const String addVisitNotePrompt = 'Add visit note...';
+  static const String visitNotes = 'Visit Notes';
   static const String yes = 'Yes';
   static const String no = 'No';
   static const String editAppointment = 'Edit Appointment';
@@ -415,6 +422,15 @@ abstract final class AppStrings {
   static const String revertToScheduled = 'Revert to Scheduled';
   static const String undoCheckIn = 'Undo Check-In';
   static const String restoreToScheduled = 'Restore to Scheduled';
+  static const String dualSession = 'Dual Session';
+  static const String checkInAllSessions = 'Check In All Sessions';
+  static const String revertAllSessions = 'Revert All Sessions';
+  static const String cancelAllSessions = 'Cancel All Sessions';
+  static const String restoreAllSessions = 'Restore All Sessions';
+  static const String confirmCancelAllSessions =
+      'Are you sure you want to cancel all sessions for this visit?';
+  static const String errorUpdatingSessionStatus =
+      'Error updating session status';
   static const String confirmRevert =
       'Are you sure you want to revert this appointment to scheduled?';
   static const String confirmRestore =

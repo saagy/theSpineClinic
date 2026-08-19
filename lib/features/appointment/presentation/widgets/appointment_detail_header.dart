@@ -2,13 +2,16 @@
 ///
 /// Row: compact avatar | patient name + clinic label | chevron.
 /// Tappable to PatientDetailScreen. Supabase RLS enforces patient access.
+///
+/// Rule 1 — keep files under 200 lines.
 library;
 
 import 'package:flutter/material.dart';
-import 'package:spine_clinic_app/core/constants/clinic_colors.dart';
 import 'package:go_router/go_router.dart';
 import 'package:spine_clinic_app/core/constants/app_sizes.dart';
 import 'package:spine_clinic_app/core/constants/app_text_styles.dart';
+import 'package:spine_clinic_app/core/constants/clinic_colors.dart';
+import 'package:spine_clinic_app/core/network/app_routes.dart';
 import 'package:spine_clinic_app/features/patient/domain/patient.dart';
 import 'package:spine_clinic_app/shared/widgets/app_avatar.dart';
 
@@ -24,11 +27,13 @@ class AppointmentDetailHeader extends StatelessWidget {
       children: [
         Padding(
           padding: const EdgeInsets.symmetric(
-            horizontal: AppSizes.p24,
+            horizontal: AppSizes.p16,
             vertical: AppSizes.p12,
           ),
           child: InkWell(
-            onTap: () => context.push('/patient/${patient.id}'),
+            onTap: () => context.push(
+              AppRoutes.patientDetail.replaceAll(':id', patient.id),
+            ),
             borderRadius: const BorderRadius.all(Radius.circular(AppSizes.r12)),
             child: Padding(
               padding: const EdgeInsets.all(AppSizes.p4),
@@ -73,9 +78,9 @@ class AppointmentDetailHeader extends StatelessWidget {
           ),
         ),
         Padding(
-          padding: const EdgeInsets.symmetric(horizontal: AppSizes.p24),
+          padding: const EdgeInsets.symmetric(horizontal: AppSizes.p16),
           child: Divider(
-            color: Theme.of(context).colorScheme.outline,
+            color: Theme.of(context).colorScheme.outlineVariant,
             height: 1.0,
             thickness: 0.5,
           ),

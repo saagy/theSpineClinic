@@ -62,7 +62,7 @@ class AppointmentStatusBanner extends StatelessWidget {
 
     return Container(
       padding: const EdgeInsets.symmetric(
-        horizontal: AppSizes.p24,
+        horizontal: AppSizes.p16,
         vertical: AppSizes.p12,
       ),
       decoration: BoxDecoration(

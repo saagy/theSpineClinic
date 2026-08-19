@@ -1,24 +1,23 @@
-/// Read-only context chip + Manage link for the patient's next visit
+/// Read-only context card + Manage link for the patient's next visit
 /// date on an appointment detail screen.
-///
-/// Replaces the previous editable card to make it unambiguous that the
-/// data acts on the PATIENT (not the appointment). The destructive
-/// "clear" affordance lives on the patient detail screen instead.
 ///
 /// Tap on "Manage" pushes the patient detail screen, where the canonical
 /// write surface (tappable Next-visit stat) lives.
+///
+/// Rule 1 — keep files under 200 lines.
 library;
 
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
-
 import 'package:spine_clinic_app/core/constants/app_sizes.dart';
 import 'package:spine_clinic_app/core/constants/app_strings.dart';
 import 'package:spine_clinic_app/core/constants/app_text_styles.dart';
+import 'package:spine_clinic_app/core/constants/clinic_colors.dart';
 import 'package:spine_clinic_app/core/network/app_routes.dart';
 import 'package:spine_clinic_app/features/patient/domain/patient.dart';
 
+/// Section card showing patient next expected visit context.
 class AppointmentNextVisitContext extends StatelessWidget {
   const AppointmentNextVisitContext({
     super.key,
@@ -30,22 +29,28 @@ class AppointmentNextVisitContext extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
+    final clinic = ClinicColors.of(context);
     final DateTime? date = patient.nextVisitDate;
 
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: AppSizes.p16),
+    return Container(
+      margin: const EdgeInsets.symmetric(
+        horizontal: AppSizes.p16,
+        vertical: AppSizes.p8,
+      ),
+      decoration: BoxDecoration(
+        color: cs.surface,
+        borderRadius: const BorderRadius.all(Radius.circular(AppSizes.r16)),
+        border: Border.all(color: cs.outlineVariant, width: 0.5),
+        boxShadow: [clinic.cardShadow],
+      ),
       child: Material(
-        color: cs.surfaceContainerHigh,
-        borderRadius: const BorderRadius.all(Radius.circular(AppSizes.r12)),
+        color: Colors.transparent,
+        borderRadius: const BorderRadius.all(Radius.circular(AppSizes.r16)),
         child: InkWell(
           onTap: () => _openPatient(context),
-          borderRadius: const BorderRadius.all(Radius.circular(AppSizes.r12)),
-          child: Container(
-            constraints: const BoxConstraints(minHeight: AppSizes.tappableMin),
-            padding: const EdgeInsets.symmetric(
-              horizontal: AppSizes.p16,
-              vertical: AppSizes.p12,
-            ),
+          borderRadius: const BorderRadius.all(Radius.circular(AppSizes.r16)),
+          child: Padding(
+            padding: const EdgeInsets.all(AppSizes.p16),
             child: Row(
               children: [
                 Icon(
@@ -71,7 +76,9 @@ class AppointmentNextVisitContext extends StatelessWidget {
                             ? AppStrings.noNextVisitSet
                             : DateFormat('EEE, MMM d, yyyy').format(date),
                         style: date == null
-                            ? AppTextStyles.bodySecondary
+                            ? AppTextStyles.bodySecondary.copyWith(
+                                color: cs.onSurfaceVariant,
+                              )
                             : AppTextStyles.bodyBold.copyWith(
                                 color: cs.onSurface,
                               ),

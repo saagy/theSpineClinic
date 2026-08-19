@@ -1,19 +1,34 @@
+/// Card displaying schedule details (date, time, visit type, package status)
+/// and any linked sessions on the same day.
+///
+/// Rule 1 — keep files under 200 lines.
+library;
+
 import 'package:flutter/material.dart';
 import 'package:spine_clinic_app/core/constants/app_sizes.dart';
 import 'package:spine_clinic_app/core/constants/app_strings.dart';
 import 'package:spine_clinic_app/core/constants/app_text_styles.dart';
+import 'package:spine_clinic_app/core/constants/clinic_colors.dart';
 import 'package:spine_clinic_app/core/utils/formatters.dart';
 import 'package:spine_clinic_app/features/appointment/domain/appointment.dart';
+import 'package:spine_clinic_app/features/appointment/presentation/widgets/appointment_linked_session_row.dart';
 
-/// Segment showing date, time, type, and package usage in a 2-column layout.
-class AppointmentScheduleCard extends StatelessWidget {
-  const AppointmentScheduleCard({super.key, required this.appointment});
+/// Section card displaying appointment schedule information and linked sessions.
+class AppointmentInfoCard extends StatelessWidget {
+  const AppointmentInfoCard({
+    super.key,
+    required this.appointment,
+    this.linkedAppointments = const <Appointment>[],
+  });
+
   final Appointment appointment;
+  final List<Appointment> linkedAppointments;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
+    final clinic = ClinicColors.of(context);
 
     final labelStyle = AppTextStyles.captionMedium.copyWith(
       color: colorScheme.onSurfaceVariant,
@@ -23,18 +38,23 @@ class AppointmentScheduleCard extends StatelessWidget {
     );
 
     final valueStyle = AppTextStyles.headingSmall.copyWith(
-      fontSize: 16,
+      fontSize: 15,
       fontWeight: FontWeight.w600,
       color: colorScheme.onSurface,
       fontFeatures: const [FontFeature.tabularFigures()],
     );
 
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(
-        AppSizes.p24,
-        AppSizes.p16,
-        AppSizes.p24,
-        AppSizes.p8,
+    return Container(
+      margin: const EdgeInsets.symmetric(
+        horizontal: AppSizes.p16,
+        vertical: AppSizes.p8,
+      ),
+      padding: const EdgeInsets.all(AppSizes.p16),
+      decoration: BoxDecoration(
+        color: colorScheme.surface,
+        borderRadius: const BorderRadius.all(Radius.circular(AppSizes.r16)),
+        border: Border.all(color: colorScheme.outlineVariant, width: 0.5),
+        boxShadow: [clinic.cardShadow],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -42,15 +62,11 @@ class AppointmentScheduleCard extends StatelessWidget {
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Column 1: Date
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      'DATE',
-                      style: labelStyle,
-                    ),
+                    Text(AppStrings.date.toUpperCase(), style: labelStyle),
                     const SizedBox(height: AppSizes.p4),
                     Text(
                       Formatters.formatDateMedium(appointment.scheduledAt),
@@ -59,16 +75,12 @@ class AppointmentScheduleCard extends StatelessWidget {
                   ],
                 ),
               ),
-              const SizedBox(width: AppSizes.p24),
-              // Column 2: Time
+              const SizedBox(width: AppSizes.p16),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      'TIME',
-                      style: labelStyle,
-                    ),
+                    Text(AppStrings.time.toUpperCase(), style: labelStyle),
                     const SizedBox(height: AppSizes.p4),
                     Text(
                       Formatters.formatTime(appointment.scheduledAt),
@@ -83,16 +95,12 @@ class AppointmentScheduleCard extends StatelessWidget {
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Column 1: Treatment
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      AppStrings.visitType.toUpperCase(),
-                      style: labelStyle,
-                    ),
-                    const SizedBox(height: AppSizes.p6),
+                    Text(AppStrings.visitType.toUpperCase(), style: labelStyle),
+                    const SizedBox(height: AppSizes.p4),
                     Text(
                       appointment.type.displayLabel,
                       style: AppTextStyles.body.copyWith(
@@ -103,17 +111,16 @@ class AppointmentScheduleCard extends StatelessWidget {
                   ],
                 ),
               ),
-              const SizedBox(width: AppSizes.p24),
-              // Column 2: Package Status
+              const SizedBox(width: AppSizes.p16),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'PACKAGE STATUS',
+                      AppStrings.packageStatus.toUpperCase(),
                       style: labelStyle,
                     ),
-                    const SizedBox(height: AppSizes.p6),
+                    const SizedBox(height: AppSizes.p4),
                     appointment.usePackage
                         ? Row(
                             mainAxisSize: MainAxisSize.min,
@@ -126,9 +133,9 @@ class AppointmentScheduleCard extends StatelessWidget {
                                   shape: BoxShape.circle,
                                 ),
                               ),
-                              const SizedBox(width: 6),
+                              const SizedBox(width: AppSizes.p6),
                               Text(
-                                'Using Package',
+                                AppStrings.usingPackage,
                                 style: AppTextStyles.body.copyWith(
                                   fontWeight: FontWeight.w500,
                                   color: colorScheme.onSurface,
@@ -137,7 +144,7 @@ class AppointmentScheduleCard extends StatelessWidget {
                             ],
                           )
                         : Text(
-                            'No Package',
+                            AppStrings.noPackage,
                             style: AppTextStyles.bodySecondary.copyWith(
                               color: colorScheme.onSurfaceVariant,
                             ),
@@ -147,8 +154,36 @@ class AppointmentScheduleCard extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: AppSizes.p16),
-          Divider(color: colorScheme.outlineVariant, height: 1.0, thickness: 0.5),
+          if (linkedAppointments.isNotEmpty) ...[
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: AppSizes.p12),
+              child: Divider(
+                color: colorScheme.outlineVariant,
+                height: 1.0,
+                thickness: 0.5,
+              ),
+            ),
+            Row(
+              children: [
+                Icon(
+                  Icons.link_rounded,
+                  color: colorScheme.secondary,
+                  size: AppSizes.iconSmall,
+                ),
+                const SizedBox(width: AppSizes.p6),
+                Text(
+                  AppStrings.linkedSessions,
+                  style: labelStyle.copyWith(
+                    color: colorScheme.secondary,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: AppSizes.p8),
+            ...linkedAppointments.map(
+              (linked) => AppointmentLinkedSessionRow(appointment: linked),
+            ),
+          ],
         ],
       ),
     );
