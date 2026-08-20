@@ -4,6 +4,7 @@ part of 'receptionist_appointment_card.dart';
 class _NameStatus extends StatelessWidget {
   const _NameStatus({
     required this.item,
+    required this.status,
     required this.style,
     required this.statusBadge,
     required this.isPastScheduled,
@@ -13,6 +14,7 @@ class _NameStatus extends StatelessWidget {
   });
 
   final AppointmentWithPatient item;
+  final AppointmentStatus status;
   final AppointmentStatusStyle style;
   final AppointmentBadgeColors statusBadge;
   final bool isPastScheduled;
@@ -22,7 +24,6 @@ class _NameStatus extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final AppointmentStatus status = item.appointment.status;
     final String primaryTitle = isPatientContext
         ? (item.doctorName != null && item.doctorName!.trim().isNotEmpty
             ? (item.doctorName!.toLowerCase().startsWith('dr')

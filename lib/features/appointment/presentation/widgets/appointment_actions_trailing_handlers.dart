@@ -3,6 +3,7 @@ part of 'appointment_actions_trailing.dart';
 mixin _AppointmentActionsTrailingHandlers
     on ConsumerState<AppointmentActionsTrailing> {
   bool _isProcessing = false;
+  AppointmentStatus? _optimisticStatus;
 
   Future<void> _handleCheckIn() => _setStatus(AppointmentStatus.checkedIn);
 
@@ -30,7 +31,10 @@ mixin _AppointmentActionsTrailingHandlers
     if (_isProcessing) return;
     final bool canUpdate = await _canUpdateStatus();
     if (!canUpdate) return;
-    setState(() => _isProcessing = true);
+    setState(() {
+      _isProcessing = true;
+      _optimisticStatus = status;
+    });
     try {
       final result = await ref
           .read(appointmentRepositoryProvider)
@@ -45,12 +49,17 @@ mixin _AppointmentActionsTrailingHandlers
             variant: AppSnackbarVariant.success,
           );
         },
-        failure: (error) => AppSnackbar.show(
-          context,
-          message: AppStrings.fromKey(error.userMessageKey),
-          variant: AppSnackbarVariant.error,
-        ),
+        failure: (error) {
+          if (mounted) setState(() => _optimisticStatus = null);
+          AppSnackbar.show(
+            context,
+            message: AppStrings.fromKey(error.userMessageKey),
+            variant: AppSnackbarVariant.error,
+          );
+        },
       );
+    } catch (_) {
+      if (mounted) setState(() => _optimisticStatus = null);
     } finally {
       if (mounted) setState(() => _isProcessing = false);
     }

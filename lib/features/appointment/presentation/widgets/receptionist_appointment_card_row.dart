@@ -5,6 +5,7 @@ part of 'receptionist_appointment_card.dart';
 class _AppointmentCardRow extends StatelessWidget {
   const _AppointmentCardRow({
     required this.item,
+    required this.status,
     required this.showDate,
     required this.style,
     required this.statusBadge,
@@ -17,6 +18,7 @@ class _AppointmentCardRow extends StatelessWidget {
   });
 
   final AppointmentWithPatient item;
+  final AppointmentStatus status;
   final bool showDate;
   final AppointmentStatusStyle style;
   final AppointmentBadgeColors statusBadge;
@@ -116,7 +118,7 @@ class _AppointmentCardRow extends StatelessWidget {
                         : statusBadge.textColor,
                     label: isPastScheduled
                         ? AppStrings.pastScheduledNeedsAction
-                        : item.appointment.status.displayLabel,
+                        : status.displayLabel,
                     icon: isPastScheduled ? Icons.warning_amber_rounded : null,
                     isCompact: isCompact,
                   ),
@@ -159,6 +161,7 @@ class _AppointmentCardRow extends StatelessWidget {
             Expanded(
               child: _NameStatus(
                 item: item,
+                status: status,
                 style: style,
                 statusBadge: statusBadge,
                 isPastScheduled: isPastScheduled,

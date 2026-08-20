@@ -42,6 +42,14 @@ class _AppointmentActionsTrailingState
     extends ConsumerState<AppointmentActionsTrailing>
     with _AppointmentActionsTrailingHandlers {
   @override
+  void didUpdateWidget(AppointmentActionsTrailing oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.appointment.status != widget.appointment.status) {
+      _optimisticStatus = null;
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
     final user = ref.watch(currentUserProvider).value;
     final bool isDoctor = user?.role == UserRole.doctor;
@@ -60,7 +68,8 @@ class _AppointmentActionsTrailingState
         (user.role == UserRole.receptionist ||
             user.role == UserRole.superAdmin ||
             user.role == UserRole.doctor);
-    final AppointmentStatus status = widget.appointment.status;
+    final AppointmentStatus status =
+        _optimisticStatus ?? widget.appointment.status;
     final bool hasMenu = isAuthorizedStaff &&
         (status == AppointmentStatus.scheduled ||
             status == AppointmentStatus.checkedIn ||

@@ -58,16 +58,8 @@ class ReceptionistAppointmentCard extends ConsumerStatefulWidget {
   final AppointmentWithPatient item;
   final bool showMenu;
   final VoidCallback? onStatusChanged;
-
-  /// When true the leading section stacks "MMM d" over "hh:mm a".
-  /// Defaults to false (time-only).
   final bool showDate;
-
-  /// Optional override for compact vs standard density.
   final bool? isCompact;
-
-  /// When true, highlights the session type and status instead of repeating
-  /// the known patient name/initials (e.g. inside Patient Details tabs).
   final bool isPatientContext;
 
   @override
@@ -79,10 +71,19 @@ class _ReceptionistAppointmentCardState
     extends ConsumerState<ReceptionistAppointmentCard>
     with _ReceptionistAppointmentCardMenu {
   @override
+  void didUpdateWidget(ReceptionistAppointmentCard oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.item.appointment.status != widget.item.appointment.status) {
+      _optimisticStatus = null;
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
     final bool isCompact =
         widget.isCompact ?? ref.watch(scheduleCompactControllerProvider);
-    final AppointmentStatus status = widget.item.appointment.status;
+    final AppointmentStatus status =
+        _optimisticStatus ?? widget.item.appointment.status;
     final AppointmentStatusStyle style = AppointmentStatusStyle.forStatus(
       context,
       status,
@@ -112,13 +113,12 @@ class _ReceptionistAppointmentCardState
 
     final double radius = isCompact ? AppSizes.r12 : AppSizes.r16;
     final EdgeInsets internalPadding = isCompact
-        ? const EdgeInsets.symmetric(
-            horizontal: AppSizes.p12,
-            vertical: 4.0,
-          )
+        ? const EdgeInsets.symmetric(horizontal: AppSizes.p12, vertical: 4.0)
         : const EdgeInsets.all(AppSizes.p16);
 
-    final Widget card = Container(
+    final Widget card = AnimatedContainer(
+      duration: const Duration(milliseconds: 180),
+      curve: Curves.easeInOut,
       decoration: BoxDecoration(
         color: isPastScheduled ? clinic.warningContainer : style.bg,
         borderRadius: BorderRadius.all(Radius.circular(radius)),
@@ -160,6 +160,7 @@ class _ReceptionistAppointmentCardState
               padding: internalPadding,
               child: _AppointmentCardRow(
                 item: widget.item,
+                status: status,
                 showDate: widget.showDate,
                 style: style,
                 statusBadge: statusBadge,

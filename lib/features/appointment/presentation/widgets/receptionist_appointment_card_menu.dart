@@ -7,6 +7,7 @@ part of 'receptionist_appointment_card.dart';
 mixin _ReceptionistAppointmentCardMenu
     on ConsumerState<ReceptionistAppointmentCard> {
   bool _isMenuProcessing = false;
+  AppointmentStatus? _optimisticStatus;
 
   /// Opens a context menu at [globalPosition] with status actions.
   Future<void> showLongPressMenu(Offset globalPosition) async {
@@ -125,25 +126,38 @@ mixin _ReceptionistAppointmentCardMenu
   }
 
   Future<void> _setStatus(String id, AppointmentStatus status) async {
-    final result = await ref
-        .read(appointmentRepositoryProvider)
-        .updateAppointmentStatus(id, status);
-    if (!mounted) return;
-    result.when(
-      success: (_) {
-        _invalidateCaches();
-        AppSnackbar.show(
-          context,
-          message: AppStrings.statusUpdateSuccess,
-          variant: AppSnackbarVariant.success,
-        );
-      },
-      failure: (error) => AppSnackbar.show(
-        context,
-        message: AppStrings.fromKey(error.userMessageKey),
-        variant: AppSnackbarVariant.error,
-      ),
-    );
+    setState(() {
+      _isMenuProcessing = true;
+      _optimisticStatus = status;
+    });
+    try {
+      final result = await ref
+          .read(appointmentRepositoryProvider)
+          .updateAppointmentStatus(id, status);
+      if (!mounted) return;
+      result.when(
+        success: (_) {
+          _invalidateCaches();
+          AppSnackbar.show(
+            context,
+            message: AppStrings.statusUpdateSuccess,
+            variant: AppSnackbarVariant.success,
+          );
+        },
+        failure: (error) {
+          if (mounted) setState(() => _optimisticStatus = null);
+          AppSnackbar.show(
+            context,
+            message: AppStrings.fromKey(error.userMessageKey),
+            variant: AppSnackbarVariant.error,
+          );
+        },
+      );
+    } catch (_) {
+      if (mounted) setState(() => _optimisticStatus = null);
+    } finally {
+      if (mounted) setState(() => _isMenuProcessing = false);
+    }
   }
 
   void _invalidateCaches() {

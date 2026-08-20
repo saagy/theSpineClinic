@@ -21,7 +21,9 @@ class _StatusDot extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
         if (icon == null)
-          Container(
+          AnimatedContainer(
+            duration: const Duration(milliseconds: 180),
+            curve: Curves.easeInOut,
             width: isCompact ? 5 : AppSizes.p6,
             height: isCompact ? 5 : AppSizes.p6,
             decoration: BoxDecoration(color: color, shape: BoxShape.circle),
@@ -34,15 +36,19 @@ class _StatusDot extends StatelessWidget {
           ),
         const SizedBox(width: AppSizes.p4),
         Flexible(
-          child: Text(
-            label,
+          child: AnimatedDefaultTextStyle(
+            duration: const Duration(milliseconds: 180),
+            curve: Curves.easeInOut,
             style: AppTextStyles.caption.copyWith(
               color: color,
               fontSize: isCompact ? 10 : 11,
               fontWeight: FontWeight.w600,
             ),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
+            child: Text(
+              label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
           ),
         ),
       ],
