@@ -35,7 +35,7 @@ class _AppointmentCardRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final double avatarRadius = isCompact ? 11.0 : AppSizes.avatarSmall / 2;
+    final double avatarRadius = isCompact ? 11.0 : 13.5;
     final String avatarName = isPatientContext
         ? (item.doctorName ?? AppStrings.doctor)
         : item.patient.fullName;
@@ -119,7 +119,11 @@ class _AppointmentCardRow extends StatelessWidget {
                     label: isPastScheduled
                         ? AppStrings.pastScheduledNeedsAction
                         : status.displayLabel,
-                    icon: isPastScheduled ? Icons.warning_amber_rounded : null,
+                    icon: isPastScheduled
+                        ? Icons.warning_amber_rounded
+                        : (status == AppointmentStatus.checkedIn
+                            ? Icons.check_circle_rounded
+                            : null),
                     isCompact: isCompact,
                   ),
                 ),
@@ -137,8 +141,8 @@ class _AppointmentCardRow extends StatelessWidget {
         }
 
         final double mobileLeadingWidth = isCompact
-            ? (showDate ? 56.0 : 48.0)
-            : (showDate ? 56.0 : 48.0);
+            ? (showDate ? 48.0 : 38.0)
+            : (showDate ? 48.0 : 40.0);
 
         return Row(
           crossAxisAlignment: CrossAxisAlignment.center,
@@ -150,14 +154,14 @@ class _AppointmentCardRow extends StatelessWidget {
               isCompact: isCompact,
               fixedWidth: mobileLeadingWidth,
             ),
-            const SizedBox(width: AppSizes.p8),
+            const SizedBox(width: AppSizes.p6),
             AppAvatar(
               name: avatarName,
               radius: avatarRadius,
               color: style.avatarBg,
               icon: avatarIcon,
             ),
-            const SizedBox(width: AppSizes.p8),
+            const SizedBox(width: AppSizes.p6),
             Expanded(
               child: _NameStatus(
                 item: item,
@@ -171,7 +175,7 @@ class _AppointmentCardRow extends StatelessWidget {
               ),
             ),
             if (enableMenu) ...[
-              const SizedBox(width: AppSizes.p8),
+              const SizedBox(width: AppSizes.p4),
               AppointmentActionsTrailing(
                 appointment: item.appointment,
                 onStatusChanged: onStatusChanged,

@@ -110,7 +110,10 @@ class _ReceptionistAppointmentCardState
     final double radius = isCompact ? AppSizes.r12 : AppSizes.r16;
     final EdgeInsets internalPadding = isCompact
         ? const EdgeInsets.symmetric(horizontal: AppSizes.p12, vertical: 4.0)
-        : const EdgeInsets.all(AppSizes.p16);
+        : const EdgeInsets.symmetric(
+            horizontal: AppSizes.p14,
+            vertical: AppSizes.p14,
+          );
 
     final Widget card = TactileScaleContainer(
       trigger: status,

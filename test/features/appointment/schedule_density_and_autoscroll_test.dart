@@ -16,6 +16,9 @@ import 'package:spine_clinic_app/features/appointment/presentation/widgets/due_p
 import 'package:spine_clinic_app/features/appointment/presentation/widgets/receptionist_grouped_appointment_card.dart';
 import 'package:spine_clinic_app/features/patient/domain/clinic_location.dart';
 import 'package:spine_clinic_app/features/patient/domain/patient.dart';
+import 'package:spine_clinic_app/features/auth/domain/staff.dart';
+import 'package:spine_clinic_app/features/auth/domain/user_role.dart';
+import 'package:spine_clinic_app/features/auth/presentation/auth_providers.dart';
 import 'package:spine_clinic_app/shared/widgets/app_button.dart';
 
 void main() {
@@ -172,6 +175,15 @@ void main() {
   });
 
   group('Grouped Dual Session Card Tests', () {
+    final staff = Staff(
+      id: 'staff-rec-1',
+      userId: 'user-rec-1',
+      fullName: 'Sara Receptionist',
+      email: 'sara@clinic.com',
+      role: UserRole.receptionist,
+      createdAt: DateTime(2026),
+    );
+
     final patient = Patient(
       id: 'patient-2',
       fullName: 'Dina Sherif',
@@ -196,6 +208,51 @@ void main() {
       createdAt: DateTime(2026),
     );
 
+    testWidgets('renders dual session standard card on mobile with clock on left, avatar, name, and Dual session subtitle', (
+      tester,
+    ) async {
+      tester.view.physicalSize = const Size(390, 844);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(() {
+        tester.view.resetPhysicalSize();
+        tester.view.resetDevicePixelRatio();
+      });
+
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            currentUserProvider.overrideWith(() => _StaticCurrentUser(staff)),
+          ],
+          child: MaterialApp(
+            home: Scaffold(
+              body: ReceptionistGroupedAppointmentCard(
+                patient: patient,
+                items: [
+                  AppointmentWithPatient(
+                    appointment: appointment1,
+                    patient: patient,
+                  ),
+                  AppointmentWithPatient(
+                    appointment: appointment2,
+                    patient: patient,
+                  ),
+                ],
+                isCompact: false,
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('Dina Sherif'), findsOneWidget);
+      expect(find.text(AppStrings.dualSession), findsOneWidget);
+      expect(find.text('09:00'), findsOneWidget);
+      expect(find.text('AM'), findsOneWidget);
+      expect(find.byIcon(Icons.more_horiz_rounded), findsNWidgets(3));
+      expect(tester.takeException(), isNull);
+    });
+
     testWidgets('renders dual session compact card on mobile without overflow', (
       tester,
     ) async {
@@ -208,6 +265,9 @@ void main() {
 
       await tester.pumpWidget(
         ProviderScope(
+          overrides: [
+            currentUserProvider.overrideWith(() => _StaticCurrentUser(staff)),
+          ],
           child: MaterialApp(
             home: Scaffold(
               body: ReceptionistGroupedAppointmentCard(
@@ -228,8 +288,12 @@ void main() {
           ),
         ),
       );
+      await tester.pumpAndSettle();
 
       expect(find.text('Dina Sherif'), findsOneWidget);
+      expect(find.text(AppStrings.dualSession), findsOneWidget);
+      expect(find.text('09:00 AM'), findsOneWidget);
+      expect(find.byIcon(Icons.more_horiz_rounded), findsNWidgets(3));
       expect(tester.takeException(), isNull);
     });
 
@@ -245,6 +309,9 @@ void main() {
 
       await tester.pumpWidget(
         ProviderScope(
+          overrides: [
+            currentUserProvider.overrideWith(() => _StaticCurrentUser(staff)),
+          ],
           child: MaterialApp(
             home: Scaffold(
               body: ReceptionistGroupedAppointmentCard(
@@ -265,8 +332,12 @@ void main() {
           ),
         ),
       );
+      await tester.pumpAndSettle();
 
       expect(find.text('Dina Sherif'), findsOneWidget);
+      expect(find.text(AppStrings.dualSession), findsOneWidget);
+      expect(find.text('09:00 AM'), findsOneWidget);
+      expect(find.byIcon(Icons.more_horiz_rounded), findsNWidgets(3));
       expect(tester.takeException(), isNull);
     });
   });
@@ -539,3 +610,12 @@ void main() {
     });
   });
 }
+
+class _StaticCurrentUser extends CurrentUser {
+  _StaticCurrentUser(this._user);
+  final Staff? _user;
+
+  @override
+  Future<Staff?> build() async => _user;
+}
+

@@ -1,9 +1,10 @@
+import 'package:auto_size_text/auto_size_text.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 /// A text widget that animates changes to [text] with a vertical rolling
 /// ticker effect (old text slides up and fades out, new text slides up from
-/// below and fades in).
+/// below and fades in). Supports optional dynamic bounded scaling via [minFontSize].
 class RollingTickerText extends StatelessWidget {
   const RollingTickerText({
     super.key,
@@ -13,6 +14,8 @@ class RollingTickerText extends StatelessWidget {
     this.maxLines = 1,
     this.overflow = TextOverflow.ellipsis,
     this.duration = const Duration(milliseconds: 260),
+    this.minFontSize,
+    this.stepGranularity = 0.5,
   });
 
   /// The text content to display and animate.
@@ -33,9 +36,35 @@ class RollingTickerText extends StatelessWidget {
   /// Duration of the rolling transition.
   final Duration duration;
 
+  /// Minimum font size floor when dynamically scaling text.
+  final double? minFontSize;
+
+  /// Step granularity for font size changes when scaling.
+  final double stepGranularity;
+
   @override
   Widget build(BuildContext context) {
     final Duration effectiveDuration = kIsWeb ? Duration.zero : duration;
+
+    final Widget textChild = minFontSize != null
+        ? AutoSizeText(
+            text,
+            key: ValueKey<String>(text),
+            style: style,
+            textAlign: textAlign,
+            maxLines: maxLines,
+            minFontSize: minFontSize!,
+            stepGranularity: stepGranularity,
+            overflow: overflow,
+          )
+        : Text(
+            text,
+            key: ValueKey<String>(text),
+            style: style,
+            textAlign: textAlign,
+            maxLines: maxLines,
+            overflow: overflow,
+          );
 
     return AnimatedSwitcher(
       duration: effectiveDuration,
@@ -68,14 +97,7 @@ class RollingTickerText extends StatelessWidget {
           ),
         );
       },
-      child: Text(
-        text,
-        key: ValueKey<String>(text),
-        style: style,
-        textAlign: textAlign,
-        maxLines: maxLines,
-        overflow: overflow,
-      ),
+      child: textChild,
     );
   }
 }

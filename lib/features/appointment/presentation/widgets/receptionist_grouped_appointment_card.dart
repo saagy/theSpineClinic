@@ -29,6 +29,7 @@ part 'receptionist_grouped_appointment_card_menu.dart';
 part 'receptionist_grouped_appointment_card_parts.dart';
 part 'receptionist_grouped_appointment_card_sub_row.dart';
 part 'receptionist_grouped_appointment_card_sub_row_builders.dart';
+part 'receptionist_grouped_appointment_status_dot.dart';
 
 /// Renders multiple appointments for a patient on the same day as a single,
 /// unified card with a sub-session timeline and batch status options.
@@ -87,8 +88,7 @@ class _ReceptionistGroupedAppointmentCardState
     final sortedItems = List<AppointmentWithPatient>.from(widget.items)
       ..sort((a, b) =>
           a.appointment.scheduledAt.compareTo(b.appointment.scheduledAt));
-    final timeStr = DateFormat('hh:mm a')
-        .format(sortedItems.first.appointment.scheduledAt.toLocal());
+    final scheduledAt = sortedItems.first.appointment.scheduledAt.toLocal();
 
     final Color cardBg = isAnyPastScheduled
         ? clinic.warningContainer
@@ -99,7 +99,10 @@ class _ReceptionistGroupedAppointmentCardState
     final double radius = isCompact ? AppSizes.r12 : AppSizes.r16;
     final EdgeInsets internalPadding = isCompact
         ? const EdgeInsets.symmetric(horizontal: AppSizes.p12, vertical: 6.0)
-        : const EdgeInsets.all(AppSizes.p16);
+        : const EdgeInsets.symmetric(
+            horizontal: AppSizes.p14,
+            vertical: AppSizes.p14,
+          );
 
     final Widget card = TactileScaleContainer(
       trigger: allCheckedIn,
@@ -125,8 +128,9 @@ class _ReceptionistGroupedAppointmentCardState
             children: [
               _GroupedCardHeader(
                 patient: widget.patient,
-                timeStr: timeStr,
+                scheduledAt: scheduledAt,
                 allCancelled: allCancelled,
+                allCheckedIn: allCheckedIn,
                 isCompact: isCompact,
                 isAuthorizedStaff: isAuthorizedStaff,
                 trailingMenu: isAuthorizedStaff

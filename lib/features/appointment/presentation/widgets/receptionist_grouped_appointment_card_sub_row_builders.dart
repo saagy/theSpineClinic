@@ -30,36 +30,26 @@ class _GroupedSubAppointmentWideRow extends StatelessWidget {
     final theme = Theme.of(context);
     final clinic = ClinicColors.of(context);
     final subAppt = item.appointment;
+    final Color timeColor = isCancelled
+        ? clinic.textMuted
+        : (subAppt.status == AppointmentStatus.checkedIn
+            ? theme.colorScheme.onPrimaryContainer
+            : theme.colorScheme.onSurface);
 
     return Row(
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
         SizedBox(
-          width: isCompact ? 88.0 : 96.0,
-          child: Row(
-            children: [
-              Container(
-                width: 7,
-                height: 7,
-                decoration:
-                    BoxDecoration(color: dotColor, shape: BoxShape.circle),
-              ),
-              const SizedBox(width: AppSizes.p4),
-              Expanded(
-                child: Text(
-                  formattedTime,
-                  style: AppTextStyles.captionBold.copyWith(
-                    color: isCancelled
-                        ? clinic.textMuted
-                        : theme.colorScheme.onSurface,
-                    decoration: isCancelled ? TextDecoration.lineThrough : null,
-                    fontSize: isCompact ? 11 : 12,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-            ],
+          width: isCompact ? 72.0 : 80.0,
+          child: Text(
+            formattedTime,
+            style: AppTextStyles.captionBold.copyWith(
+              color: timeColor,
+              decoration: isCancelled ? TextDecoration.lineThrough : null,
+              fontSize: isCompact ? 11 : 12,
+            ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
           ),
         ),
         const Spacer(),
@@ -136,20 +126,19 @@ class _GroupedSubAppointmentMobileRow extends StatelessWidget {
     final theme = Theme.of(context);
     final clinic = ClinicColors.of(context);
     final subAppt = item.appointment;
+    final Color timeColor = isCancelled
+        ? clinic.textMuted
+        : (subAppt.status == AppointmentStatus.checkedIn
+            ? theme.colorScheme.onPrimaryContainer
+            : theme.colorScheme.onSurface);
 
     return Row(
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        Container(
-          width: 7,
-          height: 7,
-          decoration: BoxDecoration(color: dotColor, shape: BoxShape.circle),
-        ),
-        const SizedBox(width: AppSizes.p6),
         Text(
           formattedTime,
           style: AppTextStyles.captionBold.copyWith(
-            color: isCancelled ? clinic.textMuted : theme.colorScheme.onSurface,
+            color: timeColor,
             decoration: isCancelled ? TextDecoration.lineThrough : null,
             fontSize: isCompact ? 11 : 12,
           ),

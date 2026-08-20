@@ -54,19 +54,21 @@ class _NameStatus extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             Flexible(
-              child: Text(
+              child: AutoSizeText(
                 secondaryText,
                 style: AppTextStyles.caption.copyWith(
                   color: Theme.of(context).colorScheme.onSurfaceVariant,
                   fontSize: isCompact ? 10 : null,
                 ),
                 maxLines: 1,
+                minFontSize: isCompact ? 8.0 : 9.5,
+                stepGranularity: 0.5,
                 overflow: TextOverflow.ellipsis,
               ),
             ),
-            const SizedBox(width: AppSizes.p6),
+            const SizedBox(width: AppSizes.p4),
             ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 130),
+              constraints: BoxConstraints(maxWidth: isCompact ? 110 : 130),
               child: _StatusDot(
                 color: isPastScheduled ? clinic.warning : statusBadge.textColor,
                 label: isPastScheduled
@@ -78,6 +80,7 @@ class _NameStatus extends StatelessWidget {
                         ? Icons.check_circle_rounded
                         : null),
                 isCompact: isCompact,
+                minFontSize: isCompact ? 8.0 : 8.5,
               ),
             ),
           ],

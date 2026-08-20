@@ -1,43 +1,67 @@
 part of 'receptionist_grouped_appointment_card.dart';
 
 /// Patient header row inside [ReceptionistGroupedAppointmentCard].
+/// Layout: [Clock] [Avatar] [Name & "Dual session" under it] [Three-dot menu]
 class _GroupedCardHeader extends StatelessWidget {
   const _GroupedCardHeader({
     required this.patient,
-    required this.timeStr,
+    required this.scheduledAt,
     required this.allCancelled,
+    required this.allCheckedIn,
     required this.isCompact,
     required this.isAuthorizedStaff,
     required this.trailingMenu,
   });
 
   final Patient patient;
-  final String timeStr;
+  final DateTime scheduledAt;
   final bool allCancelled;
+  final bool allCheckedIn;
   final bool isCompact;
   final bool isAuthorizedStaff;
   final Widget? trailingMenu;
+
+  static const double _wideBreakpoint = 500.0;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final clinic = ClinicColors.of(context);
 
-    if (isCompact) {
-      return Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          AppAvatar(
-            name: patient.fullName,
-            radius: 11.0,
-            color: allCancelled ? clinic.textMuted : null,
-          ),
-          const SizedBox(width: AppSizes.p8),
-          Expanded(
-            child: Row(
-              children: [
-                Flexible(
-                  child: AutoSizeText(
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final bool isWide = constraints.maxWidth >= _wideBreakpoint;
+        final double leadingWidth = isWide
+            ? (isCompact ? 54.0 : 64.0)
+            : (isCompact ? 38.0 : 40.0);
+        final double spacingBetween = isWide ? AppSizes.p12 : AppSizes.p6;
+        final double avatarToTextSpacing = isWide ? AppSizes.p8 : AppSizes.p6;
+        final double avatarRadius = isCompact ? 11.0 : 13.5;
+
+        return Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            _GroupedCardTimeWidget(
+              scheduledAt: scheduledAt,
+              allCancelled: allCancelled,
+              allCheckedIn: allCheckedIn,
+              isCompact: isCompact,
+              isWide: isWide,
+              fixedWidth: leadingWidth,
+            ),
+            SizedBox(width: spacingBetween),
+            AppAvatar(
+              name: patient.fullName,
+              radius: avatarRadius,
+              color: allCancelled ? clinic.textMuted : null,
+            ),
+            SizedBox(width: avatarToTextSpacing),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  AutoSizeText(
                     patient.fullName,
                     style: AppTextStyles.bodyBold.copyWith(
                       color: allCancelled
@@ -45,153 +69,121 @@ class _GroupedCardHeader extends StatelessWidget {
                           : theme.colorScheme.onSurface,
                       decoration:
                           allCancelled ? TextDecoration.lineThrough : null,
-                      fontSize: 13,
+                      fontSize: isCompact ? 13 : null,
+                    ),
+                    maxLines: 1,
+                    minFontSize: 10,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  SizedBox(height: isCompact ? 0 : AppSizes.p2),
+                  Text(
+                    AppStrings.dualSession,
+                    style: AppTextStyles.caption.copyWith(
+                      color: allCancelled
+                          ? clinic.textMuted
+                          : theme.colorScheme.onSurfaceVariant,
+                      fontSize: isCompact ? 10 : null,
+                      fontWeight: FontWeight.w500,
                     ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
-                ),
-                const SizedBox(width: AppSizes.p6),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: AppSizes.p6,
-                    vertical: 1,
-                  ),
-                  decoration: BoxDecoration(
-                    color: theme.colorScheme.primaryContainer.withAlpha(120),
-                    borderRadius: const BorderRadius.all(
-                      Radius.circular(AppSizes.r8),
-                    ),
-                  ),
-                  child: Text(
-                    AppStrings.dualSession,
-                    style: AppTextStyles.caption.copyWith(
-                      color: theme.colorScheme.primary,
-                      fontSize: 10,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
-          if (isAuthorizedStaff && trailingMenu != null) trailingMenu!,
-        ],
-      );
-    }
-
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.center,
-      children: [
-        AppAvatar(
-          name: patient.fullName,
-          radius: AppSizes.avatarSmall / 2,
-          color: allCancelled ? clinic.textMuted : null,
-        ),
-        const SizedBox(width: AppSizes.p12),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              AutoSizeText(
-                patient.fullName,
-                style: AppTextStyles.bodyBold.copyWith(
-                  color: allCancelled
-                      ? clinic.textMuted
-                      : theme.colorScheme.onSurface,
-                  decoration:
-                      allCancelled ? TextDecoration.lineThrough : null,
-                ),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-              const SizedBox(height: AppSizes.p2),
-              Text(
-                '$timeStr • ${AppStrings.dualSession}',
-                style: AppTextStyles.caption.copyWith(
-                  color: allCancelled
-                      ? clinic.textMuted
-                      : theme.colorScheme.onSurfaceVariant,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
+            if (isAuthorizedStaff && trailingMenu != null) ...[
+              const SizedBox(width: AppSizes.p4),
+              trailingMenu!,
             ],
-          ),
-        ),
-        if (isAuthorizedStaff && trailingMenu != null) trailingMenu!,
-      ],
+          ],
+        );
+      },
     );
   }
 }
 
-/// Colour-coded dot + coloured text with smooth morphing and rolling ticker label for sub-rows.
-class _GroupedStatusDot extends StatelessWidget {
-  const _GroupedStatusDot({
-    required this.color,
-    required this.label,
-    this.icon,
-    this.isCompact = false,
+/// Time widget for the grouped card header on the left.
+class _GroupedCardTimeWidget extends StatelessWidget {
+  const _GroupedCardTimeWidget({
+    required this.scheduledAt,
+    required this.allCancelled,
+    required this.allCheckedIn,
+    required this.isCompact,
+    this.isWide = false,
+    this.fixedWidth,
   });
 
-  final Color color;
-  final String label;
-  final IconData? icon;
+  final DateTime scheduledAt;
+  final bool allCancelled;
+  final bool allCheckedIn;
   final bool isCompact;
+  final bool isWide;
+  final double? fixedWidth;
 
   @override
   Widget build(BuildContext context) {
-    final double iconSize = isCompact ? 13 : AppSizes.iconSmall;
+    final theme = Theme.of(context);
+    final clinic = ClinicColors.of(context);
+    final Color timeColor = allCancelled
+        ? clinic.textMuted
+        : (allCheckedIn
+            ? theme.colorScheme.onPrimaryContainer
+            : theme.colorScheme.onSurface);
 
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.center,
-      children: [
-        AnimatedSwitcher(
-          duration: const Duration(milliseconds: 240),
-          transitionBuilder: (Widget child, Animation<double> animation) {
-            return ScaleTransition(
-              scale: CurvedAnimation(
-                parent: animation,
-                curve: Curves.easeOutBack,
-              ),
-              child: FadeTransition(
-                opacity: animation,
-                child: child,
-              ),
-            );
-          },
-          child: icon == null
-              ? AnimatedContainer(
-                  key: const ValueKey<String>('grouped_status_dot'),
-                  duration: const Duration(milliseconds: 240),
-                  curve: Curves.easeOutCubic,
-                  width: isCompact ? 5 : AppSizes.p6,
-                  height: isCompact ? 5 : AppSizes.p6,
-                  decoration: BoxDecoration(
-                    color: color,
-                    shape: BoxShape.circle,
-                  ),
-                )
-              : Icon(
-                  icon,
-                  key: ValueKey<IconData>(icon!),
-                  color: color,
-                  size: iconSize,
-                ),
+    final Widget timeWidget;
+    if (isWide) {
+      timeWidget = Text(
+        DateFormat('hh:mm a').format(scheduledAt),
+        maxLines: 1,
+        softWrap: false,
+        style: AppTextStyles.captionBold.copyWith(
+          color: timeColor,
+          fontSize: isCompact ? 11 : 12,
         ),
-        const SizedBox(width: AppSizes.p4),
-        Flexible(
-          child: RollingTickerText(
-            text: label,
-            duration: const Duration(milliseconds: 240),
-            style: AppTextStyles.caption.copyWith(
-              color: color,
-              fontSize: isCompact ? 10 : 11,
-              fontWeight: FontWeight.w600,
+      );
+    } else if (isCompact) {
+      timeWidget = Text(
+        DateFormat('hh:mm a').format(scheduledAt),
+        maxLines: 1,
+        softWrap: false,
+        style: AppTextStyles.captionBold.copyWith(
+          color: timeColor,
+          fontSize: 11,
+        ),
+      );
+    } else {
+      timeWidget = Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Text(
+            DateFormat('hh:mm').format(scheduledAt),
+            maxLines: 1,
+            softWrap: false,
+            style: AppTextStyles.captionBold.copyWith(
+              color: timeColor,
+              fontSize: 13,
             ),
           ),
-        ),
-      ],
-    );
+          Text(
+            DateFormat('a').format(scheduledAt),
+            maxLines: 1,
+            softWrap: false,
+            style: AppTextStyles.caption.copyWith(
+              color: timeColor,
+              fontSize: 10,
+            ),
+          ),
+        ],
+      );
+    }
+
+    if (fixedWidth != null) {
+      return ConstrainedBox(
+        constraints: BoxConstraints(minWidth: fixedWidth!),
+        child: timeWidget,
+      );
+    }
+    return timeWidget;
   }
 }

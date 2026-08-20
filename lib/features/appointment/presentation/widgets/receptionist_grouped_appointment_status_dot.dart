@@ -1,20 +1,18 @@
-part of 'receptionist_appointment_card.dart';
+part of 'receptionist_grouped_appointment_card.dart';
 
-/// Colour-coded dot + coloured text with smooth morphing and rolling ticker label.
-class _StatusDot extends StatelessWidget {
-  const _StatusDot({
+/// Colour-coded dot + coloured text with smooth morphing and rolling ticker label for sub-rows.
+class _GroupedStatusDot extends StatelessWidget {
+  const _GroupedStatusDot({
     required this.color,
     required this.label,
     this.icon,
     this.isCompact = false,
-    this.minFontSize,
   });
 
   final Color color;
   final String label;
   final IconData? icon;
   final bool isCompact;
-  final double? minFontSize;
 
   @override
   Widget build(BuildContext context) {
@@ -40,7 +38,7 @@ class _StatusDot extends StatelessWidget {
           },
           child: icon == null
               ? AnimatedContainer(
-                  key: const ValueKey<String>('status_dot'),
+                  key: const ValueKey<String>('grouped_status_dot'),
                   duration: const Duration(milliseconds: 240),
                   curve: Curves.easeOutCubic,
                   width: isCompact ? 5 : AppSizes.p6,
@@ -62,7 +60,6 @@ class _StatusDot extends StatelessWidget {
           child: RollingTickerText(
             text: label,
             duration: const Duration(milliseconds: 240),
-            minFontSize: minFontSize,
             style: AppTextStyles.caption.copyWith(
               color: color,
               fontSize: isCompact ? 10 : 11,
