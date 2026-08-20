@@ -8,7 +8,6 @@ import 'package:spine_clinic_app/features/medical_records/presentation/add_visit
 import 'package:spine_clinic_app/shared/widgets/app_button.dart';
 import 'package:spine_clinic_app/shared/widgets/app_snackbar.dart';
 import 'package:spine_clinic_app/shared/widgets/app_text_field.dart';
-import 'package:spine_clinic_app/shared/widgets/pain_severity_slider.dart';
 
 /// Renders the note-taking and completing form for an appointment.
 class NotesForm extends ConsumerStatefulWidget {
@@ -27,7 +26,6 @@ class NotesForm extends ConsumerStatefulWidget {
 
 class _NotesFormState extends ConsumerState<NotesForm> {
   late final TextEditingController _notesController;
-  int _painScore = 0;
   bool _isSaving = false;
 
   @override
@@ -74,11 +72,6 @@ class _NotesFormState extends ConsumerState<NotesForm> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        PainSeveritySlider(
-          value: _painScore,
-          onChanged: (int score) => setState(() => _painScore = score),
-        ),
-        const SizedBox(height: AppSizes.p20),
         AppTextField(
           controller: _notesController,
           labelText: AppStrings.notes,
