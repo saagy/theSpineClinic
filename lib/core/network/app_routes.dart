@@ -68,6 +68,28 @@ abstract final class AppRoutes {
   /// Add/edit visit notes screen (protected, full-screen without shell).
   static const String addVisitNotes = '/appointment/:id/notes';
 
+  /// Doctor replacement screen (protected, full-screen without shell).
+  static const String doctorReplacement = '/appointment/replace';
+
+  /// Builds the location for the doctor replacement screen.
+  static String doctorReplacementLocation({
+    String? absentDoctorId,
+    DateTime? date,
+  }) {
+    final Map<String, String> queryParams = {};
+    if (absentDoctorId != null) {
+      queryParams['absentDoctorId'] = absentDoctorId;
+    }
+    if (date != null) {
+      queryParams['date'] =
+          '${date.year.toString().padLeft(4, '0')}-'
+          '${date.month.toString().padLeft(2, '0')}-'
+          '${date.day.toString().padLeft(2, '0')}';
+    }
+    if (queryParams.isEmpty) return doctorReplacement;
+    return Uri(path: doctorReplacement, queryParameters: queryParams).toString();
+  }
+
   /// Visit detail screen (protected, shell sub-page with its own AppBar).
   static const String visitDetail = '/visit/:id';
 

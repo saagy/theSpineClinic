@@ -55,11 +55,13 @@ class FrostedAuthCard extends StatelessWidget {
           ),
           const SizedBox(height: AppSizes.p16),
           AnimatedSize(
-            duration: const Duration(milliseconds: 320),
+            duration: const Duration(milliseconds: 300),
             curve: Curves.easeInOutCubic,
             alignment: Alignment.topCenter,
             child: AnimatedSwitcher(
               duration: const Duration(milliseconds: 260),
+              switchInCurve: Curves.easeOutCubic,
+              switchOutCurve: Curves.easeInCubic,
               layoutBuilder: (current, prev) => Stack(
                 alignment: Alignment.topCenter,
                 children: [
@@ -71,13 +73,19 @@ class FrostedAuthCard extends StatelessWidget {
                 opacity: anim,
                 child: SlideTransition(
                   position: Tween<Offset>(
-                    begin: const Offset(0.03, 0),
+                    begin: const Offset(0.0, 0.03),
                     end: Offset.zero,
-                  ).animate(anim),
+                  ).animate(
+                    CurvedAnimation(
+                      parent: anim,
+                      curve: Curves.easeOutCubic,
+                    ),
+                  ),
                   child: child,
                 ),
               ),
               child: AuthFormSwitcher(
+                key: ValueKey<AuthMode>(mode),
                 mode: mode,
                 isBusy: isBusy,
                 ctrls: ctrls,

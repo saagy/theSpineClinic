@@ -1,17 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:spine_clinic_app/core/constants/app_sizes.dart';
 import 'package:spine_clinic_app/core/constants/app_strings.dart';
 import 'package:spine_clinic_app/core/errors/result.dart';
+import 'package:spine_clinic_app/core/network/app_routes.dart';
 import 'package:spine_clinic_app/features/admin/presentation/branch_providers.dart';
 import 'package:spine_clinic_app/features/appointment/domain/appointment_repository.dart';
 import 'package:spine_clinic_app/features/appointment/presentation/appointment_providers.dart';
+import 'package:spine_clinic_app/features/appointment/presentation/doctor_replacement_args.dart';
 import 'package:spine_clinic_app/features/appointment/presentation/receptionist_appointments_providers.dart';
-import 'package:spine_clinic_app/features/appointment/presentation/widgets/doctor_replacement_modal.dart';
 import 'package:spine_clinic_app/features/appointment/presentation/widgets/replacement_day_picker_sheet.dart';
 import 'package:spine_clinic_app/features/auth/domain/staff.dart';
 import 'package:spine_clinic_app/features/staff/presentation/staff_providers.dart';
-import 'package:spine_clinic_app/shared/widgets/app_adaptive_modal.dart';
 import 'package:spine_clinic_app/shared/widgets/app_bottom_sheet.dart';
 import 'package:spine_clinic_app/shared/widgets/app_snackbar.dart';
 import 'package:spine_clinic_app/shared/widgets/unified_filter_sheet.dart';
@@ -111,25 +112,18 @@ abstract final class ReceptionistTodayActions {
           );
           return;
         }
-        final bool? success = await AppAdaptiveModal.show<bool>(
-          context: context,
-          child: DoctorReplacementModal(
+        final bool? success = await context.push<bool>(
+          AppRoutes.doctorReplacementLocation(
+            absentDoctorId: absentDoctor.id,
+            date: start,
+          ),
+          extra: DoctorReplacementArgs(
             absentDoctor: absentDoctor,
             availableDoctors: doctors
                 .where((Staff doctor) => doctor.id != absentDoctor.id)
                 .toList(),
             appointments: items,
             day: start,
-            onSubmit:
-                (List<String> replacementIds, List<String> appointmentIds) =>
-                    ref
-                        .read(appointmentRepositoryProvider)
-                        .bulkReplaceDoctor(
-                          absentDoctorId: absentDoctor.id,
-                          replacementDoctorIds: replacementIds,
-                          appointmentIds: appointmentIds,
-                          day: start,
-                        ),
           ),
         );
         if (success == true && context.mounted) {

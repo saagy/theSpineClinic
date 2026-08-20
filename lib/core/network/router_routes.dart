@@ -73,6 +73,17 @@ List<RouteBase> _buildRoutes(Ref ref) => [
     ),
   ),
   GoRoute(
+    path: AppRoutes.doctorReplacement,
+    pageBuilder: (_, state) => appPage(
+      key: state.pageKey,
+      child: DoctorReplacementScreen(
+        args: state.extra as DoctorReplacementArgs?,
+        absentDoctorId: state.uri.queryParameters['absentDoctorId'],
+        date: DateTime.tryParse(state.uri.queryParameters['date'] ?? ''),
+      ),
+    ),
+  ),
+  GoRoute(
     path: AppRoutes.staffForm,
     pageBuilder: (_, state) => appPage(
       key: state.pageKey,

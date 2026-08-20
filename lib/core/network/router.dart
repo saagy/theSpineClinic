@@ -10,6 +10,8 @@ import 'package:spine_clinic_app/core/network/app_routes.dart';
 import 'package:spine_clinic_app/features/admin/presentation/admin_hub_screen.dart';
 import 'package:spine_clinic_app/features/admin/presentation/analytics_screen.dart';
 import 'package:spine_clinic_app/features/appointment/presentation/appointment_detail_screen.dart';
+import 'package:spine_clinic_app/features/appointment/presentation/doctor_replacement_args.dart';
+import 'package:spine_clinic_app/features/appointment/presentation/doctor_replacement_screen.dart';
 import 'package:spine_clinic_app/features/appointment/presentation/doctor_schedule_screen.dart';
 import 'package:spine_clinic_app/features/appointment/presentation/edit_appointment_screen.dart';
 import 'package:spine_clinic_app/features/appointment/presentation/new_appointment_screen.dart';

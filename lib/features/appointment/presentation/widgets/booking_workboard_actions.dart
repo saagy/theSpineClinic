@@ -9,10 +9,9 @@ import 'package:spine_clinic_app/core/network/app_routes.dart';
 import 'package:spine_clinic_app/features/appointment/domain/appointment_status.dart';
 import 'package:spine_clinic_app/features/appointment/presentation/booking_workboard_provider.dart';
 import 'package:spine_clinic_app/features/appointment/presentation/booking_workboard_state.dart';
-import 'package:spine_clinic_app/features/appointment/presentation/widgets/doctor_replacement_modal.dart';
+import 'package:spine_clinic_app/features/appointment/presentation/doctor_replacement_args.dart';
 import 'package:spine_clinic_app/features/auth/domain/staff.dart';
 import 'package:spine_clinic_app/features/patient/domain/patient.dart';
-import 'package:spine_clinic_app/shared/widgets/app_adaptive_modal.dart';
 import 'package:spine_clinic_app/shared/widgets/app_bottom_sheet.dart';
 import 'package:spine_clinic_app/shared/widgets/app_snackbar.dart';
 import 'package:spine_clinic_app/shared/widgets/confirmation_dialog.dart';
@@ -141,31 +140,29 @@ abstract final class BookingWorkboardActions {
     Staff absentDoctor,
     List<Staff> doctors,
     BookingWorkboardState state,
-  ) {
+  ) async {
     final appointments = state.schedule
         .where((item) => item.appointment.status != AppointmentStatus.cancelled)
         .toList();
     final String absentDoctorId = absentDoctor.id;
     final DateTime day = state.date;
-    return AppAdaptiveModal.show<bool>(
-      context: context,
-      child: DoctorReplacementModal(
+    final bool? success = await context.push<bool>(
+      AppRoutes.doctorReplacementLocation(
+        absentDoctorId: absentDoctorId,
+        date: day,
+      ),
+      extra: DoctorReplacementArgs(
         absentDoctor: absentDoctor,
         availableDoctors: doctors
             .where((doctor) => doctor.id != absentDoctorId)
             .toList(),
         appointments: appointments,
         day: day,
-        onSubmit: (doctorIds, appointmentIds) => ref
-            .read(bookingWorkboardProvider.notifier)
-            .replaceDoctor(
-              absentDoctorId: absentDoctorId,
-              day: day,
-              replacementDoctorIds: doctorIds,
-              appointmentIds: appointmentIds,
-            ),
       ),
     );
+    if (success == true && context.mounted) {
+      await ref.read(bookingWorkboardProvider.notifier).refresh();
+    }
   }
 
   static void _showMutationResult(BuildContext context, Result<void> result) {
