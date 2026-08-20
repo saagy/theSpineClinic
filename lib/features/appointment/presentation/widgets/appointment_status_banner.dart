@@ -60,7 +60,9 @@ class AppointmentStatusBanner extends StatelessWidget {
         break;
     }
 
-    return Container(
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 240),
+      curve: Curves.easeOutCubic,
       padding: const EdgeInsets.symmetric(
         horizontal: AppSizes.p16,
         vertical: AppSizes.p12,

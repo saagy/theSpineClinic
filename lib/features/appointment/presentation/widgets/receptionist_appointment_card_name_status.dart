@@ -72,7 +72,11 @@ class _NameStatus extends StatelessWidget {
                 label: isPastScheduled
                     ? AppStrings.pastScheduledNeedsAction
                     : status.displayLabel,
-                icon: isPastScheduled ? Icons.warning_amber_rounded : null,
+                icon: isPastScheduled
+                    ? Icons.warning_amber_rounded
+                    : (status == AppointmentStatus.checkedIn
+                        ? Icons.check_circle_rounded
+                        : null),
                 isCompact: isCompact,
               ),
             ),

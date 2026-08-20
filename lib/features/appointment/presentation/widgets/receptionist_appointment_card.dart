@@ -37,6 +37,8 @@ import 'package:spine_clinic_app/features/patient/presentation/patient_providers
 import 'package:spine_clinic_app/shared/widgets/app_avatar.dart';
 import 'package:spine_clinic_app/shared/widgets/app_snackbar.dart';
 import 'package:spine_clinic_app/shared/widgets/confirmation_dialog.dart';
+import 'package:spine_clinic_app/shared/widgets/rolling_ticker_text.dart';
+import 'package:spine_clinic_app/shared/widgets/tactile_scale_container.dart';
 
 part 'receptionist_appointment_card_menu.dart';
 part 'receptionist_appointment_card_name_status.dart';
@@ -85,29 +87,22 @@ class _ReceptionistAppointmentCardState
         widget.isCompact ?? ref.watch(scheduleCompactControllerProvider);
     final AppointmentStatus status =
         _optimisticStatus ?? widget.item.appointment.status;
-    final AppointmentStatusStyle style = AppointmentStatusStyle.forStatus(
-      context,
-      status,
-    );
-    final AppointmentBadgeColors statusBadge = status.badgeColors(context);
-    final bool isCancelled = status == AppointmentStatus.cancelled;
-    final bool applyFade = isCancelled;
+    final style = AppointmentStatusStyle.forStatus(context, status);
+    final statusBadge = status.badgeColors(context);
+    final bool applyFade = status == AppointmentStatus.cancelled;
 
     final DateTime t = widget.item.appointment.scheduledAt.toLocal();
-    final bool isPastScheduled =
-        status == AppointmentStatus.scheduled &&
+    final bool isPastScheduled = status == AppointmentStatus.scheduled &&
         DateUtils.dateOnly(t).isBefore(DateUtils.dateOnly(DateTime.now()));
     final ClinicColors clinic = ClinicColors.of(context);
 
     final user = ref.watch(currentUserProvider).value;
     final bool isDoctor = user?.role == UserRole.doctor;
     final canAccessAsync = isDoctor
-        ? ref.watch(
-            canAccessAppointmentProvider(
-              appointmentId: widget.item.appointment.id,
-              patientId: widget.item.patient.id,
-            ),
-          )
+        ? ref.watch(canAccessAppointmentProvider(
+            appointmentId: widget.item.appointment.id,
+            patientId: widget.item.patient.id,
+          ))
         : const AsyncValue.data(true);
     final bool canAccess = canAccessAsync.value ?? !isDoctor;
     final bool enableMenu = widget.showMenu && canAccess;
@@ -117,21 +112,23 @@ class _ReceptionistAppointmentCardState
         ? const EdgeInsets.symmetric(horizontal: AppSizes.p12, vertical: 4.0)
         : const EdgeInsets.all(AppSizes.p16);
 
-    final Widget card = AnimatedContainer(
-      duration: const Duration(milliseconds: 180),
-      curve: Curves.easeInOut,
-      decoration: BoxDecoration(
-        color: isPastScheduled ? clinic.warningContainer : style.bg,
-        borderRadius: BorderRadius.all(Radius.circular(radius)),
-        border: Border.all(
-          color: isPastScheduled ? clinic.warning : style.border,
-          width: AppSizes.borderWidth,
+    final Widget card = TactileScaleContainer(
+      trigger: status,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 240),
+        curve: Curves.easeOutCubic,
+        decoration: BoxDecoration(
+          color: isPastScheduled ? clinic.warningContainer : style.bg,
+          borderRadius: BorderRadius.all(Radius.circular(radius)),
+          border: Border.all(
+            color: isPastScheduled ? clinic.warning : style.border,
+            width: AppSizes.borderWidth,
+          ),
         ),
-      ),
-      child: Material(
-        color: Theme.of(context).colorScheme.surface.withAlpha(0),
-        borderRadius: BorderRadius.all(Radius.circular(radius)),
-        child: GestureDetector(
+        child: Material(
+          color: Theme.of(context).colorScheme.surface.withAlpha(0),
+          borderRadius: BorderRadius.all(Radius.circular(radius)),
+          child: GestureDetector(
           onLongPressStart: enableMenu
               ? (details) => showLongPressMenu(details.globalPosition)
               : null,
@@ -176,7 +173,8 @@ class _ReceptionistAppointmentCardState
           ),
         ),
       ),
-    );
+    ),
+  );
 
     final EdgeInsets margin = isCompact
         ? const EdgeInsets.symmetric(

@@ -1,6 +1,6 @@
 part of 'receptionist_appointment_card.dart';
 
-/// Colour-coded dot + coloured text — no background pill.
+/// Colour-coded dot + coloured text with smooth morphing and rolling ticker label.
 class _StatusDot extends StatelessWidget {
   const _StatusDot({
     required this.color,
@@ -16,38 +16,54 @@ class _StatusDot extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final double iconSize = isCompact ? 13 : AppSizes.iconSmall;
+
     return Row(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        if (icon == null)
-          AnimatedContainer(
-            duration: const Duration(milliseconds: 180),
-            curve: Curves.easeInOut,
-            width: isCompact ? 5 : AppSizes.p6,
-            height: isCompact ? 5 : AppSizes.p6,
-            decoration: BoxDecoration(color: color, shape: BoxShape.circle),
-          )
-        else
-          Icon(
-            icon,
-            color: color,
-            size: isCompact ? 13 : AppSizes.iconSmall,
-          ),
+        AnimatedSwitcher(
+          duration: const Duration(milliseconds: 240),
+          transitionBuilder: (Widget child, Animation<double> animation) {
+            return ScaleTransition(
+              scale: CurvedAnimation(
+                parent: animation,
+                curve: Curves.easeOutBack,
+              ),
+              child: FadeTransition(
+                opacity: animation,
+                child: child,
+              ),
+            );
+          },
+          child: icon == null
+              ? AnimatedContainer(
+                  key: const ValueKey<String>('status_dot'),
+                  duration: const Duration(milliseconds: 240),
+                  curve: Curves.easeOutCubic,
+                  width: isCompact ? 5 : AppSizes.p6,
+                  height: isCompact ? 5 : AppSizes.p6,
+                  decoration: BoxDecoration(
+                    color: color,
+                    shape: BoxShape.circle,
+                  ),
+                )
+              : Icon(
+                  icon,
+                  key: ValueKey<IconData>(icon!),
+                  color: color,
+                  size: iconSize,
+                ),
+        ),
         const SizedBox(width: AppSizes.p4),
         Flexible(
-          child: AnimatedDefaultTextStyle(
-            duration: const Duration(milliseconds: 180),
-            curve: Curves.easeInOut,
+          child: RollingTickerText(
+            text: label,
+            duration: const Duration(milliseconds: 240),
             style: AppTextStyles.caption.copyWith(
               color: color,
               fontSize: isCompact ? 10 : 11,
               fontWeight: FontWeight.w600,
-            ),
-            child: Text(
-              label,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
             ),
           ),
         ),

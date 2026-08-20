@@ -48,7 +48,7 @@ class _GroupedSubAppointmentRow extends ConsumerWidget {
     final Color dotColor = isPastScheduled
         ? clinic.warning
         : switch (subAppt.status) {
-            AppointmentStatus.scheduled => theme.colorScheme.primary,
+            AppointmentStatus.scheduled => clinic.neutral,
             AppointmentStatus.checkedIn => clinic.success,
             AppointmentStatus.cancelled => theme.colorScheme.error,
           };

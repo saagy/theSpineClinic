@@ -21,6 +21,8 @@ import 'package:spine_clinic_app/features/patient/domain/patient.dart';
 import 'package:spine_clinic_app/shared/widgets/app_avatar.dart';
 import 'package:spine_clinic_app/shared/widgets/app_snackbar.dart';
 import 'package:spine_clinic_app/shared/widgets/confirmation_dialog.dart';
+import 'package:spine_clinic_app/shared/widgets/rolling_ticker_text.dart';
+import 'package:spine_clinic_app/shared/widgets/tactile_scale_container.dart';
 
 part 'receptionist_grouped_appointment_card_individual_menu.dart';
 part 'receptionist_grouped_appointment_card_menu.dart';
@@ -99,20 +101,24 @@ class _ReceptionistGroupedAppointmentCardState
         ? const EdgeInsets.symmetric(horizontal: AppSizes.p12, vertical: 6.0)
         : const EdgeInsets.all(AppSizes.p16);
 
-    final Widget card = Container(
-      decoration: BoxDecoration(
-        color: cardBg,
-        borderRadius: BorderRadius.all(Radius.circular(radius)),
-        border: Border.all(
-          color: cardBorder,
-          width: AppSizes.borderWidth,
+    final Widget card = TactileScaleContainer(
+      trigger: allCheckedIn,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 240),
+        curve: Curves.easeOutCubic,
+        decoration: BoxDecoration(
+          color: cardBg,
+          borderRadius: BorderRadius.all(Radius.circular(radius)),
+          border: Border.all(
+            color: cardBorder,
+            width: AppSizes.borderWidth,
+          ),
+          boxShadow: [clinic.cardShadow],
         ),
-        boxShadow: [clinic.cardShadow],
-      ),
-      child: Material(
-        color: Colors.transparent,
-        borderRadius: BorderRadius.all(Radius.circular(radius)),
-        child: Padding(
+        child: Material(
+          color: Colors.transparent,
+          borderRadius: BorderRadius.all(Radius.circular(radius)),
+          child: Padding(
           padding: internalPadding,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -168,7 +174,8 @@ class _ReceptionistGroupedAppointmentCardState
           ),
         ),
       ),
-    );
+    ),
+  );
 
     final EdgeInsets margin = isCompact
         ? const EdgeInsets.symmetric(

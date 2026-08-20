@@ -2,9 +2,10 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:spine_clinic_app/core/constants/app_sizes.dart';
 import 'package:spine_clinic_app/core/constants/app_text_styles.dart';
+import 'package:spine_clinic_app/shared/widgets/rolling_ticker_text.dart';
 
 /// A morphing status badge that smoothly cross-fades background colors
-/// and labels when status states change (e.g. Scheduled -> Checked In).
+/// and rolls labels vertically when status states change (e.g. Scheduled -> Checked In).
 ///
 /// On Web ([kIsWeb]), color and text transitions are instant.
 class AnimatedAppBadge extends StatelessWidget {
@@ -14,7 +15,7 @@ class AnimatedAppBadge extends StatelessWidget {
     required this.label,
     required this.textColor,
     required this.backgroundColor,
-    this.duration = const Duration(milliseconds: 180),
+    this.duration = const Duration(milliseconds: 240),
   });
 
   /// The text content displayed inside the badge.
@@ -35,7 +36,7 @@ class AnimatedAppBadge extends StatelessWidget {
 
     return AnimatedContainer(
       duration: effectiveDuration,
-      curve: Curves.easeInOut,
+      curve: Curves.easeOutCubic,
       decoration: BoxDecoration(
         color: backgroundColor,
         borderRadius: const BorderRadius.all(Radius.circular(AppSizes.r4)),
@@ -44,24 +45,13 @@ class AnimatedAppBadge extends StatelessWidget {
         horizontal: AppSizes.p8,
         vertical: AppSizes.p4,
       ),
-      child: AnimatedSwitcher(
+      child: RollingTickerText(
+        text: label,
         duration: effectiveDuration,
-        transitionBuilder: (Widget child, Animation<double> animation) {
-          return FadeTransition(
-            opacity: animation,
-            child: child,
-          );
-        },
-        child: Text(
-          label,
-          key: ValueKey<String>(label),
-          style: AppTextStyles.captionBold.copyWith(
-            color: textColor,
-          ),
-          textAlign: TextAlign.center,
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
+        style: AppTextStyles.captionBold.copyWith(
+          color: textColor,
         ),
+        textAlign: TextAlign.center,
       ),
     );
   }

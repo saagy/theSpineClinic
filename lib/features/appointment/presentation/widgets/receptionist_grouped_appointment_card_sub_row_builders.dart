@@ -41,10 +41,8 @@ class _GroupedSubAppointmentWideRow extends StatelessWidget {
               Container(
                 width: 7,
                 height: 7,
-                decoration: BoxDecoration(
-                  color: dotColor,
-                  shape: BoxShape.circle,
-                ),
+                decoration:
+                    BoxDecoration(color: dotColor, shape: BoxShape.circle),
               ),
               const SizedBox(width: AppSizes.p4),
               Expanded(
@@ -64,9 +62,7 @@ class _GroupedSubAppointmentWideRow extends StatelessWidget {
             ],
           ),
         ),
-        const SizedBox(width: AppSizes.p12),
-        const Expanded(child: SizedBox()),
-        const SizedBox(width: AppSizes.p12),
+        const Spacer(),
         SizedBox(
           width: _sessionTypeWidth,
           child: Text(
@@ -91,7 +87,11 @@ class _GroupedSubAppointmentWideRow extends StatelessWidget {
               label: isPastScheduled
                   ? AppStrings.pastScheduledNeedsAction
                   : subAppt.status.displayLabel,
-              icon: isPastScheduled ? Icons.warning_amber_rounded : null,
+              icon: isPastScheduled
+                  ? Icons.warning_amber_rounded
+                  : (subAppt.status == AppointmentStatus.checkedIn
+                      ? Icons.check_circle_rounded
+                      : null),
               isCompact: isCompact,
             ),
           ),
@@ -175,7 +175,11 @@ class _GroupedSubAppointmentMobileRow extends StatelessWidget {
           label: isPastScheduled
               ? AppStrings.pastScheduledNeedsAction
               : subAppt.status.displayLabel,
-          icon: isPastScheduled ? Icons.warning_amber_rounded : null,
+          icon: isPastScheduled
+              ? Icons.warning_amber_rounded
+              : (subAppt.status == AppointmentStatus.checkedIn
+                  ? Icons.check_circle_rounded
+                  : null),
           isCompact: isCompact,
         ),
         if (canInteractWithMenu) ...[
