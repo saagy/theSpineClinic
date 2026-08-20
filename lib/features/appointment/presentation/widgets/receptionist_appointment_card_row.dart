@@ -137,8 +137,8 @@ class _AppointmentCardRow extends StatelessWidget {
         }
 
         final double mobileLeadingWidth = isCompact
-            ? (showDate ? 56.0 : 50.0)
-            : (showDate ? 60.0 : 54.0);
+            ? (showDate ? 56.0 : 48.0)
+            : (showDate ? 56.0 : 48.0);
 
         return Row(
           crossAxisAlignment: CrossAxisAlignment.center,

@@ -65,7 +65,8 @@ class _NameStatus extends StatelessWidget {
               ),
             ),
             const SizedBox(width: AppSizes.p6),
-            Flexible(
+            ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 130),
               child: _StatusDot(
                 color: isPastScheduled ? clinic.warning : statusBadge.textColor,
                 label: isPastScheduled
