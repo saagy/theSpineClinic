@@ -59,6 +59,7 @@ mixin _AppointmentActionsTrailingHandlers
           );
         },
         failure: (error) {
+          _revertProviderState(widget.appointment.id, widget.appointment.status);
           if (mounted) setState(() => _optimisticStatus = null);
           AppSnackbar.show(
             context,
@@ -68,10 +69,23 @@ mixin _AppointmentActionsTrailingHandlers
         },
       );
     } catch (_) {
+      _revertProviderState(widget.appointment.id, widget.appointment.status);
       if (mounted) setState(() => _optimisticStatus = null);
     } finally {
       if (mounted) setState(() => _isProcessing = false);
     }
+  }
+
+  void _revertProviderState(String apptId, AppointmentStatus originalStatus) {
+    ref
+        .read(receptionistAppointmentsProvider.notifier)
+        .changeStatus(apptId, originalStatus);
+    ref
+        .read(doctorScheduleProvider.notifier)
+        .changeStatus(apptId, originalStatus);
+    ref
+        .read(allAppointmentsProvider.notifier)
+        .updateStatus(apptId, originalStatus);
   }
 
   Future<bool> _canUpdateStatus() async {

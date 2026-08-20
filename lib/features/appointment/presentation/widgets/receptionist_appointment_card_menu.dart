@@ -154,6 +154,7 @@ mixin _ReceptionistAppointmentCardMenu
           );
         },
         failure: (error) {
+          _revertProviderState(id, widget.item.appointment.status);
           if (mounted) setState(() => _optimisticStatus = null);
           AppSnackbar.show(
             context,
@@ -163,10 +164,23 @@ mixin _ReceptionistAppointmentCardMenu
         },
       );
     } catch (_) {
+      _revertProviderState(id, widget.item.appointment.status);
       if (mounted) setState(() => _optimisticStatus = null);
     } finally {
       if (mounted) setState(() => _isMenuProcessing = false);
     }
+  }
+
+  void _revertProviderState(String apptId, AppointmentStatus originalStatus) {
+    ref
+        .read(receptionistAppointmentsProvider.notifier)
+        .changeStatus(apptId, originalStatus);
+    ref
+        .read(doctorScheduleProvider.notifier)
+        .changeStatus(apptId, originalStatus);
+    ref
+        .read(allAppointmentsProvider.notifier)
+        .updateStatus(apptId, originalStatus);
   }
 
   void _invalidateCaches() {
