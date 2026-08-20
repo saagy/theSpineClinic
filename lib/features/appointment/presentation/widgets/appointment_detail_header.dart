@@ -7,6 +7,7 @@
 library;
 
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:spine_clinic_app/core/constants/app_sizes.dart';
 import 'package:spine_clinic_app/core/constants/app_strings.dart';
@@ -14,18 +15,28 @@ import 'package:spine_clinic_app/core/constants/app_text_styles.dart';
 import 'package:spine_clinic_app/core/constants/clinic_colors.dart';
 import 'package:spine_clinic_app/core/network/app_routes.dart';
 import 'package:spine_clinic_app/core/utils/formatters.dart';
+import 'package:spine_clinic_app/features/auth/domain/user_role.dart';
+import 'package:spine_clinic_app/features/auth/presentation/auth_providers.dart';
 import 'package:spine_clinic_app/features/patient/domain/patient.dart';
+import 'package:spine_clinic_app/features/patient/presentation/patient_providers.dart';
 import 'package:spine_clinic_app/shared/widgets/app_avatar.dart';
+import 'package:spine_clinic_app/shared/widgets/app_snackbar.dart';
 
 /// Compact tappable patient identity block with embedded next visit info and CTA.
-class AppointmentDetailHeader extends StatelessWidget {
+class AppointmentDetailHeader extends ConsumerWidget {
   const AppointmentDetailHeader({super.key, required this.patient});
   final Patient patient;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
+    final user = ref.watch(currentUserProvider).value;
+    final isDoctor = user?.role == UserRole.doctor;
+    final canAccessAsync = isDoctor
+        ? ref.watch(canAccessPatientProvider(patient.id))
+        : const AsyncValue.data(true);
+    final bool canAccess = canAccessAsync.value ?? !isDoctor;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -36,9 +47,19 @@ class AppointmentDetailHeader extends StatelessWidget {
             vertical: AppSizes.p12,
           ),
           child: InkWell(
-            onTap: () => context.push(
-              AppRoutes.patientDetail.replaceAll(':id', patient.id),
-            ),
+            onTap: () {
+              if (!canAccess) {
+                AppSnackbar.show(
+                  context,
+                  message: AppStrings.errorDatabasePermissionDenied,
+                  variant: AppSnackbarVariant.error,
+                );
+                return;
+              }
+              context.push(
+                AppRoutes.patientDetail.replaceAll(':id', patient.id),
+              );
+            },
             borderRadius: const BorderRadius.all(Radius.circular(AppSizes.r12)),
             child: Padding(
               padding: const EdgeInsets.all(AppSizes.p4),

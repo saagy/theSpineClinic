@@ -1,5 +1,4 @@
-library;
-
+import 'package:flutter/material.dart' show DateUtils;
 import 'package:spine_clinic_app/core/errors/app_exception.dart';
 import 'package:spine_clinic_app/core/errors/result.dart';
 import 'package:spine_clinic_app/core/network/supabase_service.dart';
@@ -198,15 +197,31 @@ class PatientRepositoryImpl implements PatientRepository {
 
       final List<Map<String, dynamic>> apptDocRows = await _service.guardQuery(
         () => _service
-            .from('appointment_doctors')
-            .select('doctor_id, appointments!inner(patient_id)')
-            .eq('is_active', true)
-            .eq('appointments.patient_id', patientId),
+            .from('appointments')
+            .select(
+              'scheduled_at, status, appointment_doctors!inner(doctor_id, is_active)',
+            )
+            .eq('patient_id', patientId)
+            .eq('appointment_doctors.doctor_id', doctorId)
+            .eq('appointment_doctors.is_active', true),
       );
-      final List<String> apptDoctorIds = apptDocRows
-          .map((r) => r['doctor_id'] as String)
-          .toList();
-      if (apptDoctorIds.contains(doctorId)) return const Result.success(true);
+
+      final DateTime now = DateTime.now();
+      final DateTime nowDate = DateUtils.dateOnly(now.toLocal());
+
+      for (final Map<String, dynamic> row in apptDocRows) {
+        final String? status = row['status'] as String?;
+        if (status == 'cancelled') continue;
+        final String? scheduledAtStr = row['scheduled_at'] as String?;
+        if (scheduledAtStr == null) continue;
+        final DateTime? scheduledAt = DateTime.tryParse(scheduledAtStr);
+        if (scheduledAt == null) continue;
+        final DateTime apptDate = DateUtils.dateOnly(scheduledAt.toLocal());
+        final int diffDays = (nowDate.difference(apptDate).inDays).abs();
+        if (diffDays <= 2) {
+          return const Result.success(true);
+        }
+      }
 
       return const Result.success(false);
     } on AppException catch (e) {

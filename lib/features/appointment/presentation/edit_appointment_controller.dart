@@ -1,4 +1,5 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:spine_clinic_app/core/errors/app_exception.dart';
 import 'package:spine_clinic_app/core/errors/result.dart';
 import 'package:spine_clinic_app/features/appointment/domain/appointment.dart';
 import 'package:spine_clinic_app/features/appointment/domain/appointment_type.dart';
@@ -7,6 +8,7 @@ import 'package:spine_clinic_app/features/appointment/presentation/appointment_p
 import 'package:spine_clinic_app/features/appointment/presentation/doctor_schedule_providers.dart';
 import 'package:spine_clinic_app/features/appointment/presentation/receptionist_appointments_providers.dart';
 import 'package:spine_clinic_app/features/appointment/presentation/booking_workboard_provider.dart';
+import 'package:spine_clinic_app/features/auth/domain/user_role.dart';
 import 'package:spine_clinic_app/features/auth/presentation/auth_providers.dart';
 import 'package:spine_clinic_app/features/patient/presentation/patient_appointments_notifier.dart'
     as patient_tab;
@@ -26,8 +28,28 @@ class EditAppointmentController extends _$EditAppointmentController {
     required Appointment appointment,
     required List<String> doctorIds,
   }) async {
+    final user = ref.read(currentUserProvider).value;
+    if (user != null && user.role == UserRole.doctor) {
+      final canEdit = await ref.read(
+        canEditAppointmentProvider(
+          appointmentId: appointment.id,
+          patientId: appointment.patientId,
+        ).future,
+      );
+      if (!canEdit) {
+        return const Result.failure(
+          DatabaseException(
+            code: 'db/permission-denied',
+            message:
+                'Doctor cannot edit this appointment outside the active window',
+            userMessageKey: 'error_database_permission_denied',
+          ),
+        );
+      }
+    }
+
     final repo = ref.read(appointmentRepositoryProvider);
-    final editorId = ref.read(currentUserProvider).value?.id;
+    final editorId = user?.id;
 
     final Result<void> updateResult = await repo.updateAppointment(appointment);
     if (updateResult is Failure<void>) return updateResult;

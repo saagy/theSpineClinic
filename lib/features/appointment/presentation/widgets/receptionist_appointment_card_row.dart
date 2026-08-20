@@ -12,6 +12,7 @@ class _AppointmentCardRow extends StatelessWidget {
     required this.clinic,
     required this.enableMenu,
     required this.isCompact,
+    required this.isPatientContext,
     this.onStatusChanged,
   });
 
@@ -23,6 +24,7 @@ class _AppointmentCardRow extends StatelessWidget {
   final ClinicColors clinic;
   final bool enableMenu;
   final bool isCompact;
+  final bool isPatientContext;
   final VoidCallback? onStatusChanged;
 
   static const double _sessionTypeWidth = 130.0;
@@ -31,31 +33,64 @@ class _AppointmentCardRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final double avatarRadius = isCompact ? 11.0 : AppSizes.avatarSmall / 2;
+    final String avatarName = isPatientContext
+        ? (item.doctorName ?? AppStrings.doctor)
+        : item.patient.fullName;
+    final IconData? avatarIcon = isPatientContext
+        ? LucideIcons.stethoscope
+        : null;
+
     return LayoutBuilder(
       builder: (context, constraints) {
         final bool isWide = constraints.maxWidth >= _wideBreakpoint;
-
         if (isWide) {
+          final String title = isPatientContext
+              ? (item.doctorName != null && item.doctorName!.trim().isNotEmpty
+                  ? (item.doctorName!.toLowerCase().startsWith('dr')
+                      ? item.doctorName!
+                      : 'Dr. ${item.doctorName}')
+                  : AppStrings.noDoctorsAssigned)
+              : item.patient.fullName;
+
+          final double leadingWidth = isCompact
+              ? (showDate ? 116.0 : 54.0)
+              : (showDate ? 120.0 : 64.0);
+
           return Row(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              _TimeAvatar(
+              _TimeWidget(
                 item: item,
                 showDate: showDate,
                 style: style,
                 isCompact: isCompact,
-                fixedWidth: isCompact ? 88.0 : 96.0,
+                isWide: isWide,
+                fixedWidth: leadingWidth,
               ),
               const SizedBox(width: AppSizes.p12),
               Expanded(
-                child: Text(
-                  item.patient.fullName,
-                  style: AppTextStyles.bodyBold.copyWith(
-                    color: style.nameColor,
-                    decoration: style.nameDecoration,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
+                child: Row(
+                  children: [
+                    AppAvatar(
+                      name: avatarName,
+                      radius: avatarRadius,
+                      color: style.avatarBg,
+                      icon: avatarIcon,
+                    ),
+                    const SizedBox(width: AppSizes.p8),
+                    Expanded(
+                      child: Text(
+                        title,
+                        style: AppTextStyles.bodyBold.copyWith(
+                          color: style.nameColor,
+                          decoration: style.nameDecoration,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
                 ),
               ),
               const SizedBox(width: AppSizes.p12),
@@ -99,14 +134,26 @@ class _AppointmentCardRow extends StatelessWidget {
           );
         }
 
+        final double mobileLeadingWidth = isCompact
+            ? (showDate ? 56.0 : 50.0)
+            : (showDate ? 60.0 : 54.0);
+
         return Row(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            _TimeAvatar(
+            _TimeWidget(
               item: item,
               showDate: showDate,
               style: style,
               isCompact: isCompact,
+              fixedWidth: mobileLeadingWidth,
+            ),
+            const SizedBox(width: AppSizes.p8),
+            AppAvatar(
+              name: avatarName,
+              radius: avatarRadius,
+              color: style.avatarBg,
+              icon: avatarIcon,
             ),
             const SizedBox(width: AppSizes.p8),
             Expanded(
@@ -117,6 +164,7 @@ class _AppointmentCardRow extends StatelessWidget {
                 isPastScheduled: isPastScheduled,
                 clinic: clinic,
                 isCompact: isCompact,
+                isPatientContext: isPatientContext,
               ),
             ),
             if (enableMenu) ...[

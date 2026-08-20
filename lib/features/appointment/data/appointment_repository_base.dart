@@ -40,4 +40,20 @@ mixin _AppointmentRepositoryBase implements AppointmentRepository {
     final List<Map<String, dynamic>> rows = await query;
     return rows.map((row) => row['appointment_id'] as String).toList();
   }
+
+  String? _extractDoctorName(Map<String, dynamic> row) {
+    final doctors = row['appointment_doctors'] as List<dynamic>?;
+    if (doctors == null || doctors.isEmpty) return null;
+    final names = <String>[];
+    for (final d in doctors) {
+      if (d is Map<String, dynamic> && d['is_active'] == true) {
+        final staff = d['staff'] as Map<String, dynamic>?;
+        final name = staff?['full_name'] as String?;
+        if (name != null && name.trim().isNotEmpty) {
+          names.add(name.trim());
+        }
+      }
+    }
+    return names.isEmpty ? null : names.join(', ');
+  }
 }

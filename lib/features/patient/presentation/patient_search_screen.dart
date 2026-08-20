@@ -24,6 +24,7 @@ import 'package:spine_clinic_app/features/patient/presentation/patient_providers
 import 'package:spine_clinic_app/features/patient/presentation/widgets/patient_balance_chip.dart';
 import 'package:spine_clinic_app/features/patient/presentation/widgets/patient_search_filters.dart';
 import 'package:spine_clinic_app/shared/widgets/app_search_bar.dart';
+import 'package:spine_clinic_app/shared/widgets/app_snackbar.dart';
 import 'package:spine_clinic_app/shared/widgets/empty_state.dart';
 import 'package:spine_clinic_app/shared/widgets/patient_list_tile.dart';
 import 'package:spine_clinic_app/shared/widgets/animated_list_item.dart';
@@ -193,8 +194,27 @@ class _PatientSearchScreenState extends ConsumerState<PatientSearchScreen> {
                             sessionBalance: patient.sessionBalance,
                             tractionBalance: patient.tractionBalance,
                           ),
-                          onTap: () {
-                            context.push('/patient/${patient.id}');
+                          onTap: () async {
+                            final user = ref.read(currentUserProvider).value;
+                            if (user?.role == UserRole.doctor) {
+                              final canAccess = await ref.read(
+                                canAccessPatientProvider(patient.id).future,
+                              );
+                              if (!canAccess) {
+                                if (context.mounted) {
+                                  AppSnackbar.show(
+                                    context,
+                                    message:
+                                        AppStrings.errorDatabasePermissionDenied,
+                                    variant: AppSnackbarVariant.error,
+                                  );
+                                }
+                                return;
+                              }
+                            }
+                            if (context.mounted) {
+                              context.push('/patient/${patient.id}');
+                            }
                           },
                         ),
                       );

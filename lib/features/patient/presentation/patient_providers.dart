@@ -14,6 +14,8 @@ import 'package:spine_clinic_app/core/errors/result.dart';
 import 'package:spine_clinic_app/core/network/supabase_service.dart';
 import 'package:spine_clinic_app/features/appointment/presentation/appointment_providers.dart';
 import 'package:spine_clinic_app/features/auth/domain/staff.dart';
+import 'package:spine_clinic_app/features/auth/domain/user_role.dart';
+import 'package:spine_clinic_app/features/auth/presentation/auth_providers.dart';
 import 'package:spine_clinic_app/features/patient/data/patient_repository_impl.dart';
 import 'package:spine_clinic_app/features/patient/domain/clinic_location.dart';
 import 'package:spine_clinic_app/features/patient/domain/patient.dart';
@@ -106,3 +108,28 @@ Future<List<Staff>> patientAssignedDoctors(Ref ref, String patientId) async {
     failure: (AppException exception) => throw exception,
   );
 }
+
+/// Checks if the current authenticated user has permission to view the patient detail screen.
+///
+/// Returns `true` if:
+/// - The user is a `receptionist` or `superAdmin`.
+/// - The user is a `doctor` AND (1) the doctor is assigned to the patient in `patient_doctors`,
+///   OR (2) the patient has an active appointment with that doctor within the ±2 days window.
+@riverpod
+Future<bool> canAccessPatient(Ref ref, String patientId) async {
+  final user = ref.watch(currentUserProvider).value;
+  if (user == null) return false;
+  if (user.role != UserRole.doctor) return true;
+
+  final repo = ref.read(patientRepositoryProvider);
+  final result = await repo.canDoctorAccessPatient(
+    patientId: patientId,
+    doctorId: user.id,
+  );
+
+  return result.when(
+    success: (canAccess) => canAccess,
+    failure: (error) => false,
+  );
+}
+

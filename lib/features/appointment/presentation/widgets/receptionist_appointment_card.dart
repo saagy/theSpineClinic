@@ -10,6 +10,7 @@ library;
 
 import 'package:auto_size_text/auto_size_text.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
@@ -37,8 +38,10 @@ import 'package:spine_clinic_app/shared/widgets/app_snackbar.dart';
 import 'package:spine_clinic_app/shared/widgets/confirmation_dialog.dart';
 
 part 'receptionist_appointment_card_menu.dart';
+part 'receptionist_appointment_card_name_status.dart';
 part 'receptionist_appointment_card_parts.dart';
 part 'receptionist_appointment_card_row.dart';
+part 'receptionist_appointment_status_dot.dart';
 
 /// A single appointment card used across receptionist and doctor screens.
 class ReceptionistAppointmentCard extends ConsumerStatefulWidget {
@@ -49,6 +52,7 @@ class ReceptionistAppointmentCard extends ConsumerStatefulWidget {
     this.onStatusChanged,
     this.showDate = false,
     this.isCompact,
+    this.isPatientContext = false,
   });
 
   final AppointmentWithPatient item;
@@ -61,6 +65,10 @@ class ReceptionistAppointmentCard extends ConsumerStatefulWidget {
 
   /// Optional override for compact vs standard density.
   final bool? isCompact;
+
+  /// When true, highlights the session type and status instead of repeating
+  /// the known patient name/initials (e.g. inside Patient Details tabs).
+  final bool isPatientContext;
 
   @override
   ConsumerState<ReceptionistAppointmentCard> createState() =>
@@ -159,6 +167,7 @@ class _ReceptionistAppointmentCardState
                 clinic: clinic,
                 enableMenu: enableMenu,
                 isCompact: isCompact,
+                isPatientContext: widget.isPatientContext,
                 onStatusChanged: widget.onStatusChanged,
               ),
             ),

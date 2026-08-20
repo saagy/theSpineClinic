@@ -5,6 +5,7 @@
 /// Display labels come from [AppStrings] (Rule 7).
 library;
 
+import 'package:flutter/material.dart';
 import 'package:json_annotation/json_annotation.dart';
 import 'package:spine_clinic_app/core/constants/app_strings.dart';
 
@@ -36,6 +37,14 @@ enum AppointmentType {
         AppointmentType.reassessment => AppStrings.reassessment,
       };
 
+  /// Semantic icon representing the appointment type.
+  IconData get icon => switch (this) {
+        AppointmentType.normalPtSession => Icons.fitness_center_rounded,
+        AppointmentType.spinalTractionSession => Icons.healing_rounded,
+        AppointmentType.initialAssessment => Icons.assignment_outlined,
+        AppointmentType.reassessment => Icons.fact_check_outlined,
+      };
+
   /// Whether this type ever deducts a patient balance on completion.
   bool get affectsPackageBalance => switch (this) {
         AppointmentType.normalPtSession => true,
@@ -43,5 +52,4 @@ enum AppointmentType {
         AppointmentType.initialAssessment => false,
         AppointmentType.reassessment => false,
       };
-
 }

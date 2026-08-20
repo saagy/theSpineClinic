@@ -1062,3 +1062,131 @@ final class IsDoctorAssignedToPatientFamily extends $Family
   @override
   String toString() => r'isDoctorAssignedToPatientProvider';
 }
+
+/// Checks if the current authenticated user has permission to edit an appointment.
+///
+/// Returns `true` if:
+/// - The user is a `receptionist` or `superAdmin`.
+/// - The user is a `doctor` AND:
+///   (1) the doctor is assigned to the patient in `patient_doctors` (Case 1), OR
+///   (2) the appointment has an active assignment to the doctor AND the appointment's
+///       scheduled date is within the ±2 days window (Case 2).
+
+@ProviderFor(canEditAppointment)
+final canEditAppointmentProvider = CanEditAppointmentFamily._();
+
+/// Checks if the current authenticated user has permission to edit an appointment.
+///
+/// Returns `true` if:
+/// - The user is a `receptionist` or `superAdmin`.
+/// - The user is a `doctor` AND:
+///   (1) the doctor is assigned to the patient in `patient_doctors` (Case 1), OR
+///   (2) the appointment has an active assignment to the doctor AND the appointment's
+///       scheduled date is within the ±2 days window (Case 2).
+
+final class CanEditAppointmentProvider
+    extends $FunctionalProvider<AsyncValue<bool>, bool, FutureOr<bool>>
+    with $FutureModifier<bool>, $FutureProvider<bool> {
+  /// Checks if the current authenticated user has permission to edit an appointment.
+  ///
+  /// Returns `true` if:
+  /// - The user is a `receptionist` or `superAdmin`.
+  /// - The user is a `doctor` AND:
+  ///   (1) the doctor is assigned to the patient in `patient_doctors` (Case 1), OR
+  ///   (2) the appointment has an active assignment to the doctor AND the appointment's
+  ///       scheduled date is within the ±2 days window (Case 2).
+  CanEditAppointmentProvider._({
+    required CanEditAppointmentFamily super.from,
+    required ({String appointmentId, String patientId}) super.argument,
+  }) : super(
+         retry: null,
+         name: r'canEditAppointmentProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
+
+  @override
+  String debugGetCreateSourceHash() => _$canEditAppointmentHash();
+
+  @override
+  String toString() {
+    return r'canEditAppointmentProvider'
+        ''
+        '$argument';
+  }
+
+  @$internal
+  @override
+  $FutureProviderElement<bool> $createElement($ProviderPointer pointer) =>
+      $FutureProviderElement(pointer);
+
+  @override
+  FutureOr<bool> create(Ref ref) {
+    final argument =
+        this.argument as ({String appointmentId, String patientId});
+    return canEditAppointment(
+      ref,
+      appointmentId: argument.appointmentId,
+      patientId: argument.patientId,
+    );
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is CanEditAppointmentProvider && other.argument == argument;
+  }
+
+  @override
+  int get hashCode {
+    return argument.hashCode;
+  }
+}
+
+String _$canEditAppointmentHash() =>
+    r'e258acc69a220654ef80625a52b01c8f4c963a10';
+
+/// Checks if the current authenticated user has permission to edit an appointment.
+///
+/// Returns `true` if:
+/// - The user is a `receptionist` or `superAdmin`.
+/// - The user is a `doctor` AND:
+///   (1) the doctor is assigned to the patient in `patient_doctors` (Case 1), OR
+///   (2) the appointment has an active assignment to the doctor AND the appointment's
+///       scheduled date is within the ±2 days window (Case 2).
+
+final class CanEditAppointmentFamily extends $Family
+    with
+        $FunctionalFamilyOverride<
+          FutureOr<bool>,
+          ({String appointmentId, String patientId})
+        > {
+  CanEditAppointmentFamily._()
+    : super(
+        retry: null,
+        name: r'canEditAppointmentProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
+  /// Checks if the current authenticated user has permission to edit an appointment.
+  ///
+  /// Returns `true` if:
+  /// - The user is a `receptionist` or `superAdmin`.
+  /// - The user is a `doctor` AND:
+  ///   (1) the doctor is assigned to the patient in `patient_doctors` (Case 1), OR
+  ///   (2) the appointment has an active assignment to the doctor AND the appointment's
+  ///       scheduled date is within the ±2 days window (Case 2).
+
+  CanEditAppointmentProvider call({
+    required String appointmentId,
+    required String patientId,
+  }) => CanEditAppointmentProvider._(
+    argument: (appointmentId: appointmentId, patientId: patientId),
+    from: this,
+  );
+
+  @override
+  String toString() => r'canEditAppointmentProvider';
+}

@@ -9,6 +9,7 @@
 /// Rule 4 — repository calls always return [Result<T>].
 library;
 
+import 'package:flutter/material.dart' show DateUtils;
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import 'package:spine_clinic_app/core/errors/result.dart';
@@ -265,3 +266,45 @@ Future<bool> isDoctorAssignedToPatient(Ref ref, String patientId) async {
       await ref.watch(patientAssignedDoctorsProvider(patientId).future);
   return patientDoctors.any((d) => d.id == user.id);
 }
+
+/// Checks if the current authenticated user has permission to edit an appointment.
+///
+/// Returns `true` if:
+/// - The user is a `receptionist` or `superAdmin`.
+/// - The user is a `doctor` AND:
+///   (1) the doctor is assigned to the patient in `patient_doctors` (Case 1), OR
+///   (2) the appointment has an active assignment to the doctor AND the appointment's
+///       scheduled date is within the ±2 days window (Case 2).
+@riverpod
+Future<bool> canEditAppointment(
+  Ref ref, {
+  required String appointmentId,
+  required String patientId,
+}) async {
+  final user = ref.watch(currentUserProvider).value;
+  if (user == null) return false;
+  if (user.role != UserRole.doctor) return true;
+
+  final String doctorId = user.id;
+
+  // 1. Check patient-level assignment (Case 1: assigned doctor can edit at any time)
+  final patientDoctors =
+      await ref.watch(patientAssignedDoctorsProvider(patientId).future);
+  if (patientDoctors.any((d) => d.id == doctorId)) {
+    return true;
+  }
+
+  // 2. Check appointment-level assignment + ±2 days window (Case 2: covering doctor)
+  final apptDoctors =
+      await ref.watch(appointmentDoctorsProvider(appointmentId).future);
+  final hasApptAssignment =
+      apptDoctors.any((d) => d.doctorId == doctorId && d.isActive);
+  if (!hasApptAssignment) return false;
+
+  final appt = await ref.watch(singleAppointmentProvider(appointmentId).future);
+  final nowDate = DateUtils.dateOnly(DateTime.now().toLocal());
+  final apptDate = DateUtils.dateOnly(appt.scheduledAt.toLocal());
+  final int diffDays = (nowDate.difference(apptDate).inDays).abs();
+  return diffDays <= 2;
+}
+

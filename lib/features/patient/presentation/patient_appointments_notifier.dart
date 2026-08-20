@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
-import 'package:spine_clinic_app/features/appointment/domain/appointment.dart';
 import 'package:spine_clinic_app/features/appointment/domain/appointment_repository.dart';
 import 'package:spine_clinic_app/features/appointment/domain/appointment_status.dart';
 import 'package:spine_clinic_app/features/appointment/domain/appointment_type.dart';
@@ -60,7 +59,7 @@ class PatientAppointments extends _$PatientAppointments {
     if (currentGen != _generation) return;
 
     result.when(
-      success: (List<Appointment> appointments) {
+      success: (List<AppointmentWithPatient> appointments) {
         state = state.copyWith(
           appointments: appointments,
           isLoading: false,
@@ -108,7 +107,7 @@ class PatientAppointments extends _$PatientAppointments {
     );
 
     result.when(
-      success: (List<Appointment> newAppointments) {
+      success: (List<AppointmentWithPatient> newAppointments) {
         final all = [...state.appointments, ...newAppointments];
         state = state.copyWith(
           appointments: all,

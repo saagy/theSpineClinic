@@ -5,6 +5,7 @@ import 'package:spine_clinic_app/core/constants/app_sizes.dart';
 import 'package:spine_clinic_app/core/constants/app_strings.dart';
 import 'package:spine_clinic_app/core/errors/app_exception.dart';
 import 'package:spine_clinic_app/features/appointment/presentation/appointment_detail_controller.dart';
+import 'package:spine_clinic_app/features/appointment/presentation/appointment_providers.dart';
 import 'package:spine_clinic_app/features/appointment/presentation/widgets/edit_appointment_form.dart';
 import 'package:spine_clinic_app/features/auth/presentation/auth_providers.dart';
 import 'package:spine_clinic_app/shared/widgets/app_back_button.dart';
@@ -59,12 +60,40 @@ class EditAppointmentScreen extends ConsumerWidget {
       );
     } else {
       final state = detailAsync.value!;
-      body = EditAppointmentForm(
-        appointment: state.appointment,
-        patient: state.patient,
-        initialDoctors:
-            state.activeDoctors.map((d) => d.doctor).toList(),
+      final canEditAsync = ref.watch(
+        canEditAppointmentProvider(
+          appointmentId: state.appointment.id,
+          patientId: state.patient.id,
+        ),
       );
+      if (canEditAsync.hasValue && !canEditAsync.value!) {
+        body = ErrorView(
+          exception: const DatabaseException(
+            code: 'db/permission-denied',
+            message:
+                'Doctor cannot edit this appointment outside the active window',
+            userMessageKey: 'error_database_permission_denied',
+          ),
+          onRetry: () {
+            ref.invalidate(
+              canEditAppointmentProvider(
+                appointmentId: state.appointment.id,
+                patientId: state.patient.id,
+              ),
+            );
+            ref.invalidate(
+              appointmentDetailControllerProvider(appointmentId),
+            );
+          },
+        );
+      } else {
+        body = EditAppointmentForm(
+          appointment: state.appointment,
+          patient: state.patient,
+          initialDoctors:
+              state.activeDoctors.map((d) => d.doctor).toList(),
+        );
+      }
     }
 
     return Scaffold(

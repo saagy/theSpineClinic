@@ -48,6 +48,23 @@ mixin _PatientAppointmentQueries on _AppointmentRepositoryBase {
   }
 
   @override
+  Future<Result<List<Appointment>>> getDoctorAppointmentsForPatient({
+    required String patientId,
+    required String doctorId,
+  }) {
+    return _run(() async {
+      final List<Map<String, dynamic>> rows = await _service
+          .from(_appointmentsTable)
+          .select('*, appointment_doctors!inner(doctor_id, is_active)')
+          .eq('patient_id', patientId)
+          .eq('appointment_doctors.doctor_id', doctorId)
+          .eq('appointment_doctors.is_active', true)
+          .order('scheduled_at');
+      return rows.map(Appointment.fromJson).toList();
+    });
+  }
+
+  @override
   Future<Result<int>> getFutureScheduledAppointmentsCount(String patientId) {
     return _futureScheduledCount(patientId: patientId);
   }

@@ -14,7 +14,13 @@ import 'package:flutter/material.dart';
 /// [Icons.person] as a fallback.
 class AppAvatar extends StatelessWidget {
   /// Creates an [AppAvatar].
-  const AppAvatar({super.key, required this.name, this.radius, this.color});
+  const AppAvatar({
+    super.key,
+    required this.name,
+    this.radius,
+    this.color,
+    this.icon,
+  });
 
   /// The full name to derive initials from (e.g. "Hassan Shaker" → "HS").
   final String name;
@@ -25,26 +31,31 @@ class AppAvatar extends StatelessWidget {
   /// Avatar background color. Defaults to the active theme primary color.
   final Color? color;
 
+  /// Optional icon to display instead of initials or default person icon.
+  final IconData? icon;
+
   @override
   Widget build(BuildContext context) {
     final double r = radius ?? 23;
-    final String? initials = _deriveInitials(name);
+    final String? initials = icon != null ? null : _deriveInitials(name);
     final ColorScheme cs = Theme.of(context).colorScheme;
 
     return CircleAvatar(
       radius: r,
       backgroundColor: color ?? cs.primary,
-      child: initials != null
-          ? Text(
-              initials,
-              style: TextStyle(
-                color: cs.onPrimary,
-                fontSize: r * 0.44,
-                fontWeight: FontWeight.w700,
-                height: 1.0,
-              ),
-            )
-          : Icon(Icons.person, color: cs.onPrimary, size: r * 0.52),
+      child: icon != null
+          ? Icon(icon, color: cs.onPrimary, size: r * 1.1)
+          : initials != null
+              ? Text(
+                  initials,
+                  style: TextStyle(
+                    color: cs.onPrimary,
+                    fontSize: r * 0.44,
+                    fontWeight: FontWeight.w700,
+                    height: 1.0,
+                  ),
+                )
+              : Icon(Icons.person, color: cs.onPrimary, size: r * 0.52),
     );
   }
 

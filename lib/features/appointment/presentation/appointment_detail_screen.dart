@@ -13,6 +13,7 @@ import 'package:spine_clinic_app/core/errors/app_exception.dart';
 import 'package:spine_clinic_app/core/network/app_routes.dart';
 import 'package:spine_clinic_app/features/appointment/domain/appointment_status.dart';
 import 'package:spine_clinic_app/features/appointment/presentation/appointment_detail_controller.dart';
+import 'package:spine_clinic_app/features/appointment/presentation/appointment_providers.dart';
 import 'package:spine_clinic_app/features/appointment/presentation/widgets/appointment_detail_body.dart';
 import 'package:spine_clinic_app/features/appointment/presentation/widgets/detail_overflow_button.dart';
 import 'package:spine_clinic_app/features/auth/domain/user_role.dart';
@@ -69,7 +70,15 @@ class _AppointmentDetailScreenState
     );
     final detailState = detailAsync.value;
     final user = ref.watch(currentUserProvider).value;
-    final bool showEdit = detailState != null && user != null;
+    final canEditAsync = detailState != null
+        ? ref.watch(
+            canEditAppointmentProvider(
+              appointmentId: detailState.appointment.id,
+              patientId: detailState.patient.id,
+            ),
+          )
+        : const AsyncValue.data(false);
+    final bool showEdit = canEditAsync.value ?? false;
     final bool showDelete =
         detailState != null &&
         user != null &&
@@ -104,7 +113,7 @@ class _AppointmentDetailScreenState
               )
             : const SizedBox.shrink(),
         actions: [
-          if (showEdit)
+          if (showEdit && detailState != null)
             IconButton(
               icon: Icon(
                 Icons.edit_outlined,

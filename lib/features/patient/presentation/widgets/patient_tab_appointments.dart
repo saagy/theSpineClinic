@@ -4,7 +4,6 @@ import 'package:go_router/go_router.dart';
 import 'package:spine_clinic_app/core/constants/app_sizes.dart';
 import 'package:spine_clinic_app/core/constants/app_strings.dart';
 import 'package:spine_clinic_app/core/network/app_routes.dart';
-import 'package:spine_clinic_app/features/appointment/domain/appointment_repository.dart';
 import 'package:spine_clinic_app/features/appointment/presentation/appointment_refresh.dart';
 import 'package:spine_clinic_app/features/appointment/presentation/widgets/receptionist_appointment_card.dart';
 import 'package:spine_clinic_app/features/auth/domain/user_role.dart';
@@ -107,13 +106,10 @@ class _PatientTabAppointmentsState
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          if (!isDoctor) ...[
+          if (!isDoctor)
             Padding(
               padding: const EdgeInsets.fromLTRB(
-                AppSizes.p16,
-                AppSizes.p8,
-                AppSizes.p16,
-                AppSizes.p4,
+                AppSizes.p16, AppSizes.p8, AppSizes.p16, AppSizes.p4,
               ),
               child: AppButton(
                 labelText: AppStrings.bookAppointment,
@@ -121,7 +117,6 @@ class _PatientTabAppointmentsState
                 shape: AppButtonShape.pill,
               ),
             ),
-          ],
           SlimSortFilterBar(
             sortLabel: state.sort.buttonLabel,
             onSortTap: _showSortSheet,
@@ -153,15 +148,12 @@ class _PatientTabAppointmentsState
                     child: ListView.builder(
                       physics: const AlwaysScrollableScrollPhysics(),
                       padding: const EdgeInsets.only(bottom: AppSizes.p16),
-                      itemCount:
-                          state.appointments.length +
+                      itemCount: state.appointments.length +
                           (state.isLoadingMore ? 1 : 0),
                       itemBuilder: (context, index) {
                         if (index == state.appointments.length) {
                           return const Padding(
-                            padding: EdgeInsets.symmetric(
-                              vertical: AppSizes.p16,
-                            ),
+                            padding: EdgeInsets.symmetric(vertical: AppSizes.p16),
                             child: Center(
                               child: CircularProgressIndicator(
                                 strokeWidth: AppSizes.strokeWidthThin,
@@ -169,11 +161,7 @@ class _PatientTabAppointmentsState
                             ),
                           );
                         }
-                        final appointment = state.appointments[index];
-                        final item = AppointmentWithPatient(
-                          appointment: appointment,
-                          patient: widget.patient,
-                        );
+                        final item = state.appointments[index];
                         return AnimatedListItem(
                           index: index,
                           animatedIndices: _animatedIndices,
@@ -181,6 +169,7 @@ class _PatientTabAppointmentsState
                             item: item,
                             showMenu: true,
                             showDate: true,
+                            isPatientContext: true,
                             onStatusChanged: notifier.refresh,
                           ),
                         );
@@ -194,8 +183,11 @@ class _PatientTabAppointmentsState
   }
 
   Future<void> _openNewAppointment() async {
-    await context.push('${AppRoutes.newAppointment}?patientId=${widget.patient.id}');
+    final route =
+        '${AppRoutes.newAppointment}?patientId=${widget.patient.id}';
+    await context.push(route);
     if (!mounted) return;
     AppointmentRefresh.patientAndDashboards(ref, patientId: widget.patient.id);
   }
 }
+

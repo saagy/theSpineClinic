@@ -19,13 +19,17 @@ import 'package:spine_clinic_app/core/constants/app_text_styles.dart';
 import 'package:spine_clinic_app/core/errors/app_exception.dart'
     show AppException, UnknownException;
 import 'package:spine_clinic_app/core/network/app_routes.dart';
-import 'package:spine_clinic_app/features/patient/domain/patient.dart';
 import 'package:spine_clinic_app/features/auth/domain/staff.dart';
+import 'package:spine_clinic_app/features/auth/domain/user_role.dart';
+import 'package:spine_clinic_app/features/auth/presentation/auth_providers.dart';
 import 'package:spine_clinic_app/features/patient/domain/clinic_location.dart';
+import 'package:spine_clinic_app/features/patient/domain/patient.dart';
 import 'package:spine_clinic_app/features/patient/presentation/patient_list_providers.dart';
+import 'package:spine_clinic_app/features/patient/presentation/patient_providers.dart';
 import 'package:spine_clinic_app/shared/widgets/app_bottom_sheet.dart';
-import 'package:spine_clinic_app/shared/widgets/unified_filter_sheet.dart';
 import 'package:spine_clinic_app/shared/widgets/app_search_bar.dart';
+import 'package:spine_clinic_app/shared/widgets/app_snackbar.dart';
+import 'package:spine_clinic_app/shared/widgets/unified_filter_sheet.dart';
 import 'package:spine_clinic_app/shared/widgets/empty_state.dart';
 import 'package:spine_clinic_app/shared/widgets/error_view.dart';
 import 'package:spine_clinic_app/shared/widgets/sort_filter_bar.dart';
@@ -311,10 +315,30 @@ class _PatientListScreenState extends ConsumerState<PatientListScreen> {
                             phone: p.phoneNumber,
                             branchLabel: p.clinic.displayLabel,
                             lastVisitDate: p.lastAppointmentDate,
-                            onTap: () => context.push(
-                              AppRoutes.patientDetail
-                                  .replaceAll(':id', p.id),
-                            ),
+                            onTap: () async {
+                            final user = ref.read(currentUserProvider).value;
+                            if (user?.role == UserRole.doctor) {
+                              final canAccess = await ref.read(
+                                canAccessPatientProvider(p.id).future,
+                              );
+                              if (!canAccess) {
+                                if (context.mounted) {
+                                  AppSnackbar.show(
+                                    context,
+                                    message:
+                                        AppStrings.errorDatabasePermissionDenied,
+                                    variant: AppSnackbarVariant.error,
+                                  );
+                                }
+                                return;
+                              }
+                            }
+                            if (context.mounted) {
+                              context.push(
+                                AppRoutes.patientDetail.replaceAll(':id', p.id),
+                              );
+                            }
+                          },
                           ),
                         );
                       },

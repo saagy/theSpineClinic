@@ -2,7 +2,7 @@ part of 'appointment_repository_impl.dart';
 
 mixin _PatientAppointmentFilters on _AppointmentRepositoryBase {
   @override
-  Future<Result<List<Appointment>>> getAppointmentsForPatientPaginated({
+  Future<Result<List<AppointmentWithPatient>>> getAppointmentsForPatientPaginated({
     required String patientId,
     int offset = 0,
     int limit = 30,
@@ -20,7 +20,9 @@ mixin _PatientAppointmentFilters on _AppointmentRepositoryBase {
         dateFrom: dateFrom,
         dateTo: dateTo,
       );
-      if (doctorIds != null && doctorIds.isEmpty) return <Appointment>[];
+      if (doctorIds != null && doctorIds.isEmpty) {
+        return <AppointmentWithPatient>[];
+      }
       final PostgrestFilterBuilder builder = _patientFilters(
         patientId: patientId,
         doctorIds: doctorIds,
@@ -33,7 +35,16 @@ mixin _PatientAppointmentFilters on _AppointmentRepositoryBase {
       final List<Map<String, dynamic>> rows = await builder
           .order('scheduled_at', ascending: ascending)
           .range(offset, offset + limit - 1);
-      return rows.map(Appointment.fromJson).toList();
+      return rows
+          .where((row) => row['patient'] != null)
+          .map(
+            (row) => AppointmentWithPatient(
+              appointment: Appointment.fromJson(row),
+              patient: Patient.fromJson(row['patient'] as Map<String, dynamic>),
+              doctorName: _extractDoctorName(row),
+            ),
+          )
+          .toList();
     });
   }
 
@@ -62,6 +73,7 @@ mixin _PatientAppointmentFilters on _AppointmentRepositoryBase {
         dateFrom: dateFrom,
         dateTo: dateTo,
         usePackageFilter: usePackageFilter,
+        isCountOnly: true,
       );
       return rows.length;
     });
@@ -75,10 +87,15 @@ mixin _PatientAppointmentFilters on _AppointmentRepositoryBase {
     DateTime? dateFrom,
     DateTime? dateTo,
     bool? usePackageFilter,
+    bool isCountOnly = false,
   }) {
     var builder = _service
         .from(_appointmentsTable)
-        .select()
+        .select(
+          isCountOnly
+              ? 'id'
+              : '*, patient:patients!inner(*), appointment_doctors(is_active, staff:staff!doctor_id(full_name))',
+        )
         .eq('patient_id', patientId);
     if (dateFrom != null) {
       builder = builder.gte('scheduled_at', dateFrom.toUtc().toIso8601String());

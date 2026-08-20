@@ -376,3 +376,106 @@ final class PatientAssignedDoctorsFamily extends $Family
   @override
   String toString() => r'patientAssignedDoctorsProvider';
 }
+
+/// Checks if the current authenticated user has permission to view the patient detail screen.
+///
+/// Returns `true` if:
+/// - The user is a `receptionist` or `superAdmin`.
+/// - The user is a `doctor` AND (1) the doctor is assigned to the patient in `patient_doctors`,
+///   OR (2) the patient has an active appointment with that doctor within the ±2 days window.
+
+@ProviderFor(canAccessPatient)
+final canAccessPatientProvider = CanAccessPatientFamily._();
+
+/// Checks if the current authenticated user has permission to view the patient detail screen.
+///
+/// Returns `true` if:
+/// - The user is a `receptionist` or `superAdmin`.
+/// - The user is a `doctor` AND (1) the doctor is assigned to the patient in `patient_doctors`,
+///   OR (2) the patient has an active appointment with that doctor within the ±2 days window.
+
+final class CanAccessPatientProvider
+    extends $FunctionalProvider<AsyncValue<bool>, bool, FutureOr<bool>>
+    with $FutureModifier<bool>, $FutureProvider<bool> {
+  /// Checks if the current authenticated user has permission to view the patient detail screen.
+  ///
+  /// Returns `true` if:
+  /// - The user is a `receptionist` or `superAdmin`.
+  /// - The user is a `doctor` AND (1) the doctor is assigned to the patient in `patient_doctors`,
+  ///   OR (2) the patient has an active appointment with that doctor within the ±2 days window.
+  CanAccessPatientProvider._({
+    required CanAccessPatientFamily super.from,
+    required String super.argument,
+  }) : super(
+         retry: null,
+         name: r'canAccessPatientProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
+
+  @override
+  String debugGetCreateSourceHash() => _$canAccessPatientHash();
+
+  @override
+  String toString() {
+    return r'canAccessPatientProvider'
+        ''
+        '($argument)';
+  }
+
+  @$internal
+  @override
+  $FutureProviderElement<bool> $createElement($ProviderPointer pointer) =>
+      $FutureProviderElement(pointer);
+
+  @override
+  FutureOr<bool> create(Ref ref) {
+    final argument = this.argument as String;
+    return canAccessPatient(ref, argument);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is CanAccessPatientProvider && other.argument == argument;
+  }
+
+  @override
+  int get hashCode {
+    return argument.hashCode;
+  }
+}
+
+String _$canAccessPatientHash() => r'393a5ea9817ed05e24797c74675c6259c3e73d32';
+
+/// Checks if the current authenticated user has permission to view the patient detail screen.
+///
+/// Returns `true` if:
+/// - The user is a `receptionist` or `superAdmin`.
+/// - The user is a `doctor` AND (1) the doctor is assigned to the patient in `patient_doctors`,
+///   OR (2) the patient has an active appointment with that doctor within the ±2 days window.
+
+final class CanAccessPatientFamily extends $Family
+    with $FunctionalFamilyOverride<FutureOr<bool>, String> {
+  CanAccessPatientFamily._()
+    : super(
+        retry: null,
+        name: r'canAccessPatientProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
+  /// Checks if the current authenticated user has permission to view the patient detail screen.
+  ///
+  /// Returns `true` if:
+  /// - The user is a `receptionist` or `superAdmin`.
+  /// - The user is a `doctor` AND (1) the doctor is assigned to the patient in `patient_doctors`,
+  ///   OR (2) the patient has an active appointment with that doctor within the ±2 days window.
+
+  CanAccessPatientProvider call(String patientId) =>
+      CanAccessPatientProvider._(argument: patientId, from: this);
+
+  @override
+  String toString() => r'canAccessPatientProvider';
+}

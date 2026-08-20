@@ -9,8 +9,12 @@ import 'package:spine_clinic_app/core/errors/app_exception.dart';
 import 'package:spine_clinic_app/core/network/app_routes.dart';
 import 'package:spine_clinic_app/core/utils/formatters.dart';
 import 'package:spine_clinic_app/features/appointment/presentation/widgets/appointment_badge_colors.dart';
+import 'package:spine_clinic_app/features/auth/domain/user_role.dart';
+import 'package:spine_clinic_app/features/auth/presentation/auth_providers.dart';
 import 'package:spine_clinic_app/features/medical_records/presentation/visit_detail_controller.dart';
+import 'package:spine_clinic_app/features/patient/presentation/patient_providers.dart';
 import 'package:spine_clinic_app/shared/widgets/app_badge.dart';
+import 'package:spine_clinic_app/shared/widgets/app_snackbar.dart';
 import 'package:spine_clinic_app/shared/widgets/error_view.dart';
 import 'package:spine_clinic_app/shared/widgets/info_row.dart';
 import 'package:spine_clinic_app/shared/widgets/section_card.dart';
@@ -66,7 +70,7 @@ class VisitDetailScreen extends ConsumerWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              _buildInfoSection(context, state),
+              _buildInfoSection(context, ref, state),
               const SizedBox(height: AppSizes.p16),
               _buildDoctorsSection(context, state),
               const SizedBox(height: AppSizes.p16),
@@ -78,22 +82,42 @@ class VisitDetailScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildInfoSection(BuildContext context, VisitDetailState state) {
+  Widget _buildInfoSection(
+    BuildContext context,
+    WidgetRef ref,
+    VisitDetailState state,
+  ) {
     final ColorScheme cs = Theme.of(context).colorScheme;
     final AppointmentBadgeColors typeBadge = state.appointment.type.badgeColors(
       context,
     );
     final AppointmentBadgeColors statusBadge = state.appointment.status
         .badgeColors(context);
+    final user = ref.watch(currentUserProvider).value;
+    final isDoctor = user?.role == UserRole.doctor;
+    final canAccessAsync = isDoctor
+        ? ref.watch(canAccessPatientProvider(state.patient.id))
+        : const AsyncValue.data(true);
+    final bool canAccess = canAccessAsync.value ?? !isDoctor;
 
     return SectionCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           InkWell(
-            onTap: () => context.push(
-              AppRoutes.patientDetail.replaceAll(':id', state.patient.id),
-            ),
+            onTap: () {
+              if (!canAccess) {
+                AppSnackbar.show(
+                  context,
+                  message: AppStrings.errorDatabasePermissionDenied,
+                  variant: AppSnackbarVariant.error,
+                );
+                return;
+              }
+              context.push(
+                AppRoutes.patientDetail.replaceAll(':id', state.patient.id),
+              );
+            },
             borderRadius: const BorderRadius.all(Radius.circular(AppSizes.r4)),
             child: Padding(
               padding: const EdgeInsets.symmetric(vertical: AppSizes.p4),

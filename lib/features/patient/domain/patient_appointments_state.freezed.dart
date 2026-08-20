@@ -14,7 +14,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$PatientAppointmentsState {
 
- List<Appointment> get appointments; bool get isLoading; bool get isLoadingMore; bool get hasMore; int get totalCount; String? get errorMessage; Set<AppointmentStatus>? get statusFilter; Set<AppointmentType>? get typeFilter; DateTime? get dateFrom; DateTime? get dateTo; String? get doctorId; bool? get usePackageFilter; PatientAppointmentSortOption get sort;
+ List<AppointmentWithPatient> get appointments; bool get isLoading; bool get isLoadingMore; bool get hasMore; int get totalCount; String? get errorMessage; Set<AppointmentStatus>? get statusFilter; Set<AppointmentType>? get typeFilter; DateTime? get dateFrom; DateTime? get dateTo; String? get doctorId; bool? get usePackageFilter; PatientAppointmentSortOption get sort;
 /// Create a copy of PatientAppointmentsState
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -45,7 +45,7 @@ abstract mixin class $PatientAppointmentsStateCopyWith<$Res>  {
   factory $PatientAppointmentsStateCopyWith(PatientAppointmentsState value, $Res Function(PatientAppointmentsState) _then) = _$PatientAppointmentsStateCopyWithImpl;
 @useResult
 $Res call({
- List<Appointment> appointments, bool isLoading, bool isLoadingMore, bool hasMore, int totalCount, String? errorMessage, Set<AppointmentStatus>? statusFilter, Set<AppointmentType>? typeFilter, DateTime? dateFrom, DateTime? dateTo, String? doctorId, bool? usePackageFilter, PatientAppointmentSortOption sort
+ List<AppointmentWithPatient> appointments, bool isLoading, bool isLoadingMore, bool hasMore, int totalCount, String? errorMessage, Set<AppointmentStatus>? statusFilter, Set<AppointmentType>? typeFilter, DateTime? dateFrom, DateTime? dateTo, String? doctorId, bool? usePackageFilter, PatientAppointmentSortOption sort
 });
 
 
@@ -65,7 +65,7 @@ class _$PatientAppointmentsStateCopyWithImpl<$Res>
 @pragma('vm:prefer-inline') @override $Res call({Object? appointments = null,Object? isLoading = null,Object? isLoadingMore = null,Object? hasMore = null,Object? totalCount = null,Object? errorMessage = freezed,Object? statusFilter = freezed,Object? typeFilter = freezed,Object? dateFrom = freezed,Object? dateTo = freezed,Object? doctorId = freezed,Object? usePackageFilter = freezed,Object? sort = null,}) {
   return _then(_self.copyWith(
 appointments: null == appointments ? _self.appointments : appointments // ignore: cast_nullable_to_non_nullable
-as List<Appointment>,isLoading: null == isLoading ? _self.isLoading : isLoading // ignore: cast_nullable_to_non_nullable
+as List<AppointmentWithPatient>,isLoading: null == isLoading ? _self.isLoading : isLoading // ignore: cast_nullable_to_non_nullable
 as bool,isLoadingMore: null == isLoadingMore ? _self.isLoadingMore : isLoadingMore // ignore: cast_nullable_to_non_nullable
 as bool,hasMore: null == hasMore ? _self.hasMore : hasMore // ignore: cast_nullable_to_non_nullable
 as bool,totalCount: null == totalCount ? _self.totalCount : totalCount // ignore: cast_nullable_to_non_nullable
@@ -162,7 +162,7 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( List<Appointment> appointments,  bool isLoading,  bool isLoadingMore,  bool hasMore,  int totalCount,  String? errorMessage,  Set<AppointmentStatus>? statusFilter,  Set<AppointmentType>? typeFilter,  DateTime? dateFrom,  DateTime? dateTo,  String? doctorId,  bool? usePackageFilter,  PatientAppointmentSortOption sort)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( List<AppointmentWithPatient> appointments,  bool isLoading,  bool isLoadingMore,  bool hasMore,  int totalCount,  String? errorMessage,  Set<AppointmentStatus>? statusFilter,  Set<AppointmentType>? typeFilter,  DateTime? dateFrom,  DateTime? dateTo,  String? doctorId,  bool? usePackageFilter,  PatientAppointmentSortOption sort)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _PatientAppointmentsState() when $default != null:
 return $default(_that.appointments,_that.isLoading,_that.isLoadingMore,_that.hasMore,_that.totalCount,_that.errorMessage,_that.statusFilter,_that.typeFilter,_that.dateFrom,_that.dateTo,_that.doctorId,_that.usePackageFilter,_that.sort);case _:
@@ -183,7 +183,7 @@ return $default(_that.appointments,_that.isLoading,_that.isLoadingMore,_that.has
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( List<Appointment> appointments,  bool isLoading,  bool isLoadingMore,  bool hasMore,  int totalCount,  String? errorMessage,  Set<AppointmentStatus>? statusFilter,  Set<AppointmentType>? typeFilter,  DateTime? dateFrom,  DateTime? dateTo,  String? doctorId,  bool? usePackageFilter,  PatientAppointmentSortOption sort)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( List<AppointmentWithPatient> appointments,  bool isLoading,  bool isLoadingMore,  bool hasMore,  int totalCount,  String? errorMessage,  Set<AppointmentStatus>? statusFilter,  Set<AppointmentType>? typeFilter,  DateTime? dateFrom,  DateTime? dateTo,  String? doctorId,  bool? usePackageFilter,  PatientAppointmentSortOption sort)  $default,) {final _that = this;
 switch (_that) {
 case _PatientAppointmentsState():
 return $default(_that.appointments,_that.isLoading,_that.isLoadingMore,_that.hasMore,_that.totalCount,_that.errorMessage,_that.statusFilter,_that.typeFilter,_that.dateFrom,_that.dateTo,_that.doctorId,_that.usePackageFilter,_that.sort);case _:
@@ -203,7 +203,7 @@ return $default(_that.appointments,_that.isLoading,_that.isLoadingMore,_that.has
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( List<Appointment> appointments,  bool isLoading,  bool isLoadingMore,  bool hasMore,  int totalCount,  String? errorMessage,  Set<AppointmentStatus>? statusFilter,  Set<AppointmentType>? typeFilter,  DateTime? dateFrom,  DateTime? dateTo,  String? doctorId,  bool? usePackageFilter,  PatientAppointmentSortOption sort)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( List<AppointmentWithPatient> appointments,  bool isLoading,  bool isLoadingMore,  bool hasMore,  int totalCount,  String? errorMessage,  Set<AppointmentStatus>? statusFilter,  Set<AppointmentType>? typeFilter,  DateTime? dateFrom,  DateTime? dateTo,  String? doctorId,  bool? usePackageFilter,  PatientAppointmentSortOption sort)?  $default,) {final _that = this;
 switch (_that) {
 case _PatientAppointmentsState() when $default != null:
 return $default(_that.appointments,_that.isLoading,_that.isLoadingMore,_that.hasMore,_that.totalCount,_that.errorMessage,_that.statusFilter,_that.typeFilter,_that.dateFrom,_that.dateTo,_that.doctorId,_that.usePackageFilter,_that.sort);case _:
@@ -218,11 +218,11 @@ return $default(_that.appointments,_that.isLoading,_that.isLoadingMore,_that.has
 
 
 class _PatientAppointmentsState implements PatientAppointmentsState {
-  const _PatientAppointmentsState({final  List<Appointment> appointments = const [], this.isLoading = true, this.isLoadingMore = false, this.hasMore = false, this.totalCount = 0, this.errorMessage, final  Set<AppointmentStatus>? statusFilter, final  Set<AppointmentType>? typeFilter, this.dateFrom, this.dateTo, this.doctorId, this.usePackageFilter, this.sort = PatientAppointmentSortOption.dateNewest}): _appointments = appointments,_statusFilter = statusFilter,_typeFilter = typeFilter;
+  const _PatientAppointmentsState({final  List<AppointmentWithPatient> appointments = const [], this.isLoading = true, this.isLoadingMore = false, this.hasMore = false, this.totalCount = 0, this.errorMessage, final  Set<AppointmentStatus>? statusFilter, final  Set<AppointmentType>? typeFilter, this.dateFrom, this.dateTo, this.doctorId, this.usePackageFilter, this.sort = PatientAppointmentSortOption.dateNewest}): _appointments = appointments,_statusFilter = statusFilter,_typeFilter = typeFilter;
   
 
- final  List<Appointment> _appointments;
-@override@JsonKey() List<Appointment> get appointments {
+ final  List<AppointmentWithPatient> _appointments;
+@override@JsonKey() List<AppointmentWithPatient> get appointments {
   if (_appointments is EqualUnmodifiableListView) return _appointments;
   // ignore: implicit_dynamic_type
   return EqualUnmodifiableListView(_appointments);
@@ -287,7 +287,7 @@ abstract mixin class _$PatientAppointmentsStateCopyWith<$Res> implements $Patien
   factory _$PatientAppointmentsStateCopyWith(_PatientAppointmentsState value, $Res Function(_PatientAppointmentsState) _then) = __$PatientAppointmentsStateCopyWithImpl;
 @override @useResult
 $Res call({
- List<Appointment> appointments, bool isLoading, bool isLoadingMore, bool hasMore, int totalCount, String? errorMessage, Set<AppointmentStatus>? statusFilter, Set<AppointmentType>? typeFilter, DateTime? dateFrom, DateTime? dateTo, String? doctorId, bool? usePackageFilter, PatientAppointmentSortOption sort
+ List<AppointmentWithPatient> appointments, bool isLoading, bool isLoadingMore, bool hasMore, int totalCount, String? errorMessage, Set<AppointmentStatus>? statusFilter, Set<AppointmentType>? typeFilter, DateTime? dateFrom, DateTime? dateTo, String? doctorId, bool? usePackageFilter, PatientAppointmentSortOption sort
 });
 
 
@@ -307,7 +307,7 @@ class __$PatientAppointmentsStateCopyWithImpl<$Res>
 @override @pragma('vm:prefer-inline') $Res call({Object? appointments = null,Object? isLoading = null,Object? isLoadingMore = null,Object? hasMore = null,Object? totalCount = null,Object? errorMessage = freezed,Object? statusFilter = freezed,Object? typeFilter = freezed,Object? dateFrom = freezed,Object? dateTo = freezed,Object? doctorId = freezed,Object? usePackageFilter = freezed,Object? sort = null,}) {
   return _then(_PatientAppointmentsState(
 appointments: null == appointments ? _self._appointments : appointments // ignore: cast_nullable_to_non_nullable
-as List<Appointment>,isLoading: null == isLoading ? _self.isLoading : isLoading // ignore: cast_nullable_to_non_nullable
+as List<AppointmentWithPatient>,isLoading: null == isLoading ? _self.isLoading : isLoading // ignore: cast_nullable_to_non_nullable
 as bool,isLoadingMore: null == isLoadingMore ? _self.isLoadingMore : isLoadingMore // ignore: cast_nullable_to_non_nullable
 as bool,hasMore: null == hasMore ? _self.hasMore : hasMore // ignore: cast_nullable_to_non_nullable
 as bool,totalCount: null == totalCount ? _self.totalCount : totalCount // ignore: cast_nullable_to_non_nullable

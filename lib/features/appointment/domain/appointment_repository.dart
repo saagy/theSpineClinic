@@ -12,9 +12,10 @@ import 'package:spine_clinic_app/features/appointment/domain/appointment_type.da
 import 'package:spine_clinic_app/features/appointment/domain/bulk_doctor_replacement_result.dart';
 import 'package:spine_clinic_app/features/auth/domain/staff.dart';
 
-import 'package:spine_clinic_app/features/patient/domain/patient.dart';
-
+import 'package:spine_clinic_app/features/appointment/domain/appointment_with_patient.dart';
 import 'package:spine_clinic_app/features/patient/domain/clinic_location.dart';
+
+export 'package:spine_clinic_app/features/appointment/domain/appointment_with_patient.dart';
 
 /// Defines the appointment data operations available to the application.
 ///
@@ -61,8 +62,14 @@ abstract class AppointmentRepository {
   /// Resolves the list of all appointments for a patient.
   Future<Result<List<Appointment>>> getAppointmentsForPatient(String patientId);
 
+  /// Resolves active appointments between a patient and doctor.
+  Future<Result<List<Appointment>>> getDoctorAppointmentsForPatient({
+    required String patientId,
+    required String doctorId,
+  });
+
   /// Resolves the list of appointments for a patient, paginated, sorted, and filtered.
-  Future<Result<List<Appointment>>> getAppointmentsForPatientPaginated({
+  Future<Result<List<AppointmentWithPatient>>> getAppointmentsForPatientPaginated({
     required String patientId,
     int offset = 0,
     int limit = 30,
@@ -173,28 +180,4 @@ abstract class AppointmentRepository {
     List<String> doctorIds,
     String? editorId,
   );
-}
-
-/// Helper domain model wrapping a doctor's active appointment assignment.
-class DoctorScheduleItem {
-  final Appointment appointment;
-  final AppointmentDoctor appointmentDoctor;
-  final Patient patient;
-
-  const DoctorScheduleItem({
-    required this.appointment,
-    required this.appointmentDoctor,
-    required this.patient,
-  });
-}
-
-/// Lightweight wrapper combining an appointment with its patient for list views.
-class AppointmentWithPatient {
-  final Appointment appointment;
-  final Patient patient;
-
-  const AppointmentWithPatient({
-    required this.appointment,
-    required this.patient,
-  });
 }
