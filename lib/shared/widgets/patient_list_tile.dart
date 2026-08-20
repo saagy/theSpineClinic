@@ -12,6 +12,7 @@ import 'package:spine_clinic_app/core/constants/app_strings.dart';
 import 'package:spine_clinic_app/core/constants/app_text_styles.dart';
 import 'package:spine_clinic_app/core/constants/clinic_colors.dart';
 import 'package:spine_clinic_app/shared/widgets/app_avatar.dart';
+import 'package:spine_clinic_app/shared/widgets/pressable_scale.dart';
 
 /// A standardized patient card list tile with person avatar, name, right-aligned branch,
 /// and phone/last-visit subtitle.
@@ -61,7 +62,7 @@ class PatientListTile extends StatelessWidget {
     final ColorScheme cs = Theme.of(context).colorScheme;
     final ClinicColors clinic = ClinicColors.of(context);
 
-    return Container(
+    final Widget tile = Container(
       margin: margin ?? const EdgeInsets.only(bottom: AppSizes.p12),
       decoration: BoxDecoration(
         color: cs.surface,
@@ -81,14 +82,11 @@ class PatientListTile extends StatelessWidget {
               padding: const EdgeInsets.all(AppSizes.p16),
               child: Row(
                 children: [
-                  // ── Dynamic initials avatar ──
                   AppAvatar(
                     name: name,
                     radius: (avatarSize ?? AppSizes.avatarTile) / 2,
                   ),
                   const SizedBox(width: AppSizes.p12),
-
-                  // ── Text content ──
                   Expanded(
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
@@ -163,8 +161,6 @@ class PatientListTile extends StatelessWidget {
                       ],
                     ),
                   ),
-
-                  // ── Trailing ──
                   if (trailing != null) ...[
                     const SizedBox(width: AppSizes.p12),
                     trailing!,
@@ -176,5 +172,14 @@ class PatientListTile extends StatelessWidget {
         ),
       ),
     );
+
+    if (onTap != null) {
+      return PressableScale(
+        onTap: onTap,
+        child: tile,
+      );
+    }
+
+    return tile;
   }
 }

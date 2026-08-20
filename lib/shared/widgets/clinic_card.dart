@@ -10,6 +10,7 @@ library;
 import 'package:flutter/material.dart';
 import 'package:spine_clinic_app/core/constants/app_sizes.dart';
 import 'package:spine_clinic_app/core/constants/clinic_colors.dart';
+import 'package:spine_clinic_app/shared/widgets/pressable_scale.dart';
 
 /// A shadow-elevated white card with generous rounded corners.
 class ClinicCard extends StatelessWidget {
@@ -20,6 +21,7 @@ class ClinicCard extends StatelessWidget {
     this.trailing,
     this.padding,
     this.margin,
+    this.onTap,
     this.child,
   });
 
@@ -35,6 +37,9 @@ class ClinicCard extends StatelessWidget {
   /// Optional external margin. Defaults to zero.
   final EdgeInsetsGeometry? margin;
 
+  /// Optional tap callback with tactile touch feedback.
+  final VoidCallback? onTap;
+
   /// The card body content.
   final Widget? child;
 
@@ -43,7 +48,7 @@ class ClinicCard extends StatelessWidget {
     final ColorScheme cs = Theme.of(context).colorScheme;
     final ClinicColors clinic = ClinicColors.of(context);
 
-    return Container(
+    final Widget card = Container(
       margin: margin,
       decoration: BoxDecoration(
         color: cs.surface,
@@ -91,5 +96,14 @@ class ClinicCard extends StatelessWidget {
         ],
       ),
     );
+
+    if (onTap != null) {
+      return PressableScale(
+        onTap: onTap,
+        child: card,
+      );
+    }
+
+    return card;
   }
 }

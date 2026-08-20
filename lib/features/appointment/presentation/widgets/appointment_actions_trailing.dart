@@ -14,7 +14,7 @@ import 'package:spine_clinic_app/features/auth/domain/user_role.dart';
 import 'package:spine_clinic_app/features/auth/presentation/auth_providers.dart';
 import 'package:spine_clinic_app/features/patient/presentation/patient_list_providers.dart';
 import 'package:spine_clinic_app/features/patient/presentation/patient_providers.dart';
-import 'package:spine_clinic_app/shared/widgets/app_badge.dart';
+import 'package:spine_clinic_app/shared/widgets/animated_app_badge.dart';
 import 'package:spine_clinic_app/shared/widgets/app_snackbar.dart';
 import 'package:spine_clinic_app/shared/widgets/confirmation_dialog.dart';
 
@@ -164,7 +164,7 @@ class _AppointmentActionsTrailingState
 
     if (isPast) {
       final ClinicColors clinic = ClinicColors.of(context);
-      return AppBadge(
+      return AnimatedAppBadge(
         label: AppStrings.pastScheduledNeedsAction,
         textColor: clinic.warning,
         backgroundColor: clinic.warningContainer,
@@ -172,7 +172,7 @@ class _AppointmentActionsTrailingState
     }
 
     final AppointmentBadgeColors badge = status.badgeColors(context);
-    return AppBadge(
+    return AnimatedAppBadge(
       label: status.displayLabel,
       textColor: badge.textColor,
       backgroundColor: badge.backgroundColor,

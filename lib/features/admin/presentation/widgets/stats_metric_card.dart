@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:spine_clinic_app/core/constants/clinic_colors.dart';
 import 'package:spine_clinic_app/core/constants/app_sizes.dart';
 import 'package:spine_clinic_app/core/constants/app_text_styles.dart';
+import 'package:spine_clinic_app/shared/widgets/animated_metric_counter.dart';
+import 'package:spine_clinic_app/shared/widgets/pressable_scale.dart';
 import 'package:spine_clinic_app/shared/widgets/section_card.dart';
 
 /// Standalone analytics metric card featuring high-density design.
@@ -15,6 +17,7 @@ class StatsMetricCard extends StatelessWidget {
     this.subtitle,
     this.icon,
     this.isLoading = false,
+    this.onTap,
   });
 
   /// The descriptor label of this metric.
@@ -31,6 +34,32 @@ class StatsMetricCard extends StatelessWidget {
 
   /// Whether to render the card inside a loading skeleton state.
   final bool isLoading;
+
+  /// Optional tap callback for metric drill-downs.
+  final VoidCallback? onTap;
+
+  Widget _buildValue(BuildContext context) {
+    final String clean = value.replaceAll(RegExp(r'[^0-9.]'), '');
+    final num? parsed = num.tryParse(clean);
+    if (parsed != null && value.length <= 10 && !value.contains(':')) {
+      final String prefix = value.startsWith('\$') ? '\$' : '';
+      final String suffix = value.endsWith('%') ? '%' : '';
+      return AnimatedMetricCounter(
+        value: parsed,
+        prefix: prefix,
+        suffix: suffix,
+        style: AppTextStyles.numberLarge.copyWith(
+          color: Theme.of(context).colorScheme.onSurface,
+        ),
+      );
+    }
+    return Text(
+      value,
+      style: AppTextStyles.numberLarge.copyWith(
+        color: Theme.of(context).colorScheme.onSurface,
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -87,7 +116,7 @@ class StatsMetricCard extends StatelessWidget {
       );
     }
 
-    return SectionCard(
+    final Widget card = SectionCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
@@ -116,12 +145,7 @@ class StatsMetricCard extends StatelessWidget {
             ],
           ),
           const SizedBox(height: AppSizes.p8),
-          Text(
-            value,
-            style: AppTextStyles.numberLarge.copyWith(
-              color: Theme.of(context).colorScheme.onSurface,
-            ),
-          ),
+          _buildValue(context),
           if (subtitle != null) ...[
             const SizedBox(height: AppSizes.p4),
             Text(
@@ -136,5 +160,14 @@ class StatsMetricCard extends StatelessWidget {
         ],
       ),
     );
+
+    if (onTap != null) {
+      return PressableScale(
+        onTap: onTap,
+        child: card,
+      );
+    }
+
+    return card;
   }
 }
