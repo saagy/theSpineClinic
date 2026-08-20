@@ -10,15 +10,6 @@ import 'package:spine_clinic_app/features/appointment/presentation/receptionist_
 import 'package:spine_clinic_app/features/appointment/presentation/widgets/receptionist_appointment_card.dart';
 import 'package:spine_clinic_app/features/appointment/presentation/widgets/receptionist_day_list_helpers.dart';
 import 'package:spine_clinic_app/features/appointment/presentation/widgets/receptionist_grouped_appointment_card.dart';
-import 'package:spine_clinic_app/features/patient/domain/patient.dart';
-
-/// Helper model for grouped list item row.
-class _ScheduleRowItem {
-  final Patient patient;
-  final List<AppointmentWithPatient> appointments;
-
-  _ScheduleRowItem({required this.patient, required this.appointments});
-}
 
 /// The appointment list for a single day selected in the week strip.
 class ReceptionistDayList extends ConsumerStatefulWidget {
@@ -42,13 +33,11 @@ class ReceptionistDayList extends ConsumerStatefulWidget {
 }
 
 class _ReceptionistDayListState extends ConsumerState<ReceptionistDayList> {
-  late final ScrollController _scrollController;
   DateTime? _lastAutoScrolledDate;
 
   @override
   void initState() {
     super.initState();
-    _scrollController = ScrollController();
     _checkAutoScroll();
   }
 
@@ -60,32 +49,32 @@ class _ReceptionistDayListState extends ConsumerState<ReceptionistDayList> {
     }
   }
 
-  @override
-  void dispose() {
-    _scrollController.dispose();
-    super.dispose();
-  }
-
   void _checkAutoScroll() {
     if (!widget.state.isToday) return;
     if (_lastAutoScrolledDate == widget.state.selectedDate) return;
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted || !_scrollController.hasClients) return;
+      if (!mounted) return;
+      final controller = PrimaryScrollController.maybeOf(context);
+      if (controller == null || !controller.hasClients) return;
+
       final allItems = widget.state.itemsForSelectedDay;
       final items = _filter(allItems);
-      final rowItems = _buildRowItems(items);
-      final nowIndex = _getNowIndex(rowItems);
+      final rowItems = buildScheduleRowItems(items);
+      final nowIndex = getScheduleNowIndex(
+        rowItems,
+        isToday: widget.state.isToday,
+      );
 
       if (nowIndex > 0) {
         final isCompact = ref.read(scheduleCompactControllerProvider);
         final double itemHeight = isCompact ? 36.0 : 84.0;
         final double target = (nowIndex * itemHeight - 20.0).clamp(
           0.0,
-          _scrollController.position.maxScrollExtent,
+          controller.position.maxScrollExtent,
         );
         if (target > 0) {
-          _scrollController.animateTo(
+          controller.animateTo(
             target,
             duration: const Duration(milliseconds: 350),
             curve: Curves.easeOutCubic,
@@ -135,13 +124,15 @@ class _ReceptionistDayListState extends ConsumerState<ReceptionistDayList> {
       return emptyWidget;
     }
 
-    final rowItems = _buildRowItems(items);
-    final nowIndex = _getNowIndex(rowItems);
+    final rowItems = buildScheduleRowItems(items);
+    final nowIndex = getScheduleNowIndex(
+      rowItems,
+      isToday: widget.state.isToday,
+    );
     final hasNow = nowIndex >= 0;
     final totalCount = rowItems.length + (hasNow ? 1 : 0);
 
     final list = ListView.builder(
-      controller: _scrollController,
       physics: const AlwaysScrollableScrollPhysics(),
       padding: const EdgeInsets.fromLTRB(0, AppSizes.p8, 0, AppSizes.p32),
       itemCount: totalCount,
@@ -178,44 +169,11 @@ class _ReceptionistDayListState extends ConsumerState<ReceptionistDayList> {
     return list;
   }
 
-  List<_ScheduleRowItem> _buildRowItems(List<AppointmentWithPatient> items) {
-    final groupedItems = <String, List<AppointmentWithPatient>>{};
-    for (final item in items) {
-      final patientId = item.appointment.patientId;
-      groupedItems.putIfAbsent(patientId, () => []).add(item);
-    }
-
-    final rowItems = <_ScheduleRowItem>[];
-    final processedPatients = <String>{};
-    for (final item in items) {
-      final patientId = item.appointment.patientId;
-      if (processedPatients.contains(patientId)) continue;
-      processedPatients.add(patientId);
-      rowItems.add(_ScheduleRowItem(
-        patient: item.patient,
-        appointments: groupedItems[patientId]!,
-      ));
-    }
-    return rowItems;
-  }
-
   List<AppointmentWithPatient> _filter(List<AppointmentWithPatient> items) {
     if (widget.searchQuery.isEmpty) return items;
     final q = widget.searchQuery.toLowerCase();
     return items
         .where((a) => a.patient.fullName.toLowerCase().contains(q))
         .toList();
-  }
-
-  int _getNowIndex(List<_ScheduleRowItem> items) {
-    if (!widget.state.isToday || items.isEmpty) return -1;
-    final now = DateTime.now();
-    for (int i = 0; i < items.length; i++) {
-      final earliest = items[i].appointments.first.appointment.scheduledAt;
-      if (now.isBefore(earliest)) {
-        return i;
-      }
-    }
-    return items.length;
   }
 }

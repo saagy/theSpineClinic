@@ -64,13 +64,15 @@ class _NameStatus extends StatelessWidget {
               ),
             ),
             const SizedBox(width: AppSizes.p6),
-            _StatusDot(
-              color: isPastScheduled ? clinic.warning : statusBadge.textColor,
-              label: isPastScheduled
-                  ? AppStrings.pastScheduledNeedsAction
-                  : status.displayLabel,
-              icon: isPastScheduled ? Icons.warning_amber_rounded : null,
-              isCompact: isCompact,
+            Flexible(
+              child: _StatusDot(
+                color: isPastScheduled ? clinic.warning : statusBadge.textColor,
+                label: isPastScheduled
+                    ? AppStrings.pastScheduledNeedsAction
+                    : status.displayLabel,
+                icon: isPastScheduled ? Icons.warning_amber_rounded : null,
+                isCompact: isCompact,
+              ),
             ),
           ],
         ),
