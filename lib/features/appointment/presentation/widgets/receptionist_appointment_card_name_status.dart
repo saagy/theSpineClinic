@@ -49,10 +49,10 @@ class _NameStatus extends StatelessWidget {
         ),
         SizedBox(height: isCompact ? 0 : AppSizes.p2),
         Row(
+          mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             Flexible(
-              flex: 2,
               child: Text(
                 secondaryText,
                 style: AppTextStyles.caption.copyWith(
@@ -64,16 +64,13 @@ class _NameStatus extends StatelessWidget {
               ),
             ),
             const SizedBox(width: AppSizes.p6),
-            Flexible(
-              flex: 3,
-              child: _StatusDot(
-                color: isPastScheduled ? clinic.warning : statusBadge.textColor,
-                label: isPastScheduled
-                    ? AppStrings.pastScheduledNeedsAction
-                    : status.displayLabel,
-                icon: isPastScheduled ? Icons.warning_amber_rounded : null,
-                isCompact: isCompact,
-              ),
+            _StatusDot(
+              color: isPastScheduled ? clinic.warning : statusBadge.textColor,
+              label: isPastScheduled
+                  ? AppStrings.pastScheduledNeedsAction
+                  : status.displayLabel,
+              icon: isPastScheduled ? Icons.warning_amber_rounded : null,
+              isCompact: isCompact,
             ),
           ],
         ),
