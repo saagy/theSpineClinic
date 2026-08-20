@@ -26,6 +26,7 @@ import 'package:spine_clinic_app/features/appointment/domain/appointment_status.
 import 'package:spine_clinic_app/features/appointment/presentation/all_appointments_providers.dart';
 import 'package:spine_clinic_app/features/appointment/presentation/appointment_providers.dart';
 import 'package:spine_clinic_app/features/appointment/presentation/doctor_schedule_providers.dart';
+import 'package:spine_clinic_app/features/appointment/presentation/receptionist_appointments_providers.dart';
 import 'package:spine_clinic_app/features/appointment/presentation/widgets/appointment_actions_trailing.dart';
 import 'package:spine_clinic_app/features/appointment/presentation/widgets/appointment_badge_colors.dart';
 import 'package:spine_clinic_app/features/appointment/presentation/widgets/appointment_status_style.dart';

@@ -130,6 +130,15 @@ mixin _ReceptionistAppointmentCardMenu
       _isMenuProcessing = true;
       _optimisticStatus = status;
     });
+    ref
+        .read(receptionistAppointmentsProvider.notifier)
+        .changeStatus(id, status);
+    ref
+        .read(doctorScheduleProvider.notifier)
+        .changeStatus(id, status);
+    ref
+        .read(allAppointmentsProvider.notifier)
+        .updateStatus(id, status);
     try {
       final result = await ref
           .read(appointmentRepositoryProvider)
@@ -168,7 +177,7 @@ mixin _ReceptionistAppointmentCardMenu
     ref.invalidate(patientDetailProvider(patientId));
     ref.invalidate(futureScheduledAppointmentsCountProvider(patientId));
     ref.invalidate(availablePackageBalanceProvider(patientId));
-    ref.invalidate(doctorScheduleProvider);
+    ref.read(doctorScheduleProvider.notifier).refresh();
     ref.invalidate(patientListProvider);
     widget.onStatusChanged?.call();
   }

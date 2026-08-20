@@ -35,6 +35,15 @@ mixin _AppointmentActionsTrailingHandlers
       _isProcessing = true;
       _optimisticStatus = status;
     });
+    ref
+        .read(receptionistAppointmentsProvider.notifier)
+        .changeStatus(widget.appointment.id, status);
+    ref
+        .read(doctorScheduleProvider.notifier)
+        .changeStatus(widget.appointment.id, status);
+    ref
+        .read(allAppointmentsProvider.notifier)
+        .updateStatus(widget.appointment.id, status);
     try {
       final result = await ref
           .read(appointmentRepositoryProvider)
@@ -88,7 +97,7 @@ mixin _AppointmentActionsTrailingHandlers
     ref.invalidate(patientDetailProvider(patientId));
     ref.invalidate(futureScheduledAppointmentsCountProvider(patientId));
     ref.invalidate(availablePackageBalanceProvider(patientId));
-    ref.invalidate(doctorScheduleProvider);
+    ref.read(doctorScheduleProvider.notifier).refresh();
     ref.invalidate(patientListProvider);
     widget.onStatusChanged?.call();
   }

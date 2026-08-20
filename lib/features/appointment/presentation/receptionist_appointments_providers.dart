@@ -82,12 +82,17 @@ class ReceptionistAppointmentsNotifier
     }
 
     final int requestId = ++_requestId;
-    state = state.copyWith(
-      allItems: const <AppointmentWithPatient>[],
-      selectedDate: selected,
-      loading: true,
-      clearError: true,
-    );
+    final bool hasExisting = state.allItems.isNotEmpty;
+    if (!hasExisting) {
+      state = state.copyWith(
+        allItems: const <AppointmentWithPatient>[],
+        selectedDate: selected,
+        loading: true,
+        clearError: true,
+      );
+    } else {
+      state = state.copyWith(selectedDate: selected, clearError: true);
+    }
     final Result<List<AppointmentWithPatient>> result = await _repository
         .getAllAppointments(
           dateFrom: ScheduleWeek.windowStart(selected),

@@ -7,6 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:spine_clinic_app/core/errors/app_exception.dart';
 import 'package:spine_clinic_app/core/errors/result.dart';
 import 'package:spine_clinic_app/features/appointment/domain/appointment_repository.dart';
+import 'package:spine_clinic_app/features/appointment/domain/appointment_status.dart';
 import 'package:spine_clinic_app/features/appointment/presentation/appointment_providers.dart';
 import 'package:spine_clinic_app/features/appointment/presentation/doctor_schedule_state.dart';
 import 'package:spine_clinic_app/features/appointment/presentation/schedule_week.dart';
@@ -55,12 +56,17 @@ class DoctorScheduleNotifier extends Notifier<DoctorScheduleState> {
     }
 
     final int requestId = ++_requestId;
-    state = state.copyWith(
-      allItems: const <AppointmentWithPatient>[],
-      selectedDate: selected,
-      loading: true,
-      clearError: true,
-    );
+    final bool hasExisting = state.allItems.isNotEmpty;
+    if (!hasExisting) {
+      state = state.copyWith(
+        allItems: const <AppointmentWithPatient>[],
+        selectedDate: selected,
+        loading: true,
+        clearError: true,
+      );
+    } else {
+      state = state.copyWith(selectedDate: selected, clearError: true);
+    }
     final AppointmentRepository repository = ref.read(
       appointmentRepositoryProvider,
     );
@@ -77,8 +83,6 @@ class DoctorScheduleNotifier extends Notifier<DoctorScheduleState> {
 
     result.when(
       success: (List<AppointmentWithPatient> data) {
-        // ponytail: one bounded three-week query avoids cache orchestration;
-        // add per-week in-flight deduplication only if traffic warrants it.
         _weekCache.addAll(
           ScheduleWeek.groupWindow<AppointmentWithPatient>(
             data,
@@ -98,6 +102,23 @@ class DoctorScheduleNotifier extends Notifier<DoctorScheduleState> {
         state = state.copyWith(error: exception, loading: false);
       },
     );
+  }
+
+  void changeStatus(String appointmentId, AppointmentStatus newStatus) {
+    final List<AppointmentWithPatient> updated = state.allItems
+        .map(
+          (AppointmentWithPatient item) =>
+              item.appointment.id == appointmentId
+                  ? AppointmentWithPatient(
+                      appointment: item.appointment.copyWith(status: newStatus),
+                      patient: item.patient,
+                    )
+                  : item,
+        )
+        .toList();
+    final DateTime selected = state.selectedDate ?? DateTime.now();
+    _weekCache[ScheduleWeek.start(selected)] = updated;
+    state = state.copyWith(allItems: updated);
   }
 
   void selectDate(DateTime date) {

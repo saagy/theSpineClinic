@@ -17,6 +17,7 @@ import 'package:spine_clinic_app/features/admin/presentation/branch_providers.da
 import 'package:spine_clinic_app/features/auth/domain/user_role.dart';
 import 'package:spine_clinic_app/features/auth/presentation/auth_providers.dart';
 import 'package:spine_clinic_app/features/appointment/domain/appointment_repository.dart';
+import 'package:spine_clinic_app/features/appointment/domain/appointment_status.dart';
 import 'package:spine_clinic_app/features/appointment/presentation/appointment_providers.dart';
 
 /// AsyncNotifier managing filtered, paginated appointment list for the
@@ -181,7 +182,7 @@ class AllAppointmentsNotifier
   /// Includes a 150 ms defensive debounce to let Supabase replication
   /// settle after write operations (check-in / cancel). Existing data
   /// stays visible during the brief wait to avoid a loading flash.
-  void _reload() {
+  void _reload({bool silent = false}) {
     final _FilterSnapshot snap = _currentSnapshot();
     _generation++;
     final int gen = _generation;
@@ -190,8 +191,10 @@ class AllAppointmentsNotifier
 
     Future.delayed(const Duration(milliseconds: 150), () async {
       if (gen != _generation) return;
-      _offset = 0; // Re-assert — loadMore may have modified it during the delay
-      state = const AsyncValue.loading();
+      _offset = 0;
+      if (!silent && (!state.hasValue || (state.value?.isEmpty ?? true))) {
+        state = const AsyncValue.loading();
+      }
       try {
         final List<AppointmentWithPatient> data = await _fetch(snap);
         if (gen != _generation) return;
@@ -203,11 +206,28 @@ class AllAppointmentsNotifier
     });
   }
 
+  void updateStatus(String appointmentId, AppointmentStatus newStatus) {
+    if (!state.hasValue) return;
+    final List<AppointmentWithPatient> current = state.value!;
+    final List<AppointmentWithPatient> updated = current
+        .map(
+          (AppointmentWithPatient item) =>
+              item.appointment.id == appointmentId
+                  ? AppointmentWithPatient(
+                      appointment: item.appointment.copyWith(status: newStatus),
+                      patient: item.patient,
+                    )
+                  : item,
+        )
+        .toList();
+    state = AsyncValue.data(updated);
+  }
+
   /// Refreshes the list while preserving all current filter settings.
   ///
   /// Unlike [ref.invalidate], this does NOT re-run [build] — filters
   /// (date range, doctor, status, type, search query) are kept intact.
-  void refresh() => _reload();
+  void refresh() => _reload(silent: true);
 
   /// Appends the next page of results to the current list.
   Future<void> loadMore() async {
