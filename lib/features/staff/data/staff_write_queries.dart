@@ -54,13 +54,13 @@ Future<Result<void>> updateStaffAccount(
         ),
       );
     }
-    await service.guardQuery(
-      () => service.from('staff').update(_row(staff)).eq('id', staff.id),
-    );
     if (newPassword != null && newPassword.isNotEmpty) {
       final failure = await _updatePassword(service, staff, newPassword);
       if (failure != null) return failure;
     }
+    await service.guardQuery(
+      () => service.from('staff').update(_row(staff)).eq('id', staff.id),
+    );
     return const Result.success(null);
   } on AppException catch (e) {
     return Result.failure(e);

@@ -65,20 +65,26 @@ class PatientDocumentsRepositoryImpl implements PatientDocumentsRepository {
     required Uint8List fileBytes,
     required String uploadedBy,
   }) async {
-    try {
-      if (fileBytes.length > _maxBytes) {
-        return const Result.failure(
-          StorageException(
-            code: 'storage/file-too-large',
-            message: 'File exceeds the 10 MB limit.',
-            userMessageKey: 'error_doc_file_too_large',
-          ),
-        );
-      }
+    if (fileBytes.length > _maxBytes) {
+      return const Result.failure(
+        StorageException(
+          code: 'storage/file-too-large',
+          message: 'File exceeds the 10 MB limit.',
+          userMessageKey: 'error_doc_file_too_large',
+        ),
+      );
+    }
 
-      final String stamp = DateTime.now().millisecondsSinceEpoch.toString();
-      final String storagePath = '$patientId/${stamp}_$fileName';
+    final String stamp = DateTime.now().millisecondsSinceEpoch.toString();
+    final String storagePath = '$patientId/${stamp}_$fileName';
+
+    try {
       await _service.storage(_bucket).uploadBinary(storagePath, fileBytes);
+    } on Exception catch (error) {
+      return Result.failure(AppException.fromSupabaseException(error));
+    }
+
+    try {
       final String fileUrl = _service
           .storage(_bucket)
           .getPublicUrl(storagePath);
@@ -94,9 +100,13 @@ class PatientDocumentsRepositoryImpl implements PatientDocumentsRepository {
           .select()
           .single();
       return Result.success(PatientDocument.fromJson(row));
-    } on PostgrestException catch (error) {
-      return Result.failure(AppException.fromSupabaseException(error));
     } on Exception catch (error) {
+      // Compensating cleanup: remove orphaned storage object on DB failure
+      try {
+        await _service.storage(_bucket).remove([storagePath]);
+      } catch (_) {
+        // Best-effort cleanup
+      }
       return Result.failure(AppException.fromSupabaseException(error));
     }
   }

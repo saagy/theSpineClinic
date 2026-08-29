@@ -55,61 +55,16 @@ mixin _AppointmentMutations on _AppointmentRepositoryBase {
     List<String> doctorIds,
     String? editorId,
   ) {
-    return _run(() async {
-      final List<Map<String, dynamic>> rows = await _service
-          .from(_appointmentDoctorsTable)
-          .select()
-          .eq('appointment_id', appointmentId);
-      final List<String> active = rows
-          .where((row) => row['is_active'] == true)
-          .map((row) => row['doctor_id'] as String)
-          .toList();
-      final List<String> inactive = rows
-          .where((row) => row['is_active'] == false)
-          .map((row) => row['doctor_id'] as String)
-          .toList();
-      final List<String> deactivate = active
-          .where((id) => !doctorIds.contains(id))
-          .toList();
-      final List<String> reactivate = doctorIds
-          .where(inactive.contains)
-          .toList();
-      final List<String> insert = doctorIds
-          .where((id) => !active.contains(id) && !inactive.contains(id))
-          .toList();
-      if (deactivate.isNotEmpty) {
-        await _service
-            .from(_appointmentDoctorsTable)
-            .update(<String, dynamic>{'is_active': false})
-            .eq('appointment_id', appointmentId)
-            .inFilter('doctor_id', deactivate);
-      }
-      if (reactivate.isNotEmpty) {
-        await _service
-            .from(_appointmentDoctorsTable)
-            .update(<String, dynamic>{
-              'is_active': true,
-              'added_by': editorId,
-              'added_at': DateTime.now().toUtc().toIso8601String(),
-            })
-            .eq('appointment_id', appointmentId)
-            .inFilter('doctor_id', reactivate);
-      }
-      if (insert.isNotEmpty) {
-        final List<Map<String, dynamic>> newRows = insert
-            .map(
-              (doctorId) => <String, dynamic>{
-                'appointment_id': appointmentId,
-                'doctor_id': doctorId,
-                'is_active': true,
-                'added_by': editorId,
-                'added_at': DateTime.now().toUtc().toIso8601String(),
-              },
-            )
-            .toList();
-        await _service.from(_appointmentDoctorsTable).insert(newRows);
-      }
-    });
+    return _run(
+      () => _service.rpc(
+        'update_appointment_doctors',
+        params: <String, dynamic>{
+          'p_appointment_id': appointmentId,
+          'p_doctor_ids': doctorIds,
+          'p_editor_id': editorId,
+        },
+      ),
+    );
   }
 
   @override

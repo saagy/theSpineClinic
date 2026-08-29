@@ -52,6 +52,11 @@ Experience the live multi-role application directly in your browser:
 | <img src="docs/screenshots/due_patients_queue.jpg" width="300" alt="Due Patients & Rapid Rebooking Queue"/> | <img src="docs/screenshots/dark_mode_profile.jpg" width="300" alt="Dark Theme & Operations Hub"/> |
 | *Overdue recall tracking, date-filtered queues, one-touch patient phone outreach, and instant appointment booking.* | *OLED-optimized dark theme, multi-branch switching (`Masr El-Gedida`), and schedule density controls.* |
 
+| 🩺 Doctor Workstation | 🗓️ Receptionist Booking Workboard |
+| :---: | :---: |
+| <img src="docs/screenshots/doctor_workstation.jpg" width="300" alt="Doctor Workstation"/> | <img src="docs/screenshots/receptionist_due_patients.jpg" width="300" alt="Receptionist Booking Workboard"/> |
+| *Role-scoped doctor portal: personal day queue, live "now" timeline indicator, and status-coded visit cards.* | *Branch-scoped workboard with Schedule / Booking / All tabs, due-patient queue, and one-tap Call / Book actions.* |
+
 </div>
 
 ---
@@ -72,8 +77,8 @@ Unlike standard CRUD templates, this platform solves complex domain challenges i
 What differentiates this project from typical mobile apps:
 
 ### 1. Database-Enforced Financial & Quota Integrity
-* **Atomic PostgreSQL Triggers**: Session status transitions (e.g. marking an appointment `Completed` or `Cancelled`) fire database triggers (`trg_deduct_package_balance`, `trg_sync_package_balance`) that calculate and mutate balances atomically on the database server.
-* **ACID Multi-Slot Booking RPCs**: Recurring multi-week appointments execute inside single PostgreSQL stored procedures (`book_recurring_appointments_v1`). If any single doctor slot has a scheduling conflict, the entire batch automatically rolls back.
+* **Atomic PostgreSQL Triggers**: Session status transitions (e.g. checking a patient in with `checked_in`, or cancelling a visit) fire database triggers (`trigger_appointment_package_deduction`, `trigger_payment_insert_package_sync`) that calculate and mutate balances atomically on the database server.
+* **ACID Multi-Slot Booking RPCs**: Recurring multi-week appointments execute inside single PostgreSQL stored procedures (`book_recurring_appointments`). If any validation fails mid-batch, the entire batch automatically rolls back.
 
 ### 2. Resilient Functional Error Handling (`Result<T>` Monad)
 * **No Unhandled Async Exceptions**: Every repository contract returns a functional `Result<T>` (`Success<T>` | `Failure<AppException>`) instead of throwing unhandled exceptions across the widget tree.
@@ -154,17 +159,17 @@ sequenceDiagram
     participant Trigger as Postgres Trigger (Balance Sync)
 
     Receptionist->>FlutterApp: Schedule 5 Recurring Visits
-    FlutterApp->>RPC: Execute book_recurring_appointments_v1()
+    FlutterApp->>RPC: Execute book_recurring_appointments()
     critical Transaction
-        RPC->>DB: Check Doctor Schedule Conflicts
+        RPC->>DB: Verify due state & doctor roles
         RPC->>DB: Batch Insert 5 Appointments
     end
     DB-->>FlutterApp: Booking Confirmed (Atomic)
-    Note over DB,Trigger: Patient Attends & Visit Completed
-    Receptionist->>FlutterApp: Mark Appointment "Completed"
-    FlutterApp->>DB: UPDATE appointment status = 'completed'
-    DB->>Trigger: Fires trg_deduct_package_balance
-    Trigger->>DB: Decrement patient package_balance by 1
+    Note over DB,Trigger: Patient Attends & Is Checked In
+    Receptionist->>FlutterApp: Mark Appointment "Checked In"
+    FlutterApp->>DB: UPDATE appointment status = 'checked_in'
+    DB->>Trigger: Fires trigger_appointment_package_deduction
+    Trigger->>DB: Decrement session/traction balance by 1
 ```
 
 ---
@@ -173,7 +178,7 @@ sequenceDiagram
 
 | Domain | Technology / Library | Purpose & Rationale |
 | :--- | :--- | :--- |
-| **Framework** | [Flutter](https://flutter.dev) (v3.x) & [Dart](https://dart.dev) (v3.x) | Cross-platform client targeting Web, iOS, and Android |
+| **Framework** | [Flutter](https://flutter.dev) (3.x) & [Dart](https://dart.dev) (≥ 3.10) | Cross-platform client targeting Web, iOS, and Android |
 | **State Management** | [Flutter Riverpod](https://pub.dev/packages/flutter_riverpod) + `riverpod_generator` | Reactive, compile-safe dependency injection and state caching |
 | **Backend & Database** | [Supabase](https://supabase.com) (PostgreSQL 15+) | Managed PostgreSQL, Row Level Security (RLS), Realtime & Auth |
 | **Navigation** | [GoRouter](https://pub.dev/packages/go_router) | Declarative URL routing with asynchronous authentication redirect guards |
@@ -234,6 +239,11 @@ flutter run \
 dart run build_runner build --delete-conflicting-outputs
 ```
 
+> **Credential resolution order:** compile-time `--dart-define` flags → bundled
+> `.env` asset → compiled-in defaults. Passing the flags explicitly keeps
+> credentials out of built web assets; the `.env` fallback exists for
+> convenience during local development.
+
 ---
 
 ## 🧪 Testing & Quality Assurance
@@ -245,18 +255,26 @@ flutter analyze
 # 2. Run Unit & Widget Test Suite
 flutter test
 
-# 3. Verify Database Balance Triggers (Rollback-safe SQL script)
+# 3. Verify Database Business Rules (Rollback-safe SQL scripts)
 psql "$DATABASE_URL" -f test/trigger_sanity.sql
 ```
+
+Details, suite layout, and the additional SQL sanity scripts: [docs/testing.md](docs/testing.md).
 
 ---
 
 ## 📚 Technical Documentation
 
-* 📖 [Database Overview](docs/database-overview.md) — System of record architecture and data models.
-* 📋 [Schema Reference](docs/schema-reference.md) — Exhaustive table schema, triggers, and RPC documentation.
-* 🔐 [Security & RLS Model](docs/security-model.md) — Role policies, auth tokens, and private storage rules.
-* ⚙️ [Development Workflow](docs/development-workflow.md) — Branching, migrations, and local workflows.
+Full documentation lives in [`docs/`](docs/README.md):
+
+| Document | Contents |
+| :--- | :--- |
+| 🏛️ [Architecture](docs/architecture.md) | Layered design, data-flow contract, state-management patterns, routing & role guards. |
+| 🗄️ [Database Overview](docs/database-overview.md) | System-of-record orientation, migration history, DB change workflow. |
+| 📋 [Database Schema](docs/database-schema.md) | Canonical table/column/enum reference, RPCs, triggers, RLS summary. |
+| 🔐 [Security Model](docs/security-model.md) | Role policies, enforcement layers, private storage rules. |
+| 🧪 [Testing](docs/testing.md) | Dart test suite layout and SQL sanity scripts. |
+| 🤝 [Contributing](CONTRIBUTING.md) | Environment setup, commands, and development conventions. |
 
 ---
 

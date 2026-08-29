@@ -62,6 +62,7 @@ supabase/.temp/
 .codex/
 .impeccable/
 .opencode/
+.zcode/
 .mcp.json
 opencode.json
 skills-lock.json

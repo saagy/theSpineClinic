@@ -18,10 +18,9 @@
     hex codes in any widget. All colors must come from the active theme via
     Theme.of(context). All spacing must reference AppSizes tokens. All text
     styles must reference AppTextStyles.
-    *Legacy note: The codebase currently has 100+ `AppColors` references inside
-    widget files. These are legacy violations. When touching a file for any
-    reason, migrate its color references to `Theme.of(context)`. Do not
-    introduce new `AppColors` references in widgets.*
+    *Status note: the legacy `AppColors` migration is complete — widget files
+    reference the theme exclusively. Keep it that way; never re-introduce
+    `AppColors` references inside widgets.*
 17. **Component Reuse Mandate:** Before building any new visual element, check
     shared/widgets/ first. If a suitable component exists, use it. If a new
     pattern is needed, build it in shared/widgets/ first, then use it. Never
@@ -81,6 +80,21 @@
     }
     ```
 
+27. **Atomic Multi-Step Mutations:** Any repository operation that touches more
+    than one table, modifies multiple rows conditionally, or performs a
+    read-modify-write on a record, MUST be executed inside a single PostgreSQL
+    RPC function (`SECURITY DEFINER` transaction) — never as sequential client-side
+    PostgREST HTTP calls. When an operation spans the database and an external
+    store (e.g., Supabase Storage), follow the strict safety contract:
+    - For deletions/updates: Database is the source of truth and executes first;
+      storage deletion executes second with best-effort error suppression.
+    - For uploads/creations: If storage upload succeeds but the subsequent
+      database record insert fails, the catch block MUST execute a compensating
+      deletion of the uploaded storage object to prevent orphaned artifacts.
+    - Never perform client-side read-modify-write (e.g. fetch balance -> add delta
+      -> update balance); use atomic database RPCs or atomic SQL increment
+      expressions.
+
 ## Known Gotchas
 
 ### Status Callback Wiring
@@ -95,7 +109,7 @@ onStatusChanged: () => ref.read(myProvider.notifier).refresh()
 // Widget accepts VoidCallback? onStatusChanged and forwards to card
 ```
 
-## 2. Data Flow Contract
+## Data Flow Contract
 
 Every feature must follow this exact flow. No shortcuts.
 
@@ -113,7 +127,7 @@ SupabaseService (core/network, wraps Supabase client)
 Supabase (database + RLS enforces access)
 ```
 
-## 3. Folder Structure
+## Folder Structure
 Every file must live inside this exact structure. Never create folders
 outside it. Never place business logic in presentation. Never place
 Supabase calls in widgets.
@@ -163,9 +177,9 @@ lib/
   `dart run build_runner build --delete-conflicting-outputs`
 
 ## Data Sources
-- **Schema Docs (agent-readable):** `docs/database-schema.md` — full DB reference (tables, columns, enums, RLS, functions, business rules, model mapping)
+- **Schema Docs (agent-readable):** `docs/database-schema.md` — full DB reference (tables, columns, enums, indexes, functions, triggers, RLS summary)
 - **Schema DDL (recreation):** `supabase/full_schema.sql` — run this to recreate the DB schema from scratch
-- **Migrations:** `supabase/migrations/` — incremental changes (not comprehensive)
+- **Migrations:** `supabase/migrations/` — incremental changes; `full_schema.sql` stays in sync with them
 
 ## Design Reference
 Target aesthetic: Medics Medical App UI Kit vibe.
@@ -185,7 +199,7 @@ Target aesthetic: Medics Medical App UI Kit vibe.
 - Never ask for confirmation on read operations
 
 ## Active Technical Debt & Deferred Tasks
-- **Auth Brand Component Extraction**: Reusable `ClinicBrandMark` widget layout is currently duplicated in `splash_screen.dart`, `login_screen.dart`, and `register_screen.dart`. Should be refactored into a single shared widget in `lib/shared/widgets/clinic_brand_mark.dart`.
 - **Forgot Password Flow**: Secure and free password recovery is supported by the Supabase backend (`resetPasswordForEmail`), but the frontend views (Forgot/Reset screens and routing) are deferred.
 - **Progressive Onboarding**: The registration form has 6+ fields and should eventually be broken into a 2-step wizard (identity details → credentials) to minimize form fatigue.
 - **Clinic Package Settings Product Definition**: The existing Clinic Settings management UI is intentionally unrouted. Before reconnecting it, define who may change packages, how changes affect existing balances and payments, what audit/version history is required, and the final admin UX. The `clinic_settings` data and payment package-reading flow remain active.
+- **Staff Feature Domain Layer**: `lib/features/staff/` currently has only `data/` and `presentation/`; extract its repository interface and models into a `domain/` layer to match every other feature.

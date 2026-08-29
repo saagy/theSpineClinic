@@ -138,62 +138,20 @@ class AuthRepositoryImpl implements AuthRepository {
     ClinicLocation? branch,
   }) async {
     try {
-      debugPrint('REGISTER: Starting signup for $email as ${role.dbValue}');
-      final response = await _service.signUpWithEmail(
-        email: email,
-        password: password,
-      );
-
-      final String? userId = response.user?.id;
-      debugPrint('REGISTER: signUp returned userId=$userId');
-      debugPrint(
-        'REGISTER: session exists=${response.session != null}',
-      );
-
-      if (userId == null) {
-        return const Result.failure(
-          AuthException(
-            code: 'auth/registration-failed',
-            message: 'Sign-up succeeded but no user ID was returned.',
-          ),
-        );
-      }
-
-      if (!_service.isAuthenticated) {
-        debugPrint(
-          'REGISTER: No session after signup — email confirmation '
-          'may be enabled in Supabase. Cannot insert staff row.',
-        );
-        return const Result.failure(
-          AuthException(
-            code: 'auth/no-session-after-signup',
-            message:
-                'Registration created but email confirmation is required. '
-                'Please ask your administrator to disable email confirmation '
-                'in the Supabase Dashboard, or confirm your email first.',
-            userMessageKey: 'error_auth_email_not_confirmed',
-          ),
-        );
-      }
-
-      debugPrint('REGISTER: Inserting staff row for $userId');
-      final Map<String, Object?> staffData = {
-        'user_id': userId,
-        'full_name': fullName,
-        'email': email,
-        'phone': phone,
-        'role': role.dbValue,
-        'is_active': false,
-      };
-      if (branch != null) staffData['branch'] = branch.dbValue;
-
+      debugPrint('REGISTER: Starting atomic registration for $email as ${role.dbValue}');
       await _service.guardQuery(
-        () => _service.from(_staffTable).insert(staffData),
+        () => _service.rpc(
+          'register_doctor_application',
+          params: {
+            'p_email': email,
+            'p_password': password,
+            'p_full_name': fullName,
+            'p_phone': phone,
+            'p_role': role.dbValue,
+            'p_branch': branch?.dbValue,
+          },
+        ),
       );
-
-      debugPrint('REGISTER: Staff row inserted, signing out');
-      await _service.signOut();
-
       debugPrint('REGISTER: Registration complete');
       return const Result.success(null);
     } on AppException catch (error) {
@@ -229,15 +187,6 @@ class AuthRepositoryImpl implements AuthRepository {
     String? newPassword,
   }) async {
     try {
-      await _service.guardQuery(
-        () => _service.from(_staffTable).update({
-          'full_name': staff.fullName,
-          'email': staff.email,
-          'phone': staff.phone,
-          'branch': staff.branch?.dbValue,
-        }).eq('id', staff.id),
-      );
-
       if (newPassword != null && newPassword.isNotEmpty) {
         // Self password change — use Supabase Auth API directly.
         // The RPC requires super_admin; the Auth API lets any
@@ -256,6 +205,15 @@ class AuthRepositoryImpl implements AuthRepository {
           );
         }
       }
+
+      await _service.guardQuery(
+        () => _service.from(_staffTable).update({
+          'full_name': staff.fullName,
+          'email': staff.email,
+          'phone': staff.phone,
+          'branch': staff.branch?.dbValue,
+        }).eq('id', staff.id),
+      );
 
       return const Result.success(null);
     } on AppException catch (error) {
