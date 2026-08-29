@@ -12,12 +12,12 @@ import 'package:spine_clinic_app/core/constants/app_text_styles.dart';
 import 'package:spine_clinic_app/core/errors/app_exception.dart';
 import 'package:spine_clinic_app/features/auth/presentation/auth_providers.dart';
 import 'package:spine_clinic_app/features/patient/domain/patient.dart';
+import 'package:spine_clinic_app/features/patient/presentation/widgets/patient_payments_skeleton.dart';
 import 'package:spine_clinic_app/features/patient/presentation/widgets/payment_row.dart';
 import 'package:spine_clinic_app/features/patient/presentation/widgets/payment_summary_header.dart';
 import 'package:spine_clinic_app/features/payments/presentation/record_payment_controller.dart';
 import 'package:spine_clinic_app/shared/widgets/empty_state.dart';
 import 'package:spine_clinic_app/shared/widgets/error_view.dart';
-import 'package:spine_clinic_app/shared/widgets/skeleton_loader.dart';
 
 class PatientTabPayments extends ConsumerWidget {
   const PatientTabPayments({super.key, required this.patient});
@@ -33,10 +33,7 @@ class PatientTabPayments extends ConsumerWidget {
     final Widget content = asyncPayments.when(
       loading: () => const KeyedSubtree(
         key: ValueKey('payments_loading'),
-        child: Padding(
-          padding: EdgeInsets.all(AppSizes.p16),
-          child: SkeletonTileList(count: 4),
-        ),
+        child: PatientPaymentsSkeleton(),
       ),
       error: (error, _) => KeyedSubtree(
         key: const ValueKey('payments_error'),

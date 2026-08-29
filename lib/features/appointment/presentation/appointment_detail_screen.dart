@@ -6,7 +6,6 @@ library;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:spine_clinic_app/core/constants/app_sizes.dart';
 import 'package:spine_clinic_app/core/constants/app_strings.dart';
 import 'package:spine_clinic_app/core/constants/app_text_styles.dart';
 import 'package:spine_clinic_app/core/errors/app_exception.dart';
@@ -18,9 +17,9 @@ import 'package:spine_clinic_app/features/appointment/presentation/widgets/appoi
 import 'package:spine_clinic_app/features/appointment/presentation/widgets/detail_overflow_button.dart';
 import 'package:spine_clinic_app/features/auth/domain/user_role.dart';
 import 'package:spine_clinic_app/features/auth/presentation/auth_providers.dart';
+import 'package:spine_clinic_app/features/appointment/presentation/widgets/appointment_detail_skeleton.dart';
 import 'package:spine_clinic_app/shared/widgets/app_back_button.dart';
 import 'package:spine_clinic_app/shared/widgets/error_view.dart';
-import 'package:spine_clinic_app/shared/widgets/skeleton_loader.dart';
 
 /// Screen displaying the full detail view for a single appointment.
 class AppointmentDetailScreen extends ConsumerStatefulWidget {
@@ -134,10 +133,7 @@ class _AppointmentDetailScreenState
         ],
       ),
       body: detailAsync.when(
-        loading: () => const Padding(
-          padding: EdgeInsets.all(AppSizes.p16),
-          child: SkeletonTileList(count: 5),
-        ),
+        loading: () => const AppointmentDetailSkeleton(),
         error: (Object error, StackTrace stack) => ErrorView(
           exception: error is AppException
               ? error

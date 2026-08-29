@@ -22,7 +22,7 @@ import 'package:spine_clinic_app/shared/widgets/app_button.dart';
 import 'package:spine_clinic_app/shared/widgets/app_snackbar.dart';
 import 'package:spine_clinic_app/shared/widgets/empty_state.dart';
 import 'package:spine_clinic_app/shared/widgets/error_view.dart';
-import 'package:spine_clinic_app/shared/widgets/skeleton_loader.dart';
+import 'package:spine_clinic_app/features/patient/presentation/widgets/patient_documents_skeleton.dart';
 
 class PatientTabDocuments extends ConsumerStatefulWidget {
   const PatientTabDocuments({super.key, required this.patient});
@@ -107,7 +107,7 @@ class _PatientTabDocumentsState extends ConsumerState<PatientTabDocuments> {
               patientDocumentsNotifierProvider(widget.patient.id),
             ),
             child: documentsAsync.when(
-              loading: () => const SkeletonTileList(count: 4),
+              loading: () => const PatientDocumentsSkeleton(),
               error: (err, _) => ListView(
                 physics: const AlwaysScrollableScrollPhysics(),
                 children: [
