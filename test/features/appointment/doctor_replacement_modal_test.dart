@@ -57,6 +57,10 @@ void main() {
       ProviderScope(
         overrides: [
           appointmentRepositoryProvider.overrideWithValue(fakeRepo),
+          activeDoctorsProvider.overrideWith((ref) => [
+            _doctor('replacement', 'Dr Replacement'),
+            _doctor('absent', 'Dr Absent'),
+          ]),
           allDoctorsForFilterProvider.overrideWith((ref) => [
             _doctor('replacement', 'Dr Replacement'),
             _doctor('absent', 'Dr Absent'),
@@ -84,11 +88,7 @@ void main() {
     await tester.tap(find.text(AppStrings.selectReplacementDoctors));
     await tester.pumpAndSettle();
 
-    // Focus the textfield to show results
-    await tester.tap(find.byType(TextField));
-    await tester.pumpAndSettle();
-
-    // Select Dr Replacement
+    // Select Dr Replacement directly in the picker sheet
     await tester.tap(find.text('Dr Replacement'));
     await tester.pumpAndSettle();
 

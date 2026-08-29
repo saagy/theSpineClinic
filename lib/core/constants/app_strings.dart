@@ -727,8 +727,9 @@ abstract final class AppStrings {
   static const String noStaffAssignedToSession =
       'No staff assigned to this session.';
 
-  // ── Doctor Overlay ──
+  // ── Doctor Overlay & Picker ──
   static const String selectDoctors = 'Select Doctors';
+  static const String chooseDoctor = 'Choose Doctor';
   static const String searchDoctorsHint = 'Search doctors…';
   static const String searchAndAssignDoctors = 'Search & Assign Doctors';
   static const String typeDoctorName = 'Type doctor name...';
@@ -738,6 +739,12 @@ abstract final class AppStrings {
       'At least one doctor is required.';
   static const String unableToLoadDoctors =
       'Unable to load doctors — tap refresh icon to retry';
+  static const String tapToSelectDoctors = 'Tap to select doctors';
+  static const String changeDoctor = 'Change Doctor';
+  static const String addDoctor = 'Add Doctor';
+  static const String done = 'Done';
+  static String selectedCount(int count) => '$count selected';
+  static String assignedCount(int count) => '$count assigned';
 
   // ── Patient Tabs ──
   static const String usePackageBalance = 'Use Package Balance';

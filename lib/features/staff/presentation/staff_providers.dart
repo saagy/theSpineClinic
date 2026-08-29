@@ -19,6 +19,8 @@ import 'package:spine_clinic_app/features/auth/presentation/auth_providers.dart'
 import 'package:spine_clinic_app/features/patient/domain/patient.dart';
 import 'package:spine_clinic_app/features/staff/data/staff_repository.dart';
 
+import 'package:spine_clinic_app/features/staff/presentation/widgets/staff_account_status.dart';
+
 part 'staff_providers.g.dart';
 
 /// Provides a singleton [StaffRepository] instance.
@@ -38,7 +40,7 @@ Future<List<Staff>> activeDoctors(Ref ref) async {
   );
 }
 
-/// Fetches all doctors regardless of active status.
+/// Fetches all approved doctors (both active and deactivated, excluding pending applications).
 ///
 /// Used by filter/search dropdowns (PatientListFilters, UnifiedFilterSheet)
 /// where users need to filter by historical records tied to deactivated staff.
@@ -50,8 +52,9 @@ Future<List<Staff>> allDoctorsForFilter(Ref ref) async {
   final StaffRepository repo = ref.read(staffRepositoryProvider);
   final Result<List<Staff>> result = await repo.getAllStaff();
   return result.when(
-    success: (List<Staff> data) =>
-        data.where((s) => s.role == UserRole.doctor).toList(),
+    success: (List<Staff> data) => data
+        .where((s) => s.role == UserRole.doctor && !s.isPendingApplication)
+        .toList(),
     failure: (AppException exception) => throw exception,
   );
 }

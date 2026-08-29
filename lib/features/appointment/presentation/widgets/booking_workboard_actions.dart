@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:spine_clinic_app/core/constants/app_sizes.dart';
 import 'package:spine_clinic_app/core/constants/app_strings.dart';
 import 'package:spine_clinic_app/core/errors/result.dart';
 import 'package:spine_clinic_app/core/network/app_routes.dart';
@@ -12,10 +11,9 @@ import 'package:spine_clinic_app/features/appointment/presentation/booking_workb
 import 'package:spine_clinic_app/features/appointment/presentation/doctor_replacement_args.dart';
 import 'package:spine_clinic_app/features/auth/domain/staff.dart';
 import 'package:spine_clinic_app/features/patient/domain/patient.dart';
-import 'package:spine_clinic_app/shared/widgets/app_bottom_sheet.dart';
 import 'package:spine_clinic_app/shared/widgets/app_snackbar.dart';
 import 'package:spine_clinic_app/shared/widgets/confirmation_dialog.dart';
-import 'package:spine_clinic_app/shared/widgets/unified_filter_sheet.dart';
+import 'package:spine_clinic_app/shared/widgets/doctor_picker_sheet.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 abstract final class BookingWorkboardActions {
@@ -40,24 +38,15 @@ abstract final class BookingWorkboardActions {
     BuildContext context,
     WidgetRef ref,
     BookingWorkboardState state,
-  ) {
-    return AppBottomSheet.show<void>(
+  ) async {
+    final picked = await DoctorPickerSheet.showSingle(
       context: context,
-      title: AppStrings.filters,
-      initialChildSize: AppSizes.sheetMax,
-      builder: (sheetContext, scrollController) => UnifiedFilterSheet(
-        initialDoctorId: state.doctorId,
-        initialClinic: null,
-        showBranchFilter: false,
-        scrollController: scrollController,
-        onApplied: (doctorId, _) {
-          ref.read(bookingWorkboardProvider.notifier).setDoctorFilter(doctorId);
-          Navigator.of(sheetContext).pop();
-        },
-        onReset: () =>
-            ref.read(bookingWorkboardProvider.notifier).setDoctorFilter(null),
-      ),
+      selectedDoctorId: state.doctorId,
+      showAllOption: true,
+      showDeactivated: true,
+      title: AppStrings.filterByDoctor,
     );
+    ref.read(bookingWorkboardProvider.notifier).setDoctorFilter(picked?.id);
   }
 
   static Future<void> call(BuildContext context, Patient patient) async {

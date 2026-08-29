@@ -22,14 +22,12 @@ import 'package:spine_clinic_app/core/network/app_routes.dart';
 import 'package:spine_clinic_app/features/auth/domain/staff.dart';
 import 'package:spine_clinic_app/features/auth/domain/user_role.dart';
 import 'package:spine_clinic_app/features/auth/presentation/auth_providers.dart';
-import 'package:spine_clinic_app/features/patient/domain/clinic_location.dart';
 import 'package:spine_clinic_app/features/patient/domain/patient.dart';
 import 'package:spine_clinic_app/features/patient/presentation/patient_list_providers.dart';
 import 'package:spine_clinic_app/features/patient/presentation/patient_providers.dart';
-import 'package:spine_clinic_app/shared/widgets/app_bottom_sheet.dart';
 import 'package:spine_clinic_app/shared/widgets/app_search_bar.dart';
 import 'package:spine_clinic_app/shared/widgets/app_snackbar.dart';
-import 'package:spine_clinic_app/shared/widgets/unified_filter_sheet.dart';
+import 'package:spine_clinic_app/shared/widgets/doctor_picker_sheet.dart';
 import 'package:spine_clinic_app/shared/widgets/empty_state.dart';
 import 'package:spine_clinic_app/shared/widgets/error_view.dart';
 import 'package:spine_clinic_app/shared/widgets/sort_filter_bar.dart';
@@ -360,32 +358,16 @@ class _PatientListScreenState extends ConsumerState<PatientListScreen> {
     );
   }
 
-  void _showPatientFilterSheet() {
+  Future<void> _showPatientFilterSheet() async {
     final notifier = ref.read(patientListProvider.notifier);
-
-    AppBottomSheet.show(
+    final picked = await DoctorPickerSheet.showSingle(
       context: context,
-      title: AppStrings.filters,
-      initialChildSize: AppSizes.sheetMax,
-      builder: (context, scrollController) => UnifiedFilterSheet(
-        initialDoctorId: notifier.currentDoctorFilter,
-        initialClinic: notifier.currentClinicFilter,
-        scrollController: scrollController,
-        onApplied: (String? doctorId, ClinicLocation? clinic) {
-          if (doctorId != notifier.currentDoctorFilter) {
-            notifier.setDoctorFilter(doctorId);
-          }
-          if (clinic != notifier.currentClinicFilter) {
-            notifier.setClinicFilter(clinic);
-          }
-          Navigator.of(context).pop();
-        },
-        onReset: () {
-          notifier.setDoctorFilter(null);
-          notifier.setClinicFilter(null);
-        },
-      ),
+      selectedDoctorId: notifier.currentDoctorFilter,
+      showAllOption: true,
+      showDeactivated: true,
+      title: AppStrings.filterByDoctor,
     );
+    notifier.setDoctorFilter(picked?.id);
   }
 
   List<ActiveFilterChip> get _activeChips {

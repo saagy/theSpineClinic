@@ -3,14 +3,14 @@ import 'package:flutter/services.dart';
 import 'package:spine_clinic_app/core/constants/app_sizes.dart';
 import 'package:spine_clinic_app/core/constants/app_text_styles.dart';
 
-/// Standard bottom sheet shell with shared chrome and wide-screen restraint.
+/// Standard bottom sheet shell with shared chrome, draggable resizing, and wide-screen restraint.
 class AppBottomSheet extends StatelessWidget {
   const AppBottomSheet({
     super.key,
     required this.title,
     required this.builder,
     this.initialChildSize = 0.75,
-    this.minChildSize = 0.5,
+    this.minChildSize = 0.4,
     this.maxChildSize = AppSizes.sheetMax,
     this.maxWidth = AppSizes.profileLayoutMaxWidth,
   });
@@ -28,7 +28,7 @@ class AppBottomSheet extends StatelessWidget {
     required Widget Function(BuildContext, ScrollController) builder,
     bool isScrollControlled = true,
     double initialChildSize = 0.75,
-    double minChildSize = 0.5,
+    double minChildSize = 0.4,
     double maxChildSize = AppSizes.sheetMax,
     double maxWidth = AppSizes.profileLayoutMaxWidth,
   }) {
@@ -78,7 +78,7 @@ class AppBottomSheet extends StatelessWidget {
   }
 }
 
-class _BottomSheetFrame extends StatelessWidget {
+class _BottomSheetFrame extends StatefulWidget {
   const _BottomSheetFrame({
     required this.title,
     required this.builder,
@@ -96,23 +96,60 @@ class _BottomSheetFrame extends StatelessWidget {
   final double maxWidth;
 
   @override
+  State<_BottomSheetFrame> createState() => _BottomSheetFrameState();
+}
+
+class _BottomSheetFrameState extends State<_BottomSheetFrame> {
+  final DraggableScrollableController _sheetController =
+      DraggableScrollableController();
+
+  @override
+  void dispose() {
+    _sheetController.dispose();
+    super.dispose();
+  }
+
+  void _onDragUpdate(DragUpdateDetails details) {
+    final double screenHeight = MediaQuery.sizeOf(context).height;
+    if (screenHeight > 0 && _sheetController.isAttached) {
+      final double deltaFraction = -details.primaryDelta! / screenHeight;
+      final double targetSize = (_sheetController.size + deltaFraction).clamp(
+        widget.minChildSize,
+        widget.maxChildSize,
+      );
+      _sheetController.jumpTo(targetSize);
+    }
+  }
+
+  void _onDragEnd(DragEndDetails details) {
+    if (!_sheetController.isAttached) return;
+    final double velocity = details.primaryVelocity ?? 0;
+    if (velocity > 800 || _sheetController.size <= widget.minChildSize + 0.05) {
+      Navigator.of(context).maybePop();
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
     final ColorScheme cs = Theme.of(context).colorScheme;
     final double bottomInset = MediaQuery.viewInsetsOf(context).bottom;
     final bool keyboardVisible = bottomInset > 0;
+
     return Padding(
       padding: EdgeInsets.only(bottom: bottomInset),
       child: DraggableScrollableSheet(
-        key: ValueKey<bool>(keyboardVisible),
-        initialChildSize: keyboardVisible ? maxChildSize : initialChildSize,
-        minChildSize: minChildSize,
-        maxChildSize: maxChildSize,
+        controller: _sheetController,
+        initialChildSize: keyboardVisible
+            ? widget.maxChildSize
+            : widget.initialChildSize,
+        minChildSize: widget.minChildSize,
+        maxChildSize: widget.maxChildSize,
         expand: false,
         builder: (context, scrollController) {
           return Align(
             alignment: Alignment.bottomCenter,
             child: ConstrainedBox(
-              constraints: BoxConstraints(maxWidth: maxWidth),
+              constraints: BoxConstraints(maxWidth: widget.maxWidth),
               child: Container(
                 decoration: BoxDecoration(
                   color: cs.surface,
@@ -126,12 +163,23 @@ class _BottomSheetFrame extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      const SizedBox(height: AppSizes.p8),
-                      _Handle(color: cs.outlineVariant),
-                      const SizedBox(height: AppSizes.p8),
-                      _Header(title: title),
-                      const SizedBox(height: AppSizes.p12),
-                      Expanded(child: builder(context, scrollController)),
+                      GestureDetector(
+                        behavior: HitTestBehavior.opaque,
+                        onVerticalDragUpdate: _onDragUpdate,
+                        onVerticalDragEnd: _onDragEnd,
+                        child: Column(
+                          children: [
+                            const SizedBox(height: AppSizes.p8),
+                            _Handle(color: cs.outlineVariant),
+                            const SizedBox(height: AppSizes.p8),
+                            _Header(title: widget.title),
+                            const SizedBox(height: AppSizes.p8),
+                          ],
+                        ),
+                      ),
+                      Expanded(
+                        child: widget.builder(context, scrollController),
+                      ),
                     ],
                   ),
                 ),

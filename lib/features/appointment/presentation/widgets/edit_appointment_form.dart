@@ -18,7 +18,7 @@ import 'package:spine_clinic_app/features/appointment/presentation/edit_appointm
 import 'package:spine_clinic_app/features/appointment/presentation/widgets/booking_form_fields.dart';
 import 'package:spine_clinic_app/features/auth/domain/staff.dart';
 import 'package:spine_clinic_app/features/patient/domain/patient.dart';
-import 'package:spine_clinic_app/features/staff/presentation/widgets/app_doctor_multi_select_field.dart';
+import 'package:spine_clinic_app/shared/widgets/doctor_select_field.dart';
 import 'package:spine_clinic_app/shared/widgets/app_button.dart';
 import 'package:spine_clinic_app/shared/widgets/app_snackbar.dart';
 import 'package:spine_clinic_app/shared/widgets/loading_overlay.dart';
@@ -234,7 +234,7 @@ class _EditAppointmentFormState extends ConsumerState<EditAppointmentForm> {
                           style: AppTextStyles.captionMedium.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
                         ),
                         const SizedBox(height: AppSizes.p12),
-                        AppDoctorMultiSelectField(
+                        DoctorSelectField(
                           key: _doctorFieldKey,
                           initialValue: widget.initialDoctors,
                           enabled: true,

@@ -12,7 +12,7 @@ import 'package:spine_clinic_app/features/patient/domain/clinic_location.dart';
 import 'package:spine_clinic_app/features/patient/domain/patient.dart';
 import 'package:spine_clinic_app/features/patient/presentation/edit_patient_controller.dart';
 import 'package:spine_clinic_app/features/patient/presentation/widgets/patient_demographic_fields.dart';
-import 'package:spine_clinic_app/features/staff/presentation/widgets/app_doctor_multi_select_field.dart';
+import 'package:spine_clinic_app/shared/widgets/doctor_select_field.dart';
 import 'package:spine_clinic_app/shared/widgets/app_button.dart';
 import 'package:spine_clinic_app/shared/widgets/app_chip.dart';
 import 'package:spine_clinic_app/shared/widgets/app_snackbar.dart';
@@ -191,7 +191,7 @@ class _EditPatientFormState extends ConsumerState<EditPatientForm> {
                                 .map((doc) => AppChip(label: doc.fullName))
                                 .toList(),
                           )
-                        : AppDoctorMultiSelectField(
+                        : DoctorSelectField(
                             initialValue: _selectedDoctors,
                             onSavedDoctors: (doctors) => setState(() {
                               final copy = List<Staff>.from(doctors);

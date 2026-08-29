@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:spine_clinic_app/core/constants/app_sizes.dart';
 import 'package:spine_clinic_app/core/constants/app_strings.dart';
 import 'package:spine_clinic_app/core/errors/result.dart';
 import 'package:spine_clinic_app/core/network/app_routes.dart';
@@ -13,9 +12,8 @@ import 'package:spine_clinic_app/features/appointment/presentation/receptionist_
 import 'package:spine_clinic_app/features/appointment/presentation/widgets/replacement_day_picker_sheet.dart';
 import 'package:spine_clinic_app/features/auth/domain/staff.dart';
 import 'package:spine_clinic_app/features/staff/presentation/staff_providers.dart';
-import 'package:spine_clinic_app/shared/widgets/app_bottom_sheet.dart';
 import 'package:spine_clinic_app/shared/widgets/app_snackbar.dart';
-import 'package:spine_clinic_app/shared/widgets/unified_filter_sheet.dart';
+import 'package:spine_clinic_app/shared/widgets/doctor_picker_sheet.dart';
 
 abstract final class ReceptionistTodayActions {
   static Future<void> showFilter(
@@ -26,23 +24,14 @@ abstract final class ReceptionistTodayActions {
     final ReceptionistAppointmentsNotifier notifier = ref.read(
       receptionistAppointmentsProvider.notifier,
     );
-    await AppBottomSheet.show<void>(
+    final picked = await DoctorPickerSheet.showSingle(
       context: context,
-      title: AppStrings.filters,
-      initialChildSize: AppSizes.sheetMax,
-      builder: (BuildContext sheetContext, ScrollController controller) =>
-          UnifiedFilterSheet(
-            initialDoctorId: state.filterDoctorId,
-            initialClinic: null,
-            showBranchFilter: false,
-            scrollController: controller,
-            onApplied: (String? doctorId, _) {
-              notifier.setDoctorFilter(doctorId);
-              Navigator.of(sheetContext).pop();
-            },
-            onReset: () => notifier.setDoctorFilter(null),
-          ),
+      selectedDoctorId: state.filterDoctorId,
+      showAllOption: true,
+      showDeactivated: true,
+      title: AppStrings.filterByDoctor,
     );
+    notifier.setDoctorFilter(picked?.id);
   }
 
   static Future<void> replaceDoctor(
@@ -50,31 +39,12 @@ abstract final class ReceptionistTodayActions {
     WidgetRef ref,
     ReceptionistAppointmentsState state,
   ) async {
-    String? chosenDoctorId;
-    await AppBottomSheet.show<void>(
+    final absentDoctor = await DoctorPickerSheet.showSingle(
       context: context,
       title: AppStrings.selectAbsentDoctor,
-      builder: (BuildContext sheetContext, ScrollController controller) =>
-          UnifiedFilterSheet(
-            initialDoctorId: null,
-            initialClinic: null,
-            showBranchFilter: false,
-            showActions: false,
-            scrollController: controller,
-            onApplied: (String? doctorId, _) {
-              chosenDoctorId = doctorId;
-              Navigator.of(sheetContext).pop();
-            },
-          ),
+      showAllOption: false,
+      showDeactivated: true,
     );
-    if (chosenDoctorId == null || !context.mounted) return;
-
-    final List<Staff> doctors = await ref.read(
-      allDoctorsForFilterProvider.future,
-    );
-    final Staff? absentDoctor = doctors
-        .where((Staff doctor) => doctor.id == chosenDoctorId)
-        .firstOrNull;
     if (absentDoctor == null || !context.mounted) return;
 
     final DateTime? chosenDay = await ReplacementDayPickerSheet.show(
@@ -112,6 +82,9 @@ abstract final class ReceptionistTodayActions {
           );
           return;
         }
+        final List<Staff> doctors =
+            (await ref.read(activeDoctorsProvider.future));
+        if (!context.mounted) return;
         final bool? success = await context.push<bool>(
           AppRoutes.doctorReplacementLocation(
             absentDoctorId: absentDoctor.id,

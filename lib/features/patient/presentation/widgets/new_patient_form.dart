@@ -17,7 +17,7 @@ import 'package:spine_clinic_app/features/patient/domain/clinic_location.dart';
 import 'package:spine_clinic_app/features/patient/domain/patient.dart';
 import 'package:spine_clinic_app/features/patient/presentation/new_patient_controller.dart';
 import 'package:spine_clinic_app/features/patient/presentation/widgets/patient_form_fields.dart';
-import 'package:spine_clinic_app/features/staff/presentation/widgets/app_doctor_multi_select_field.dart';
+import 'package:spine_clinic_app/shared/widgets/doctor_select_field.dart';
 import 'package:spine_clinic_app/shared/widgets/app_button.dart';
 import 'package:spine_clinic_app/shared/widgets/app_snackbar.dart';
 import 'package:spine_clinic_app/shared/widgets/confirmation_dialog.dart';
@@ -231,7 +231,7 @@ class _NewPatientFormState extends ConsumerState<NewPatientForm> {
                 return null;
               },
               builder: (state) {
-                return AppDoctorMultiSelectField(
+                return DoctorSelectField(
                   initialValue: List<Staff>.from(state.value ?? []),
                   onSavedDoctors: (doctors) => state.didChange(doctors),
                   onChanged: (doctors) => state.didChange(doctors),

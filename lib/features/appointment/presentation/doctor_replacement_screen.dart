@@ -11,12 +11,11 @@ import 'package:spine_clinic_app/features/appointment/presentation/widgets/docto
 import 'package:spine_clinic_app/features/appointment/presentation/widgets/doctor_replacement_loader.dart';
 import 'package:spine_clinic_app/features/auth/domain/staff.dart';
 import 'package:spine_clinic_app/shared/widgets/app_back_button.dart';
-import 'package:spine_clinic_app/shared/widgets/app_bottom_sheet.dart';
 import 'package:spine_clinic_app/shared/widgets/app_snackbar.dart';
+import 'package:spine_clinic_app/shared/widgets/doctor_picker_sheet.dart';
 import 'package:spine_clinic_app/shared/widgets/empty_state.dart';
 import 'package:spine_clinic_app/shared/widgets/error_view.dart';
 import 'package:spine_clinic_app/shared/widgets/skeleton_loader.dart';
-import 'package:spine_clinic_app/shared/widgets/unified_filter_sheet.dart';
 
 /// Screen for bulk reassigning an absent doctor's appointments to a replacement.
 class DoctorReplacementScreen extends ConsumerStatefulWidget {
@@ -39,7 +38,6 @@ class DoctorReplacementScreen extends ConsumerStatefulWidget {
 class _DoctorReplacementScreenState
     extends ConsumerState<DoctorReplacementScreen> {
   Staff? _absentDoctor;
-  List<Staff> _availableDoctors = const [];
   List<AppointmentWithPatient> _appointments = const [];
   DateTime _day = DateTime.now();
   final Set<String> _appointmentIds = {};
@@ -60,7 +58,6 @@ class _DoctorReplacementScreenState
 
   void _initArgs(DoctorReplacementArgs args) {
     _absentDoctor = args.absentDoctor;
-    _availableDoctors = args.availableDoctors;
     _appointments = args.appointments;
     _day = args.day;
     _appointmentIds.addAll(args.appointments.map((a) => a.appointment.id));
@@ -85,29 +82,17 @@ class _DoctorReplacementScreenState
   }
 
   Future<void> _chooseDoctors() async {
-    String? chosenDoctorId;
-    await AppBottomSheet.show<void>(
+    final doctor = await DoctorPickerSheet.showSingle(
       context: context,
+      selectedDoctorId: _selectedDoctor?.id,
       title: AppStrings.selectReplacementDoctors,
-      builder: (sheetContext, scrollController) => UnifiedFilterSheet(
-        initialDoctorId: _selectedDoctor?.id,
-        initialClinic: null,
-        showBranchFilter: false,
-        showActions: false,
-        showDeactivated: false,
-        excludeDoctorIds: [_absentDoctor?.id ?? ''],
-        scrollController: scrollController,
-        onApplied: (doctorId, _) {
-          chosenDoctorId = doctorId;
-          Navigator.of(sheetContext).pop();
-        },
-      ),
+      showAllOption: false,
+      showDeactivated: false,
+      excludeDoctorIds: [_absentDoctor?.id ?? ''],
     );
-    if (chosenDoctorId == null || !mounted) return;
-    final doctor = _availableDoctors
-        .where((d) => d.id == chosenDoctorId)
-        .firstOrNull;
-    if (doctor != null) setState(() => _selectedDoctor = doctor);
+    if (doctor != null && mounted) {
+      setState(() => _selectedDoctor = doctor);
+    }
   }
 
   Future<void> _submit() async {

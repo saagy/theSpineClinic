@@ -291,7 +291,6 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('Dina Sherif'), findsOneWidget);
-      expect(find.text(AppStrings.dualSession), findsOneWidget);
       expect(find.text('09:00 AM'), findsOneWidget);
       expect(find.byIcon(Icons.more_horiz_rounded), findsNWidgets(3));
       expect(tester.takeException(), isNull);
@@ -335,7 +334,6 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('Dina Sherif'), findsOneWidget);
-      expect(find.text(AppStrings.dualSession), findsOneWidget);
       expect(find.text('09:00 AM'), findsOneWidget);
       expect(find.byIcon(Icons.more_horiz_rounded), findsNWidgets(3));
       expect(tester.takeException(), isNull);

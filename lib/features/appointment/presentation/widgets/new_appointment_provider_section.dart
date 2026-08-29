@@ -47,7 +47,7 @@ extension _NewAppointmentProviderSection on _NewAppointmentFormState {
             ),
             const SizedBox(height: AppSizes.p8),
           ],
-          AppDoctorMultiSelectField(
+          DoctorSelectField(
             key: _doctorFieldKey,
             initialValue: const [],
             enabled: _doctorFieldEnabled,

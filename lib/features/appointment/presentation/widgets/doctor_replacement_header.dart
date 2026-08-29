@@ -5,6 +5,8 @@ import 'package:spine_clinic_app/core/constants/app_strings.dart';
 import 'package:spine_clinic_app/core/constants/app_text_styles.dart';
 import 'package:spine_clinic_app/features/auth/domain/staff.dart';
 
+import 'package:spine_clinic_app/shared/widgets/doctor_filter_tile.dart';
+
 /// Top header section for doctor replacement with date summary,
 /// doctor selector trigger, and selection counter.
 class DoctorReplacementHeader extends StatelessWidget {
@@ -42,14 +44,10 @@ class DoctorReplacementHeader extends StatelessWidget {
             style: AppTextStyles.bodySecondary,
           ),
           const SizedBox(height: AppSizes.p16),
-          OutlinedButton.icon(
-            onPressed: onChooseDoctor,
-            icon: const Icon(Icons.medical_services_outlined),
-            label: Text(
-              selectedDoctor == null
-                  ? AppStrings.selectReplacementDoctors
-                  : selectedDoctor!.fullName,
-            ),
+          DoctorFilterTile(
+            selectedDoctor: selectedDoctor,
+            placeholderText: AppStrings.selectReplacementDoctors,
+            onTap: onChooseDoctor,
           ),
           const SizedBox(height: AppSizes.p16),
           Row(

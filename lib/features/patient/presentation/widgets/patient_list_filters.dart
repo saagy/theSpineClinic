@@ -1,17 +1,17 @@
-/// Filter bar widget for the patient list screen with searchable doctor filter.
+/// Filter bar widget for the patient list screen with unified doctor picker.
 library;
 
 import 'package:flutter/material.dart';
-import 'package:spine_clinic_app/core/constants/clinic_colors.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-
 import 'package:spine_clinic_app/core/constants/app_sizes.dart';
 import 'package:spine_clinic_app/core/constants/app_strings.dart';
 import 'package:spine_clinic_app/core/constants/app_text_styles.dart';
+import 'package:spine_clinic_app/core/constants/clinic_colors.dart';
 import 'package:spine_clinic_app/features/auth/domain/staff.dart';
 import 'package:spine_clinic_app/features/patient/domain/clinic_location.dart';
 import 'package:spine_clinic_app/features/patient/presentation/patient_list_providers.dart';
 import 'package:spine_clinic_app/features/staff/presentation/staff_providers.dart';
+import 'package:spine_clinic_app/shared/widgets/doctor_picker_sheet.dart';
 
 /// Renders doctor and branch filter controls for the patient list.
 class PatientListFilters extends ConsumerWidget {
@@ -19,20 +19,25 @@ class PatientListFilters extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    ref.watch(patientListProvider);
+    final selectedDoctorId = ref.read(patientListProvider.notifier).currentDoctorFilter;
     final doctorsAsync = ref.watch(allDoctorsForFilterProvider);
+
+    Staff? selectedDoctor;
+    if (selectedDoctorId != null && doctorsAsync.hasValue) {
+      selectedDoctor = doctorsAsync.value!
+          .where((d) => d.id == selectedDoctorId)
+          .firstOrNull;
+    }
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: AppSizes.p16),
       child: Row(
         children: [
           Expanded(
-            child: doctorsAsync.when(
-              loading: () => const SizedBox(
-                height: AppSizes.inputHeight,
-                child: Center(child: CircularProgressIndicator(strokeWidth: AppSizes.strokeWidthThin)),
-              ),
-              error: (_, __) => const SizedBox.shrink(),
-              data: (List<Staff> doctors) => _SearchableDoctorFilter(doctors: doctors),
+            child: _DoctorFilterTrigger(
+              selectedDoctor: selectedDoctor,
+              selectedDoctorId: selectedDoctorId,
             ),
           ),
           const SizedBox(width: AppSizes.p8),
@@ -43,179 +48,88 @@ class PatientListFilters extends ConsumerWidget {
   }
 }
 
-/// Searchable doctor filter using an overlay pattern similar to
-/// [AppDoctorMultiSelectField] but for single-select.
-class _SearchableDoctorFilter extends ConsumerStatefulWidget {
-  const _SearchableDoctorFilter({required this.doctors});
-  final List<Staff> doctors;
+class _DoctorFilterTrigger extends ConsumerWidget {
+  const _DoctorFilterTrigger({
+    required this.selectedDoctor,
+    required this.selectedDoctorId,
+  });
 
-  @override
-  ConsumerState<_SearchableDoctorFilter> createState() => _SearchableDoctorFilterState();
-}
+  final Staff? selectedDoctor;
+  final String? selectedDoctorId;
 
-class _SearchableDoctorFilterState extends ConsumerState<_SearchableDoctorFilter> {
-  final FocusNode _focusNode = FocusNode();
-  final LayerLink _layerLink = LayerLink();
-  final TextEditingController _searchCtrl = TextEditingController();
-  OverlayEntry? _overlayEntry;
-  String _selectedDoctorName = '';
-
-  @override
-  void initState() {
-    super.initState();
-    _focusNode.addListener(_onFocusChange);
+  Future<void> _pickDoctor(BuildContext context, WidgetRef ref) async {
+    final picked = await DoctorPickerSheet.showSingle(
+      context: context,
+      selectedDoctorId: selectedDoctorId,
+      showAllOption: true,
+      showDeactivated: true,
+      title: AppStrings.filterByDoctor,
+    );
+    ref.read(patientListProvider.notifier).setDoctorFilter(picked?.id);
   }
 
   @override
-  void dispose() {
-    _focusNode.removeListener(_onFocusChange);
-    _focusNode.dispose();
-    _searchCtrl.dispose();
-    _hideOverlay();
-    super.dispose();
-  }
+  Widget build(BuildContext context, WidgetRef ref) {
+    final cs = Theme.of(context).colorScheme;
+    final hasDoctor = selectedDoctorId != null;
+    final label = selectedDoctor?.fullName ?? (hasDoctor ? 'Loading...' : AppStrings.allDoctors);
 
-  void _onFocusChange() {
-    if (_focusNode.hasFocus) {
-      _showOverlay();
-    }
-  }
-
-  void _showOverlay() {
-    if (_overlayEntry != null) return;
-    _overlayEntry = _createOverlay();
-    Overlay.of(context).insert(_overlayEntry!);
-  }
-
-  void _hideOverlay() {
-    _overlayEntry?.remove();
-    _overlayEntry = null;
-  }
-
-  OverlayEntry _createOverlay() {
-    return OverlayEntry(
-      builder: (ctx) {
-        final query = _searchCtrl.text.toLowerCase();
-        final filtered = query.isEmpty
-            ? List<Staff>.from(widget.doctors)
-            : widget.doctors.where((d) => d.fullName.toLowerCase().contains(query)).toList();
-        // Active doctors first, deactivated at the end.
-        filtered.sort((a, b) {
-          if (a.isActive == b.isActive) return a.fullName.compareTo(b.fullName);
-          return a.isActive ? -1 : 1;
-        });
-
-        return Positioned(
-          width: _layerLink.leaderSize?.width ?? AppSizes.navDrawerWidth,
-          child: CompositedTransformFollower(
-            link: _layerLink,
-            showWhenUnlinked: false,
-            offset: const Offset(0, AppSizes.overlayDropdownOffset),
-            child: Material(
-              elevation: AppSizes.overlayElevation,
-              borderRadius: BorderRadius.circular(AppSizes.r6),
-              clipBehavior: Clip.antiAlias,
-              child: Container(
-                constraints: const BoxConstraints(maxHeight: AppSizes.navDrawerWidth),
-                color: Theme.of(context).colorScheme.surface,
-                child: ListView(
-                  padding: EdgeInsets.zero,
-                  shrinkWrap: true,
-                  children: [
-                    _FilterItem(
-                      label: AppStrings.allDoctors,
-                      onTap: () {
-                        setState(() { _selectedDoctorName = ''; });
-                        _searchCtrl.clear();
-                        ref.read(patientListProvider.notifier).setDoctorFilter(null);
-                        _hideOverlay();
-                        _focusNode.unfocus();
-                      },
-                    ),
-                    ...filtered.map((d) => _FilterItem(
-                      label: d.isActive
-                          ? d.fullName
-                          : '${d.fullName} (${AppStrings.deactivated})',
-                      onTap: () {
-                        setState(() {
-                          _selectedDoctorName = d.isActive
-                              ? d.fullName
-                              : '${d.fullName} (${AppStrings.deactivated})';
-                        });
-                        _searchCtrl.clear();
-                        ref.read(patientListProvider.notifier).setDoctorFilter(d.id);
-                        _hideOverlay();
-                        _focusNode.unfocus();
-                      },
-                    )),
-                  ],
+    return Material(
+      color: cs.surface,
+      shape: RoundedRectangleBorder(
+        borderRadius: const BorderRadius.all(Radius.circular(AppSizes.r12)),
+        side: BorderSide(
+          color: hasDoctor ? cs.primary : cs.outlineVariant,
+          width: AppSizes.borderWidth,
+        ),
+      ),
+      child: InkWell(
+        onTap: () => _pickDoctor(context, ref),
+        borderRadius: const BorderRadius.all(Radius.circular(AppSizes.r12)),
+        child: SizedBox(
+          height: AppSizes.inputHeight,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: AppSizes.p12),
+            child: Row(
+              children: [
+                Icon(
+                  Icons.person_search_rounded,
+                  size: AppSizes.iconSmall,
+                  color: hasDoctor ? cs.primary : cs.onSurfaceVariant,
                 ),
-              ),
-            ),
-          ),
-        );
-      },
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final showPlaceholder = _selectedDoctorName.isEmpty;
-    final border = OutlineInputBorder(
-      borderRadius: const BorderRadius.all(Radius.circular(AppSizes.r6)),
-      borderSide: BorderSide(color: Theme.of(context).colorScheme.outline, width: AppSizes.borderWidth),
-    );
-
-    return CompositedTransformTarget(
-      link: _layerLink,
-      child: SizedBox(
-        height: AppSizes.inputHeight,
-        child: TextField(
-          controller: _searchCtrl,
-          focusNode: _focusNode,
-          onChanged: (_) => _overlayEntry?.markNeedsBuild(),
-          style: AppTextStyles.captionMedium.copyWith(color: Theme.of(context).colorScheme.onSurface),
-          decoration: InputDecoration(
-            isDense: true,
-            contentPadding: const EdgeInsets.symmetric(horizontal: AppSizes.p12, vertical: AppSizes.p8),
-            hintText: showPlaceholder ? AppStrings.filterByDoctor : _selectedDoctorName,
-            hintStyle: AppTextStyles.captionMedium.copyWith(
-              color: showPlaceholder ? Theme.of(context).colorScheme.onSurfaceVariant : Theme.of(context).colorScheme.onSurface,
-            ),
-            suffixIcon: _selectedDoctorName.isNotEmpty
-                ? GestureDetector(
-                    onTap: () {
-                      setState(() { _selectedDoctorName = ''; });
-                      ref.read(patientListProvider.notifier).setDoctorFilter(null);
-                    },
-                    child: Icon(Icons.close, size: AppSizes.iconDefault, color: Theme.of(context).colorScheme.onSurfaceVariant),
+                const SizedBox(width: AppSizes.p8),
+                Expanded(
+                  child: Text(
+                    label,
+                    style: AppTextStyles.captionMedium.copyWith(
+                      color: hasDoctor ? cs.onSurface : cs.onSurfaceVariant,
+                    ),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+                if (hasDoctor)
+                  IconButton(
+                    icon: Icon(
+                      Icons.close_rounded,
+                      size: AppSizes.iconSmall,
+                      color: cs.onSurfaceVariant,
+                    ),
+                    onPressed: () => ref
+                        .read(patientListProvider.notifier)
+                        .setDoctorFilter(null),
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(),
                   )
-                : Icon(Icons.search_rounded, size: AppSizes.iconDefault, color: Theme.of(context).colorScheme.onSurfaceVariant),
-            filled: true,
-            fillColor: Theme.of(context).colorScheme.surface,
-            enabledBorder: border,
-            focusedBorder: border.copyWith(
-              borderSide: BorderSide(color: ClinicColors.of(context).outlineStrong, width: AppSizes.borderWidthFocused),
+                else
+                  Icon(
+                    Icons.unfold_more_rounded,
+                    size: AppSizes.iconSmall,
+                    color: cs.onSurfaceVariant,
+                  ),
+              ],
             ),
           ),
         ),
-      ),
-    );
-  }
-}
-
-class _FilterItem extends StatelessWidget {
-  const _FilterItem({required this.label, required this.onTap});
-  final String label;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: AppSizes.p12, vertical: AppSizes.p12),
-        child: Text(label, style: AppTextStyles.captionMedium, maxLines: 1, overflow: TextOverflow.ellipsis),
       ),
     );
   }
@@ -226,9 +140,9 @@ class _BranchFilterDropdown extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final notifier = ref.read(patientListProvider.notifier);
     final border = OutlineInputBorder(
-      borderRadius: const BorderRadius.all(Radius.circular(AppSizes.r6)),
+      borderRadius: const BorderRadius.all(Radius.circular(AppSizes.r12)),
       borderSide: BorderSide(
-        color: Theme.of(context).colorScheme.outline,
+        color: Theme.of(context).colorScheme.outlineVariant,
         width: AppSizes.borderWidth,
       ),
     );
@@ -236,7 +150,10 @@ class _BranchFilterDropdown extends ConsumerWidget {
       initialValue: notifier.currentClinicFilter,
       decoration: InputDecoration(
         isDense: true,
-        contentPadding: const EdgeInsets.symmetric(horizontal: AppSizes.p12, vertical: AppSizes.p8),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: AppSizes.p12,
+          vertical: AppSizes.p8,
+        ),
         border: border,
         enabledBorder: border,
         focusedBorder: border.copyWith(
@@ -246,12 +163,25 @@ class _BranchFilterDropdown extends ConsumerWidget {
           ),
         ),
       ),
-      hint: Text(AppStrings.allBranches,
-          style: AppTextStyles.captionMedium.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant)),
+      hint: Text(
+        AppStrings.allBranches,
+        style: AppTextStyles.captionMedium.copyWith(
+          color: Theme.of(context).colorScheme.onSurfaceVariant,
+        ),
+      ),
       items: const [
-        DropdownMenuItem<ClinicLocation?>(value: null, child: Text(AppStrings.allBranches)),
-        DropdownMenuItem<ClinicLocation?>(value: ClinicLocation.tagamoa, child: Text(AppStrings.clinicTagamoa)),
-        DropdownMenuItem<ClinicLocation?>(value: ClinicLocation.masrElgedida, child: Text(AppStrings.clinicMasrElgedida)),
+        DropdownMenuItem<ClinicLocation?>(
+          value: null,
+          child: Text(AppStrings.allBranches),
+        ),
+        DropdownMenuItem<ClinicLocation?>(
+          value: ClinicLocation.tagamoa,
+          child: Text(AppStrings.clinicTagamoa),
+        ),
+        DropdownMenuItem<ClinicLocation?>(
+          value: ClinicLocation.masrElgedida,
+          child: Text(AppStrings.clinicMasrElgedida),
+        ),
       ],
       onChanged: notifier.setClinicFilter,
     );
