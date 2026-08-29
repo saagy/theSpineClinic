@@ -7,6 +7,7 @@ import 'package:spine_clinic_app/core/constants/app_sizes.dart';
 import 'package:spine_clinic_app/core/constants/app_strings.dart';
 import 'package:spine_clinic_app/core/constants/app_text_styles.dart';
 import 'package:spine_clinic_app/core/utils/formatters.dart';
+import 'package:spine_clinic_app/shared/widgets/skeleton_loader.dart';
 
 class PatientInfoStatsStrip extends StatelessWidget {
   const PatientInfoStatsStrip({
@@ -24,8 +25,6 @@ class PatientInfoStatsStrip extends StatelessWidget {
     required this.onNextVisitTap,
     required this.onPaymentsTap,
   });
-
-  static const String _emptyValue = '-';
 
   final int apptCount;
   final bool apptLoading;
@@ -45,13 +44,15 @@ class PatientInfoStatsStrip extends StatelessWidget {
     final cs = Theme.of(context).colorScheme;
     final List<_InfoStat> stats = <_InfoStat>[
       _InfoStat(
-        value: apptLoading ? _emptyValue : '$apptCount',
+        value: '$apptCount',
+        isLoading: apptLoading,
         label: AppStrings.totalAppointments,
         onTap: onAppointmentsTap,
         trailingIcon: _TrailingIcon.chevron,
       ),
       _InfoStat(
         value: nextVisitText,
+        isLoading: nextVisitIsMutating,
         label: AppStrings.nextVisit,
         onTap: nextVisitIsMutating ? null : onNextVisitTap,
         trailingIcon: nextVisitSet
@@ -64,7 +65,8 @@ class PatientInfoStatsStrip extends StatelessWidget {
     if (!isDoctor) {
       stats.add(
         _InfoStat(
-          value: paymentsLoading ? _emptyValue : amountDue.toCurrencyString(),
+          value: amountDue.toCurrencyString(),
+          isLoading: paymentsLoading,
           label: AppStrings.amountDue,
           onTap: onPaymentsTap,
           isWarning: amountDue > 0,
@@ -102,6 +104,7 @@ class _InfoStat {
   const _InfoStat({
     required this.value,
     required this.label,
+    this.isLoading = false,
     this.onTap,
     this.isWarning = false,
     this.muted = false,
@@ -110,6 +113,7 @@ class _InfoStat {
 
   final String value;
   final String label;
+  final bool isLoading;
   final VoidCallback? onTap;
   final bool isWarning;
   final bool muted;
@@ -130,11 +134,22 @@ class _InfoStatItem extends StatelessWidget {
         : (stat.muted ? cs.onSurfaceVariant : cs.onSurface);
 
     Widget valueRow;
-    if (stat.trailingIcon != _TrailingIcon.none) {
+    if (stat.isLoading) {
+      valueRow = const KeyedSubtree(
+        key: ValueKey('stat_loading'),
+        child: SizedBox(
+          height: 24,
+          child: Center(
+            child: SkeletonBox(width: 36, height: 16, borderRadius: 4),
+          ),
+        ),
+      );
+    } else if (stat.trailingIcon != _TrailingIcon.none) {
       final IconData iconData = stat.trailingIcon == _TrailingIcon.chevron
           ? Icons.chevron_right_rounded
           : Icons.edit_outlined;
       valueRow = Row(
+        key: ValueKey('stat_data_${stat.value}'),
         mainAxisSize: MainAxisSize.min,
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
@@ -158,6 +173,7 @@ class _InfoStatItem extends StatelessWidget {
     } else {
       valueRow = Text(
         stat.value,
+        key: ValueKey('stat_data_${stat.value}'),
         style: AppTextStyles.numberLarge.copyWith(color: valueColor),
         maxLines: 1,
       );
@@ -171,7 +187,14 @@ class _InfoStatItem extends StatelessWidget {
         children: [
           FittedBox(
             fit: BoxFit.scaleDown,
-            child: valueRow,
+            child: AnimatedSwitcher(
+              duration: const Duration(milliseconds: 200),
+              switchInCurve: Curves.easeOutCubic,
+              switchOutCurve: Curves.easeInCubic,
+              transitionBuilder: (child, anim) =>
+                  FadeTransition(opacity: anim, child: child),
+              child: valueRow,
+            ),
           ),
           const SizedBox(height: AppSizes.p4),
           Text(

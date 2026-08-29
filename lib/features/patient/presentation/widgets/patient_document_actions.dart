@@ -10,7 +10,7 @@ import 'package:spine_clinic_app/features/patient/presentation/widgets/rename_do
 import 'package:spine_clinic_app/shared/widgets/app_snackbar.dart';
 import 'package:spine_clinic_app/shared/widgets/confirmation_dialog.dart';
 
-enum _DocumentAction { rename, delete }
+enum DocumentAction { rename, delete }
 
 /// Touch-sized overflow menu for rename and delete document actions.
 class PatientDocumentActions extends ConsumerStatefulWidget {
@@ -18,21 +18,38 @@ class PatientDocumentActions extends ConsumerStatefulWidget {
 
   final PatientDocument document;
 
-  @override
-  ConsumerState<PatientDocumentActions> createState() =>
-      _PatientDocumentActionsState();
-}
+  static List<PopupMenuItem<DocumentAction>> buildMenuItems(BuildContext context) {
+    final ColorScheme colors = Theme.of(context).colorScheme;
+    return [
+      PopupMenuItem<DocumentAction>(
+        value: DocumentAction.rename,
+        child: Row(
+          children: [
+            Icon(Icons.edit_outlined, color: colors.onSurface, size: AppSizes.iconDefault),
+            const SizedBox(width: AppSizes.p12),
+            Text(AppStrings.rename, style: AppTextStyles.bodyMedium.copyWith(color: colors.onSurface)),
+          ],
+        ),
+      ),
+      PopupMenuItem<DocumentAction>(
+        value: DocumentAction.delete,
+        child: Row(
+          children: [
+            Icon(Icons.delete_outline_rounded, color: colors.error, size: AppSizes.iconDefault),
+            const SizedBox(width: AppSizes.p12),
+            Text(AppStrings.delete, style: AppTextStyles.bodyMedium.copyWith(color: colors.error)),
+          ],
+        ),
+      ),
+    ];
+  }
 
-class _PatientDocumentActionsState
-    extends ConsumerState<PatientDocumentActions> {
-  bool _isDeleting = false;
-
-  Future<void> _rename() async {
+  static Future<void> renameDocument(BuildContext context, PatientDocument document) async {
     final bool? renamed = await showDialog<bool>(
       context: context,
-      builder: (_) => RenameDocumentDialog(document: widget.document),
+      builder: (_) => RenameDocumentDialog(document: document),
     );
-    if (renamed == true && mounted) {
+    if (renamed == true && context.mounted) {
       AppSnackbar.show(
         context,
         message: AppStrings.documentRenamed,
@@ -41,7 +58,11 @@ class _PatientDocumentActionsState
     }
   }
 
-  Future<void> _delete() async {
+  static Future<void> deleteDocument(
+    BuildContext context,
+    WidgetRef ref,
+    PatientDocument document,
+  ) async {
     final bool? confirmed = await showDialog<bool>(
       context: context,
       builder: (_) => const ConfirmationDialog(
@@ -52,16 +73,14 @@ class _PatientDocumentActionsState
         isDestructive: true,
       ),
     );
-    if (confirmed != true || !mounted) return;
+    if (confirmed != true || !context.mounted) return;
 
-    setState(() => _isDeleting = true);
     final Result<void> result = await ref
         .read(
-          patientDocumentsNotifierProvider(widget.document.patientId).notifier,
+          patientDocumentsNotifierProvider(document.patientId).notifier,
         )
-        .deleteDocument(widget.document);
-    if (!mounted) return;
-    setState(() => _isDeleting = false);
+        .deleteDocument(document);
+    if (!context.mounted) return;
     result.when(
       success: (_) => AppSnackbar.show(
         context,
@@ -74,6 +93,61 @@ class _PatientDocumentActionsState
         variant: AppSnackbarVariant.error,
       ),
     );
+  }
+
+  static Future<void> showContextMenu({
+    required BuildContext context,
+    required WidgetRef ref,
+    required PatientDocument document,
+    required Offset globalPosition,
+  }) async {
+    final RenderBox overlay =
+        Overlay.of(context).context.findRenderObject() as RenderBox;
+    final RelativeRect position = RelativeRect.fromRect(
+      Rect.fromPoints(globalPosition, globalPosition),
+      overlay.localToGlobal(Offset.zero) & overlay.size,
+    );
+
+    final colors = Theme.of(context).colorScheme;
+    final DocumentAction? selected = await showMenu<DocumentAction>(
+      context: context,
+      position: position,
+      color: colors.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: AppSizes.borderRadiusInput,
+      ),
+      elevation: 2,
+      items: buildMenuItems(context),
+    );
+
+    if (selected == null || !context.mounted) return;
+    if (selected == DocumentAction.rename) {
+      await renameDocument(context, document);
+    } else if (selected == DocumentAction.delete) {
+      await deleteDocument(context, ref, document);
+    }
+  }
+
+  @override
+  ConsumerState<PatientDocumentActions> createState() =>
+      _PatientDocumentActionsState();
+}
+
+class _PatientDocumentActionsState
+    extends ConsumerState<PatientDocumentActions> {
+  bool _isDeleting = false;
+
+  Future<void> _handleDelete() async {
+    setState(() => _isDeleting = true);
+    try {
+      await PatientDocumentActions.deleteDocument(
+        context,
+        ref,
+        widget.document,
+      );
+    } finally {
+      if (mounted) setState(() => _isDeleting = false);
+    }
   }
 
   @override
@@ -92,7 +166,7 @@ class _PatientDocumentActionsState
                   color: colors.error,
                 ),
               )
-            : PopupMenuButton<_DocumentAction>(
+            : PopupMenuButton<DocumentAction>(
                 tooltip: AppStrings.moreActions,
                 icon: Icon(
                   Icons.more_vert_rounded,
@@ -103,46 +177,15 @@ class _PatientDocumentActionsState
                   borderRadius: AppSizes.borderRadiusInput,
                 ),
                 color: colors.surface,
-                onSelected: (_DocumentAction action) {
-                  if (action == _DocumentAction.rename) {
-                    _rename();
+                onSelected: (DocumentAction action) {
+                  if (action == DocumentAction.rename) {
+                    PatientDocumentActions.renameDocument(context, widget.document);
                   } else {
-                    _delete();
+                    _handleDelete();
                   }
                 },
-                itemBuilder: (_) => [
-                  _menuItem(
-                    action: _DocumentAction.rename,
-                    icon: Icons.edit_outlined,
-                    label: AppStrings.rename,
-                    color: colors.onSurface,
-                  ),
-                  _menuItem(
-                    action: _DocumentAction.delete,
-                    icon: Icons.delete_outline_rounded,
-                    label: AppStrings.delete,
-                    color: colors.error,
-                  ),
-                ],
+                itemBuilder: (_) => PatientDocumentActions.buildMenuItems(context),
               ),
-      ),
-    );
-  }
-
-  PopupMenuItem<_DocumentAction> _menuItem({
-    required _DocumentAction action,
-    required IconData icon,
-    required String label,
-    required Color color,
-  }) {
-    return PopupMenuItem<_DocumentAction>(
-      value: action,
-      child: Row(
-        children: [
-          Icon(icon, color: color, size: AppSizes.iconDefault),
-          const SizedBox(width: AppSizes.p12),
-          Text(label, style: AppTextStyles.bodyMedium.copyWith(color: color)),
-        ],
       ),
     );
   }

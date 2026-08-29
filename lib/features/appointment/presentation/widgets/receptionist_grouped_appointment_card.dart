@@ -98,7 +98,7 @@ class _ReceptionistGroupedAppointmentCardState
         : (allCheckedIn ? clinic.checkedInOutline : theme.colorScheme.outline);
     final double radius = isCompact ? AppSizes.r12 : AppSizes.r16;
     final EdgeInsets internalPadding = isCompact
-        ? const EdgeInsets.symmetric(horizontal: AppSizes.p12, vertical: 6.0)
+        ? const EdgeInsets.symmetric(horizontal: AppSizes.p12, vertical: AppSizes.p4)
         : const EdgeInsets.symmetric(
             horizontal: AppSizes.p14,
             vertical: AppSizes.p14,
@@ -157,7 +157,7 @@ class _ReceptionistGroupedAppointmentCardState
                 ),
                 const SizedBox(height: AppSizes.p8),
               ] else
-                const SizedBox(height: AppSizes.p4),
+                const SizedBox(height: AppSizes.p2),
               ListView.separated(
                 shrinkWrap: true,
                 physics: const NeverScrollableScrollPhysics(),

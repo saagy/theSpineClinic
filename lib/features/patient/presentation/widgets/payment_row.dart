@@ -13,6 +13,7 @@ import 'package:spine_clinic_app/features/auth/presentation/auth_providers.dart'
 import 'package:spine_clinic_app/features/patient/presentation/patient_providers.dart';
 import 'package:spine_clinic_app/features/patient/presentation/widgets/collect_due_sheet.dart';
 import 'package:spine_clinic_app/features/patient/presentation/widgets/edit_payment_sheet.dart';
+import 'package:spine_clinic_app/features/patient/presentation/widgets/payment_actions_menu.dart';
 import 'package:spine_clinic_app/features/patient/presentation/widgets/payment_ledger_box.dart';
 import 'package:spine_clinic_app/features/patient/presentation/widgets/payment_row_header.dart';
 import 'package:spine_clinic_app/features/payments/domain/payment_record.dart';
@@ -51,17 +52,33 @@ class PaymentRow extends ConsumerWidget {
       color: cs.surface,
       child: ClipRRect(
         borderRadius: const BorderRadius.all(Radius.circular(AppSizes.r16)),
-        child: InkWell(
-          onTap: isAdmin ? () => _showEditPayment(context) : null,
-          onLongPress: isAdmin ? () => _confirmDelete(context, ref) : null,
-          splashColor: cs.surfaceContainer,
-          highlightColor: cs.surfaceContainer.withAlpha(128),
-          child: Padding(
-            padding: const EdgeInsets.all(AppSizes.p16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
+        child: GestureDetector(
+          onLongPressStart: isAdmin
+              ? (details) => PaymentActionsMenu.showContextMenu(
+                    context,
+                    details.globalPosition,
+                    onEdit: () => _showEditPayment(context),
+                    onDelete: () => _confirmDelete(context, ref),
+                  )
+              : null,
+          onSecondaryTapDown: isAdmin
+              ? (details) => PaymentActionsMenu.showContextMenu(
+                    context,
+                    details.globalPosition,
+                    onEdit: () => _showEditPayment(context),
+                    onDelete: () => _confirmDelete(context, ref),
+                  )
+              : null,
+          child: InkWell(
+            onTap: isAdmin ? () => _showEditPayment(context) : null,
+            splashColor: cs.surfaceContainer,
+            highlightColor: cs.surfaceContainer.withAlpha(128),
+            child: Padding(
+              padding: const EdgeInsets.all(AppSizes.p16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
                 PaymentRowHeader(
                   payment: payment,
                   recordedByAsync: recordedByAsync,
@@ -80,8 +97,9 @@ class PaymentRow extends ConsumerWidget {
           ),
         ),
       ),
-    );
-  }
+    ),
+  );
+}
 
   bool get _hasLedgerData =>
       payment.sessionBalanceAdded > 0 ||

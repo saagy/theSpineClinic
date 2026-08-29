@@ -139,6 +139,9 @@ mixin _ReceptionistAppointmentCardMenu
     ref
         .read(allAppointmentsProvider.notifier)
         .updateStatus(id, status);
+    ref
+        .read(patientAppointmentsProvider(widget.item.appointment.patientId).notifier)
+        .changeStatus(id, status);
     try {
       final result = await ref
           .read(appointmentRepositoryProvider)
@@ -181,14 +184,16 @@ mixin _ReceptionistAppointmentCardMenu
     ref
         .read(allAppointmentsProvider.notifier)
         .updateStatus(apptId, originalStatus);
+    ref
+        .read(patientAppointmentsProvider(widget.item.appointment.patientId).notifier)
+        .changeStatus(apptId, originalStatus);
   }
 
   void _invalidateCaches() {
     final String patientId = widget.item.appointment.patientId;
     ref.invalidate(todayAppointmentsProvider);
     ref.read(allAppointmentsProvider.notifier).refresh();
-    ref.invalidate(patientAppointmentsProvider(patientId));
-    ref.invalidate(patientDetailProvider(patientId));
+    ref.read(patientAppointmentsProvider(patientId).notifier).refresh(silent: true);
     ref.invalidate(futureScheduledAppointmentsCountProvider(patientId));
     ref.invalidate(availablePackageBalanceProvider(patientId));
     ref.read(doctorScheduleProvider.notifier).refresh();

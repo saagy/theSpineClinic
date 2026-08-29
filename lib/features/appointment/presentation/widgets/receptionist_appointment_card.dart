@@ -24,7 +24,8 @@ import 'package:spine_clinic_app/core/utils/schedule_density_controller.dart';
 import 'package:spine_clinic_app/features/appointment/domain/appointment_repository.dart';
 import 'package:spine_clinic_app/features/appointment/domain/appointment_status.dart';
 import 'package:spine_clinic_app/features/appointment/presentation/all_appointments_providers.dart';
-import 'package:spine_clinic_app/features/appointment/presentation/appointment_providers.dart';
+import 'package:spine_clinic_app/features/appointment/presentation/appointment_providers.dart'
+    hide patientAppointmentsProvider;
 import 'package:spine_clinic_app/features/appointment/presentation/doctor_schedule_providers.dart';
 import 'package:spine_clinic_app/features/appointment/presentation/receptionist_appointments_providers.dart';
 import 'package:spine_clinic_app/features/appointment/presentation/widgets/appointment_actions_trailing.dart';
@@ -32,8 +33,8 @@ import 'package:spine_clinic_app/features/appointment/presentation/widgets/appoi
 import 'package:spine_clinic_app/features/appointment/presentation/widgets/appointment_status_style.dart';
 import 'package:spine_clinic_app/features/auth/domain/user_role.dart';
 import 'package:spine_clinic_app/features/auth/presentation/auth_providers.dart';
+import 'package:spine_clinic_app/features/patient/presentation/patient_appointments_notifier.dart';
 import 'package:spine_clinic_app/features/patient/presentation/patient_list_providers.dart';
-import 'package:spine_clinic_app/features/patient/presentation/patient_providers.dart';
 import 'package:spine_clinic_app/shared/widgets/app_avatar.dart';
 import 'package:spine_clinic_app/shared/widgets/app_snackbar.dart';
 import 'package:spine_clinic_app/shared/widgets/confirmation_dialog.dart';

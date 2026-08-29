@@ -19,11 +19,13 @@ class PatientNotesList extends _$PatientNotesList {
     return const PatientNotesListState(isLoading: true);
   }
 
-  Future<void> _fetchFirstPage() async {
+  Future<void> _fetchFirstPage({bool silent = false}) async {
     _generation++;
     final int currentGen = _generation;
 
-    state = state.copyWith(isLoading: true, errorMessage: null);
+    if (!silent || state.notes.isEmpty) {
+      state = state.copyWith(isLoading: true, errorMessage: null);
+    }
 
     final PatientNotesRepository repo = ref.read(patientNotesRepositoryProvider);
     final countResult = await repo.countNotesForPatient(
@@ -111,8 +113,8 @@ class PatientNotesList extends _$PatientNotesList {
     );
   }
 
-  Future<void> refresh() async {
-    await _fetchFirstPage();
+  Future<void> refresh({bool silent = true}) async {
+    await _fetchFirstPage(silent: silent);
   }
 
   void setDateRange(DateTime? from, DateTime? to) {

@@ -110,7 +110,7 @@ class _GroupedSubAppointmentRow extends ConsumerWidget {
             },
             child: Padding(
               padding: EdgeInsets.symmetric(
-                vertical: isCompact ? AppSizes.p2 : AppSizes.p6,
+                vertical: isCompact ? 1.0 : AppSizes.p6,
                 horizontal: AppSizes.p4,
               ),
               child: rowContent,

@@ -18,6 +18,7 @@ import 'package:spine_clinic_app/features/medical_records/presentation/medical_r
 import 'package:spine_clinic_app/features/patient/presentation/widgets/add_note_sheet.dart';
 import 'package:spine_clinic_app/features/appointment/presentation/widgets/appointment_note_actions.dart';
 import 'package:spine_clinic_app/shared/widgets/eyebrow_label.dart';
+import 'package:spine_clinic_app/shared/widgets/skeleton_loader.dart';
 
 /// Section card for viewing, adding, and editing appointment visit notes.
 class AppointmentNotesCard extends ConsumerWidget {
@@ -50,9 +51,18 @@ class AppointmentNotesCard extends ConsumerWidget {
         boxShadow: [clinic.cardShadow],
       ),
       child: noteAsync.when(
-        loading: () => const Padding(
-          padding: EdgeInsets.symmetric(vertical: AppSizes.p8),
-          child: Center(child: CircularProgressIndicator()),
+        loading: () => Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: const [
+            SkeletonBox(width: 80, height: 14),
+            SizedBox(height: AppSizes.p12),
+            SkeletonBox(
+              width: double.infinity,
+              height: 38,
+              borderRadius: AppSizes.r8,
+            ),
+          ],
         ),
         error: (error, _) {
           final AppException ex = error is AppException

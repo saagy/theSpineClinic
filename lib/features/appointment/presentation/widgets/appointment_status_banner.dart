@@ -73,30 +73,38 @@ class AppointmentStatusBanner extends StatelessWidget {
           left: BorderSide(color: fg, width: AppSizes.p4),
         ),
       ),
-      child: Row(
-        children: [
-          Icon(icon, color: fg, size: AppSizes.iconDefault),
-          const SizedBox(width: AppSizes.p12),
-          Expanded(
-            child: Text.rich(
-              TextSpan(
-                children: [
-                  TextSpan(
-                    text:
-                        '${isPastScheduled ? AppStrings.scheduled : status.displayLabel}: ',
-                    style: AppTextStyles.bodyBold.copyWith(color: fg),
-                  ),
-                  TextSpan(
-                    text: description,
-                    style: AppTextStyles.bodySecondary.copyWith(
-                      color: fg.withValues(alpha: 0.9),
+      child: AnimatedSwitcher(
+        duration: const Duration(milliseconds: 200),
+        switchInCurve: Curves.easeOutCubic,
+        switchOutCurve: Curves.easeInCubic,
+        transitionBuilder: (child, animation) =>
+            FadeTransition(opacity: animation, child: child),
+        child: Row(
+          key: ValueKey('status_banner_${status.name}_$isPastScheduled'),
+          children: [
+            Icon(icon, color: fg, size: AppSizes.iconDefault),
+            const SizedBox(width: AppSizes.p12),
+            Expanded(
+              child: Text.rich(
+                TextSpan(
+                  children: [
+                    TextSpan(
+                      text:
+                          '${isPastScheduled ? AppStrings.scheduled : status.displayLabel}: ',
+                      style: AppTextStyles.bodyBold.copyWith(color: fg),
                     ),
-                  ),
-                ],
+                    TextSpan(
+                      text: description,
+                      style: AppTextStyles.bodySecondary.copyWith(
+                        color: fg.withValues(alpha: 0.9),
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

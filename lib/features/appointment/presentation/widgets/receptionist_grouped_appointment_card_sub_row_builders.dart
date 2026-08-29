@@ -159,20 +159,22 @@ class _GroupedSubAppointmentMobileRow extends StatelessWidget {
           ),
         ),
         const SizedBox(width: AppSizes.p6),
-        _GroupedStatusDot(
-          color: dotColor,
-          label: isPastScheduled
-              ? AppStrings.pastScheduledNeedsAction
-              : subAppt.status.displayLabel,
-          icon: isPastScheduled
-              ? Icons.warning_amber_rounded
-              : (subAppt.status == AppointmentStatus.checkedIn
-                  ? Icons.check_circle_rounded
-                  : null),
-          isCompact: isCompact,
+        Flexible(
+          child: _GroupedStatusDot(
+            color: dotColor,
+            label: isPastScheduled
+                ? AppStrings.pastScheduledNeedsAction
+                : subAppt.status.displayLabel,
+            icon: isPastScheduled
+                ? Icons.warning_amber_rounded
+                : (subAppt.status == AppointmentStatus.checkedIn
+                    ? Icons.check_circle_rounded
+                    : null),
+            isCompact: isCompact,
+          ),
         ),
         if (canInteractWithMenu) ...[
-          const SizedBox(width: AppSizes.p6),
+          const SizedBox(width: AppSizes.p4),
           AppointmentActionsTrailing(
             appointment: subAppt,
             onStatusChanged: onStatusChanged,

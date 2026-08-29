@@ -130,52 +130,75 @@ class _PatientTabAppointmentsState
               onClearAll: notifier.clearFilters,
             ),
           Expanded(
-            child: state.isLoading
-                ? const SkeletonTileList(count: 4)
-                : state.errorMessage != null
-                ? PatientAppointmentsErrorState(
-                    message: state.errorMessage,
-                    onRefresh: notifier.refresh,
-                  )
-                : state.appointments.isEmpty
-                ? const EmptyState(
-                    message: AppStrings.noAppointments,
-                    icon: Icons.calendar_today_rounded,
-                  )
-                : RefreshIndicator(
-                    onRefresh: notifier.refresh,
-                    color: cs.primary,
-                    child: ListView.builder(
-                      physics: const AlwaysScrollableScrollPhysics(),
-                      padding: const EdgeInsets.only(bottom: AppSizes.p16),
-                      itemCount: state.appointments.length +
-                          (state.isLoadingMore ? 1 : 0),
-                      itemBuilder: (context, index) {
-                        if (index == state.appointments.length) {
-                          return const Padding(
-                            padding: EdgeInsets.symmetric(vertical: AppSizes.p16),
-                            child: Center(
-                              child: CircularProgressIndicator(
-                                strokeWidth: AppSizes.strokeWidthThin,
+            child: AnimatedSwitcher(
+              duration: const Duration(milliseconds: 250),
+              switchInCurve: Curves.easeOutCubic,
+              switchOutCurve: Curves.easeInCubic,
+              transitionBuilder: (child, animation) =>
+                  FadeTransition(opacity: animation, child: child),
+              child: state.isLoading
+                  ? const KeyedSubtree(
+                      key: ValueKey('patient_appts_loading'),
+                      child: SkeletonTileList(count: 4),
+                    )
+                  : state.errorMessage != null
+                  ? KeyedSubtree(
+                      key: const ValueKey('patient_appts_error'),
+                      child: PatientAppointmentsErrorState(
+                        message: state.errorMessage,
+                        onRefresh: notifier.refresh,
+                      ),
+                    )
+                  : state.appointments.isEmpty
+                  ? const KeyedSubtree(
+                      key: ValueKey('patient_appts_empty'),
+                      child: EmptyState(
+                        message: AppStrings.noAppointments,
+                        icon: Icons.calendar_today_rounded,
+                      ),
+                    )
+                  : KeyedSubtree(
+                      key: ValueKey(
+                        'patient_appts_data_${state.appointments.length}',
+                      ),
+                      child: RefreshIndicator(
+                        onRefresh: notifier.refresh,
+                        color: cs.primary,
+                        child: ListView.builder(
+                          physics: const AlwaysScrollableScrollPhysics(),
+                          padding: const EdgeInsets.only(bottom: AppSizes.p16),
+                          itemCount: state.appointments.length +
+                              (state.isLoadingMore ? 1 : 0),
+                          itemBuilder: (context, index) {
+                            if (index == state.appointments.length) {
+                              return const Padding(
+                                padding: EdgeInsets.symmetric(
+                                  vertical: AppSizes.p16,
+                                ),
+                                child: Center(
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: AppSizes.strokeWidthThin,
+                                  ),
+                                ),
+                              );
+                            }
+                            final item = state.appointments[index];
+                            return AnimatedListItem(
+                              index: index,
+                              animatedIndices: _animatedIndices,
+                              child: ReceptionistAppointmentCard(
+                                item: item,
+                                showMenu: true,
+                                showDate: true,
+                                isPatientContext: true,
+                                onStatusChanged: notifier.refresh,
                               ),
-                            ),
-                          );
-                        }
-                        final item = state.appointments[index];
-                        return AnimatedListItem(
-                          index: index,
-                          animatedIndices: _animatedIndices,
-                          child: ReceptionistAppointmentCard(
-                            item: item,
-                            showMenu: true,
-                            showDate: true,
-                            isPatientContext: true,
-                            onStatusChanged: notifier.refresh,
-                          ),
-                        );
-                      },
+                            );
+                          },
+                        ),
+                      ),
                     ),
-                  ),
+            ),
           ),
         ],
       ),

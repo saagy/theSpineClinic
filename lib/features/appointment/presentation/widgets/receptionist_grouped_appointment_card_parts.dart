@@ -36,7 +36,7 @@ class _GroupedCardHeader extends StatelessWidget {
             : (isCompact ? 38.0 : 40.0);
         final double spacingBetween = isWide ? AppSizes.p12 : AppSizes.p6;
         final double avatarToTextSpacing = isWide ? AppSizes.p8 : AppSizes.p6;
-        final double avatarRadius = isCompact ? 11.0 : 13.5;
+        final double avatarRadius = isCompact ? 10.0 : 13.5;
 
         return Row(
           crossAxisAlignment: CrossAxisAlignment.center,
@@ -67,23 +67,24 @@ class _GroupedCardHeader extends StatelessWidget {
                       color: allCancelled
                           ? clinic.textMuted
                           : theme.colorScheme.onSurface,
-                      decoration:
-                          allCancelled ? TextDecoration.lineThrough : null,
+                      decoration: allCancelled
+                          ? TextDecoration.lineThrough
+                          : null,
                       fontSize: isCompact ? 13 : null,
                     ),
                     maxLines: 1,
                     minFontSize: 10,
                     overflow: TextOverflow.ellipsis,
                   ),
-                  SizedBox(height: isCompact ? 0 : AppSizes.p2),
+                  const SizedBox(height: AppSizes.p2),
                   Text(
                     AppStrings.dualSession,
                     style: AppTextStyles.caption.copyWith(
                       color: allCancelled
                           ? clinic.textMuted
                           : theme.colorScheme.onSurfaceVariant,
-                      fontSize: isCompact ? 10 : null,
                       fontWeight: FontWeight.w500,
+                      fontSize: isCompact ? 11 : null,
                     ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,

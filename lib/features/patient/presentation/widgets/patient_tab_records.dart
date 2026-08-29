@@ -119,7 +119,7 @@ class _PatientTabRecordsState extends ConsumerState<PatientTabRecords> {
               child: state.isLoading
                   ? const KeyedSubtree(
                       key: ValueKey('notes_loading'),
-                      child: SkeletonTileList(count: 4),
+                      child: SkeletonNoteList(count: 4),
                     )
                   : state.errorMessage != null
                       ? KeyedSubtree(

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:spine_clinic_app/core/constants/app_sizes.dart';
 import 'package:spine_clinic_app/core/constants/app_strings.dart';
@@ -12,16 +13,17 @@ import 'package:spine_clinic_app/shared/widgets/app_file_viewer.dart';
 import 'package:spine_clinic_app/shared/widgets/app_snackbar.dart';
 
 /// Touch-first card for opening and managing one patient document.
-class PatientDocumentItem extends StatefulWidget {
+class PatientDocumentItem extends ConsumerStatefulWidget {
   const PatientDocumentItem({super.key, required this.document});
 
   final PatientDocument document;
 
   @override
-  State<PatientDocumentItem> createState() => _PatientDocumentItemState();
+  ConsumerState<PatientDocumentItem> createState() =>
+      _PatientDocumentItemState();
 }
 
-class _PatientDocumentItemState extends State<PatientDocumentItem> {
+class _PatientDocumentItemState extends ConsumerState<PatientDocumentItem> {
   bool _isOpening = false;
 
   Future<void> _open() async {
@@ -71,62 +73,76 @@ class _PatientDocumentItemState extends State<PatientDocumentItem> {
         borderRadius: AppSizes.borderRadiusCard,
         side: BorderSide(color: colors.outlineVariant),
       ),
-      child: InkWell(
-        onTap: _isOpening ? null : _open,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Expanded(
-              child: Stack(
-                fit: StackFit.expand,
-                children: [
-                  PatientDocumentPreview(document: widget.document),
-                  if (_isOpening)
-                    ColoredBox(
-                      color: colors.scrim.withAlpha(100),
-                      child: Center(
-                        child: SizedBox.square(
-                          dimension: AppSizes.iconDefault,
-                          child: CircularProgressIndicator(
-                            strokeWidth: AppSizes.strokeWidthThin,
-                            color: colors.primary,
+      child: GestureDetector(
+        onLongPressStart: (details) => PatientDocumentActions.showContextMenu(
+          context: context,
+          ref: ref,
+          document: widget.document,
+          globalPosition: details.globalPosition,
+        ),
+        onSecondaryTapDown: (details) => PatientDocumentActions.showContextMenu(
+          context: context,
+          ref: ref,
+          document: widget.document,
+          globalPosition: details.globalPosition,
+        ),
+        child: InkWell(
+          onTap: _isOpening ? null : _open,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Expanded(
+                child: Stack(
+                  fit: StackFit.expand,
+                  children: [
+                    PatientDocumentPreview(document: widget.document),
+                    if (_isOpening)
+                      ColoredBox(
+                        color: colors.scrim.withAlpha(100),
+                        child: Center(
+                          child: SizedBox.square(
+                            dimension: AppSizes.iconDefault,
+                            child: CircularProgressIndicator(
+                              strokeWidth: AppSizes.strokeWidthThin,
+                              color: colors.primary,
+                            ),
                           ),
                         ),
                       ),
+                    Positioned(
+                      top: AppSizes.p8,
+                      right: AppSizes.p8,
+                      child: PatientDocumentActions(document: widget.document),
                     ),
-                  Positioned(
-                    top: AppSizes.p8,
-                    right: AppSizes.p8,
-                    child: PatientDocumentActions(document: widget.document),
-                  ),
-                ],
+                  ],
+                ),
               ),
-            ),
-            Padding(
-              padding: const EdgeInsets.all(AppSizes.p16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    widget.document.fileName,
-                    style: AppTextStyles.captionMedium.copyWith(
-                      color: colors.onSurface,
+              Padding(
+                padding: const EdgeInsets.all(AppSizes.p16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      widget.document.fileName,
+                      style: AppTextStyles.captionMedium.copyWith(
+                        color: colors.onSurface,
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
                     ),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  const SizedBox(height: AppSizes.p4),
-                  Text(
-                    date,
-                    style: AppTextStyles.caption.copyWith(
-                      color: colors.onSurfaceVariant,
+                    const SizedBox(height: AppSizes.p4),
+                    Text(
+                      date,
+                      style: AppTextStyles.caption.copyWith(
+                        color: colors.onSurfaceVariant,
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

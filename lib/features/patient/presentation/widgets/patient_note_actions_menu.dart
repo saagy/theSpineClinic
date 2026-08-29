@@ -1,6 +1,6 @@
-/// Context menu for payment rows styled consistently with appointment cards.
+/// Context and overflow actions menu for patient notes.
 ///
-/// Rule 1 — under 200 lines.
+/// Rule 1  — under 200 lines.
 /// Rule 15/16 — colorScheme and AppTextStyles tokens.
 library;
 
@@ -9,9 +9,9 @@ import 'package:spine_clinic_app/core/constants/app_sizes.dart';
 import 'package:spine_clinic_app/core/constants/app_strings.dart';
 import 'package:spine_clinic_app/core/constants/app_text_styles.dart';
 
-/// Trailing popup menu for payment actions (Edit / Delete).
-class PaymentActionsMenu extends StatelessWidget {
-  const PaymentActionsMenu({
+/// Trailing / context menu for note actions (Edit / Delete).
+class PatientNoteActionsMenu extends StatelessWidget {
+  const PatientNoteActionsMenu({
     super.key,
     required this.onEdit,
     required this.onDelete,

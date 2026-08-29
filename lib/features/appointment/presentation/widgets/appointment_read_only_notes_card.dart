@@ -14,6 +14,7 @@ import 'package:spine_clinic_app/features/medical_records/domain/patient_note.da
 import 'package:spine_clinic_app/features/medical_records/presentation/medical_records_providers.dart';
 import 'package:spine_clinic_app/shared/widgets/app_button.dart';
 import 'package:spine_clinic_app/shared/widgets/section_card.dart';
+import 'package:spine_clinic_app/shared/widgets/skeleton_loader.dart';
 
 /// Read-only visit notes card displayed in AppointmentDetailScreen.
 class AppointmentReadOnlyNotesCard extends ConsumerWidget {
@@ -42,8 +43,13 @@ class AppointmentReadOnlyNotesCard extends ConsumerWidget {
       child: SectionCard(
         title: AppStrings.notes,
         child: noteAsync.when(
-          loading: () => Center(
-            child: CircularProgressIndicator(color: Theme.of(context).colorScheme.primary),
+          loading: () => const Padding(
+            padding: EdgeInsets.symmetric(vertical: AppSizes.p4),
+            child: SkeletonBox(
+              width: double.infinity,
+              height: 32,
+              borderRadius: AppSizes.r8,
+            ),
           ),
           error: (Object error, StackTrace stack) => Text(
             'Error loading notes.',

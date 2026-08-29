@@ -20,11 +20,13 @@ class PatientAppointments extends _$PatientAppointments {
     return const PatientAppointmentsState(isLoading: true);
   }
 
-  Future<void> _fetchFirstPage() async {
+  Future<void> _fetchFirstPage({bool silent = false}) async {
     _generation++;
     final int currentGen = _generation;
 
-    state = state.copyWith(isLoading: true, errorMessage: null);
+    if (!silent || state.appointments.isEmpty) {
+      state = state.copyWith(isLoading: true, errorMessage: null);
+    }
 
     final AppointmentRepository repo = ref.read(appointmentRepositoryProvider);
     final countResult = await repo.countAppointmentsForPatient(
@@ -76,6 +78,21 @@ class PatientAppointments extends _$PatientAppointments {
     );
   }
 
+  void changeStatus(String appointmentId, AppointmentStatus newStatus) {
+    final List<AppointmentWithPatient> updated = state.appointments
+        .map(
+          (AppointmentWithPatient item) =>
+              item.appointment.id == appointmentId
+                  ? AppointmentWithPatient(
+                      appointment: item.appointment.copyWith(status: newStatus),
+                      patient: item.patient,
+                    )
+                  : item,
+        )
+        .toList();
+    state = state.copyWith(appointments: updated);
+  }
+
   void _reloadDebounced() {
     _generation++;
     final int currentGen = _generation;
@@ -124,8 +141,8 @@ class PatientAppointments extends _$PatientAppointments {
     );
   }
 
-  Future<void> refresh() async {
-    await _fetchFirstPage();
+  Future<void> refresh({bool silent = true}) async {
+    await _fetchFirstPage(silent: silent);
   }
 
   void setStatusFilter(Set<AppointmentStatus>? status) {

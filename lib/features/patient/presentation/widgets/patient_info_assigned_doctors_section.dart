@@ -32,31 +32,48 @@ class PatientInfoAssignedDoctorsSection extends StatelessWidget {
         children: [
           const EyebrowLabel(text: AppStrings.assignedDoctors),
           const SizedBox(height: AppSizes.p8),
-          doctorsAsync.when(
-            data: (doctors) => doctors.isEmpty
-                ? Padding(
-                    padding: const EdgeInsets.symmetric(vertical: AppSizes.p8),
-                    child: Text(
-                      AppStrings.noDoctorsAssigned,
-                      style: AppTextStyles.bodySecondary.copyWith(
-                        color: cs.onSurfaceVariant,
+          AnimatedSwitcher(
+            duration: const Duration(milliseconds: 200),
+            switchInCurve: Curves.easeOutCubic,
+            switchOutCurve: Curves.easeInCubic,
+            transitionBuilder: (child, anim) =>
+                FadeTransition(opacity: anim, child: child),
+            child: doctorsAsync.when(
+              data: (doctors) => doctors.isEmpty
+                  ? Padding(
+                      key: const ValueKey('assigned_doctors_empty'),
+                      padding: const EdgeInsets.symmetric(vertical: AppSizes.p8),
+                      child: Text(
+                        AppStrings.noDoctorsAssigned,
+                        style: AppTextStyles.bodySecondary.copyWith(
+                          color: cs.onSurfaceVariant,
+                        ),
+                      ),
+                    )
+                  : KeyedSubtree(
+                      key: ValueKey('assigned_doctors_data_${doctors.length}'),
+                      child: Column(
+                        children: doctors
+                            .map(
+                              (doctor) => DoctorRow(
+                                name: doctor.fullName,
+                                isActive: doctor.isActive,
+                              ),
+                            )
+                            .toList(),
                       ),
                     ),
-                  )
-                : Column(
-                    children: doctors
-                        .map(
-                          (doctor) => DoctorRow(
-                            name: doctor.fullName,
-                            isActive: doctor.isActive,
-                          ),
-                        )
-                        .toList(),
+              loading: () => const KeyedSubtree(
+                key: ValueKey('assigned_doctors_loading'),
+                child: SkeletonListTile(),
+              ),
+              error: (_, __) => KeyedSubtree(
+                key: const ValueKey('assigned_doctors_error'),
+                child: ErrorView(
+                  exception: const UnknownException(
+                    message: AppStrings.errorLoadingAssignedDoctors,
                   ),
-            loading: () => const SkeletonListTile(),
-            error: (_, __) => ErrorView(
-              exception: const UnknownException(
-                message: AppStrings.errorLoadingAssignedDoctors,
+                ),
               ),
             ),
           ),

@@ -48,27 +48,49 @@ class _AppointmentActionButtonsState
 
   @override
   Widget build(BuildContext context) {
+    final Widget child;
     if (_isScheduled) {
-      return ScheduledActions(
-        loading: _loading,
-        onCheckIn: () => _act(_checkIn),
-        onCancel: () => _act(_cancel),
+      child = KeyedSubtree(
+        key: const ValueKey('scheduled_actions'),
+        child: ScheduledActions(
+          loading: _loading,
+          onCheckIn: () => _act(_checkIn),
+          onCancel: () => _act(_cancel),
+        ),
       );
-    }
-    if (_isCheckedIn) {
-      return CheckedInActions(
-        loading: _loading,
-        onRevert: () => _act(_revert),
-        onCancel: () => _act(_cancel),
+    } else if (_isCheckedIn) {
+      child = KeyedSubtree(
+        key: const ValueKey('checked_in_actions'),
+        child: CheckedInActions(
+          loading: _loading,
+          onRevert: () => _act(_revert),
+          onCancel: () => _act(_cancel),
+        ),
       );
-    }
-    if (_isCancelled) {
-      return CancelledActions(
-        loading: _loading,
-        onRestore: () => _act(_restore),
+    } else if (_isCancelled) {
+      child = KeyedSubtree(
+        key: const ValueKey('cancelled_actions'),
+        child: CancelledActions(
+          loading: _loading,
+          onRestore: () => _act(_restore),
+        ),
       );
+    } else {
+      child = const SizedBox.shrink(key: ValueKey('empty_actions'));
     }
-    return const SizedBox.shrink();
+
+    return AnimatedSize(
+      duration: const Duration(milliseconds: 200),
+      curve: Curves.easeOutCubic,
+      child: AnimatedSwitcher(
+        duration: const Duration(milliseconds: 200),
+        switchInCurve: Curves.easeOutCubic,
+        switchOutCurve: Curves.easeInCubic,
+        transitionBuilder: (child, animation) =>
+            FadeTransition(opacity: animation, child: child),
+        child: child,
+      ),
+    );
   }
 
   // ── Action dispatcher ───────────────────────────────────────────────────

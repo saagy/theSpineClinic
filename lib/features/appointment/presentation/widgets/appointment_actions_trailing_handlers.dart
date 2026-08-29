@@ -44,6 +44,9 @@ mixin _AppointmentActionsTrailingHandlers
     ref
         .read(allAppointmentsProvider.notifier)
         .updateStatus(widget.appointment.id, status);
+    ref
+        .read(patientAppointmentsProvider(widget.appointment.patientId).notifier)
+        .changeStatus(widget.appointment.id, status);
     try {
       final result = await ref
           .read(appointmentRepositoryProvider)
@@ -86,6 +89,9 @@ mixin _AppointmentActionsTrailingHandlers
     ref
         .read(allAppointmentsProvider.notifier)
         .updateStatus(apptId, originalStatus);
+    ref
+        .read(patientAppointmentsProvider(widget.appointment.patientId).notifier)
+        .changeStatus(apptId, originalStatus);
   }
 
   Future<bool> _canUpdateStatus() async {
@@ -107,8 +113,7 @@ mixin _AppointmentActionsTrailingHandlers
     final String patientId = widget.appointment.patientId;
     ref.invalidate(todayAppointmentsProvider);
     ref.read(allAppointmentsProvider.notifier).refresh();
-    ref.invalidate(patientAppointmentsProvider(patientId));
-    ref.invalidate(patientDetailProvider(patientId));
+    ref.read(patientAppointmentsProvider(patientId).notifier).refresh(silent: true);
     ref.invalidate(futureScheduledAppointmentsCountProvider(patientId));
     ref.invalidate(availablePackageBalanceProvider(patientId));
     ref.read(doctorScheduleProvider.notifier).refresh();
