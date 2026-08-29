@@ -158,4 +158,15 @@ abstract final class AppTextStyles {
     height: 1.2,
     fontFeatures: [FontFeature.tabularFigures()],
   );
+
+  /// Avatar initials typography token using the bundled Plus Jakarta Sans font.
+  static TextStyle avatarInitials({required double fontSize, Color? color}) =>
+      TextStyle(
+        fontFamily: _fontFamily,
+        fontSize: fontSize,
+        fontWeight: FontWeight.w600,
+        letterSpacing: -0.2,
+        height: 1.0,
+        color: color,
+      );
 }

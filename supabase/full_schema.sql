@@ -634,6 +634,10 @@ DECLARE
   v_staff_role public.user_role;
   v_staff_active boolean;
   v_next_visit date;
+  v_current_balance integer;
+  v_future_commitments integer;
+  v_available_balance integer;
+  v_required_sessions integer;
 BEGIN
   SELECT staff_id, staff_role, staff_active
   INTO v_staff_id, v_staff_role, v_staff_active
@@ -648,6 +652,38 @@ BEGIN
   IF coalesce(array_length(p_slots, 1), 0) = 0
      OR coalesce(array_length(p_doctor_ids, 1), 0) = 0 THEN
     RAISE EXCEPTION 'At least one slot and doctor are required.';
+  END IF;
+
+  -- Enforce package balance limit when booking with use_package = true
+  IF p_use_package AND p_type IN ('normal_pt_session'::public.appointment_type, 'spinal_traction_session'::public.appointment_type) THEN
+    v_required_sessions := coalesce(array_length(p_slots, 1), 0);
+
+    IF p_type = 'normal_pt_session'::public.appointment_type THEN
+      SELECT coalesce(session_balance, 0) INTO v_current_balance
+      FROM public.patients
+      WHERE id = p_patient_id
+      FOR UPDATE;
+    ELSIF p_type = 'spinal_traction_session'::public.appointment_type THEN
+      SELECT coalesce(traction_balance, 0) INTO v_current_balance
+      FROM public.patients
+      WHERE id = p_patient_id
+      FOR UPDATE;
+    END IF;
+
+    SELECT count(*) INTO v_future_commitments
+    FROM public.appointments
+    WHERE patient_id = p_patient_id
+      AND type = p_type
+      AND status = 'scheduled'::public.appointment_status
+      AND use_package = true
+      AND scheduled_at >= now();
+
+    v_available_balance := coalesce(v_current_balance, 0) - coalesce(v_future_commitments, 0);
+
+    IF v_required_sessions > v_available_balance THEN
+      RAISE EXCEPTION 'Insufficient package balance. Available: %, Requested: %', v_available_balance, v_required_sessions
+        USING ERRCODE = 'P0002';
+    END IF;
   END IF;
 
   IF p_expected_next_visit_date IS NOT NULL THEN

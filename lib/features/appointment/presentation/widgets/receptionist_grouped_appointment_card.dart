@@ -158,22 +158,15 @@ class _ReceptionistGroupedAppointmentCardState
                 const SizedBox(height: AppSizes.p8),
               ] else
                 const SizedBox(height: AppSizes.p2),
-              ListView.separated(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                itemCount: sortedItems.length,
-                separatorBuilder: (_, __) =>
-                    SizedBox(height: isCompact ? 2.0 : AppSizes.p8),
-                itemBuilder: (context, idx) {
-                  final item = sortedItems[idx];
-                  return _GroupedSubAppointmentRow(
-                    item: item,
-                    isAuthorizedStaff: isAuthorizedStaff,
-                    onStatusChanged: widget.onStatusChanged,
-                    onShowStatusMenu: showIndividualStatusMenu,
-                  );
-                },
-              ),
+              for (int idx = 0; idx < sortedItems.length; idx++) ...[
+                if (idx > 0) SizedBox(height: isCompact ? 2.0 : AppSizes.p8),
+                _GroupedSubAppointmentRow(
+                  item: sortedItems[idx],
+                  isAuthorizedStaff: isAuthorizedStaff,
+                  onStatusChanged: widget.onStatusChanged,
+                  onShowStatusMenu: showIndividualStatusMenu,
+                ),
+              ],
             ],
           ),
         ),

@@ -36,7 +36,13 @@ class _GroupedCardHeader extends StatelessWidget {
             : (isCompact ? 38.0 : 40.0);
         final double spacingBetween = isWide ? AppSizes.p12 : AppSizes.p6;
         final double avatarToTextSpacing = isWide ? AppSizes.p8 : AppSizes.p6;
-        final double avatarRadius = isCompact ? 10.0 : 13.5;
+        final double avatarRadius = isCompact ? 12.0 : 14.0;
+
+        final nameStyle = AppTextStyles.bodyBold.copyWith(
+          color: allCancelled ? clinic.textMuted : theme.colorScheme.onSurface,
+          decoration: allCancelled ? TextDecoration.lineThrough : null,
+          fontSize: isCompact ? 13 : null,
+        );
 
         return Row(
           crossAxisAlignment: CrossAxisAlignment.center,
@@ -60,15 +66,7 @@ class _GroupedCardHeader extends StatelessWidget {
               child: isCompact
                   ? AutoSizeText(
                       patient.fullName,
-                      style: AppTextStyles.bodyBold.copyWith(
-                        color: allCancelled
-                            ? clinic.textMuted
-                            : theme.colorScheme.onSurface,
-                        decoration: allCancelled
-                            ? TextDecoration.lineThrough
-                            : null,
-                        fontSize: 13,
-                      ),
+                      style: nameStyle,
                       maxLines: 1,
                       minFontSize: 10,
                       overflow: TextOverflow.ellipsis,
@@ -79,14 +77,7 @@ class _GroupedCardHeader extends StatelessWidget {
                       children: [
                         AutoSizeText(
                           patient.fullName,
-                          style: AppTextStyles.bodyBold.copyWith(
-                            color: allCancelled
-                                ? clinic.textMuted
-                                : theme.colorScheme.onSurface,
-                            decoration: allCancelled
-                                ? TextDecoration.lineThrough
-                                : null,
-                          ),
+                          style: nameStyle,
                           maxLines: 1,
                           minFontSize: 10,
                           overflow: TextOverflow.ellipsis,

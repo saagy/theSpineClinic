@@ -15,30 +15,12 @@ extension _NewAppointmentFormView on _NewAppointmentFormState {
     final int proposedCount =
         (_selectedType.affectsPackageBalance && _usePackage) ? _computedSlots.length : 0;
 
-    final secondaryAvailableAsync = isPatientValid && _bundleSecondarySession
-        ? ref.watch(
-            availableBalanceForTypeProvider((
-              patientId: _patientId!,
-              type: _secondaryType,
-            )),
-          )
-        : null;
-    final int secondaryProposedCount =
-        (_bundleSecondarySession && _secondaryType.affectsPackageBalance && _secondaryUsePackage)
-            ? _computedSlots.length
-            : 0;
-
     final bool isSubmissionBlocked = isPatientValid &&
-        ((proposedCount > 0 &&
-            (availableAsync == null ||
-                availableAsync.isLoading ||
-                availableAsync.hasError ||
-                proposedCount > (availableAsync.value ?? 0))) ||
-        (secondaryProposedCount > 0 &&
-            (secondaryAvailableAsync == null ||
-                secondaryAvailableAsync.isLoading ||
-                secondaryAvailableAsync.hasError ||
-                secondaryProposedCount > (secondaryAvailableAsync.value ?? 0))));
+        proposedCount > 0 &&
+        (availableAsync == null ||
+            availableAsync.isLoading ||
+            availableAsync.hasError ||
+            proposedCount > (availableAsync.value ?? 0));
 
     return LoadingOverlay(
       isLoading: _isSubmitting,
@@ -146,39 +128,42 @@ extension _NewAppointmentFormView on _NewAppointmentFormState {
   }
 
   Widget _buildBundlingToggle(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: AppSizes.p16, vertical: AppSizes.p8),
-      decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surface,
-        borderRadius: const BorderRadius.all(Radius.circular(AppSizes.r16)),
-        border: Border.all(
-          color: Theme.of(context).colorScheme.outline,
-          width: AppSizes.borderWidth,
-        ),
-      ),
-      child: SwitchListTile(
-        contentPadding: EdgeInsets.zero,
-        title: Text(
-          'Bundle with assessment',
-          style: AppTextStyles.bodyBold.copyWith(
-            color: Theme.of(context).colorScheme.onSurface,
+    return Material(
+      color: Theme.of(context).colorScheme.surface,
+      borderRadius: const BorderRadius.all(Radius.circular(AppSizes.r16)),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: AppSizes.p16, vertical: AppSizes.p8),
+        decoration: BoxDecoration(
+          borderRadius: const BorderRadius.all(Radius.circular(AppSizes.r16)),
+          border: Border.all(
+            color: Theme.of(context).colorScheme.outline,
+            width: AppSizes.borderWidth,
           ),
         ),
-        subtitle: Text(
-          'Book an assessment session alongside this treatment',
-          style: AppTextStyles.caption.copyWith(
-            color: Theme.of(context).colorScheme.onSurfaceVariant,
+        child: SwitchListTile(
+          contentPadding: EdgeInsets.zero,
+          title: Text(
+            'Bundle with assessment',
+            style: AppTextStyles.bodyBold.copyWith(
+              color: Theme.of(context).colorScheme.onSurface,
+            ),
           ),
+          subtitle: Text(
+            'Book an assessment session alongside this treatment',
+            style: AppTextStyles.caption.copyWith(
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
+          ),
+          value: _bundleSecondarySession,
+          activeThumbColor: Theme.of(context).colorScheme.primary,
+          onChanged: (val) => _mutate(() {
+            _bundleSecondarySession = val;
+            if (val) {
+              _isRecurring = false;
+            }
+            _prepopulateDoctorsForBundling();
+          }),
         ),
-        value: _bundleSecondarySession,
-        activeThumbColor: Theme.of(context).colorScheme.primary,
-        onChanged: (val) => _mutate(() {
-          _bundleSecondarySession = val;
-          if (val) {
-            _isRecurring = false;
-          }
-          _prepopulateDoctorsForBundling();
-        }),
       ),
     );
   }
@@ -317,27 +302,6 @@ extension _NewAppointmentFormView on _NewAppointmentFormState {
                 ? AppStrings.atLeastOneDoctorRequired
                 : null,
           ),
-          if (_secondaryType.affectsPackageBalance) ...[
-            const SizedBox(height: AppSizes.p16),
-            Divider(color: theme.colorScheme.outline, height: 1, thickness: 0.5),
-            const SizedBox(height: AppSizes.p12),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  'Use package balance for secondary session',
-                  style: AppTextStyles.body.copyWith(
-                    color: theme.colorScheme.onSurface,
-                  ),
-                ),
-                Switch(
-                  value: _secondaryUsePackage,
-                  onChanged: (value) => _mutate(() => _secondaryUsePackage = value),
-                  activeThumbColor: theme.colorScheme.primary,
-                ),
-              ],
-            ),
-          ],
         ],
       ),
     );

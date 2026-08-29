@@ -75,6 +75,7 @@ abstract final class AppStrings {
     'error_doc_file_too_large': errorDocFileTooLarge,
     'error_attachment_partial_fail': errorAttachmentPartialFail,
     'due_booking_changed': dueBookingChanged,
+    'insufficient_package_balance': insufficientPackageBalance,
   };
 
   // Form Labels & Search

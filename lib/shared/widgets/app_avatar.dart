@@ -7,6 +7,7 @@
 library;
 
 import 'package:flutter/material.dart';
+import 'package:spine_clinic_app/core/constants/app_text_styles.dart';
 
 /// A dynamic avatar that extracts up to two letter initials from [name].
 ///
@@ -39,6 +40,9 @@ class AppAvatar extends StatelessWidget {
     final double r = radius ?? 23;
     final String? initials = icon != null ? null : _deriveInitials(name);
     final ColorScheme cs = Theme.of(context).colorScheme;
+    final double fontSize = initials != null
+        ? (initials.length == 1 ? r * 0.90 : r * 0.78)
+        : r * 0.78;
 
     return CircleAvatar(
       radius: r,
@@ -48,14 +52,12 @@ class AppAvatar extends StatelessWidget {
           : initials != null
               ? Text(
                   initials,
-                  style: TextStyle(
+                  style: AppTextStyles.avatarInitials(
+                    fontSize: fontSize,
                     color: cs.onPrimary,
-                    fontSize: r * 0.44,
-                    fontWeight: FontWeight.w700,
-                    height: 1.0,
                   ),
                 )
-              : Icon(Icons.person, color: cs.onPrimary, size: r * 0.52),
+              : Icon(Icons.person, color: cs.onPrimary, size: r * 1.1),
     );
   }
 

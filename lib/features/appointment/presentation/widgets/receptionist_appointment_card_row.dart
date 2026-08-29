@@ -35,7 +35,7 @@ class _AppointmentCardRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final double avatarRadius = isCompact ? 11.0 : 13.5;
+    final double avatarRadius = isCompact ? 12.0 : 14.0;
     final String avatarName = isPatientContext
         ? (item.doctorName ?? AppStrings.doctor)
         : item.patient.fullName;

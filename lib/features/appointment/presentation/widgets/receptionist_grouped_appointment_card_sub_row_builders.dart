@@ -159,7 +159,8 @@ class _GroupedSubAppointmentMobileRow extends StatelessWidget {
           ),
         ),
         const SizedBox(width: AppSizes.p6),
-        Flexible(
+        ConstrainedBox(
+          constraints: BoxConstraints(maxWidth: isCompact ? 110 : 130),
           child: _GroupedStatusDot(
             color: dotColor,
             label: isPastScheduled

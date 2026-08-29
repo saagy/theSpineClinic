@@ -76,7 +76,6 @@ class _NewAppointmentFormState extends ConsumerState<NewAppointmentForm> {
   final _secondaryDoctorFieldKey = GlobalKey<FormFieldState<List<Staff>>>();
   TimeOfDay? _secondaryTime = const TimeOfDay(hour: 9, minute: 0);
   String? _secondaryTimeErrorText;
-  bool _secondaryUsePackage = true;
   List<Staff> _assignedDoctorsCache = const [];
 
   static const Duration _fetchTimeout = Duration(seconds: 15);
@@ -85,6 +84,7 @@ class _NewAppointmentFormState extends ConsumerState<NewAppointmentForm> {
   void initState() {
     super.initState();
     _sessionsController = TextEditingController();
+    _sessionsController.addListener(_onSessionsChanged);
     _selectedDate = widget.preselectedDate ?? DateTime.now();
     final String? patientId = widget.preselectedPatientId?.trim();
     if (patientId != null && patientId.length == 36) {
@@ -96,8 +96,11 @@ class _NewAppointmentFormState extends ConsumerState<NewAppointmentForm> {
     }
   }
 
+  void _onSessionsChanged() => setState(() {});
+
   @override
   void dispose() {
+    _sessionsController.removeListener(_onSessionsChanged);
     _sessionsController.dispose();
     super.dispose();
   }

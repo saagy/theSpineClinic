@@ -172,6 +172,25 @@ extension _NewAppointmentFormActions on _NewAppointmentFormState {
       );
       return;
     }
+
+    if (_selectedType.affectsPackageBalance && _usePackage) {
+      final available = await ref.read(
+        availableBalanceForTypeProvider((
+          patientId: _patientId!,
+          type: _selectedType,
+        )).future,
+      );
+      if (!mounted) return;
+      if (_computedSlots.length > (available ?? 0)) {
+        AppSnackbar.show(
+          context,
+          message: AppStrings.insufficientPackageBalance,
+          variant: AppSnackbarVariant.error,
+        );
+        return;
+      }
+    }
+
     _mutate(() => _isSubmitting = true);
     final result = await BookingSubmitHelper.executeBooking(
       repo: ref.read(appointmentRepositoryProvider),
@@ -206,7 +225,7 @@ extension _NewAppointmentFormActions on _NewAppointmentFormState {
         time: _secondaryTime!,
         creatorId: creator.id,
         doctors: secondaryDoctors,
-        usePackage: _secondaryUsePackage,
+        usePackage: false,
         expectedNextVisitDate: null,
       );
       if (!mounted) return;

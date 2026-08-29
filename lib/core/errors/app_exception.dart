@@ -152,6 +152,16 @@ class DatabaseException extends AppException {
       );
     }
 
+    if (error.message.toLowerCase().contains('insufficient package balance') ||
+        pgCode == 'P0002') {
+      return DatabaseException(
+        code: 'db/insufficient-package-balance',
+        message: error.message,
+        userMessageKey: 'insufficient_package_balance',
+        pgCode: pgCode,
+      );
+    }
+
     // HTTP 401 Unauthorized — no active session / RLS blocked
     final int? httpStatus = int.tryParse('${error.code}');
     if (httpStatus == 401 ||
