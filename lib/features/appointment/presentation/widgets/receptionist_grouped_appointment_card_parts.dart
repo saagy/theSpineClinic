@@ -57,40 +57,54 @@ class _GroupedCardHeader extends StatelessWidget {
             ),
             SizedBox(width: avatarToTextSpacing),
             Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  AutoSizeText(
-                    patient.fullName,
-                    style: AppTextStyles.bodyBold.copyWith(
-                      color: allCancelled
-                          ? clinic.textMuted
-                          : theme.colorScheme.onSurface,
-                      decoration: allCancelled
-                          ? TextDecoration.lineThrough
-                          : null,
-                      fontSize: isCompact ? 13 : null,
+              child: isCompact
+                  ? AutoSizeText(
+                      patient.fullName,
+                      style: AppTextStyles.bodyBold.copyWith(
+                        color: allCancelled
+                            ? clinic.textMuted
+                            : theme.colorScheme.onSurface,
+                        decoration: allCancelled
+                            ? TextDecoration.lineThrough
+                            : null,
+                        fontSize: 13,
+                      ),
+                      maxLines: 1,
+                      minFontSize: 10,
+                      overflow: TextOverflow.ellipsis,
+                    )
+                  : Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        AutoSizeText(
+                          patient.fullName,
+                          style: AppTextStyles.bodyBold.copyWith(
+                            color: allCancelled
+                                ? clinic.textMuted
+                                : theme.colorScheme.onSurface,
+                            decoration: allCancelled
+                                ? TextDecoration.lineThrough
+                                : null,
+                          ),
+                          maxLines: 1,
+                          minFontSize: 10,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        const SizedBox(height: AppSizes.p2),
+                        Text(
+                          AppStrings.dualSession,
+                          style: AppTextStyles.caption.copyWith(
+                            color: allCancelled
+                                ? clinic.textMuted
+                                : theme.colorScheme.onSurfaceVariant,
+                            fontWeight: FontWeight.w500,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ],
                     ),
-                    maxLines: 1,
-                    minFontSize: 10,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  const SizedBox(height: AppSizes.p2),
-                  Text(
-                    AppStrings.dualSession,
-                    style: AppTextStyles.caption.copyWith(
-                      color: allCancelled
-                          ? clinic.textMuted
-                          : theme.colorScheme.onSurfaceVariant,
-                      fontWeight: FontWeight.w500,
-                      fontSize: isCompact ? 11 : null,
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ],
-              ),
             ),
             if (isAuthorizedStaff && trailingMenu != null) ...[
               const SizedBox(width: AppSizes.p4),
