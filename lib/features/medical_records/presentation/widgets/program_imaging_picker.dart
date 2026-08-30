@@ -54,96 +54,82 @@ class ProgramImagingPicker extends StatelessWidget {
     final cs = Theme.of(context).colorScheme;
     final totalCount = pendingFiles.length + existingDocuments.length;
 
-    return Container(
-      padding: const EdgeInsets.all(AppSizes.p16),
-      decoration: BoxDecoration(
-        color: cs.surfaceContainerLow,
-        borderRadius: BorderRadius.circular(AppSizes.r16),
-        border: Border.all(color: cs.outlineVariant),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Row(
-                children: [
-                  Icon(
-                    Icons.photo_library_outlined,
-                    size: 20,
-                    color: cs.primary,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Icon(
+              Icons.photo_library_outlined,
+              size: AppSizes.iconDefault,
+              color: cs.primary,
+            ),
+            const SizedBox(width: AppSizes.p8),
+            Text(
+              AppStrings.imagingAttachments,
+              style: AppTextStyles.bodyBold.copyWith(color: cs.onSurface),
+            ),
+            const Spacer(),
+            if (totalCount > 0)
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: AppSizes.p8,
+                  vertical: AppSizes.p2,
+                ),
+                decoration: BoxDecoration(
+                  color: cs.primaryContainer,
+                  borderRadius: BorderRadius.circular(AppSizes.r999),
+                ),
+                child: Text(
+                  AppStrings.scanCountLabel(totalCount),
+                  style: AppTextStyles.captionBold.copyWith(
+                    color: cs.onPrimaryContainer,
+                    fontSize: AppSizes.fontSizeXs,
                   ),
-                  const SizedBox(width: AppSizes.p8),
-                  Text(
-                    AppStrings.imagingAttachments,
-                    style: AppTextStyles.cardTitle.copyWith(
-                      color: cs.onSurface,
-                    ),
-                  ),
-                ],
+                ),
               ),
-              if (totalCount > 0)
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: AppSizes.p8,
-                    vertical: AppSizes.p2,
-                  ),
-                  decoration: BoxDecoration(
-                    color: cs.primaryContainer,
-                    borderRadius: BorderRadius.circular(AppSizes.r12),
-                  ),
-                  child: Text(
-                    AppStrings.scanCountLabel(totalCount),
-                    style: AppTextStyles.captionBold.copyWith(
-                      color: cs.onPrimaryContainer,
-                      fontSize: AppSizes.fontSizeXs,
+          ],
+        ),
+        const SizedBox(height: AppSizes.p12),
+        if (totalCount > 0) ...[
+          SizedBox(
+            height: AppSizes.mediaThumbStripHeight,
+            child: ListView(
+              scrollDirection: Axis.horizontal,
+              physics: const BouncingScrollPhysics(),
+              children: [
+                ...existingDocuments.map(
+                  (doc) => Padding(
+                    padding: const EdgeInsets.only(right: AppSizes.p8),
+                    child: ProgramPickerCard(
+                      fileName: doc.fileName,
+                      previewWidget: PatientDocumentPreview(document: doc),
+                      onDelete: () => onDeleteExistingDocument?.call(doc),
                     ),
                   ),
                 ),
-            ],
+                ...pendingFiles.asMap().entries.map(
+                  (entry) => Padding(
+                    padding: const EdgeInsets.only(right: AppSizes.p8),
+                    child: ProgramPickerCard(
+                      fileName: entry.value.name,
+                      imageBytes: entry.value.bytes,
+                      onDelete: () => _removePending(entry.key),
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
           const SizedBox(height: AppSizes.p12),
-          if (totalCount > 0) ...[
-            SizedBox(
-              height: 128,
-              child: ListView(
-                scrollDirection: Axis.horizontal,
-                physics: const BouncingScrollPhysics(),
-                children: [
-                  ...existingDocuments.map(
-                    (doc) => Padding(
-                      padding: const EdgeInsets.only(right: AppSizes.p8),
-                      child: ProgramPickerCard(
-                        fileName: doc.fileName,
-                        previewWidget: PatientDocumentPreview(document: doc),
-                        onDelete: () => onDeleteExistingDocument?.call(doc),
-                      ),
-                    ),
-                  ),
-                  ...pendingFiles.asMap().entries.map(
-                    (entry) => Padding(
-                      padding: const EdgeInsets.only(right: AppSizes.p8),
-                      child: ProgramPickerCard(
-                        fileName: entry.value.name,
-                        imageBytes: entry.value.bytes,
-                        onDelete: () => _removePending(entry.key),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: AppSizes.p12),
-          ],
-          AppButton(
-            labelText: AppStrings.attachImagingFiles,
-            icon: Icons.add_photo_alternate_outlined,
-            variant: AppButtonVariant.secondary,
-            onPressed: _pickFiles,
-          ),
         ],
-      ),
+        AppButton(
+          labelText: AppStrings.attachImagingFiles,
+          icon: Icons.add_photo_alternate_outlined,
+          variant: AppButtonVariant.secondary,
+          onPressed: _pickFiles,
+        ),
+      ],
     );
   }
 }

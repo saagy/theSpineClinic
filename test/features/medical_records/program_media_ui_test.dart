@@ -4,8 +4,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:go_router/go_router.dart';
 import 'package:spine_clinic_app/core/constants/app_strings.dart';
 import 'package:spine_clinic_app/core/errors/result.dart';
+import 'package:spine_clinic_app/core/network/app_routes.dart';
 import 'package:spine_clinic_app/core/utils/file_display_helper.dart';
 import 'package:spine_clinic_app/features/medical_records/presentation/screens/program_gallery_viewer_screen.dart';
 import 'package:spine_clinic_app/features/medical_records/presentation/widgets/program_media_card.dart';
@@ -171,7 +173,7 @@ void main() {
     });
 
     testWidgets(
-      'ProgramGalleryViewerScreen navigates via chevron button and keyboard',
+      'ProgramGalleryViewerScreen navigates via swipe and keyboard',
       (tester) async {
         await tester.pumpWidget(
           ProviderScope(
@@ -191,21 +193,88 @@ void main() {
         await tester.pumpAndSettle();
 
         expect(find.text('1 of 2'), findsOneWidget);
-        expect(find.byIcon(Icons.chevron_right_rounded), findsOneWidget);
+        expect(find.byIcon(Icons.chevron_right_rounded), findsNothing);
         expect(find.byIcon(Icons.chevron_left_rounded), findsNothing);
 
-        // Tap next chevron
-        await tester.tap(find.byIcon(Icons.chevron_right_rounded));
+        // Swipe to next document
+        await tester.drag(find.byType(PageView), const Offset(-500, 0));
         await tester.pumpAndSettle();
 
         expect(find.text('2 of 2'), findsOneWidget);
-        expect(find.byIcon(Icons.chevron_left_rounded), findsOneWidget);
 
         // Navigate back using Left arrow key
         await tester.sendKeyEvent(LogicalKeyboardKey.arrowLeft);
         await tester.pumpAndSettle();
 
         expect(find.text('1 of 2'), findsOneWidget);
+      },
+    );
+
+    testWidgets(
+      'ProgramGalleryViewerScreen.open pushes gallery and close button returns to previous screen',
+      (tester) async {
+        final router = GoRouter(
+          initialLocation: '/program-detail',
+          routes: [
+            GoRoute(
+              path: '/program-detail',
+              builder: (context, _) => Scaffold(
+                body: Center(
+                  child: ElevatedButton(
+                    onPressed: () => ProgramGalleryViewerScreen.open(
+                      context,
+                      documents: testDocs,
+                      initialIndex: 0,
+                    ),
+                    child: const Text('Open Gallery'),
+                  ),
+                ),
+              ),
+            ),
+            GoRoute(
+              path: AppRoutes.galleryViewer,
+              builder: (_, state) {
+                final args = state.extra as ProgramGalleryViewerArgs?;
+                return ProgramGalleryViewerScreen(
+                  documents: args?.documents ?? const [],
+                  initialIndex: args?.initialIndex ?? 0,
+                  title: args?.title ?? AppStrings.imagingAttachments,
+                );
+              },
+            ),
+          ],
+        );
+        addTearDown(router.dispose);
+
+        await tester.pumpWidget(
+          ProviderScope(
+            overrides: [
+              patientDocumentsRepositoryProvider.overrideWithValue(
+                _FakeDocumentsRepository(testDocs),
+              ),
+            ],
+            child: MaterialApp.router(routerConfig: router),
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        expect(find.text('Open Gallery'), findsOneWidget);
+        expect(find.byType(ProgramGalleryViewerScreen), findsNothing);
+
+        // Tap open gallery
+        await tester.tap(find.text('Open Gallery'));
+        await tester.pumpAndSettle();
+
+        expect(find.byType(ProgramGalleryViewerScreen), findsOneWidget);
+
+        // Tap close button (X)
+        await tester.tap(find.byTooltip(AppStrings.close));
+        await tester.pumpAndSettle();
+
+        // Should return back to /program-detail cleanly
+        expect(find.byType(ProgramGalleryViewerScreen), findsNothing);
+        expect(find.text('Open Gallery'), findsOneWidget);
+        expect(router.routeInformationProvider.value.uri.path, '/program-detail');
       },
     );
   });

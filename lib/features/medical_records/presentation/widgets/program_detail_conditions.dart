@@ -99,7 +99,7 @@ class ProgramDetailConditions extends StatelessWidget {
                           Expanded(
                             child: Text(
                               c.condition?.conditionName ??
-                                  'Condition details',
+                                  AppStrings.conditionUnspecified,
                               style: AppTextStyles.body.copyWith(
                                 color: cs.onSurface,
                               ),

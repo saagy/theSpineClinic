@@ -120,6 +120,36 @@ List<RouteBase> _buildRoutes(Ref ref) => [
       child: StaffFormScreen(staff: state.extra as Staff?),
     ),
   ),
+  GoRoute(
+    path: AppRoutes.galleryViewer,
+    pageBuilder: (_, state) {
+      final extra = state.extra;
+      final List<PatientDocument> docs;
+      final int index;
+      final String title;
+      if (extra is ProgramGalleryViewerArgs) {
+        docs = extra.documents;
+        index = extra.initialIndex;
+        title = extra.title;
+      } else if (extra is List<PatientDocument>) {
+        docs = extra;
+        index = 0;
+        title = AppStrings.imagingAttachments;
+      } else {
+        docs = const [];
+        index = 0;
+        title = AppStrings.imagingAttachments;
+      }
+      return appPage(
+        key: state.pageKey,
+        child: ProgramGalleryViewerScreen(
+          documents: docs,
+          initialIndex: index,
+          title: title,
+        ),
+      );
+    },
+  ),
   ShellRoute(
     pageBuilder: (BuildContext context, GoRouterState state, Widget child) {
       final user = ref.read(currentUserProvider).value;

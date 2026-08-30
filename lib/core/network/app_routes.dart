@@ -31,6 +31,9 @@ abstract final class AppRoutes {
   /// Full-screen patient document viewer nested under patient detail.
   static const String patientDocumentViewer = 'document/:documentId';
 
+  /// Gallery lightbox viewer for program documents and image reels.
+  static const String galleryViewer = '/gallery';
+
   /// Builds the browser-safe location for a patient document viewer.
   static String patientDocumentViewerLocation({
     required String patientId,

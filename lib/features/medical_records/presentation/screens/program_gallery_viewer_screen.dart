@@ -3,18 +3,30 @@ library;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
-import 'package:spine_clinic_app/core/constants/app_sizes.dart';
 import 'package:spine_clinic_app/core/constants/app_strings.dart';
 import 'package:spine_clinic_app/core/constants/app_text_styles.dart';
+import 'package:spine_clinic_app/core/network/app_routes.dart';
 import 'package:spine_clinic_app/core/utils/file_display_helper.dart';
-import 'package:spine_clinic_app/features/medical_records/presentation/widgets/gallery_nav_button.dart';
 import 'package:spine_clinic_app/features/medical_records/presentation/widgets/gallery_page_indicator.dart';
 import 'package:spine_clinic_app/features/patient/domain/patient_document.dart';
 import 'package:spine_clinic_app/shared/widgets/empty_state.dart';
 import 'package:spine_clinic_app/shared/widgets/image_viewer_view.dart';
 import 'package:spine_clinic_app/shared/widgets/pdf_viewer_view.dart';
 
-/// Full-screen lightbox gallery supporting swipe, click arrows, and keyboard navigation.
+/// Arguments bundle passed to [ProgramGalleryViewerScreen] via GoRouter extra.
+class ProgramGalleryViewerArgs {
+  const ProgramGalleryViewerArgs({
+    required this.documents,
+    this.initialIndex = 0,
+    this.title = AppStrings.imagingAttachments,
+  });
+
+  final List<PatientDocument> documents;
+  final int initialIndex;
+  final String title;
+}
+
+/// Full-screen lightbox gallery supporting swipe and keyboard navigation.
 class ProgramGalleryViewerScreen extends StatefulWidget {
   const ProgramGalleryViewerScreen({
     super.key,
@@ -30,12 +42,53 @@ class ProgramGalleryViewerScreen extends StatefulWidget {
   @override
   State<ProgramGalleryViewerScreen> createState() =>
       _ProgramGalleryViewerScreenState();
+
+  /// Convenience push used by the program detail screen and the
+  /// patient documents tab (program-folder tile).
+  static void open(
+    BuildContext context, {
+    required List<PatientDocument> documents,
+    int initialIndex = 0,
+    String title = AppStrings.imagingAttachments,
+  }) {
+    if (documents.isEmpty) return;
+    if (GoRouter.maybeOf(context) != null) {
+      context.push(
+        AppRoutes.galleryViewer,
+        extra: ProgramGalleryViewerArgs(
+          documents: documents,
+          initialIndex: initialIndex,
+          title: title,
+        ),
+      );
+    } else {
+      Navigator.of(context).push(
+        PageRouteBuilder<void>(
+          pageBuilder: (_, __, ___) => ProgramGalleryViewerScreen(
+            documents: documents,
+            initialIndex: initialIndex,
+            title: title,
+          ),
+          transitionDuration: Duration.zero,
+          reverseTransitionDuration: Duration.zero,
+        ),
+      );
+    }
+  }
 }
 
 class _ProgramGalleryViewerScreenState
     extends State<ProgramGalleryViewerScreen> {
   late final PageController _pageController;
   late int _currentIndex;
+
+  void _close() {
+    if (Navigator.of(context).canPop()) {
+      Navigator.of(context).pop();
+    } else {
+      context.pop();
+    }
+  }
 
   @override
   void initState() {
@@ -76,7 +129,7 @@ class _ProgramGalleryViewerScreenState
         appBar: AppBar(
           leading: IconButton(
             icon: const Icon(Icons.close_rounded),
-            onPressed: () => context.pop(),
+            onPressed: _close,
           ),
           title: Text(widget.title),
         ),
@@ -107,7 +160,7 @@ class _ProgramGalleryViewerScreenState
             leading: IconButton(
               icon: Icon(Icons.close_rounded, color: cs.onSurface),
               tooltip: AppStrings.close,
-              onPressed: () => context.pop(),
+              onPressed: _close,
             ),
             title: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -135,51 +188,23 @@ class _ProgramGalleryViewerScreenState
             child: Column(
               children: [
                 Expanded(
-                  child: Stack(
-                    children: [
-                      PageView.builder(
-                        controller: _pageController,
-                        physics: const BouncingScrollPhysics(),
-                        itemCount: widget.documents.length,
-                        onPageChanged: (i) => setState(() => _currentIndex = i),
-                        itemBuilder: (context, index) {
-                          final doc = widget.documents[index];
-                          return FileDisplayHelper.isPdf(doc.fileName)
-                              ? PdfViewerView(
-                                  fileUrl: doc.fileUrl,
-                                  fileName: doc.fileName,
-                                )
-                              : ImageViewerView(
-                                  fileUrl: doc.fileUrl,
-                                  fileName: doc.fileName,
-                                );
-                        },
-                      ),
-                      if (_currentIndex > 0)
-                        Positioned(
-                          left: AppSizes.p16,
-                          top: 0,
-                          bottom: 0,
-                          child: Center(
-                            child: GalleryNavButton(
-                              icon: Icons.chevron_left_rounded,
-                              onTap: _previousPage,
-                            ),
-                          ),
-                        ),
-                      if (_currentIndex < widget.documents.length - 1)
-                        Positioned(
-                          right: AppSizes.p16,
-                          top: 0,
-                          bottom: 0,
-                          child: Center(
-                            child: GalleryNavButton(
-                              icon: Icons.chevron_right_rounded,
-                              onTap: _nextPage,
-                            ),
-                          ),
-                        ),
-                    ],
+                  child: PageView.builder(
+                    controller: _pageController,
+                    physics: const BouncingScrollPhysics(),
+                    itemCount: widget.documents.length,
+                    onPageChanged: (i) => setState(() => _currentIndex = i),
+                    itemBuilder: (context, index) {
+                      final doc = widget.documents[index];
+                      return FileDisplayHelper.isPdf(doc.fileName)
+                          ? PdfViewerView(
+                              fileUrl: doc.fileUrl,
+                              fileName: doc.fileName,
+                            )
+                          : ImageViewerView(
+                              fileUrl: doc.fileUrl,
+                              fileName: doc.fileName,
+                            );
+                    },
                   ),
                 ),
                 if (widget.documents.length > 1)

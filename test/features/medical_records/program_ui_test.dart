@@ -16,6 +16,7 @@ import 'package:spine_clinic_app/features/medical_records/domain/program_status.
 import 'package:spine_clinic_app/features/medical_records/presentation/condition_catalog_providers.dart';
 import 'package:spine_clinic_app/features/medical_records/presentation/patient_programs_providers.dart';
 import 'package:spine_clinic_app/features/medical_records/presentation/screens/program_detail_screen.dart';
+import 'package:spine_clinic_app/features/medical_records/presentation/screens/program_form_screen.dart';
 import 'package:spine_clinic_app/features/medical_records/presentation/widgets/condition_picker_sheet.dart';
 import 'package:spine_clinic_app/features/medical_records/presentation/widgets/region_filter_dropdown.dart';
 import 'package:spine_clinic_app/features/patient/domain/clinic_location.dart';
@@ -245,11 +246,30 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.text('Rehabilitation Episode'), findsOneWidget);
+    expect(find.text(AppStrings.program), findsOneWidget);
     expect(find.text('Shoulder'), findsOneWidget);
     expect(find.text('Shoulder impingement syndrome'), findsOneWidget);
     expect(find.text('Full flexion with mild pain at end range'), findsOneWidget);
     expect(find.text('MRI indicates mild L4-L5 bulge'), findsOneWidget);
+  });
+
+  testWidgets('ProgramFormScreen renders form content with pinned bottom save bar', (tester) async {
+    final container = ProviderContainer();
+
+    await tester.pumpWidget(
+      _wrap(const ProgramFormScreen(patientId: 'pat-1'), container),
+    );
+    await tester.pumpAndSettle();
+
+    // Body must render (a collapsed body means the save bar swallowed it).
+    expect(find.text(AppStrings.selectInjuries), findsOneWidget);
+    expect(find.byType(ListView), findsWidgets);
+
+    // Save button must be pinned to the bottom edge, not floating mid-screen.
+    final saveCenter = tester.getCenter(find.text(AppStrings.save));
+    final screenHeight = tester.view.physicalSize.height /
+        tester.view.devicePixelRatio;
+    expect(saveCenter.dy, greaterThan(screenHeight * 0.8));
   });
 
   testWidgets('RegionFilterDropdown renders anatomical regions correctly',

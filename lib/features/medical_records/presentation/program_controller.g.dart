@@ -50,7 +50,7 @@ final class ProgramControllerProvider
   }
 }
 
-String _$programControllerHash() => r'b2806a13fdf069e18b8e260d32cd426072166a49';
+String _$programControllerHash() => r'73276264076951c3e0651ec0b34ec8342af2abda';
 
 /// Mutation controller managing program creation, updates, status changes, and deletion.
 ///

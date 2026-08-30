@@ -2,12 +2,18 @@ library;
 
 import 'package:flutter/material.dart';
 import 'package:spine_clinic_app/core/constants/app_sizes.dart';
+import 'package:spine_clinic_app/core/constants/app_strings.dart';
 import 'package:spine_clinic_app/core/constants/app_text_styles.dart';
 import 'package:spine_clinic_app/core/utils/formatters.dart';
+import 'package:spine_clinic_app/features/medical_records/domain/body_region.dart';
 import 'package:spine_clinic_app/features/medical_records/domain/patient_program.dart';
 import 'package:spine_clinic_app/features/medical_records/presentation/widgets/program_status_badge.dart';
 
 /// Card component rendering a program summary in the patient programs list.
+///
+/// Conditions are grouped under their affected region (max 3 shown, the
+/// rest collapsed into a "+N more" line). Raw clinical text is intentionally
+/// omitted (Rule 22): it lives in the detail screen.
 class ProgramCard extends StatelessWidget {
   const ProgramCard({
     super.key,
@@ -18,11 +24,99 @@ class ProgramCard extends StatelessWidget {
   final PatientProgram program;
   final VoidCallback onTap;
 
+  static const int _maxVisibleConditions = 3;
+
+  /// Groups condition names by body region, regions sorted alphabetically.
+  Map<BodyRegion, List<String>> _conditionsByRegion() {
+    final map = <BodyRegion, List<String>>{};
+    for (final pc in program.conditions) {
+      final condition = pc.condition;
+      if (condition == null) continue;
+      map.putIfAbsent(condition.region, () => []).add(condition.conditionName);
+    }
+    final sortedKeys = map.keys.toList()
+      ..sort((a, b) => a.displayName.compareTo(b.displayName));
+    return {for (final key in sortedKeys) key: map[key]!};
+  }
+
+  Widget _regionPill(BuildContext context, BodyRegion region) {
+    final cs = Theme.of(context).colorScheme;
+    return Container(
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSizes.p8,
+        vertical: AppSizes.p2,
+      ),
+      decoration: BoxDecoration(
+        color: cs.secondaryContainer,
+        borderRadius: BorderRadius.circular(AppSizes.r999),
+      ),
+      child: Text(
+        region.displayName,
+        style: AppTextStyles.captionBold.copyWith(
+          color: cs.onSecondaryContainer,
+        ),
+      ),
+    );
+  }
+
+  Widget _conditionBullet(BuildContext context, String name) {
+    final cs = Theme.of(context).colorScheme;
+    return Padding(
+      padding: const EdgeInsets.only(
+        left: AppSizes.p8,
+        top: AppSizes.p4,
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            '• ',
+            style: TextStyle(
+              color: cs.primary,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          Expanded(
+            child: Text(
+              name,
+              style: AppTextStyles.bodySecondary.copyWith(color: cs.onSurface),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
-    final regions = program.affectedRegions;
-    final conditions = program.conditions;
+    final grouped = _conditionsByRegion();
+
+    // Cap visible conditions across all regions to keep cards uniform.
+    final sections = <Widget>[];
+    var shown = 0;
+    var hidden = 0;
+    for (final entry in grouped.entries) {
+      final visible =
+          entry.value.take(_maxVisibleConditions - shown).toList();
+      hidden += entry.value.length - visible.length;
+      shown += visible.length;
+      if (visible.isEmpty) continue;
+      sections.add(
+        Padding(
+          padding: const EdgeInsets.only(bottom: AppSizes.p8),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _regionPill(context, entry.key),
+              ...visible.map((name) => _conditionBullet(context, name)),
+            ],
+          ),
+        ),
+      );
+    }
 
     return Container(
       margin: const EdgeInsets.symmetric(
@@ -65,82 +159,15 @@ class ProgramCard extends StatelessWidget {
                 ],
               ),
               const SizedBox(height: AppSizes.p12),
-              if (regions.isNotEmpty) ...[
-                Wrap(
-                  spacing: AppSizes.p6,
-                  runSpacing: AppSizes.p6,
-                  children: regions.map((r) {
-                    return Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: AppSizes.p8,
-                        vertical: AppSizes.p4,
-                      ),
-                      decoration: BoxDecoration(
-                        color: cs.secondaryContainer,
-                        borderRadius: BorderRadius.circular(AppSizes.r999),
-                      ),
-                      child: Text(
-                        r.displayName,
-                        style: AppTextStyles.captionBold.copyWith(
-                          color: cs.onSecondaryContainer,
-                        ),
-                      ),
-                    );
-                  }).toList(),
-                ),
-                const SizedBox(height: AppSizes.p8),
-              ],
-              if (conditions.isNotEmpty) ...[
-                ...conditions.take(3).map((c) {
-                  final name =
-                      c.condition?.conditionName ?? 'Injured Condition';
-                  return Padding(
-                    padding: const EdgeInsets.only(bottom: AppSizes.p4),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          '• ',
-                          style: TextStyle(
-                            color: cs.primary,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        Expanded(
-                          child: Text(
-                            name,
-                            style: AppTextStyles.bodySecondary.copyWith(
-                              color: cs.onSurface,
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                      ],
-                    ),
-                  );
-                }),
-                if (conditions.length > 3)
-                  Text(
-                    '+${conditions.length - 3} more conditions',
-                    style: AppTextStyles.caption.copyWith(
-                      color: cs.primary,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-              ],
-              if (program.examination != null &&
-                  program.examination!.trim().isNotEmpty) ...[
-                const SizedBox(height: AppSizes.p8),
+              ...sections,
+              if (hidden > 0)
                 Text(
-                  program.examination!,
+                  AppStrings.moreConditions(hidden),
                   style: AppTextStyles.caption.copyWith(
-                    color: cs.onSurfaceVariant,
+                    color: cs.primary,
+                    fontWeight: FontWeight.w600,
                   ),
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
                 ),
-              ],
             ],
           ),
         ),

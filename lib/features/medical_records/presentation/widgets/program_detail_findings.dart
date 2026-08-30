@@ -87,7 +87,7 @@ class ProgramDetailFindings extends ConsumerWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Clinical Assessment & Findings',
+            AppStrings.clinicalFindingsSection,
             style: AppTextStyles.cardTitle.copyWith(color: cs.onSurface),
           ),
           const SizedBox(height: AppSizes.p12),
@@ -106,13 +106,10 @@ class ProgramDetailFindings extends ConsumerWidget {
           ProgramMediaReel(
             documents: docs,
             onOpenDocument: (initialIndex) {
-              Navigator.of(context).push(
-                MaterialPageRoute<void>(
-                  builder: (_) => ProgramGalleryViewerScreen(
-                    documents: docs,
-                    initialIndex: initialIndex,
-                  ),
-                ),
+              ProgramGalleryViewerScreen.open(
+                context,
+                documents: docs,
+                initialIndex: initialIndex,
               );
             },
           ),

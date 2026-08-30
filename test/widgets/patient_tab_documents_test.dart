@@ -3,13 +3,19 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:spine_clinic_app/core/errors/result.dart';
+import 'package:spine_clinic_app/features/medical_records/domain/patient_program.dart';
+import 'package:spine_clinic_app/features/medical_records/domain/program_repository.dart';
+import 'package:spine_clinic_app/features/medical_records/domain/program_status.dart';
+import 'package:spine_clinic_app/features/medical_records/presentation/patient_programs_providers.dart';
 import 'package:spine_clinic_app/features/patient/domain/clinic_location.dart';
 import 'package:spine_clinic_app/features/patient/domain/patient.dart';
 import 'package:spine_clinic_app/features/patient/domain/patient_document.dart';
 import 'package:spine_clinic_app/features/patient/domain/patient_documents_repository.dart';
 import 'package:spine_clinic_app/features/patient/presentation/patient_documents_providers.dart';
 import 'package:spine_clinic_app/features/patient/presentation/widgets/patient_document_actions.dart';
+import 'package:spine_clinic_app/features/patient/presentation/widgets/patient_document_item.dart';
 import 'package:spine_clinic_app/features/patient/presentation/widgets/patient_tab_documents.dart';
+import 'package:spine_clinic_app/features/patient/presentation/widgets/program_document_folder_tile.dart';
 
 class FakePatientDocumentsRepository implements PatientDocumentsRepository {
   final List<PatientDocument> mockDocs;
@@ -65,6 +71,60 @@ class FakePatientDocumentsRepository implements PatientDocumentsRepository {
   }
 }
 
+class FakeProgramRepository implements ProgramRepository {
+  final List<PatientProgram> programs;
+  FakeProgramRepository(this.programs);
+
+  @override
+  Future<Result<List<PatientProgram>>> getProgramsForPatient(
+    String patientId,
+  ) async =>
+      Result.success(programs);
+
+  @override
+  Future<Result<PatientProgram?>> getProgramById(String programId) async =>
+      Result.success(programs.where((p) => p.id == programId).firstOrNull);
+
+  @override
+  Future<Result<PatientProgram>> createProgram({
+    required String patientId,
+    required List<String> conditionIds,
+    String? examination,
+    String? imagingNotes,
+    String? exaggeratingPositions,
+    String? relievingPositions,
+    String? notes,
+    List<ProgramAttachment>? pendingAttachments,
+  }) async =>
+      throw UnimplementedError();
+
+  @override
+  Future<Result<PatientProgram>> updateProgram({
+    required String programId,
+    required String patientId,
+    required List<String> conditionIds,
+    String? examination,
+    String? imagingNotes,
+    String? exaggeratingPositions,
+    String? relievingPositions,
+    String? notes,
+    ProgramStatus? status,
+    List<ProgramAttachment>? pendingAttachments,
+  }) async =>
+      throw UnimplementedError();
+
+  @override
+  Future<Result<void>> updateProgramStatus({
+    required String programId,
+    required ProgramStatus status,
+  }) async =>
+      const Result.success(null);
+
+  @override
+  Future<Result<void>> deleteProgram(String programId) async =>
+      const Result.success(null);
+}
+
 void main() {
   final patient = Patient(
     id: 'p1',
@@ -94,9 +154,14 @@ void main() {
   Widget buildTestWidget({
     required FakePatientDocumentsRepository repo,
     required double width,
+    FakeProgramRepository? programRepo,
   }) {
     return ProviderScope(
-      overrides: [patientDocumentsRepositoryProvider.overrideWithValue(repo)],
+      overrides: [
+        patientDocumentsRepositoryProvider.overrideWithValue(repo),
+        if (programRepo != null)
+          programRepositoryProvider.overrideWithValue(programRepo),
+      ],
       child: MaterialApp(
         home: Scaffold(
           body: SizedBox(
@@ -106,6 +171,19 @@ void main() {
           ),
         ),
       ),
+    );
+  }
+
+  PatientProgram buildProgram({
+    required String id,
+    required DateTime createdAt,
+  }) {
+    return PatientProgram(
+      id: id,
+      patientId: 'p1',
+      createdBy: 'doc1',
+      createdAt: createdAt,
+      updatedAt: createdAt,
     );
   }
 
@@ -175,6 +253,115 @@ void main() {
 
       // At 1200 width, formula is (1200 / 300).floor().clamp(2, 6) = 4 columns
       expect(delegate.crossAxisCount, 4);
+    });
+  });
+
+  group('PatientTabDocuments Program Folder Grouping', () {
+    PatientDocument doc(String id, {String? programId, DateTime? at}) =>
+        PatientDocument(
+          id: id,
+          patientId: 'p1',
+          fileUrl: 'https://example.com/$id.pdf',
+          fileName: '$id.pdf',
+          programId: programId,
+          uploadedAt: at ?? DateTime(2026, 8, 30),
+        );
+
+    testWidgets('renders program docs as a single folder tile', (
+      tester,
+    ) async {
+      final docs = [
+        doc('d1', programId: 'prog-1'),
+        doc('d2', programId: 'prog-1'),
+        doc('d3'), // standalone
+      ];
+      final repo = FakePatientDocumentsRepository(List.of(docs));
+      final progRepo = FakeProgramRepository([
+        buildProgram(
+          id: 'prog-1',
+          createdAt: DateTime(2026, 8, 20),
+        ),
+      ]);
+
+      await tester.pumpWidget(
+        buildTestWidget(
+          repo: repo,
+          width: 375,
+          programRepo: progRepo,
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.byType(ProgramDocumentFolderTile), findsOneWidget);
+      // Only the standalone doc is rendered as a PatientDocumentItem.
+      expect(find.byType(PatientDocumentItem), findsOneWidget);
+    });
+
+    testWidgets('standalone docs with no programId render as doc tiles', (
+      tester,
+    ) async {
+      final docs = [
+        doc('d1'),
+        doc('d2'),
+      ];
+      final repo = FakePatientDocumentsRepository(List.of(docs));
+
+      await tester.pumpWidget(buildTestWidget(repo: repo, width: 375));
+      await tester.pumpAndSettle();
+
+      expect(find.byType(ProgramDocumentFolderTile), findsNothing);
+      expect(find.byType(PatientDocumentItem), findsNWidgets(2));
+    });
+
+    testWidgets('program with no docs does not surface a folder', (
+      tester,
+    ) async {
+      final docs = [doc('d1')];
+      final repo = FakePatientDocumentsRepository(List.of(docs));
+      final progRepo = FakeProgramRepository([
+        buildProgram(id: 'prog-empty', createdAt: DateTime(2026, 1, 1)),
+      ]);
+
+      await tester.pumpWidget(
+        buildTestWidget(repo: repo, width: 375, programRepo: progRepo),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.byType(ProgramDocumentFolderTile), findsNothing);
+      expect(find.byType(PatientDocumentItem), findsOneWidget);
+    });
+
+    testWidgets('tapping a folder tile pushes a new route', (
+      tester,
+    ) async {
+      final docs = [
+        doc('d1', programId: 'prog-1'),
+        doc('d2', programId: 'prog-1'),
+      ];
+      final repo = FakePatientDocumentsRepository(List.of(docs));
+      final progRepo = FakeProgramRepository([
+        buildProgram(id: 'prog-1', createdAt: DateTime(2026, 8, 20)),
+      ]);
+
+      await tester.pumpWidget(
+        buildTestWidget(
+          repo: repo,
+          width: 800,
+          programRepo: progRepo,
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      final BuildContext tabContext = tester.element(
+        find.byType(PatientTabDocuments),
+      );
+      final NavigatorState nav = Navigator.of(tabContext);
+      expect(nav.canPop(), isFalse);
+
+      await tester.tap(find.byType(ProgramDocumentFolderTile));
+      await tester.pumpAndSettle();
+
+      expect(nav.canPop(), isTrue);
     });
   });
 }

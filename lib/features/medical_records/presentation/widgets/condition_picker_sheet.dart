@@ -111,7 +111,7 @@ class _ConditionPickerSheetState extends ConsumerState<ConditionPickerSheet> {
 
               if (filtered.isEmpty) {
                 return const EmptyState(
-                  message: 'No matching conditions found.',
+                  message: AppStrings.noMatchingConditions,
                   icon: Icons.search_off_rounded,
                 );
               }

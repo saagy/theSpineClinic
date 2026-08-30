@@ -73,7 +73,7 @@ class _ProgramFormScreenState extends ConsumerState<ProgramFormScreen> {
     if (_selectedConditions.isEmpty) {
       AppSnackbar.show(
         context,
-        message: 'Please select at least one condition/injury.',
+        message: AppStrings.selectConditionRequired,
         variant: AppSnackbarVariant.info,
       );
       return;
@@ -149,47 +149,79 @@ class _ProgramFormScreenState extends ConsumerState<ProgramFormScreen> {
         leading: const AppBackButton(),
         title: Text(isEdit ? AppStrings.editProgram : AppStrings.newProgram),
       ),
-      body: SafeArea(
-        child: Form(
-          key: _formKey,
-          child: ListView(
-            padding: const EdgeInsets.all(AppSizes.p16),
+      bottomNavigationBar: SafeArea(
+        top: false,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(
+            AppSizes.p16,
+            AppSizes.p8,
+            AppSizes.p16,
+            AppSizes.p16,
+          ),
+          // Row (not Center) so the bar keeps its natural height in
+          // bottomNavigationBar; Center would expand and swallow the body.
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              ProgramConditionSelector(
-                selectedConditions: _selectedConditions,
-                onConditionsChanged: (items) {
-                  setState(() => _selectedConditions = items);
-                },
+              Flexible(
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(
+                    maxWidth: AppSizes.formLayoutMaxWidth,
+                  ),
+                  child: AppButton(
+                    labelText: AppStrings.save,
+                    isLoading: _isSubmitting,
+                    shape: AppButtonShape.pill,
+                    onPressed: _submit,
+                  ),
+                ),
               ),
-              const SizedBox(height: AppSizes.p16),
-              ProgramClinicalInputs(
-                examinationController: _examinationController,
-                imagingNotesController: _imagingNotesController,
-                exaggeratingPositionsController:
-                    _exaggeratingPositionsController,
-                relievingPositionsController: _relievingPositionsController,
-                notesController: _notesController,
-                pendingFiles: _pendingFiles,
-                existingDocuments: existingDocs.cast(),
-                onPendingFilesChanged: (files) {
-                  setState(() => _pendingFiles = files);
-                },
-                onDeleteExistingDocument: (doc) {
-                  ref
-                      .read(patientDocumentsNotifierProvider(widget.patientId)
-                          .notifier)
-                      .deleteDocument(doc);
-                },
-              ),
-              const SizedBox(height: AppSizes.p24),
-              AppButton(
-                labelText: AppStrings.save,
-                isLoading: _isSubmitting,
-                shape: AppButtonShape.pill,
-                onPressed: _submit,
-              ),
-              const SizedBox(height: AppSizes.p24),
             ],
+          ),
+        ),
+      ),
+      body: SafeArea(
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(
+              maxWidth: AppSizes.formLayoutMaxWidth,
+            ),
+            child: Form(
+              key: _formKey,
+              child: ListView(
+                padding: const EdgeInsets.all(AppSizes.p16),
+                children: [
+                  ProgramConditionSelector(
+                    selectedConditions: _selectedConditions,
+                    onConditionsChanged: (items) {
+                      setState(() => _selectedConditions = items);
+                    },
+                  ),
+                  const SizedBox(height: AppSizes.p16),
+                  ProgramClinicalInputs(
+                    examinationController: _examinationController,
+                    imagingNotesController: _imagingNotesController,
+                    exaggeratingPositionsController:
+                        _exaggeratingPositionsController,
+                    relievingPositionsController:
+                        _relievingPositionsController,
+                    notesController: _notesController,
+                    pendingFiles: _pendingFiles,
+                    existingDocuments: existingDocs.cast(),
+                    onPendingFilesChanged: (files) {
+                      setState(() => _pendingFiles = files);
+                    },
+                    onDeleteExistingDocument: (doc) {
+                      ref
+                          .read(patientDocumentsNotifierProvider(widget.patientId)
+                              .notifier)
+                          .deleteDocument(doc);
+                    },
+                  ),
+                  const SizedBox(height: AppSizes.p24),
+                ],
+              ),
+            ),
           ),
         ),
       ),

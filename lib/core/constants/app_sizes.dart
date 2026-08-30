@@ -142,6 +142,13 @@ abstract final class AppSizes {
   /// Maximum width of the seven-day schedule navigator on large windows.
   static const double scheduleNavigatorMaxWidth = 640.0;
 
+  /// Maximum width for form screens (create/edit flows) so long forms read
+  /// as a focused single column on desktop instead of stretching full-width.
+  static const double formLayoutMaxWidth = 720.0;
+
+  /// Height of the horizontal imaging thumbnail strip in the program form.
+  static const double mediaThumbStripHeight = 128.0;
+
   /// Height of the pageable seven-day row.
   static const double scheduleWeekHeight = 72.0;
 

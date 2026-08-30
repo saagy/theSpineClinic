@@ -74,7 +74,7 @@ class ProgramDetailHeader extends ConsumerWidget {
       success: (_) {
         AppSnackbar.show(
           context,
-          message: 'Program deleted.',
+          message: AppStrings.programDeleted,
           variant: AppSnackbarVariant.success,
         );
         context.pop();
@@ -107,7 +107,7 @@ class ProgramDetailHeader extends ConsumerWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                'Rehabilitation Episode',
+                AppStrings.program,
                 style: AppTextStyles.cardTitle.copyWith(color: cs.onSurface),
               ),
               ProgramStatusBadge(status: program.status),
@@ -123,7 +123,9 @@ class ProgramDetailHeader extends ConsumerWidget {
               ),
               const SizedBox(width: AppSizes.p6),
               Text(
-                'Created: ${Formatters.formatDateLong(program.createdAt)}',
+                AppStrings.createdLabel(
+                  Formatters.formatDateLong(program.createdAt),
+                ),
                 style: AppTextStyles.caption.copyWith(
                   color: cs.onSurfaceVariant,
                 ),
@@ -148,17 +150,23 @@ class ProgramDetailHeader extends ConsumerWidget {
                 PopupMenuButton<ProgramStatus>(
                   onSelected: (st) => _changeStatus(context, ref, st),
                   itemBuilder: (ctx) => [
-                    const PopupMenuItem(
+                    PopupMenuItem(
                       value: ProgramStatus.active,
-                      child: Text('Set Active'),
+                      child: Text(
+                        AppStrings.setStatusLabel(AppStrings.programActive),
+                      ),
                     ),
-                    const PopupMenuItem(
+                    PopupMenuItem(
                       value: ProgramStatus.completed,
-                      child: Text('Set Completed'),
+                      child: Text(
+                        AppStrings.setStatusLabel(AppStrings.programCompleted),
+                      ),
                     ),
-                    const PopupMenuItem(
+                    PopupMenuItem(
                       value: ProgramStatus.archived,
-                      child: Text('Set Archived'),
+                      child: Text(
+                        AppStrings.setStatusLabel(AppStrings.programArchived),
+                      ),
                     ),
                   ],
                   child: Container(
@@ -168,12 +176,15 @@ class ProgramDetailHeader extends ConsumerWidget {
                     ),
                     decoration: BoxDecoration(
                       border: Border.all(color: cs.outlineVariant),
-                      borderRadius: BorderRadius.circular(AppSizes.r8),
+                      borderRadius: BorderRadius.circular(AppSizes.r999),
                     ),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Text('Status', style: AppTextStyles.captionBold),
+                        Text(
+                          AppStrings.setStatus,
+                          style: AppTextStyles.captionBold,
+                        ),
                         const Icon(Icons.arrow_drop_down, size: 18),
                       ],
                     ),

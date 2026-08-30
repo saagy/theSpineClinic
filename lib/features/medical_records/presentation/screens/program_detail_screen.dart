@@ -69,7 +69,7 @@ class ProgramDetailScreen extends ConsumerWidget {
             final effectiveProgram = program ?? initialProgram;
             if (effectiveProgram == null) {
               return const EmptyState(
-                message: 'Program not found.',
+                message: AppStrings.programNotFound,
                 icon: Icons.search_off_rounded,
               );
             }
@@ -81,16 +81,23 @@ class ProgramDetailScreen extends ConsumerWidget {
   }
 
   Widget _buildContent(BuildContext context, PatientProgram program) {
-    return ListView(
-      padding: const EdgeInsets.all(AppSizes.p16),
-      children: [
-        ProgramDetailHeader(program: program),
-        const SizedBox(height: AppSizes.p16),
-        ProgramDetailConditions(program: program),
-        const SizedBox(height: AppSizes.p16),
-        ProgramDetailFindings(program: program),
-        const SizedBox(height: AppSizes.p24),
-      ],
+    return Center(
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(
+          maxWidth: AppSizes.formLayoutMaxWidth,
+        ),
+        child: ListView(
+          padding: const EdgeInsets.all(AppSizes.p16),
+          children: [
+            ProgramDetailHeader(program: program),
+            const SizedBox(height: AppSizes.p16),
+            ProgramDetailConditions(program: program),
+            const SizedBox(height: AppSizes.p16),
+            ProgramDetailFindings(program: program),
+            const SizedBox(height: AppSizes.p24),
+          ],
+        ),
+      ),
     );
   }
 }

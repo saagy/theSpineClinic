@@ -96,7 +96,13 @@ class _ViewerHeader extends StatelessWidget {
           IconButton(
             icon: Icon(Icons.close_rounded, color: colors.onSurface),
             tooltip: AppStrings.close,
-            onPressed: () => context.pop(),
+            onPressed: () {
+              if (Navigator.of(context).canPop()) {
+                Navigator.of(context).pop();
+              } else {
+                context.pop();
+              }
+            },
           ),
           const SizedBox(width: AppSizes.p4),
           Expanded(

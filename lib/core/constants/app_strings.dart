@@ -1027,4 +1027,21 @@ abstract final class AppStrings {
   static const String planSaved = 'Treatment plan saved.';
   static const String noTreatmentPlans = 'No treatment plans in this program.';
   static const String exportProgramPdf = 'Export Program PDF';
+
+  // Program form sections & feedback
+  static const String clinicalFindingsSection = 'Clinical Findings';
+  static const String positionsSection = 'Positions & Notes';
+  static const String noConditionsSelected =
+      'Select at least one injury to define the affected regions.';
+  static const String programNotFound = 'Program not found.';
+  static const String programDeleted = 'Program deleted.';
+  static const String setStatus = 'Status';
+  static const String conditionUnspecified = 'Condition details';
+  static const String noMatchingConditions = 'No matching conditions found.';
+  static const String selectConditionRequired =
+      'Please select at least one condition/injury.';
+  static String conditionsSelected(int count) => '$count selected';
+  static String moreConditions(int count) => '+$count more conditions';
+  static String createdLabel(String date) => 'Created: $date';
+  static String setStatusLabel(String status) => 'Set $status';
 }

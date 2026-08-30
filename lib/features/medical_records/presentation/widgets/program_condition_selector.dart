@@ -6,7 +6,6 @@ import 'package:spine_clinic_app/core/constants/app_strings.dart';
 import 'package:spine_clinic_app/core/constants/app_text_styles.dart';
 import 'package:spine_clinic_app/features/medical_records/domain/condition_catalog.dart';
 import 'package:spine_clinic_app/features/medical_records/presentation/widgets/condition_picker_sheet.dart';
-import 'package:spine_clinic_app/shared/widgets/app_button.dart';
 
 /// Interactive card allowing users to view and select catalog conditions for a program.
 class ProgramConditionSelector extends StatelessWidget {
@@ -32,6 +31,8 @@ class ProgramConditionSelector extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
+    final sorted = List<ConditionCatalog>.from(selectedConditions)
+      ..sort((a, b) => a.region.displayName.compareTo(b.region.displayName));
 
     return Container(
       padding: const EdgeInsets.all(AppSizes.p16),
@@ -44,41 +45,43 @@ class ProgramConditionSelector extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
-                AppStrings.selectInjuries,
-                style: AppTextStyles.cardTitle.copyWith(color: cs.onSurface),
+              Icon(
+                Icons.personal_injury_rounded,
+                size: AppSizes.iconDefault,
+                color: cs.primary,
               ),
-              if (selectedConditions.isNotEmpty)
-                TextButton.icon(
-                  icon: const Icon(Icons.edit_outlined, size: 18),
-                  label: const Text(AppStrings.edit),
-                  onPressed: () => _openPicker(context),
+              const SizedBox(width: AppSizes.p8),
+              Expanded(
+                child: Text(
+                  AppStrings.selectInjuries,
+                  style: AppTextStyles.cardTitle.copyWith(color: cs.onSurface),
                 ),
+              ),
+              TextButton.icon(
+                icon: const Icon(Icons.edit_outlined, size: 18),
+                label: Text(
+                  selectedConditions.isEmpty
+                      ? AppStrings.add
+                      : AppStrings.edit,
+                ),
+                onPressed: () => _openPicker(context),
+              ),
             ],
           ),
           const SizedBox(height: AppSizes.p8),
-          if (selectedConditions.isEmpty) ...[
+          if (sorted.isEmpty)
             Text(
-              'No conditions selected. Please select at least one condition to define affected regions.',
+              AppStrings.noConditionsSelected,
               style: AppTextStyles.bodySecondary.copyWith(
                 color: cs.onSurfaceVariant,
               ),
-            ),
-            const SizedBox(height: AppSizes.p12),
-            AppButton(
-              labelText: AppStrings.selectInjuries,
-              icon: Icons.add_circle_outline,
-              variant: AppButtonVariant.secondary,
-              shape: AppButtonShape.pill,
-              onPressed: () => _openPicker(context),
-            ),
-          ] else ...[
+            )
+          else
             Wrap(
               spacing: AppSizes.p8,
               runSpacing: AppSizes.p8,
-              children: selectedConditions.map((c) {
+              children: sorted.map((c) {
                 return Chip(
                   backgroundColor: cs.primaryContainer,
                   deleteIcon: Icon(
@@ -114,7 +117,6 @@ class ProgramConditionSelector extends StatelessWidget {
                 );
               }).toList(),
             ),
-          ],
         ],
       ),
     );
