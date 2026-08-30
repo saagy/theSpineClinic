@@ -479,3 +479,103 @@ final class CanAccessPatientFamily extends $Family
   @override
   String toString() => r'canAccessPatientProvider';
 }
+
+/// Tracks the active sub-tab index on the patient profile screen across navigations.
+
+@ProviderFor(PatientActiveTab)
+final patientActiveTabProvider = PatientActiveTabFamily._();
+
+/// Tracks the active sub-tab index on the patient profile screen across navigations.
+final class PatientActiveTabProvider
+    extends $NotifierProvider<PatientActiveTab, int> {
+  /// Tracks the active sub-tab index on the patient profile screen across navigations.
+  PatientActiveTabProvider._({
+    required PatientActiveTabFamily super.from,
+    required String super.argument,
+  }) : super(
+         retry: null,
+         name: r'patientActiveTabProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
+
+  @override
+  String debugGetCreateSourceHash() => _$patientActiveTabHash();
+
+  @override
+  String toString() {
+    return r'patientActiveTabProvider'
+        ''
+        '($argument)';
+  }
+
+  @$internal
+  @override
+  PatientActiveTab create() => PatientActiveTab();
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(int value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<int>(value),
+    );
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is PatientActiveTabProvider && other.argument == argument;
+  }
+
+  @override
+  int get hashCode {
+    return argument.hashCode;
+  }
+}
+
+String _$patientActiveTabHash() => r'6db6b46c61732ebc52e559012e793a989f17bab4';
+
+/// Tracks the active sub-tab index on the patient profile screen across navigations.
+
+final class PatientActiveTabFamily extends $Family
+    with $ClassFamilyOverride<PatientActiveTab, int, int, int, String> {
+  PatientActiveTabFamily._()
+    : super(
+        retry: null,
+        name: r'patientActiveTabProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
+  /// Tracks the active sub-tab index on the patient profile screen across navigations.
+
+  PatientActiveTabProvider call(String patientId) =>
+      PatientActiveTabProvider._(argument: patientId, from: this);
+
+  @override
+  String toString() => r'patientActiveTabProvider';
+}
+
+/// Tracks the active sub-tab index on the patient profile screen across navigations.
+
+abstract class _$PatientActiveTab extends $Notifier<int> {
+  late final _$args = ref.$arg as String;
+  String get patientId => _$args;
+
+  int build(String patientId);
+  @$mustCallSuper
+  @override
+  void runBuild() {
+    final ref = this.ref as $Ref<int, int>;
+    final element =
+        ref.element
+            as $ClassProviderElement<
+              AnyNotifier<int, int>,
+              int,
+              Object?,
+              Object?
+            >;
+    element.handleCreate(ref, () => build(_$args));
+  }
+}

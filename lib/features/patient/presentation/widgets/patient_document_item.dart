@@ -31,7 +31,7 @@ class _PatientDocumentItemState extends ConsumerState<PatientDocumentItem> {
     setState(() => _isOpening = true);
     try {
       if (isSupportedAppFile(widget.document.fileName)) {
-        context.go(
+        context.push(
           AppRoutes.patientDocumentViewerLocation(
             patientId: widget.document.patientId,
             documentId: widget.document.id,

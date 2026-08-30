@@ -37,19 +37,39 @@ class PatientProfile extends ConsumerStatefulWidget {
   ConsumerState<PatientProfile> createState() => _PatientProfileState();
 }
 
-class _PatientProfileState extends ConsumerState<PatientProfile> {
+class _PatientProfileState extends ConsumerState<PatientProfile>
+    with SingleTickerProviderStateMixin {
   late final ScrollController _scrollController;
+  late final TabController _tabController;
   bool _showAppBarTitle = false;
 
   @override
   void initState() {
     super.initState();
-    _scrollController = ScrollController();
-    _scrollController.addListener(_onScroll);
+    _scrollController = ScrollController()..addListener(_onScroll);
+    final int tabCount = widget.isDoctor ? 5 : 6;
+    final int savedIndex = ref.read(patientActiveTabProvider(widget.patient.id));
+    final int initialIndex =
+        (savedIndex >= 0 && savedIndex < tabCount) ? savedIndex : 0;
+    _tabController = TabController(
+      length: tabCount,
+      vsync: this,
+      initialIndex: initialIndex,
+    )..addListener(_onTabChanged);
+  }
+
+  void _onTabChanged() {
+    if (!_tabController.indexIsChanging && mounted) {
+      ref
+          .read(patientActiveTabProvider(widget.patient.id).notifier)
+          .setTab(_tabController.index);
+    }
   }
 
   @override
   void dispose() {
+    _tabController.removeListener(_onTabChanged);
+    _tabController.dispose();
     _scrollController.removeListener(_onScroll);
     _scrollController.dispose();
     super.dispose();
@@ -76,92 +96,93 @@ class _PatientProfileState extends ConsumerState<PatientProfile> {
     final isEmptyAsync = ref.watch(patientIsEmptyProvider(patient.id));
     final bool patientIsEmpty = isEmptyAsync.value ?? false;
 
-    final tabs = <Tab>[
-      const Tab(text: AppStrings.tabInfo),
-      const Tab(text: AppStrings.appointments),
-      const Tab(text: AppStrings.programs),
-      const Tab(text: AppStrings.tabRecords),
-      if (!isDoctor) const Tab(text: AppStrings.payments),
-      const Tab(text: AppStrings.tabDocuments),
+    final tabEntries = <(Tab, Widget)>[
+      (const Tab(text: AppStrings.tabInfo), PatientTabInfo(patient: patient)),
+      (const Tab(text: AppStrings.appointments), PatientTabAppointments(patient: patient)),
+      (const Tab(text: AppStrings.programs), PatientTabPrograms(patient: patient)),
+      (const Tab(text: AppStrings.tabRecords), PatientTabRecords(patient: patient)),
+      if (!isDoctor)
+        (const Tab(text: AppStrings.payments), PatientTabPayments(patient: patient)),
+      (const Tab(text: AppStrings.tabDocuments), PatientTabDocuments(patient: patient)),
     ];
-    final views = <Widget>[
-      PatientTabInfo(patient: patient),
-      PatientTabAppointments(patient: patient),
-      PatientTabPrograms(patient: patient),
-      PatientTabRecords(patient: patient),
-      if (!isDoctor) PatientTabPayments(patient: patient),
-      PatientTabDocuments(patient: patient),
-    ];
+    final tabs = tabEntries.map((e) => e.$1).toList();
+    final views = tabEntries.map((e) => e.$2).toList();
 
-    return DefaultTabController(
-      length: tabs.length,
-      child: Scaffold(
-        appBar: AppBar(
-          backgroundColor: cs.surface,
-          elevation: 0,
-          surfaceTintColor: cs.surface.withAlpha(0),
-          leading: const AppBackButton(),
-          title: AnimatedOpacity(
-            opacity: _showAppBarTitle ? 1.0 : 0.0,
-            duration: const Duration(milliseconds: 200),
-            child: Text(
-              patient.fullName,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
+    return Scaffold(
+      appBar: AppBar(
+        backgroundColor: cs.surface,
+        elevation: 0,
+        surfaceTintColor: cs.surface.withAlpha(0),
+        leading: const AppBackButton(),
+        title: AnimatedOpacity(
+          opacity: _showAppBarTitle ? 1.0 : 0.0,
+          duration: const Duration(milliseconds: 200),
+          child: Text(
+            patient.fullName,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.edit_outlined),
+            tooltip: AppStrings.edit,
+            onPressed: () => context.push(
+              AppRoutes.editPatient.replaceAll(':id', patient.id),
+              extra: patient,
             ),
           ),
-          actions: [
-            IconButton(
-              icon: const Icon(Icons.edit_outlined),
-              tooltip: AppStrings.edit,
-              onPressed: () => context.push(
-                AppRoutes.editPatient.replaceAll(':id', patient.id),
-                extra: patient,
+          if (canDelete && patientIsEmpty)
+            PopupMenuButton<String>(
+              icon: const Icon(Icons.more_vert),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(AppSizes.r12),
               ),
-            ),
-            if (canDelete && patientIsEmpty)
-              PopupMenuButton<String>(
-                icon: const Icon(Icons.more_vert),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(AppSizes.r12),
-                ),
-                onSelected: (_) => _confirmDelete(context),
-                itemBuilder: (_) => [
-                  PopupMenuItem(
-                    value: 'delete',
-                    child: Row(
-                      children: [
-                        Icon(Icons.delete_outline, color: cs.error),
-                        const SizedBox(width: AppSizes.p12),
-                        Text(AppStrings.deletePatient),
-                      ],
-                    ),
+              onSelected: (_) => _confirmDelete(context),
+              itemBuilder: (_) => [
+                PopupMenuItem(
+                  value: 'delete',
+                  child: Row(
+                    children: [
+                      Icon(Icons.delete_outline, color: cs.error),
+                      const SizedBox(width: AppSizes.p12),
+                      Text(AppStrings.deletePatient),
+                    ],
                   ),
-                ],
-              ),
-          ],
-        ),
-        body: NestedScrollView(
-          controller: _scrollController,
-          headerSliverBuilder: (context, innerBoxIsScrolled) => [
-            SliverToBoxAdapter(
-              child: PatientProfileHeader(patient: patient, isDoctor: isDoctor),
+                ),
+              ],
             ),
-            SliverPersistentHeader(
-              pinned: true,
-              delegate: PinnedTabBarDelegate(
-                tabBar: UnderlineTabBar(tabs: tabs),
-                bgColor: cs.surface,
-              ),
+        ],
+      ),
+      body: NestedScrollView(
+        controller: _scrollController,
+        headerSliverBuilder: (_, __) => [
+          SliverToBoxAdapter(
+            child: PatientProfileHeader(
+              patient: patient,
+              isDoctor: isDoctor,
             ),
-          ],
-          body: TabBarView(children: views),
+          ),
+          SliverPersistentHeader(
+            pinned: true,
+            delegate: PinnedTabBarDelegate(
+              tabBar: UnderlineTabBar(
+                controller: _tabController,
+                tabs: tabs,
+              ),
+              bgColor: cs.surface,
+            ),
+          ),
+        ],
+        body: TabBarView(
+          controller: _tabController,
+          children: views,
         ),
-        floatingActionButton: PatientQuickActionsFab(
-          patient: patient,
-          isDoctor: isDoctor,
-          canHandlePayments: canHandlePayments,
-        ),
+      ),
+      floatingActionButton: PatientQuickActionsFab(
+        patient: patient,
+        isDoctor: isDoctor,
+        canHandlePayments: canHandlePayments,
       ),
     );
   }

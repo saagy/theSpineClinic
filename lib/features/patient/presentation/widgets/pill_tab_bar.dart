@@ -11,8 +11,9 @@ import 'package:flutter/material.dart';
 import 'package:spine_clinic_app/core/constants/app_sizes.dart';
 
 class UnderlineTabBar extends StatelessWidget {
-  const UnderlineTabBar({super.key, required this.tabs});
+  const UnderlineTabBar({super.key, required this.tabs, this.controller});
   final List<Tab> tabs;
+  final TabController? controller;
 
   @override
   Widget build(BuildContext context) {
@@ -25,6 +26,7 @@ class UnderlineTabBar extends StatelessWidget {
         child: Container(
           constraints: const BoxConstraints(maxWidth: 600),
           child: TabBar(
+            controller: controller,
             labelColor: cs.primary,
             unselectedLabelColor: cs.onSurfaceVariant,
             labelStyle: const TextStyle(

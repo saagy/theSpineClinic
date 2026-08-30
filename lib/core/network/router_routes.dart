@@ -24,7 +24,7 @@ List<RouteBase> _buildRoutes(Ref ref) => [
       key: state.pageKey,
       child: EditPatientScreen(
         patientId: state.pathParameters['id'] ?? '',
-        patient: state.extra as Patient?,
+        patient: _extractPatient(state.extra),
       ),
     ),
   ),
@@ -44,7 +44,7 @@ List<RouteBase> _buildRoutes(Ref ref) => [
       child: ProgramDetailScreen(
         patientId: state.pathParameters['id'] ?? '',
         programId: state.pathParameters['programId'] ?? '',
-        initialProgram: state.extra as PatientProgram?,
+        initialProgram: _extractProgram(state.extra),
       ),
     ),
   ),
@@ -54,7 +54,7 @@ List<RouteBase> _buildRoutes(Ref ref) => [
       key: state.pageKey,
       child: ProgramFormScreen(
         patientId: state.pathParameters['id'] ?? '',
-        program: state.extra as PatientProgram?,
+        program: _extractProgram(state.extra),
       ),
     ),
   ),
@@ -117,7 +117,7 @@ List<RouteBase> _buildRoutes(Ref ref) => [
     path: AppRoutes.staffForm,
     pageBuilder: (_, state) => appPage(
       key: state.pageKey,
-      child: StaffFormScreen(staff: state.extra as Staff?),
+      child: StaffFormScreen(staff: _extractStaff(state.extra)),
     ),
   ),
   GoRoute(
@@ -131,8 +131,15 @@ List<RouteBase> _buildRoutes(Ref ref) => [
         docs = extra.documents;
         index = extra.initialIndex;
         title = extra.title;
-      } else if (extra is List<PatientDocument>) {
-        docs = extra;
+      } else if (extra is List) {
+        docs = extra
+            .map((e) => e is PatientDocument
+                ? e
+                : (e is Map<String, dynamic>
+                    ? PatientDocument.fromJson(e)
+                    : null))
+            .whereType<PatientDocument>()
+            .toList();
         index = 0;
         title = AppStrings.imagingAttachments;
       } else {
@@ -264,3 +271,39 @@ final List<RouteBase> _shellRoutes = [
     ),
   ),
 ];
+
+Patient? _extractPatient(Object? extra) {
+  if (extra is Patient) return extra;
+  if (extra is Map<String, dynamic>) {
+    try {
+      return Patient.fromJson(extra);
+    } catch (_) {
+      return null;
+    }
+  }
+  return null;
+}
+
+PatientProgram? _extractProgram(Object? extra) {
+  if (extra is PatientProgram) return extra;
+  if (extra is Map<String, dynamic>) {
+    try {
+      return PatientProgram.fromJson(extra);
+    } catch (_) {
+      return null;
+    }
+  }
+  return null;
+}
+
+Staff? _extractStaff(Object? extra) {
+  if (extra is Staff) return extra;
+  if (extra is Map<String, dynamic>) {
+    try {
+      return Staff.fromJson(extra);
+    } catch (_) {
+      return null;
+    }
+  }
+  return null;
+}

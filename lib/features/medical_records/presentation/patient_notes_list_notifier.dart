@@ -15,11 +15,14 @@ class PatientNotesList extends _$PatientNotesList {
 
   @override
   PatientNotesListState build(String patientId) {
-    Future.microtask(() => _fetchFirstPage());
+    Future.microtask(() {
+      if (ref.mounted) _fetchFirstPage();
+    });
     return const PatientNotesListState(isLoading: true);
   }
 
   Future<void> _fetchFirstPage({bool silent = false}) async {
+    if (!ref.mounted) return;
     _generation++;
     final int currentGen = _generation;
 
@@ -33,6 +36,8 @@ class PatientNotesList extends _$PatientNotesList {
       dateFrom: state.dateFrom,
       dateTo: state.dateTo,
     );
+
+    if (!ref.mounted) return;
 
     int totalCount = 0;
     countResult.when(
@@ -49,7 +54,7 @@ class PatientNotesList extends _$PatientNotesList {
       ascending: state.sort == PatientNotesSortOption.dateOldest,
     );
 
-    if (currentGen != _generation) return;
+    if (!ref.mounted || currentGen != _generation) return;
 
     result.when(
       success: (List<PatientNote> notes) {
@@ -73,14 +78,16 @@ class PatientNotesList extends _$PatientNotesList {
     _generation++;
     final int currentGen = _generation;
     Future.delayed(const Duration(milliseconds: 150), () {
-      if (currentGen == _generation) {
+      if (ref.mounted && currentGen == _generation) {
         _fetchFirstPage();
       }
     });
   }
 
   Future<void> loadMore() async {
-    if (state.isLoading || state.isLoadingMore || !state.hasMore) return;
+    if (!ref.mounted || state.isLoading || state.isLoadingMore || !state.hasMore) {
+      return;
+    }
 
     state = state.copyWith(isLoadingMore: true);
 
@@ -94,6 +101,8 @@ class PatientNotesList extends _$PatientNotesList {
       dateTo: state.dateTo,
       ascending: state.sort == PatientNotesSortOption.dateOldest,
     );
+
+    if (!ref.mounted) return;
 
     result.when(
       success: (List<PatientNote> newNotes) {
@@ -114,20 +123,24 @@ class PatientNotesList extends _$PatientNotesList {
   }
 
   Future<void> refresh({bool silent = true}) async {
+    if (!ref.mounted) return;
     await _fetchFirstPage(silent: silent);
   }
 
   void setDateRange(DateTime? from, DateTime? to) {
+    if (!ref.mounted) return;
     state = state.copyWith(dateFrom: from, dateTo: to);
     _reloadDebounced();
   }
 
   void setSort(PatientNotesSortOption sort) {
+    if (!ref.mounted) return;
     state = state.copyWith(sort: sort);
     _reloadDebounced();
   }
 
   void clearFilters() {
+    if (!ref.mounted) return;
     state = state.copyWith(
       dateFrom: null,
       dateTo: null,

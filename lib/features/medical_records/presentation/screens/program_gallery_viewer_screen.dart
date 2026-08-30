@@ -83,18 +83,25 @@ class _ProgramGalleryViewerScreenState
   late int _currentIndex;
 
   void _close() {
-    if (Navigator.of(context).canPop()) {
-      Navigator.of(context).pop();
-    } else {
+    if (context.canPop()) {
       context.pop();
+    } else if (Navigator.of(context).canPop()) {
+      Navigator.of(context).pop();
     }
   }
 
   @override
   void initState() {
     super.initState();
-    _currentIndex = widget.initialIndex.clamp(0, widget.documents.length - 1);
+    _currentIndex = widget.documents.isEmpty
+        ? 0
+        : widget.initialIndex.clamp(0, widget.documents.length - 1);
     _pageController = PageController(initialPage: _currentIndex);
+    if (widget.documents.isEmpty) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _close();
+      });
+    }
   }
 
   @override

@@ -133,3 +133,14 @@ Future<bool> canAccessPatient(Ref ref, String patientId) async {
   );
 }
 
+/// Tracks the active sub-tab index on the patient profile screen across navigations.
+@riverpod
+class PatientActiveTab extends _$PatientActiveTab {
+  @override
+  int build(String patientId) => 0;
+
+  void setTab(int index) {
+    if (state != index) state = index;
+  }
+}
+

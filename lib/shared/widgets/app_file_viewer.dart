@@ -97,10 +97,10 @@ class _ViewerHeader extends StatelessWidget {
             icon: Icon(Icons.close_rounded, color: colors.onSurface),
             tooltip: AppStrings.close,
             onPressed: () {
-              if (Navigator.of(context).canPop()) {
-                Navigator.of(context).pop();
-              } else {
+              if (context.canPop()) {
                 context.pop();
+              } else if (Navigator.of(context).canPop()) {
+                Navigator.of(context).pop();
               }
             },
           ),

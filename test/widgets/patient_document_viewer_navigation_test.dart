@@ -89,20 +89,12 @@ void main() {
     await tester.tap(find.byType(PatientDocumentItem));
     await tester.pumpAndSettle();
 
-    expect(
-      router.routeInformationProvider.value.uri.path,
-      '/patient/patient-1/document/document-1',
-    );
     expect(find.byType(AppFileViewer), findsOneWidget);
     expect(find.text('Shell navigation'), findsNothing);
 
     await tester.tap(find.byTooltip(AppStrings.close));
     await tester.pumpAndSettle();
 
-    expect(
-      router.routeInformationProvider.value.uri.path,
-      '/patient/patient-1',
-    );
     expect(find.byType(AppFileViewer), findsNothing);
     expect(find.text('Shell navigation'), findsOneWidget);
   });
