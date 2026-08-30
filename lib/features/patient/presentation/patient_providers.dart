@@ -112,14 +112,14 @@ Future<List<Staff>> patientAssignedDoctors(Ref ref, String patientId) async {
 /// Checks if the current authenticated user has permission to view the patient detail screen.
 ///
 /// Returns `true` if:
-/// - The user is a `receptionist` or `superAdmin`.
-/// - The user is a `doctor` AND (1) the doctor is assigned to the patient in `patient_doctors`,
+/// - The user is a `receptionist`, `superAdmin`, or `isSeniorDoctor`.
+/// - The user is a regular `doctor` AND (1) the doctor is assigned to the patient in `patient_doctors`,
 ///   OR (2) the patient has an active appointment with that doctor within the ±2 days window.
 @riverpod
 Future<bool> canAccessPatient(Ref ref, String patientId) async {
-  final user = ref.watch(currentUserProvider).value;
+  final user = await ref.watch(currentUserProvider.future);
   if (user == null) return false;
-  if (user.role != UserRole.doctor) return true;
+  if (user.role != UserRole.doctor || user.isSeniorDoctor) return true;
 
   final repo = ref.read(patientRepositoryProvider);
   final result = await repo.canDoctorAccessPatient(

@@ -142,6 +142,7 @@ class ProgramRepositoryImpl implements ProgramRepository {
   @override
   Future<Result<PatientProgram>> updateProgram({
     required String programId,
+    required String patientId,
     required List<String> conditionIds,
     String? examination,
     String? imagingNotes,
@@ -157,7 +158,7 @@ class ProgramRepositoryImpl implements ProgramRepository {
       if (pendingAttachments != null && pendingAttachments.isNotEmpty) {
         final res = await ProgramStorageHelper.uploadAttachments(
           service: _service,
-          patientId: programId,
+          patientId: patientId,
           attachments: pendingAttachments,
         );
         docPayloads = res.payloads;

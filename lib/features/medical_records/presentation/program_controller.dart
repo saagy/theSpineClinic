@@ -106,6 +106,7 @@ class ProgramController extends _$ProgramController {
 
     final result = await repo.updateProgram(
       programId: programId,
+      patientId: patientId,
       conditionIds: conditionIds,
       examination: examination,
       imagingNotes: imagingNotes,

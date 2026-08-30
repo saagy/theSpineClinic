@@ -46,7 +46,7 @@ class EditPatientController extends _$EditPatientController {
       return false;
     }
 
-    if (currentUser.role == UserRole.doctor) {
+    if (currentUser.role == UserRole.doctor && !currentUser.isSeniorDoctor) {
       final Result<bool> accessResult = await repo.canDoctorAccessPatient(
         patientId: patient.id,
         doctorId: currentUser.id,

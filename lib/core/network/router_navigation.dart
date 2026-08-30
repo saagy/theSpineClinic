@@ -2,6 +2,17 @@ part of 'router.dart';
 
 int _resolveActiveIndex(String role, String location) {
   switch (role) {
+    case 'senior_doctor':
+      if (location == AppRoutes.doctorProfile ||
+          location == AppRoutes.doctorHistory) {
+        return 2;
+      }
+      if (location == AppRoutes.patientList ||
+          location == AppRoutes.myPatients ||
+          location.startsWith('/patient/')) {
+        return 1;
+      }
+      return 0;
     case 'doctor':
       if (location == AppRoutes.doctorProfile ||
           location == AppRoutes.doctorHistory) {
@@ -36,11 +47,17 @@ int _resolveActiveIndex(String role, String location) {
   }
 }
 
-
-
-
 void _onTabSelected(BuildContext context, String role, int index) {
   switch (role) {
+    case 'senior_doctor':
+      switch (index) {
+        case 0:
+          context.go(AppRoutes.schedule);
+        case 1:
+          context.go(AppRoutes.patientList);
+        case 2:
+          context.go(AppRoutes.doctorProfile);
+      }
     case 'doctor':
       switch (index) {
         case 0:

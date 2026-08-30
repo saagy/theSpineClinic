@@ -94,29 +94,35 @@ class VisitDetailScreen extends ConsumerWidget {
     final AppointmentBadgeColors statusBadge = state.appointment.status
         .badgeColors(context);
     final user = ref.watch(currentUserProvider).value;
-    final isDoctor = user?.role == UserRole.doctor;
-    final canAccessAsync = isDoctor
-        ? ref.watch(canAccessPatientProvider(state.patient.id))
-        : const AsyncValue.data(true);
-    final bool canAccess = canAccessAsync.value ?? !isDoctor;
+    final isRegularDoctor =
+        user?.role == UserRole.doctor && !(user?.isSeniorDoctor ?? false);
 
     return SectionCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           InkWell(
-            onTap: () {
-              if (!canAccess) {
-                AppSnackbar.show(
-                  context,
-                  message: AppStrings.errorDatabasePermissionDenied,
-                  variant: AppSnackbarVariant.error,
+            onTap: () async {
+              if (isRegularDoctor) {
+                final canAccess = await ref.read(
+                  canAccessPatientProvider(state.patient.id).future,
                 );
-                return;
+                if (!canAccess) {
+                  if (context.mounted) {
+                    AppSnackbar.show(
+                      context,
+                      message: AppStrings.errorDatabasePermissionDenied,
+                      variant: AppSnackbarVariant.error,
+                    );
+                  }
+                  return;
+                }
               }
-              context.push(
-                AppRoutes.patientDetail.replaceAll(':id', state.patient.id),
-              );
+              if (context.mounted) {
+                context.push(
+                  AppRoutes.patientDetail.replaceAll(':id', state.patient.id),
+                );
+              }
             },
             borderRadius: const BorderRadius.all(Radius.circular(AppSizes.r4)),
             child: Padding(

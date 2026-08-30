@@ -8,15 +8,21 @@ part of 'program_controller.dart';
 
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // ignore_for_file: type=lint, type=warning
-/// Mutation controller for creating, updating, and deleting rehabilitation programs.
+/// Mutation controller managing program creation, updates, status changes, and deletion.
+///
+/// Rule 28 — declared with `keepAlive: true` to prevent premature disposal during in-flight requests.
 
 @ProviderFor(ProgramController)
 final programControllerProvider = ProgramControllerProvider._();
 
-/// Mutation controller for creating, updating, and deleting rehabilitation programs.
+/// Mutation controller managing program creation, updates, status changes, and deletion.
+///
+/// Rule 28 — declared with `keepAlive: true` to prevent premature disposal during in-flight requests.
 final class ProgramControllerProvider
     extends $NotifierProvider<ProgramController, AsyncValue<void>> {
-  /// Mutation controller for creating, updating, and deleting rehabilitation programs.
+  /// Mutation controller managing program creation, updates, status changes, and deletion.
+  ///
+  /// Rule 28 — declared with `keepAlive: true` to prevent premature disposal during in-flight requests.
   ProgramControllerProvider._()
     : super(
         from: null,
@@ -44,9 +50,11 @@ final class ProgramControllerProvider
   }
 }
 
-String _$programControllerHash() => r'f660809c67e69db9985a77071928d8cc980e1cac';
+String _$programControllerHash() => r'b2806a13fdf069e18b8e260d32cd426072166a49';
 
-/// Mutation controller for creating, updating, and deleting rehabilitation programs.
+/// Mutation controller managing program creation, updates, status changes, and deletion.
+///
+/// Rule 28 — declared with `keepAlive: true` to prevent premature disposal during in-flight requests.
 
 abstract class _$ProgramController extends $Notifier<AsyncValue<void>> {
   AsyncValue<void> build();

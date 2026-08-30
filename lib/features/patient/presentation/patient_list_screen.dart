@@ -186,6 +186,7 @@ class _PatientListScreenState extends ConsumerState<PatientListScreen> {
   @override
   Widget build(BuildContext context) {
     final AsyncValue<List<Patient>> state = ref.watch(patientListProvider);
+    final user = ref.watch(currentUserProvider).value;
     if (state.isLoading && state.value == null) {
       _animatedIndices.clear();
     }
@@ -314,29 +315,30 @@ class _PatientListScreenState extends ConsumerState<PatientListScreen> {
                             branchLabel: p.clinic.displayLabel,
                             lastVisitDate: p.lastAppointmentDate,
                             onTap: () async {
-                            final user = ref.read(currentUserProvider).value;
-                            if (user?.role == UserRole.doctor) {
-                              final canAccess = await ref.read(
-                                canAccessPatientProvider(p.id).future,
-                              );
-                              if (!canAccess) {
-                                if (context.mounted) {
-                                  AppSnackbar.show(
-                                    context,
-                                    message:
-                                        AppStrings.errorDatabasePermissionDenied,
-                                    variant: AppSnackbarVariant.error,
-                                  );
+                              final user = ref.read(currentUserProvider).value;
+                              if (user?.role == UserRole.doctor &&
+                                  !(user?.isSeniorDoctor ?? false)) {
+                                final canAccess = await ref.read(
+                                  canAccessPatientProvider(p.id).future,
+                                );
+                                if (!canAccess) {
+                                  if (context.mounted) {
+                                    AppSnackbar.show(
+                                      context,
+                                      message:
+                                          AppStrings.errorDatabasePermissionDenied,
+                                      variant: AppSnackbarVariant.error,
+                                    );
+                                  }
+                                  return;
                                 }
-                                return;
                               }
-                            }
-                            if (context.mounted) {
-                              context.push(
-                                AppRoutes.patientDetail.replaceAll(':id', p.id),
-                              );
-                            }
-                          },
+                              if (context.mounted) {
+                                context.push(
+                                  AppRoutes.patientDetail.replaceAll(':id', p.id),
+                                );
+                              }
+                            },
                           ),
                         );
                       },
@@ -348,13 +350,15 @@ class _PatientListScreenState extends ConsumerState<PatientListScreen> {
           ],
         ),
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () => context.push(AppRoutes.newPatient),
-        backgroundColor: Theme.of(context).colorScheme.primary,
-        foregroundColor: Theme.of(context).colorScheme.onPrimary,
-        shape: const CircleBorder(),
-        child: const Icon(Icons.add),
-      ),
+      floatingActionButton: (user != null && user.role != UserRole.doctor)
+          ? FloatingActionButton(
+              onPressed: () => context.push(AppRoutes.newPatient),
+              backgroundColor: Theme.of(context).colorScheme.primary,
+              foregroundColor: Theme.of(context).colorScheme.onPrimary,
+              shape: const CircleBorder(),
+              child: const Icon(Icons.add),
+            )
+          : null,
     );
   }
 

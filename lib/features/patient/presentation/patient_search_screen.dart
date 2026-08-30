@@ -196,7 +196,8 @@ class _PatientSearchScreenState extends ConsumerState<PatientSearchScreen> {
                           ),
                           onTap: () async {
                             final user = ref.read(currentUserProvider).value;
-                            if (user?.role == UserRole.doctor) {
+                            if (user?.role == UserRole.doctor &&
+                                !(user?.isSeniorDoctor ?? false)) {
                               final canAccess = await ref.read(
                                 canAccessPatientProvider(patient.id).future,
                               );

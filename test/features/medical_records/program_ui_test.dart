@@ -98,6 +98,7 @@ class _FakeProgramRepo implements ProgramRepository {
   @override
   Future<Result<PatientProgram>> updateProgram({
     required String programId,
+    required String patientId,
     required List<String> conditionIds,
     String? examination,
     String? imagingNotes,

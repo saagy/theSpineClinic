@@ -933,7 +933,7 @@ final class CanAccessAppointmentProvider
 }
 
 String _$canAccessAppointmentHash() =>
-    r'31cbebab24ab95b41ae56bb466b03e7bb77ee15c';
+    r'08a31a8912bbb0925bf685ab82338846e8af4942';
 
 /// Checks if the current authenticated user has permission to view and modify
 /// a specific appointment.
@@ -979,19 +979,19 @@ final class CanAccessAppointmentFamily extends $Family
 }
 
 /// Checks if the current doctor is assigned to the given patient in `patient_doctors`.
-/// Non-doctor staff always return `true`.
+/// Non-doctor staff and senior doctors always return `true`.
 
 @ProviderFor(isDoctorAssignedToPatient)
 final isDoctorAssignedToPatientProvider = IsDoctorAssignedToPatientFamily._();
 
 /// Checks if the current doctor is assigned to the given patient in `patient_doctors`.
-/// Non-doctor staff always return `true`.
+/// Non-doctor staff and senior doctors always return `true`.
 
 final class IsDoctorAssignedToPatientProvider
     extends $FunctionalProvider<AsyncValue<bool>, bool, FutureOr<bool>>
     with $FutureModifier<bool>, $FutureProvider<bool> {
   /// Checks if the current doctor is assigned to the given patient in `patient_doctors`.
-  /// Non-doctor staff always return `true`.
+  /// Non-doctor staff and senior doctors always return `true`.
   IsDoctorAssignedToPatientProvider._({
     required IsDoctorAssignedToPatientFamily super.from,
     required String super.argument,
@@ -1037,10 +1037,10 @@ final class IsDoctorAssignedToPatientProvider
 }
 
 String _$isDoctorAssignedToPatientHash() =>
-    r'08a2a53eecb1a44c95b268ec7964e98274a0e534';
+    r'ea99f4dc71f3e1744151316284ce896723b8f9c4';
 
 /// Checks if the current doctor is assigned to the given patient in `patient_doctors`.
-/// Non-doctor staff always return `true`.
+/// Non-doctor staff and senior doctors always return `true`.
 
 final class IsDoctorAssignedToPatientFamily extends $Family
     with $FunctionalFamilyOverride<FutureOr<bool>, String> {
@@ -1054,7 +1054,7 @@ final class IsDoctorAssignedToPatientFamily extends $Family
       );
 
   /// Checks if the current doctor is assigned to the given patient in `patient_doctors`.
-  /// Non-doctor staff always return `true`.
+  /// Non-doctor staff and senior doctors always return `true`.
 
   IsDoctorAssignedToPatientProvider call(String patientId) =>
       IsDoctorAssignedToPatientProvider._(argument: patientId, from: this);
@@ -1066,8 +1066,8 @@ final class IsDoctorAssignedToPatientFamily extends $Family
 /// Checks if the current authenticated user has permission to edit an appointment.
 ///
 /// Returns `true` if:
-/// - The user is a `receptionist` or `superAdmin`.
-/// - The user is a `doctor` AND:
+/// - The user is a `receptionist`, `superAdmin`, or `isSeniorDoctor`.
+/// - The user is a regular `doctor` AND:
 ///   (1) the doctor is assigned to the patient in `patient_doctors` (Case 1), OR
 ///   (2) the appointment has an active assignment to the doctor AND the appointment's
 ///       scheduled date is within the ±2 days window (Case 2).
@@ -1078,8 +1078,8 @@ final canEditAppointmentProvider = CanEditAppointmentFamily._();
 /// Checks if the current authenticated user has permission to edit an appointment.
 ///
 /// Returns `true` if:
-/// - The user is a `receptionist` or `superAdmin`.
-/// - The user is a `doctor` AND:
+/// - The user is a `receptionist`, `superAdmin`, or `isSeniorDoctor`.
+/// - The user is a regular `doctor` AND:
 ///   (1) the doctor is assigned to the patient in `patient_doctors` (Case 1), OR
 ///   (2) the appointment has an active assignment to the doctor AND the appointment's
 ///       scheduled date is within the ±2 days window (Case 2).
@@ -1090,8 +1090,8 @@ final class CanEditAppointmentProvider
   /// Checks if the current authenticated user has permission to edit an appointment.
   ///
   /// Returns `true` if:
-  /// - The user is a `receptionist` or `superAdmin`.
-  /// - The user is a `doctor` AND:
+  /// - The user is a `receptionist`, `superAdmin`, or `isSeniorDoctor`.
+  /// - The user is a regular `doctor` AND:
   ///   (1) the doctor is assigned to the patient in `patient_doctors` (Case 1), OR
   ///   (2) the appointment has an active assignment to the doctor AND the appointment's
   ///       scheduled date is within the ±2 days window (Case 2).
@@ -1144,13 +1144,13 @@ final class CanEditAppointmentProvider
 }
 
 String _$canEditAppointmentHash() =>
-    r'e258acc69a220654ef80625a52b01c8f4c963a10';
+    r'c5a0076614a92a449cd0a86d2ef7af8ca1c47066';
 
 /// Checks if the current authenticated user has permission to edit an appointment.
 ///
 /// Returns `true` if:
-/// - The user is a `receptionist` or `superAdmin`.
-/// - The user is a `doctor` AND:
+/// - The user is a `receptionist`, `superAdmin`, or `isSeniorDoctor`.
+/// - The user is a regular `doctor` AND:
 ///   (1) the doctor is assigned to the patient in `patient_doctors` (Case 1), OR
 ///   (2) the appointment has an active assignment to the doctor AND the appointment's
 ///       scheduled date is within the ±2 days window (Case 2).
@@ -1173,8 +1173,8 @@ final class CanEditAppointmentFamily extends $Family
   /// Checks if the current authenticated user has permission to edit an appointment.
   ///
   /// Returns `true` if:
-  /// - The user is a `receptionist` or `superAdmin`.
-  /// - The user is a `doctor` AND:
+  /// - The user is a `receptionist`, `superAdmin`, or `isSeniorDoctor`.
+  /// - The user is a regular `doctor` AND:
   ///   (1) the doctor is assigned to the patient in `patient_doctors` (Case 1), OR
   ///   (2) the appointment has an active assignment to the doctor AND the appointment's
   ///       scheduled date is within the ±2 days window (Case 2).

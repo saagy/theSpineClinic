@@ -987,6 +987,14 @@ abstract final class AppStrings {
       'Are you sure you want to delete this program and all its treatment plans?';
   static const String attachImagingFiles = 'Attach Images / Scans';
   static const String imagingAttachments = 'Imaging Attachments';
+  static const String scanCount = 'Scans';
+  static const String imageLabel = 'Image';
+  static const String pdfLabel = 'PDF';
+  static const String viewScans = 'View Scans';
+  static const String noAttachments = 'No imaging files attached';
+  static String scanItemIndex(int current, int total) => '$current of $total';
+  static String scanCountLabel(int count) =>
+      '$count ${count == 1 ? 'Scan' : 'Scans'}';
   static const String allBodyRegions = 'All Body Regions';
   static const String filterByRegion = 'Filter by Region';
 
@@ -999,8 +1007,8 @@ abstract final class AppStrings {
   static const String modalityNeurodynamicWb = 'Neurodynamic (WB)';
 
   // Lateralities
-  static const String lateralityRight = 'Right (Rt)';
-  static const String lateralityLeft = 'Left (Lt)';
+  static const String lateralityRight = 'Right';
+  static const String lateralityLeft = 'Left';
   static const String lateralityBoth = 'Both';
   static const String lateralityNone = 'General / None';
 

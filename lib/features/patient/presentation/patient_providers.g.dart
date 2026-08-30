@@ -380,8 +380,8 @@ final class PatientAssignedDoctorsFamily extends $Family
 /// Checks if the current authenticated user has permission to view the patient detail screen.
 ///
 /// Returns `true` if:
-/// - The user is a `receptionist` or `superAdmin`.
-/// - The user is a `doctor` AND (1) the doctor is assigned to the patient in `patient_doctors`,
+/// - The user is a `receptionist`, `superAdmin`, or `isSeniorDoctor`.
+/// - The user is a regular `doctor` AND (1) the doctor is assigned to the patient in `patient_doctors`,
 ///   OR (2) the patient has an active appointment with that doctor within the ±2 days window.
 
 @ProviderFor(canAccessPatient)
@@ -390,8 +390,8 @@ final canAccessPatientProvider = CanAccessPatientFamily._();
 /// Checks if the current authenticated user has permission to view the patient detail screen.
 ///
 /// Returns `true` if:
-/// - The user is a `receptionist` or `superAdmin`.
-/// - The user is a `doctor` AND (1) the doctor is assigned to the patient in `patient_doctors`,
+/// - The user is a `receptionist`, `superAdmin`, or `isSeniorDoctor`.
+/// - The user is a regular `doctor` AND (1) the doctor is assigned to the patient in `patient_doctors`,
 ///   OR (2) the patient has an active appointment with that doctor within the ±2 days window.
 
 final class CanAccessPatientProvider
@@ -400,8 +400,8 @@ final class CanAccessPatientProvider
   /// Checks if the current authenticated user has permission to view the patient detail screen.
   ///
   /// Returns `true` if:
-  /// - The user is a `receptionist` or `superAdmin`.
-  /// - The user is a `doctor` AND (1) the doctor is assigned to the patient in `patient_doctors`,
+  /// - The user is a `receptionist`, `superAdmin`, or `isSeniorDoctor`.
+  /// - The user is a regular `doctor` AND (1) the doctor is assigned to the patient in `patient_doctors`,
   ///   OR (2) the patient has an active appointment with that doctor within the ±2 days window.
   CanAccessPatientProvider._({
     required CanAccessPatientFamily super.from,
@@ -446,13 +446,13 @@ final class CanAccessPatientProvider
   }
 }
 
-String _$canAccessPatientHash() => r'393a5ea9817ed05e24797c74675c6259c3e73d32';
+String _$canAccessPatientHash() => r'c7627ed6df31ff9785c08242742bcf0c2b4d159a';
 
 /// Checks if the current authenticated user has permission to view the patient detail screen.
 ///
 /// Returns `true` if:
-/// - The user is a `receptionist` or `superAdmin`.
-/// - The user is a `doctor` AND (1) the doctor is assigned to the patient in `patient_doctors`,
+/// - The user is a `receptionist`, `superAdmin`, or `isSeniorDoctor`.
+/// - The user is a regular `doctor` AND (1) the doctor is assigned to the patient in `patient_doctors`,
 ///   OR (2) the patient has an active appointment with that doctor within the ±2 days window.
 
 final class CanAccessPatientFamily extends $Family
@@ -469,8 +469,8 @@ final class CanAccessPatientFamily extends $Family
   /// Checks if the current authenticated user has permission to view the patient detail screen.
   ///
   /// Returns `true` if:
-  /// - The user is a `receptionist` or `superAdmin`.
-  /// - The user is a `doctor` AND (1) the doctor is assigned to the patient in `patient_doctors`,
+  /// - The user is a `receptionist`, `superAdmin`, or `isSeniorDoctor`.
+  /// - The user is a regular `doctor` AND (1) the doctor is assigned to the patient in `patient_doctors`,
   ///   OR (2) the patient has an active appointment with that doctor within the ±2 days window.
 
   CanAccessPatientProvider call(String patientId) =>

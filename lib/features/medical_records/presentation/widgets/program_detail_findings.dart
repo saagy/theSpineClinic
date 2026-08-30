@@ -2,13 +2,12 @@ library;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 import 'package:spine_clinic_app/core/constants/app_sizes.dart';
 import 'package:spine_clinic_app/core/constants/app_strings.dart';
 import 'package:spine_clinic_app/core/constants/app_text_styles.dart';
-import 'package:spine_clinic_app/core/network/app_routes.dart';
 import 'package:spine_clinic_app/features/medical_records/domain/patient_program.dart';
-import 'package:spine_clinic_app/features/patient/domain/patient_document.dart';
+import 'package:spine_clinic_app/features/medical_records/presentation/screens/program_gallery_viewer_screen.dart';
+import 'package:spine_clinic_app/features/medical_records/presentation/widgets/program_media_reel.dart';
 import 'package:spine_clinic_app/features/patient/presentation/patient_documents_providers.dart';
 
 /// Card displaying the clinical examination, imaging findings, scans, and position findings.
@@ -53,84 +52,6 @@ class ProgramDetailFindings extends ConsumerWidget {
               content.trim(),
               style: AppTextStyles.body.copyWith(color: cs.onSurface),
             ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildImagingAttachments(
-    BuildContext context,
-    List<PatientDocument> docs,
-  ) {
-    if (docs.isEmpty) return const SizedBox.shrink();
-    final cs = Theme.of(context).colorScheme;
-
-    return Padding(
-      padding: const EdgeInsets.only(bottom: AppSizes.p12),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Icon(Icons.photo_library_outlined, size: 16, color: cs.primary),
-              const SizedBox(width: AppSizes.p6),
-              Text(
-                AppStrings.imagingAttachments,
-                style: AppTextStyles.captionBold.copyWith(
-                  color: cs.onSurfaceVariant,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: AppSizes.p8),
-          Wrap(
-            spacing: AppSizes.p8,
-            runSpacing: AppSizes.p8,
-            children: docs.map((doc) {
-              final isPdf = doc.fileName.toLowerCase().endsWith('.pdf');
-              return InkWell(
-                onTap: () {
-                  final location = AppRoutes.patientDocumentViewerLocation(
-                    patientId: program.patientId,
-                    documentId: doc.id,
-                  );
-                  context.push(location);
-                },
-                borderRadius: BorderRadius.circular(AppSizes.r12),
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: AppSizes.p10,
-                    vertical: AppSizes.p6,
-                  ),
-                  decoration: BoxDecoration(
-                    color: cs.surface,
-                    borderRadius: BorderRadius.circular(AppSizes.r12),
-                    border: Border.all(color: cs.outlineVariant),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(
-                        isPdf
-                            ? Icons.picture_as_pdf_rounded
-                            : Icons.image_rounded,
-                        size: 18,
-                        color: isPdf ? cs.error : cs.primary,
-                      ),
-                      const SizedBox(width: AppSizes.p6),
-                      Text(
-                        doc.fileName,
-                        style: AppTextStyles.caption.copyWith(
-                          color: cs.primary,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              );
-            }).toList(),
           ),
         ],
       ),
@@ -182,7 +103,19 @@ class ProgramDetailFindings extends ConsumerWidget {
             content: program.imagingNotes,
             icon: Icons.image_search_outlined,
           ),
-          _buildImagingAttachments(context, docs),
+          ProgramMediaReel(
+            documents: docs,
+            onOpenDocument: (initialIndex) {
+              Navigator.of(context).push(
+                MaterialPageRoute<void>(
+                  builder: (_) => ProgramGalleryViewerScreen(
+                    documents: docs,
+                    initialIndex: initialIndex,
+                  ),
+                ),
+              );
+            },
+          ),
           _buildFindingSection(
             context: context,
             title: AppStrings.exaggeratingPositions,

@@ -32,11 +32,8 @@ class AppointmentDetailHeader extends ConsumerWidget {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     final user = ref.watch(currentUserProvider).value;
-    final isDoctor = user?.role == UserRole.doctor;
-    final canAccessAsync = isDoctor
-        ? ref.watch(canAccessPatientProvider(patient.id))
-        : const AsyncValue.data(true);
-    final bool canAccess = canAccessAsync.value ?? !isDoctor;
+    final isRegularDoctor =
+        user?.role == UserRole.doctor && !(user?.isSeniorDoctor ?? false);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -47,18 +44,27 @@ class AppointmentDetailHeader extends ConsumerWidget {
             vertical: AppSizes.p12,
           ),
           child: InkWell(
-            onTap: () {
-              if (!canAccess) {
-                AppSnackbar.show(
-                  context,
-                  message: AppStrings.errorDatabasePermissionDenied,
-                  variant: AppSnackbarVariant.error,
+            onTap: () async {
+              if (isRegularDoctor) {
+                final canAccess = await ref.read(
+                  canAccessPatientProvider(patient.id).future,
                 );
-                return;
+                if (!canAccess) {
+                  if (context.mounted) {
+                    AppSnackbar.show(
+                      context,
+                      message: AppStrings.errorDatabasePermissionDenied,
+                      variant: AppSnackbarVariant.error,
+                    );
+                  }
+                  return;
+                }
               }
-              context.push(
-                AppRoutes.patientDetail.replaceAll(':id', patient.id),
-              );
+              if (context.mounted) {
+                context.push(
+                  AppRoutes.patientDetail.replaceAll(':id', patient.id),
+                );
+              }
             },
             borderRadius: const BorderRadius.all(Radius.circular(AppSizes.r12)),
             child: Padding(

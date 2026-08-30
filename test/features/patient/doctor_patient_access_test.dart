@@ -51,6 +51,16 @@ void main() {
     createdAt: DateTime(2026, 1, 1),
   );
 
+  final seniorDoctor = Staff(
+    id: 'senior-doc-1',
+    userId: 'user-senior',
+    fullName: 'Dr. Senior',
+    email: 'senior@clinic.com',
+    role: UserRole.doctor,
+    isSenior: true,
+    createdAt: DateTime(2026, 1, 1),
+  );
+
   final patient = Patient(
     id: 'patient-1',
     fullName: 'John Doe',
@@ -60,6 +70,24 @@ void main() {
   );
 
   group('canAccessPatient Provider Tests', () {
+    test('senior doctor has unconditional access to any patient', () async {
+      final container = ProviderContainer(
+        overrides: [
+          currentUserProvider.overrideWith(
+            () => _StaticCurrentUser(seniorDoctor),
+          ),
+        ],
+      );
+      addTearDown(container.dispose);
+      await container.read(currentUserProvider.future);
+
+      final canAccess = await container.read(
+        canAccessPatientProvider('patient-1').future,
+      );
+
+      expect(canAccess, isTrue);
+    });
+
     test('non-doctor roles (receptionist / superAdmin) have full access to any patient', () async {
       final container = ProviderContainer(
         overrides: [

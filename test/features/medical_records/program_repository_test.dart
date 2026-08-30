@@ -77,6 +77,7 @@ class _FakeProgramRepository implements ProgramRepository {
   @override
   Future<Result<PatientProgram>> updateProgram({
     required String programId,
+    required String patientId,
     required List<String> conditionIds,
     String? examination,
     String? imagingNotes,
@@ -249,5 +250,19 @@ void main() {
     expect(programs, isNotNull);
     expect(programs!.length, equals(1));
     expect(programs.first.examination, equals('Normal range of motion'));
+
+    final updateResult = await container
+        .read(programControllerProvider.notifier)
+        .updateProgram(
+          programId: programs.first.id,
+          patientId: 'patient-1',
+          conditionIds: ['cond-1'],
+          examination: 'Updated examination',
+        );
+
+    expect(updateResult.isSuccess, isTrue);
+    final updatedPrograms =
+        container.read(patientProgramsProvider('patient-1')).value;
+    expect(updatedPrograms!.first.examination, equals('Updated examination'));
   });
 }

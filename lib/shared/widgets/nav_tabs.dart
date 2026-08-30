@@ -24,6 +24,11 @@ class NavTab {
 /// Resolves the navigation tab set for a given [userRole].
 abstract final class NavTabs {
   static List<NavTab> forRole(String role) => switch (role) {
+    'senior_doctor' => const [
+      NavTab(icon: LucideIcons.calendar, label: AppStrings.navMySchedule),
+      NavTab(icon: LucideIcons.users, label: AppStrings.patients),
+      NavTab(icon: LucideIcons.user, label: AppStrings.profile),
+    ],
     'doctor' => const [
       NavTab(icon: LucideIcons.calendar, label: AppStrings.navMySchedule),
       NavTab(icon: LucideIcons.users, label: AppStrings.navMyPatients),

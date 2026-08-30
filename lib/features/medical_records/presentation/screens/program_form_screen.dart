@@ -48,12 +48,9 @@ class _ProgramFormScreenState extends ConsumerState<ProgramFormScreen> {
     super.initState();
     final p = widget.program;
     _examinationController = TextEditingController(text: p?.examination ?? '');
-    _imagingNotesController =
-        TextEditingController(text: p?.imagingNotes ?? '');
-    _exaggeratingPositionsController =
-        TextEditingController(text: p?.exaggeratingPositions ?? '');
-    _relievingPositionsController =
-        TextEditingController(text: p?.relievingPositions ?? '');
+    _imagingNotesController = TextEditingController(text: p?.imagingNotes ?? '');
+    _exaggeratingPositionsController = TextEditingController(text: p?.exaggeratingPositions ?? '');
+    _relievingPositionsController = TextEditingController(text: p?.relievingPositions ?? '');
     _notesController = TextEditingController(text: p?.notes ?? '');
     _selectedConditions = p?.conditions
             .where((c) => c.condition != null)

@@ -232,9 +232,9 @@ Future<bool> canAccessAppointment(
   required String appointmentId,
   required String patientId,
 }) async {
-  final user = ref.watch(currentUserProvider).value;
+  final user = await ref.watch(currentUserProvider.future);
   if (user == null) return false;
-  if (user.role != UserRole.doctor) return true;
+  if (user.role != UserRole.doctor || user.isSeniorDoctor) return true;
 
   final String doctorId = user.id;
 
@@ -256,12 +256,12 @@ Future<bool> canAccessAppointment(
 }
 
 /// Checks if the current doctor is assigned to the given patient in `patient_doctors`.
-/// Non-doctor staff always return `true`.
+/// Non-doctor staff and senior doctors always return `true`.
 @riverpod
 Future<bool> isDoctorAssignedToPatient(Ref ref, String patientId) async {
-  final user = ref.watch(currentUserProvider).value;
+  final user = await ref.watch(currentUserProvider.future);
   if (user == null) return false;
-  if (user.role != UserRole.doctor) return true;
+  if (user.role != UserRole.doctor || user.isSeniorDoctor) return true;
   final patientDoctors =
       await ref.watch(patientAssignedDoctorsProvider(patientId).future);
   return patientDoctors.any((d) => d.id == user.id);
@@ -270,8 +270,8 @@ Future<bool> isDoctorAssignedToPatient(Ref ref, String patientId) async {
 /// Checks if the current authenticated user has permission to edit an appointment.
 ///
 /// Returns `true` if:
-/// - The user is a `receptionist` or `superAdmin`.
-/// - The user is a `doctor` AND:
+/// - The user is a `receptionist`, `superAdmin`, or `isSeniorDoctor`.
+/// - The user is a regular `doctor` AND:
 ///   (1) the doctor is assigned to the patient in `patient_doctors` (Case 1), OR
 ///   (2) the appointment has an active assignment to the doctor AND the appointment's
 ///       scheduled date is within the ±2 days window (Case 2).
@@ -281,9 +281,9 @@ Future<bool> canEditAppointment(
   required String appointmentId,
   required String patientId,
 }) async {
-  final user = ref.watch(currentUserProvider).value;
+  final user = await ref.watch(currentUserProvider.future);
   if (user == null) return false;
-  if (user.role != UserRole.doctor) return true;
+  if (user.role != UserRole.doctor || user.isSeniorDoctor) return true;
 
   final String doctorId = user.id;
 
