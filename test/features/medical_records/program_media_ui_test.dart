@@ -7,7 +7,6 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:spine_clinic_app/core/constants/app_strings.dart';
 import 'package:spine_clinic_app/core/errors/result.dart';
-import 'package:spine_clinic_app/core/network/app_routes.dart';
 import 'package:spine_clinic_app/core/utils/file_display_helper.dart';
 import 'package:spine_clinic_app/features/medical_records/presentation/screens/program_gallery_viewer_screen.dart';
 import 'package:spine_clinic_app/features/medical_records/presentation/widgets/program_media_card.dart';
@@ -230,17 +229,6 @@ void main() {
                   ),
                 ),
               ),
-            ),
-            GoRoute(
-              path: AppRoutes.galleryViewer,
-              builder: (_, state) {
-                final args = state.extra as ProgramGalleryViewerArgs?;
-                return ProgramGalleryViewerScreen(
-                  documents: args?.documents ?? const [],
-                  initialIndex: args?.initialIndex ?? 0,
-                  title: args?.title ?? AppStrings.imagingAttachments,
-                );
-              },
             ),
           ],
         );

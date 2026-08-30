@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:spine_clinic_app/core/constants/app_strings.dart';
 import 'package:spine_clinic_app/core/errors/app_exception.dart';
+import 'package:spine_clinic_app/core/network/app_routes.dart';
 import 'package:spine_clinic_app/features/patient/domain/patient_document.dart';
 import 'package:spine_clinic_app/features/patient/presentation/patient_documents_providers.dart';
 import 'package:spine_clinic_app/shared/widgets/app_file_viewer.dart';
@@ -25,10 +26,13 @@ class PatientDocumentViewerScreen extends ConsumerWidget {
     final AsyncValue<List<PatientDocument>> documents = ref.watch(
       patientDocumentsNotifierProvider(patientId),
     );
+    final String fallback =
+        AppRoutes.patientDetail.replaceFirst(':id', patientId);
 
     return documents.when(
       loading: () => AppFileViewerScaffold(
         title: AppStrings.tabDocuments,
+        fallbackLocation: fallback,
         body: Center(
           child: CircularProgressIndicator(
             color: Theme.of(context).colorScheme.primary,
@@ -37,6 +41,7 @@ class PatientDocumentViewerScreen extends ConsumerWidget {
       ),
       error: (Object error, _) => AppFileViewerScaffold(
         title: AppStrings.tabDocuments,
+        fallbackLocation: fallback,
         body: ErrorView(
           exception: error is AppException
               ? error
@@ -48,9 +53,10 @@ class PatientDocumentViewerScreen extends ConsumerWidget {
       data: (List<PatientDocument> documents) {
         final PatientDocument? document = _findDocument(documents);
         if (document == null) {
-          return const AppFileViewerScaffold(
+          return AppFileViewerScaffold(
             title: AppStrings.tabDocuments,
-            body: EmptyState(
+            fallbackLocation: fallback,
+            body: const EmptyState(
               message: AppStrings.documentNotFound,
               icon: Icons.image_not_supported_outlined,
             ),
@@ -59,6 +65,7 @@ class PatientDocumentViewerScreen extends ConsumerWidget {
         return AppFileViewer(
           fileUrl: document.fileUrl,
           fileName: document.fileName,
+          fallbackLocation: fallback,
         );
       },
     );

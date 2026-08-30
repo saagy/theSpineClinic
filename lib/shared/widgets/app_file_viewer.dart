@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
 import 'package:path/path.dart' as p;
 
 import 'package:spine_clinic_app/core/constants/app_sizes.dart';
 import 'package:spine_clinic_app/core/constants/app_strings.dart';
 import 'package:spine_clinic_app/core/constants/app_text_styles.dart';
+import 'package:spine_clinic_app/core/utils/viewer_navigation_helper.dart';
 import 'package:spine_clinic_app/shared/widgets/image_viewer_view.dart';
 import 'package:spine_clinic_app/shared/widgets/pdf_viewer_view.dart';
 
@@ -22,11 +22,13 @@ class AppFileViewer extends StatelessWidget {
   const AppFileViewer({
     required this.fileUrl,
     required this.fileName,
+    this.fallbackLocation,
     super.key,
   });
 
   final String fileUrl;
   final String fileName;
+  final String? fallbackLocation;
 
   @override
   Widget build(BuildContext context) {
@@ -39,7 +41,11 @@ class AppFileViewer extends StatelessWidget {
       _ => const _UnsupportedFileView(),
     };
 
-    return AppFileViewerScaffold(title: fileName, body: body);
+    return AppFileViewerScaffold(
+      title: fileName,
+      body: body,
+      fallbackLocation: fallbackLocation,
+    );
   }
 }
 
@@ -48,11 +54,13 @@ class AppFileViewerScaffold extends StatelessWidget {
   const AppFileViewerScaffold({
     required this.title,
     required this.body,
+    this.fallbackLocation,
     super.key,
   });
 
   final String title;
   final Widget body;
+  final String? fallbackLocation;
 
   @override
   Widget build(BuildContext context) {
@@ -66,7 +74,10 @@ class AppFileViewerScaffold extends StatelessWidget {
         bottom: true,
         child: Column(
           children: [
-            _ViewerHeader(title: title),
+            _ViewerHeader(
+              title: title,
+              fallbackLocation: fallbackLocation,
+            ),
             Expanded(child: body),
           ],
         ),
@@ -76,9 +87,13 @@ class AppFileViewerScaffold extends StatelessWidget {
 }
 
 class _ViewerHeader extends StatelessWidget {
-  const _ViewerHeader({required this.title});
+  const _ViewerHeader({
+    required this.title,
+    this.fallbackLocation,
+  });
 
   final String title;
+  final String? fallbackLocation;
 
   @override
   Widget build(BuildContext context) {
@@ -96,13 +111,10 @@ class _ViewerHeader extends StatelessWidget {
           IconButton(
             icon: Icon(Icons.close_rounded, color: colors.onSurface),
             tooltip: AppStrings.close,
-            onPressed: () {
-              if (context.canPop()) {
-                context.pop();
-              } else if (Navigator.of(context).canPop()) {
-                Navigator.of(context).pop();
-              }
-            },
+            onPressed: () => closeViewer(
+              context,
+              fallbackLocation: fallbackLocation,
+            ),
           ),
           const SizedBox(width: AppSizes.p4),
           Expanded(

@@ -110,6 +110,8 @@ class ProgramDetailFindings extends ConsumerWidget {
                 context,
                 documents: docs,
                 initialIndex: initialIndex,
+                patientId: program.patientId,
+                programId: program.id,
               );
             },
           ),

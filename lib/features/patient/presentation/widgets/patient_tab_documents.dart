@@ -85,6 +85,8 @@ class _PatientTabDocumentsState extends ConsumerState<PatientTabDocuments> {
       context,
       documents: group.documents,
       title: AppStrings.clinicalFindingsSection,
+      patientId: widget.patient.id,
+      programId: group.program?.id,
     );
   }
 

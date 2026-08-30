@@ -47,6 +47,26 @@ List<RouteBase> _buildRoutes(Ref ref) => [
         initialProgram: _extractProgram(state.extra),
       ),
     ),
+    routes: [
+      GoRoute(
+        parentNavigatorKey: _rootNavigatorKey,
+        path: AppRoutes.programGallery,
+        pageBuilder: (_, state) {
+          final patientId = state.pathParameters['id'] ?? '';
+          final programId = state.pathParameters['programId'] ?? '';
+          final int index =
+              int.tryParse(state.uri.queryParameters['index'] ?? '0') ?? 0;
+          return appPage(
+            key: state.pageKey,
+            child: ProgramGalleryViewerRouteScreen(
+              patientId: patientId,
+              programId: programId,
+              initialIndex: index,
+            ),
+          );
+        },
+      ),
+    ],
   ),
   GoRoute(
     path: AppRoutes.editPatientProgram,
@@ -120,43 +140,7 @@ List<RouteBase> _buildRoutes(Ref ref) => [
       child: StaffFormScreen(staff: _extractStaff(state.extra)),
     ),
   ),
-  GoRoute(
-    path: AppRoutes.galleryViewer,
-    pageBuilder: (_, state) {
-      final extra = state.extra;
-      final List<PatientDocument> docs;
-      final int index;
-      final String title;
-      if (extra is ProgramGalleryViewerArgs) {
-        docs = extra.documents;
-        index = extra.initialIndex;
-        title = extra.title;
-      } else if (extra is List) {
-        docs = extra
-            .map((e) => e is PatientDocument
-                ? e
-                : (e is Map<String, dynamic>
-                    ? PatientDocument.fromJson(e)
-                    : null))
-            .whereType<PatientDocument>()
-            .toList();
-        index = 0;
-        title = AppStrings.imagingAttachments;
-      } else {
-        docs = const [];
-        index = 0;
-        title = AppStrings.imagingAttachments;
-      }
-      return appPage(
-        key: state.pageKey,
-        child: ProgramGalleryViewerScreen(
-          documents: docs,
-          initialIndex: index,
-          title: title,
-        ),
-      );
-    },
-  ),
+
   ShellRoute(
     pageBuilder: (BuildContext context, GoRouterState state, Widget child) {
       final user = ref.read(currentUserProvider).value;

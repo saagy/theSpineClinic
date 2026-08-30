@@ -31,9 +31,6 @@ abstract final class AppRoutes {
   /// Full-screen patient document viewer nested under patient detail.
   static const String patientDocumentViewer = 'document/:documentId';
 
-  /// Gallery lightbox viewer for program documents and image reels.
-  static const String galleryViewer = '/gallery';
-
   /// Builds the browser-safe location for a patient document viewer.
   static String patientDocumentViewerLocation({
     required String patientId,
@@ -58,6 +55,26 @@ abstract final class AppRoutes {
 
   /// Patient rehabilitation program detail screen.
   static const String patientProgramDetail = '/patient/:id/programs/:programId';
+
+  /// Program gallery lightbox viewer for clinical scans.
+  static const String programGallery = 'gallery';
+
+  /// Builds the location for a program gallery lightbox viewer.
+  static String programGalleryLocation({
+    required String patientId,
+    required String programId,
+    int initialIndex = 0,
+  }) {
+    final String patientLocation = patientDetail.replaceFirst(
+      ':id',
+      Uri.encodeComponent(patientId),
+    );
+    final String programLocation =
+        'programs/${Uri.encodeComponent(programId)}/$programGallery';
+    return initialIndex > 0
+        ? '$patientLocation/$programLocation?index=$initialIndex'
+        : '$patientLocation/$programLocation';
+  }
 
   /// Edit patient rehabilitation program screen.
   static const String editPatientProgram =
