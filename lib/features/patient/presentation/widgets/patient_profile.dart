@@ -1,8 +1,3 @@
-/// Patient profile view with header, pinned TabBar, and quick actions FAB.
-///
-/// Sub-tabs: Info | Appointments | Records | Payments | Documents
-///
-/// Rule 1 — keep files under 200 lines.
 library;
 
 import 'package:flutter/material.dart';
@@ -23,6 +18,7 @@ import 'package:spine_clinic_app/features/patient/presentation/widgets/patient_t
 import 'package:spine_clinic_app/features/patient/presentation/widgets/patient_tab_documents.dart';
 import 'package:spine_clinic_app/features/patient/presentation/widgets/patient_tab_info.dart';
 import 'package:spine_clinic_app/features/patient/presentation/widgets/patient_tab_payments.dart';
+import 'package:spine_clinic_app/features/patient/presentation/widgets/patient_tab_programs.dart';
 import 'package:spine_clinic_app/features/patient/presentation/widgets/patient_tab_records.dart';
 import 'package:spine_clinic_app/features/patient/presentation/widgets/pill_tab_bar.dart';
 import 'package:spine_clinic_app/features/patient/presentation/widgets/pinned_tab_bar_delegate.dart';
@@ -63,9 +59,7 @@ class _PatientProfileState extends ConsumerState<PatientProfile> {
     if (!_scrollController.hasClients) return;
     final bool show = _scrollController.offset > 80;
     if (show != _showAppBarTitle) {
-      setState(() {
-        _showAppBarTitle = show;
-      });
+      setState(() => _showAppBarTitle = show);
     }
   }
 
@@ -85,6 +79,7 @@ class _PatientProfileState extends ConsumerState<PatientProfile> {
     final tabs = <Tab>[
       const Tab(text: AppStrings.tabInfo),
       const Tab(text: AppStrings.appointments),
+      const Tab(text: AppStrings.programs),
       const Tab(text: AppStrings.tabRecords),
       if (!isDoctor) const Tab(text: AppStrings.payments),
       const Tab(text: AppStrings.tabDocuments),
@@ -92,6 +87,7 @@ class _PatientProfileState extends ConsumerState<PatientProfile> {
     final views = <Widget>[
       PatientTabInfo(patient: patient),
       PatientTabAppointments(patient: patient),
+      PatientTabPrograms(patient: patient),
       PatientTabRecords(patient: patient),
       if (!isDoctor) PatientTabPayments(patient: patient),
       PatientTabDocuments(patient: patient),

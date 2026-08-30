@@ -68,6 +68,7 @@ class _RenameRepository implements PatientDocumentsRepository {
     required String fileName,
     required Uint8List fileBytes,
     required String uploadedBy,
+    String? programId,
   }) => throw UnimplementedError();
 
   @override

@@ -45,6 +45,9 @@ abstract class Staff with _$Staff {
     @Default(false)
     bool canManagePayments,
 
+    /// Whether this doctor is a senior doctor responsible for assessments and programs.
+    @JsonKey(name: 'is_senior') @Default(false) bool isSenior,
+
     /// The primary clinic location/branch for this staff member (synced preference).
     @JsonKey(name: 'branch') ClinicLocation? branch,
 
@@ -62,4 +65,9 @@ abstract class Staff with _$Staff {
   bool get canHandlePayments =>
       role == UserRole.superAdmin ||
       (role == UserRole.receptionist && canManagePayments);
+
+  /// Whether the user has permission to create and manage patient programs.
+  bool get isSeniorDoctor =>
+      role == UserRole.superAdmin ||
+      (role == UserRole.doctor && isSenior);
 }

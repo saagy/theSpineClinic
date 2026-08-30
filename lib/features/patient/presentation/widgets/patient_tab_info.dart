@@ -3,13 +3,14 @@ library;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-
 import 'package:spine_clinic_app/core/constants/app_sizes.dart';
 import 'package:spine_clinic_app/core/constants/app_strings.dart';
 import 'package:spine_clinic_app/core/errors/result.dart';
 import 'package:spine_clinic_app/core/utils/formatters.dart';
 import 'package:spine_clinic_app/features/auth/domain/user_role.dart';
 import 'package:spine_clinic_app/features/auth/presentation/auth_providers.dart';
+import 'package:spine_clinic_app/features/medical_records/presentation/medical_history_providers.dart';
+import 'package:spine_clinic_app/features/medical_records/presentation/widgets/medical_history_section.dart';
 import 'package:spine_clinic_app/features/patient/domain/patient.dart';
 import 'package:spine_clinic_app/features/patient/presentation/patient_appointments_notifier.dart';
 import 'package:spine_clinic_app/features/patient/presentation/patient_next_visit_controller.dart';
@@ -39,10 +40,9 @@ class PatientTabInfo extends ConsumerWidget {
     final paymentsAsync = ref.watch(patientPaymentsProvider(patient.id));
     final doctorsAsync = ref.watch(patientAssignedDoctorsProvider(patient.id));
     final nextVisitState = ref.watch(patientNextVisitControllerProvider);
-    final double amountDue =
-        paymentsAsync.value?.fold<double>(
+    final double amountDue = paymentsAsync.value?.fold<double>(
           0.0,
-          (sum, payment) => sum + payment.remainingDue,
+          (sum, p) => sum + p.remainingDue,
         ) ??
         0.0;
     final DateTime? nextVisitDate = patient.nextVisitDate;
@@ -57,6 +57,7 @@ class PatientTabInfo extends ConsumerWidget {
         ref.invalidate(patientDetailProvider(patient.id));
         ref.invalidate(patientAssignedDoctorsProvider(patient.id));
         ref.invalidate(patientPaymentsProvider(patient.id));
+        ref.invalidate(patientMedicalHistoryProvider(patient.id));
         ref.read(patientAppointmentsProvider(patient.id).notifier).refresh();
         try {
           await ref.read(patientPaymentsProvider(patient.id).future);
@@ -84,13 +85,11 @@ class PatientTabInfo extends ConsumerWidget {
                   _animateToTab(context, _appointmentsTabIndex),
               onNextVisitTap: canEditNextVisit
                   ? () => _handleNextVisitTap(context, ref)
-                  : () {
-                      AppSnackbar.show(
+                  : () => AppSnackbar.show(
                         context,
                         message: AppStrings.nextVisit,
                         variant: AppSnackbarVariant.info,
-                      );
-                    },
+                      ),
               onPaymentsTap: isDoctor
                   ? null
                   : () => _animateToTab(context, _paymentsTabIndex),
@@ -98,6 +97,10 @@ class PatientTabInfo extends ConsumerWidget {
             const _FullWidthHairline(),
             const SizedBox(height: AppSizes.p24),
             PatientInfoContactSection(patient: patient),
+            const SizedBox(height: AppSizes.p24),
+            const _HairlineDivider(),
+            const SizedBox(height: AppSizes.p24),
+            MedicalHistorySection(patientId: patient.id),
             const SizedBox(height: AppSizes.p24),
             const _HairlineDivider(),
             const SizedBox(height: AppSizes.p24),
@@ -120,16 +123,12 @@ class PatientTabInfo extends ConsumerWidget {
     DefaultTabController.maybeOf(context)?.animateTo(index);
   }
 
-  Future<void> _handleNextVisitTap(
-    BuildContext context,
-    WidgetRef ref,
-  ) async {
+  Future<void> _handleNextVisitTap(BuildContext context, WidgetRef ref) async {
     if (patient.nextVisitDate == null) {
       await _openDatePicker(context, ref);
       return;
     }
-    final NextVisitAction? action =
-        await NextVisitOptionsSheet.show(context);
+    final NextVisitAction? action = await NextVisitOptionsSheet.show(context);
     if (action == null || !context.mounted) return;
     switch (action) {
       case NextVisitAction.change:
@@ -148,8 +147,7 @@ class PatientTabInfo extends ConsumerWidget {
       lastDate: now.add(const Duration(days: 730)),
       helpText: AppStrings.setNextVisit,
     );
-    if (picked == null) return;
-    if (!context.mounted) return;
+    if (picked == null || !context.mounted) return;
     final result = await ref
         .read(patientNextVisitControllerProvider.notifier)
         .setNextVisit(patient.id, picked);
@@ -196,9 +194,8 @@ class _FullWidthHairline extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
     return ColoredBox(
-      color: cs.outlineVariant,
+      color: Theme.of(context).colorScheme.outlineVariant,
       child: const SizedBox(height: AppSizes.borderWidth),
     );
   }
@@ -209,11 +206,10 @@ class _HairlineDivider extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: AppSizes.p24),
       child: ColoredBox(
-        color: cs.outlineVariant,
+        color: Theme.of(context).colorScheme.outlineVariant,
         child: const SizedBox(height: AppSizes.borderWidth),
       ),
     );

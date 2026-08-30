@@ -32,6 +32,7 @@ abstract class PatientDocumentsRepository {
     required String fileName,
     required Uint8List fileBytes,
     required String uploadedBy,
+    String? programId,
   });
 
   /// Downloads raw bytes for a stored document. No client cache —

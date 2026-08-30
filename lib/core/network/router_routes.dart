@@ -29,6 +29,36 @@ List<RouteBase> _buildRoutes(Ref ref) => [
     ),
   ),
   GoRoute(
+    path: AppRoutes.newPatientProgram,
+    pageBuilder: (_, state) => appPage(
+      key: state.pageKey,
+      child: ProgramFormScreen(
+        patientId: state.pathParameters['id'] ?? '',
+      ),
+    ),
+  ),
+  GoRoute(
+    path: AppRoutes.patientProgramDetail,
+    pageBuilder: (_, state) => appPage(
+      key: state.pageKey,
+      child: ProgramDetailScreen(
+        patientId: state.pathParameters['id'] ?? '',
+        programId: state.pathParameters['programId'] ?? '',
+        initialProgram: state.extra as PatientProgram?,
+      ),
+    ),
+  ),
+  GoRoute(
+    path: AppRoutes.editPatientProgram,
+    pageBuilder: (_, state) => appPage(
+      key: state.pageKey,
+      child: ProgramFormScreen(
+        patientId: state.pathParameters['id'] ?? '',
+        program: state.extra as PatientProgram?,
+      ),
+    ),
+  ),
+  GoRoute(
     path: AppRoutes.recordPayment,
     pageBuilder: (_, state) => appPage(
       key: state.pageKey,

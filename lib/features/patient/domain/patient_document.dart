@@ -34,6 +34,9 @@ abstract class PatientDocument with _$PatientDocument {
     /// FK referencing staff(id) who uploaded it — nullable.
     @JsonKey(name: 'uploaded_by') String? uploadedBy,
 
+    /// Optional FK referencing patient_programs(id) for imaging attachments.
+    @JsonKey(name: 'program_id') String? programId,
+
     /// Row creation/upload timestamp.
     @JsonKey(name: 'uploaded_at') required DateTime uploadedAt,
   }) = _PatientDocument;

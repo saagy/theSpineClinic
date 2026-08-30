@@ -95,6 +95,15 @@
       -> update balance); use atomic database RPCs or atomic SQL increment
       expressions.
 
+28. **Mutation Controller Lifecycle (`keepAlive: true`):** Any action or mutation
+    controller (`class XController extends _$XController`) that is invoked via
+    `ref.read(xControllerProvider.notifier).someAction(...)` from a button, form,
+    or modal bottom sheet MUST be declared with `@Riverpod(keepAlive: true)`.
+    Without `keepAlive: true`, an unobserved auto-dispose controller will be
+    garbage-collected by Riverpod while the async network request is in-flight,
+    causing `ref.mounted` to evaluate to `false` upon completion and silently
+    skipping state updates/invalidations.
+
 ## Known Gotchas
 
 ### Status Callback Wiring
@@ -107,6 +116,17 @@ disappear until the user manually pulls to refresh.
 // Screen
 onStatusChanged: () => ref.read(myProvider.notifier).refresh()
 // Widget accepts VoidCallback? onStatusChanged and forwards to card
+```
+
+### PostgreSQL Base Table Grants vs RLS
+In PostgreSQL/Supabase, Row Level Security (`CREATE POLICY`) only takes effect
+*after* table-level privileges are granted to the executing role. Creating a new
+table and defining RLS policies without issuing `GRANT ... TO authenticated;`
+will cause PostgreSQL to reject all queries with error `42501: permission denied
+for table <table_name>` before RLS policies are even evaluated. Every new table
+created in migrations MUST include explicit grants:
+```sql
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.<table_name> TO authenticated;
 ```
 
 ## Data Flow Contract

@@ -60,6 +60,7 @@ class PatientDocumentsNotifierNotifier
   Future<Result<PatientDocument>> uploadDocument({
     required String fileName,
     required Uint8List fileBytes,
+    String? programId,
   }) async {
     // Rule 6: Every write action must read currentUserProvider to check role and id.
     final Staff? currentUser = ref.read(currentUserProvider).value;
@@ -81,18 +82,21 @@ class PatientDocumentsNotifierNotifier
       fileName: fileName,
       fileBytes: fileBytes,
       uploadedBy: currentUser.id,
+      programId: programId,
     );
     if (!ref.mounted) return result;
 
     // Refresh the list on success only. Failures are surfaced to the
     // caller via the returned Result and rendered as a snackbar; the
     // list itself stays visible.
-    await result.when(
-      success: (PatientDocument newDoc) async {
+    result.when(
+      success: (PatientDocument newDoc) {
+        state.whenData((current) {
+          state = AsyncData([newDoc, ...current]);
+        });
         ref.invalidateSelf();
-        await future;
       },
-      failure: (AppException exception) async {
+      failure: (AppException exception) {
         /* no state mutation */
       },
     );
@@ -125,12 +129,16 @@ class PatientDocumentsNotifierNotifier
     );
     if (!ref.mounted) return result;
 
-    await result.when(
-      success: (_) async {
+    result.when(
+      success: (PatientDocument updatedDoc) {
+        state.whenData((current) {
+          state = AsyncData(
+            current.map((d) => d.id == updatedDoc.id ? updatedDoc : d).toList(),
+          );
+        });
         ref.invalidateSelf();
-        await future;
       },
-      failure: (_) async {},
+      failure: (_) {},
     );
     return result;
   }
@@ -165,16 +173,33 @@ class PatientDocumentsNotifierNotifier
     final Result<void> result = await repo.deleteDocument(documentId: doc.id);
     if (!ref.mounted) return result;
 
-    await result.when(
-      success: (_) async {
+    result.when(
+      success: (_) {
+        state.whenData((current) {
+          state = AsyncData(
+            current.where((d) => d.id != doc.id).toList(),
+          );
+        });
         ref.invalidateSelf();
-        await future;
       },
-      failure: (AppException exception) async {
+      failure: (AppException exception) {
         /* no state mutation */
       },
     );
 
     return result;
   }
+}
+
+/// Filtered documents provider for a specific rehabilitation program.
+@riverpod
+FutureOr<List<PatientDocument>> programDocuments(
+  Ref ref, {
+  required String patientId,
+  required String programId,
+}) async {
+  final docs = await ref.watch(
+    patientDocumentsNotifierProvider(patientId).future,
+  );
+  return docs.where((d) => d.programId == programId).toList();
 }

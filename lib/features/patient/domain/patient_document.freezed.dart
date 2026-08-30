@@ -23,7 +23,8 @@ mixin _$PatientDocument {
 /// rows that pre-date the thumbnail column migration.
 @JsonKey(name: 'thumbnail_url') String? get thumbnailUrl;/// Raw name of the file (e.g. 'xray.pdf').
 @JsonKey(name: 'file_name') String get fileName;/// FK referencing staff(id) who uploaded it — nullable.
-@JsonKey(name: 'uploaded_by') String? get uploadedBy;/// Row creation/upload timestamp.
+@JsonKey(name: 'uploaded_by') String? get uploadedBy;/// Optional FK referencing patient_programs(id) for imaging attachments.
+@JsonKey(name: 'program_id') String? get programId;/// Row creation/upload timestamp.
 @JsonKey(name: 'uploaded_at') DateTime get uploadedAt;
 /// Create a copy of PatientDocument
 /// with the given fields replaced by the non-null parameter values.
@@ -37,16 +38,16 @@ $PatientDocumentCopyWith<PatientDocument> get copyWith => _$PatientDocumentCopyW
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is PatientDocument&&(identical(other.id, id) || other.id == id)&&(identical(other.patientId, patientId) || other.patientId == patientId)&&(identical(other.fileUrl, fileUrl) || other.fileUrl == fileUrl)&&(identical(other.thumbnailUrl, thumbnailUrl) || other.thumbnailUrl == thumbnailUrl)&&(identical(other.fileName, fileName) || other.fileName == fileName)&&(identical(other.uploadedBy, uploadedBy) || other.uploadedBy == uploadedBy)&&(identical(other.uploadedAt, uploadedAt) || other.uploadedAt == uploadedAt));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is PatientDocument&&(identical(other.id, id) || other.id == id)&&(identical(other.patientId, patientId) || other.patientId == patientId)&&(identical(other.fileUrl, fileUrl) || other.fileUrl == fileUrl)&&(identical(other.thumbnailUrl, thumbnailUrl) || other.thumbnailUrl == thumbnailUrl)&&(identical(other.fileName, fileName) || other.fileName == fileName)&&(identical(other.uploadedBy, uploadedBy) || other.uploadedBy == uploadedBy)&&(identical(other.programId, programId) || other.programId == programId)&&(identical(other.uploadedAt, uploadedAt) || other.uploadedAt == uploadedAt));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,patientId,fileUrl,thumbnailUrl,fileName,uploadedBy,uploadedAt);
+int get hashCode => Object.hash(runtimeType,id,patientId,fileUrl,thumbnailUrl,fileName,uploadedBy,programId,uploadedAt);
 
 @override
 String toString() {
-  return 'PatientDocument(id: $id, patientId: $patientId, fileUrl: $fileUrl, thumbnailUrl: $thumbnailUrl, fileName: $fileName, uploadedBy: $uploadedBy, uploadedAt: $uploadedAt)';
+  return 'PatientDocument(id: $id, patientId: $patientId, fileUrl: $fileUrl, thumbnailUrl: $thumbnailUrl, fileName: $fileName, uploadedBy: $uploadedBy, programId: $programId, uploadedAt: $uploadedAt)';
 }
 
 
@@ -57,7 +58,7 @@ abstract mixin class $PatientDocumentCopyWith<$Res>  {
   factory $PatientDocumentCopyWith(PatientDocument value, $Res Function(PatientDocument) _then) = _$PatientDocumentCopyWithImpl;
 @useResult
 $Res call({
- String id,@JsonKey(name: 'patient_id') String patientId,@JsonKey(name: 'file_url') String fileUrl,@JsonKey(name: 'thumbnail_url') String? thumbnailUrl,@JsonKey(name: 'file_name') String fileName,@JsonKey(name: 'uploaded_by') String? uploadedBy,@JsonKey(name: 'uploaded_at') DateTime uploadedAt
+ String id,@JsonKey(name: 'patient_id') String patientId,@JsonKey(name: 'file_url') String fileUrl,@JsonKey(name: 'thumbnail_url') String? thumbnailUrl,@JsonKey(name: 'file_name') String fileName,@JsonKey(name: 'uploaded_by') String? uploadedBy,@JsonKey(name: 'program_id') String? programId,@JsonKey(name: 'uploaded_at') DateTime uploadedAt
 });
 
 
@@ -74,7 +75,7 @@ class _$PatientDocumentCopyWithImpl<$Res>
 
 /// Create a copy of PatientDocument
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? patientId = null,Object? fileUrl = null,Object? thumbnailUrl = freezed,Object? fileName = null,Object? uploadedBy = freezed,Object? uploadedAt = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? patientId = null,Object? fileUrl = null,Object? thumbnailUrl = freezed,Object? fileName = null,Object? uploadedBy = freezed,Object? programId = freezed,Object? uploadedAt = null,}) {
   return _then(_self.copyWith(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,patientId: null == patientId ? _self.patientId : patientId // ignore: cast_nullable_to_non_nullable
@@ -82,6 +83,7 @@ as String,fileUrl: null == fileUrl ? _self.fileUrl : fileUrl // ignore: cast_nul
 as String,thumbnailUrl: freezed == thumbnailUrl ? _self.thumbnailUrl : thumbnailUrl // ignore: cast_nullable_to_non_nullable
 as String?,fileName: null == fileName ? _self.fileName : fileName // ignore: cast_nullable_to_non_nullable
 as String,uploadedBy: freezed == uploadedBy ? _self.uploadedBy : uploadedBy // ignore: cast_nullable_to_non_nullable
+as String?,programId: freezed == programId ? _self.programId : programId // ignore: cast_nullable_to_non_nullable
 as String?,uploadedAt: null == uploadedAt ? _self.uploadedAt : uploadedAt // ignore: cast_nullable_to_non_nullable
 as DateTime,
   ));
@@ -168,10 +170,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id, @JsonKey(name: 'patient_id')  String patientId, @JsonKey(name: 'file_url')  String fileUrl, @JsonKey(name: 'thumbnail_url')  String? thumbnailUrl, @JsonKey(name: 'file_name')  String fileName, @JsonKey(name: 'uploaded_by')  String? uploadedBy, @JsonKey(name: 'uploaded_at')  DateTime uploadedAt)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id, @JsonKey(name: 'patient_id')  String patientId, @JsonKey(name: 'file_url')  String fileUrl, @JsonKey(name: 'thumbnail_url')  String? thumbnailUrl, @JsonKey(name: 'file_name')  String fileName, @JsonKey(name: 'uploaded_by')  String? uploadedBy, @JsonKey(name: 'program_id')  String? programId, @JsonKey(name: 'uploaded_at')  DateTime uploadedAt)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _PatientDocument() when $default != null:
-return $default(_that.id,_that.patientId,_that.fileUrl,_that.thumbnailUrl,_that.fileName,_that.uploadedBy,_that.uploadedAt);case _:
+return $default(_that.id,_that.patientId,_that.fileUrl,_that.thumbnailUrl,_that.fileName,_that.uploadedBy,_that.programId,_that.uploadedAt);case _:
   return orElse();
 
 }
@@ -189,10 +191,10 @@ return $default(_that.id,_that.patientId,_that.fileUrl,_that.thumbnailUrl,_that.
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id, @JsonKey(name: 'patient_id')  String patientId, @JsonKey(name: 'file_url')  String fileUrl, @JsonKey(name: 'thumbnail_url')  String? thumbnailUrl, @JsonKey(name: 'file_name')  String fileName, @JsonKey(name: 'uploaded_by')  String? uploadedBy, @JsonKey(name: 'uploaded_at')  DateTime uploadedAt)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id, @JsonKey(name: 'patient_id')  String patientId, @JsonKey(name: 'file_url')  String fileUrl, @JsonKey(name: 'thumbnail_url')  String? thumbnailUrl, @JsonKey(name: 'file_name')  String fileName, @JsonKey(name: 'uploaded_by')  String? uploadedBy, @JsonKey(name: 'program_id')  String? programId, @JsonKey(name: 'uploaded_at')  DateTime uploadedAt)  $default,) {final _that = this;
 switch (_that) {
 case _PatientDocument():
-return $default(_that.id,_that.patientId,_that.fileUrl,_that.thumbnailUrl,_that.fileName,_that.uploadedBy,_that.uploadedAt);case _:
+return $default(_that.id,_that.patientId,_that.fileUrl,_that.thumbnailUrl,_that.fileName,_that.uploadedBy,_that.programId,_that.uploadedAt);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -209,10 +211,10 @@ return $default(_that.id,_that.patientId,_that.fileUrl,_that.thumbnailUrl,_that.
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id, @JsonKey(name: 'patient_id')  String patientId, @JsonKey(name: 'file_url')  String fileUrl, @JsonKey(name: 'thumbnail_url')  String? thumbnailUrl, @JsonKey(name: 'file_name')  String fileName, @JsonKey(name: 'uploaded_by')  String? uploadedBy, @JsonKey(name: 'uploaded_at')  DateTime uploadedAt)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id, @JsonKey(name: 'patient_id')  String patientId, @JsonKey(name: 'file_url')  String fileUrl, @JsonKey(name: 'thumbnail_url')  String? thumbnailUrl, @JsonKey(name: 'file_name')  String fileName, @JsonKey(name: 'uploaded_by')  String? uploadedBy, @JsonKey(name: 'program_id')  String? programId, @JsonKey(name: 'uploaded_at')  DateTime uploadedAt)?  $default,) {final _that = this;
 switch (_that) {
 case _PatientDocument() when $default != null:
-return $default(_that.id,_that.patientId,_that.fileUrl,_that.thumbnailUrl,_that.fileName,_that.uploadedBy,_that.uploadedAt);case _:
+return $default(_that.id,_that.patientId,_that.fileUrl,_that.thumbnailUrl,_that.fileName,_that.uploadedBy,_that.programId,_that.uploadedAt);case _:
   return null;
 
 }
@@ -224,7 +226,7 @@ return $default(_that.id,_that.patientId,_that.fileUrl,_that.thumbnailUrl,_that.
 @JsonSerializable()
 
 class _PatientDocument implements PatientDocument {
-  const _PatientDocument({required this.id, @JsonKey(name: 'patient_id') required this.patientId, @JsonKey(name: 'file_url') required this.fileUrl, @JsonKey(name: 'thumbnail_url') this.thumbnailUrl, @JsonKey(name: 'file_name') required this.fileName, @JsonKey(name: 'uploaded_by') this.uploadedBy, @JsonKey(name: 'uploaded_at') required this.uploadedAt});
+  const _PatientDocument({required this.id, @JsonKey(name: 'patient_id') required this.patientId, @JsonKey(name: 'file_url') required this.fileUrl, @JsonKey(name: 'thumbnail_url') this.thumbnailUrl, @JsonKey(name: 'file_name') required this.fileName, @JsonKey(name: 'uploaded_by') this.uploadedBy, @JsonKey(name: 'program_id') this.programId, @JsonKey(name: 'uploaded_at') required this.uploadedAt});
   factory _PatientDocument.fromJson(Map<String, dynamic> json) => _$PatientDocumentFromJson(json);
 
 /// Primary key (`uuid`).
@@ -241,6 +243,8 @@ class _PatientDocument implements PatientDocument {
 @override@JsonKey(name: 'file_name') final  String fileName;
 /// FK referencing staff(id) who uploaded it — nullable.
 @override@JsonKey(name: 'uploaded_by') final  String? uploadedBy;
+/// Optional FK referencing patient_programs(id) for imaging attachments.
+@override@JsonKey(name: 'program_id') final  String? programId;
 /// Row creation/upload timestamp.
 @override@JsonKey(name: 'uploaded_at') final  DateTime uploadedAt;
 
@@ -257,16 +261,16 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _PatientDocument&&(identical(other.id, id) || other.id == id)&&(identical(other.patientId, patientId) || other.patientId == patientId)&&(identical(other.fileUrl, fileUrl) || other.fileUrl == fileUrl)&&(identical(other.thumbnailUrl, thumbnailUrl) || other.thumbnailUrl == thumbnailUrl)&&(identical(other.fileName, fileName) || other.fileName == fileName)&&(identical(other.uploadedBy, uploadedBy) || other.uploadedBy == uploadedBy)&&(identical(other.uploadedAt, uploadedAt) || other.uploadedAt == uploadedAt));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _PatientDocument&&(identical(other.id, id) || other.id == id)&&(identical(other.patientId, patientId) || other.patientId == patientId)&&(identical(other.fileUrl, fileUrl) || other.fileUrl == fileUrl)&&(identical(other.thumbnailUrl, thumbnailUrl) || other.thumbnailUrl == thumbnailUrl)&&(identical(other.fileName, fileName) || other.fileName == fileName)&&(identical(other.uploadedBy, uploadedBy) || other.uploadedBy == uploadedBy)&&(identical(other.programId, programId) || other.programId == programId)&&(identical(other.uploadedAt, uploadedAt) || other.uploadedAt == uploadedAt));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,patientId,fileUrl,thumbnailUrl,fileName,uploadedBy,uploadedAt);
+int get hashCode => Object.hash(runtimeType,id,patientId,fileUrl,thumbnailUrl,fileName,uploadedBy,programId,uploadedAt);
 
 @override
 String toString() {
-  return 'PatientDocument(id: $id, patientId: $patientId, fileUrl: $fileUrl, thumbnailUrl: $thumbnailUrl, fileName: $fileName, uploadedBy: $uploadedBy, uploadedAt: $uploadedAt)';
+  return 'PatientDocument(id: $id, patientId: $patientId, fileUrl: $fileUrl, thumbnailUrl: $thumbnailUrl, fileName: $fileName, uploadedBy: $uploadedBy, programId: $programId, uploadedAt: $uploadedAt)';
 }
 
 
@@ -277,7 +281,7 @@ abstract mixin class _$PatientDocumentCopyWith<$Res> implements $PatientDocument
   factory _$PatientDocumentCopyWith(_PatientDocument value, $Res Function(_PatientDocument) _then) = __$PatientDocumentCopyWithImpl;
 @override @useResult
 $Res call({
- String id,@JsonKey(name: 'patient_id') String patientId,@JsonKey(name: 'file_url') String fileUrl,@JsonKey(name: 'thumbnail_url') String? thumbnailUrl,@JsonKey(name: 'file_name') String fileName,@JsonKey(name: 'uploaded_by') String? uploadedBy,@JsonKey(name: 'uploaded_at') DateTime uploadedAt
+ String id,@JsonKey(name: 'patient_id') String patientId,@JsonKey(name: 'file_url') String fileUrl,@JsonKey(name: 'thumbnail_url') String? thumbnailUrl,@JsonKey(name: 'file_name') String fileName,@JsonKey(name: 'uploaded_by') String? uploadedBy,@JsonKey(name: 'program_id') String? programId,@JsonKey(name: 'uploaded_at') DateTime uploadedAt
 });
 
 
@@ -294,7 +298,7 @@ class __$PatientDocumentCopyWithImpl<$Res>
 
 /// Create a copy of PatientDocument
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? patientId = null,Object? fileUrl = null,Object? thumbnailUrl = freezed,Object? fileName = null,Object? uploadedBy = freezed,Object? uploadedAt = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? patientId = null,Object? fileUrl = null,Object? thumbnailUrl = freezed,Object? fileName = null,Object? uploadedBy = freezed,Object? programId = freezed,Object? uploadedAt = null,}) {
   return _then(_PatientDocument(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,patientId: null == patientId ? _self.patientId : patientId // ignore: cast_nullable_to_non_nullable
@@ -302,6 +306,7 @@ as String,fileUrl: null == fileUrl ? _self.fileUrl : fileUrl // ignore: cast_nul
 as String,thumbnailUrl: freezed == thumbnailUrl ? _self.thumbnailUrl : thumbnailUrl // ignore: cast_nullable_to_non_nullable
 as String?,fileName: null == fileName ? _self.fileName : fileName // ignore: cast_nullable_to_non_nullable
 as String,uploadedBy: freezed == uploadedBy ? _self.uploadedBy : uploadedBy // ignore: cast_nullable_to_non_nullable
+as String?,programId: freezed == programId ? _self.programId : programId // ignore: cast_nullable_to_non_nullable
 as String?,uploadedAt: null == uploadedAt ? _self.uploadedAt : uploadedAt // ignore: cast_nullable_to_non_nullable
 as DateTime,
   ));

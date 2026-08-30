@@ -14,6 +14,7 @@ _PatientDocument _$PatientDocumentFromJson(Map<String, dynamic> json) =>
       thumbnailUrl: json['thumbnail_url'] as String?,
       fileName: json['file_name'] as String,
       uploadedBy: json['uploaded_by'] as String?,
+      programId: json['program_id'] as String?,
       uploadedAt: DateTime.parse(json['uploaded_at'] as String),
     );
 
@@ -25,5 +26,6 @@ Map<String, dynamic> _$PatientDocumentToJson(_PatientDocument instance) =>
       'thumbnail_url': instance.thumbnailUrl,
       'file_name': instance.fileName,
       'uploaded_by': instance.uploadedBy,
+      'program_id': instance.programId,
       'uploaded_at': instance.uploadedAt.toIso8601String(),
     };

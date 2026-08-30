@@ -99,7 +99,7 @@ final class ActiveDoctorsProvider
 
 String _$activeDoctorsHash() => r'63a8cabbf18d26a853e0e31abf9a215b2536d74b';
 
-/// Fetches all doctors regardless of active status.
+/// Fetches all approved doctors (both active and deactivated, excluding pending applications).
 ///
 /// Used by filter/search dropdowns (PatientListFilters, UnifiedFilterSheet)
 /// where users need to filter by historical records tied to deactivated staff.
@@ -110,7 +110,7 @@ String _$activeDoctorsHash() => r'63a8cabbf18d26a853e0e31abf9a215b2536d74b';
 @ProviderFor(allDoctorsForFilter)
 final allDoctorsForFilterProvider = AllDoctorsForFilterProvider._();
 
-/// Fetches all doctors regardless of active status.
+/// Fetches all approved doctors (both active and deactivated, excluding pending applications).
 ///
 /// Used by filter/search dropdowns (PatientListFilters, UnifiedFilterSheet)
 /// where users need to filter by historical records tied to deactivated staff.
@@ -126,7 +126,7 @@ final class AllDoctorsForFilterProvider
           FutureOr<List<Staff>>
         >
     with $FutureModifier<List<Staff>>, $FutureProvider<List<Staff>> {
-  /// Fetches all doctors regardless of active status.
+  /// Fetches all approved doctors (both active and deactivated, excluding pending applications).
   ///
   /// Used by filter/search dropdowns (PatientListFilters, UnifiedFilterSheet)
   /// where users need to filter by historical records tied to deactivated staff.
@@ -160,7 +160,7 @@ final class AllDoctorsForFilterProvider
 }
 
 String _$allDoctorsForFilterHash() =>
-    r'cba80831ea1051becd801a017a065a9faf03e233';
+    r'80e6acb30753416a47acbd89a3c37107fe780842';
 
 /// Controller managing the roster of patients assigned to the logged-in doctor.
 

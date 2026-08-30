@@ -46,6 +46,13 @@ abstract final class Formatters {
     return DateFormat('MMM d, yyyy').format(date.toLocal());
   }
 
+  /// Formats a [DateTime] into a full long string: `MMMM d, yyyy`.
+  ///
+  /// Example: `October 24, 2026`
+  static String formatDateLong(DateTime date) {
+    return DateFormat('MMMM d, yyyy').format(date.toLocal());
+  }
+
   /// Formats a [DateTime] with hour and minute resolution: `MMM d, yyyy, hh:mm a`.
   ///
   /// Always converts to local time before formatting so that UTC timestamps

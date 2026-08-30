@@ -16,9 +16,42 @@ CREATE TYPE public.clinic_location AS ENUM (
 CREATE TYPE public.appointment_type AS ENUM (
   'normal_pt_session',
   'spinal_traction_session',
-  'check_up',
   'initial_assessment',
   'reassessment'
+);
+
+CREATE TYPE public.body_region AS ENUM (
+  'shoulder',
+  'elbow',
+  'hand',
+  'lumbar_spine',
+  'thoracic_spine',
+  'cervical_spine',
+  'hip_joint',
+  'knee_joint',
+  'ankle_joint',
+  'foot'
+);
+
+CREATE TYPE public.program_status AS ENUM (
+  'active',
+  'completed',
+  'archived'
+);
+
+CREATE TYPE public.modality_type AS ENUM (
+  'muscle_pain',
+  'mass_built',
+  'tecar',
+  'tecar_focal',
+  'neurodynamic_non_wb',
+  'neurodynamic_wb'
+);
+
+CREATE TYPE public.laterality AS ENUM (
+  'right',
+  'left',
+  'both'
 );
 
 CREATE TYPE public.appointment_status AS ENUM (
@@ -36,6 +69,7 @@ CREATE TABLE public.staff (
   role            public.user_role NOT NULL,
   is_active       boolean NOT NULL DEFAULT true,
   can_manage_payments boolean NOT NULL DEFAULT false,
+  is_senior       boolean NOT NULL DEFAULT false,
   created_at      timestamptz NOT NULL DEFAULT now(),
   phone           text,
   branch          public.clinic_location,
@@ -87,6 +121,85 @@ CREATE TABLE public.appointment_doctors (
 );
 ALTER TABLE public.appointment_doctors ENABLE ROW LEVEL SECURITY;
 
+CREATE TABLE public.patient_medical_history (
+  id                   uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  patient_id           uuid NOT NULL UNIQUE REFERENCES public.patients(id) ON DELETE CASCADE,
+  has_diabetes         boolean NOT NULL DEFAULT false,
+  hba1c_value          text,
+  has_hypertension     boolean NOT NULL DEFAULT false,
+  has_hyperlipidemia   boolean NOT NULL DEFAULT false,
+  has_rheumatology     boolean NOT NULL DEFAULT false,
+  rheumatology_details text,
+  additional_notes     text,
+  updated_by           uuid REFERENCES public.staff(id) ON DELETE SET NULL,
+  created_at           timestamptz NOT NULL DEFAULT now(),
+  updated_at           timestamptz NOT NULL DEFAULT now()
+);
+ALTER TABLE public.patient_medical_history ENABLE ROW LEVEL SECURITY;
+
+CREATE TABLE public.condition_catalog (
+  id             uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  region         public.body_region NOT NULL,
+  condition_name text NOT NULL,
+  display_order  integer NOT NULL DEFAULT 0,
+  created_at     timestamptz NOT NULL DEFAULT now(),
+  CONSTRAINT unique_region_condition UNIQUE (region, condition_name)
+);
+ALTER TABLE public.condition_catalog ENABLE ROW LEVEL SECURITY;
+
+CREATE TABLE public.patient_programs (
+  id                     uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  patient_id             uuid NOT NULL REFERENCES public.patients(id) ON DELETE CASCADE,
+  created_by             uuid NOT NULL REFERENCES public.staff(id) ON DELETE RESTRICT,
+  status                 public.program_status NOT NULL DEFAULT 'active'::public.program_status,
+  examination            text,
+  imaging_notes          text,
+  exaggerating_positions text,
+  relieving_positions    text,
+  notes                  text,
+  created_at             timestamptz NOT NULL DEFAULT now(),
+  updated_at             timestamptz NOT NULL DEFAULT now()
+);
+ALTER TABLE public.patient_programs ENABLE ROW LEVEL SECURITY;
+
+CREATE TABLE public.program_conditions (
+  id           uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  program_id   uuid NOT NULL REFERENCES public.patient_programs(id) ON DELETE CASCADE,
+  condition_id uuid NOT NULL REFERENCES public.condition_catalog(id) ON DELETE CASCADE,
+  CONSTRAINT unique_program_condition UNIQUE (program_id, condition_id)
+);
+ALTER TABLE public.program_conditions ENABLE ROW LEVEL SECURITY;
+
+CREATE TABLE public.treatment_plans (
+  id          uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  program_id  uuid NOT NULL REFERENCES public.patient_programs(id) ON DELETE CASCADE,
+  created_by  uuid NOT NULL REFERENCES public.staff(id) ON DELETE RESTRICT,
+  plan_name   text NOT NULL DEFAULT 'Plan 1',
+  is_active   boolean NOT NULL DEFAULT true,
+  notes       text,
+  created_at  timestamptz NOT NULL DEFAULT now(),
+  updated_at  timestamptz NOT NULL DEFAULT now()
+);
+ALTER TABLE public.treatment_plans ENABLE ROW LEVEL SECURITY;
+
+CREATE TABLE public.plan_modalities (
+  id                uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  treatment_plan_id uuid NOT NULL REFERENCES public.treatment_plans(id) ON DELETE CASCADE,
+  modality_type     public.modality_type NOT NULL,
+  notes             text,
+  CONSTRAINT unique_plan_modality UNIQUE (treatment_plan_id, modality_type)
+);
+ALTER TABLE public.plan_modalities ENABLE ROW LEVEL SECURITY;
+
+CREATE TABLE public.modality_regions (
+  id               uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  plan_modality_id uuid NOT NULL REFERENCES public.plan_modalities(id) ON DELETE CASCADE,
+  target_region    text NOT NULL,
+  laterality       public.laterality,
+  time_minutes     integer NOT NULL DEFAULT 15
+);
+ALTER TABLE public.modality_regions ENABLE ROW LEVEL SECURITY;
+
 CREATE TABLE public.patient_documents (
   id             uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   patient_id     uuid NOT NULL REFERENCES public.patients(id) ON DELETE CASCADE,
@@ -94,7 +207,8 @@ CREATE TABLE public.patient_documents (
   file_name      text NOT NULL,
   uploaded_by    uuid REFERENCES public.staff(id) ON DELETE SET NULL,
   uploaded_at    timestamptz NOT NULL DEFAULT now(),
-  thumbnail_url  text
+  thumbnail_url  text,
+  program_id     uuid REFERENCES public.patient_programs(id) ON DELETE CASCADE
 );
 ALTER TABLE public.patient_documents ENABLE ROW LEVEL SECURITY;
 
@@ -128,6 +242,14 @@ CREATE INDEX idx_appointments_patient_status_scheduled ON public.appointments US
 CREATE INDEX idx_appointments_scheduled_at ON public.appointments USING btree (scheduled_at);
 CREATE INDEX idx_patients_clinic_next_visit ON public.patients USING btree (clinic, next_visit_date) WHERE (next_visit_date IS NOT NULL);
 CREATE INDEX idx_patient_notes_patient ON public.patient_notes USING btree (patient_id);
+CREATE INDEX idx_medical_history_patient ON public.patient_medical_history USING btree (patient_id);
+CREATE INDEX idx_condition_catalog_region ON public.condition_catalog USING btree (region, display_order);
+CREATE INDEX idx_patient_programs_patient ON public.patient_programs USING btree (patient_id, status);
+CREATE INDEX idx_program_conditions_program ON public.program_conditions USING btree (program_id);
+CREATE INDEX idx_treatment_plans_program ON public.treatment_plans USING btree (program_id, is_active);
+CREATE INDEX idx_plan_modalities_plan ON public.plan_modalities USING btree (treatment_plan_id);
+CREATE INDEX idx_modality_regions_modality ON public.modality_regions USING btree (plan_modality_id);
+CREATE INDEX idx_patient_documents_program ON public.patient_documents USING btree (program_id);
 
 -- Functions & RPCs
 CREATE OR REPLACE FUNCTION public.clinic_timezone()
@@ -150,6 +272,250 @@ BEGIN
     FROM public.staff 
     WHERE user_id = auth.uid() 
     LIMIT 1;
+END;
+$function$;
+
+CREATE OR REPLACE FUNCTION public.can_current_staff_access_patient(p_patient_id uuid)
+RETURNS boolean
+LANGUAGE sql
+SECURITY DEFINER
+STABLE
+AS $function$
+  SELECT EXISTS (
+    SELECT 1 FROM public.staff s
+    WHERE s.user_id = auth.uid()
+      AND s.is_active = true
+      AND (
+        s.role IN ('super_admin'::public.user_role, 'receptionist'::public.user_role)
+        OR (
+          s.role = 'doctor'::public.user_role
+          AND (
+            s.is_senior = true
+            OR EXISTS (
+              SELECT 1 FROM public.patient_doctors pd
+              WHERE pd.patient_id = p_patient_id AND pd.doctor_id = s.id
+            )
+            OR EXISTS (
+              SELECT 1 FROM public.appointments a
+              JOIN public.appointment_doctors ad ON ad.appointment_id = a.id
+              WHERE a.patient_id = p_patient_id
+                AND ad.doctor_id = s.id
+                AND ad.is_active = true
+            )
+          )
+        )
+      )
+  );
+$function$;
+
+CREATE OR REPLACE FUNCTION public.can_current_staff_modify_patient_programs(p_patient_id uuid)
+RETURNS boolean
+LANGUAGE sql
+SECURITY DEFINER
+STABLE
+AS $function$
+  SELECT EXISTS (
+    SELECT 1 FROM public.staff s
+    WHERE s.user_id = auth.uid()
+      AND s.is_active = true
+      AND (
+        s.role = 'super_admin'::public.user_role
+        OR (
+          s.role = 'doctor'::public.user_role
+          AND s.is_senior = true
+        )
+      )
+  );
+$function$;
+
+CREATE OR REPLACE FUNCTION public.create_patient_program(
+  p_patient_id uuid,
+  p_condition_ids uuid[],
+  p_examination text DEFAULT NULL,
+  p_imaging_notes text DEFAULT NULL,
+  p_exaggerating_positions text DEFAULT NULL,
+  p_relieving_positions text DEFAULT NULL,
+  p_notes text DEFAULT NULL,
+  p_documents jsonb DEFAULT NULL
+)
+RETURNS jsonb
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $function$
+DECLARE
+  v_caller_staff_id uuid;
+  v_caller_role public.user_role;
+  v_caller_is_senior boolean;
+  v_caller_active boolean;
+  v_program_id uuid;
+  v_cond_id uuid;
+  v_result jsonb;
+BEGIN
+  SELECT id, role, is_senior, is_active
+  INTO v_caller_staff_id, v_caller_role, v_caller_is_senior, v_caller_active
+  FROM public.staff
+  WHERE user_id = auth.uid();
+
+  IF v_caller_staff_id IS NULL OR v_caller_active IS NOT TRUE THEN
+    RAISE EXCEPTION 'Unauthorized: Active staff profile not found.';
+  END IF;
+
+  IF v_caller_role != 'super_admin' AND (v_caller_role != 'doctor' OR v_caller_is_senior IS NOT TRUE) THEN
+    RAISE EXCEPTION 'Permission denied: Only senior doctors and super admins can create patient programs.';
+  END IF;
+
+  INSERT INTO public.patient_programs (
+    patient_id,
+    created_by,
+    status,
+    examination,
+    imaging_notes,
+    exaggerating_positions,
+    relieving_positions,
+    notes
+  ) VALUES (
+    p_patient_id,
+    v_caller_staff_id,
+    'active',
+    p_examination,
+    p_imaging_notes,
+    p_exaggerating_positions,
+    p_relieving_positions,
+    p_notes
+  )
+  RETURNING id INTO v_program_id;
+
+  IF p_condition_ids IS NOT NULL AND array_length(p_condition_ids, 1) > 0 THEN
+    FOREACH v_cond_id IN ARRAY p_condition_ids LOOP
+      INSERT INTO public.program_conditions (program_id, condition_id)
+      VALUES (v_program_id, v_cond_id)
+      ON CONFLICT (program_id, condition_id) DO NOTHING;
+    END LOOP;
+  END IF;
+
+  IF p_documents IS NOT NULL AND jsonb_array_length(p_documents) > 0 THEN
+    INSERT INTO public.patient_documents (patient_id, program_id, file_url, file_name, uploaded_by)
+    SELECT
+      p_patient_id,
+      v_program_id,
+      doc->>'file_url',
+      doc->>'file_name',
+      v_caller_staff_id
+    FROM jsonb_array_elements(p_documents) AS doc;
+  END IF;
+
+  SELECT jsonb_build_object(
+    'id', p.id,
+    'patient_id', p.patient_id,
+    'created_by', p.created_by,
+    'status', p.status,
+    'examination', p.examination,
+    'imaging_notes', p.imaging_notes,
+    'exaggerating_positions', p.exaggerating_positions,
+    'relieving_positions', p.relieving_positions,
+    'notes', p.notes,
+    'created_at', p.created_at,
+    'updated_at', p.updated_at
+  ) INTO v_result
+  FROM public.patient_programs p
+  WHERE p.id = v_program_id;
+
+  RETURN v_result;
+END;
+$function$;
+
+CREATE OR REPLACE FUNCTION public.update_patient_program(
+  p_program_id uuid,
+  p_condition_ids uuid[],
+  p_examination text DEFAULT NULL,
+  p_imaging_notes text DEFAULT NULL,
+  p_exaggerating_positions text DEFAULT NULL,
+  p_relieving_positions text DEFAULT NULL,
+  p_notes text DEFAULT NULL,
+  p_status public.program_status DEFAULT NULL,
+  p_documents jsonb DEFAULT NULL
+)
+RETURNS jsonb
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $function$
+DECLARE
+  v_caller_staff_id uuid;
+  v_caller_role public.user_role;
+  v_caller_is_senior boolean;
+  v_caller_active boolean;
+  v_program public.patient_programs%ROWTYPE;
+  v_cond_id uuid;
+  v_result jsonb;
+BEGIN
+  SELECT id, role, is_senior, is_active
+  INTO v_caller_staff_id, v_caller_role, v_caller_is_senior, v_caller_active
+  FROM public.staff
+  WHERE user_id = auth.uid();
+
+  IF v_caller_staff_id IS NULL OR v_caller_active IS NOT TRUE THEN
+    RAISE EXCEPTION 'Unauthorized: Active staff profile not found.';
+  END IF;
+
+  IF v_caller_role != 'super_admin' AND (v_caller_role != 'doctor' OR v_caller_is_senior IS NOT TRUE) THEN
+    RAISE EXCEPTION 'Permission denied: Only senior doctors and super admins can update patient programs.';
+  END IF;
+
+  SELECT * INTO v_program FROM public.patient_programs WHERE id = p_program_id;
+  IF NOT FOUND THEN
+    RAISE EXCEPTION 'Program not found.';
+  END IF;
+
+  UPDATE public.patient_programs
+  SET
+    examination = COALESCE(p_examination, examination),
+    imaging_notes = COALESCE(p_imaging_notes, imaging_notes),
+    exaggerating_positions = COALESCE(p_exaggerating_positions, exaggerating_positions),
+    relieving_positions = COALESCE(p_relieving_positions, relieving_positions),
+    notes = COALESCE(p_notes, notes),
+    status = COALESCE(p_status, status),
+    updated_at = now()
+  WHERE id = p_program_id;
+
+  IF p_condition_ids IS NOT NULL THEN
+    DELETE FROM public.program_conditions WHERE program_id = p_program_id;
+    IF array_length(p_condition_ids, 1) > 0 THEN
+      FOREACH v_cond_id IN ARRAY p_condition_ids LOOP
+        INSERT INTO public.program_conditions (program_id, condition_id)
+        VALUES (p_program_id, v_cond_id)
+        ON CONFLICT (program_id, condition_id) DO NOTHING;
+      END LOOP;
+    END IF;
+  END IF;
+
+  IF p_documents IS NOT NULL AND jsonb_array_length(p_documents) > 0 THEN
+    INSERT INTO public.patient_documents (patient_id, program_id, file_url, file_name, uploaded_by)
+    SELECT
+      v_program.patient_id,
+      p_program_id,
+      doc->>'file_url',
+      doc->>'file_name',
+      v_caller_staff_id
+    FROM jsonb_array_elements(p_documents) AS doc;
+  END IF;
+
+  SELECT jsonb_build_object(
+    'id', p.id,
+    'patient_id', p.patient_id,
+    'created_by', p.created_by,
+    'status', p.status,
+    'examination', p.examination,
+    'imaging_notes', p.imaging_notes,
+    'exaggerating_positions', p.exaggerating_positions,
+    'relieving_positions', p.relieving_positions,
+    'notes', p.notes,
+    'created_at', p.created_at,
+    'updated_at', p.updated_at
+  ) INTO v_result
+  FROM public.patient_programs p
+  WHERE p.id = p_program_id;
+
+  RETURN v_result;
 END;
 $function$;
 
@@ -550,6 +916,10 @@ DECLARE
   caller_role public.user_role;
   caller_active boolean;
 BEGIN
+  IF auth.uid() IS NULL THEN
+    RETURN NEW;
+  END IF;
+
   SELECT role, is_active INTO caller_role, caller_active
   FROM staff
   WHERE user_id = auth.uid();
@@ -567,6 +937,9 @@ BEGIN
     END IF;
     IF NEW.can_manage_payments IS DISTINCT FROM OLD.can_manage_payments THEN
       RAISE EXCEPTION 'You cannot change your payment access.';
+    END IF;
+    IF NEW.is_senior IS DISTINCT FROM OLD.is_senior THEN
+      RAISE EXCEPTION 'You cannot change your senior doctor status.';
     END IF;
     IF NEW.id IS DISTINCT FROM OLD.id OR NEW.user_id IS DISTINCT FROM OLD.user_id THEN
       RAISE EXCEPTION 'You cannot change your ID or User ID.';
@@ -1052,6 +1425,38 @@ CREATE POLICY "Only payment-enabled staff can record payments" ON public.payment
 CREATE POLICY "Only payment-enabled staff can update payments" ON public.payment_records FOR UPDATE TO authenticated USING (public.current_staff_can_manage_payments()) WITH CHECK (public.current_staff_can_manage_payments());
 CREATE POLICY "Only payment-enabled staff can delete payments" ON public.payment_records FOR DELETE TO authenticated USING (public.current_staff_can_manage_payments());
 
+-- Condition Catalog Policies
+CREATE POLICY "Active staff can read condition catalog" ON public.condition_catalog FOR SELECT TO authenticated USING (EXISTS (SELECT 1 FROM public.get_auth_staff_profile() WHERE staff_active = true));
+CREATE POLICY "Super admins can manage condition catalog" ON public.condition_catalog FOR ALL TO authenticated USING (EXISTS (SELECT 1 FROM public.get_auth_staff_profile() WHERE staff_role = 'super_admin'::user_role AND staff_active = true));
+
+-- Patient Medical History Policies
+CREATE POLICY "Staff with patient access can read medical history" ON public.patient_medical_history FOR SELECT TO authenticated USING (public.can_current_staff_access_patient(patient_id));
+CREATE POLICY "Senior doctors and admins can insert medical history" ON public.patient_medical_history FOR INSERT TO authenticated WITH CHECK (public.can_current_staff_modify_patient_programs(patient_id));
+CREATE POLICY "Senior doctors and admins can update medical history" ON public.patient_medical_history FOR UPDATE TO authenticated USING (public.can_current_staff_modify_patient_programs(patient_id)) WITH CHECK (public.can_current_staff_modify_patient_programs(patient_id));
+CREATE POLICY "Super admins can delete medical history" ON public.patient_medical_history FOR DELETE TO authenticated USING (EXISTS (SELECT 1 FROM public.get_auth_staff_profile() WHERE staff_role = 'super_admin'::user_role AND staff_active = true));
+
+-- Patient Programs Policies
+CREATE POLICY "Staff with patient access can read programs" ON public.patient_programs FOR SELECT TO authenticated USING (public.can_current_staff_access_patient(patient_id));
+CREATE POLICY "Senior doctors and admins can insert programs" ON public.patient_programs FOR INSERT TO authenticated WITH CHECK (public.can_current_staff_modify_patient_programs(patient_id));
+CREATE POLICY "Senior doctors and admins can update programs" ON public.patient_programs FOR UPDATE TO authenticated USING (public.can_current_staff_modify_patient_programs(patient_id)) WITH CHECK (public.can_current_staff_modify_patient_programs(patient_id));
+CREATE POLICY "Super admins and senior doctors can delete programs" ON public.patient_programs FOR DELETE TO authenticated USING (public.can_current_staff_modify_patient_programs(patient_id));
+
+-- Program Conditions Policies
+CREATE POLICY "Staff with patient access can read program conditions" ON public.program_conditions FOR SELECT TO authenticated USING (EXISTS (SELECT 1 FROM public.patient_programs p WHERE p.id = program_conditions.program_id AND public.can_current_staff_access_patient(p.patient_id)));
+CREATE POLICY "Senior doctors and admins can manage program conditions" ON public.program_conditions FOR ALL TO authenticated USING (EXISTS (SELECT 1 FROM public.patient_programs p WHERE p.id = program_conditions.program_id AND public.can_current_staff_modify_patient_programs(p.patient_id)));
+
+-- Treatment Plans Policies
+CREATE POLICY "Staff with patient access can read treatment plans" ON public.treatment_plans FOR SELECT TO authenticated USING (EXISTS (SELECT 1 FROM public.patient_programs p WHERE p.id = treatment_plans.program_id AND public.can_current_staff_access_patient(p.patient_id)));
+CREATE POLICY "Senior doctors and admins can manage treatment plans" ON public.treatment_plans FOR ALL TO authenticated USING (EXISTS (SELECT 1 FROM public.patient_programs p WHERE p.id = treatment_plans.program_id AND public.can_current_staff_modify_patient_programs(p.patient_id)));
+
+-- Plan Modalities Policies
+CREATE POLICY "Staff with patient access can read plan modalities" ON public.plan_modalities FOR SELECT TO authenticated USING (EXISTS (SELECT 1 FROM public.treatment_plans tp JOIN public.patient_programs p ON p.id = tp.program_id WHERE tp.id = plan_modalities.treatment_plan_id AND public.can_current_staff_access_patient(p.patient_id)));
+CREATE POLICY "Senior doctors and admins can manage plan modalities" ON public.plan_modalities FOR ALL TO authenticated USING (EXISTS (SELECT 1 FROM public.treatment_plans tp JOIN public.patient_programs p ON p.id = tp.program_id WHERE tp.id = plan_modalities.treatment_plan_id AND public.can_current_staff_modify_patient_programs(p.patient_id)));
+
+-- Modality Regions Policies
+CREATE POLICY "Staff with patient access can read modality regions" ON public.modality_regions FOR SELECT TO authenticated USING (EXISTS (SELECT 1 FROM public.plan_modalities pm JOIN public.treatment_plans tp ON tp.id = pm.treatment_plan_id JOIN public.patient_programs p ON p.id = tp.program_id WHERE pm.id = modality_regions.plan_modality_id AND public.can_current_staff_access_patient(p.patient_id)));
+CREATE POLICY "Senior doctors and admins can manage modality regions" ON public.modality_regions FOR ALL TO authenticated USING (EXISTS (SELECT 1 FROM public.plan_modalities pm JOIN public.treatment_plans tp ON tp.id = pm.treatment_plan_id JOIN public.patient_programs p ON p.id = tp.program_id WHERE pm.id = modality_regions.plan_modality_id AND public.can_current_staff_modify_patient_programs(p.patient_id)));
+
 -- Storage Configuration & Policies
 INSERT INTO storage.buckets (id, name, public) VALUES ('patient-documents', 'patient-documents', false) ON CONFLICT (id) DO NOTHING;
 
@@ -1059,3 +1464,142 @@ CREATE POLICY "Select storage_objects policy" ON storage.objects FOR SELECT TO a
 CREATE POLICY "Insert storage_objects policy" ON storage.objects FOR INSERT TO authenticated WITH CHECK (bucket_id = 'patient-documents' AND EXISTS (SELECT 1 FROM public.get_auth_staff_profile() WHERE staff_active = true AND (staff_role = ANY (ARRAY['super_admin'::user_role, 'receptionist'::user_role]) OR (staff_role = 'doctor'::user_role AND (path_tokens[1] IN (SELECT pd.patient_id::text FROM public.patient_doctors pd WHERE pd.doctor_id = (SELECT staff_id FROM public.get_auth_staff_profile())) OR path_tokens[1] IN (SELECT a.patient_id::text FROM public.appointments a JOIN public.appointment_doctors ad ON ad.appointment_id = a.id WHERE ad.doctor_id = (SELECT staff_id FROM public.get_auth_staff_profile()) AND ad.is_active = true))))));
 CREATE POLICY "Update storage_objects policy" ON storage.objects FOR UPDATE TO authenticated USING (bucket_id = 'patient-documents'::text AND EXISTS ( SELECT 1 FROM public.get_auth_staff_profile() WHERE staff_active = true AND staff_role = ANY (ARRAY['super_admin'::user_role, 'receptionist'::user_role])));
 CREATE POLICY "Delete storage_objects policy" ON storage.objects FOR DELETE TO authenticated USING (bucket_id = 'patient-documents' AND EXISTS (SELECT 1 FROM public.get_auth_staff_profile() WHERE staff_active = true AND (staff_role = ANY (ARRAY['super_admin'::user_role, 'receptionist'::user_role]) OR (staff_role = 'doctor'::user_role AND (path_tokens[1] IN (SELECT pd.patient_id::text FROM public.patient_doctors pd WHERE pd.doctor_id = (SELECT staff_id FROM public.get_auth_staff_profile())) OR path_tokens[1] IN (SELECT a.patient_id::text FROM public.appointments a JOIN public.appointment_doctors ad ON ad.appointment_id = a.id WHERE ad.doctor_id = (SELECT staff_id FROM public.get_auth_staff_profile()) AND ad.is_active = true))))));
+
+-- Seed Condition Catalog Data
+INSERT INTO public.condition_catalog (region, condition_name, display_order) VALUES
+  -- Shoulder (16)
+  ('shoulder', 'Shoulder impingement syndrome', 1),
+  ('shoulder', 'Rotator cuff tendinopathy', 2),
+  ('shoulder', 'Subacromial bursitis', 3),
+  ('shoulder', 'Long head of biceps tendinopathy', 4),
+  ('shoulder', 'Glenohumeral OA', 5),
+  ('shoulder', 'AC OA', 6),
+  ('shoulder', 'Frozen Shoulder', 7),
+  ('shoulder', 'Shoulder instability', 8),
+  ('shoulder', 'Shoulder dislocation', 9),
+  ('shoulder', 'Labral tear', 10),
+  ('shoulder', 'SLAP lesion', 11),
+  ('shoulder', 'Bankart lesion', 12),
+  ('shoulder', 'Calcific tendinopathy', 13),
+  ('shoulder', 'Fracture', 14),
+  ('shoulder', 'Muscle strain', 15),
+  ('shoulder', 'Post-operation Rehabilitation', 16),
+
+  -- Hand (8)
+  ('hand', 'De Quervain''s', 1),
+  ('hand', 'Trigger fingers', 2),
+  ('hand', 'Wrist sprain', 3),
+  ('hand', 'Scapholunate ligament injury', 4),
+  ('hand', 'TFCC injury', 5),
+  ('hand', 'Ganglion cyst', 6),
+  ('hand', 'Distal radius fracture', 7),
+  ('hand', 'Post-operative rehabilitation', 8),
+
+  -- Lumbar Spine (15)
+  ('lumbar_spine', 'Lumbar disc herniation L1-L2', 1),
+  ('lumbar_spine', 'Lumbar disc herniation L2-L3', 2),
+  ('lumbar_spine', 'Lumbar disc herniation L3-L4', 3),
+  ('lumbar_spine', 'Lumbar disc herniation L4-L5', 4),
+  ('lumbar_spine', 'Lumbar disc herniation L5-S1', 5),
+  ('lumbar_spine', 'Lumbar canal stenosis', 6),
+  ('lumbar_spine', 'Foraminal stenosis', 7),
+  ('lumbar_spine', 'Spondylosis', 8),
+  ('lumbar_spine', 'Facet arthropathy', 9),
+  ('lumbar_spine', 'Spondylolisthesis', 10),
+  ('lumbar_spine', 'Clinical spinal instability', 11),
+  ('lumbar_spine', 'SIJ', 12),
+  ('lumbar_spine', 'Lumbar muscle strain', 13),
+  ('lumbar_spine', 'Vertebral fracture', 14),
+  ('lumbar_spine', 'Post-surgical Rehabilitation', 15),
+
+  -- Thoracic Spine (10)
+  ('thoracic_spine', 'Thoracic disc herniation', 1),
+  ('thoracic_spine', 'Facet arthropathy', 2),
+  ('thoracic_spine', 'Scheuermann''s kyphosis', 3),
+  ('thoracic_spine', 'Thoracic hyperkyphosis cause complications', 4),
+  ('thoracic_spine', 'Thoracic Scoliosis', 5),
+  ('thoracic_spine', 'Costovertebral dysfunction', 6),
+  ('thoracic_spine', 'Vertebral fracture', 7),
+  ('thoracic_spine', 'Rib fracture', 8),
+  ('thoracic_spine', 'Interosseous muscle strain', 9),
+  ('thoracic_spine', 'Post surgical Rehabilitation', 10),
+
+  -- Cervical Spine (14)
+  ('cervical_spine', 'Cervical disc herniation C2-C3', 1),
+  ('cervical_spine', 'Cervical disc herniation C3-C4', 2),
+  ('cervical_spine', 'Cervical disc herniation C4-C5', 3),
+  ('cervical_spine', 'Cervical disc herniation C5-C6', 4),
+  ('cervical_spine', 'Cervical disc herniation C6-C7', 5),
+  ('cervical_spine', 'Spondylosis', 6),
+  ('cervical_spine', 'Spinal stenosis', 7),
+  ('cervical_spine', 'Facet locking', 8),
+  ('cervical_spine', 'Cervical myelopathy', 9),
+  ('cervical_spine', 'C.S.T', 10),
+  ('cervical_spine', 'Cervicogenic headache', 11),
+  ('cervical_spine', 'Cervicogenic Dizziness', 12),
+  ('cervical_spine', 'Cervicogenic tinnitus', 13),
+  ('cervical_spine', 'Post surgical Rehabilitation', 14),
+
+  -- Hip Joint (14)
+  ('hip_joint', 'Hip OA', 1),
+  ('hip_joint', 'Hip FAI', 2),
+  ('hip_joint', 'Acetabular labral tear', 3),
+  ('hip_joint', 'Greater trochanteric pain syndrome', 4),
+  ('hip_joint', 'Trochanteric bursitis', 5),
+  ('hip_joint', 'Proximal hamstring tendinopathy', 6),
+  ('hip_joint', 'Adductor strain', 7),
+  ('hip_joint', 'Hamstring strain', 8),
+  ('hip_joint', 'AVN', 9),
+  ('hip_joint', 'Femoral neck stress fracture', 10),
+  ('hip_joint', 'Athletic pubalgia', 11),
+  ('hip_joint', 'THA', 12),
+  ('hip_joint', 'Post fracture rehabilitation', 13),
+  ('hip_joint', 'Osteitis pubis', 14),
+
+  -- Knee Joint (16)
+  ('knee_joint', 'Knee OA Rt', 1),
+  ('knee_joint', 'Knee OA Lt', 2),
+  ('knee_joint', 'Patellofemoral OA Rt', 3),
+  ('knee_joint', 'Patellofemoral OA Lt', 4),
+  ('knee_joint', 'Patellar tendinopathy', 5),
+  ('knee_joint', 'Quadriceps strain', 6),
+  ('knee_joint', 'ITBS', 7),
+  ('knee_joint', 'ACL partial tear', 8),
+  ('knee_joint', 'ACL complete tear', 9),
+  ('knee_joint', 'PHMM tear', 10),
+  ('knee_joint', 'Patellar instability', 11),
+  ('knee_joint', 'Patellar maltracking', 12),
+  ('knee_joint', 'Osteochondral lesion', 13),
+  ('knee_joint', 'Post operation Rehabilitation', 14),
+  ('knee_joint', 'Post operation Fixation', 15),
+  ('knee_joint', 'Osgood-Schlatter syndrome', 16),
+
+  -- Ankle Joint (11)
+  ('ankle_joint', 'Lateral ankle sprain', 1),
+  ('ankle_joint', 'Medial ankle sprain', 2),
+  ('ankle_joint', 'Syndesmotic injury', 3),
+  ('ankle_joint', 'Chronic ankle instability', 4),
+  ('ankle_joint', 'Achilles tendinopathy', 5),
+  ('ankle_joint', 'Achilles tendon tear', 6),
+  ('ankle_joint', 'Peroneal tendon subluxation', 7),
+  ('ankle_joint', 'Ankle OA', 8),
+  ('ankle_joint', 'Ankle impingement syndrome', 9),
+  ('ankle_joint', 'Osteochondral lesion', 10),
+  ('ankle_joint', 'Haglund''s deformity', 11),
+
+  -- Foot (4)
+  ('foot', 'Plantar fasciitis', 1),
+  ('foot', 'Calcaneal spur', 2),
+  ('foot', 'Metatarsalgia', 3),
+  ('foot', 'Stress fracture', 4)
+ON CONFLICT (region, condition_name) DO NOTHING;
+
+-- Table Grants for authenticated role
+-- RLS policies only work on top of base table-level GRANT privileges.
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.patient_medical_history TO authenticated;
+GRANT SELECT ON public.condition_catalog TO authenticated;
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.patient_programs TO authenticated;
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.program_conditions TO authenticated;
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.treatment_plans TO authenticated;
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.plan_modalities TO authenticated;
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.modality_regions TO authenticated;

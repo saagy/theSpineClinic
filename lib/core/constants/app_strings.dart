@@ -110,6 +110,7 @@ abstract final class AppStrings {
   static const String filter = 'Filter';
   static const String retry = 'Retry';
   static const String confirm = 'Confirm';
+  static const String apply = 'Apply';
   static const String close = 'Close';
   static const String submit = 'Submit';
   static const String upload = 'Upload';
@@ -921,4 +922,101 @@ abstract final class AppStrings {
       'No doctors have appointments today.';
   static const String cannotReplaceWithSelf =
       'A doctor cannot cover for themselves.';
+
+  // Senior Doctor Assessment & Programs
+  static const String seniorDoctor = 'Senior Doctor';
+  static const String juniorDoctor = 'Junior Doctor';
+  static const String isSeniorDoctor = 'Senior Doctor Assessment Role';
+  static const String isSeniorDoctorDescription =
+      'Allows creating and managing patient assessments, programs, and treatment plans.';
+
+  // Medical History
+  static const String medicalHistory = 'Medical History';
+  static const String editMedicalHistory = 'Edit Medical History';
+  static const String diabetes = 'Diabetes';
+  static const String hba1c = 'HbA1c';
+  static const String hba1cValue = 'HbA1c Value';
+  static const String hba1cHint = 'e.g. 6.5%';
+  static const String hypertension = 'Hypertension';
+  static const String hyperlipidemia = 'Hyperlipidemia';
+  static const String rheumatology = 'Rheumatology';
+  static const String rheumatologyDetails = 'Rheumatology Details';
+  static const String rheumatologyDetailsHint = 'Condition details, medications\u2026';
+  static const String additionalMedicalNotes = 'Additional Medical Notes';
+  static const String additionalMedicalNotesHint = 'Other conditions, surgical history\u2026';
+  static const String noMedicalHistoryRecorded = 'No medical history recorded yet.';
+  static const String medicalHistorySaved = 'Medical history saved.';
+
+  // Body Regions
+  static const String regionShoulder = 'Shoulder';
+  static const String regionElbow = 'Elbow';
+  static const String regionHand = 'Hand';
+  static const String regionLumbarSpine = 'Lumbar Spine';
+  static const String regionThoracicSpine = 'Thoracic Spine';
+  static const String regionCervicalSpine = 'Cervical Spine';
+  static const String regionHipJoint = 'Hip Joint';
+  static const String regionKneeJoint = 'Knee Joint';
+  static const String regionAnkleJoint = 'Ankle Joint';
+  static const String regionFoot = 'Foot';
+
+  // Program Lifecycle & Status
+  static const String programs = 'Programs';
+  static const String newProgram = 'New Program';
+  static const String editProgram = 'Edit Program';
+  static const String programDetails = 'Program Details';
+  static const String programActive = 'Active';
+  static const String programCompleted = 'Completed';
+  static const String programArchived = 'Archived';
+  static const String affectedRegions = 'Affected Regions';
+  static const String selectInjuries = 'Select Injuries / Conditions';
+  static const String examination = 'Physical Examination';
+  static const String examinationHint = 'ROM, special tests, palpation findings\u2026';
+  static const String imagingNotes = 'Imaging Findings';
+  static const String imagingNotesHint =
+      'X-ray, MRI, CT scan interpretation…';
+  static const String exaggeratingPositions = 'Exaggerating Positions';
+  static const String exaggeratingPositionsHint = 'Positions/movements that worsen pain…';
+  static const String relievingPositions = 'Relieving Positions';
+  static const String relievingPositionsHint = 'Positions/movements that ease pain…';
+  static const String programNotes = 'Program Notes';
+  static const String programNotesHint = 'General clinical notes for this program…';
+  static const String noProgramsRecorded = 'No rehabilitation programs created yet.';
+  static const String programSaved = 'Program saved.';
+  static const String deleteProgram = 'Delete Program';
+  static const String deleteProgramConfirm =
+      'Are you sure you want to delete this program and all its treatment plans?';
+  static const String attachImagingFiles = 'Attach Images / Scans';
+  static const String imagingAttachments = 'Imaging Attachments';
+  static const String allBodyRegions = 'All Body Regions';
+  static const String filterByRegion = 'Filter by Region';
+
+  // Modality Types
+  static const String modalityMusclePain = 'Muscle Pain';
+  static const String modalityMassBuilt = 'Mass Built';
+  static const String modalityTecar = 'TECAR';
+  static const String modalityTecarFocal = 'TECAR Focal Technique';
+  static const String modalityNeurodynamicNonWb = 'Neurodynamic (Non-WB)';
+  static const String modalityNeurodynamicWb = 'Neurodynamic (WB)';
+
+  // Lateralities
+  static const String lateralityRight = 'Right (Rt)';
+  static const String lateralityLeft = 'Left (Lt)';
+  static const String lateralityBoth = 'Both';
+  static const String lateralityNone = 'General / None';
+
+  // Treatment Plans
+  static const String treatmentPlans = 'Treatment Plans';
+  static const String treatmentPlan = 'Treatment Plan';
+  static const String newTreatmentPlan = 'New Treatment Plan';
+  static const String editTreatmentPlan = 'Edit Treatment Plan';
+  static const String planName = 'Plan Name';
+  static const String planActive = 'Active Plan';
+  static const String planArchived = 'Archived Plan';
+  static const String addModality = 'Add Modality';
+  static const String addRegion = 'Add Target Region';
+  static const String targetRegion = 'Target Region';
+  static const String durationMinutes = 'Duration (minutes)';
+  static const String planSaved = 'Treatment plan saved.';
+  static const String noTreatmentPlans = 'No treatment plans in this program.';
+  static const String exportProgramPdf = 'Export Program PDF';
 }

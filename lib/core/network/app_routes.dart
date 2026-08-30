@@ -50,6 +50,16 @@ abstract final class AppRoutes {
   /// Edit patient screen (protected, full-screen without shell).
   static const String editPatient = '/patient/:id/edit';
 
+  /// New patient rehabilitation program (protected, full-screen without shell).
+  static const String newPatientProgram = '/patient/:id/programs/new';
+
+  /// Patient rehabilitation program detail screen.
+  static const String patientProgramDetail = '/patient/:id/programs/:programId';
+
+  /// Edit patient rehabilitation program screen.
+  static const String editPatientProgram =
+      '/patient/:id/programs/:programId/edit';
+
   /// Record payment screen (protected, full-screen without shell).
   static const String recordPayment = '/patient/:id/pay';
 

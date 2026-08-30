@@ -15,8 +15,12 @@ All times are stored as `timestamptz`; clinic-local calendar logic goes through
 | --- | --- | --- |
 | `user_role` | `super_admin`, `receptionist`, `doctor` | `doctor` = physical therapist. No patient login exists — patients are data, not users. |
 | `clinic_location` | `tagamoa`, `masr_elgedida` | The two branches. |
-| `appointment_type` | `normal_pt_session`, `spinal_traction_session`, `check_up`, `initial_assessment`, `reassessment` | Only PT and traction sessions consume package balance; assessments and check-ups never deduct. |
+| `appointment_type` | `normal_pt_session`, `spinal_traction_session`, `initial_assessment`, `reassessment` | Only PT and traction sessions consume package balance; assessments never deduct. |
 | `appointment_status` | `scheduled`, `checked_in`, `cancelled` | `checked_in` deducts balance; reverting to `scheduled`/`cancelled` refunds it. |
+| `body_region` | `shoulder`, `elbow`, `hand`, `lumbar_spine`, `thoracic_spine`, `cervical_spine`, `hip_joint`, `knee_joint`, `ankle_joint`, `foot` | Body regions for condition catalog and injury classifications. |
+| `program_status` | `active`, `completed`, `archived` | Rehabilitation program lifecycle status. |
+| `modality_type` | `muscle_pain`, `mass_built`, `tecar`, `tecar_focal`, `neurodynamic_non_wb`, `neurodynamic_wb` | Physiotherapy equipment & modality devices. |
+| `laterality` | `right`, `left`, `both` | Side selection for bilateral body regions. |
 
 ## 2. Tables
 
@@ -29,6 +33,7 @@ Auth-linked staff profiles. One row per Supabase Auth user (`auth.users`).
 - `role` (`user_role`, NOT NULL)
 - `is_active` (`boolean`, NOT NULL, default `true`)
 - `can_manage_payments` (`boolean`, NOT NULL, default `false`) — payment-write permission for receptionists
+- `is_senior` (`boolean`, NOT NULL, default `false`) — senior doctor assessment & program creation permission
 - `created_at` (`timestamptz`, NOT NULL, default `now()`)
 - `phone` (`text`, nullable)
 - `branch` (`clinic_location`, nullable)
@@ -39,7 +44,7 @@ Patient registry plus package credit balances.
 - `id` (`uuid`, PK, default `gen_random_uuid()`)
 - `full_name` (`text`, NOT NULL)
 - `phone_number` (`text`, NOT NULL)
-- `program` (`text`, nullable)
+- `program` (`text`, nullable) — legacy single-line program descriptor
 - `clinic` (`clinic_location`, NOT NULL)
 - `session_balance` (`integer`, NOT NULL, default `0`) — PT session credits
 - `traction_balance` (`integer`, NOT NULL, default `0`) — traction session credits
@@ -47,10 +52,79 @@ Patient registry plus package credit balances.
 - `created_by` (`uuid`, FK → `staff(id)` ON DELETE SET NULL, nullable)
 - `created_at` (`timestamptz`, NOT NULL, default `now()`)
 
+### `patient_medical_history`
+Structured patient medical history (1:1 with patients, managed by senior doctors).
+- `id` (`uuid`, PK, default `gen_random_uuid()`)
+- `patient_id` (`uuid`, UNIQUE, FK → `patients(id)` ON DELETE CASCADE, NOT NULL)
+- `has_diabetes` (`boolean`, NOT NULL, default `false`)
+- `hba1c_value` (`text`, nullable)
+- `has_hypertension` (`boolean`, NOT NULL, default `false`)
+- `has_hyperlipidemia` (`boolean`, NOT NULL, default `false`)
+- `has_rheumatology` (`boolean`, NOT NULL, default `false`)
+- `rheumatology_details` (`text`, nullable)
+- `additional_notes` (`text`, nullable)
+- `updated_by` (`uuid`, FK → `staff(id)` ON DELETE SET NULL, nullable)
+- `created_at` (`timestamptz`, NOT NULL, default `now()`)
+- `updated_at` (`timestamptz`, NOT NULL, default `now()`)
+
+### `condition_catalog`
+Reference catalog of injury/condition definitions organized by body region (~108 items).
+- `id` (`uuid`, PK, default `gen_random_uuid()`)
+- `region` (`body_region`, NOT NULL)
+- `condition_name` (`text`, NOT NULL)
+- `display_order` (`integer`, NOT NULL, default `0`)
+- `created_at` (`timestamptz`, NOT NULL, default `now()`)
+
+### `patient_programs`
+Rehabilitation and assessment programs (1:N with patients).
+- `id` (`uuid`, PK, default `gen_random_uuid()`)
+- `patient_id` (`uuid`, FK → `patients(id)` ON DELETE CASCADE, NOT NULL)
+- `created_by` (`uuid`, FK → `staff(id)` ON DELETE RESTRICT, NOT NULL)
+- `status` (`program_status`, NOT NULL, default `'active'`)
+- `examination` (`text`, nullable)
+- `imaging_notes` (`text`, nullable)
+- `exaggerating_positions` (`text`, nullable)
+- `relieving_positions` (`text`, nullable)
+- `notes` (`text`, nullable)
+- `created_at` (`timestamptz`, NOT NULL, default `now()`)
+- `updated_at` (`timestamptz`, NOT NULL, default `now()`)
+
+### `program_conditions`
+Junction table linking programs with selected conditions from the catalog (N:N).
+- `id` (`uuid`, PK, default `gen_random_uuid()`)
+- `program_id` (`uuid`, FK → `patient_programs(id)` ON DELETE CASCADE, NOT NULL)
+- `condition_id` (`uuid`, FK → `condition_catalog(id)` ON DELETE CASCADE, NOT NULL)
+
+### `treatment_plans`
+Treatment plan configurations within a program (1:N with programs).
+- `id` (`uuid`, PK, default `gen_random_uuid()`)
+- `program_id` (`uuid`, FK → `patient_programs(id)` ON DELETE CASCADE, NOT NULL)
+- `created_by` (`uuid`, FK → `staff(id)` ON DELETE RESTRICT, NOT NULL)
+- `plan_name` (`text`, NOT NULL, default `'Plan 1'`)
+- `is_active` (`boolean`, NOT NULL, default `true`)
+- `notes` (`text`, nullable)
+- `created_at` (`timestamptz`, NOT NULL, default `now()`)
+- `updated_at` (`timestamptz`, NOT NULL, default `now()`)
+
+### `plan_modalities`
+Equipment/modalities attached to a treatment plan (1:N with treatment plans).
+- `id` (`uuid`, PK, default `gen_random_uuid()`)
+- `treatment_plan_id` (`uuid`, FK → `treatment_plans(id)` ON DELETE CASCADE, NOT NULL)
+- `modality_type` (`modality_type`, NOT NULL)
+- `notes` (`text`, nullable)
+
+### `modality_regions`
+Target regions and duration for modality configurations (1:N with plan modalities).
+- `id` (`uuid`, PK, default `gen_random_uuid()`)
+- `plan_modality_id` (`uuid`, FK → `plan_modalities(id)` ON DELETE CASCADE, NOT NULL)
+- `target_region` (`text`, NOT NULL)
+- `laterality` (`laterality`, nullable)
+- `time_minutes` (`integer`, NOT NULL, default `15`)
+
 ### `patient_doctors`
 Long-term (M:N) doctor assignments. Composite PK (`patient_id`, `doctor_id`).
 - `patient_id` (`uuid`, PK/FK → `patients(id)` ON DELETE CASCADE, NOT NULL)
-- `doctor_id` (`uuid`, PK/FK → `staff(id)` ON DELETE CASCADE, NOT NULL) — must reference a `doctor`-role staff row (enforced by `tr_enforce_patient_doctor_role`)
+- `doctor_id` (`uuid`, PK/FK → `staff(id)` ON DELETE CASCADE, NOT NULL) — must reference a `doctor`-role staff row
 - `assigned_at` (`timestamptz`, NOT NULL, default `now()`)
 
 ### `appointments`
@@ -59,17 +133,16 @@ Visit schedule.
 - `patient_id` (`uuid`, FK → `patients(id)` ON DELETE CASCADE, NOT NULL)
 - `type` (`appointment_type`, NOT NULL)
 - `status` (`appointment_status`, NOT NULL, default `'scheduled'`)
-- `use_package` (`boolean`, NOT NULL, default `true`) — whether check-in consumes a credit
+- `use_package` (`boolean`, NOT NULL, default `true`)
 - `scheduled_at` (`timestamptz`, NOT NULL, default `now()`)
 - `created_by` (`uuid`, FK → `staff(id)` ON DELETE SET NULL, nullable)
 - `created_at` (`timestamptz`, NOT NULL, default `now()`)
 
 ### `appointment_doctors`
-Per-appointment doctor assignments. Inactive rows are kept as history; a partial
-unique index allows only one active row per (appointment, doctor).
+Per-appointment doctor assignments.
 - `id` (`uuid`, PK, default `gen_random_uuid()`)
 - `appointment_id` (`uuid`, FK → `appointments(id)` ON DELETE CASCADE, NOT NULL)
-- `doctor_id` (`uuid`, FK → `staff(id)` ON DELETE RESTRICT, NOT NULL) — must reference a `doctor`-role staff row
+- `doctor_id` (`uuid`, FK → `staff(id)` ON DELETE RESTRICT, NOT NULL)
 - `is_active` (`boolean`, NOT NULL, default `true`)
 - `added_by` (`uuid`, FK → `staff(id)` ON DELETE SET NULL, nullable)
 - `added_at` (`timestamptz`, NOT NULL, default `now()`)
@@ -78,17 +151,15 @@ unique index allows only one active row per (appointment, doctor).
 Metadata for files stored in the private `patient-documents` Storage bucket.
 - `id` (`uuid`, PK, default `gen_random_uuid()`)
 - `patient_id` (`uuid`, FK → `patients(id)` ON DELETE CASCADE, NOT NULL)
+- `program_id` (`uuid`, FK → `patient_programs(id)` ON DELETE SET NULL, nullable)
 - `file_url` (`text`, NOT NULL)
-- `file_name` (`text`, NOT NULL) — the only mutable column for authenticated clients
+- `file_name` (`text`, NOT NULL)
 - `thumbnail_url` (`text`, nullable)
 - `uploaded_by` (`uuid`, FK → `staff(id)` ON DELETE SET NULL, nullable)
 - `uploaded_at` (`timestamptz`, NOT NULL, default `now()`)
 
-`UPDATE` is revoked on the whole table and re-granted for `file_name` only, so
-paths and other metadata are immutable through rename.
-
 ### `patient_notes`
-Clinical progress notes, optionally linked to an appointment.
+Clinical progress notes.
 - `id` (`uuid`, PK, default `gen_random_uuid()`)
 - `patient_id` (`uuid`, FK → `patients(id)` ON DELETE CASCADE, NOT NULL)
 - `appointment_id` (`uuid`, FK → `appointments(id)` ON DELETE SET NULL, nullable)
@@ -118,11 +189,22 @@ staff                    -> appointments.created_by
 staff                    -> patient_documents.uploaded_by
 staff                    -> patient_notes.created_by
 staff                    -> payment_records.recorded_by
+staff                    -> patient_medical_history.updated_by
+staff                    -> patient_programs.created_by
+staff                    -> treatment_plans.created_by
 patients                 <- patient_doctors.patient_id   (M:N to doctors)
 patients                 <- appointments.patient_id
 patients                 <- patient_notes.patient_id
 patients                 <- patient_documents.patient_id
 patients                 <- payment_records.patient_id
+patients                 <- patient_medical_history.patient_id (1:1)
+patients                 <- patient_programs.patient_id (1:N)
+patient_programs         <- program_conditions.program_id (1:N)
+condition_catalog        <- program_conditions.condition_id (N:1)
+patient_programs         <- treatment_plans.program_id (1:N)
+patient_programs         <- patient_documents.program_id (optional imaging link)
+treatment_plans          <- plan_modalities.treatment_plan_id (1:N)
+plan_modalities          <- modality_regions.plan_modality_id (1:N)
 appointments             <- appointment_doctors.appointment_id
 appointments             <- patient_notes.appointment_id (optional)
 ```
@@ -136,6 +218,14 @@ appointments             <- patient_notes.appointment_id (optional)
 | `idx_appointments_scheduled_at` | `appointments` | Day/timeline schedule queries. |
 | `idx_patients_clinic_next_visit` (partial: `WHERE next_visit_date IS NOT NULL`) | `patients` | Due-patients queue per branch. |
 | `idx_patient_notes_patient` | `patient_notes` | Notes listing per patient. |
+| `idx_medical_history_patient` | `patient_medical_history` | Medical history lookup per patient. |
+| `idx_condition_catalog_region` | `condition_catalog` | Sorted condition catalog retrieval by region. |
+| `idx_patient_programs_patient` | `patient_programs` | Program lookups per patient. |
+| `idx_program_conditions_program` | `program_conditions` | Condition joins per program. |
+| `idx_treatment_plans_program` | `treatment_plans` | Active plan resolution per program. |
+| `idx_plan_modalities_plan` | `plan_modalities` | Modality list per treatment plan. |
+| `idx_modality_regions_modality` | `modality_regions` | Target regions per modality. |
+| `idx_patient_documents_program` | `patient_documents` | Program imaging attachments query. |
 
 ## 5. Functions & RPCs
 
@@ -144,75 +234,59 @@ appointments             <- patient_notes.appointment_id (optional)
 | --- | --- |
 | `get_auth_staff_profile()` | Returns `(staff_id, staff_role, staff_active)` for `auth.uid()`. Backbone of every policy. |
 | `current_staff_can_manage_payments()` | True for active super admins and receptionists with `can_manage_payments = true`. Gates payment writes. |
+| `can_current_staff_access_patient(p_patient_id)` | Checks if authenticated staff has operational access to patient (admin/receptionist or assigned/booked doctor). |
+| `can_current_staff_modify_patient_programs(p_patient_id)` | Checks if authenticated staff is super admin or senior doctor with patient access. |
 | `clinic_timezone()` | Returns `'Africa/Cairo'`; single calendar-timezone configuration point. |
 
 ### Data-access RPCs (called by repositories)
 | Function | Purpose |
 | --- | --- |
-| `create_patient_with_doctors(p_name, p_phone, p_program, p_clinic, p_created_by, p_doctor_ids)` | Registers a patient and inserts assignments atomically; rejects empty or non-doctor doctor lists (receptionist/super admin only). |
-| `update_patient_doctors(p_patient_id, p_doctor_ids)` | Replaces long-term assignments; guarantees at least one active doctor remains (receptionist/super admin only). |
-| `update_appointment_doctors(p_appointment_id, p_doctor_ids, p_editor_id)` | Synchronizes appointment doctor assignments in a single transaction; deactivates removed doctors, reactivates existing, and inserts new ones (receptionist/super admin only). |
-| `collect_payment_due(p_payment_id, p_additional_amount)` | Atomically adds collected due to payment record amount, preventing race condition lost updates (staff with payment permission only). |
-| `book_recurring_appointments(p_patient_id, p_type, p_slots, p_use_package, p_creator_id, p_doctor_ids, p_expected_next_visit_date)` | Books one or more slots with all doctors in a single transaction. When `p_use_package` is true it locks the patient row and enforces that requested slots do not exceed available package balance. When `p_expected_next_visit_date` is passed it re-verifies the due state inside the transaction so two receptionists cannot double-book the same recall (receptionist/super admin only). |
-| `bulk_replace_appointment_doctor(p_absent_doctor_id, p_replacement_doctor_ids, p_appointment_ids, p_day)` | Transactionally swaps an absent doctor off a selected day's appointments (receptionist/super admin only); returns replaced/remaining counts. |
-| `get_due_patients(p_due_on, p_doctor_id, p_clinic)` | Branch-scoped due-patient queue, optionally filtered by doctor; excludes patients who already have a scheduled appointment on/after their `next_visit_date`. |
+| `create_patient_with_doctors(...)` | Registers a patient and inserts assignments atomically. |
+| `update_patient_doctors(...)` | Replaces long-term assignments. |
+| `update_appointment_doctors(...)` | Synchronizes appointment doctor assignments. |
+| `collect_payment_due(...)` | Atomically adds collected due to payment record amount. |
+| `book_recurring_appointments(...)` | Books slots with package balance locking. |
+| `bulk_replace_appointment_doctor(...)` | Swaps an absent doctor off a day's appointments. |
+| `get_due_patients(...)` | Branch-scoped due-patient queue. |
 
 ### Auth & Staff Registration RPCs
 | Function | Purpose |
 | --- | --- |
-| `register_doctor_application(p_email, p_password, p_full_name, p_phone, p_role, p_branch)` | Atomically creates the `auth.users` row and inactive `staff` application profile without requiring a client session. Accessible by unauthenticated applicants (`anon`). |
-| `create_staff_user(new_email, new_password, new_full_name, new_role, new_phone, new_can_manage_payments, new_branch)` | Creates an `auth.users` row plus the linked active `staff` profile (super admin only). |
-| `update_user_password(target_user_id, new_password)` | Resets a staff user's password (super admin only). |
-| `delete_doctor_user(target_user_id)` | Deletes a doctor auth user (cascades to `staff`); used to reject applications (super admin only). |
-
-### Trigger functions (invoked by the triggers in §6)
-| Function | Purpose |
-| --- | --- |
-| `handle_package_deduction()` | Deducts/refunds the correct balance bucket on `appointments` status transitions. |
-| `handle_payment_package_sync()` | Adds/subtracts credits when `payment_records` rows are inserted/deleted. |
-| `check_patient_has_doctors()` | Blocks assignment deletion that would leave a patient with zero doctors. |
-| `enforce_doctor_reference_roles()` | Rejects non-doctor staff IDs in `patient_doctors` / `appointment_doctors`. |
-| `prevent_referenced_doctor_role_change()` | Blocks demoting a doctor who is still referenced by assignments. |
-| `verify_staff_update_permissions()` | Prevents staff from self-promoting, self-deactivating, or granting themselves payment access. |
-| `sync_staff_email_to_auth_users()` | Mirrors `staff.email` changes into `auth.users`. |
+| `register_doctor_application(...)` | Creates `auth.users` row and inactive `staff` application profile (`anon` accessible). |
+| `create_staff_user(...)` | Creates `auth.users` row plus linked active `staff` profile (super admin only). |
+| `update_user_password(...)` | Resets a staff user's password (super admin only). |
+| `delete_doctor_user(...)` | Deletes a doctor auth user to reject applications (super admin only). |
 
 ## 6. Triggers
 
 | Trigger | Fires on | Effect |
 | --- | --- | --- |
-| `trigger_appointment_package_deduction` | `AFTER UPDATE` on `appointments` | `scheduled → checked_in` with `use_package` deducts one credit from the type's bucket; `checked_in → scheduled/cancelled` refunds it. Assessments/check-ups never touch balances. |
-| `trigger_payment_insert_package_sync` | `AFTER INSERT` on `payment_records` | Adds purchased `session_balance_added` / `traction_balance_added` credits to the patient. |
-| `trigger_payment_delete_package_sync` | `AFTER DELETE` on `payment_records` | Reverses the credits of the deleted payment. |
-| `tr_check_patient_has_doctors` | `AFTER DELETE OR UPDATE` on `patient_doctors` (deferred) | Rejects the change if it would leave the patient with zero assigned doctors. |
-| `tr_enforce_patient_doctor_role` | `BEFORE INSERT/UPDATE` on `patient_doctors.doctor_id` | `doctor_id` must be a doctor-role staff row. |
-| `tr_enforce_appointment_doctor_roles` | `BEFORE INSERT/UPDATE` on `appointment_doctors.doctor_id` | Same doctor-role guarantee at appointment level. |
-| `tr_verify_staff_update_permissions` | `BEFORE UPDATE` on `staff` | Super admins may edit anyone; everyone else may edit only their own profile and cannot change their own role, active flag, payment permission, or IDs. |
-| `tr_prevent_referenced_doctor_role_change` | `BEFORE UPDATE OF role` on `staff` | Blocks changing a doctor's role while they still hold patient or appointment assignments. |
-| `trigger_sync_staff_email` | `AFTER UPDATE` on `staff` | Syncs email changes to the linked `auth.users` row. |
+| `trigger_appointment_package_deduction` | `AFTER UPDATE` on `appointments` | Deducts/refunds session balances on status transitions. |
+| `trigger_payment_insert_package_sync` | `AFTER INSERT` on `payment_records` | Adds purchased credits to patient balance. |
+| `trigger_payment_delete_package_sync` | `AFTER DELETE` on `payment_records` | Reverses credits of deleted payment. |
+| `tr_check_patient_has_doctors` | `AFTER DELETE OR UPDATE` on `patient_doctors` (deferred) | Rejects change if patient would have zero doctors. |
+| `tr_enforce_patient_doctor_role` | `BEFORE INSERT/UPDATE` on `patient_doctors.doctor_id` | Guarantees doctor role on assignment. |
+| `tr_enforce_appointment_doctor_roles` | `BEFORE INSERT/UPDATE` on `appointment_doctors.doctor_id` | Guarantees doctor role on appointment. |
+| `tr_verify_staff_update_permissions` | `BEFORE UPDATE` on `staff` | Controls self-edits vs admin edits. |
+| `tr_prevent_referenced_doctor_role_change` | `BEFORE UPDATE OF role` on `staff` | Blocks changing doctor role while referenced. |
+| `trigger_sync_staff_email` | `AFTER UPDATE` on `staff` | Syncs email changes to `auth.users`. |
 
 ## 7. Row-Level Security Summary
-
-RLS is enabled on all eight tables and on `storage.objects` for the documents
-bucket. Complete policy text lives in
-[`supabase/full_schema.sql`](../supabase/full_schema.sql); the rationale
-is documented in the [Security Model](security-model.md). Summary:
 
 | Table | Read | Write |
 | --- | --- | --- |
 | `staff` | Active staff (directory) + own profile | Own profile (limited by trigger) / super admin |
 | `patients` | Super admin + receptionist; doctors scoped to assigned/appointment patients | Super admin + receptionist; doctors scoped (update only) |
+| `patient_medical_history` | Staff with patient access (`can_current_staff_access_patient`) | Super admin + senior doctors (`can_current_staff_modify_patient_programs`) |
+| `condition_catalog` | All active staff | Super admin only |
+| `patient_programs` | Staff with patient access | Super admin + senior doctors |
+| `program_conditions` | Staff with patient access | Super admin + senior doctors |
+| `treatment_plans` | Staff with patient access | Super admin + senior doctors |
+| `plan_modalities` | Staff with patient access | Super admin + senior doctors |
+| `modality_regions` | Staff with patient access | Super admin + senior doctors |
 | `patient_doctors` | All active staff | Super admin + receptionist |
-| `appointments`, `appointment_doctors` | All active staff | All active staff (RPC/trigger layer adds role checks) |
-| `patient_documents` | Super admin + receptionist; doctors scoped | Same scope; `file_name` rename only |
-| `patient_notes` | Super admin + receptionist; doctors scoped (read/insert) | Super admin + receptionist + doctors |
+| `appointments`, `appointment_doctors` | All active staff | All active staff |
+| `patient_documents` | Staff with patient access | Staff with patient access (file_name rename only) |
+| `patient_notes` | Staff with patient access | Staff with patient access |
 | `payment_records` | All active staff | Only `current_staff_can_manage_payments()` callers |
-| `storage.objects` (`patient-documents`) | Mirrors document scope via `path_tokens[1]` = patient id | Object rename: super admin + receptionist only |
-
-## 8. Storage Bucket
-
-- Bucket: `patient-documents`, **private** (`public = false`).
-- Object paths are prefixed with the patient id; policies scope doctor access
-  through `path_tokens[1]`.
-- Four `storage.objects` policies (select/insert/update/delete) mirror the
-  `patient_documents` table rules; update (rename) is limited to super admins
-  and receptionists.
+| `storage.objects` (`patient-documents`) | Staff with patient access | Super admin + receptionist + doctors |

@@ -42,12 +42,14 @@ class PatientDocumentsRepositoryImpl implements PatientDocumentsRepository {
     required String fileName,
     required Uint8List fileBytes,
     required String uploadedBy,
+    String? programId,
   }) =>
       _upload(
         patientId: patientId,
         fileName: fileName,
         fileBytes: fileBytes,
         uploadedBy: uploadedBy,
+        programId: programId,
       ).timeout(
         _uploadTimeout,
         onTimeout: () => const Result.failure(
@@ -64,6 +66,7 @@ class PatientDocumentsRepositoryImpl implements PatientDocumentsRepository {
     required String fileName,
     required Uint8List fileBytes,
     required String uploadedBy,
+    String? programId,
   }) async {
     if (fileBytes.length > _maxBytes) {
       return const Result.failure(
@@ -96,6 +99,7 @@ class PatientDocumentsRepositoryImpl implements PatientDocumentsRepository {
             'thumbnail_url': null,
             'file_name': fileName,
             'uploaded_by': uploadedBy,
+            if (programId != null) 'program_id': programId,
           })
           .select()
           .single();
