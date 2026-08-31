@@ -58,7 +58,7 @@ final class PatientNotesListProvider
   }
 }
 
-String _$patientNotesListHash() => r'038adbf0372559b62a9b0dca56c6324e3d626172';
+String _$patientNotesListHash() => r'7793547bc64d8f46445847d5183bb1e657b0752e';
 
 final class PatientNotesListFamily extends $Family
     with

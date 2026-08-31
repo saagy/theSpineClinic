@@ -1027,6 +1027,45 @@ abstract final class AppStrings {
   static const String planSaved = 'Treatment plan saved.';
   static const String noTreatmentPlans = 'No treatment plans in this program.';
   static const String exportProgramPdf = 'Export Program PDF';
+  static const String selectModalities = 'Select Modalities';
+  static const String configureRegions = 'Configure Target Regions';
+  static const String treatmentPlanSaved = 'Treatment plan saved successfully.';
+  static const String treatmentPlanDeleted = 'Treatment plan deleted.';
+  static const String deleteTreatmentPlan = 'Delete Treatment Plan';
+  static const String deleteTreatmentPlanConfirm =
+      'Are you sure you want to delete this treatment plan and its configured modalities?';
+  static const String noRegionsConfigured = 'No target regions configured.';
+  static const String totalDuration = 'Total Duration';
+  static const String minutesAbbreviation = 'min';
+  static const String planNotes = 'Plan Notes';
+  static const String planNotesHint =
+      'Enter specific treatment instructions, precautions, or notes...';
+  static const String planNameHint = 'e.g. Plan 1 - Acute Phase';
+  static const String modalityNotes = 'Modality Notes';
+  static const String modalityNotesHint =
+      'Intensity, parameters, or specific technique notes...';
+  static const String activePlanToggle = 'Set as Active Plan';
+  static const String activePlanSubtitle =
+      'Active plan will be executed during patient visits';
+  static const String noModalitiesSelected =
+      'No modalities selected. Tap a modality card above to configure.';
+  static const String previousPlans = 'Previous Plan Versions';
+  static const String planHistory = 'Plan History';
+  static const String setAsActive = 'Set as Active';
+  static const String planActivated = 'Plan activated successfully.';
+  static const String newPlanVersion = 'New Plan Version';
+  static const String activate = 'Activate';
+  static const String inactive = 'Inactive';
+  static String createdOn(String date) => 'Created $date';
+  static String modalitiesCount(int count) =>
+      '$count ${count == 1 ? 'Modality' : 'Modalities'}';
+  static String regionsCount(int count) =>
+      '$count ${count == 1 ? 'Region' : 'Regions'}';
+  static String durationFormat(int min) => '$min min';
+  static String totalDurationFormat(int min) => '$min min total';
+  static String scansCount(int count) => '$count ${count == 1 ? 'Scan' : 'Scans'}';
+  static String regionsAndConditionsCount(int regions, int conditions) =>
+      '$regions ${regions == 1 ? 'Region' : 'Regions'} · $conditions ${conditions == 1 ? 'Condition' : 'Conditions'}';
 
   // Program form sections & feedback
   static const String clinicalFindingsSection = 'Clinical Findings';
@@ -1045,3 +1084,4 @@ abstract final class AppStrings {
   static String createdLabel(String date) => 'Created: $date';
   static String setStatusLabel(String status) => 'Set $status';
 }
+

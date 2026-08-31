@@ -1,0 +1,200 @@
+library;
+
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:spine_clinic_app/core/constants/app_sizes.dart';
+import 'package:spine_clinic_app/core/constants/app_strings.dart';
+import 'package:spine_clinic_app/core/constants/app_text_styles.dart';
+import 'package:spine_clinic_app/core/utils/formatters.dart';
+import 'package:spine_clinic_app/features/auth/presentation/auth_providers.dart';
+import 'package:spine_clinic_app/features/medical_records/domain/patient_program.dart';
+import 'package:spine_clinic_app/features/medical_records/domain/treatment_plan.dart';
+import 'package:spine_clinic_app/features/medical_records/presentation/treatment_plan_controller.dart';
+import 'package:spine_clinic_app/features/medical_records/presentation/widgets/treatment_modality_tile.dart';
+import 'package:spine_clinic_app/features/medical_records/presentation/widgets/treatment_plan_builder_sheet.dart';
+import 'package:spine_clinic_app/features/medical_records/presentation/widgets/treatment_plan_history_tile.dart';
+import 'package:spine_clinic_app/shared/widgets/app_button.dart';
+import 'package:spine_clinic_app/shared/widgets/app_snackbar.dart';
+import 'package:spine_clinic_app/shared/widgets/confirmation_dialog.dart';
+
+/// Card component presenting active and historical treatment plans in a program.
+class ProgramDetailTreatment extends ConsumerStatefulWidget {
+  const ProgramDetailTreatment({super.key, required this.program});
+  final PatientProgram program;
+
+  @override
+  ConsumerState<ProgramDetailTreatment> createState() => _ProgramDetailTreatmentState();
+}
+
+class _ProgramDetailTreatmentState extends ConsumerState<ProgramDetailTreatment> {
+  bool _historyExpanded = false;
+
+  Future<void> _openPlanBuilder({TreatmentPlan? plan}) => TreatmentPlanBuilderSheet.show(
+        context,
+        programId: widget.program.id,
+        patientId: widget.program.patientId,
+        affectedRegions: widget.program.affectedRegions,
+        existingPlan: plan,
+      );
+
+  Future<void> _deletePlan(String planId) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => const ConfirmationDialog(
+        title: AppStrings.deleteTreatmentPlan,
+        message: AppStrings.deleteTreatmentPlanConfirm,
+        isDestructive: true,
+      ),
+    );
+    if (confirmed != true || !mounted) return;
+
+    final res = await ref.read(treatmentPlanControllerProvider.notifier).deletePlan(
+          planId: planId,
+          programId: widget.program.id,
+          patientId: widget.program.patientId,
+        );
+
+    if (!mounted) return;
+    res.when(
+      success: (_) => AppSnackbar.show(context, message: AppStrings.treatmentPlanDeleted, variant: AppSnackbarVariant.success),
+      failure: (e) => AppSnackbar.show(context, message: AppStrings.fromKey(e.userMessageKey), variant: AppSnackbarVariant.error),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    final isSenior = ref.watch(currentUserProvider).value?.isSeniorDoctor ?? false;
+    final activePlan = widget.program.activePlan;
+    final inactivePlans = widget.program.treatmentPlans.where((p) => p.id != activePlan?.id).toList()
+      ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
+
+    return Container(
+      padding: const EdgeInsets.all(AppSizes.p16),
+      decoration: BoxDecoration(
+        color: cs.surfaceContainerLow,
+        borderRadius: BorderRadius.circular(AppSizes.r16),
+        border: Border.all(color: cs.outlineVariant),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Row(
+                children: [
+                  Icon(Icons.medical_services_outlined, size: AppSizes.iconSmall, color: cs.primary),
+                  const SizedBox(width: AppSizes.p8),
+                  Text(AppStrings.treatmentPlan, style: AppTextStyles.cardTitle.copyWith(color: cs.onSurface)),
+                ],
+              ),
+              if (activePlan != null && isSenior)
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    IconButton(icon: const Icon(Icons.add_circle_outline, size: 18), tooltip: AppStrings.newPlanVersion, onPressed: () => _openPlanBuilder()),
+                    IconButton(icon: const Icon(Icons.edit_outlined, size: 18), tooltip: AppStrings.edit, onPressed: () => _openPlanBuilder(plan: activePlan)),
+                    IconButton(icon: Icon(Icons.delete_outline, size: 18, color: cs.error), tooltip: AppStrings.delete, onPressed: () => _deletePlan(activePlan.id)),
+                  ],
+                ),
+            ],
+          ),
+          const SizedBox(height: AppSizes.p12),
+          if (activePlan == null) ...[
+            Text(AppStrings.noTreatmentPlans, style: AppTextStyles.bodySecondary.copyWith(color: cs.onSurfaceVariant)),
+            if (isSenior) ...[
+              const SizedBox(height: AppSizes.p12),
+              AppButton(labelText: AppStrings.newTreatmentPlan, icon: Icons.add_circle_outline, variant: AppButtonVariant.secondary, shape: AppButtonShape.pill, onPressed: () => _openPlanBuilder()),
+            ],
+          ] else
+            _buildActivePlan(cs, activePlan),
+          if (inactivePlans.isNotEmpty) ...[
+            const SizedBox(height: AppSizes.p12),
+            _buildHistorySection(cs, inactivePlans, isSenior),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildActivePlan(ColorScheme cs, TreatmentPlan plan) {
+    final totalMin = plan.modalities.fold<int>(0, (sum, m) => sum + m.regions.fold<int>(0, (rSum, r) => rSum + r.timeMinutes));
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Wrap(
+          crossAxisAlignment: WrapCrossAlignment.center,
+          spacing: AppSizes.p8,
+          runSpacing: AppSizes.p4,
+          children: [
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: AppSizes.p8, vertical: AppSizes.p2),
+              decoration: BoxDecoration(color: cs.primaryContainer, borderRadius: BorderRadius.circular(AppSizes.r999)),
+              child: Text(plan.planName, style: AppTextStyles.captionBold.copyWith(color: cs.onPrimaryContainer)),
+            ),
+            Text(
+              '${AppStrings.createdOn(Formatters.formatDateMedium(plan.createdAt))} · ${AppStrings.modalitiesCount(plan.modalities.length)}${totalMin > 0 ? ' · ${AppStrings.totalDurationFormat(totalMin)}' : ''}',
+              style: AppTextStyles.caption.copyWith(color: cs.onSurfaceVariant),
+            ),
+          ],
+        ),
+        if (plan.notes != null && plan.notes!.trim().isNotEmpty) ...[
+          const SizedBox(height: AppSizes.p8),
+          Text(plan.notes!.trim(), style: AppTextStyles.bodySecondary.copyWith(color: cs.onSurfaceVariant)),
+        ],
+        const SizedBox(height: AppSizes.p12),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: AppSizes.p12, vertical: AppSizes.p4),
+          decoration: BoxDecoration(
+            color: cs.surface,
+            borderRadius: BorderRadius.circular(AppSizes.r12),
+            border: Border.all(color: cs.outlineVariant.withAlpha(120)),
+          ),
+          child: Column(
+            children: [
+              for (int i = 0; i < plan.modalities.length; i++)
+                TreatmentModalityTile(modality: plan.modalities[i], showDivider: i < plan.modalities.length - 1),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildHistorySection(ColorScheme cs, List<TreatmentPlan> plans, bool isSenior) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Divider(height: AppSizes.p16),
+        InkWell(
+          onTap: () => setState(() => _historyExpanded = !_historyExpanded),
+          borderRadius: BorderRadius.circular(AppSizes.r8),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: AppSizes.p4),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text('${AppStrings.previousPlans} (${plans.length})', style: AppTextStyles.captionBold.copyWith(color: cs.onSurfaceVariant)),
+                Icon(_historyExpanded ? Icons.expand_less : Icons.expand_more, size: 18, color: cs.onSurfaceVariant),
+              ],
+            ),
+          ),
+        ),
+        if (_historyExpanded) ...[
+          const SizedBox(height: AppSizes.p8),
+          for (final p in plans)
+            TreatmentPlanHistoryTile(
+              plan: p,
+              programId: widget.program.id,
+              patientId: widget.program.patientId,
+              isSeniorDoctor: isSenior,
+              onEdit: () => _openPlanBuilder(plan: p),
+              onDelete: () => _deletePlan(p.id),
+            ),
+        ],
+      ],
+    );
+  }
+}

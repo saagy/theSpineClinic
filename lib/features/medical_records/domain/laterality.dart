@@ -21,8 +21,8 @@ enum Laterality {
       };
 
   String get shortLabel => switch (this) {
-        Laterality.right => '(Right)',
-        Laterality.left => '(Left)',
+        Laterality.right => 'Right',
+        Laterality.left => 'Left',
         Laterality.both => 'Both',
       };
 }

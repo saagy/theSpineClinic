@@ -10,6 +10,7 @@ import 'package:spine_clinic_app/features/medical_records/presentation/patient_p
 import 'package:spine_clinic_app/features/medical_records/presentation/widgets/program_detail_conditions.dart';
 import 'package:spine_clinic_app/features/medical_records/presentation/widgets/program_detail_findings.dart';
 import 'package:spine_clinic_app/features/medical_records/presentation/widgets/program_detail_header.dart';
+import 'package:spine_clinic_app/features/medical_records/presentation/widgets/program_detail_treatment.dart';
 import 'package:spine_clinic_app/shared/widgets/app_back_button.dart';
 import 'package:spine_clinic_app/shared/widgets/empty_state.dart';
 import 'package:spine_clinic_app/shared/widgets/error_view.dart';
@@ -40,64 +41,81 @@ class ProgramDetailScreen extends ConsumerWidget {
       body: SafeArea(
         child: asyncDetail.when(
           loading: () {
-            if (initialProgram != null) {
-              return _buildContent(context, initialProgram!);
-            }
-            return const Padding(
-              padding: EdgeInsets.all(AppSizes.p16),
-              child: SkeletonTileList(count: 4),
-            );
+            if (initialProgram != null) return _buildResponsiveLayout(context, initialProgram!);
+            return const Padding(padding: EdgeInsets.all(AppSizes.p16), child: SkeletonTileList(count: 4));
           },
           error: (err, _) {
-            if (initialProgram != null) {
-              return _buildContent(context, initialProgram!);
-            }
+            if (initialProgram != null) return _buildResponsiveLayout(context, initialProgram!);
             return Center(
               child: Padding(
                 padding: const EdgeInsets.all(AppSizes.p24),
                 child: ErrorView(
-                  exception: err is AppException
-                      ? err
-                      : AppException.fromSupabaseException(err),
-                  onRetry: () =>
-                      ref.invalidate(programDetailProvider(programId)),
+                  exception: err is AppException ? err : AppException.fromSupabaseException(err),
+                  onRetry: () => ref.invalidate(programDetailProvider(programId)),
                 ),
               ),
             );
           },
           data: (program) {
-            final effectiveProgram = program ?? initialProgram;
-            if (effectiveProgram == null) {
-              return const EmptyState(
-                message: AppStrings.programNotFound,
-                icon: Icons.search_off_rounded,
-              );
+            final effective = program ?? initialProgram;
+            if (effective == null) {
+              return const EmptyState(message: AppStrings.programNotFound, icon: Icons.search_off_rounded);
             }
-            return _buildContent(context, effectiveProgram);
+            return _buildResponsiveLayout(context, effective);
           },
         ),
       ),
     );
   }
 
-  Widget _buildContent(BuildContext context, PatientProgram program) {
-    return Center(
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(
-          maxWidth: AppSizes.formLayoutMaxWidth,
-        ),
-        child: ListView(
-          padding: const EdgeInsets.all(AppSizes.p16),
-          children: [
-            ProgramDetailHeader(program: program),
-            const SizedBox(height: AppSizes.p16),
-            ProgramDetailConditions(program: program),
-            const SizedBox(height: AppSizes.p16),
-            ProgramDetailFindings(program: program),
-            const SizedBox(height: AppSizes.p24),
-          ],
-        ),
-      ),
+  Widget _buildResponsiveLayout(BuildContext context, PatientProgram program) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final bool isWide = constraints.maxWidth >= 900;
+        final maxW = isWide ? 1280.0 : AppSizes.formLayoutMaxWidth;
+
+        return Center(
+          child: ConstrainedBox(
+            constraints: BoxConstraints(maxWidth: maxW),
+            child: ListView(
+              padding: const EdgeInsets.all(AppSizes.p16),
+              children: [
+                ProgramDetailHeader(program: program),
+                const SizedBox(height: AppSizes.p16),
+                if (isWide)
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(
+                        flex: 5,
+                        child: Column(
+                          children: [
+                            ProgramDetailConditions(program: program),
+                            const SizedBox(height: AppSizes.p16),
+                            ProgramDetailFindings(program: program),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: AppSizes.p16),
+                      Expanded(
+                        flex: 6,
+                        child: ProgramDetailTreatment(program: program),
+                      ),
+                    ],
+                  )
+                else ...[
+                  ProgramDetailTreatment(program: program),
+                  const SizedBox(height: AppSizes.p16),
+                  ProgramDetailConditions(program: program),
+                  const SizedBox(height: AppSizes.p16),
+                  ProgramDetailFindings(program: program),
+                ],
+                const SizedBox(height: AppSizes.p24),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 }

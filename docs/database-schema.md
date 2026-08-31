@@ -248,6 +248,11 @@ appointments             <- patient_notes.appointment_id (optional)
 | `book_recurring_appointments(...)` | Books slots with package balance locking. |
 | `bulk_replace_appointment_doctor(...)` | Swaps an absent doctor off a day's appointments. |
 | `get_due_patients(...)` | Branch-scoped due-patient queue. |
+| `create_patient_program(...)` | Atomically creates a patient rehabilitation program with conditions and attached imaging documents. |
+| `update_patient_program(...)` | Atomically updates a patient program, its conditions, status, and attached documents. |
+| `upsert_treatment_plan(...)` | Atomically creates/updates a treatment plan and re-syncs child modalities and target regions. |
+| `delete_treatment_plan(...)` | Atomically deletes a treatment plan and cascades child modalities/regions. |
+| `activate_treatment_plan(...)` | Atomically marks a treatment plan as the active version and deactivates others. |
 
 ### Auth & Staff Registration RPCs
 | Function | Purpose |
