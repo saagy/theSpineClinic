@@ -47,7 +47,14 @@ Write-Host "  ANON_KEY:     $($supabaseKey.Substring(0, [Math]::Min(20, $supabas
 
 # ── 2. Build Flutter web ──────────────────────────────────────
 Write-Host ""
-Write-Host "[2/3] Building Flutter web (release)..." -ForegroundColor Yellow
+Write-Host "[2/3] Resolving dependencies & building Flutter web (release)..." -ForegroundColor Yellow
+
+& flutter pub get
+if ($LASTEXITCODE -ne 0) {
+    Write-Host "ERROR: flutter pub get failed" -ForegroundColor Red
+    Read-Host "Press Enter to exit"
+    exit 1
+}
 
 $buildArgs = @(
     "build", "web", "--release",

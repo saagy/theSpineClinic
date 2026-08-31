@@ -58,7 +58,14 @@ class ProgramPdfService {
       ),
     );
 
-    await Printing.layoutPdf(onLayout: (PdfPageFormat format) async => doc.save(), name: 'SpineClinic_${patient?.fullName ?? 'Patient'}_Program.pdf');
+    final pdfBytes = await doc.save();
+    final sanitizedName = (patient?.fullName ?? 'Patient').trim().replaceAll(RegExp(r'[^\w\s-]'), '').replaceAll(RegExp(r'\s+'), '_');
+    final fileName = 'SpineClinic_${sanitizedName}_Program.pdf';
+
+    await Printing.sharePdf(
+      bytes: pdfBytes,
+      filename: fileName,
+    );
   }
 
   static pw.Widget _buildHeader(String title, PatientProgram program) {
