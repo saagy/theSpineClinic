@@ -75,7 +75,8 @@ class _PatientSearchScreenState extends ConsumerState<PatientSearchScreen> {
       _animatedIndices.clear();
     }
     final user = ref.watch(currentUserProvider).value;
-    final showFab = user != null && user.role != UserRole.doctor;
+    final showFab = user != null &&
+        (user.role != UserRole.doctor || user.isSeniorDoctor);
 
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,

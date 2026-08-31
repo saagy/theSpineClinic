@@ -21,7 +21,7 @@ class NewPatientScreen extends ConsumerWidget {
     final asyncUser = ref.watch(currentUserProvider);
     final user = asyncUser.value;
 
-    if (user != null && user.role == UserRole.doctor) {
+    if (user != null && user.role == UserRole.doctor && !user.isSeniorDoctor) {
       return Scaffold(
         appBar: AppBar(
           title: const Text(AppStrings.registerPatient),
@@ -32,7 +32,7 @@ class NewPatientScreen extends ConsumerWidget {
         body: const ErrorView(
           exception: DatabaseException(
             code: 'db/rls-violation',
-            message: 'Doctors are completely blocked from registering patients.',
+            message: 'Regular doctors are blocked from registering patients.',
             userMessageKey: 'error_database_permission_denied',
           ),
         ),

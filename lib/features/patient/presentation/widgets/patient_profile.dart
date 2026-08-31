@@ -92,7 +92,8 @@ class _PatientProfileState extends ConsumerState<PatientProfile>
     final bool canHandlePayments = user?.canHandlePayments ?? false;
     final canDelete =
         user?.role == UserRole.superAdmin ||
-        user?.role == UserRole.receptionist;
+        user?.role == UserRole.receptionist ||
+        (user?.isSeniorDoctor ?? false);
     final isEmptyAsync = ref.watch(patientIsEmptyProvider(patient.id));
     final bool patientIsEmpty = isEmptyAsync.value ?? false;
 
@@ -181,7 +182,7 @@ class _PatientProfileState extends ConsumerState<PatientProfile>
       ),
       floatingActionButton: PatientQuickActionsFab(
         patient: patient,
-        isDoctor: isDoctor,
+        isDoctor: isDoctor && !(user?.isSeniorDoctor ?? false),
         canHandlePayments: canHandlePayments,
       ),
     );

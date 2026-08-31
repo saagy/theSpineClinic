@@ -81,7 +81,7 @@ class _AppointmentDetailScreenState
     final bool showDelete =
         detailState != null &&
         user != null &&
-        user.role != UserRole.doctor &&
+        (user.role != UserRole.doctor || user.isSeniorDoctor) &&
         (detailState.appointment.status == AppointmentStatus.scheduled ||
             detailState.appointment.status == AppointmentStatus.cancelled);
     final String? patientName = detailState?.patient.fullName;

@@ -224,23 +224,11 @@ class _NewPatientFormState extends ConsumerState<NewPatientForm> {
             child: FormBuilderField<List<Staff>>(
               name: 'assigned_doctors',
               initialValue: const [],
-              validator: (val) {
-                if (val == null || val.isEmpty) {
-                  return 'At least one assigned doctor is required';
-                }
-                return null;
-              },
               builder: (state) {
                 return DoctorSelectField(
                   initialValue: List<Staff>.from(state.value ?? []),
                   onSavedDoctors: (doctors) => state.didChange(doctors),
                   onChanged: (doctors) => state.didChange(doctors),
-                  validator: (val) {
-                    if (val == null || val.isEmpty) {
-                      return 'At least one assigned doctor is required';
-                    }
-                    return null;
-                  },
                 );
               },
             ),

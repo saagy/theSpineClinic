@@ -22,13 +22,9 @@ import 'package:spine_clinic_app/shared/widgets/section_card.dart';
 
 /// Form component for editing patient demographics and doctor assignments.
 class EditPatientForm extends ConsumerStatefulWidget {
-  /// Creates an [EditPatientForm].
   const EditPatientForm({super.key, required this.patient, required this.assignedDoctors});
 
-  /// The patient entity to edit.
   final Patient patient;
-
-  /// Currently assigned doctors.
   final List<Staff> assignedDoctors;
 
   @override
@@ -89,9 +85,7 @@ class _EditPatientFormState extends ConsumerState<EditPatientForm> {
   }
 
   Future<void> _handleCancel() async {
-    if (_hasChanges() && await _showDiscardDialog()) {
-      if (mounted) context.pop();
-    } else if (!_hasChanges()) {
+    if ((_hasChanges() && await _showDiscardDialog()) || !_hasChanges()) {
       if (mounted) context.pop();
     }
   }
@@ -118,27 +112,20 @@ class _EditPatientFormState extends ConsumerState<EditPatientForm> {
   Widget build(BuildContext context) {
     final isSaving = ref.watch(editPatientControllerProvider).isLoading;
     final user = ref.watch(currentUserProvider).value;
-    final isDoctor = user?.role == UserRole.doctor;
+    final isRegularDoctor =
+        user?.role == UserRole.doctor && !(user?.isSeniorDoctor ?? false);
 
     ref.listen<AsyncValue<void>>(
       editPatientControllerProvider,
       (previous, next) {
         next.whenOrNull(
           data: (_) {
-            AppSnackbar.show(
-              context,
-              message: AppStringsAuth.patientUpdatedSuccess,
-              variant: AppSnackbarVariant.success,
-            );
+            AppSnackbar.show(context, message: AppStringsAuth.patientUpdatedSuccess, variant: AppSnackbarVariant.success);
             context.pop();
           },
-          error: (error, stackTrace) {
-            final exception = error is AppException ? error : UnknownException(message: error.toString());
-            AppSnackbar.show(
-              context,
-              message: AppStrings.fromKey(exception.userMessageKey),
-              variant: AppSnackbarVariant.error,
-            );
+          error: (error, _) {
+            final ex = error is AppException ? error : UnknownException(message: error.toString());
+            AppSnackbar.show(context, message: AppStrings.fromKey(ex.userMessageKey), variant: AppSnackbarVariant.error);
           },
         );
       },
@@ -183,7 +170,7 @@ class _EditPatientFormState extends ConsumerState<EditPatientForm> {
                   const SizedBox(height: AppSizes.p16),
                   SectionCard(
                     title: AppStrings.assignedDoctors,
-                    child: isDoctor
+                    child: isRegularDoctor
                         ? Wrap(
                             spacing: AppSizes.p8,
                             runSpacing: AppSizes.p8,
@@ -194,18 +181,13 @@ class _EditPatientFormState extends ConsumerState<EditPatientForm> {
                         : DoctorSelectField(
                             initialValue: _selectedDoctors,
                             onSavedDoctors: (doctors) => setState(() {
-                              final copy = List<Staff>.from(doctors);
                               _selectedDoctors.clear();
-                              _selectedDoctors.addAll(copy);
+                              _selectedDoctors.addAll(doctors);
                             }),
                             onChanged: (doctors) => setState(() {
-                              final copy = List<Staff>.from(doctors);
                               _selectedDoctors.clear();
-                              _selectedDoctors.addAll(copy);
+                              _selectedDoctors.addAll(doctors);
                             }),
-                            validator: (val) => (val == null || val.isEmpty)
-                                ? AppStringsAuth.validationDoctorRequired
-                                : null,
                           ),
                   ),
                   const SizedBox(height: AppSizes.p32),

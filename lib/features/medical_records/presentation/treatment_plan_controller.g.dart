@@ -104,7 +104,7 @@ final class TreatmentPlanControllerProvider
 }
 
 String _$treatmentPlanControllerHash() =>
-    r'a883a3e30bfd53bcf472397570e63d91ed7db122';
+    r'cc8da1588f665b2e51ac2f796ea21e018a75fa35';
 
 /// Mutation controller managing treatment plan creation, updates, and deletion.
 ///

@@ -104,11 +104,11 @@ class ProgramDetailScreen extends ConsumerWidget {
                     ],
                   )
                 else ...[
-                  ProgramDetailTreatment(program: program),
-                  const SizedBox(height: AppSizes.p16),
                   ProgramDetailConditions(program: program),
                   const SizedBox(height: AppSizes.p16),
                   ProgramDetailFindings(program: program),
+                  const SizedBox(height: AppSizes.p16),
+                  ProgramDetailTreatment(program: program),
                 ],
                 const SizedBox(height: AppSizes.p24),
               ],

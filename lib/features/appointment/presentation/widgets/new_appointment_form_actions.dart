@@ -164,7 +164,7 @@ extension _NewAppointmentFormActions on _NewAppointmentFormState {
     final Staff? creator = ref.read(currentUserProvider).value;
     if (creator == null ||
         !creator.isActive ||
-        creator.role == UserRole.doctor) {
+        (creator.role == UserRole.doctor && !creator.isSeniorDoctor)) {
       AppSnackbar.show(
         context,
         message: AppStrings.accessDenied,

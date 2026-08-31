@@ -350,7 +350,8 @@ class _PatientListScreenState extends ConsumerState<PatientListScreen> {
           ],
         ),
       ),
-      floatingActionButton: (user != null && user.role != UserRole.doctor)
+      floatingActionButton: (user != null &&
+              (user.role != UserRole.doctor || user.isSeniorDoctor))
           ? FloatingActionButton(
               onPressed: () => context.push(AppRoutes.newPatient),
               backgroundColor: Theme.of(context).colorScheme.primary,

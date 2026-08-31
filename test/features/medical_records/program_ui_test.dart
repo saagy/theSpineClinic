@@ -250,6 +250,11 @@ void main() {
     expect(find.text('Shoulder impingement syndrome'), findsOneWidget);
     expect(find.text('Full flexion with mild pain at end range'), findsOneWidget);
     expect(find.text('MRI indicates mild L4-L5 bulge'), findsOneWidget);
+
+    // Verify Treatment Plan is rendered after Findings
+    final findingsTop = tester.getTopLeft(find.text(AppStrings.clinicalFindingsSection)).dy;
+    final treatmentTop = tester.getTopLeft(find.text(AppStrings.treatmentPlan)).dy;
+    expect(treatmentTop, greaterThan(findingsTop));
   });
 
   testWidgets('ProgramFormScreen renders form content with pinned bottom save bar', (tester) async {

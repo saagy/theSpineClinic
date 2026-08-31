@@ -91,7 +91,8 @@ class _PatientTabAppointmentsState
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     final user = ref.watch(currentUserProvider).value;
-    final isDoctor = user?.role == UserRole.doctor;
+    final isRegularDoctor =
+        user?.role == UserRole.doctor && !(user?.isSeniorDoctor ?? false);
     final state = ref.watch(patientAppointmentsProvider(widget.patient.id));
     if (state.isLoading) {
       _animatedIndices.clear();
@@ -106,7 +107,7 @@ class _PatientTabAppointmentsState
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          if (!isDoctor)
+          if (!isRegularDoctor)
             Padding(
               padding: const EdgeInsets.fromLTRB(
                 AppSizes.p16, AppSizes.p8, AppSizes.p16, AppSizes.p4,

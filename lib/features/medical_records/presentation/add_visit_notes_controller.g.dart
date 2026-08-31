@@ -56,7 +56,7 @@ final class AddVisitNotesControllerProvider
 }
 
 String _$addVisitNotesControllerHash() =>
-    r'e8a4d2df36af46725af152ff1a641a43c4b90292';
+    r'4615354c7fc1e5e61838980135b3f2f443a1d757';
 
 /// Controller managing a single appointment's visit notes state and updates.
 

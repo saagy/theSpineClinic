@@ -79,9 +79,9 @@ class EditPatientController extends _$EditPatientController {
       return false;
     }
 
-    // 2. Update patient doctor assignments (only for admin/receptionist,
+    // 2. Update patient doctor assignments (for admin/receptionist/senior doctor,
     //    and only when the list has actually changed)
-    if (currentUser.role != UserRole.doctor) {
+    if (currentUser.role != UserRole.doctor || currentUser.isSeniorDoctor) {
       final currentSet = selectedDoctorIds.toSet();
       final initialSet = initialDoctorIds.toSet();
       final doctorsChanged =

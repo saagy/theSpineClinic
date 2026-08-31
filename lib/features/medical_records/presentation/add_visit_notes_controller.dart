@@ -49,7 +49,8 @@ class AddVisitNotesController extends _$AddVisitNotesController {
     bool isAuthorized = false;
 
     if (currentUser != null) {
-      if (currentUser.role == UserRole.superAdmin) {
+      if (currentUser.role == UserRole.superAdmin ||
+          currentUser.isSeniorDoctor) {
         isAuthorized = true;
       } else if (currentUser.role == UserRole.doctor) {
         // Only a doctor assigned to the appointment is authorized.

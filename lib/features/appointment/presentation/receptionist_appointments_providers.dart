@@ -103,7 +103,7 @@ class ReceptionistAppointmentsNotifier
           limit: 1000,
           ascending: true,
         );
-    if (requestId != _requestId) return;
+    if (!ref.mounted || requestId != _requestId) return;
 
     result.when(
       success: (List<AppointmentWithPatient> data) {

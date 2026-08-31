@@ -33,7 +33,8 @@ class NewAppointmentScreen extends ConsumerWidget {
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!asyncUser.isLoading &&
-          (user == null || user.role == UserRole.doctor)) {
+          (user == null ||
+              (user.role == UserRole.doctor && !user.isSeniorDoctor))) {
         AppSnackbar.show(
           context,
           message: AppStrings.accessDenied,
@@ -43,7 +44,9 @@ class NewAppointmentScreen extends ConsumerWidget {
       }
     });
 
-    if (asyncUser.isLoading || user == null || user.role == UserRole.doctor) {
+    if (asyncUser.isLoading ||
+        user == null ||
+        (user.role == UserRole.doctor && !user.isSeniorDoctor)) {
       return Scaffold(
         backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         body: Center(

@@ -71,7 +71,7 @@ class VisitDetailController extends _$VisitDetailController {
     bool canEditNotes = false;
 
     if (currentUser != null) {
-      if (currentUser.role == UserRole.superAdmin) {
+      if (currentUser.role == UserRole.superAdmin || currentUser.isSeniorDoctor) {
         canEditNotes = true;
       } else if (currentUser.role == UserRole.doctor) {
         final bool isAttendingDoctor = activeDoctors.any(

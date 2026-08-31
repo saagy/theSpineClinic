@@ -542,21 +542,7 @@ CREATE OR REPLACE FUNCTION public.check_patient_has_doctors()
  LANGUAGE plpgsql
  SECURITY DEFINER
 AS $function$
-DECLARE
-  doctor_count integer;
 BEGIN
-  IF EXISTS (SELECT 1 FROM public.patients WHERE id = OLD.patient_id) THEN
-    SELECT count(*) INTO doctor_count
-    FROM public.patient_doctors
-    WHERE patient_id = OLD.patient_id;
-
-    IF doctor_count = 0 THEN
-      RAISE EXCEPTION 'Patient % would have no assigned doctors. Reassign them to another doctor first.',
-        OLD.patient_id
-        USING ERRCODE = '22000';
-    END IF;
-  END IF;
-
   RETURN NULL;
 END;
 $function$;
@@ -614,36 +600,42 @@ CREATE OR REPLACE FUNCTION public.create_patient_with_doctors(p_name text, p_pho
  RETURNS public.patients
  LANGUAGE plpgsql
  SECURITY DEFINER
+ SET search_path = public
 AS $function$
     DECLARE
       new_patient public.patients;
       doc_id uuid;
       invalid_count integer;
+      v_staff_id uuid;
+      v_staff_role public.user_role;
+      v_staff_active boolean;
     BEGIN
-      IF NOT EXISTS (
-        SELECT 1 FROM public.get_auth_staff_profile()
-        WHERE staff_role IN ('super_admin'::user_role, 'receptionist'::user_role)
-          AND staff_active = true
-      ) THEN
-        RAISE EXCEPTION 'Only active receptionists or super admins can register patients.'
+      SELECT staff_id, staff_role, staff_active
+      INTO v_staff_id, v_staff_role, v_staff_active
+      FROM public.get_auth_staff_profile();
+
+      IF v_staff_active IS DISTINCT FROM true
+         OR (v_staff_role NOT IN ('super_admin'::user_role, 'receptionist'::user_role)
+             AND NOT EXISTS (
+               SELECT 1 FROM public.staff s
+               WHERE s.id = v_staff_id AND s.role = 'doctor'::public.user_role AND s.is_senior = true
+             )) THEN
+        RAISE EXCEPTION 'Only active receptionists, super admins, or senior doctors can register patients.'
           USING ERRCODE = '42501';
       END IF;
 
-      IF p_doctor_ids IS NULL OR array_length(p_doctor_ids, 1) = 0 THEN
-        RAISE EXCEPTION 'At least one assigned doctor is required.'
-          USING ERRCODE = '22000';
-      END IF;
-
-      SELECT count(*) INTO invalid_count
-      FROM unnest(p_doctor_ids) AS did
-      LEFT JOIN public.staff s ON s.id = did
-        AND s.is_active = true
-        AND s.role = 'doctor'::public.user_role
-      WHERE s.id IS NULL;
-      IF invalid_count > 0 THEN
-        RAISE EXCEPTION 'All assigned doctors must be active doctor accounts. Found % invalid doctor(s).',
-          invalid_count
-          USING ERRCODE = '22000';
+      IF p_doctor_ids IS NOT NULL AND array_length(p_doctor_ids, 1) > 0 THEN
+        SELECT count(*) INTO invalid_count
+        FROM unnest(p_doctor_ids) AS did
+        LEFT JOIN public.staff s ON s.id = did
+          AND s.is_active = true
+          AND s.role = 'doctor'::public.user_role
+        WHERE s.id IS NULL;
+        IF invalid_count > 0 THEN
+          RAISE EXCEPTION 'All assigned doctors must be active doctor accounts. Found % invalid doctor(s).',
+            invalid_count
+            USING ERRCODE = '22000';
+        END IF;
       END IF;
 
       INSERT INTO public.patients (
@@ -653,10 +645,12 @@ AS $function$
       VALUES (p_name, p_phone, p_program, p_clinic, 0, 0, p_created_by, NOW())
       RETURNING * INTO new_patient;
 
-      FOREACH doc_id IN ARRAY p_doctor_ids LOOP
-        INSERT INTO public.patient_doctors (patient_id, doctor_id)
-        VALUES (new_patient.id, doc_id);
-      END LOOP;
+      IF p_doctor_ids IS NOT NULL AND array_length(p_doctor_ids, 1) > 0 THEN
+        FOREACH doc_id IN ARRAY p_doctor_ids LOOP
+          INSERT INTO public.patient_doctors (patient_id, doctor_id)
+          VALUES (new_patient.id, doc_id);
+        END LOOP;
+      END IF;
 
       RETURN new_patient;
     END;
@@ -666,25 +660,33 @@ CREATE OR REPLACE FUNCTION public.update_patient_doctors(p_patient_id uuid, p_do
  RETURNS void
  LANGUAGE plpgsql
  SECURITY DEFINER
+ SET search_path = public
 AS $function$
 DECLARE
   doc_id uuid;
   invalid_count integer;
   active_count integer;
+  v_staff_id uuid;
+  v_staff_role public.user_role;
+  v_staff_active boolean;
 BEGIN
-  IF NOT EXISTS (
-    SELECT 1
-    FROM public.get_auth_staff_profile()
-    WHERE staff_role IN ('super_admin'::user_role, 'receptionist'::user_role)
-      AND staff_active = true
-  ) THEN
-    RAISE EXCEPTION 'Only active receptionists or super admins can update patient doctor assignments.'
+  SELECT staff_id, staff_role, staff_active
+  INTO v_staff_id, v_staff_role, v_staff_active
+  FROM public.get_auth_staff_profile();
+
+  IF v_staff_active IS DISTINCT FROM true
+     OR (v_staff_role NOT IN ('super_admin'::user_role, 'receptionist'::user_role)
+         AND NOT EXISTS (
+           SELECT 1 FROM public.staff s
+           WHERE s.id = v_staff_id AND s.role = 'doctor'::public.user_role AND s.is_senior = true
+         )) THEN
+    RAISE EXCEPTION 'Only active receptionists, super admins, or senior doctors can update patient doctor assignments.'
       USING ERRCODE = '42501';
   END IF;
 
   IF p_doctor_ids IS NULL OR array_length(p_doctor_ids, 1) = 0 THEN
-    RAISE EXCEPTION 'At least one assigned doctor is required.'
-      USING ERRCODE = '22000';
+    DELETE FROM public.patient_doctors WHERE patient_id = p_patient_id;
+    RETURN;
   END IF;
 
   SELECT count(*) INTO invalid_count
@@ -705,7 +707,7 @@ BEGIN
     AND s.role = 'doctor'::public.user_role;
 
   IF active_count = 0 THEN
-    RAISE EXCEPTION 'At least one active doctor is required.'
+    RAISE EXCEPTION 'At least one active doctor is required when assigning doctors.'
       USING ERRCODE = '22000';
   END IF;
 
@@ -1017,7 +1019,11 @@ BEGIN
   FROM public.get_auth_staff_profile();
 
   IF v_staff_active IS DISTINCT FROM true
-     OR v_staff_role NOT IN ('receptionist', 'super_admin')
+     OR (v_staff_role NOT IN ('receptionist', 'super_admin')
+         AND NOT EXISTS (
+           SELECT 1 FROM public.staff s
+           WHERE s.id = v_staff_id AND s.role = 'doctor'::public.user_role AND s.is_senior = true
+         ))
      OR v_staff_id IS DISTINCT FROM p_creator_id THEN
     RAISE EXCEPTION 'Permission denied.' USING ERRCODE = '42501';
   END IF;
@@ -1043,77 +1049,55 @@ BEGIN
       FOR UPDATE;
     END IF;
 
-    SELECT count(*) INTO v_future_commitments
+    SELECT coalesce(count(*), 0)::integer INTO v_future_commitments
     FROM public.appointments
     WHERE patient_id = p_patient_id
       AND type = p_type
       AND status = 'scheduled'::public.appointment_status
-      AND use_package = true
-      AND scheduled_at >= now();
+      AND scheduled_at > now();
 
-    v_available_balance := coalesce(v_current_balance, 0) - coalesce(v_future_commitments, 0);
+    v_available_balance := v_current_balance - v_future_commitments;
 
     IF v_required_sessions > v_available_balance THEN
-      RAISE EXCEPTION 'Insufficient package balance. Available: %, Requested: %', v_available_balance, v_required_sessions
-        USING ERRCODE = 'P0002';
+      RAISE EXCEPTION 'Insufficient package balance for patient %. Required %, available %.',
+        p_patient_id, v_required_sessions, v_available_balance
+        USING ERRCODE = '22000';
     END IF;
   END IF;
 
-  IF p_expected_next_visit_date IS NOT NULL THEN
-    SELECT next_visit_date INTO v_next_visit
-    FROM public.patients
-    WHERE id = p_patient_id
-    FOR UPDATE;
-
-    IF v_next_visit IS DISTINCT FROM p_expected_next_visit_date
-       OR EXISTS (
-         SELECT 1
-         FROM unnest(p_slots) AS slots(slot)
-         WHERE (slots.slot AT TIME ZONE public.clinic_timezone())::date
-               < v_next_visit
-       )
-       OR EXISTS (
-         SELECT 1 FROM public.appointments a
-         WHERE a.patient_id = p_patient_id
-           AND a.status = 'scheduled'::public.appointment_status
-           AND (a.scheduled_at AT TIME ZONE public.clinic_timezone())::date >= v_next_visit
-       ) THEN
-      RAISE EXCEPTION 'Patient is no longer due for booking.'
-        USING ERRCODE = 'P0001';
-    END IF;
-  END IF;
-
+  -- 1. Insert appointments & doctor junctions
   FOREACH v_slot IN ARRAY p_slots LOOP
     INSERT INTO public.appointments (
-      patient_id,
-      type,
-      scheduled_at,
-      status,
-      use_package,
-      created_by
+      patient_id, type, scheduled_at, status, created_by
     ) VALUES (
-      p_patient_id,
-      p_type,
-      v_slot,
-      'scheduled'::public.appointment_status,
-      p_use_package,
-      p_creator_id
+      p_patient_id, p_type, v_slot, 'scheduled'::public.appointment_status, p_creator_id
     ) RETURNING id INTO v_appt_id;
 
     FOREACH v_doc_id IN ARRAY p_doctor_ids LOOP
       INSERT INTO public.appointment_doctors (
-        appointment_id,
-        doctor_id,
-        is_active,
-        added_by
+        appointment_id, doctor_id, is_active, added_by
       ) VALUES (
-        v_appt_id,
-        v_doc_id,
-        true,
-        p_creator_id
+        v_appt_id, v_doc_id, true, p_creator_id
       );
     END LOOP;
   END LOOP;
+
+  -- 2. Recalculate next_visit_date
+  IF p_expected_next_visit_date IS NOT NULL THEN
+    v_next_visit := p_expected_next_visit_date;
+  ELSE
+    SELECT (scheduled_at AT TIME ZONE public.clinic_timezone())::date INTO v_next_visit
+    FROM public.appointments
+    WHERE patient_id = p_patient_id
+      AND status = 'scheduled'::public.appointment_status
+      AND scheduled_at >= now()
+    ORDER BY scheduled_at ASC
+    LIMIT 1;
+  END IF;
+
+  UPDATE public.patients
+  SET next_visit_date = v_next_visit
+  WHERE id = p_patient_id;
 END;
 $function$;
 
@@ -1141,7 +1125,11 @@ BEGIN
   FROM public.get_auth_staff_profile();
 
   IF v_active IS DISTINCT FROM true
-     OR v_role NOT IN ('receptionist', 'super_admin') THEN
+     OR (v_role NOT IN ('receptionist', 'super_admin')
+         AND NOT EXISTS (
+           SELECT 1 FROM public.staff s
+           WHERE s.id = v_editor_id AND s.role = 'doctor'::public.user_role AND s.is_senior = true
+         )) THEN
     RAISE EXCEPTION 'Permission denied.' USING ERRCODE = '42501';
   END IF;
 
@@ -1298,8 +1286,13 @@ BEGIN
     INTO v_staff_id, v_staff_role, v_active
     FROM public.get_auth_staff_profile();
 
-  IF NOT coalesce(v_active, false) OR v_staff_role NOT IN ('super_admin', 'receptionist') THEN
-    RAISE EXCEPTION 'Permission denied: must be active super_admin or receptionist'
+  IF NOT coalesce(v_active, false)
+     OR (v_staff_role NOT IN ('super_admin', 'receptionist')
+         AND NOT EXISTS (
+           SELECT 1 FROM public.staff s
+           WHERE s.id = v_staff_id AND s.role = 'doctor'::public.user_role AND s.is_senior = true
+         )) THEN
+    RAISE EXCEPTION 'Permission denied: must be active super_admin, receptionist, or senior doctor'
       USING ERRCODE = '42501';
   END IF;
 
@@ -1583,7 +1576,6 @@ END;
 $function$;
 
 -- Triggers
-CREATE CONSTRAINT TRIGGER tr_check_patient_has_doctors AFTER DELETE OR UPDATE ON public.patient_doctors DEFERRABLE INITIALLY DEFERRED FOR EACH ROW EXECUTE FUNCTION check_patient_has_doctors();
 CREATE TRIGGER trigger_appointment_package_deduction AFTER UPDATE ON public.appointments FOR EACH ROW EXECUTE FUNCTION handle_package_deduction();
 CREATE TRIGGER trigger_payment_insert_package_sync AFTER INSERT ON public.payment_records FOR EACH ROW EXECUTE FUNCTION handle_payment_package_sync();
 CREATE TRIGGER trigger_payment_delete_package_sync AFTER DELETE ON public.payment_records FOR EACH ROW EXECUTE FUNCTION handle_payment_package_sync();
@@ -1600,13 +1592,12 @@ CREATE POLICY "Allow users to insert their own profile" ON public.staff FOR INSE
 CREATE POLICY "Allow users to update their own profile" ON public.staff FOR UPDATE TO authenticated USING (user_id = auth.uid()) WITH CHECK (user_id = auth.uid());
 CREATE POLICY "Only super_admins can modify staff data" ON public.staff FOR ALL TO authenticated USING (EXISTS (SELECT 1 FROM public.get_auth_staff_profile() WHERE staff_role = 'super_admin'::user_role AND staff_active = true));
 
-CREATE POLICY "Super Admins and Receptionists have full access to patients" ON public.patients FOR ALL TO authenticated USING (EXISTS (SELECT 1 FROM public.get_auth_staff_profile() WHERE staff_role = ANY (ARRAY['super_admin'::user_role, 'receptionist'::user_role]) AND staff_active = true));
-CREATE POLICY "Super Admins and Receptionists can delete patients" ON public.patients FOR DELETE TO authenticated USING (EXISTS (SELECT 1 FROM public.get_auth_staff_profile() WHERE staff_role = ANY (ARRAY['super_admin'::user_role, 'receptionist'::user_role]) AND staff_active = true));
+CREATE POLICY "Staff with management access have full access to patients" ON public.patients FOR ALL TO authenticated USING (EXISTS (SELECT 1 FROM public.staff s WHERE s.user_id = auth.uid() AND s.is_active = true AND (s.role IN ('super_admin'::public.user_role, 'receptionist'::public.user_role) OR (s.role = 'doctor'::public.user_role AND s.is_senior = true))));
 CREATE POLICY "Staff can view accessible patients" ON public.patients FOR SELECT TO authenticated USING (public.can_current_staff_access_patient(id));
 CREATE POLICY "Staff can update accessible patients" ON public.patients FOR UPDATE TO authenticated USING (public.can_current_staff_access_patient(id)) WITH CHECK (public.can_current_staff_access_patient(id));
 
 CREATE POLICY "All active staff can look at patient-doctor associations" ON public.patient_doctors FOR SELECT TO authenticated USING (EXISTS (SELECT 1 FROM public.get_auth_staff_profile() WHERE staff_active = true));
-CREATE POLICY "Only receptionists and admins can alter long-term patient doctor assignments" ON public.patient_doctors FOR ALL TO authenticated USING (EXISTS (SELECT 1 FROM public.get_auth_staff_profile() WHERE staff_role = ANY (ARRAY['super_admin'::user_role, 'receptionist'::user_role]) AND staff_active = true));
+CREATE POLICY "Staff with management access can alter long-term patient doctor assignments" ON public.patient_doctors FOR ALL TO authenticated USING (EXISTS (SELECT 1 FROM public.staff s WHERE s.user_id = auth.uid() AND s.is_active = true AND (s.role IN ('super_admin'::public.user_role, 'receptionist'::public.user_role) OR (s.role = 'doctor'::public.user_role AND s.is_senior = true))));
 
 CREATE POLICY "Staff can view all appointments" ON public.appointments FOR SELECT TO authenticated USING (EXISTS (SELECT 1 FROM public.get_auth_staff_profile() WHERE staff_active = true));
 CREATE POLICY "Staff can modify appointments" ON public.appointments FOR ALL TO authenticated USING (EXISTS (SELECT 1 FROM public.get_auth_staff_profile() WHERE staff_active = true));
@@ -1640,7 +1631,7 @@ CREATE POLICY "Super admins can manage condition catalog" ON public.condition_ca
 CREATE POLICY "Staff with patient access can read medical history" ON public.patient_medical_history FOR SELECT TO authenticated USING (public.can_current_staff_access_patient(patient_id));
 CREATE POLICY "Senior doctors and admins can insert medical history" ON public.patient_medical_history FOR INSERT TO authenticated WITH CHECK (public.can_current_staff_modify_patient_programs(patient_id));
 CREATE POLICY "Senior doctors and admins can update medical history" ON public.patient_medical_history FOR UPDATE TO authenticated USING (public.can_current_staff_modify_patient_programs(patient_id)) WITH CHECK (public.can_current_staff_modify_patient_programs(patient_id));
-CREATE POLICY "Super admins can delete medical history" ON public.patient_medical_history FOR DELETE TO authenticated USING (EXISTS (SELECT 1 FROM public.get_auth_staff_profile() WHERE staff_role = 'super_admin'::user_role AND staff_active = true));
+CREATE POLICY "Senior doctors and admins can delete medical history" ON public.patient_medical_history FOR DELETE TO authenticated USING (public.can_current_staff_modify_patient_programs(patient_id));
 
 -- Patient Programs Policies
 CREATE POLICY "Staff with patient access can read programs" ON public.patient_programs FOR SELECT TO authenticated USING (public.can_current_staff_access_patient(patient_id));

@@ -1,14 +1,7 @@
 /// Riverpod controller for the AppointmentDetailScreen.
-///
-/// Manages composite state: [Appointment] + [Patient] + doctor assignments
-/// (active and inactive). Exposes mutation methods for status transitions.
-///
-/// Rule 3 — all state via Riverpod, no setState.
-/// Rule 4 — repository calls always return [Result<T>].
 library;
 
 import 'package:riverpod_annotation/riverpod_annotation.dart';
-
 import 'package:spine_clinic_app/core/errors/app_exception.dart';
 import 'package:spine_clinic_app/core/errors/result.dart';
 import 'package:spine_clinic_app/features/appointment/domain/appointment.dart';
@@ -47,9 +40,8 @@ class AppointmentDetailController extends _$AppointmentDetailController {
     final AppointmentRepository repo = ref.read(appointmentRepositoryProvider);
 
     // 1. Fetch appointment
-    final Result<Appointment> appointmentResult = await repo.getAppointmentById(
-      appointmentId,
-    );
+    final Result<Appointment> appointmentResult =
+        await repo.getAppointmentById(appointmentId);
     final Appointment appointment = switch (appointmentResult) {
       Success<Appointment>(:final data) => data,
       Failure<Appointment>(:final exception) => throw exception,
@@ -83,7 +75,7 @@ class AppointmentDetailController extends _$AppointmentDetailController {
 
     // 6. Enforce doctor-level access control
     final Staff? user = ref.watch(currentUserProvider).value;
-    if (user != null && user.role == UserRole.doctor) {
+    if (user != null && user.role == UserRole.doctor && !user.isSeniorDoctor) {
       final bool isDoctorOnAppointment =
           active.any((d) => d.doctor.id == user.id);
       if (!isDoctorOnAppointment) {
@@ -169,7 +161,7 @@ class AppointmentDetailController extends _$AppointmentDetailController {
         userMessageKey: 'error_auth_generic',
       );
     }
-    if (user.role == UserRole.doctor) {
+    if (user.role == UserRole.doctor && !user.isSeniorDoctor) {
       final current = state.value;
       if (current == null) return;
       final bool isDoctorOnAppointment =

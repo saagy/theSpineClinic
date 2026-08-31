@@ -11,7 +11,7 @@ import 'package:spine_clinic_app/features/patient/presentation/patient_providers
 
 part 'delete_patient_controller.g.dart';
 
-@riverpod
+@Riverpod(keepAlive: true)
 class DeletePatientController extends _$DeletePatientController {
   @override
   FutureOr<void> build() {}
@@ -27,11 +27,12 @@ class DeletePatientController extends _$DeletePatientController {
       );
     }
     if (user.role != UserRole.superAdmin &&
-        user.role != UserRole.receptionist) {
+        user.role != UserRole.receptionist &&
+        !user.isSeniorDoctor) {
       return const Result.failure(
         AuthException(
           code: 'security/permission-denied',
-          message: 'Only super admins and receptionists can delete patients.',
+          message: 'Only super admins, receptionists, and senior doctors can delete patients.',
         ),
       );
     }
