@@ -57,7 +57,7 @@ class ProgramPdfSections {
     final regions = program.affectedRegions.toList()..sort((a, b) => a.displayName.compareTo(b.displayName));
     final findingsRows = <List<String>>[];
     if (program.examination?.isNotEmpty ?? false) findingsRows.add(['Physical Examination', program.examination!.trim()]);
-    if (program.exaggeratingPositions?.isNotEmpty ?? false) findingsRows.add(['Exaggerating Positions', program.exaggeratingPositions!.trim()]);
+    if (program.exaggeratingPositions?.isNotEmpty ?? false) findingsRows.add(['Aggravating Positions', program.exaggeratingPositions!.trim()]);
     if (program.relievingPositions?.isNotEmpty ?? false) findingsRows.add(['Relieving Positions', program.relievingPositions!.trim()]);
     if (program.imagingNotes?.isNotEmpty ?? false) findingsRows.add(['Imaging & Scans', program.imagingNotes!.trim()]);
 

@@ -29,31 +29,16 @@ class ProgramDetailTreatment extends ConsumerStatefulWidget {
 class _ProgramDetailTreatmentState extends ConsumerState<ProgramDetailTreatment> {
   bool _historyExpanded = false;
 
-  Future<void> _openPlanBuilder({TreatmentPlan? plan}) => TreatmentPlanBuilderSheet.show(
-        context,
-        programId: widget.program.id,
-        patientId: widget.program.patientId,
-        affectedRegions: widget.program.affectedRegions,
-        existingPlan: plan,
-      );
+  Future<void> _openPlanBuilder({TreatmentPlan? plan}) => TreatmentPlanBuilderSheet.show(context, programId: widget.program.id, patientId: widget.program.patientId, affectedRegions: widget.program.affectedRegions, existingPlan: plan);
 
   Future<void> _deletePlan(String planId) async {
     final confirmed = await showDialog<bool>(
       context: context,
-      builder: (ctx) => const ConfirmationDialog(
-        title: AppStrings.deleteTreatmentPlan,
-        message: AppStrings.deleteTreatmentPlanConfirm,
-        isDestructive: true,
-      ),
+      builder: (ctx) => const ConfirmationDialog(title: AppStrings.deleteTreatmentPlan, message: AppStrings.deleteTreatmentPlanConfirm, isDestructive: true),
     );
     if (confirmed != true || !mounted) return;
 
-    final res = await ref.read(treatmentPlanControllerProvider.notifier).deletePlan(
-          planId: planId,
-          programId: widget.program.id,
-          patientId: widget.program.patientId,
-        );
-
+    final res = await ref.read(treatmentPlanControllerProvider.notifier).deletePlan(planId: planId, programId: widget.program.id, patientId: widget.program.patientId);
     if (!mounted) return;
     res.when(
       success: (_) => AppSnackbar.show(context, message: AppStrings.treatmentPlanDeleted, variant: AppSnackbarVariant.success),
@@ -61,41 +46,63 @@ class _ProgramDetailTreatmentState extends ConsumerState<ProgramDetailTreatment>
     );
   }
 
+  PopupMenuItem<String> _menuItem(String val, IconData icon, Color iconColor, String label, {Color? textColor}) => PopupMenuItem(
+        value: val,
+        height: AppSizes.buttonHeightSmall,
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: AppSizes.iconSmall, color: iconColor),
+            const SizedBox(width: AppSizes.p8),
+            Text(label, style: AppTextStyles.bodyMedium.copyWith(color: textColor)),
+          ],
+        ),
+      );
+
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     final isSenior = ref.watch(currentUserProvider).value?.isSeniorDoctor ?? false;
     final activePlan = widget.program.activePlan;
-    final inactivePlans = widget.program.treatmentPlans.where((p) => p.id != activePlan?.id).toList()
-      ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
+    final inactivePlans = widget.program.treatmentPlans.where((p) => p.id != activePlan?.id).toList()..sort((a, b) => b.createdAt.compareTo(a.createdAt));
 
     return Container(
       padding: const EdgeInsets.all(AppSizes.p16),
-      decoration: BoxDecoration(
-        color: cs.surfaceContainerLow,
-        borderRadius: BorderRadius.circular(AppSizes.r16),
-        border: Border.all(color: cs.outlineVariant),
-      ),
+      decoration: BoxDecoration(color: cs.surfaceContainerLow, borderRadius: BorderRadius.circular(AppSizes.r16), border: Border.all(color: cs.outlineVariant)),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Row(
-                children: [
-                  Icon(Icons.medical_services_outlined, size: AppSizes.iconSmall, color: cs.primary),
-                  const SizedBox(width: AppSizes.p8),
-                  Text(AppStrings.treatmentPlan, style: AppTextStyles.cardTitle.copyWith(color: cs.onSurface)),
-                ],
-              ),
+              Icon(Icons.medical_services_outlined, size: AppSizes.iconSmall, color: cs.primary),
+              const SizedBox(width: AppSizes.p8),
+              Expanded(child: Text(AppStrings.treatmentPlan, style: AppTextStyles.cardTitle.copyWith(color: cs.onSurface), overflow: TextOverflow.ellipsis)),
               if (activePlan != null && isSenior)
-                Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    IconButton(icon: const Icon(Icons.add_circle_outline, size: 18), tooltip: AppStrings.newPlanVersion, onPressed: () => _openPlanBuilder()),
-                    IconButton(icon: const Icon(Icons.edit_outlined, size: 18), tooltip: AppStrings.edit, onPressed: () => _openPlanBuilder(plan: activePlan)),
-                    IconButton(icon: Icon(Icons.delete_outline, size: 18, color: cs.error), tooltip: AppStrings.delete, onPressed: () => _deletePlan(activePlan.id)),
+                PopupMenuButton<String>(
+                  icon: Icon(
+                    Icons.more_horiz_rounded,
+                    color: cs.onSurfaceVariant,
+                    size: AppSizes.iconDefault,
+                  ),
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(),
+                  splashRadius: AppSizes.iconDefault,
+                  color: cs.surface,
+                  shape: const RoundedRectangleBorder(
+                    borderRadius: BorderRadius.all(Radius.circular(AppSizes.r12)),
+                  ),
+                  elevation: 2,
+                  position: PopupMenuPosition.under,
+                  tooltip: AppStrings.treatmentPlan,
+                  onSelected: (val) {
+                    if (val == 'new_version') _openPlanBuilder();
+                    if (val == 'edit') _openPlanBuilder(plan: activePlan);
+                    if (val == 'delete') _deletePlan(activePlan.id);
+                  },
+                  itemBuilder: (ctx) => [
+                    _menuItem('new_version', Icons.add_circle_outline, cs.primary, AppStrings.newPlanVersion, textColor: cs.onSurface),
+                    _menuItem('edit', Icons.edit_outlined, cs.primary, AppStrings.edit, textColor: cs.onSurface),
+                    _menuItem('delete', Icons.delete_outline_rounded, cs.error, AppStrings.delete, textColor: cs.error),
                   ],
                 ),
             ],
@@ -144,21 +151,8 @@ class _ProgramDetailTreatmentState extends ConsumerState<ProgramDetailTreatment>
           const SizedBox(height: AppSizes.p8),
           Text(plan.notes!.trim(), style: AppTextStyles.bodySecondary.copyWith(color: cs.onSurfaceVariant)),
         ],
-        const SizedBox(height: AppSizes.p12),
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: AppSizes.p12, vertical: AppSizes.p4),
-          decoration: BoxDecoration(
-            color: cs.surface,
-            borderRadius: BorderRadius.circular(AppSizes.r12),
-            border: Border.all(color: cs.outlineVariant.withAlpha(120)),
-          ),
-          child: Column(
-            children: [
-              for (int i = 0; i < plan.modalities.length; i++)
-                TreatmentModalityTile(modality: plan.modalities[i], showDivider: i < plan.modalities.length - 1),
-            ],
-          ),
-        ),
+        const SizedBox(height: AppSizes.p8),
+        for (int i = 0; i < plan.modalities.length; i++) TreatmentModalityTile(modality: plan.modalities[i], showDivider: i < plan.modalities.length - 1),
       ],
     );
   }
@@ -167,7 +161,7 @@ class _ProgramDetailTreatmentState extends ConsumerState<ProgramDetailTreatment>
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Divider(height: AppSizes.p16),
+        Divider(height: AppSizes.p16, color: cs.outlineVariant.withAlpha(60)),
         InkWell(
           onTap: () => setState(() => _historyExpanded = !_historyExpanded),
           borderRadius: BorderRadius.circular(AppSizes.r8),

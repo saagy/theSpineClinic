@@ -68,7 +68,7 @@ class ProgramMediaReel extends StatelessWidget {
           ),
           const SizedBox(height: AppSizes.p8),
           SizedBox(
-            height: 140,
+            height: 132,
             child: ListView.separated(
               scrollDirection: Axis.horizontal,
               physics: const BouncingScrollPhysics(),

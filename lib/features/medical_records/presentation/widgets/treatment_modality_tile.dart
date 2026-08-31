@@ -2,6 +2,7 @@ library;
 
 import 'package:flutter/material.dart';
 import 'package:spine_clinic_app/core/constants/app_sizes.dart';
+import 'package:spine_clinic_app/core/constants/app_strings.dart';
 import 'package:spine_clinic_app/core/constants/app_text_styles.dart';
 import 'package:spine_clinic_app/features/medical_records/domain/plan_modality.dart';
 
@@ -28,19 +29,37 @@ class TreatmentModalityTile extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Expanded(
-                flex: 4,
+                flex: 5,
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      modality.modalityType.displayLabel,
-                      style: AppTextStyles.bodyBold.copyWith(color: cs.onSurface),
+                    Row(
+                      children: [
+                        Container(
+                          width: 6,
+                          height: 6,
+                          decoration: BoxDecoration(
+                            color: cs.primary,
+                            shape: BoxShape.circle,
+                          ),
+                        ),
+                        const SizedBox(width: AppSizes.p8),
+                        Expanded(
+                          child: Text(
+                            modality.modalityType.displayLabel,
+                            style: AppTextStyles.bodyBold.copyWith(color: cs.onSurface),
+                          ),
+                        ),
+                      ],
                     ),
                     if (modality.notes != null && modality.notes!.trim().isNotEmpty) ...[
                       const SizedBox(height: AppSizes.p2),
-                      Text(
-                        modality.notes!.trim(),
-                        style: AppTextStyles.caption.copyWith(color: cs.onSurfaceVariant),
+                      Padding(
+                        padding: const EdgeInsets.only(left: AppSizes.p14),
+                        child: Text(
+                          modality.notes!.trim(),
+                          style: AppTextStyles.caption.copyWith(color: cs.onSurfaceVariant),
+                        ),
                       ),
                     ],
                   ],
@@ -48,7 +67,7 @@ class TreatmentModalityTile extends StatelessWidget {
               ),
               const SizedBox(width: AppSizes.p8),
               Expanded(
-                flex: 6,
+                flex: 5,
                 child: modality.regions.isNotEmpty
                     ? Wrap(
                         alignment: WrapAlignment.end,
@@ -87,10 +106,11 @@ class TreatmentModalityTile extends StatelessWidget {
                           decoration: BoxDecoration(
                             color: cs.surfaceContainerHighest.withAlpha(80),
                             borderRadius: BorderRadius.circular(AppSizes.r8),
+                            border: Border.all(color: cs.outlineVariant.withAlpha(80)),
                           ),
                           child: Text(
-                            'General Technique',
-                            style: AppTextStyles.caption.copyWith(
+                            AppStrings.modalityGeneral,
+                            style: AppTextStyles.captionBold.copyWith(
                               color: cs.onSurfaceVariant,
                             ),
                           ),

@@ -16,32 +16,28 @@ class ProgramDetailFindings extends ConsumerWidget {
 
   final PatientProgram program;
 
-  Widget _buildFieldTile(BuildContext context, {required String label, required String? value, required IconData icon}) {
+  Widget _buildFindingItem(
+    BuildContext context, {
+    required String label,
+    required String? value,
+    required IconData icon,
+  }) {
     if (value == null || value.trim().isEmpty) return const SizedBox.shrink();
     final cs = Theme.of(context).colorScheme;
 
-    return Container(
-      margin: const EdgeInsets.only(bottom: AppSizes.p8),
-      padding: const EdgeInsets.all(AppSizes.p12),
-      decoration: BoxDecoration(
-        color: cs.surface,
-        borderRadius: BorderRadius.circular(AppSizes.r12),
-        border: Border.all(color: cs.outlineVariant.withAlpha(120)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Icon(icon, size: 15, color: cs.primary),
-              const SizedBox(width: AppSizes.p6),
-              Text(label, style: AppTextStyles.captionBold.copyWith(color: cs.onSurfaceVariant)),
-            ],
-          ),
-          const SizedBox(height: AppSizes.p6),
-          Text(value.trim(), style: AppTextStyles.body.copyWith(color: cs.onSurface)),
-        ],
-      ),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Icon(icon, size: 14, color: cs.primary),
+            const SizedBox(width: AppSizes.p6),
+            Text(label, style: AppTextStyles.captionBold.copyWith(color: cs.onSurfaceVariant)),
+          ],
+        ),
+        const SizedBox(height: AppSizes.p4),
+        Text(value.trim(), style: AppTextStyles.body.copyWith(color: cs.onSurface)),
+      ],
     );
   }
 
@@ -51,14 +47,18 @@ class ProgramDetailFindings extends ConsumerWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Expanded(child: first),
-          const SizedBox(width: AppSizes.p8),
+          const SizedBox(width: AppSizes.p16),
           Expanded(child: second),
         ],
       );
     }
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
-      children: [first, second],
+      children: [
+        first,
+        const SizedBox(height: AppSizes.p12),
+        second,
+      ],
     );
   }
 
@@ -96,20 +96,33 @@ class ProgramDetailFindings extends ConsumerWidget {
                 children: [
                   Icon(Icons.assignment_outlined, size: AppSizes.iconSmall, color: cs.primary),
                   const SizedBox(width: AppSizes.p8),
-                  Text(AppStrings.clinicalFindingsSection, style: AppTextStyles.cardTitle.copyWith(color: cs.onSurface)),
+                  Expanded(
+                    child: Text(
+                      AppStrings.clinicalFindingsSection,
+                      style: AppTextStyles.cardTitle.copyWith(color: cs.onSurface),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
                 ],
               ),
               const SizedBox(height: AppSizes.p12),
-              if (hasExam && hasImaging)
+              if (hasExam && hasImaging) ...[
                 _buildPair(
                   context,
-                  first: _buildFieldTile(context, label: AppStrings.examination, value: program.examination, icon: Icons.health_and_safety_outlined),
-                  second: _buildFieldTile(context, label: AppStrings.imagingNotes, value: program.imagingNotes, icon: Icons.image_search_outlined),
+                  first: _buildFindingItem(context, label: AppStrings.examination, value: program.examination, icon: Icons.health_and_safety_outlined),
+                  second: _buildFindingItem(context, label: AppStrings.imagingNotes, value: program.imagingNotes, icon: Icons.image_search_outlined),
                   isWide: isWide,
-                )
-              else ...[
-                if (hasExam) _buildFieldTile(context, label: AppStrings.examination, value: program.examination, icon: Icons.health_and_safety_outlined),
-                if (hasImaging) _buildFieldTile(context, label: AppStrings.imagingNotes, value: program.imagingNotes, icon: Icons.image_search_outlined),
+                ),
+                const SizedBox(height: AppSizes.p12),
+              ] else ...[
+                if (hasExam) ...[
+                  _buildFindingItem(context, label: AppStrings.examination, value: program.examination, icon: Icons.health_and_safety_outlined),
+                  const SizedBox(height: AppSizes.p12),
+                ],
+                if (hasImaging) ...[
+                  _buildFindingItem(context, label: AppStrings.imagingNotes, value: program.imagingNotes, icon: Icons.image_search_outlined),
+                  const SizedBox(height: AppSizes.p12),
+                ],
               ],
               if (docs.isNotEmpty) ...[
                 ProgramMediaReel(
@@ -124,18 +137,26 @@ class ProgramDetailFindings extends ConsumerWidget {
                 ),
                 const SizedBox(height: AppSizes.p8),
               ],
-              if (hasExagg && hasRelief)
+              if (hasExagg && hasRelief) ...[
                 _buildPair(
                   context,
-                  first: _buildFieldTile(context, label: AppStrings.exaggeratingPositions, value: program.exaggeratingPositions, icon: Icons.trending_up_rounded),
-                  second: _buildFieldTile(context, label: AppStrings.relievingPositions, value: program.relievingPositions, icon: Icons.trending_down_rounded),
+                  first: _buildFindingItem(context, label: AppStrings.exaggeratingPositions, value: program.exaggeratingPositions, icon: Icons.trending_up_rounded),
+                  second: _buildFindingItem(context, label: AppStrings.relievingPositions, value: program.relievingPositions, icon: Icons.trending_down_rounded),
                   isWide: isWide,
-                )
-              else ...[
-                if (hasExagg) _buildFieldTile(context, label: AppStrings.exaggeratingPositions, value: program.exaggeratingPositions, icon: Icons.trending_up_rounded),
-                if (hasRelief) _buildFieldTile(context, label: AppStrings.relievingPositions, value: program.relievingPositions, icon: Icons.trending_down_rounded),
+                ),
+                if (hasNotes) const SizedBox(height: AppSizes.p12),
+              ] else ...[
+                if (hasExagg) ...[
+                  _buildFindingItem(context, label: AppStrings.exaggeratingPositions, value: program.exaggeratingPositions, icon: Icons.trending_up_rounded),
+                  if (hasNotes || hasRelief) const SizedBox(height: AppSizes.p12),
+                ],
+                if (hasRelief) ...[
+                  _buildFindingItem(context, label: AppStrings.relievingPositions, value: program.relievingPositions, icon: Icons.trending_down_rounded),
+                  if (hasNotes) const SizedBox(height: AppSizes.p12),
+                ],
               ],
-              if (hasNotes) _buildFieldTile(context, label: AppStrings.programNotes, value: program.notes, icon: Icons.notes_rounded),
+              if (hasNotes)
+                _buildFindingItem(context, label: AppStrings.programNotes, value: program.notes, icon: Icons.notes_rounded),
             ],
           ),
         );

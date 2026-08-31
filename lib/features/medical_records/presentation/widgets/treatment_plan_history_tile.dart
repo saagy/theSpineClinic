@@ -102,12 +102,42 @@ class _TreatmentPlanHistoryTileState extends ConsumerState<TreatmentPlanHistoryT
                           : Text(AppStrings.activate),
                     ),
                     PopupMenuButton<String>(
-                      icon: Icon(Icons.more_vert, size: 18, color: cs.onSurfaceVariant),
+                      icon: Icon(Icons.more_horiz_rounded, size: AppSizes.iconDefault, color: cs.onSurfaceVariant),
                       padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(),
+                      splashRadius: AppSizes.iconDefault,
+                      color: cs.surface,
+                      shape: const RoundedRectangleBorder(
+                        borderRadius: BorderRadius.all(Radius.circular(AppSizes.r12)),
+                      ),
+                      elevation: 2,
+                      position: PopupMenuPosition.under,
                       onSelected: (val) => val == 'edit' ? widget.onEdit() : widget.onDelete(),
                       itemBuilder: (ctx) => [
-                        const PopupMenuItem(value: 'edit', child: Text(AppStrings.edit)),
-                        PopupMenuItem(value: 'delete', child: Text(AppStrings.delete, style: TextStyle(color: cs.error))),
+                        PopupMenuItem(
+                          value: 'edit',
+                          height: AppSizes.buttonHeightSmall,
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(Icons.edit_outlined, color: cs.primary, size: AppSizes.iconSmall),
+                              const SizedBox(width: AppSizes.p8),
+                              Text(AppStrings.edit, style: AppTextStyles.bodyMedium.copyWith(color: cs.onSurface)),
+                            ],
+                          ),
+                        ),
+                        PopupMenuItem(
+                          value: 'delete',
+                          height: AppSizes.buttonHeightSmall,
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(Icons.delete_outline_rounded, color: cs.error, size: AppSizes.iconSmall),
+                              const SizedBox(width: AppSizes.p8),
+                              Text(AppStrings.delete, style: AppTextStyles.bodyMedium.copyWith(color: cs.error)),
+                            ],
+                          ),
+                        ),
                       ],
                     ),
                   ],

@@ -974,7 +974,7 @@ abstract final class AppStrings {
   static const String imagingNotes = 'Imaging Findings';
   static const String imagingNotesHint =
       'X-ray, MRI, CT scan interpretation…';
-  static const String exaggeratingPositions = 'Exaggerating Positions';
+  static const String exaggeratingPositions = 'Aggravating Positions';
   static const String exaggeratingPositionsHint = 'Positions/movements that worsen pain…';
   static const String relievingPositions = 'Relieving Positions';
   static const String relievingPositionsHint = 'Positions/movements that ease pain…';
@@ -1005,6 +1005,7 @@ abstract final class AppStrings {
   static const String modalityTecarFocal = 'TECAR Focal Technique';
   static const String modalityNeurodynamicNonWb = 'Neurodynamic (Non-WB)';
   static const String modalityNeurodynamicWb = 'Neurodynamic (WB)';
+  static const String modalityGeneral = 'General';
 
   // Lateralities
   static const String lateralityRight = 'Right';
@@ -1063,7 +1064,8 @@ abstract final class AppStrings {
       '$count ${count == 1 ? 'Region' : 'Regions'}';
   static String durationFormat(int min) => '$min min';
   static String totalDurationFormat(int min) => '$min min total';
-  static String scansCount(int count) => '$count ${count == 1 ? 'Scan' : 'Scans'}';
+  static String conditionsCount(int count) =>
+      '$count ${count == 1 ? 'Condition' : 'Conditions'}';
   static String regionsAndConditionsCount(int regions, int conditions) =>
       '$regions ${regions == 1 ? 'Region' : 'Regions'} · $conditions ${conditions == 1 ? 'Condition' : 'Conditions'}';
 

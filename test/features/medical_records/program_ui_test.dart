@@ -9,16 +9,20 @@ import 'package:spine_clinic_app/features/auth/presentation/auth_providers.dart'
 import 'package:spine_clinic_app/features/medical_records/domain/body_region.dart';
 import 'package:spine_clinic_app/features/medical_records/domain/condition_catalog.dart';
 import 'package:spine_clinic_app/features/medical_records/domain/condition_catalog_repository.dart';
+import 'package:spine_clinic_app/features/medical_records/domain/modality_type.dart';
 import 'package:spine_clinic_app/features/medical_records/domain/patient_program.dart';
+import 'package:spine_clinic_app/features/medical_records/domain/plan_modality.dart';
 import 'package:spine_clinic_app/features/medical_records/domain/program_condition.dart';
 import 'package:spine_clinic_app/features/medical_records/domain/program_repository.dart';
 import 'package:spine_clinic_app/features/medical_records/domain/program_status.dart';
+import 'package:spine_clinic_app/features/medical_records/domain/treatment_plan.dart';
 import 'package:spine_clinic_app/features/medical_records/presentation/condition_catalog_providers.dart';
 import 'package:spine_clinic_app/features/medical_records/presentation/patient_programs_providers.dart';
 import 'package:spine_clinic_app/features/medical_records/presentation/screens/program_detail_screen.dart';
 import 'package:spine_clinic_app/features/medical_records/presentation/screens/program_form_screen.dart';
 import 'package:spine_clinic_app/features/medical_records/presentation/widgets/condition_picker_sheet.dart';
 import 'package:spine_clinic_app/features/medical_records/presentation/widgets/region_filter_dropdown.dart';
+import 'package:spine_clinic_app/features/medical_records/presentation/widgets/treatment_modality_tile.dart';
 import 'package:spine_clinic_app/features/patient/domain/clinic_location.dart';
 import 'package:spine_clinic_app/features/patient/domain/patient.dart';
 import 'package:spine_clinic_app/features/patient/presentation/widgets/patient_tab_programs.dart';
@@ -210,6 +214,8 @@ void main() {
       createdBy: 'doc1',
       examination: 'Full flexion with mild pain at end range',
       imagingNotes: 'MRI indicates mild L4-L5 bulge',
+      exaggeratingPositions: 'Sitting > 20 mins',
+      relievingPositions: 'Supine rest',
       createdAt: DateTime(2026, 8, 30),
       updatedAt: DateTime(2026, 8, 30),
       conditions: [
@@ -222,6 +228,24 @@ void main() {
             region: BodyRegion.shoulder,
             conditionName: 'Shoulder impingement syndrome',
           ),
+        ),
+      ],
+      treatmentPlans: [
+        TreatmentPlan(
+          id: 'plan-1',
+          programId: 'prog-1',
+          createdBy: 'doc1',
+          planName: 'Plan 1',
+          isActive: true,
+          createdAt: DateTime(2026, 8, 30),
+          updatedAt: DateTime(2026, 8, 30),
+          modalities: [
+            PlanModality(
+              id: 'm1',
+              treatmentPlanId: 'plan-1',
+              modalityType: ModalityType.tecarFocal,
+            ),
+          ],
         ),
       ],
     );
@@ -250,6 +274,16 @@ void main() {
     expect(find.text('Shoulder impingement syndrome'), findsOneWidget);
     expect(find.text('Full flexion with mild pain at end range'), findsOneWidget);
     expect(find.text('MRI indicates mild L4-L5 bulge'), findsOneWidget);
+    expect(find.text('Sitting > 20 mins'), findsOneWidget);
+    expect(find.text('Supine rest'), findsOneWidget);
+    expect(find.text(AppStrings.exaggeratingPositions), findsOneWidget);
+    expect(find.text('1 Condition'), findsOneWidget);
+
+    // Verify AppBar action buttons are present
+    expect(find.byIcon(Icons.picture_as_pdf_outlined), findsOneWidget);
+    expect(find.byIcon(Icons.edit_outlined), findsOneWidget);
+    expect(find.byIcon(Icons.delete_outline), findsOneWidget);
+    expect(find.byIcon(Icons.more_horiz_rounded), findsWidgets);
 
     // Verify Treatment Plan is rendered after Findings
     final findingsTop = tester.getTopLeft(find.text(AppStrings.clinicalFindingsSection)).dy;
@@ -295,5 +329,31 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text(AppStrings.allBodyRegions), findsOneWidget);
+  });
+
+  testWidgets('TreatmentModalityTile displays General badge without duration when regions are empty', (tester) async {
+    const modality = PlanModality(
+      id: 'm1',
+      treatmentPlanId: 'tp1',
+      modalityType: ModalityType.tecar,
+      notes: 'General application',
+      regions: [],
+    );
+
+    await tester.pumpWidget(
+      const MaterialApp(
+        home: Scaffold(
+          body: TreatmentModalityTile(modality: modality),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('TECAR'), findsOneWidget);
+    expect(find.text('General application'), findsOneWidget);
+    expect(find.text(AppStrings.modalityGeneral), findsOneWidget);
+    // Should NOT have any duration minutes formatted
+    expect(find.textContaining('min'), findsNothing);
+    expect(find.textContaining('m'), findsNothing);
   });
 }
