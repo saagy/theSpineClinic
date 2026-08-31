@@ -18,6 +18,7 @@ import 'package:spine_clinic_app/features/medical_records/domain/program_conditi
 import 'package:spine_clinic_app/features/medical_records/domain/program_repository.dart';
 import 'package:spine_clinic_app/features/medical_records/domain/program_status.dart';
 import 'package:spine_clinic_app/features/medical_records/domain/treatment_plan.dart';
+import 'package:spine_clinic_app/features/medical_records/domain/treatment_plan_input.dart';
 import 'package:spine_clinic_app/features/medical_records/domain/treatment_plan_repository.dart';
 import 'package:spine_clinic_app/features/medical_records/presentation/patient_programs_providers.dart';
 import 'package:spine_clinic_app/features/medical_records/presentation/treatment_plan_controller.dart';
@@ -53,9 +54,9 @@ class _FakeProgRepo implements ProgramRepository {
   @override
   Future<Result<PatientProgram?>> getProgramById(String programId) async => const Result.success(null);
   @override
-  Future<Result<PatientProgram>> createProgram({required String patientId, required List<String> conditionIds, String? examination, String? imagingNotes, String? exaggeratingPositions, String? relievingPositions, String? notes, List<ProgramAttachment>? pendingAttachments}) async => throw UnimplementedError();
+  Future<Result<PatientProgram>> createProgram({required String patientId, required List<String> conditionIds, String? examination, String? imagingNotes, String? exaggeratingPositions, String? relievingPositions, String? notes, List<ProgramAttachment>? pendingAttachments, TreatmentPlanInput? treatmentPlan}) async => throw UnimplementedError();
   @override
-  Future<Result<PatientProgram>> updateProgram({required String programId, required String patientId, required List<String> conditionIds, String? examination, String? imagingNotes, String? exaggeratingPositions, String? relievingPositions, String? notes, ProgramStatus? status, List<ProgramAttachment>? pendingAttachments}) async => throw UnimplementedError();
+  Future<Result<PatientProgram>> updateProgram({required String programId, required String patientId, required List<String> conditionIds, String? examination, String? imagingNotes, String? exaggeratingPositions, String? relievingPositions, String? notes, ProgramStatus? status, List<ProgramAttachment>? pendingAttachments, TreatmentPlanInput? treatmentPlan}) async => throw UnimplementedError();
   @override
   Future<Result<void>> updateProgramStatus({required String programId, required ProgramStatus status}) async => const Result.success(null);
   @override

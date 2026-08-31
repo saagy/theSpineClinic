@@ -336,7 +336,8 @@ CREATE OR REPLACE FUNCTION public.create_patient_program(
   p_exaggerating_positions text DEFAULT NULL,
   p_relieving_positions text DEFAULT NULL,
   p_notes text DEFAULT NULL,
-  p_documents jsonb DEFAULT NULL
+  p_documents jsonb DEFAULT NULL,
+  p_treatment_plan jsonb DEFAULT NULL
 )
 RETURNS jsonb
 LANGUAGE plpgsql
@@ -349,6 +350,10 @@ DECLARE
   v_caller_active boolean;
   v_program_id uuid;
   v_cond_id uuid;
+  v_plan_id uuid;
+  v_modality_elem jsonb;
+  v_modality_id uuid;
+  v_region_elem jsonb;
   v_result jsonb;
 BEGIN
   SELECT id, role, is_senior, is_active
@@ -404,6 +409,61 @@ BEGIN
     FROM jsonb_array_elements(p_documents) AS doc;
   END IF;
 
+  IF p_treatment_plan IS NOT NULL AND p_treatment_plan != 'null'::jsonb THEN
+    IF (p_treatment_plan->'modalities' IS NOT NULL AND jsonb_array_length(p_treatment_plan->'modalities') > 0)
+       OR (p_treatment_plan->>'notes' IS NOT NULL AND p_treatment_plan->>'notes' != '') THEN
+      INSERT INTO public.treatment_plans (
+        program_id,
+        created_by,
+        plan_name,
+        is_active,
+        notes
+      ) VALUES (
+        v_program_id,
+        v_caller_staff_id,
+        COALESCE(NULLIF(p_treatment_plan->>'plan_name', ''), 'Plan 1'),
+        COALESCE((p_treatment_plan->>'is_active')::boolean, true),
+        p_treatment_plan->>'notes'
+      )
+      RETURNING id INTO v_plan_id;
+
+      IF p_treatment_plan->'modalities' IS NOT NULL AND jsonb_array_length(p_treatment_plan->'modalities') > 0 THEN
+        FOR v_modality_elem IN SELECT * FROM jsonb_array_elements(p_treatment_plan->'modalities') LOOP
+          INSERT INTO public.plan_modalities (
+            treatment_plan_id,
+            modality_type,
+            notes
+          ) VALUES (
+            v_plan_id,
+            (v_modality_elem->>'modality_type')::public.modality_type,
+            v_modality_elem->>'notes'
+          )
+          RETURNING id INTO v_modality_id;
+
+          IF v_modality_elem->'regions' IS NOT NULL AND jsonb_array_length(v_modality_elem->'regions') > 0 THEN
+            FOR v_region_elem IN SELECT * FROM jsonb_array_elements(v_modality_elem->'regions') LOOP
+              INSERT INTO public.modality_regions (
+                plan_modality_id,
+                target_region,
+                laterality,
+                time_minutes
+              ) VALUES (
+                v_modality_id,
+                v_region_elem->>'target_region',
+                CASE
+                  WHEN v_region_elem->>'laterality' IS NOT NULL AND v_region_elem->>'laterality' != ''
+                  THEN (v_region_elem->>'laterality')::public.laterality
+                  ELSE NULL
+                END,
+                COALESCE((v_region_elem->>'time_minutes')::integer, 15)
+              );
+            END LOOP;
+          END IF;
+        END LOOP;
+      END IF;
+    END IF;
+  END IF;
+
   SELECT jsonb_build_object(
     'id', p.id,
     'patient_id', p.patient_id,
@@ -433,7 +493,8 @@ CREATE OR REPLACE FUNCTION public.update_patient_program(
   p_relieving_positions text DEFAULT NULL,
   p_notes text DEFAULT NULL,
   p_status public.program_status DEFAULT NULL,
-  p_documents jsonb DEFAULT NULL
+  p_documents jsonb DEFAULT NULL,
+  p_treatment_plan jsonb DEFAULT NULL
 )
 RETURNS jsonb
 LANGUAGE plpgsql
@@ -446,6 +507,10 @@ DECLARE
   v_caller_active boolean;
   v_program public.patient_programs%ROWTYPE;
   v_cond_id uuid;
+  v_plan_id uuid;
+  v_modality_elem jsonb;
+  v_modality_id uuid;
+  v_region_elem jsonb;
   v_result jsonb;
 BEGIN
   SELECT id, role, is_senior, is_active
@@ -497,6 +562,125 @@ BEGIN
       doc->>'file_name',
       v_caller_staff_id
     FROM jsonb_array_elements(p_documents) AS doc;
+  END IF;
+
+  IF p_treatment_plan IS NOT NULL AND p_treatment_plan != 'null'::jsonb THEN
+    IF p_treatment_plan->>'id' IS NOT NULL AND (p_treatment_plan->>'id')::text != '' THEN
+      v_plan_id := (p_treatment_plan->>'id')::uuid;
+
+      UPDATE public.treatment_plans
+      SET
+        plan_name = COALESCE(NULLIF(p_treatment_plan->>'plan_name', ''), plan_name),
+        is_active = COALESCE((p_treatment_plan->>'is_active')::boolean, is_active),
+        notes = p_treatment_plan->>'notes',
+        updated_at = now()
+      WHERE id = v_plan_id AND program_id = p_program_id;
+
+      IF COALESCE((p_treatment_plan->>'is_active')::boolean, false) IS TRUE THEN
+        UPDATE public.treatment_plans
+        SET is_active = false, updated_at = now()
+        WHERE program_id = p_program_id AND is_active = true AND id != v_plan_id;
+      END IF;
+
+      IF p_treatment_plan->'modalities' IS NOT NULL THEN
+        DELETE FROM public.plan_modalities WHERE treatment_plan_id = v_plan_id;
+
+        IF jsonb_array_length(p_treatment_plan->'modalities') > 0 THEN
+          FOR v_modality_elem IN SELECT * FROM jsonb_array_elements(p_treatment_plan->'modalities') LOOP
+            INSERT INTO public.plan_modalities (
+              treatment_plan_id,
+              modality_type,
+              notes
+            ) VALUES (
+              v_plan_id,
+              (v_modality_elem->>'modality_type')::public.modality_type,
+              v_modality_elem->>'notes'
+            )
+            RETURNING id INTO v_modality_id;
+
+            IF v_modality_elem->'regions' IS NOT NULL AND jsonb_array_length(v_modality_elem->'regions') > 0 THEN
+              FOR v_region_elem IN SELECT * FROM jsonb_array_elements(v_modality_elem->'regions') LOOP
+                INSERT INTO public.modality_regions (
+                  plan_modality_id,
+                  target_region,
+                  laterality,
+                  time_minutes
+                ) VALUES (
+                  v_modality_id,
+                  v_region_elem->>'target_region',
+                  CASE
+                    WHEN v_region_elem->>'laterality' IS NOT NULL AND v_region_elem->>'laterality' != ''
+                    THEN (v_region_elem->>'laterality')::public.laterality
+                    ELSE NULL
+                  END,
+                  COALESCE((v_region_elem->>'time_minutes')::integer, 15)
+                );
+              END LOOP;
+            END IF;
+          END LOOP;
+        END IF;
+      END IF;
+    ELSE
+      IF (p_treatment_plan->'modalities' IS NOT NULL AND jsonb_array_length(p_treatment_plan->'modalities') > 0)
+         OR (p_treatment_plan->>'notes' IS NOT NULL AND p_treatment_plan->>'notes' != '') THEN
+
+        IF COALESCE((p_treatment_plan->>'is_active')::boolean, true) IS TRUE THEN
+          UPDATE public.treatment_plans
+          SET is_active = false, updated_at = now()
+          WHERE program_id = p_program_id AND is_active = true;
+        END IF;
+
+        INSERT INTO public.treatment_plans (
+          program_id,
+          created_by,
+          plan_name,
+          is_active,
+          notes
+        ) VALUES (
+          p_program_id,
+          v_caller_staff_id,
+          COALESCE(NULLIF(p_treatment_plan->>'plan_name', ''), 'Plan 1'),
+          COALESCE((p_treatment_plan->>'is_active')::boolean, true),
+          p_treatment_plan->>'notes'
+        )
+        RETURNING id INTO v_plan_id;
+
+        IF p_treatment_plan->'modalities' IS NOT NULL AND jsonb_array_length(p_treatment_plan->'modalities') > 0 THEN
+          FOR v_modality_elem IN SELECT * FROM jsonb_array_elements(p_treatment_plan->'modalities') LOOP
+            INSERT INTO public.plan_modalities (
+              treatment_plan_id,
+              modality_type,
+              notes
+            ) VALUES (
+              v_plan_id,
+              (v_modality_elem->>'modality_type')::public.modality_type,
+              v_modality_elem->>'notes'
+            )
+            RETURNING id INTO v_modality_id;
+
+            IF v_modality_elem->'regions' IS NOT NULL AND jsonb_array_length(v_modality_elem->'regions') > 0 THEN
+              FOR v_region_elem IN SELECT * FROM jsonb_array_elements(v_modality_elem->'regions') LOOP
+                INSERT INTO public.modality_regions (
+                  plan_modality_id,
+                  target_region,
+                  laterality,
+                  time_minutes
+                ) VALUES (
+                  v_modality_id,
+                  v_region_elem->>'target_region',
+                  CASE
+                    WHEN v_region_elem->>'laterality' IS NOT NULL AND v_region_elem->>'laterality' != ''
+                    THEN (v_region_elem->>'laterality')::public.laterality
+                    ELSE NULL
+                  END,
+                  COALESCE((v_region_elem->>'time_minutes')::integer, 15)
+                );
+              END LOOP;
+            END IF;
+          END LOOP;
+        END IF;
+      END IF;
+    END IF;
   END IF;
 
   SELECT jsonb_build_object(

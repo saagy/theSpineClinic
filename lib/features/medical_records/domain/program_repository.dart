@@ -4,6 +4,7 @@ import 'dart:typed_data';
 import 'package:spine_clinic_app/core/errors/result.dart';
 import 'package:spine_clinic_app/features/medical_records/domain/patient_program.dart';
 import 'package:spine_clinic_app/features/medical_records/domain/program_status.dart';
+import 'package:spine_clinic_app/features/medical_records/domain/treatment_plan_input.dart';
 
 /// Represents a raw imaging file to attach atomically with a program.
 class ProgramAttachment {
@@ -34,6 +35,7 @@ abstract class ProgramRepository {
     String? relievingPositions,
     String? notes,
     List<ProgramAttachment>? pendingAttachments,
+    TreatmentPlanInput? treatmentPlan,
   });
 
   /// Updates an existing patient program atomically via PostgreSQL RPC.
@@ -48,6 +50,7 @@ abstract class ProgramRepository {
     String? notes,
     ProgramStatus? status,
     List<ProgramAttachment>? pendingAttachments,
+    TreatmentPlanInput? treatmentPlan,
   });
 
   /// Updates only the status of a program (e.g. active, completed, archived).

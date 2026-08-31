@@ -7,6 +7,7 @@ import 'package:spine_clinic_app/features/medical_records/data/program_storage_h
 import 'package:spine_clinic_app/features/medical_records/domain/patient_program.dart';
 import 'package:spine_clinic_app/features/medical_records/domain/program_repository.dart';
 import 'package:spine_clinic_app/features/medical_records/domain/program_status.dart';
+import 'package:spine_clinic_app/features/medical_records/domain/treatment_plan_input.dart';
 import 'package:spine_clinic_app/features/patient/data/patient_document_storage.dart';
 
 /// Supabase-backed implementation of [ProgramRepository].
@@ -88,6 +89,7 @@ class ProgramRepositoryImpl implements ProgramRepository {
     String? relievingPositions,
     String? notes,
     List<ProgramAttachment>? pendingAttachments,
+    TreatmentPlanInput? treatmentPlan,
   }) async {
     final paths = <String>[];
     try {
@@ -111,6 +113,8 @@ class ProgramRepositoryImpl implements ProgramRepository {
         'p_relieving_positions': relievingPositions,
         'p_notes': notes,
         if (docPayloads != null) 'p_documents': docPayloads,
+        if (treatmentPlan != null && treatmentPlan.isNotEmpty)
+          'p_treatment_plan': treatmentPlan.toJson(),
       };
 
       final data = await _service.guardQuery(
@@ -151,6 +155,7 @@ class ProgramRepositoryImpl implements ProgramRepository {
     String? notes,
     ProgramStatus? status,
     List<ProgramAttachment>? pendingAttachments,
+    TreatmentPlanInput? treatmentPlan,
   }) async {
     final paths = <String>[];
     try {
@@ -175,6 +180,8 @@ class ProgramRepositoryImpl implements ProgramRepository {
         'p_notes': notes,
         if (status != null) 'p_status': status.name,
         if (docPayloads != null) 'p_documents': docPayloads,
+        if (treatmentPlan != null && treatmentPlan.isNotEmpty)
+          'p_treatment_plan': treatmentPlan.toJson(),
       };
 
       await _service.guardQuery(

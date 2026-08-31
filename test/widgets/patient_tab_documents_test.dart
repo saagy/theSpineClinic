@@ -6,6 +6,7 @@ import 'package:spine_clinic_app/core/errors/result.dart';
 import 'package:spine_clinic_app/features/medical_records/domain/patient_program.dart';
 import 'package:spine_clinic_app/features/medical_records/domain/program_repository.dart';
 import 'package:spine_clinic_app/features/medical_records/domain/program_status.dart';
+import 'package:spine_clinic_app/features/medical_records/domain/treatment_plan_input.dart';
 import 'package:spine_clinic_app/features/medical_records/presentation/patient_programs_providers.dart';
 import 'package:spine_clinic_app/features/patient/domain/clinic_location.dart';
 import 'package:spine_clinic_app/features/patient/domain/patient.dart';
@@ -95,6 +96,7 @@ class FakeProgramRepository implements ProgramRepository {
     String? relievingPositions,
     String? notes,
     List<ProgramAttachment>? pendingAttachments,
+    TreatmentPlanInput? treatmentPlan,
   }) async =>
       throw UnimplementedError();
 
@@ -110,6 +112,7 @@ class FakeProgramRepository implements ProgramRepository {
     String? notes,
     ProgramStatus? status,
     List<ProgramAttachment>? pendingAttachments,
+    TreatmentPlanInput? treatmentPlan,
   }) async =>
       throw UnimplementedError();
 

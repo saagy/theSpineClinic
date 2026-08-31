@@ -16,6 +16,7 @@ import 'package:spine_clinic_app/features/medical_records/domain/program_conditi
 import 'package:spine_clinic_app/features/medical_records/domain/program_repository.dart';
 import 'package:spine_clinic_app/features/medical_records/domain/program_status.dart';
 import 'package:spine_clinic_app/features/medical_records/domain/treatment_plan.dart';
+import 'package:spine_clinic_app/features/medical_records/domain/treatment_plan_input.dart';
 import 'package:spine_clinic_app/features/medical_records/presentation/condition_catalog_providers.dart';
 import 'package:spine_clinic_app/features/medical_records/presentation/patient_programs_providers.dart';
 import 'package:spine_clinic_app/features/medical_records/presentation/screens/program_detail_screen.dart';
@@ -86,6 +87,7 @@ class _FakeProgramRepo implements ProgramRepository {
     String? relievingPositions,
     String? notes,
     List<ProgramAttachment>? pendingAttachments,
+    TreatmentPlanInput? treatmentPlan,
   }) async {
     final prog = PatientProgram(
       id: 'p1',
@@ -112,6 +114,7 @@ class _FakeProgramRepo implements ProgramRepository {
     String? notes,
     ProgramStatus? status,
     List<ProgramAttachment>? pendingAttachments,
+    TreatmentPlanInput? treatmentPlan,
   }) async =>
       Result.success(programs.first);
 
@@ -355,5 +358,61 @@ void main() {
     // Should NOT have any duration minutes formatted
     expect(find.textContaining('min'), findsNothing);
     expect(find.textContaining('m'), findsNothing);
+  });
+
+  testWidgets('ProgramFormScreen renders inline Treatment Plan section and preloads active plan on edit', (tester) async {
+    tester.view.physicalSize = const Size(1080, 2400);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(() {
+      tester.view.resetPhysicalSize();
+      tester.view.resetDevicePixelRatio();
+    });
+
+    final programWithPlan = PatientProgram(
+      id: 'prog-edit-1',
+      patientId: 'pat-1',
+      createdBy: 'doc1',
+      examination: 'Initial exam',
+      createdAt: DateTime(2026, 8, 30),
+      updatedAt: DateTime(2026, 8, 30),
+      conditions: const [],
+      treatmentPlans: [
+        TreatmentPlan(
+          id: 'plan-edit-1',
+          programId: 'prog-edit-1',
+          createdBy: 'doc1',
+          planName: 'Initial Acute Plan',
+          notes: 'Focus on gentle ROM',
+          isActive: true,
+          createdAt: DateTime(2026, 8, 30),
+          updatedAt: DateTime(2026, 8, 30),
+          modalities: const [
+            PlanModality(
+              id: 'm1',
+              treatmentPlanId: 'plan-edit-1',
+              modalityType: ModalityType.musclePain,
+              notes: 'Low intensity',
+            ),
+          ],
+        ),
+      ],
+    );
+
+    final container = ProviderContainer(
+      overrides: [
+        currentUserProvider.overrideWith(() => _StaticUser(senior)),
+      ],
+    );
+
+    await tester.pumpWidget(
+      _wrap(ProgramFormScreen(patientId: 'pat-1', program: programWithPlan), container),
+    );
+    await tester.pumpAndSettle();
+
+    // Verify Treatment Plan section and preloaded values
+    expect(find.text(AppStrings.treatmentPlanSection), findsOneWidget);
+    expect(find.text('Initial Acute Plan'), findsOneWidget);
+    expect(find.text('Focus on gentle ROM'), findsOneWidget);
+    expect(find.text(AppStrings.selectModalities), findsOneWidget);
   });
 }

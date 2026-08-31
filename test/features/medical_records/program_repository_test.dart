@@ -11,6 +11,7 @@ import 'package:spine_clinic_app/features/medical_records/domain/patient_program
 import 'package:spine_clinic_app/features/medical_records/domain/program_condition.dart';
 import 'package:spine_clinic_app/features/medical_records/domain/program_repository.dart';
 import 'package:spine_clinic_app/features/medical_records/domain/program_status.dart';
+import 'package:spine_clinic_app/features/medical_records/domain/treatment_plan_input.dart';
 import 'package:spine_clinic_app/features/medical_records/presentation/patient_programs_providers.dart';
 import 'package:spine_clinic_app/features/medical_records/presentation/program_controller.dart';
 
@@ -42,6 +43,7 @@ class _FakeProgramRepository implements ProgramRepository {
     String? relievingPositions,
     String? notes,
     List<ProgramAttachment>? pendingAttachments,
+    TreatmentPlanInput? treatmentPlan,
   }) async {
     final newProg = PatientProgram(
       id: 'program-${programs.length + 1}',
@@ -86,6 +88,7 @@ class _FakeProgramRepository implements ProgramRepository {
     String? notes,
     ProgramStatus? status,
     List<ProgramAttachment>? pendingAttachments,
+    TreatmentPlanInput? treatmentPlan,
   }) async {
     final index = programs.indexWhere((p) => p.id == programId);
     if (index < 0) {

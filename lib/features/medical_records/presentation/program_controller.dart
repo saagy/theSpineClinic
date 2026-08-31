@@ -8,14 +8,13 @@ import 'package:spine_clinic_app/features/auth/presentation/auth_providers.dart'
 import 'package:spine_clinic_app/features/medical_records/domain/patient_program.dart';
 import 'package:spine_clinic_app/features/medical_records/domain/program_repository.dart';
 import 'package:spine_clinic_app/features/medical_records/domain/program_status.dart';
+import 'package:spine_clinic_app/features/medical_records/domain/treatment_plan_input.dart';
 import 'package:spine_clinic_app/features/medical_records/presentation/patient_programs_providers.dart';
 import 'package:spine_clinic_app/features/patient/presentation/patient_documents_providers.dart';
 
 part 'program_controller.g.dart';
 
-/// Mutation controller managing program creation, updates, status changes, and deletion.
-///
-/// Rule 28 — declared with `keepAlive: true` to prevent premature disposal during in-flight requests.
+/// Mutation controller managing program creation, updates, status changes, and deletion (Rule 28).
 @Riverpod(keepAlive: true)
 class ProgramController extends _$ProgramController {
   @override
@@ -51,6 +50,7 @@ class ProgramController extends _$ProgramController {
     String? relievingPositions,
     String? notes,
     List<ProgramAttachment>? pendingAttachments,
+    TreatmentPlanInput? treatmentPlan,
   }) async {
     final permError = _verifySeniorDoctorPermission();
     if (permError != null) return Result.failure(permError);
@@ -67,6 +67,7 @@ class ProgramController extends _$ProgramController {
       relievingPositions: relievingPositions,
       notes: notes,
       pendingAttachments: pendingAttachments,
+      treatmentPlan: treatmentPlan,
     );
 
     if (!ref.mounted) return result;
@@ -97,6 +98,7 @@ class ProgramController extends _$ProgramController {
     String? notes,
     ProgramStatus? status,
     List<ProgramAttachment>? pendingAttachments,
+    TreatmentPlanInput? treatmentPlan,
   }) async {
     final permError = _verifySeniorDoctorPermission();
     if (permError != null) return Result.failure(permError);
@@ -115,6 +117,7 @@ class ProgramController extends _$ProgramController {
       notes: notes,
       status: status,
       pendingAttachments: pendingAttachments,
+      treatmentPlan: treatmentPlan,
     );
 
     if (!ref.mounted) return result;
@@ -144,9 +147,9 @@ class ProgramController extends _$ProgramController {
     if (permError != null) return Result.failure(permError);
 
     state = const AsyncValue.loading();
-    final ProgramRepository repo = ref.read(programRepositoryProvider);
+    final repo = ref.read(programRepositoryProvider);
 
-    final Result<void> result = await repo.updateProgramStatus(
+    final result = await repo.updateProgramStatus(
       programId: programId,
       status: status,
     );
@@ -159,9 +162,7 @@ class ProgramController extends _$ProgramController {
         ref.read(patientProgramsProvider(patientId).notifier).refresh();
         ref.invalidate(programDetailProvider(programId));
       },
-      failure: (AppException exception) {
-        state = AsyncValue.error(exception, StackTrace.current);
-      },
+      failure: (e) => state = AsyncValue.error(e, StackTrace.current),
     );
 
     return result;
