@@ -97,10 +97,6 @@ class ProgramDetailFindings extends ConsumerWidget {
                   Icon(Icons.assignment_outlined, size: AppSizes.iconSmall, color: cs.primary),
                   const SizedBox(width: AppSizes.p8),
                   Text(AppStrings.clinicalFindingsSection, style: AppTextStyles.cardTitle.copyWith(color: cs.onSurface)),
-                  if (docs.isNotEmpty) ...[
-                    const Spacer(),
-                    Text(AppStrings.scansCount(docs.length), style: AppTextStyles.caption.copyWith(color: cs.onSurfaceVariant)),
-                  ],
                 ],
               ),
               const SizedBox(height: AppSizes.p12),

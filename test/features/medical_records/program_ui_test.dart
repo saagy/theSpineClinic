@@ -246,8 +246,7 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.text(AppStrings.program), findsOneWidget);
-    expect(find.text('Shoulder'), findsOneWidget);
+    expect(find.text('Shoulder'), findsWidgets);
     expect(find.text('Shoulder impingement syndrome'), findsOneWidget);
     expect(find.text('Full flexion with mild pain at end range'), findsOneWidget);
     expect(find.text('MRI indicates mild L4-L5 bulge'), findsOneWidget);

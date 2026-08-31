@@ -1083,5 +1083,9 @@ abstract final class AppStrings {
   static String moreConditions(int count) => '+$count more conditions';
   static String createdLabel(String date) => 'Created: $date';
   static String setStatusLabel(String status) => 'Set $status';
+  static const String exportPdf = 'Export Report PDF';
+  static const String printReport = 'Print Report';
+  static const String generatingPdf = 'Generating PDF report...';
+  static const String clinicalReport = 'Clinical Assessment & Rehabilitation Report';
 }
 
