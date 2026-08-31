@@ -41,12 +41,13 @@ class ProgramDetailHeader extends ConsumerWidget {
 
   Future<void> _exportPdf(BuildContext context, WidgetRef ref) async {
     try {
-      final patient = ref.read(patientDetailProvider(program.patientId)).value;
-      final history = ref.read(patientMedicalHistoryProvider(program.patientId)).value;
+      final patient = await ref.read(patientDetailProvider(program.patientId).future);
+      final history = await ref.read(patientMedicalHistoryProvider(program.patientId).future);
       await ProgramPdfService.printProgramReport(program: program, patient: patient, medicalHistory: history);
-    } catch (_) {
+    } catch (e, st) {
+      debugPrint('PDF export error: $e\n$st');
       if (context.mounted) {
-        AppSnackbar.show(context, message: AppStrings.errorDatabaseGeneric, variant: AppSnackbarVariant.error);
+        AppSnackbar.show(context, message: AppStrings.pdfExportError, variant: AppSnackbarVariant.error);
       }
     }
   }

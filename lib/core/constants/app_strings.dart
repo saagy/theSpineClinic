@@ -1087,5 +1087,6 @@ abstract final class AppStrings {
   static const String printReport = 'Print Report';
   static const String generatingPdf = 'Generating PDF report...';
   static const String clinicalReport = 'Clinical Assessment & Rehabilitation Report';
+  static const String pdfExportError = 'Could not generate PDF report. Please try again.';
 }
 

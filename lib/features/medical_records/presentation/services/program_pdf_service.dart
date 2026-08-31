@@ -1,5 +1,6 @@
 library;
 
+import 'package:flutter/services.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
@@ -18,8 +19,14 @@ class ProgramPdfService {
     PatientMedicalHistory? medicalHistory,
   }) async {
     final doc = pw.Document();
-    final font = await PdfGoogleFonts.openSansRegular();
-    final boldFont = await PdfGoogleFonts.openSansBold();
+
+    pw.Font font = pw.Font.helvetica();
+    pw.Font boldFont = pw.Font.helveticaBold();
+    try {
+      final fontData = await rootBundle.load('assets/fonts/Inter-VariableFont_opsz,wght.ttf');
+      font = pw.Font.ttf(fontData);
+      boldFont = font;
+    } catch (_) {}
 
     final title = program.affectedRegions.isNotEmpty
         ? program.affectedRegions.map((r) => r.displayName).join(' & ')
