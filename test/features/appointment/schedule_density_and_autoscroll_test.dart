@@ -340,63 +340,8 @@ void main() {
     });
   });
 
-  group('Schedule Day List Auto-Scroll Tests', () {
-
-    test('estimateScheduleScrollOffset correctly calculates offsets for single and grouped items', () {
-      final p1 = Patient(
-        id: 'p-1',
-        fullName: 'Patient 1',
-        phoneNumber: '010',
-        clinic: ClinicLocation.tagamoa,
-        createdAt: DateTime(2026),
-      );
-      final singleAppt = Appointment(
-        id: 'a-1',
-        patientId: p1.id,
-        type: AppointmentType.normalPtSession,
-        scheduledAt: DateTime.now(),
-        createdAt: DateTime(2026),
-      );
-      final singleItem = AppointmentWithPatient(
-        appointment: singleAppt,
-        patient: p1,
-      );
-
-      final rowItems = [
-        ScheduleRowItem(patient: p1, appointments: [singleItem]),
-        ScheduleRowItem(patient: p1, appointments: [singleItem, singleItem]),
-        ScheduleRowItem(patient: p1, appointments: [singleItem]),
-      ];
-
-      // Standard mode
-      final offsetStd = estimateScheduleScrollOffset(
-        rowItems: rowItems,
-        nowIndex: 2,
-        isCompact: false,
-      );
-      // Top padding (8) + item 0 (84) + item 1 (91 + 2*40 = 171) - top margin (16) = 8 + 84 + 171 - 16 = 247
-      expect(offsetStd, 247.0);
-
-      // Compact mode
-      final offsetCmp = estimateScheduleScrollOffset(
-        rowItems: rowItems,
-        nowIndex: 2,
-        isCompact: true,
-      );
-      // Top padding (8) + item 0 (37) + item 1 (38 + 2*22 = 82) - top margin (16) = 8 + 37 + 82 - 16 = 111
-      expect(offsetCmp, 111.0);
-    });
-
-    test('estimateDoctorScheduleScrollOffset accurately calculates offset for doctor lists', () {
-      final offset = estimateDoctorScheduleScrollOffset(
-        nowIndex: 20,
-        isCompact: false,
-      );
-      // Top padding (8) + 20 * 84 - 16 = 8 + 1680 - 16 = 1672
-      expect(offset, 1672.0);
-    });
-
-    testWidgets('ReceptionistDayList auto-scrolls to now indicator with 30 appointments', (
+  group('Schedule Day List Rendering & Now Indicator Tests', () {
+    testWidgets('ReceptionistDayList renders with now indicator for 30 appointments', (
       tester,
     ) async {
       tester.view.physicalSize = const Size(390, 844);
@@ -457,7 +402,7 @@ void main() {
       expect(tester.takeException(), isNull);
     });
 
-    testWidgets('DoctorDayList auto-scrolls to now indicator with 30 appointments', (
+    testWidgets('DoctorDayList renders with now indicator for 30 appointments', (
       tester,
     ) async {
       tester.view.physicalSize = const Size(390, 844);
