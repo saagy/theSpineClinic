@@ -7,9 +7,9 @@ void main() {
     final tabs = NavTabs.forRole('super_admin');
 
     expect(tabs.map((tab) => tab.label), [
-      AppStrings.navAnalytics,
       AppStrings.navAppts,
       AppStrings.patients,
+      AppStrings.navAnalytics,
       AppStrings.navAdmin,
     ]);
     expect(
@@ -26,6 +26,22 @@ void main() {
     expect(NavTabs.forRole('doctor').map((tab) => tab.label), [
       AppStrings.navMySchedule,
       AppStrings.navMyPatients,
+      AppStrings.profile,
+    ]);
+  });
+
+  test('senior doctor navigation shows all patients', () {
+    expect(NavTabs.forRole('senior_doctor').map((tab) => tab.label), [
+      AppStrings.navMySchedule,
+      AppStrings.patients,
+      AppStrings.profile,
+    ]);
+  });
+
+  test('receptionist navigation shows appts, patients, profile', () {
+    expect(NavTabs.forRole('receptionist').map((tab) => tab.label), [
+      AppStrings.navAppts,
+      AppStrings.patients,
       AppStrings.profile,
     ]);
   });

@@ -341,45 +341,102 @@ void main() {
   });
 
   group('Schedule Day List Auto-Scroll Tests', () {
-    final patient = Patient(
-      id: 'patient-1',
-      fullName: 'Youssef Nabil',
-      phoneNumber: '01012345678',
-      clinic: ClinicLocation.tagamoa,
-      createdAt: DateTime(2026),
-    );
 
-    final appointmentPast = Appointment(
-      id: 'appointment-1',
-      patientId: patient.id,
-      type: AppointmentType.normalPtSession,
-      scheduledAt: DateTime.now().subtract(const Duration(hours: 2)),
-      createdAt: DateTime(2026),
-    );
+    test('estimateScheduleScrollOffset correctly calculates offsets for single and grouped items', () {
+      final p1 = Patient(
+        id: 'p-1',
+        fullName: 'Patient 1',
+        phoneNumber: '010',
+        clinic: ClinicLocation.tagamoa,
+        createdAt: DateTime(2026),
+      );
+      final singleAppt = Appointment(
+        id: 'a-1',
+        patientId: p1.id,
+        type: AppointmentType.normalPtSession,
+        scheduledAt: DateTime.now(),
+        createdAt: DateTime(2026),
+      );
+      final singleItem = AppointmentWithPatient(
+        appointment: singleAppt,
+        patient: p1,
+      );
 
-    final appointmentFuture = Appointment(
-      id: 'appointment-2',
-      patientId: patient.id,
-      type: AppointmentType.normalPtSession,
-      scheduledAt: DateTime.now().add(const Duration(hours: 2)),
-      createdAt: DateTime(2026),
-    );
+      final rowItems = [
+        ScheduleRowItem(patient: p1, appointments: [singleItem]),
+        ScheduleRowItem(patient: p1, appointments: [singleItem, singleItem]),
+        ScheduleRowItem(patient: p1, appointments: [singleItem]),
+      ];
 
-    testWidgets('ReceptionistDayList mounts and renders now indicator for today', (
+      // Standard mode
+      final offsetStd = estimateScheduleScrollOffset(
+        rowItems: rowItems,
+        nowIndex: 2,
+        isCompact: false,
+      );
+      // Top padding (8) + item 0 (84) + item 1 (91 + 2*40 = 171) - top margin (16) = 8 + 84 + 171 - 16 = 247
+      expect(offsetStd, 247.0);
+
+      // Compact mode
+      final offsetCmp = estimateScheduleScrollOffset(
+        rowItems: rowItems,
+        nowIndex: 2,
+        isCompact: true,
+      );
+      // Top padding (8) + item 0 (37) + item 1 (38 + 2*22 = 82) - top margin (16) = 8 + 37 + 82 - 16 = 111
+      expect(offsetCmp, 111.0);
+    });
+
+    test('estimateDoctorScheduleScrollOffset accurately calculates offset for doctor lists', () {
+      final offset = estimateDoctorScheduleScrollOffset(
+        nowIndex: 20,
+        isCompact: false,
+      );
+      // Top padding (8) + 20 * 84 - 16 = 8 + 1680 - 16 = 1672
+      expect(offset, 1672.0);
+    });
+
+    testWidgets('ReceptionistDayList auto-scrolls to now indicator with 30 appointments', (
       tester,
     ) async {
+      tester.view.physicalSize = const Size(390, 844);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(() {
+        tester.view.resetPhysicalSize();
+        tester.view.resetDevicePixelRatio();
+      });
+
+      final now = DateTime.now();
+      final allItems = <AppointmentWithPatient>[];
+      for (int i = 0; i < 30; i++) {
+        final p = Patient(
+          id: 'patient-$i',
+          fullName: 'Patient $i',
+          phoneNumber: '010$i',
+          clinic: ClinicLocation.tagamoa,
+          createdAt: DateTime(2026),
+        );
+        // First 20 appointments are in the past, next 10 are in the future
+        final scheduledTime = i < 20
+            ? now.subtract(Duration(hours: 20 - i))
+            : now.add(Duration(hours: i - 19));
+        allItems.add(
+          AppointmentWithPatient(
+            appointment: Appointment(
+              id: 'appt-$i',
+              patientId: p.id,
+              type: AppointmentType.normalPtSession,
+              scheduledAt: scheduledTime,
+              createdAt: DateTime(2026),
+            ),
+            patient: p,
+          ),
+        );
+      }
+
       final state = ReceptionistAppointmentsState(
-        selectedDate: DateTime.now(),
-        allItems: [
-          AppointmentWithPatient(
-            appointment: appointmentPast,
-            patient: patient,
-          ),
-          AppointmentWithPatient(
-            appointment: appointmentFuture,
-            patient: patient,
-          ),
-        ],
+        selectedDate: now,
+        allItems: allItems,
       );
 
       await tester.pumpWidget(
@@ -400,21 +457,46 @@ void main() {
       expect(tester.takeException(), isNull);
     });
 
-    testWidgets('DoctorDayList mounts and renders now indicator for today', (
+    testWidgets('DoctorDayList auto-scrolls to now indicator with 30 appointments', (
       tester,
     ) async {
+      tester.view.physicalSize = const Size(390, 844);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(() {
+        tester.view.resetPhysicalSize();
+        tester.view.resetDevicePixelRatio();
+      });
+
+      final now = DateTime.now();
+      final allItems = <AppointmentWithPatient>[];
+      for (int i = 0; i < 30; i++) {
+        final p = Patient(
+          id: 'patient-$i',
+          fullName: 'Patient $i',
+          phoneNumber: '010$i',
+          clinic: ClinicLocation.tagamoa,
+          createdAt: DateTime(2026),
+        );
+        final scheduledTime = i < 20
+            ? now.subtract(Duration(hours: 20 - i))
+            : now.add(Duration(hours: i - 19));
+        allItems.add(
+          AppointmentWithPatient(
+            appointment: Appointment(
+              id: 'appt-$i',
+              patientId: p.id,
+              type: AppointmentType.normalPtSession,
+              scheduledAt: scheduledTime,
+              createdAt: DateTime(2026),
+            ),
+            patient: p,
+          ),
+        );
+      }
+
       final state = DoctorScheduleState(
-        selectedDate: DateTime.now(),
-        allItems: [
-          AppointmentWithPatient(
-            appointment: appointmentPast,
-            patient: patient,
-          ),
-          AppointmentWithPatient(
-            appointment: appointmentFuture,
-            patient: patient,
-          ),
-        ],
+        selectedDate: now,
+        allItems: allItems,
       );
 
       await tester.pumpWidget(
