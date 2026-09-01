@@ -214,18 +214,35 @@ appointments             <- patient_notes.appointment_id (optional)
 | Index | Table | Purpose |
 | --- | --- | --- |
 | `unique_active_appointment_doctor` (unique, partial: `WHERE is_active`) | `appointment_doctors` | One active assignment per appointment+doctor. |
+| `idx_appointment_doctors_doctor_id` | `appointment_doctors` | Doctor appointment joins and schedule queries. |
+| `idx_appointment_doctors_appointment_id` | `appointment_doctors` | Appointment doctor list joins and cascades. |
+| `idx_appointment_doctors_added_by` | `appointment_doctors` | Audit lookup by creator. |
 | `idx_appointments_patient_status_scheduled` | `appointments` | Patient history lookups by status, newest first. |
 | `idx_appointments_scheduled_at` | `appointments` | Day/timeline schedule queries. |
+| `idx_appointments_created_by` | `appointments` | Appointment author audit lookup. |
+| `idx_patient_doctors_doctor_id` | `patient_doctors` | Doctor-assigned patient queries and RLS evaluation. |
 | `idx_patients_clinic_next_visit` (partial: `WHERE next_visit_date IS NOT NULL`) | `patients` | Due-patients queue per branch. |
+| `idx_patients_phone` | `patients` | Fast patient phone lookup. |
+| `idx_patients_full_name_trgm` (GIN trigram) | `patients` | Fast patient name substring and ILIKE searches. |
+| `idx_patients_created_by` | `patients` | Patient registration author audit lookup. |
+| `idx_patient_documents_patient_id` | `patient_documents` | Patient document gallery retrieval. |
+| `idx_patient_documents_uploaded_by` | `patient_documents` | Document uploader audit lookup. |
+| `idx_patient_documents_program` | `patient_documents` | Program imaging attachments query. |
+| `idx_patient_medical_history_updated_by` | `patient_medical_history` | Medical history editor audit lookup. |
 | `idx_patient_notes_patient` | `patient_notes` | Notes listing per patient. |
-| `idx_medical_history_patient` | `patient_medical_history` | Medical history lookup per patient. |
+| `idx_patient_notes_appointment_id` | `patient_notes` | Clinical notes linked to appointments. |
+| `idx_patient_notes_created_by` | `patient_notes` | Note author audit lookup. |
+| `idx_payment_records_patient_id` | `payment_records` | Patient payment history retrieval. |
+| `idx_payment_records_recorded_by` | `payment_records` | Payment recorder audit lookup. |
 | `idx_condition_catalog_region` | `condition_catalog` | Sorted condition catalog retrieval by region. |
 | `idx_patient_programs_patient` | `patient_programs` | Program lookups per patient. |
+| `idx_patient_programs_created_by` | `patient_programs` | Program author audit lookup. |
 | `idx_program_conditions_program` | `program_conditions` | Condition joins per program. |
+| `idx_program_conditions_condition_id` | `program_conditions` | Catalog condition references. |
 | `idx_treatment_plans_program` | `treatment_plans` | Active plan resolution per program. |
+| `idx_treatment_plans_created_by` | `treatment_plans` | Treatment plan creator audit lookup. |
 | `idx_plan_modalities_plan` | `plan_modalities` | Modality list per treatment plan. |
 | `idx_modality_regions_modality` | `modality_regions` | Target regions per modality. |
-| `idx_patient_documents_program` | `patient_documents` | Program imaging attachments query. |
 
 ## 5. Functions & RPCs
 

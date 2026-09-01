@@ -243,18 +243,36 @@ ALTER TABLE public.payment_records ENABLE ROW LEVEL SECURITY;
 
 -- Indexes
 CREATE UNIQUE INDEX unique_active_appointment_doctor ON public.appointment_doctors USING btree (appointment_id, doctor_id) WHERE (is_active = true);
+CREATE INDEX idx_appointment_doctors_doctor_id ON public.appointment_doctors USING btree (doctor_id);
+CREATE INDEX idx_appointment_doctors_appointment_id ON public.appointment_doctors USING btree (appointment_id);
+CREATE INDEX idx_appointment_doctors_added_by ON public.appointment_doctors USING btree (added_by);
 CREATE INDEX idx_appointments_patient_status_scheduled ON public.appointments USING btree (patient_id, status, scheduled_at DESC);
 CREATE INDEX idx_appointments_scheduled_at ON public.appointments USING btree (scheduled_at);
+CREATE INDEX idx_appointments_created_by ON public.appointments USING btree (created_by);
+CREATE INDEX idx_patient_doctors_doctor_id ON public.patient_doctors USING btree (doctor_id);
 CREATE INDEX idx_patients_clinic_next_visit ON public.patients USING btree (clinic, next_visit_date) WHERE (next_visit_date IS NOT NULL);
+CREATE INDEX idx_patients_phone ON public.patients USING btree (phone_number);
+CREATE INDEX idx_patients_full_name_trgm ON public.patients USING gin (full_name extensions.gin_trgm_ops);
+CREATE INDEX idx_patients_created_by ON public.patients USING btree (created_by);
+CREATE INDEX idx_patient_documents_patient_id ON public.patient_documents USING btree (patient_id);
+CREATE INDEX idx_patient_documents_uploaded_by ON public.patient_documents USING btree (uploaded_by);
+CREATE INDEX idx_patient_documents_program ON public.patient_documents USING btree (program_id);
+CREATE INDEX idx_patient_medical_history_updated_by ON public.patient_medical_history USING btree (updated_by);
 CREATE INDEX idx_patient_notes_patient ON public.patient_notes USING btree (patient_id);
+CREATE INDEX idx_patient_notes_appointment_id ON public.patient_notes USING btree (appointment_id);
+CREATE INDEX idx_patient_notes_created_by ON public.patient_notes USING btree (created_by);
+CREATE INDEX idx_payment_records_patient_id ON public.payment_records USING btree (patient_id);
+CREATE INDEX idx_payment_records_recorded_by ON public.payment_records USING btree (recorded_by);
 CREATE INDEX idx_medical_history_patient ON public.patient_medical_history USING btree (patient_id);
 CREATE INDEX idx_condition_catalog_region ON public.condition_catalog USING btree (region, display_order);
 CREATE INDEX idx_patient_programs_patient ON public.patient_programs USING btree (patient_id, status);
+CREATE INDEX idx_patient_programs_created_by ON public.patient_programs USING btree (created_by);
 CREATE INDEX idx_program_conditions_program ON public.program_conditions USING btree (program_id);
+CREATE INDEX idx_program_conditions_condition_id ON public.program_conditions USING btree (condition_id);
 CREATE INDEX idx_treatment_plans_program ON public.treatment_plans USING btree (program_id, is_active);
+CREATE INDEX idx_treatment_plans_created_by ON public.treatment_plans USING btree (created_by);
 CREATE INDEX idx_plan_modalities_plan ON public.plan_modalities USING btree (treatment_plan_id);
 CREATE INDEX idx_modality_regions_modality ON public.modality_regions USING btree (plan_modality_id);
-CREATE INDEX idx_patient_documents_program ON public.patient_documents USING btree (program_id);
 
 -- Functions & RPCs
 CREATE OR REPLACE FUNCTION public.clinic_timezone()
