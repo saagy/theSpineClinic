@@ -23,7 +23,7 @@ class PatientListTile extends StatelessWidget {
     required this.name,
     required this.phone,
     required this.branchLabel,
-    required this.lastVisitDate,
+    this.lastVisitDate,
     this.trailing,
     this.onTap,
     this.avatarSize,
@@ -39,7 +39,7 @@ class PatientListTile extends StatelessWidget {
   /// The branch/clinic location label.
   final String branchLabel;
 
-  /// The patient's last visit/appointment date.
+  /// The patient's optional last visit/appointment date.
   final DateTime? lastVisitDate;
 
   /// Optional additional trailing widget (displayed on the far right).
@@ -56,9 +56,9 @@ class PatientListTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final String lastVisitText = lastVisitDate != null
+    final String? lastVisitText = lastVisitDate != null
         ? '${AppStrings.lastVisitLabelShort} ${DateFormat('MMM d').format(lastVisitDate!.toLocal())}'
-        : '${AppStrings.lastVisitLabelShort} ${AppStrings.noVisitsYet}';
+        : null;
     final ColorScheme cs = Theme.of(context).colorScheme;
     final ClinicColors clinic = ClinicColors.of(context);
 
@@ -134,28 +134,28 @@ class PatientListTile extends StatelessWidget {
                                 overflow: TextOverflow.ellipsis,
                               ),
                             ),
-                            const SizedBox(width: AppSizes.p8),
-                            Container(
-                              width: 3,
-                              height: 3,
-                              decoration: BoxDecoration(
-                                color: clinic.textMuted,
-                                shape: BoxShape.circle,
-                              ),
-                            ),
-                            const SizedBox(width: AppSizes.p8),
-                            Flexible(
-                              child: Text(
-                                lastVisitText,
-                                style: AppTextStyles.caption.copyWith(
-                                  color: lastVisitDate != null
-                                      ? cs.onSurfaceVariant
-                                      : clinic.textMuted,
+                            if (lastVisitText != null) ...[
+                              const SizedBox(width: AppSizes.p8),
+                              Container(
+                                width: 3,
+                                height: 3,
+                                decoration: BoxDecoration(
+                                  color: clinic.textMuted,
+                                  shape: BoxShape.circle,
                                 ),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
                               ),
-                            ),
+                              const SizedBox(width: AppSizes.p8),
+                              Flexible(
+                                child: Text(
+                                  lastVisitText,
+                                  style: AppTextStyles.caption.copyWith(
+                                    color: cs.onSurfaceVariant,
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                            ],
                           ],
                         ),
                       ],

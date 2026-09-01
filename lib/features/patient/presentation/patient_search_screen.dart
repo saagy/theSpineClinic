@@ -190,7 +190,6 @@ class _PatientSearchScreenState extends ConsumerState<PatientSearchScreen> {
                           name: patient.fullName,
                           phone: patient.phoneNumber,
                           branchLabel: patient.clinic.displayLabel,
-                          lastVisitDate: patient.lastAppointmentDate,
                           trailing: PatientBalanceChip(
                             sessionBalance: patient.sessionBalance,
                             tractionBalance: patient.tractionBalance,

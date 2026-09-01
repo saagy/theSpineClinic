@@ -189,7 +189,6 @@ class _MyPatientsScreenState extends ConsumerState<MyPatientsScreen> {
                             name: patient.fullName,
                             phone: patient.phoneNumber,
                             branchLabel: patient.clinic.displayLabel,
-                            lastVisitDate: patient.lastAppointmentDate,
                             onTap: () =>
                                 context.push('/patient/${patient.id}'),
                           ),
