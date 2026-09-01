@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:spine_clinic_app/core/constants/app_sizes.dart';
 import 'package:spine_clinic_app/core/constants/app_strings.dart';
 import 'package:spine_clinic_app/core/constants/app_text_styles.dart';
+import 'package:spine_clinic_app/core/constants/clinic_colors.dart';
 import 'package:spine_clinic_app/features/medical_records/domain/program_status.dart';
 
 /// Renders a status badge for a rehabilitation program.
@@ -15,15 +16,22 @@ class ProgramStatusBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
+    final clinic = ClinicColors.of(context);
 
-    final (color, label) = switch (status) {
-      ProgramStatus.active => (cs.primary, AppStrings.programActive),
+    final (color, bgColor, label) = switch (status) {
+      ProgramStatus.active => (
+          cs.primary,
+          cs.primary.withAlpha(25),
+          AppStrings.programActive,
+        ),
       ProgramStatus.completed => (
-          cs.tertiary,
+          clinic.success,
+          clinic.successContainer,
           AppStrings.programCompleted,
         ),
       ProgramStatus.archived => (
-          cs.onSurfaceVariant.withAlpha(150),
+          clinic.neutral,
+          clinic.neutralContainer,
           AppStrings.programArchived,
         ),
     };
@@ -34,9 +42,9 @@ class ProgramStatusBadge extends StatelessWidget {
         vertical: AppSizes.p4,
       ),
       decoration: BoxDecoration(
-        color: color.withAlpha(30),
+        color: bgColor,
         borderRadius: BorderRadius.circular(AppSizes.r999),
-        border: Border.all(color: color.withAlpha(80)),
+        border: Border.all(color: color.withAlpha(70)),
       ),
       child: Text(
         label,

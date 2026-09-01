@@ -2,6 +2,7 @@ library;
 
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
+import 'package:spine_clinic_app/features/medical_records/domain/modality_target_region.dart';
 import 'package:spine_clinic_app/features/medical_records/domain/patient_medical_history.dart';
 import 'package:spine_clinic_app/features/medical_records/domain/patient_program.dart';
 import 'package:spine_clinic_app/features/patient/domain/patient.dart';
@@ -154,7 +155,9 @@ class ProgramPdfSections {
           headers: ['Modality', 'Target Region & Laterality', 'Duration', 'Parameters / Notes'],
           data: activePlan.modalities.map((m) {
             final regStr = m.regions.map((r) => '${r.targetRegion}${r.laterality != null ? ' (${r.laterality!.shortLabel})' : ''}').join(', ');
-            final totalMin = m.regions.fold<int>(0, (sum, r) => sum + r.timeMinutes);
+            final totalMin = m.regions
+                .where((r) => ModalityTargetRegion.hasDuration(m.modalityType, r.targetRegion))
+                .fold<int>(0, (sum, r) => sum + r.timeMinutes);
             return [m.modalityType.displayLabel, regStr.isEmpty ? 'General Technique' : regStr, totalMin > 0 ? '$totalMin min' : '-', m.notes ?? '-'];
           }).toList(),
         ),

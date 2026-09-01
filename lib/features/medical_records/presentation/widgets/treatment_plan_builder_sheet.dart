@@ -6,10 +6,13 @@ import 'package:spine_clinic_app/core/constants/app_sizes.dart';
 import 'package:spine_clinic_app/core/constants/app_strings.dart';
 import 'package:spine_clinic_app/core/constants/app_text_styles.dart';
 import 'package:spine_clinic_app/features/medical_records/domain/body_region.dart';
+import 'package:spine_clinic_app/features/medical_records/domain/laterality.dart';
 import 'package:spine_clinic_app/features/medical_records/domain/modality_input.dart';
+import 'package:spine_clinic_app/features/medical_records/domain/modality_target_region.dart';
 import 'package:spine_clinic_app/features/medical_records/domain/modality_type.dart';
 import 'package:spine_clinic_app/features/medical_records/domain/treatment_plan.dart';
 import 'package:spine_clinic_app/features/medical_records/presentation/treatment_plan_controller.dart';
+import 'package:spine_clinic_app/features/medical_records/presentation/widgets/modality_chip_selector.dart';
 import 'package:spine_clinic_app/features/medical_records/presentation/widgets/modality_config_card.dart';
 import 'package:spine_clinic_app/features/medical_records/presentation/widgets/treatment_plan_header_inputs.dart';
 import 'package:spine_clinic_app/shared/widgets/app_bottom_sheet.dart';
@@ -37,20 +40,19 @@ class TreatmentPlanBuilderSheet extends ConsumerStatefulWidget {
     required String patientId,
     required Set<BodyRegion> affectedRegions,
     TreatmentPlan? existingPlan,
-  }) {
-    return AppBottomSheet.show<TreatmentPlan>(
-      context: context,
-      title: existingPlan != null ? AppStrings.editTreatmentPlan : AppStrings.newTreatmentPlan,
-      initialChildSize: 0.90,
-      maxChildSize: 0.95,
-      builder: (ctx, _) => TreatmentPlanBuilderSheet(
-        programId: programId,
-        patientId: patientId,
-        affectedRegions: affectedRegions,
-        existingPlan: existingPlan,
-      ),
-    );
-  }
+  }) =>
+      AppBottomSheet.show<TreatmentPlan>(
+        context: context,
+        title: existingPlan != null ? AppStrings.editTreatmentPlan : AppStrings.newTreatmentPlan,
+        initialChildSize: 0.90,
+        maxChildSize: 0.95,
+        builder: (ctx, _) => TreatmentPlanBuilderSheet(
+          programId: programId,
+          patientId: patientId,
+          affectedRegions: affectedRegions,
+          existingPlan: existingPlan,
+        ),
+      );
 
   @override
   ConsumerState<TreatmentPlanBuilderSheet> createState() => _TreatmentPlanBuilderSheetState();
@@ -71,7 +73,6 @@ class _TreatmentPlanBuilderSheetState extends ConsumerState<TreatmentPlanBuilder
     _nameController = TextEditingController(text: plan?.planName ?? 'Plan 1');
     _notesController = TextEditingController(text: plan?.notes ?? '');
     _isActive = plan?.isActive ?? true;
-
     _modalityInputs = {for (final t in ModalityType.values) t: ModalityInput(modalityType: t)};
     _selectedModalities = {};
 
@@ -81,13 +82,7 @@ class _TreatmentPlanBuilderSheetState extends ConsumerState<TreatmentPlanBuilder
         _modalityInputs[pm.modalityType] = ModalityInput(
           modalityType: pm.modalityType,
           notes: pm.notes,
-          regions: pm.regions
-              .map((r) => RegionInput(
-                    targetRegion: r.targetRegion,
-                    laterality: r.laterality,
-                    timeMinutes: r.timeMinutes,
-                  ))
-              .toList(),
+          regions: pm.regions.map((r) => RegionInput(targetRegion: r.targetRegion, laterality: r.laterality, timeMinutes: r.timeMinutes)).toList(),
         );
       }
     }
@@ -122,12 +117,40 @@ class _TreatmentPlanBuilderSheetState extends ConsumerState<TreatmentPlanBuilder
         AppSnackbar.show(context, message: AppStrings.treatmentPlanSaved, variant: AppSnackbarVariant.success);
         Navigator.of(context).pop(plan);
       },
-      failure: (e) => AppSnackbar.show(
-        context,
-        message: AppStrings.fromKey(e.userMessageKey),
-        variant: AppSnackbarVariant.error,
-      ),
+      failure: (e) => AppSnackbar.show(context, message: AppStrings.fromKey(e.userMessageKey), variant: AppSnackbarVariant.error),
     );
+  }
+
+  void _handleToggle(ModalityType type, bool isSelected) {
+    setState(() {
+      if (isSelected) {
+        _selectedModalities.add(type);
+        final current = _modalityInputs[type] ?? ModalityInput(modalityType: type);
+        if (type.hasRegionSubSelections && current.regions.isEmpty) {
+          final initial = _resolveSmartRegion(type);
+          if (initial != null) {
+            final isBilateral = ModalityTargetRegion.isRegionBilateral(type, initial);
+            final target = initial == 'Paraspinal' ? 'Paraspinal (Cervical)' : initial;
+            _modalityInputs[type] = current.copyWith(regions: [
+              RegionInput(targetRegion: target, laterality: isBilateral ? Laterality.both : null, timeMinutes: 15),
+            ]);
+          }
+        }
+      } else {
+        _selectedModalities.remove(type);
+      }
+    });
+  }
+
+  String? _resolveSmartRegion(ModalityType type) {
+    final available = ModalityTargetRegion.regionsFor(type);
+    if (available.isEmpty) return null;
+    for (final bodyRegion in widget.affectedRegions) {
+      final name = bodyRegion.displayName.toLowerCase();
+      final match = available.where((r) => r.name.toLowerCase().contains(name) || name.contains(r.name.toLowerCase())).firstOrNull;
+      if (match != null) return match.name;
+    }
+    return available.first.name;
   }
 
   @override
@@ -148,31 +171,45 @@ class _TreatmentPlanBuilderSheetState extends ConsumerState<TreatmentPlanBuilder
               ),
               const SizedBox(height: AppSizes.p16),
               Text(AppStrings.selectModalities, style: AppTextStyles.cardTitle.copyWith(color: cs.onSurface)),
-              const SizedBox(height: AppSizes.p12),
-              ...ModalityType.values.map((type) {
-                return ModalityConfigCard(
-                  modalityType: type,
-                  isSelected: _selectedModalities.contains(type),
-                  modalityInput: _modalityInputs[type]!,
-                  onToggle: (sel) => setState(() => sel ? _selectedModalities.add(type) : _selectedModalities.remove(type)),
-                  onModalityChanged: (input) => setState(() => _modalityInputs[type] = input),
-                );
-              }),
+              const SizedBox(height: AppSizes.p8),
+              ModalityChipSelector(
+                selectedModalities: _selectedModalities,
+                onToggle: (type) => _handleToggle(type, !_selectedModalities.contains(type)),
+              ),
+              const SizedBox(height: AppSizes.p16),
+              if (_selectedModalities.isEmpty)
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(AppSizes.p16),
+                  decoration: BoxDecoration(
+                    color: cs.surfaceContainerLow,
+                    borderRadius: BorderRadius.circular(AppSizes.r16),
+                    border: Border.all(color: cs.outlineVariant),
+                  ),
+                  child: Text(
+                    AppStrings.noModalitiesSelected,
+                    textAlign: TextAlign.center,
+                    style: AppTextStyles.bodySecondary.copyWith(color: cs.onSurfaceVariant),
+                  ),
+                )
+              else
+                ...ModalityType.values.where(_selectedModalities.contains).map((type) => ModalityConfigCard(
+                      key: ValueKey(type),
+                      modalityType: type,
+                      isSelected: true,
+                      modalityInput: _modalityInputs[type]!,
+                      onToggle: (sel) => _handleToggle(type, sel),
+                      onRemove: () => _handleToggle(type, false),
+                      onModalityChanged: (input) => setState(() => _modalityInputs[type] = input),
+                    )),
               const SizedBox(height: AppSizes.p24),
             ],
           ),
         ),
         Container(
           padding: const EdgeInsets.all(AppSizes.p16),
-          decoration: BoxDecoration(
-            color: cs.surface,
-            border: Border(top: BorderSide(color: cs.outlineVariant)),
-          ),
-          child: AppButton(
-            labelText: AppStrings.save,
-            isLoading: _isSubmitting,
-            onPressed: _submit,
-          ),
+          decoration: BoxDecoration(color: cs.surface, border: Border(top: BorderSide(color: cs.outlineVariant))),
+          child: AppButton(labelText: AppStrings.save, isLoading: _isSubmitting, onPressed: _submit),
         ),
       ],
     );

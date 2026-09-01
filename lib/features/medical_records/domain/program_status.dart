@@ -14,6 +14,13 @@ enum ProgramStatus {
 
   final String dbValue;
 
+  /// Sort priority: Active (0) > Completed (1) > Archived (2)
+  int get priority => switch (this) {
+        ProgramStatus.active => 0,
+        ProgramStatus.completed => 1,
+        ProgramStatus.archived => 2,
+      };
+
   String get displayLabel => switch (this) {
         ProgramStatus.active => AppStrings.programActive,
         ProgramStatus.completed => AppStrings.programCompleted,

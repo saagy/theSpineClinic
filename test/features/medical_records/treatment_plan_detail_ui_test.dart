@@ -178,4 +178,25 @@ void main() {
 
     expect(fakeRepo.activatedPlanId, 'tp1');
   });
+
+  testWidgets('ProgramDetailTreatment displays noActiveTreatmentPlan and previous plans when no plan is active', (tester) async {
+    final progWithInactiveOnly = baseProg.copyWith(treatmentPlans: [plan1]);
+    final fakeRepo = _FakePlanRepo();
+
+    await tester.pumpWidget(ProviderScope(
+      overrides: [
+        currentUserProvider.overrideWith(() => _StaticUser(senior)),
+        treatmentPlanRepositoryProvider.overrideWithValue(fakeRepo),
+        programRepositoryProvider.overrideWithValue(_FakeProgRepo()),
+      ],
+      child: MaterialApp(home: Scaffold(body: ProgramDetailTreatment(program: progWithInactiveOnly))),
+    ));
+    await tester.pumpAndSettle();
+
+    // Verify "No active treatment plan" is shown
+    expect(find.text(AppStrings.noActiveTreatmentPlan), findsOneWidget);
+    // History section is auto-expanded and shows the plan with Activate button
+    expect(find.text('Phase 1 - Acute'), findsOneWidget);
+    expect(find.text(AppStrings.activate), findsOneWidget);
+  });
 }

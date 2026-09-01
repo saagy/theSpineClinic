@@ -7,6 +7,7 @@ import 'package:spine_clinic_app/core/constants/app_strings.dart';
 import 'package:spine_clinic_app/core/constants/app_text_styles.dart';
 import 'package:spine_clinic_app/core/utils/formatters.dart';
 import 'package:spine_clinic_app/features/auth/presentation/auth_providers.dart';
+import 'package:spine_clinic_app/features/medical_records/domain/modality_target_region.dart';
 import 'package:spine_clinic_app/features/medical_records/domain/patient_program.dart';
 import 'package:spine_clinic_app/features/medical_records/domain/treatment_plan.dart';
 import 'package:spine_clinic_app/features/medical_records/presentation/treatment_plan_controller.dart';
@@ -79,18 +80,12 @@ class _ProgramDetailTreatmentState extends ConsumerState<ProgramDetailTreatment>
               Expanded(child: Text(AppStrings.treatmentPlan, style: AppTextStyles.cardTitle.copyWith(color: cs.onSurface), overflow: TextOverflow.ellipsis)),
               if (activePlan != null && isSenior)
                 PopupMenuButton<String>(
-                  icon: Icon(
-                    Icons.more_horiz_rounded,
-                    color: cs.onSurfaceVariant,
-                    size: AppSizes.iconDefault,
-                  ),
+                  icon: Icon(Icons.more_horiz_rounded, color: cs.onSurfaceVariant, size: AppSizes.iconDefault),
                   padding: EdgeInsets.zero,
                   constraints: const BoxConstraints(),
                   splashRadius: AppSizes.iconDefault,
                   color: cs.surface,
-                  shape: const RoundedRectangleBorder(
-                    borderRadius: BorderRadius.all(Radius.circular(AppSizes.r12)),
-                  ),
+                  shape: const RoundedRectangleBorder(borderRadius: BorderRadius.all(Radius.circular(AppSizes.r12))),
                   elevation: 2,
                   position: PopupMenuPosition.under,
                   tooltip: AppStrings.treatmentPlan,
@@ -109,7 +104,7 @@ class _ProgramDetailTreatmentState extends ConsumerState<ProgramDetailTreatment>
           ),
           const SizedBox(height: AppSizes.p12),
           if (activePlan == null) ...[
-            Text(AppStrings.noTreatmentPlans, style: AppTextStyles.bodySecondary.copyWith(color: cs.onSurfaceVariant)),
+            Text(inactivePlans.isNotEmpty ? AppStrings.noActiveTreatmentPlan : AppStrings.noTreatmentPlans, style: AppTextStyles.bodySecondary.copyWith(color: cs.onSurfaceVariant)),
             if (isSenior) ...[
               const SizedBox(height: AppSizes.p12),
               AppButton(labelText: AppStrings.newTreatmentPlan, icon: Icons.add_circle_outline, variant: AppButtonVariant.secondary, shape: AppButtonShape.pill, onPressed: () => _openPlanBuilder()),
@@ -118,7 +113,7 @@ class _ProgramDetailTreatmentState extends ConsumerState<ProgramDetailTreatment>
             _buildActivePlan(cs, activePlan),
           if (inactivePlans.isNotEmpty) ...[
             const SizedBox(height: AppSizes.p12),
-            _buildHistorySection(cs, inactivePlans, isSenior),
+            _buildHistorySection(cs, inactivePlans, isSenior, isAutoExpanded: activePlan == null),
           ],
         ],
       ),
@@ -126,7 +121,14 @@ class _ProgramDetailTreatmentState extends ConsumerState<ProgramDetailTreatment>
   }
 
   Widget _buildActivePlan(ColorScheme cs, TreatmentPlan plan) {
-    final totalMin = plan.modalities.fold<int>(0, (sum, m) => sum + m.regions.fold<int>(0, (rSum, r) => rSum + r.timeMinutes));
+    final totalMin = plan.modalities.fold<int>(
+      0,
+      (sum, m) =>
+          sum +
+          m.regions
+              .where((r) => ModalityTargetRegion.hasDuration(m.modalityType, r.targetRegion))
+              .fold<int>(0, (rSum, r) => rSum + r.timeMinutes),
+    );
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -157,13 +159,14 @@ class _ProgramDetailTreatmentState extends ConsumerState<ProgramDetailTreatment>
     );
   }
 
-  Widget _buildHistorySection(ColorScheme cs, List<TreatmentPlan> plans, bool isSenior) {
+  Widget _buildHistorySection(ColorScheme cs, List<TreatmentPlan> plans, bool isSenior, {bool isAutoExpanded = false}) {
+    final expanded = _historyExpanded || isAutoExpanded;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Divider(height: AppSizes.p16, color: cs.outlineVariant.withAlpha(60)),
         InkWell(
-          onTap: () => setState(() => _historyExpanded = !_historyExpanded),
+          onTap: () => setState(() => _historyExpanded = !expanded),
           borderRadius: BorderRadius.circular(AppSizes.r8),
           child: Padding(
             padding: const EdgeInsets.symmetric(vertical: AppSizes.p4),
@@ -171,12 +174,12 @@ class _ProgramDetailTreatmentState extends ConsumerState<ProgramDetailTreatment>
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text('${AppStrings.previousPlans} (${plans.length})', style: AppTextStyles.captionBold.copyWith(color: cs.onSurfaceVariant)),
-                Icon(_historyExpanded ? Icons.expand_less : Icons.expand_more, size: 18, color: cs.onSurfaceVariant),
+                Icon(expanded ? Icons.expand_less : Icons.expand_more, size: 18, color: cs.onSurfaceVariant),
               ],
             ),
           ),
         ),
-        if (_historyExpanded) ...[
+        if (expanded) ...[
           const SizedBox(height: AppSizes.p8),
           for (final p in plans)
             TreatmentPlanHistoryTile(

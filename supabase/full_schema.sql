@@ -45,7 +45,12 @@ CREATE TYPE public.modality_type AS ENUM (
   'tecar',
   'tecar_focal',
   'neurodynamic_non_wb',
-  'neurodynamic_wb'
+  'neurodynamic_wb',
+  'release',
+  'met',
+  'mobilization',
+  'mulligan',
+  'exercise'
 );
 
 CREATE TYPE public.laterality AS ENUM (

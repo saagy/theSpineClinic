@@ -5,9 +5,11 @@ import 'package:spine_clinic_app/core/constants/app_sizes.dart';
 import 'package:spine_clinic_app/core/constants/app_strings.dart';
 import 'package:spine_clinic_app/core/constants/app_text_styles.dart';
 import 'package:spine_clinic_app/features/medical_records/domain/body_region.dart';
+import 'package:spine_clinic_app/features/medical_records/domain/laterality.dart';
 import 'package:spine_clinic_app/features/medical_records/domain/modality_input.dart';
 import 'package:spine_clinic_app/features/medical_records/domain/modality_target_region.dart';
 import 'package:spine_clinic_app/features/medical_records/domain/modality_type.dart';
+import 'package:spine_clinic_app/features/medical_records/presentation/widgets/modality_chip_selector.dart';
 import 'package:spine_clinic_app/features/medical_records/presentation/widgets/modality_config_card.dart';
 import 'package:spine_clinic_app/shared/widgets/app_text_field.dart';
 import 'package:spine_clinic_app/shared/widgets/section_card.dart';
@@ -41,9 +43,17 @@ class ProgramTreatmentPlanInputs extends StatelessWidget {
       if (type.hasRegionSubSelections && current.regions.isEmpty) {
         final initialRegion = _resolveSmartRegion(type);
         if (initialRegion != null) {
+          final isBilateral = ModalityTargetRegion.isRegionBilateral(type, initialRegion);
+          final target = initialRegion == 'Paraspinal' ? 'Paraspinal (Cervical)' : initialRegion;
           onModalityInputChanged(
             type,
-            current.copyWith(regions: [RegionInput(targetRegion: initialRegion, timeMinutes: 15)]),
+            current.copyWith(regions: [
+              RegionInput(
+                targetRegion: target,
+                laterality: isBilateral ? Laterality.both : null,
+                timeMinutes: 15,
+              )
+            ]),
           );
         }
       }
@@ -112,16 +122,39 @@ class ProgramTreatmentPlanInputs extends StatelessWidget {
             AppStrings.selectModalities,
             style: AppTextStyles.cardTitle.copyWith(color: cs.onSurface),
           ),
-          const SizedBox(height: AppSizes.p12),
-          ...ModalityType.values.map((type) {
-            return ModalityConfigCard(
-              modalityType: type,
-              isSelected: selectedModalities.contains(type),
-              modalityInput: modalityInputs[type] ?? ModalityInput(modalityType: type),
-              onToggle: (selected) => _handleToggle(type, selected),
-              onModalityChanged: (input) => onModalityInputChanged(type, input),
-            );
-          }),
+          const SizedBox(height: AppSizes.p8),
+          ModalityChipSelector(
+            selectedModalities: selectedModalities,
+            onToggle: (type) => _handleToggle(type, !selectedModalities.contains(type)),
+          ),
+          const SizedBox(height: AppSizes.p16),
+          if (selectedModalities.isEmpty)
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(AppSizes.p16),
+              decoration: BoxDecoration(
+                color: cs.surfaceContainerLowest,
+                borderRadius: BorderRadius.circular(AppSizes.r16),
+                border: Border.all(color: cs.outlineVariant),
+              ),
+              child: Text(
+                AppStrings.noModalitiesSelected,
+                textAlign: TextAlign.center,
+                style: AppTextStyles.bodySecondary.copyWith(color: cs.onSurfaceVariant),
+              ),
+            )
+          else
+            ...ModalityType.values.where(selectedModalities.contains).map((type) {
+              return ModalityConfigCard(
+                key: ValueKey(type),
+                modalityType: type,
+                isSelected: true,
+                modalityInput: modalityInputs[type] ?? ModalityInput(modalityType: type),
+                onToggle: (selected) => _handleToggle(type, selected),
+                onRemove: () => _handleToggle(type, false),
+                onModalityChanged: (input) => onModalityInputChanged(type, input),
+              );
+            }),
         ],
       ),
     );

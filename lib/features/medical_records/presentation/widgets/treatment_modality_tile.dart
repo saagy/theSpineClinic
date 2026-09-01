@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:spine_clinic_app/core/constants/app_sizes.dart';
 import 'package:spine_clinic_app/core/constants/app_strings.dart';
 import 'package:spine_clinic_app/core/constants/app_text_styles.dart';
+import 'package:spine_clinic_app/features/medical_records/domain/modality_target_region.dart';
 import 'package:spine_clinic_app/features/medical_records/domain/plan_modality.dart';
 
 /// Clean row element for a modality inside a treatment plan table.
@@ -77,6 +78,11 @@ class TreatmentModalityTile extends StatelessWidget {
                           final lat = region.laterality != null
                               ? ' (${region.laterality!.shortLabel})'
                               : '';
+                          final hasDur = ModalityTargetRegion.hasDuration(
+                            modality.modalityType,
+                            region.targetRegion,
+                          );
+                          final dur = hasDur ? ' · ${region.timeMinutes}m' : '';
                           return Container(
                             padding: const EdgeInsets.symmetric(
                               horizontal: AppSizes.p8,
@@ -88,7 +94,7 @@ class TreatmentModalityTile extends StatelessWidget {
                               border: Border.all(color: cs.outlineVariant.withAlpha(100)),
                             ),
                             child: Text(
-                              '${region.targetRegion}$lat · ${region.timeMinutes}m',
+                              '${region.targetRegion}$lat$dur',
                               style: AppTextStyles.captionBold.copyWith(
                                 color: cs.onSecondaryContainer,
                               ),

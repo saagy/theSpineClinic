@@ -19,7 +19,7 @@ All times are stored as `timestamptz`; clinic-local calendar logic goes through
 | `appointment_status` | `scheduled`, `checked_in`, `cancelled` | `checked_in` deducts balance; reverting to `scheduled`/`cancelled` refunds it. |
 | `body_region` | `shoulder`, `elbow`, `hand`, `lumbar_spine`, `thoracic_spine`, `cervical_spine`, `hip_joint`, `knee_joint`, `ankle_joint`, `foot` | Body regions for condition catalog and injury classifications. |
 | `program_status` | `active`, `completed`, `archived` | Rehabilitation program lifecycle status. |
-| `modality_type` | `muscle_pain`, `mass_built`, `tecar`, `tecar_focal`, `neurodynamic_non_wb`, `neurodynamic_wb` | Physiotherapy equipment & modality devices. |
+| `modality_type` | `muscle_pain`, `mass_built`, `tecar`, `tecar_focal`, `neurodynamic_non_wb`, `neurodynamic_wb`, `release`, `met`, `mobilization`, `mulligan`, `exercise` | Physiotherapy equipment & modality devices. |
 | `laterality` | `right`, `left`, `both` | Side selection for bilateral body regions. |
 
 ## 2. Tables

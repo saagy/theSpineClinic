@@ -17,6 +17,7 @@ import 'package:spine_clinic_app/features/medical_records/presentation/widgets/p
 import 'package:spine_clinic_app/features/medical_records/presentation/widgets/program_detail_findings.dart';
 import 'package:spine_clinic_app/features/medical_records/presentation/widgets/program_detail_header.dart';
 import 'package:spine_clinic_app/features/medical_records/presentation/widgets/program_detail_treatment.dart';
+import 'package:spine_clinic_app/features/medical_records/presentation/widgets/treatment_plan_builder_sheet.dart';
 import 'package:spine_clinic_app/features/patient/presentation/patient_providers.dart';
 import 'package:spine_clinic_app/shared/widgets/app_back_button.dart';
 import 'package:spine_clinic_app/shared/widgets/app_snackbar.dart';
@@ -26,48 +27,62 @@ import 'package:spine_clinic_app/shared/widgets/error_view.dart';
 import 'package:spine_clinic_app/shared/widgets/skeleton_loader.dart';
 
 /// Screen displaying comprehensive details of a single rehabilitation program.
-class ProgramDetailScreen extends ConsumerWidget {
+class ProgramDetailScreen extends ConsumerStatefulWidget {
   const ProgramDetailScreen({
     super.key,
     required this.patientId,
     required this.programId,
     this.initialProgram,
+    this.autoOpenPlanBuilder = false,
   });
 
   final String patientId;
   final String programId;
   final PatientProgram? initialProgram;
+  final bool autoOpenPlanBuilder;
 
-  Future<void> _exportPdf(BuildContext context, WidgetRef ref, PatientProgram program) async {
+  @override
+  ConsumerState<ProgramDetailScreen> createState() => _ProgramDetailScreenState();
+}
+
+class _ProgramDetailScreenState extends ConsumerState<ProgramDetailScreen> {
+  bool _planBuilderOpened = false;
+
+  void _checkAutoOpen(PatientProgram program) {
+    if (widget.autoOpenPlanBuilder && !_planBuilderOpened) {
+      _planBuilderOpened = true;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          TreatmentPlanBuilderSheet.show(
+            context,
+            programId: program.id,
+            patientId: program.patientId,
+            affectedRegions: program.affectedRegions,
+          );
+        }
+      });
+    }
+  }
+
+  Future<void> _exportPdf(PatientProgram program) async {
     try {
       final patient = await ref.read(patientDetailProvider(program.patientId).future);
       final history = await ref.read(patientMedicalHistoryProvider(program.patientId).future);
       await ProgramPdfService.printProgramReport(program: program, patient: patient, medicalHistory: history);
-    } catch (e, st) {
-      debugPrint('PDF export error: $e\n$st');
-      if (context.mounted) {
-        AppSnackbar.show(context, message: AppStrings.pdfExportError, variant: AppSnackbarVariant.error);
-      }
+    } catch (_) {
+      if (mounted) AppSnackbar.show(context, message: AppStrings.pdfExportError, variant: AppSnackbarVariant.error);
     }
   }
 
-  Future<void> _deleteProgram(BuildContext context, WidgetRef ref, PatientProgram program) async {
+  Future<void> _deleteProgram(PatientProgram program) async {
     final confirmed = await showDialog<bool>(
       context: context,
-      builder: (ctx) => const ConfirmationDialog(
-        title: AppStrings.deleteProgram,
-        message: AppStrings.deleteProgramConfirm,
-        isDestructive: true,
-      ),
+      builder: (ctx) => const ConfirmationDialog(title: AppStrings.deleteProgram, message: AppStrings.deleteProgramConfirm, isDestructive: true),
     );
-    if (confirmed != true || !context.mounted) return;
+    if (confirmed != true || !mounted) return;
 
-    final result = await ref.read(programControllerProvider.notifier).deleteProgram(
-          programId: program.id,
-          patientId: program.patientId,
-        );
-
-    if (!context.mounted) return;
+    final result = await ref.read(programControllerProvider.notifier).deleteProgram(programId: program.id, patientId: program.patientId);
+    if (!mounted) return;
     result.when(
       success: (_) {
         AppSnackbar.show(context, message: AppStrings.programDeleted, variant: AppSnackbarVariant.success);
@@ -77,77 +92,61 @@ class ProgramDetailScreen extends ConsumerWidget {
     );
   }
 
-  List<Widget> _buildAppBarActions(BuildContext context, WidgetRef ref, PatientProgram? program) {
+  List<Widget> _buildAppBarActions(PatientProgram? program) {
     if (program == null) return const [];
     final cs = Theme.of(context).colorScheme;
     final isSenior = ref.watch(currentUserProvider).value?.isSeniorDoctor ?? false;
 
     return [
-      IconButton(
-        icon: const Icon(Icons.picture_as_pdf_outlined),
-        tooltip: AppStrings.exportPdf,
-        onPressed: () => _exportPdf(context, ref, program),
-      ),
+      IconButton(icon: const Icon(Icons.picture_as_pdf_outlined), tooltip: AppStrings.exportPdf, onPressed: () => _exportPdf(program)),
       if (isSenior) ...[
         IconButton(
           icon: const Icon(Icons.edit_outlined),
           tooltip: AppStrings.edit,
-          onPressed: () => context.push(
-            AppRoutes.editPatientProgram.replaceAll(':id', program.patientId).replaceAll(':programId', program.id),
-            extra: program,
-          ),
+          onPressed: () => context.push(AppRoutes.editPatientProgram.replaceAll(':id', program.patientId).replaceAll(':programId', program.id), extra: program),
         ),
-        IconButton(
-          icon: Icon(Icons.delete_outline, color: cs.error),
-          tooltip: AppStrings.delete,
-          onPressed: () => _deleteProgram(context, ref, program),
-        ),
+        IconButton(icon: Icon(Icons.delete_outline, color: cs.error), tooltip: AppStrings.delete, onPressed: () => _deleteProgram(program)),
       ],
     ];
   }
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final asyncDetail = ref.watch(programDetailProvider(programId));
-    final program = asyncDetail.value ?? initialProgram;
+  Widget build(BuildContext context) {
+    final asyncDetail = ref.watch(programDetailProvider(widget.programId));
+    final program = asyncDetail.value ?? widget.initialProgram;
+    if (program != null) _checkAutoOpen(program);
 
     return Scaffold(
       appBar: AppBar(
         leading: const AppBackButton(),
         title: const Text(AppStrings.programDetails),
-        actions: _buildAppBarActions(context, ref, program),
+        actions: _buildAppBarActions(program),
       ),
       body: SafeArea(
         child: asyncDetail.when(
-          loading: () {
-            if (initialProgram != null) return _buildResponsiveLayout(context, initialProgram!);
-            return const Padding(padding: EdgeInsets.all(AppSizes.p16), child: SkeletonTileList(count: 4));
-          },
-          error: (err, _) {
-            if (initialProgram != null) return _buildResponsiveLayout(context, initialProgram!);
-            return Center(
-              child: Padding(
-                padding: const EdgeInsets.all(AppSizes.p24),
-                child: ErrorView(
-                  exception: err is AppException ? err : AppException.fromSupabaseException(err),
-                  onRetry: () => ref.invalidate(programDetailProvider(programId)),
+          loading: () => program != null ? _buildLayout(program) : const Padding(padding: EdgeInsets.all(AppSizes.p16), child: SkeletonTileList(count: 4)),
+          error: (err, _) => program != null
+              ? _buildLayout(program)
+              : Center(
+                  child: Padding(
+                    padding: const EdgeInsets.all(AppSizes.p24),
+                    child: ErrorView(
+                      exception: err is AppException ? err : AppException.fromSupabaseException(err),
+                      onRetry: () => ref.invalidate(programDetailProvider(widget.programId)),
+                    ),
+                  ),
                 ),
-              ),
-            );
-          },
           data: (prog) {
-            final effective = prog ?? initialProgram;
-            if (effective == null) {
-              return const EmptyState(message: AppStrings.programNotFound, icon: Icons.search_off_rounded);
-            }
-            return _buildResponsiveLayout(context, effective);
+            final effective = prog ?? widget.initialProgram;
+            if (effective == null) return const EmptyState(message: AppStrings.programNotFound, icon: Icons.search_off_rounded);
+            return _buildLayout(effective);
           },
         ),
       ),
     );
   }
 
-  Widget _buildResponsiveLayout(BuildContext context, PatientProgram program) {
+  Widget _buildLayout(PatientProgram program) {
     return LayoutBuilder(
       builder: (context, constraints) {
         final bool isWide = constraints.maxWidth >= 900;
@@ -166,21 +165,9 @@ class ProgramDetailScreen extends ConsumerWidget {
                   Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Expanded(
-                        flex: 5,
-                        child: Column(
-                          children: [
-                            ProgramDetailConditions(program: program),
-                            const SizedBox(height: AppSizes.p16),
-                            ProgramDetailFindings(program: program),
-                          ],
-                        ),
-                      ),
+                      Expanded(flex: 5, child: Column(children: [ProgramDetailConditions(program: program), const SizedBox(height: AppSizes.p16), ProgramDetailFindings(program: program)])),
                       const SizedBox(width: AppSizes.p16),
-                      Expanded(
-                        flex: 6,
-                        child: ProgramDetailTreatment(program: program),
-                      ),
+                      Expanded(flex: 6, child: ProgramDetailTreatment(program: program)),
                     ],
                   )
                 else ...[

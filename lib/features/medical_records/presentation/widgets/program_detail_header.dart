@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:spine_clinic_app/core/constants/app_sizes.dart';
 import 'package:spine_clinic_app/core/constants/app_strings.dart';
 import 'package:spine_clinic_app/core/constants/app_text_styles.dart';
+import 'package:spine_clinic_app/core/constants/clinic_colors.dart';
 import 'package:spine_clinic_app/core/utils/formatters.dart';
 import 'package:spine_clinic_app/features/auth/presentation/auth_providers.dart';
 import 'package:spine_clinic_app/features/medical_records/domain/patient_program.dart';
@@ -37,6 +38,7 @@ class ProgramDetailHeader extends ConsumerWidget {
     if (!isSenior) return ProgramStatusBadge(status: program.status);
 
     final cs = Theme.of(context).colorScheme;
+    final clinic = ClinicColors.of(context);
 
     PopupMenuItem<ProgramStatus> buildItem(ProgramStatus st, IconData icon, Color color, String label) {
       final isCurrent = program.status == st;
@@ -82,8 +84,8 @@ class ProgramDetailHeader extends ConsumerWidget {
       },
       itemBuilder: (ctx) => [
         buildItem(ProgramStatus.active, Icons.play_circle_outline_rounded, cs.primary, AppStrings.programActive),
-        buildItem(ProgramStatus.completed, Icons.task_alt_rounded, cs.tertiary, AppStrings.programCompleted),
-        buildItem(ProgramStatus.archived, Icons.archive_outlined, cs.onSurfaceVariant, AppStrings.programArchived),
+        buildItem(ProgramStatus.completed, Icons.task_alt_rounded, clinic.success, AppStrings.programCompleted),
+        buildItem(ProgramStatus.archived, Icons.archive_outlined, clinic.neutral, AppStrings.programArchived),
       ],
       child: Row(
         mainAxisSize: MainAxisSize.min,

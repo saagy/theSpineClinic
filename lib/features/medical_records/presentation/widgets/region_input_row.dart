@@ -6,6 +6,7 @@ import 'package:spine_clinic_app/core/constants/app_strings.dart';
 import 'package:spine_clinic_app/core/constants/app_text_styles.dart';
 import 'package:spine_clinic_app/features/medical_records/domain/laterality.dart';
 import 'package:spine_clinic_app/features/medical_records/domain/modality_input.dart';
+import 'package:spine_clinic_app/features/medical_records/domain/modality_region_catalog.dart';
 import 'package:spine_clinic_app/features/medical_records/domain/modality_target_region.dart';
 import 'package:spine_clinic_app/features/medical_records/domain/modality_type.dart';
 
@@ -26,13 +27,15 @@ class RegionInputRow extends StatelessWidget {
   final ValueChanged<RegionInput> onChanged;
   final VoidCallback onDelete;
 
+  bool get _isParaspinal =>
+      modalityType == ModalityType.release &&
+      regionInput.targetRegion.toLowerCase().startsWith('paraspinal');
+
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
-    final isBilateral = ModalityTargetRegion.isRegionBilateral(
-      modalityType,
-      regionInput.targetRegion,
-    );
+    final isBilateral = ModalityTargetRegion.isRegionBilateral(modalityType, regionInput.targetRegion);
+    final showDuration = ModalityTargetRegion.hasDuration(modalityType, regionInput.targetRegion);
 
     return Container(
       margin: const EdgeInsets.only(bottom: AppSizes.p10),
@@ -56,17 +59,20 @@ class RegionInputRow extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: AppSizes.p8),
-          Row(
-            children: [
-              if (isBilateral) ...[
-                Expanded(child: _buildLateralitySelector()),
-                const SizedBox(width: AppSizes.p12),
-              ] else
-                const Spacer(),
-              _buildDurationStepper(context),
-            ],
-          ),
+          if (_isParaspinal) _buildParaspinalSubSelector(),
+          if (isBilateral || showDuration) ...[
+            const SizedBox(height: AppSizes.p8),
+            Row(
+              children: [
+                if (isBilateral) ...[
+                  Expanded(child: _buildLateralitySelector()),
+                  if (showDuration) const SizedBox(width: AppSizes.p12),
+                ] else if (showDuration)
+                  const Spacer(),
+                if (showDuration) _buildDurationStepper(context),
+              ],
+            ),
+          ],
         ],
       ),
     );
@@ -74,14 +80,15 @@ class RegionInputRow extends StatelessWidget {
 
   Widget _buildRegionDropdown(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
-    final String selected = regionInput.targetRegion.isNotEmpty
+    final selectedRaw = regionInput.targetRegion.isNotEmpty
         ? regionInput.targetRegion
         : (availableRegions.isNotEmpty ? availableRegions.first.name : '');
+    final dropdownValue = _isParaspinal
+        ? 'Paraspinal'
+        : (availableRegions.any((r) => r.name == selectedRaw) ? selectedRaw : (availableRegions.isNotEmpty ? availableRegions.first.name : ''));
 
     return DropdownButtonFormField<String>(
-      initialValue: availableRegions.any((r) => r.name == selected)
-          ? selected
-          : (availableRegions.isNotEmpty ? availableRegions.first.name : null),
+      initialValue: dropdownValue.isNotEmpty ? dropdownValue : null,
       isExpanded: true,
       decoration: InputDecoration(
         labelText: AppStrings.targetRegion,
@@ -89,18 +96,42 @@ class RegionInputRow extends StatelessWidget {
         contentPadding: const EdgeInsets.symmetric(horizontal: AppSizes.p12, vertical: AppSizes.p8),
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(AppSizes.r8)),
       ),
-      items: availableRegions.map((r) {
-        return DropdownMenuItem<String>(
-          value: r.name,
-          child: Text(r.name, style: AppTextStyles.body.copyWith(color: cs.onSurface)),
-        );
-      }).toList(),
+      items: availableRegions.map((r) => DropdownMenuItem(value: r.name, child: Text(r.name, style: AppTextStyles.body.copyWith(color: cs.onSurface)))).toList(),
       onChanged: (val) {
-        if (val != null) {
+        if (val == null) return;
+        if (val == 'Paraspinal') {
+          onChanged(regionInput.copyWith(targetRegion: 'Paraspinal (Cervical)', laterality: regionInput.laterality ?? Laterality.both));
+        } else {
           final isBilateral = ModalityTargetRegion.isRegionBilateral(modalityType, val);
-          onChanged(regionInput.copyWith(targetRegion: val, laterality: isBilateral ? regionInput.laterality : null));
+          onChanged(regionInput.copyWith(targetRegion: val, laterality: isBilateral ? (regionInput.laterality ?? Laterality.both) : null));
         }
       },
+    );
+  }
+
+  Widget _buildParaspinalSubSelector() {
+    String currentSub = 'Cervical';
+    for (final opt in ModalityRegionCatalog.paraspinalSubOptions) {
+      if (regionInput.targetRegion.contains(opt)) {
+        currentSub = opt;
+        break;
+      }
+    }
+
+    return Padding(
+      padding: const EdgeInsets.only(top: AppSizes.p8),
+      child: SegmentedButton<String>(
+        segments: const [
+          ButtonSegment(value: 'Cervical', label: Text('Cervical')),
+          ButtonSegment(value: 'Thoracic', label: Text('Thoracic')),
+          ButtonSegment(value: 'Lumbar', label: Text('Lumbar')),
+          ButtonSegment(value: 'SI', label: Text('SI')),
+        ],
+        selected: {currentSub},
+        showSelectedIcon: false,
+        style: const ButtonStyle(visualDensity: VisualDensity.compact, tapTargetSize: MaterialTapTargetSize.shrinkWrap, textStyle: WidgetStatePropertyAll(AppTextStyles.captionBold)),
+        onSelectionChanged: (sel) => sel.isNotEmpty ? onChanged(regionInput.copyWith(targetRegion: 'Paraspinal (${sel.first})')) : null,
+      ),
     );
   }
 
@@ -114,44 +145,34 @@ class RegionInputRow extends StatelessWidget {
       selected: {regionInput.laterality},
       emptySelectionAllowed: true,
       showSelectedIcon: false,
-      style: ButtonStyle(
-        visualDensity: VisualDensity.compact,
-        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-        textStyle: WidgetStatePropertyAll(AppTextStyles.captionBold),
-      ),
-      onSelectionChanged: (sel) {
-        onChanged(regionInput.copyWith(laterality: sel.isEmpty ? null : sel.first));
-      },
+      style: const ButtonStyle(visualDensity: VisualDensity.compact, tapTargetSize: MaterialTapTargetSize.shrinkWrap, textStyle: WidgetStatePropertyAll(AppTextStyles.captionBold)),
+      onSelectionChanged: (sel) => onChanged(regionInput.copyWith(laterality: sel.isEmpty ? null : sel.first)),
     );
   }
 
   Widget _buildDurationStepper(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
-    final minutes = regionInput.timeMinutes;
+    final min = regionInput.timeMinutes;
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: AppSizes.p8, vertical: AppSizes.p4),
-      decoration: BoxDecoration(
-        color: cs.surfaceContainerLowest,
-        borderRadius: BorderRadius.circular(AppSizes.r8),
-        border: Border.all(color: cs.outlineVariant),
-      ),
+      decoration: BoxDecoration(color: cs.surfaceContainerLowest, borderRadius: BorderRadius.circular(AppSizes.r8), border: Border.all(color: cs.outlineVariant)),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
           InkWell(
-            onTap: minutes > 5 ? () => onChanged(regionInput.copyWith(timeMinutes: minutes - 5)) : null,
+            onTap: min > 5 ? () => onChanged(regionInput.copyWith(timeMinutes: min - 5)) : null,
             borderRadius: BorderRadius.circular(AppSizes.r4),
-            child: Icon(Icons.remove, size: 16, color: minutes > 5 ? cs.primary : cs.outline),
+            child: Icon(Icons.remove, size: 16, color: min > 5 ? cs.primary : cs.outline),
           ),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: AppSizes.p8),
-            child: Text(AppStrings.durationFormat(minutes), style: AppTextStyles.captionBold.copyWith(color: cs.onSurface)),
+            child: Text(AppStrings.durationFormat(min), style: AppTextStyles.captionBold.copyWith(color: cs.onSurface)),
           ),
           InkWell(
-            onTap: minutes < 60 ? () => onChanged(regionInput.copyWith(timeMinutes: minutes + 5)) : null,
+            onTap: min < 60 ? () => onChanged(regionInput.copyWith(timeMinutes: min + 5)) : null,
             borderRadius: BorderRadius.circular(AppSizes.r4),
-            child: Icon(Icons.add, size: 16, color: minutes < 60 ? cs.primary : cs.outline),
+            child: Icon(Icons.add, size: 16, color: min < 60 ? cs.primary : cs.outline),
           ),
         ],
       ),

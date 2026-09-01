@@ -35,4 +35,9 @@ const _$ModalityTypeEnumMap = {
   ModalityType.tecarFocal: 'tecar_focal',
   ModalityType.neurodynamicNonWb: 'neurodynamic_non_wb',
   ModalityType.neurodynamicWb: 'neurodynamic_wb',
+  ModalityType.release: 'release',
+  ModalityType.met: 'met',
+  ModalityType.mobilization: 'mobilization',
+  ModalityType.mulligan: 'mulligan',
+  ModalityType.exercise: 'exercise',
 };

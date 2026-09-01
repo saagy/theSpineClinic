@@ -4,13 +4,14 @@ import 'package:flutter/material.dart';
 import 'package:spine_clinic_app/core/constants/app_sizes.dart';
 import 'package:spine_clinic_app/core/constants/app_strings.dart';
 import 'package:spine_clinic_app/core/constants/app_text_styles.dart';
+import 'package:spine_clinic_app/features/medical_records/domain/laterality.dart';
 import 'package:spine_clinic_app/features/medical_records/domain/modality_input.dart';
 import 'package:spine_clinic_app/features/medical_records/domain/modality_target_region.dart';
 import 'package:spine_clinic_app/features/medical_records/domain/modality_type.dart';
 import 'package:spine_clinic_app/features/medical_records/presentation/widgets/region_input_row.dart';
 import 'package:spine_clinic_app/shared/widgets/app_text_field.dart';
 
-/// Card component to configure a single treatment modality and its target regions.
+/// Card component to configure a single active treatment modality and its target regions.
 class ModalityConfigCard extends StatefulWidget {
   const ModalityConfigCard({
     super.key,
@@ -19,6 +20,7 @@ class ModalityConfigCard extends StatefulWidget {
     required this.modalityInput,
     required this.onToggle,
     required this.onModalityChanged,
+    this.onRemove,
   });
 
   final ModalityType modalityType;
@@ -26,6 +28,7 @@ class ModalityConfigCard extends StatefulWidget {
   final ModalityInput modalityInput;
   final ValueChanged<bool> onToggle;
   final ValueChanged<ModalityInput> onModalityChanged;
+  final VoidCallback? onRemove;
 
   @override
   State<ModalityConfigCard> createState() => _ModalityConfigCardState();
@@ -33,6 +36,7 @@ class ModalityConfigCard extends StatefulWidget {
 
 class _ModalityConfigCardState extends State<ModalityConfigCard> {
   late final TextEditingController _notesController;
+  bool _isExpanded = true;
 
   @override
   void initState() {
@@ -58,10 +62,15 @@ class _ModalityConfigCardState extends State<ModalityConfigCard> {
   void _addRegion() {
     final regions = ModalityTargetRegion.regionsFor(widget.modalityType);
     final defaultRegion = regions.isNotEmpty ? regions.first.name : 'Target Region';
+    final isBilateral = ModalityTargetRegion.isRegionBilateral(widget.modalityType, defaultRegion);
 
     final updated = [
       ...widget.modalityInput.regions,
-      RegionInput(targetRegion: defaultRegion, timeMinutes: 15),
+      RegionInput(
+        targetRegion: defaultRegion,
+        laterality: isBilateral ? Laterality.both : null,
+        timeMinutes: 15,
+      ),
     ];
     widget.onModalityChanged(widget.modalityInput.copyWith(regions: updated));
   }
@@ -84,18 +93,18 @@ class _ModalityConfigCardState extends State<ModalityConfigCard> {
     return Container(
       margin: const EdgeInsets.only(bottom: AppSizes.p12),
       decoration: BoxDecoration(
-        color: widget.isSelected ? cs.primaryContainer.withAlpha(25) : cs.surfaceContainerLow,
+        color: cs.surfaceContainerLow,
         borderRadius: BorderRadius.circular(AppSizes.r16),
         border: Border.all(
-          color: widget.isSelected ? cs.primary : cs.outlineVariant,
-          width: widget.isSelected ? 1.5 : 1.0,
+          color: widget.isSelected ? cs.primary.withAlpha(120) : cs.outlineVariant,
+          width: 1.0,
         ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           _buildHeader(cs),
-          if (widget.isSelected) _buildBody(),
+          if (widget.isSelected && _isExpanded) _buildBody(),
         ],
       ),
     );
@@ -103,29 +112,30 @@ class _ModalityConfigCardState extends State<ModalityConfigCard> {
 
   Widget _buildHeader(ColorScheme cs) {
     return InkWell(
-      onTap: () => widget.onToggle(!widget.isSelected),
+      onTap: () => setState(() => _isExpanded = !_isExpanded),
       borderRadius: BorderRadius.circular(AppSizes.r16),
       child: Padding(
-        padding: const EdgeInsets.all(AppSizes.p16),
+        padding: const EdgeInsets.symmetric(horizontal: AppSizes.p16, vertical: AppSizes.p12),
         child: Row(
           children: [
-            Checkbox(
-              value: widget.isSelected,
-              onChanged: (val) => widget.onToggle(val ?? false),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppSizes.r4)),
+            Container(
+              padding: const EdgeInsets.all(AppSizes.p6),
+              decoration: BoxDecoration(
+                color: cs.primaryContainer,
+                shape: BoxShape.circle,
+              ),
+              child: Icon(widget.modalityType.icon, size: 16, color: cs.onPrimaryContainer),
             ),
-            const SizedBox(width: AppSizes.p8),
+            const SizedBox(width: AppSizes.p12),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
                     widget.modalityType.displayLabel,
-                    style: AppTextStyles.cardTitle.copyWith(
-                      color: widget.isSelected ? cs.primary : cs.onSurface,
-                    ),
+                    style: AppTextStyles.cardTitle.copyWith(color: cs.onSurface),
                   ),
-                  if (widget.modalityType.hasRegionSubSelections && widget.isSelected)
+                  if (widget.modalityType.hasRegionSubSelections)
                     Text(
                       AppStrings.regionsCount(widget.modalityInput.regions.length),
                       style: AppTextStyles.caption.copyWith(color: cs.onSurfaceVariant),
@@ -134,9 +144,17 @@ class _ModalityConfigCardState extends State<ModalityConfigCard> {
               ),
             ),
             Icon(
-              widget.isSelected ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down,
+              _isExpanded ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down,
               color: cs.onSurfaceVariant,
             ),
+            if (widget.onRemove != null) ...[
+              const SizedBox(width: AppSizes.p4),
+              IconButton(
+                icon: Icon(Icons.close, size: 18, color: cs.error),
+                tooltip: AppStrings.delete,
+                onPressed: widget.onRemove,
+              ),
+            ],
           ],
         ),
       ),

@@ -967,6 +967,7 @@ abstract final class AppStrings {
   static const String programActive = 'Active';
   static const String programCompleted = 'Completed';
   static const String programArchived = 'Archived';
+  static String archivedProgramsCount(int count) => 'Archived Programs ($count)';
   static const String affectedRegions = 'Affected Regions';
   static const String selectInjuries = 'Select Injuries / Conditions';
   static const String examination = 'Physical Examination';
@@ -1005,7 +1006,17 @@ abstract final class AppStrings {
   static const String modalityTecarFocal = 'TECAR Focal Technique';
   static const String modalityNeurodynamicNonWb = 'Neurodynamic (Non-WB)';
   static const String modalityNeurodynamicWb = 'Neurodynamic (WB)';
+  static const String modalityRelease = 'Release';
+  static const String modalityMet = 'MET';
+  static const String modalityMobilization = 'Mobilization';
+  static const String modalityMulligan = 'Mulligan';
+  static const String modalityExercise = 'Exercise';
   static const String modalityGeneral = 'General';
+  static const String paraspinalSection = 'Paraspinal';
+  static const String cervical = 'Cervical';
+  static const String thoracic = 'Thoracic';
+  static const String lumbar = 'Lumbar';
+  static const String sacroiliac = 'SI';
 
   // Lateralities
   static const String lateralityRight = 'Right';
@@ -1027,6 +1038,7 @@ abstract final class AppStrings {
   static const String durationMinutes = 'Duration (minutes)';
   static const String planSaved = 'Treatment plan saved.';
   static const String noTreatmentPlans = 'No treatment plans in this program.';
+  static const String noActiveTreatmentPlan = 'No active treatment plan.';
   static const String exportProgramPdf = 'Export Program PDF';
   static const String selectModalities = 'Select Modalities';
   static const String configureRegions = 'Configure Target Regions';
@@ -1049,7 +1061,7 @@ abstract final class AppStrings {
   static const String activePlanSubtitle =
       'Active plan will be executed during patient visits';
   static const String noModalitiesSelected =
-      'No modalities selected. Tap a modality card above to configure.';
+      'No modalities selected. Tap a modality chip above to configure.';
   static const String previousPlans = 'Previous Plan Versions';
   static const String planHistory = 'Plan History';
   static const String setAsActive = 'Set as Active';
@@ -1084,6 +1096,7 @@ abstract final class AppStrings {
   static const String noMatchingConditions = 'No matching conditions found.';
   static const String selectConditionRequired =
       'Please select at least one condition/injury.';
+  static const String saveAndPrescribePlan = 'Save & Prescribe Plan';
   static String conditionsSelected(int count) => '$count selected';
   static String moreConditions(int count) => '+$count more conditions';
   static String createdLabel(String date) => 'Created: $date';

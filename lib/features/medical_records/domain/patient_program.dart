@@ -42,7 +42,7 @@ abstract class PatientProgram with _$PatientProgram {
     for (final plan in treatmentPlans) {
       if (plan.isActive) return plan;
     }
-    return treatmentPlans.firstOrNull;
+    return null;
   }
 
   /// Derived unique list of affected body regions from selected conditions.

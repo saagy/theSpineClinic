@@ -307,7 +307,7 @@ void main() {
     expect(find.byType(ListView), findsWidgets);
 
     // Save button must be pinned to the bottom edge, not floating mid-screen.
-    final saveCenter = tester.getCenter(find.text(AppStrings.save));
+    final saveCenter = tester.getCenter(find.text(AppStrings.saveAndPrescribePlan));
     final screenHeight = tester.view.physicalSize.height /
         tester.view.devicePixelRatio;
     expect(saveCenter.dy, greaterThan(screenHeight * 0.8));
@@ -360,42 +360,16 @@ void main() {
     expect(find.textContaining('m'), findsNothing);
   });
 
-  testWidgets('ProgramFormScreen renders inline Treatment Plan section and preloads active plan on edit', (tester) async {
-    tester.view.physicalSize = const Size(1080, 2400);
-    tester.view.devicePixelRatio = 1.0;
-    addTearDown(() {
-      tester.view.resetPhysicalSize();
-      tester.view.resetDevicePixelRatio();
-    });
-
+  testWidgets('ProgramFormScreen on edit displays clinical findings and saves without inline treatment plan section', (tester) async {
     final programWithPlan = PatientProgram(
       id: 'prog-edit-1',
       patientId: 'pat-1',
       createdBy: 'doc1',
       examination: 'Initial exam',
+      notes: 'Initial clinical notes',
       createdAt: DateTime(2026, 8, 30),
       updatedAt: DateTime(2026, 8, 30),
       conditions: const [],
-      treatmentPlans: [
-        TreatmentPlan(
-          id: 'plan-edit-1',
-          programId: 'prog-edit-1',
-          createdBy: 'doc1',
-          planName: 'Initial Acute Plan',
-          notes: 'Focus on gentle ROM',
-          isActive: true,
-          createdAt: DateTime(2026, 8, 30),
-          updatedAt: DateTime(2026, 8, 30),
-          modalities: const [
-            PlanModality(
-              id: 'm1',
-              treatmentPlanId: 'plan-edit-1',
-              modalityType: ModalityType.musclePain,
-              notes: 'Low intensity',
-            ),
-          ],
-        ),
-      ],
     );
 
     final container = ProviderContainer(
@@ -409,10 +383,98 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    // Verify Treatment Plan section and preloaded values
-    expect(find.text(AppStrings.treatmentPlanSection), findsOneWidget);
-    expect(find.text('Initial Acute Plan'), findsOneWidget);
-    expect(find.text('Focus on gentle ROM'), findsOneWidget);
-    expect(find.text(AppStrings.selectModalities), findsOneWidget);
+    // Verify clinical findings and saveChanges action
+    expect(find.text('Initial exam'), findsOneWidget);
+    expect(find.text('Initial clinical notes'), findsOneWidget);
+    expect(find.text(AppStrings.saveChanges), findsOneWidget);
+    // Treatment plan section should NOT be present on edit program form
+    expect(find.text(AppStrings.treatmentPlanSection), findsNothing);
+  });
+
+  testWidgets('PatientTabPrograms prioritizes Active program over newer Completed program', (tester) async {
+    final olderActive = PatientProgram(
+      id: 'p-active',
+      patientId: 'pat-1',
+      createdBy: 'doc1',
+      status: ProgramStatus.active,
+      createdAt: DateTime(2026, 1, 1),
+      updatedAt: DateTime(2026, 1, 1),
+      conditions: const [],
+    );
+    final newerCompleted = PatientProgram(
+      id: 'p-completed',
+      patientId: 'pat-1',
+      createdBy: 'doc1',
+      status: ProgramStatus.completed,
+      createdAt: DateTime(2026, 6, 1),
+      updatedAt: DateTime(2026, 6, 1),
+      conditions: const [],
+    );
+
+    final fakeProgRepo = _FakeProgramRepo()..programs.addAll([newerCompleted, olderActive]);
+    final container = ProviderContainer(
+      overrides: [
+        currentUserProvider.overrideWith(() => _StaticUser(senior)),
+        programRepositoryProvider.overrideWithValue(fakeProgRepo),
+      ],
+    );
+
+    await tester.pumpWidget(
+      _wrap(PatientTabPrograms(patient: testPatient), container),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text(AppStrings.programActive), findsOneWidget);
+    expect(find.text(AppStrings.programCompleted), findsOneWidget);
+
+    final activePos = tester.getTopLeft(find.text(AppStrings.programActive)).dy;
+    final completedPos = tester.getTopLeft(find.text(AppStrings.programCompleted)).dy;
+    expect(activePos, lessThan(completedPos));
+  });
+
+  testWidgets('PatientTabPrograms isolates archived programs in collapsible section', (tester) async {
+    final activeProg = PatientProgram(
+      id: 'p-active',
+      patientId: 'pat-1',
+      createdBy: 'doc1',
+      status: ProgramStatus.active,
+      createdAt: DateTime(2026, 1, 1),
+      updatedAt: DateTime(2026, 1, 1),
+      conditions: const [],
+    );
+    final archivedProg = PatientProgram(
+      id: 'p-archived',
+      patientId: 'pat-1',
+      createdBy: 'doc1',
+      status: ProgramStatus.archived,
+      createdAt: DateTime(2025, 1, 1),
+      updatedAt: DateTime(2025, 1, 1),
+      conditions: const [],
+    );
+
+    final fakeProgRepo = _FakeProgramRepo()..programs.addAll([activeProg, archivedProg]);
+    final container = ProviderContainer(
+      overrides: [
+        currentUserProvider.overrideWith(() => _StaticUser(senior)),
+        programRepositoryProvider.overrideWithValue(fakeProgRepo),
+      ],
+    );
+
+    await tester.pumpWidget(
+      _wrap(PatientTabPrograms(patient: testPatient), container),
+    );
+    await tester.pumpAndSettle();
+
+    // Archived section header is visible with count 1
+    expect(find.text(AppStrings.archivedProgramsCount(1)), findsOneWidget);
+    // Archived badge should not be visible initially when collapsed
+    expect(find.text(AppStrings.programArchived), findsNothing);
+
+    // Tap to expand archived programs
+    await tester.tap(find.text(AppStrings.archivedProgramsCount(1)));
+    await tester.pumpAndSettle();
+
+    // Archived program card is now visible
+    expect(find.text(AppStrings.programArchived), findsOneWidget);
   });
 }

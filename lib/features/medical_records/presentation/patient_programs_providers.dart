@@ -25,9 +25,17 @@ class PatientProgramsNotifier extends _$PatientProgramsNotifier {
     final Result<List<PatientProgram>> result =
         await repo.getProgramsForPatient(patientId);
     return result.when(
-      success: (List<PatientProgram> data) => data,
+      success: (List<PatientProgram> data) => _sortPrograms(data),
       failure: (AppException exception) => throw exception,
     );
+  }
+
+  static List<PatientProgram> _sortPrograms(List<PatientProgram> list) {
+    return List<PatientProgram>.from(list)..sort((a, b) {
+      final statusComp = a.status.priority.compareTo(b.status.priority);
+      if (statusComp != 0) return statusComp;
+      return b.createdAt.compareTo(a.createdAt);
+    });
   }
 
   /// Updates or inserts a program in place without reloading the list.
@@ -39,13 +47,13 @@ class PatientProgramsNotifier extends _$PatientProgramsNotifier {
 
     final current = state.value!;
     final index = current.indexWhere((p) => p.id == program.id);
+    final updated = List<PatientProgram>.from(current);
     if (index >= 0) {
-      final updated = List<PatientProgram>.from(current);
       updated[index] = program;
-      state = AsyncValue.data(updated);
     } else {
-      state = AsyncValue.data([program, ...current]);
+      updated.add(program);
     }
+    state = AsyncValue.data(_sortPrograms(updated));
   }
 
   /// Removes a deleted program in place.
@@ -63,7 +71,7 @@ class PatientProgramsNotifier extends _$PatientProgramsNotifier {
     if (!ref.mounted) return;
     result.when(
       success: (List<PatientProgram> data) {
-        state = AsyncValue.data(data);
+        state = AsyncValue.data(_sortPrograms(data));
       },
       failure: (AppException exception) {
         if (!state.hasValue) {

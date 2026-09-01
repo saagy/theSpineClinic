@@ -7,6 +7,7 @@ import 'package:spine_clinic_app/core/constants/app_text_styles.dart';
 import 'package:spine_clinic_app/core/utils/formatters.dart';
 import 'package:spine_clinic_app/features/medical_records/domain/body_region.dart';
 import 'package:spine_clinic_app/features/medical_records/domain/patient_program.dart';
+import 'package:spine_clinic_app/features/medical_records/domain/program_status.dart';
 import 'package:spine_clinic_app/features/medical_records/presentation/widgets/program_status_badge.dart';
 
 /// Card component rendering a program summary in the patient programs list.
@@ -118,24 +119,46 @@ class ProgramCard extends StatelessWidget {
       );
     }
 
+    final (cardBg, borderColor, borderWidth) = switch (program.status) {
+      ProgramStatus.active => (
+          cs.surfaceContainerLow,
+          cs.primary.withAlpha(90),
+          1.5,
+        ),
+      ProgramStatus.completed => (
+          cs.surfaceContainerLow,
+          cs.outlineVariant,
+          1.0,
+        ),
+      ProgramStatus.archived => (
+          cs.surfaceContainerLowest,
+          cs.outlineVariant.withAlpha(120),
+          1.0,
+        ),
+    };
+
+    final isArchived = program.status == ProgramStatus.archived;
+
     return Container(
       margin: const EdgeInsets.symmetric(
         horizontal: AppSizes.p16,
         vertical: AppSizes.p8,
       ),
       decoration: BoxDecoration(
-        color: cs.surfaceContainerLow,
+        color: cardBg,
         borderRadius: BorderRadius.circular(AppSizes.r16),
-        border: Border.all(color: cs.outlineVariant),
+        border: Border.all(color: borderColor, width: borderWidth),
       ),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(AppSizes.r16),
-        child: Padding(
-          padding: const EdgeInsets.all(AppSizes.p16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
+      child: Opacity(
+        opacity: isArchived ? 0.82 : 1.0,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(AppSizes.r16),
+          child: Padding(
+            padding: const EdgeInsets.all(AppSizes.p16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -172,6 +195,7 @@ class ProgramCard extends StatelessWidget {
           ),
         ),
       ),
-    );
-  }
+    ),
+  );
+}
 }

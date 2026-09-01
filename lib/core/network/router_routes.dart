@@ -45,6 +45,7 @@ List<RouteBase> _buildRoutes(Ref ref) => [
         patientId: state.pathParameters['id'] ?? '',
         programId: state.pathParameters['programId'] ?? '',
         initialProgram: _extractProgram(state.extra),
+        autoOpenPlanBuilder: state.uri.queryParameters['openPlan'] == 'true',
       ),
     ),
     routes: [
