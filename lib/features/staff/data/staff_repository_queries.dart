@@ -8,7 +8,7 @@ Future<Result<int>> countUpcomingStaffAppointments(
 ) async {
   try {
     final now = DateTime.now().toUtc().toIso8601String();
-    final rows = await service.guardQuery(
+    final List<Map<String, dynamic>> rows = await service.guardQuery(
       () => service
           .from('appointment_doctors')
           .select('appointment_id, appointments!inner(scheduled_at)')

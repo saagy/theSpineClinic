@@ -1,15 +1,15 @@
 library;
 
+import 'package:http/http.dart' as http;
 import 'package:spine_clinic_app/core/errors/app_exception.dart';
 import 'package:spine_clinic_app/core/network/supabase_service.dart';
 import 'package:spine_clinic_app/features/medical_records/domain/program_repository.dart';
 
-/// Helper to manage atomic storage uploads and compensating deletions for programs.
+/// Helper to manage atomic Cloudflare R2 storage uploads and compensating deletions for programs.
 abstract final class ProgramStorageHelper {
-  static const String bucket = 'patient-documents';
   static const int maxBytes = 10 * 1024 * 1024; // 10MB
 
-  /// Uploads all attachments to storage.
+  /// Uploads all attachments to Cloudflare R2 storage via presigned URLs.
   /// If any upload fails, immediately rolls back and cleans up uploaded files.
   static Future<({List<Map<String, dynamic>> payloads, List<String> paths})>
       uploadAttachments({
@@ -30,15 +30,37 @@ abstract final class ProgramStorageHelper {
           );
         }
 
-        final stamp = DateTime.now().millisecondsSinceEpoch.toString();
-        final storagePath = '$patientId/${stamp}_${att.fileName}';
+        final fnRes = await service.invokeFunction(
+          'document-storage',
+          body: {
+            'action': 'get-upload-url',
+            'patientId': patientId,
+            'fileName': att.fileName,
+          },
+        );
+        final data = fnRes.data as Map<String, dynamic>;
+        final String uploadUrl = data['uploadUrl'] as String;
+        final String objectKey = data['objectKey'] as String;
+        final String contentType =
+            (data['contentType'] as String?) ?? 'application/octet-stream';
 
-        await service.storage(bucket).uploadBinary(storagePath, att.bytes);
-        paths.add(storagePath);
+        final putRes = await http.put(
+          Uri.parse(uploadUrl),
+          headers: {'Content-Type': contentType},
+          body: att.bytes,
+        );
 
-        final fileUrl = service.storage(bucket).getPublicUrl(storagePath);
+        if (putRes.statusCode < 200 || putRes.statusCode >= 300) {
+          throw StorageException(
+            code: 'storage/upload-failed',
+            message: 'R2 upload failed with HTTP ${putRes.statusCode}',
+            userMessageKey: 'error_unknown',
+          );
+        }
+
+        paths.add(objectKey);
         payloads.add({
-          'file_url': fileUrl,
+          'file_url': objectKey,
           'file_name': att.fileName,
         });
       }
@@ -57,9 +79,15 @@ abstract final class ProgramStorageHelper {
   }) async {
     if (paths.isEmpty) return;
     try {
-      await service.storage(bucket).remove(paths);
+      await service.invokeFunction(
+        'document-storage',
+        body: {
+          'action': 'delete-objects',
+          'objectKeys': paths,
+        },
+      );
     } catch (_) {
-      // Best-effort cleanup
+      // Best-effort cleanup per Rule 27
     }
   }
 }

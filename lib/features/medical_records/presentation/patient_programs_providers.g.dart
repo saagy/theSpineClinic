@@ -108,7 +108,7 @@ final class PatientProgramsNotifierProvider
 }
 
 String _$patientProgramsNotifierHash() =>
-    r'32f95f3a2c9aea2b6113db7cbe2032426479a9f7';
+    r'a75856a736f3e2263a617ac408adfe50db20fc38';
 
 /// Manages and caches the list of rehabilitation programs for a patient.
 

@@ -14,6 +14,16 @@ abstract class StaffRepository {
   Future<Result<List<Patient>>> getAssignedPatients({
     required String doctorId,
     String? query,
+    ClinicLocation? clinic,
+    int offset = 0,
+    int limit = 30,
+    String orderBy = 'full_name',
+    bool ascending = true,
+  });
+  Future<Result<int>> countAssignedPatients({
+    required String doctorId,
+    String? query,
+    ClinicLocation? clinic,
   });
   Future<Result<List<Staff>>> getAllStaff();
   Future<Result<void>> createStaff({
@@ -57,6 +67,11 @@ class StaffRepositoryImpl implements StaffRepository {
   Future<Result<List<Patient>>> getAssignedPatients({
     required String doctorId,
     String? query,
+    ClinicLocation? clinic,
+    int offset = 0,
+    int limit = 30,
+    String orderBy = 'full_name',
+    bool ascending = true,
   }) async {
     try {
       var builder = _service
@@ -65,6 +80,9 @@ class StaffRepositoryImpl implements StaffRepository {
             '*, patient_doctors!inner(), appointments(scheduled_at, status)',
           )
           .eq('patient_doctors.doctor_id', doctorId);
+      if (clinic != null) {
+        builder = builder.eq('clinic', clinic.dbValue);
+      }
       if (query != null && query.trim().isNotEmpty) {
         for (final token in query.trim().split(RegExp(r'\s+'))) {
           if (token.isNotEmpty) {
@@ -74,8 +92,45 @@ class StaffRepositoryImpl implements StaffRepository {
           }
         }
       }
-      final rows = await _service.guardQuery(() => builder.order('full_name'));
+      final rows = await _service.guardQuery(
+        () => builder
+            .order(orderBy, ascending: ascending)
+            .range(offset, offset + limit - 1),
+      );
       return Result.success(rows.map(buildPatientWithLastVisit).toList());
+    } on AppException catch (e) {
+      return Result.failure(e);
+    } on Exception catch (e) {
+      return Result.failure(AppException.fromSupabaseException(e));
+    }
+  }
+
+  @override
+  Future<Result<int>> countAssignedPatients({
+    required String doctorId,
+    String? query,
+    ClinicLocation? clinic,
+  }) async {
+    try {
+      var builder = _service
+          .from('patients')
+          .select('id, patient_doctors!inner(doctor_id)')
+          .eq('patient_doctors.doctor_id', doctorId);
+      if (clinic != null) {
+        builder = builder.eq('clinic', clinic.dbValue);
+      }
+      if (query != null && query.trim().isNotEmpty) {
+        for (final token in query.trim().split(RegExp(r'\s+'))) {
+          if (token.isNotEmpty) {
+            builder = builder.or(
+              'full_name.ilike.%$token%,phone_number.ilike.%$token%',
+            );
+          }
+        }
+      }
+      final List<Map<String, dynamic>> rows =
+          await _service.guardQuery(() => builder);
+      return Result.success(rows.length);
     } on AppException catch (e) {
       return Result.failure(e);
     } on Exception catch (e) {

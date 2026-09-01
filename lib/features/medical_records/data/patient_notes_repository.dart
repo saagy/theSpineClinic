@@ -103,7 +103,7 @@ class PatientNotesRepositoryImpl implements PatientNotesRepository {
     DateTime? dateTo,
   }) async {
     try {
-      var query = _service.from('patient_notes').select().eq('patient_id', patientId);
+      var query = _service.from('patient_notes').select('id').eq('patient_id', patientId);
       if (dateFrom != null) query = query.gte('created_at', dateFrom.toUtc().toIso8601String());
       if (dateTo != null) query = query.lt('created_at', dateTo.toUtc().toIso8601String());
       final List<Map<String, dynamic>> rows = await _service.guardQuery(() => query);

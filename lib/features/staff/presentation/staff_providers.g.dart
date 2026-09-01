@@ -162,15 +162,15 @@ final class AllDoctorsForFilterProvider
 String _$allDoctorsForFilterHash() =>
     r'80e6acb30753416a47acbd89a3c37107fe780842';
 
-/// Controller managing the roster of patients assigned to the logged-in doctor.
+/// Controller managing the roster of patients assigned to the logged-in doctor with pagination.
 
 @ProviderFor(MyPatientsController)
 final myPatientsControllerProvider = MyPatientsControllerProvider._();
 
-/// Controller managing the roster of patients assigned to the logged-in doctor.
+/// Controller managing the roster of patients assigned to the logged-in doctor with pagination.
 final class MyPatientsControllerProvider
     extends $AsyncNotifierProvider<MyPatientsController, List<Patient>> {
-  /// Controller managing the roster of patients assigned to the logged-in doctor.
+  /// Controller managing the roster of patients assigned to the logged-in doctor with pagination.
   MyPatientsControllerProvider._()
     : super(
         from: null,
@@ -191,9 +191,9 @@ final class MyPatientsControllerProvider
 }
 
 String _$myPatientsControllerHash() =>
-    r'2c0455708a80fcbef69c9910a276bf63e52d6034';
+    r'4ee09af844e1281b9bc4c58a59cdd0b1117827b2';
 
-/// Controller managing the roster of patients assigned to the logged-in doctor.
+/// Controller managing the roster of patients assigned to the logged-in doctor with pagination.
 
 abstract class _$MyPatientsController extends $AsyncNotifier<List<Patient>> {
   FutureOr<List<Patient>> build();
