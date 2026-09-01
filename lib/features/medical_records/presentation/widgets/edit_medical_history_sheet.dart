@@ -19,10 +19,12 @@ class EditMedicalHistorySheet extends ConsumerStatefulWidget {
     super.key,
     required this.patientId,
     this.initialHistory,
+    this.scrollController,
   });
 
   final String patientId;
   final PatientMedicalHistory? initialHistory;
+  final ScrollController? scrollController;
 
   static Future<void> show(
     BuildContext context, {
@@ -33,10 +35,12 @@ class EditMedicalHistorySheet extends ConsumerStatefulWidget {
       context: context,
       title: AppStrings.editMedicalHistory,
       initialChildSize: 0.85,
+      minChildSize: 0.45,
       maxChildSize: 0.95,
       builder: (ctx, scrollController) => EditMedicalHistorySheet(
         patientId: patientId,
         initialHistory: initialHistory,
+        scrollController: scrollController,
       ),
     );
   }
@@ -94,45 +98,31 @@ class _EditMedicalHistorySheetState
       hasHypertension: _hasHypertension,
       hasHyperlipidemia: _hasHyperlipidemia,
       hasRheumatology: _hasRheumatology,
-      rheumatologyDetails:
-          _hasRheumatology ? _rheumatologyController.text.trim() : null,
-      additionalNotes: _notesController.text.trim().isEmpty
-          ? null
-          : _notesController.text.trim(),
+      rheumatologyDetails: _hasRheumatology ? _rheumatologyController.text.trim() : null,
+      additionalNotes: _notesController.text.trim().isEmpty ? null : _notesController.text.trim(),
       createdAt: widget.initialHistory?.createdAt ?? DateTime.now(),
       updatedAt: DateTime.now(),
     );
 
-    final result = await ref
-        .read(medicalHistoryControllerProvider.notifier)
-        .saveMedicalHistory(history);
+    final result = await ref.read(medicalHistoryControllerProvider.notifier).saveMedicalHistory(history);
 
     if (!mounted) return;
     setState(() => _isSubmitting = false);
 
     result.when(
       success: (saved) {
-        ref
-            .read(patientMedicalHistoryProvider(widget.patientId).notifier)
-            .updateData(saved);
+        ref.read(patientMedicalHistoryProvider(widget.patientId).notifier).updateData(saved);
         Navigator.of(context).pop();
-        AppSnackbar.show(
-          context,
-          message: AppStrings.medicalHistorySaved,
-          variant: AppSnackbarVariant.success,
-        );
+        AppSnackbar.show(context, message: AppStrings.medicalHistorySaved, variant: AppSnackbarVariant.success);
       },
-      failure: (error) => AppSnackbar.show(
-        context,
-        message: AppStrings.fromKey(error.userMessageKey),
-        variant: AppSnackbarVariant.error,
-      ),
+      failure: (error) => AppSnackbar.show(context, message: AppStrings.fromKey(error.userMessageKey), variant: AppSnackbarVariant.error),
     );
   }
 
   @override
   Widget build(BuildContext context) {
     return ListView(
+      controller: widget.scrollController,
       padding: const EdgeInsets.symmetric(
         horizontal: AppSizes.p20,
         vertical: AppSizes.p12,

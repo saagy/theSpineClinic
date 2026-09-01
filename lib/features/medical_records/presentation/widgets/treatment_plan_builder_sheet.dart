@@ -27,12 +27,14 @@ class TreatmentPlanBuilderSheet extends ConsumerStatefulWidget {
     required this.patientId,
     required this.affectedRegions,
     this.existingPlan,
+    this.scrollController,
   });
 
   final String programId;
   final String patientId;
   final Set<BodyRegion> affectedRegions;
   final TreatmentPlan? existingPlan;
+  final ScrollController? scrollController;
 
   static Future<TreatmentPlan?> show(
     BuildContext context, {
@@ -44,13 +46,15 @@ class TreatmentPlanBuilderSheet extends ConsumerStatefulWidget {
       AppBottomSheet.show<TreatmentPlan>(
         context: context,
         title: existingPlan != null ? AppStrings.editTreatmentPlan : AppStrings.newTreatmentPlan,
-        initialChildSize: 0.90,
-        maxChildSize: 0.95,
-        builder: (ctx, _) => TreatmentPlanBuilderSheet(
+        initialChildSize: 0.85,
+        minChildSize: 0.45,
+        maxChildSize: AppSizes.sheetMax,
+        builder: (ctx, scrollController) => TreatmentPlanBuilderSheet(
           programId: programId,
           patientId: patientId,
           affectedRegions: affectedRegions,
           existingPlan: existingPlan,
+          scrollController: scrollController,
         ),
       );
 
@@ -161,6 +165,7 @@ class _TreatmentPlanBuilderSheetState extends ConsumerState<TreatmentPlanBuilder
       children: [
         Expanded(
           child: ListView(
+            controller: widget.scrollController,
             padding: const EdgeInsets.symmetric(horizontal: AppSizes.p16),
             children: [
               TreatmentPlanHeaderInputs(
@@ -181,16 +186,8 @@ class _TreatmentPlanBuilderSheetState extends ConsumerState<TreatmentPlanBuilder
                 Container(
                   width: double.infinity,
                   padding: const EdgeInsets.all(AppSizes.p16),
-                  decoration: BoxDecoration(
-                    color: cs.surfaceContainerLow,
-                    borderRadius: BorderRadius.circular(AppSizes.r16),
-                    border: Border.all(color: cs.outlineVariant),
-                  ),
-                  child: Text(
-                    AppStrings.noModalitiesSelected,
-                    textAlign: TextAlign.center,
-                    style: AppTextStyles.bodySecondary.copyWith(color: cs.onSurfaceVariant),
-                  ),
+                  decoration: BoxDecoration(color: cs.surfaceContainerLow, borderRadius: BorderRadius.circular(AppSizes.r16), border: Border.all(color: cs.outlineVariant)),
+                  child: Text(AppStrings.noModalitiesSelected, textAlign: TextAlign.center, style: AppTextStyles.bodySecondary.copyWith(color: cs.onSurfaceVariant)),
                 )
               else
                 ...ModalityType.values.where(_selectedModalities.contains).map((type) => ModalityConfigCard(

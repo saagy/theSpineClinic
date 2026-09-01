@@ -13,6 +13,7 @@ import 'package:spine_clinic_app/features/medical_records/presentation/medical_h
 import 'package:spine_clinic_app/features/medical_records/presentation/patient_programs_providers.dart';
 import 'package:spine_clinic_app/features/medical_records/presentation/program_controller.dart';
 import 'package:spine_clinic_app/features/medical_records/presentation/services/program_pdf_service.dart';
+import 'package:spine_clinic_app/features/medical_records/presentation/treatment_plan_controller.dart';
 import 'package:spine_clinic_app/features/medical_records/presentation/widgets/program_detail_conditions.dart';
 import 'package:spine_clinic_app/features/medical_records/presentation/widgets/program_detail_findings.dart';
 import 'package:spine_clinic_app/features/medical_records/presentation/widgets/program_detail_header.dart';
@@ -24,6 +25,7 @@ import 'package:spine_clinic_app/shared/widgets/app_snackbar.dart';
 import 'package:spine_clinic_app/shared/widgets/confirmation_dialog.dart';
 import 'package:spine_clinic_app/shared/widgets/empty_state.dart';
 import 'package:spine_clinic_app/shared/widgets/error_view.dart';
+import 'package:spine_clinic_app/shared/widgets/loading_overlay.dart';
 import 'package:spine_clinic_app/shared/widgets/skeleton_loader.dart';
 
 /// Screen displaying comprehensive details of a single rehabilitation program.
@@ -92,8 +94,8 @@ class _ProgramDetailScreenState extends ConsumerState<ProgramDetailScreen> {
     );
   }
 
-  List<Widget> _buildAppBarActions(PatientProgram? program) {
-    if (program == null) return const [];
+  List<Widget> _buildAppBarActions(PatientProgram? program, {required bool isDeleting}) {
+    if (program == null || isDeleting) return const [];
     final cs = Theme.of(context).colorScheme;
     final isSenior = ref.watch(currentUserProvider).value?.isSeniorDoctor ?? false;
 
@@ -112,6 +114,9 @@ class _ProgramDetailScreenState extends ConsumerState<ProgramDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isDeleting = ref.watch(programControllerProvider).isLoading;
+    final isPlanBusy = ref.watch(treatmentPlanControllerProvider).isLoading;
+    final isBusy = isDeleting || isPlanBusy;
     final asyncDetail = ref.watch(programDetailProvider(widget.programId));
     final program = asyncDetail.value ?? widget.initialProgram;
     if (program != null) _checkAutoOpen(program);
@@ -120,27 +125,30 @@ class _ProgramDetailScreenState extends ConsumerState<ProgramDetailScreen> {
       appBar: AppBar(
         leading: const AppBackButton(),
         title: const Text(AppStrings.programDetails),
-        actions: _buildAppBarActions(program),
+        actions: _buildAppBarActions(program, isDeleting: isBusy),
       ),
-      body: SafeArea(
-        child: asyncDetail.when(
-          loading: () => program != null ? _buildLayout(program) : const Padding(padding: EdgeInsets.all(AppSizes.p16), child: SkeletonTileList(count: 4)),
-          error: (err, _) => program != null
-              ? _buildLayout(program)
-              : Center(
-                  child: Padding(
-                    padding: const EdgeInsets.all(AppSizes.p24),
-                    child: ErrorView(
-                      exception: err is AppException ? err : AppException.fromSupabaseException(err),
-                      onRetry: () => ref.invalidate(programDetailProvider(widget.programId)),
+      body: LoadingOverlay(
+        isLoading: isBusy,
+        child: SafeArea(
+          child: asyncDetail.when(
+            loading: () => program != null ? _buildLayout(program) : const Padding(padding: EdgeInsets.all(AppSizes.p16), child: SkeletonTileList(count: 4)),
+            error: (err, _) => program != null
+                ? _buildLayout(program)
+                : Center(
+                    child: Padding(
+                      padding: const EdgeInsets.all(AppSizes.p24),
+                      child: ErrorView(
+                        exception: err is AppException ? err : AppException.fromSupabaseException(err),
+                        onRetry: () => ref.invalidate(programDetailProvider(widget.programId)),
+                      ),
                     ),
                   ),
-                ),
-          data: (prog) {
-            final effective = prog ?? widget.initialProgram;
-            if (effective == null) return const EmptyState(message: AppStrings.programNotFound, icon: Icons.search_off_rounded);
-            return _buildLayout(effective);
-          },
+            data: (prog) {
+              final effective = prog ?? widget.initialProgram;
+              if (effective == null) return const EmptyState(message: AppStrings.programNotFound, icon: Icons.search_off_rounded);
+              return _buildLayout(effective);
+            },
+          ),
         ),
       ),
     );

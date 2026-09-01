@@ -41,22 +41,13 @@ class ProgramGalleryViewerScreen extends StatefulWidget {
     if (documents.isEmpty) return;
     final router = GoRouter.maybeOf(context);
     if (patientId != null && programId != null && router != null) {
-      router.push(AppRoutes.programGalleryLocation(
-        patientId: patientId,
-        programId: programId,
-        initialIndex: initialIndex,
-      ));
+      router.push(AppRoutes.programGalleryLocation(patientId: patientId, programId: programId, initialIndex: initialIndex));
     } else {
       Navigator.of(context, rootNavigator: true).push(PageRouteBuilder<void>(
-        pageBuilder: (_, __, ___) => ProgramGalleryViewerScreen(
-          documents: documents,
-          initialIndex: initialIndex,
-          title: title,
-        ),
+        pageBuilder: (_, __, ___) => ProgramGalleryViewerScreen(documents: documents, initialIndex: initialIndex, title: title),
         transitionDuration: const Duration(milliseconds: 200),
         reverseTransitionDuration: const Duration(milliseconds: 150),
-        transitionsBuilder: (_, a, __, c) =>
-            FadeTransition(opacity: a, child: c),
+        transitionsBuilder: (_, a, __, c) => FadeTransition(opacity: a, child: c),
       ));
     }
   }

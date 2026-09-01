@@ -1,18 +1,91 @@
-library;
-
+import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
+import 'package:spine_clinic_app/core/constants/app_strings.dart';
 import 'package:spine_clinic_app/core/utils/formatters.dart';
 import 'package:spine_clinic_app/features/medical_records/domain/patient_medical_history.dart';
 import 'package:spine_clinic_app/features/medical_records/domain/patient_program.dart';
+import 'package:spine_clinic_app/features/medical_records/domain/program_status.dart';
+import 'package:spine_clinic_app/features/medical_records/presentation/medical_history_providers.dart';
+import 'package:spine_clinic_app/features/medical_records/presentation/patient_programs_providers.dart';
 import 'package:spine_clinic_app/features/medical_records/presentation/services/program_pdf_sections.dart';
+import 'package:spine_clinic_app/features/medical_records/presentation/widgets/program_picker_bottom_sheet.dart';
 import 'package:spine_clinic_app/features/patient/domain/patient.dart';
+import 'package:spine_clinic_app/shared/widgets/app_bottom_sheet.dart';
+import 'package:spine_clinic_app/shared/widgets/app_snackbar.dart';
 
 /// Generates and previews a clinical assessment and rehabilitation report PDF.
 class ProgramPdfService {
   const ProgramPdfService._();
+
+  /// Dispatches the complete program PDF export flow for a given [patient].
+  ///
+  /// Automatically resolves single vs multiple active or archived programs,
+  /// displays a picker modal if disambiguation is required, and previews
+  /// the generated report.
+  static Future<void> exportProgramForPatient({
+    required BuildContext context,
+    required WidgetRef ref,
+    required Patient patient,
+  }) async {
+    try {
+      final List<PatientProgram> programs =
+          await ref.read(patientProgramsProvider(patient.id).future);
+
+      if (programs.isEmpty) {
+        if (context.mounted) {
+          AppSnackbar.show(
+            context,
+            message: AppStrings.noProgramsRecorded,
+            variant: AppSnackbarVariant.info,
+          );
+        }
+        return;
+      }
+
+      final List<PatientProgram> activePrograms =
+          programs.where((p) => p.status == ProgramStatus.active).toList();
+
+      PatientProgram? targetProgram;
+      if (programs.length == 1) {
+        targetProgram = programs.first;
+      } else if (activePrograms.length == 1) {
+        targetProgram = activePrograms.first;
+      } else {
+        if (!context.mounted) return;
+        targetProgram = await AppBottomSheet.show<PatientProgram>(
+          context: context,
+          title: AppStrings.selectProgram,
+          builder: (ctx, scrollController) => ProgramPickerBottomSheet(
+            programs: programs,
+            scrollController: scrollController,
+          ),
+        );
+      }
+
+      if (targetProgram == null || !context.mounted) return;
+
+      final PatientMedicalHistory? history = await ref
+          .read(patientMedicalHistoryProvider(patient.id).future);
+
+      await printProgramReport(
+        program: targetProgram,
+        patient: patient,
+        medicalHistory: history,
+      );
+    } catch (_) {
+      if (context.mounted) {
+        AppSnackbar.show(
+          context,
+          message: AppStrings.pdfExportError,
+          variant: AppSnackbarVariant.error,
+        );
+      }
+    }
+  }
 
   static Future<void> printProgramReport({
     required PatientProgram program,

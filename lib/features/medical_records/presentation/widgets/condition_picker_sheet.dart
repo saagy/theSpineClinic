@@ -21,9 +21,11 @@ class ConditionPickerSheet extends ConsumerStatefulWidget {
   const ConditionPickerSheet({
     super.key,
     required this.selectedConditionIds,
+    this.scrollController,
   });
 
   final Set<String> selectedConditionIds;
+  final ScrollController? scrollController;
 
   static Future<List<ConditionCatalog>?> show(
     BuildContext context, {
@@ -33,9 +35,11 @@ class ConditionPickerSheet extends ConsumerStatefulWidget {
       context: context,
       title: AppStrings.selectInjuries,
       initialChildSize: 0.85,
+      minChildSize: 0.45,
       maxChildSize: 0.95,
-      builder: (ctx, _) => ConditionPickerSheet(
+      builder: (ctx, scrollController) => ConditionPickerSheet(
         selectedConditionIds: initialSelectedIds,
+        scrollController: scrollController,
       ),
     );
   }
@@ -117,6 +121,7 @@ class _ConditionPickerSheetState extends ConsumerState<ConditionPickerSheet> {
               }
 
               return ListView.builder(
+                controller: widget.scrollController,
                 padding: const EdgeInsets.symmetric(horizontal: AppSizes.p16),
                 itemCount: filtered.length,
                 itemBuilder: (context, index) {
