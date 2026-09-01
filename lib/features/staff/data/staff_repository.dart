@@ -1,3 +1,5 @@
+import 'package:supabase_flutter/supabase_flutter.dart' show CountOption;
+
 import 'package:spine_clinic_app/core/errors/app_exception.dart';
 import 'package:spine_clinic_app/core/errors/result.dart';
 import 'package:spine_clinic_app/core/network/supabase_service.dart';
@@ -5,7 +7,6 @@ import 'package:spine_clinic_app/features/auth/domain/staff.dart';
 import 'package:spine_clinic_app/features/auth/domain/user_role.dart';
 import 'package:spine_clinic_app/features/patient/domain/clinic_location.dart';
 import 'package:spine_clinic_app/features/patient/domain/patient.dart';
-import 'package:spine_clinic_app/features/staff/data/staff_patient_mapper.dart';
 import 'package:spine_clinic_app/features/staff/data/staff_repository_queries.dart';
 import 'package:spine_clinic_app/features/staff/data/staff_write_queries.dart';
 
@@ -76,9 +77,7 @@ class StaffRepositoryImpl implements StaffRepository {
     try {
       var builder = _service
           .from('patients')
-          .select(
-            '*, patient_doctors!inner(), appointments(scheduled_at, status)',
-          )
+          .select('*, patient_doctors!inner(doctor_id)')
           .eq('patient_doctors.doctor_id', doctorId);
       if (clinic != null) {
         builder = builder.eq('clinic', clinic.dbValue);
@@ -97,7 +96,7 @@ class StaffRepositoryImpl implements StaffRepository {
             .order(orderBy, ascending: ascending)
             .range(offset, offset + limit - 1),
       );
-      return Result.success(rows.map(buildPatientWithLastVisit).toList());
+      return Result.success(rows.map(Patient.fromJson).toList());
     } on AppException catch (e) {
       return Result.failure(e);
     } on Exception catch (e) {
@@ -112,25 +111,27 @@ class StaffRepositoryImpl implements StaffRepository {
     ClinicLocation? clinic,
   }) async {
     try {
-      var builder = _service
-          .from('patients')
-          .select('id, patient_doctors!inner(doctor_id)')
-          .eq('patient_doctors.doctor_id', doctorId);
-      if (clinic != null) {
-        builder = builder.eq('clinic', clinic.dbValue);
-      }
-      if (query != null && query.trim().isNotEmpty) {
-        for (final token in query.trim().split(RegExp(r'\s+'))) {
-          if (token.isNotEmpty) {
-            builder = builder.or(
-              'full_name.ilike.%$token%,phone_number.ilike.%$token%',
-            );
+      final int count = await _service.guardQuery(() async {
+        var builder = _service
+            .from('patient_doctors')
+            .count(CountOption.exact)
+            .eq('doctor_id', doctorId);
+        if (clinic != null) {
+          builder = builder.eq('patients.clinic', clinic.dbValue);
+        }
+        if (query != null && query.trim().isNotEmpty) {
+          for (final token in query.trim().split(RegExp(r'\s+'))) {
+            if (token.isNotEmpty) {
+              builder = builder.or(
+                'full_name.ilike.%$token%,phone_number.ilike.%$token%',
+                referencedTable: 'patients',
+              );
+            }
           }
         }
-      }
-      final List<Map<String, dynamic>> rows =
-          await _service.guardQuery(() => builder);
-      return Result.success(rows.length);
+        return await builder;
+      });
+      return Result.success(count);
     } on AppException catch (e) {
       return Result.failure(e);
     } on Exception catch (e) {

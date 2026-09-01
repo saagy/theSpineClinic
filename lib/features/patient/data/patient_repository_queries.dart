@@ -2,10 +2,11 @@
 /// [PatientRepositoryImpl] to keep the main file under 200 lines.
 library;
 
+import 'package:supabase_flutter/supabase_flutter.dart' show CountOption;
+
 import 'package:spine_clinic_app/core/errors/app_exception.dart';
 import 'package:spine_clinic_app/core/errors/result.dart';
 import 'package:spine_clinic_app/core/network/supabase_service.dart';
-import 'package:spine_clinic_app/core/utils/patient_helpers.dart';
 import 'package:spine_clinic_app/features/patient/domain/clinic_location.dart';
 import 'package:spine_clinic_app/features/patient/domain/patient.dart';
 
@@ -57,13 +58,9 @@ class PatientRepositoryQueries {
         final base = doctorId != null
             ? _service
                   .from(_table)
-                  .select(
-                    '*, patient_doctors!inner(), appointments(scheduled_at, status)',
-                  )
+                  .select('*, patient_doctors!inner(doctor_id)')
                   .eq('patient_doctors.doctor_id', doctorId)
-            : _service
-                  .from(_table)
-                  .select('*, appointments(scheduled_at, status)');
+            : _service.from(_table).select('*');
         final withClinic = clinic != null
             ? base.eq('clinic', clinic.dbValue)
             : base;
@@ -84,7 +81,7 @@ class PatientRepositoryQueries {
             .order(orderBy, ascending: ascending)
             .range(offset, offset + limit - 1);
       });
-      return Result.success(rows.map(parsePatientRowWithLastAppt).toList());
+      return Result.success(rows.map(Patient.fromJson).toList());
     } on AppException catch (e) {
       return Result.failure(e);
     } catch (e) {
@@ -98,30 +95,44 @@ class PatientRepositoryQueries {
     ClinicLocation? clinic,
   }) async {
     try {
-      final List<Map<String, dynamic>> rows = await _service.guardQuery(() {
-        final base = doctorId != null
-            ? _service
-                  .from(_table)
-                  .select('id, patient_doctors!inner(doctor_id)')
-                  .eq('patient_doctors.doctor_id', doctorId)
-            : _service.from(_table).select('id');
-        final withClinic = clinic != null
-            ? base.eq('clinic', clinic.dbValue)
-            : base;
-        if (query != null && query.trim().isNotEmpty) {
-          final tokens = query
-              .trim()
-              .split(RegExp(r'\s+'))
-              .where((t) => t.isNotEmpty);
-          final dynamic queryBuilder = withClinic;
-          return tokens.fold<dynamic>(
-            queryBuilder,
-            (q, t) => q.or('full_name.ilike.%$t%,phone_number.ilike.%$t%'),
-          );
+      final int count = await _service.guardQuery(() async {
+        if (doctorId != null) {
+          var base = _service
+              .from('patient_doctors')
+              .count(CountOption.exact)
+              .eq('doctor_id', doctorId);
+          if (clinic != null) {
+            base = base.eq('patients.clinic', clinic.dbValue);
+          }
+          if (query != null && query.trim().isNotEmpty) {
+            for (final token in query.trim().split(RegExp(r'\s+'))) {
+              if (token.isNotEmpty) {
+                base = base.or(
+                  'full_name.ilike.%$token%,phone_number.ilike.%$token%',
+                  referencedTable: 'patients',
+                );
+              }
+            }
+          }
+          return await base;
         }
-        return withClinic;
+
+        var base = _service.from(_table).count(CountOption.exact);
+        if (clinic != null) {
+          base = base.eq('clinic', clinic.dbValue);
+        }
+        if (query != null && query.trim().isNotEmpty) {
+          for (final token in query.trim().split(RegExp(r'\s+'))) {
+            if (token.isNotEmpty) {
+              base = base.or(
+                'full_name.ilike.%$token%,phone_number.ilike.%$token%',
+              );
+            }
+          }
+        }
+        return await base;
       });
-      return Result.success(rows.length);
+      return Result.success(count);
     } on AppException catch (e) {
       return Result.failure(e);
     } catch (e) {

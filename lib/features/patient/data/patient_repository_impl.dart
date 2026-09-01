@@ -37,9 +37,7 @@ class PatientRepositoryImpl implements PatientRepository {
       if (trimmed.isEmpty) return const Result.success([]);
       final List<String> tokens = trimmed.split(RegExp(r'\s+'));
       final List<Map<String, dynamic>> rows = await _service.guardQuery(() {
-        final base = _service
-            .from(_table)
-            .select('*, appointments(scheduled_at, status)');
+        final base = _service.from(_table).select('*');
         final filtered = tokens
             .where((t) => t.isNotEmpty)
             .fold(
@@ -52,7 +50,7 @@ class PatientRepositoryImpl implements PatientRepository {
             : filtered;
         return withClinic.order('full_name').limit(_searchLimit);
       });
-      return Result.success(rows.map(parsePatientRowWithLastAppt).toList());
+      return Result.success(rows.map(Patient.fromJson).toList());
     } on AppException catch (e) {
       return Result.failure(e);
     } catch (e) {
