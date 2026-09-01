@@ -33,6 +33,7 @@ class ReceptionistDayList extends ConsumerStatefulWidget {
 }
 
 class _ReceptionistDayListState extends ConsumerState<ReceptionistDayList> {
+  final GlobalKey _nowIndicatorKey = GlobalKey();
   DateTime? _lastAutoScrolledDate;
 
   @override
@@ -45,12 +46,16 @@ class _ReceptionistDayListState extends ConsumerState<ReceptionistDayList> {
   void didUpdateWidget(covariant ReceptionistDayList oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.state.selectedDate != widget.state.selectedDate) {
+      _lastAutoScrolledDate = null;
+      _checkAutoScroll();
+    } else if (oldWidget.state.itemsForSelectedDay.isEmpty &&
+        widget.state.itemsForSelectedDay.isNotEmpty) {
       _checkAutoScroll();
     }
   }
 
   void _checkAutoScroll() {
-    if (!widget.state.isToday) return;
+    if (!widget.state.isToday || widget.searchQuery.isNotEmpty) return;
     if (_lastAutoScrolledDate == widget.state.selectedDate) return;
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -60,27 +65,39 @@ class _ReceptionistDayListState extends ConsumerState<ReceptionistDayList> {
 
       final allItems = widget.state.itemsForSelectedDay;
       final items = _filter(allItems);
+      if (items.isEmpty) return;
+
       final rowItems = buildScheduleRowItems(items);
       final nowIndex = getScheduleNowIndex(
         rowItems,
         isToday: widget.state.isToday,
       );
+      if (nowIndex < 0) return;
 
-      if (nowIndex > 0) {
-        final isCompact = ref.read(scheduleCompactControllerProvider);
-        final double itemHeight = isCompact ? 36.0 : 84.0;
-        final double target = (nowIndex * itemHeight - 20.0).clamp(
-          0.0,
-          controller.position.maxScrollExtent,
-        );
-        if (target > 0) {
-          controller.animateTo(
-            target,
-            duration: const Duration(milliseconds: 350),
-            curve: Curves.easeOutCubic,
+      final isCompact = ref.read(scheduleCompactControllerProvider);
+      final double target = estimateScheduleScrollOffset(
+        rowItems: rowItems,
+        nowIndex: nowIndex,
+        isCompact: isCompact,
+      );
+
+      if (target > 0) {
+        controller.jumpTo(target);
+      }
+
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        final nowContext = _nowIndicatorKey.currentContext;
+        if (nowContext != null) {
+          Scrollable.ensureVisible(
+            nowContext,
+            alignment: 0.08,
+            duration: const Duration(milliseconds: 150),
+            curve: Curves.easeOut,
           );
         }
-      }
+      });
+
       _lastAutoScrolledDate = widget.state.selectedDate;
     });
   }
@@ -138,7 +155,7 @@ class _ReceptionistDayListState extends ConsumerState<ReceptionistDayList> {
       itemCount: totalCount,
       itemBuilder: (_, index) {
         if (hasNow && index == nowIndex) {
-          return const ScheduleNowIndicator();
+          return ScheduleNowIndicator(key: _nowIndicatorKey);
         }
 
         final cardIndex = hasNow && index > nowIndex ? index - 1 : index;

@@ -65,7 +65,7 @@ mixin _PatientAppointmentFilters on _AppointmentRepositoryBase {
         dateTo: dateTo,
       );
       if (doctorIds != null && doctorIds.isEmpty) return 0;
-      final List<Map<String, dynamic>> rows = await _patientFilters(
+      final PostgrestFilterBuilder builder = _patientCountFilters(
         patientId: patientId,
         doctorIds: doctorIds,
         statusFilter: statusFilter,
@@ -73,10 +73,48 @@ mixin _PatientAppointmentFilters on _AppointmentRepositoryBase {
         dateFrom: dateFrom,
         dateTo: dateTo,
         usePackageFilter: usePackageFilter,
-        isCountOnly: true,
       );
+      final List<Map<String, dynamic>> rows = await builder;
       return rows.length;
     });
+  }
+
+  PostgrestFilterBuilder _patientCountFilters({
+    required String patientId,
+    required List<String>? doctorIds,
+    Set<AppointmentStatus>? statusFilter,
+    Set<AppointmentType>? typeFilter,
+    DateTime? dateFrom,
+    DateTime? dateTo,
+    bool? usePackageFilter,
+  }) {
+    var builder = _service
+        .from(_appointmentsTable)
+        .select('id')
+        .eq('patient_id', patientId);
+    if (dateFrom != null) {
+      builder = builder.gte('scheduled_at', dateFrom.toUtc().toIso8601String());
+    }
+    if (dateTo != null) {
+      builder = builder.lt('scheduled_at', dateTo.toUtc().toIso8601String());
+    }
+    if (statusFilter != null && statusFilter.isNotEmpty) {
+      builder = builder.inFilter(
+        'status',
+        statusFilter.map((status) => status.dbValue).toList(),
+      );
+    }
+    if (typeFilter != null && typeFilter.isNotEmpty) {
+      builder = builder.inFilter(
+        'type',
+        typeFilter.map((type) => type.dbValue).toList(),
+      );
+    }
+    if (usePackageFilter != null) {
+      builder = builder.eq('use_package', usePackageFilter);
+    }
+    if (doctorIds != null) builder = builder.inFilter('id', doctorIds);
+    return builder;
   }
 
   PostgrestFilterBuilder _patientFilters({
@@ -87,14 +125,11 @@ mixin _PatientAppointmentFilters on _AppointmentRepositoryBase {
     DateTime? dateFrom,
     DateTime? dateTo,
     bool? usePackageFilter,
-    bool isCountOnly = false,
   }) {
     var builder = _service
         .from(_appointmentsTable)
         .select(
-          isCountOnly
-              ? 'id'
-              : '*, patient:patients!inner(*), appointment_doctors(is_active, staff:staff!doctor_id(full_name))',
+          '*, patient:patients!inner(*), appointment_doctors(is_active, staff:staff!doctor_id(full_name))',
         )
         .eq('patient_id', patientId);
     if (dateFrom != null) {

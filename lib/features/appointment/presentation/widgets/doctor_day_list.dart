@@ -36,6 +36,7 @@ class DoctorDayList extends ConsumerStatefulWidget {
 
 class _DoctorDayListState extends ConsumerState<DoctorDayList> {
   late final ScrollController _scrollController;
+  final GlobalKey _nowIndicatorKey = GlobalKey();
   DateTime? _lastAutoScrolledDate;
 
   @override
@@ -49,6 +50,10 @@ class _DoctorDayListState extends ConsumerState<DoctorDayList> {
   void didUpdateWidget(covariant DoctorDayList oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.state.selectedDate != widget.state.selectedDate) {
+      _lastAutoScrolledDate = null;
+      _checkAutoScroll();
+    } else if (oldWidget.state.itemsForSelectedDay.isEmpty &&
+        widget.state.itemsForSelectedDay.isNotEmpty) {
       _checkAutoScroll();
     }
   }
@@ -66,23 +71,37 @@ class _DoctorDayListState extends ConsumerState<DoctorDayList> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted || !_scrollController.hasClients) return;
       final items = widget.state.itemsForSelectedDay;
-      final nowIndex = _getNowIndex(items);
+      if (items.isEmpty) return;
 
-      if (nowIndex > 0) {
-        final isCompact = ref.read(scheduleCompactControllerProvider);
-        final double itemHeight = isCompact ? 36.0 : 84.0;
-        final double target = (nowIndex * itemHeight - 20.0).clamp(
-          0.0,
-          _scrollController.position.maxScrollExtent,
-        );
-        if (target > 0) {
-          _scrollController.animateTo(
-            target,
-            duration: const Duration(milliseconds: 350),
-            curve: Curves.easeOutCubic,
+      final nowIndex = getDoctorScheduleNowIndex(
+        items,
+        isToday: widget.state.isToday,
+      );
+      if (nowIndex < 0) return;
+
+      final isCompact = ref.read(scheduleCompactControllerProvider);
+      final double target = estimateDoctorScheduleScrollOffset(
+        nowIndex: nowIndex,
+        isCompact: isCompact,
+      );
+
+      if (target > 0) {
+        _scrollController.jumpTo(target);
+      }
+
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        final nowContext = _nowIndicatorKey.currentContext;
+        if (nowContext != null) {
+          Scrollable.ensureVisible(
+            nowContext,
+            alignment: 0.08,
+            duration: const Duration(milliseconds: 150),
+            curve: Curves.easeOut,
           );
         }
-      }
+      });
+
       _lastAutoScrolledDate = widget.state.selectedDate;
     });
   }
@@ -123,7 +142,10 @@ class _DoctorDayListState extends ConsumerState<DoctorDayList> {
       return emptyWidget;
     }
 
-    final nowIndex = _getNowIndex(items);
+    final nowIndex = getDoctorScheduleNowIndex(
+      items,
+      isToday: widget.state.isToday,
+    );
     final hasNow = nowIndex >= 0;
     final totalCount = items.length + (hasNow ? 1 : 0);
 
@@ -134,7 +156,7 @@ class _DoctorDayListState extends ConsumerState<DoctorDayList> {
       itemCount: totalCount,
       itemBuilder: (_, index) {
         if (hasNow && index == nowIndex) {
-          return const ScheduleNowIndicator();
+          return ScheduleNowIndicator(key: _nowIndicatorKey);
         }
 
         final cardIndex = hasNow && index > nowIndex ? index - 1 : index;
@@ -157,16 +179,5 @@ class _DoctorDayListState extends ConsumerState<DoctorDayList> {
       item: item,
       onStatusChanged: widget.onStatusChanged,
     );
-  }
-
-  int _getNowIndex(List<AppointmentWithPatient> items) {
-    if (!widget.state.isToday || items.isEmpty) return -1;
-    final now = DateTime.now();
-    for (int i = 0; i < items.length; i++) {
-      if (now.isBefore(items[i].appointment.scheduledAt)) {
-        return i;
-      }
-    }
-    return items.length;
   }
 }

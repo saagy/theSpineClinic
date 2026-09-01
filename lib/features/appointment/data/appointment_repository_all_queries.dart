@@ -64,7 +64,7 @@ mixin _AllAppointmentQueries on _AppointmentRepositoryBase {
         dateTo: dateTo,
       );
       if (doctorIds != null && doctorIds.isEmpty) return 0;
-      final List<Map<String, dynamic>> rows = await _filters(
+      final PostgrestFilterBuilder builder = _countFilters(
         doctorIds: doctorIds,
         dateFrom: dateFrom,
         dateTo: dateTo,
@@ -73,8 +73,44 @@ mixin _AllAppointmentQueries on _AppointmentRepositoryBase {
         type: type,
         patientQuery: patientQuery,
       );
+      final List<Map<String, dynamic>> rows = await builder;
       return rows.length;
     });
+  }
+
+  PostgrestFilterBuilder _countFilters({
+    required List<String>? doctorIds,
+    DateTime? dateFrom,
+    DateTime? dateTo,
+    String? status,
+    String? clinic,
+    String? type,
+    String? patientQuery,
+  }) {
+    var builder = _service
+        .from(_appointmentsTable)
+        .select('id, patient:patients!inner(id)');
+    if (dateFrom != null) {
+      builder = builder.gte('scheduled_at', dateFrom.toUtc().toIso8601String());
+    }
+    if (dateTo != null) {
+      builder = builder.lt('scheduled_at', dateTo.toUtc().toIso8601String());
+    }
+    if (status != null) builder = builder.eq('status', status);
+    if (clinic != null) builder = builder.eq('patient.clinic', clinic);
+    if (type != null) builder = builder.eq('type', type);
+    if (doctorIds != null) builder = builder.inFilter('id', doctorIds);
+    if (patientQuery != null && patientQuery.trim().isNotEmpty) {
+      for (final String token in patientQuery.trim().split(RegExp(r'\s+'))) {
+        if (token.isEmpty) continue;
+        final String escaped = _escapeLike(token);
+        builder = builder.or(
+          'full_name.ilike.%$escaped%,phone_number.ilike.%$escaped%',
+          referencedTable: 'patients',
+        );
+      }
+    }
+    return builder;
   }
 
   PostgrestFilterBuilder _filters({

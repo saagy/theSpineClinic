@@ -13,13 +13,15 @@ import 'package:spine_clinic_app/core/network/app_routes.dart';
 import 'package:spine_clinic_app/features/appointment/domain/appointment_status.dart';
 import 'package:spine_clinic_app/features/appointment/presentation/appointment_detail_controller.dart';
 import 'package:spine_clinic_app/features/appointment/presentation/appointment_providers.dart';
+import 'package:spine_clinic_app/features/appointment/presentation/edit_appointment_controller.dart';
 import 'package:spine_clinic_app/features/appointment/presentation/widgets/appointment_detail_body.dart';
+import 'package:spine_clinic_app/features/appointment/presentation/widgets/appointment_detail_skeleton.dart';
 import 'package:spine_clinic_app/features/appointment/presentation/widgets/detail_overflow_button.dart';
 import 'package:spine_clinic_app/features/auth/domain/user_role.dart';
 import 'package:spine_clinic_app/features/auth/presentation/auth_providers.dart';
-import 'package:spine_clinic_app/features/appointment/presentation/widgets/appointment_detail_skeleton.dart';
 import 'package:spine_clinic_app/shared/widgets/app_back_button.dart';
 import 'package:spine_clinic_app/shared/widgets/error_view.dart';
+import 'package:spine_clinic_app/shared/widgets/loading_overlay.dart';
 
 /// Screen displaying the full detail view for a single appointment.
 class AppointmentDetailScreen extends ConsumerStatefulWidget {
@@ -64,6 +66,7 @@ class _AppointmentDetailScreenState
   @override
   Widget build(BuildContext context) {
     final appointmentId = widget.appointmentId;
+    final isMutating = ref.watch(editAppointmentControllerProvider).isLoading;
     final AsyncValue<AppointmentDetailState> detailAsync = ref.watch(
       appointmentDetailControllerProvider(appointmentId),
     );
@@ -111,40 +114,45 @@ class _AppointmentDetailScreenState
                 ),
               )
             : const SizedBox.shrink(),
-        actions: [
-          if (showEdit && detailState != null)
-            IconButton(
-              icon: Icon(
-                Icons.edit_outlined,
-                color: colorScheme.onSurfaceVariant,
-              ),
-              onPressed: () {
-                context.push(
-                  AppRoutes.editAppointment.replaceAll(
-                    ':id',
-                    detailState.appointment.id,
+        actions: isMutating
+            ? const []
+            : [
+                if (showEdit && detailState != null)
+                  IconButton(
+                    icon: Icon(
+                      Icons.edit_outlined,
+                      color: colorScheme.onSurfaceVariant,
+                    ),
+                    onPressed: () {
+                      context.push(
+                        AppRoutes.editAppointment.replaceAll(
+                          ':id',
+                          detailState.appointment.id,
+                        ),
+                      );
+                    },
+                    tooltip: AppStrings.editDetails,
                   ),
-                );
-              },
-              tooltip: AppStrings.editDetails,
-            ),
-          if (showDelete)
-            DetailOverflowButton(appointment: detailState.appointment),
-        ],
+                if (showDelete)
+                  DetailOverflowButton(appointment: detailState.appointment),
+              ],
       ),
-      body: detailAsync.when(
-        loading: () => const AppointmentDetailSkeleton(),
-        error: (Object error, StackTrace stack) => ErrorView(
-          exception: error is AppException
-              ? error
-              : AppException.fromSupabaseException(error),
-          onRetry: () => ref.invalidate(
-            appointmentDetailControllerProvider(appointmentId),
+      body: LoadingOverlay(
+        isLoading: isMutating,
+        child: detailAsync.when(
+          loading: () => const AppointmentDetailSkeleton(),
+          error: (Object error, StackTrace stack) => ErrorView(
+            exception: error is AppException
+                ? error
+                : AppException.fromSupabaseException(error),
+            onRetry: () => ref.invalidate(
+              appointmentDetailControllerProvider(appointmentId),
+            ),
           ),
-        ),
-        data: (AppointmentDetailState state) => AppointmentDetailBody(
-          state: state,
-          scrollController: _scrollController,
+          data: (AppointmentDetailState state) => AppointmentDetailBody(
+            state: state,
+            scrollController: _scrollController,
+          ),
         ),
       ),
     );

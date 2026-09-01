@@ -62,6 +62,54 @@ int getScheduleNowIndex(
   return items.length;
 }
 
+/// Returns insertion index for `ScheduleNowIndicator` in doctor day lists.
+/// Returns `-1` if selected day is not today or items is empty.
+int getDoctorScheduleNowIndex(
+  List<AppointmentWithPatient> items, {
+  required bool isToday,
+}) {
+  if (!isToday || items.isEmpty) return -1;
+  final now = DateTime.now();
+  for (int i = 0; i < items.length; i++) {
+    if (now.isBefore(items[i].appointment.scheduledAt)) {
+      return i;
+    }
+  }
+  return items.length;
+}
+
+/// Estimates the scroll offset to position the now indicator near the top.
+double estimateScheduleScrollOffset({
+  required List<ScheduleRowItem> rowItems,
+  required int nowIndex,
+  required bool isCompact,
+}) {
+  if (nowIndex <= 0) return 0.0;
+  double offset = AppSizes.p8;
+
+  for (int i = 0; i < nowIndex && i < rowItems.length; i++) {
+    final count = rowItems[i].appointments.length;
+    if (count <= 1) {
+      offset += isCompact ? 37.0 : 84.0;
+    } else {
+      offset += isCompact ? (38.0 + count * 22.0) : (91.0 + count * 40.0);
+    }
+  }
+
+  return (offset - AppSizes.p16).clamp(0.0, double.infinity);
+}
+
+/// Estimates the scroll offset for doctor day list (single cards).
+double estimateDoctorScheduleScrollOffset({
+  required int nowIndex,
+  required bool isCompact,
+}) {
+  if (nowIndex <= 0) return 0.0;
+  final double itemHeight = isCompact ? 37.0 : 84.0;
+  final double offset = AppSizes.p8 + (nowIndex * itemHeight);
+  return (offset - AppSizes.p16).clamp(0.0, double.infinity);
+}
+
 /// Now indicator: red dot + current time + horizontal red line.
 class ScheduleNowIndicator extends StatelessWidget {
   const ScheduleNowIndicator({super.key});

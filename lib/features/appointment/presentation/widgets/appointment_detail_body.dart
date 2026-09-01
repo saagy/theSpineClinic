@@ -17,6 +17,7 @@ import 'package:spine_clinic_app/features/appointment/presentation/widgets/appoi
 import 'package:spine_clinic_app/features/appointment/presentation/widgets/appointment_doctors_section.dart';
 import 'package:spine_clinic_app/features/appointment/presentation/widgets/appointment_info_card.dart';
 import 'package:spine_clinic_app/features/appointment/presentation/widgets/appointment_notes_card.dart';
+import 'package:spine_clinic_app/features/appointment/presentation/widgets/appointment_program_pdf_tile.dart';
 import 'package:spine_clinic_app/features/appointment/presentation/widgets/appointment_status_banner.dart';
 import 'package:spine_clinic_app/features/auth/presentation/auth_providers.dart';
 import 'package:spine_clinic_app/shared/widgets/empty_state.dart';
@@ -103,6 +104,9 @@ class AppointmentDetailBody extends ConsumerWidget {
                   AppointmentInfoCard(
                     appointment: state.appointment,
                     linkedAppointments: linkedAppointments,
+                  ),
+                  AppointmentProgramPdfTile(
+                    patient: state.patient,
                   ),
                   AppointmentNotesCard(
                     appointmentId: state.appointment.id,
