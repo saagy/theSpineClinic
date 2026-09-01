@@ -69,6 +69,8 @@ class MyPatientsController extends _$MyPatientsController {
   String _orderBy = 'full_name';
   bool _ascending = true;
   int _totalCount = 0;
+  bool _isLoadingMore = false;
+  int _requestId = 0;
   static const int _pageSize = 30;
 
   /// Whether more pages are available to load.
@@ -126,98 +128,83 @@ class MyPatientsController extends _$MyPatientsController {
     );
   }
 
-  /// Searches assigned patients by name or phone number.
-  void searchNow(String query) {
-    _currentQuery = query;
-    _offset = 0;
-    _totalCount = 0;
-    state = const AsyncValue.loading();
+  void _applyFilter() {
     final Staff? user = ref.read(currentUserProvider).value;
     if (user == null) return;
+    _offset = 0;
+    _totalCount = 0;
+    final int reqId = ++_requestId;
+    state = const AsyncValue.loading();
     _fetch(user.id).then(
       (data) {
-        if (!ref.mounted) return;
+        if (!ref.mounted || reqId != _requestId) return;
         state = AsyncValue.data(data);
       },
       onError: (err, stack) {
-        if (!ref.mounted) return;
+        if (!ref.mounted || reqId != _requestId) return;
         state = AsyncValue.error(err, stack);
       },
     );
+  }
+
+  /// Searches assigned patients by name or phone number.
+  void searchNow(String query) {
+    if (_currentQuery == query) return;
+    _currentQuery = query;
+    _applyFilter();
   }
 
   /// Filters assigned patients by clinic location.
   void setClinicFilter(ClinicLocation? clinic) {
+    if (_clinicFilter == clinic) return;
     _clinicFilter = clinic;
-    _offset = 0;
-    _totalCount = 0;
-    state = const AsyncValue.loading();
-    final Staff? user = ref.read(currentUserProvider).value;
-    if (user == null) return;
-    _fetch(user.id).then(
-      (data) {
-        if (!ref.mounted) return;
-        state = AsyncValue.data(data);
-      },
-      onError: (err, stack) {
-        if (!ref.mounted) return;
-        state = AsyncValue.error(err, stack);
-      },
-    );
+    _applyFilter();
   }
 
   /// Sets server-side sorting.
   void setSort(String orderBy, bool ascending) {
+    if (_orderBy == orderBy && _ascending == ascending) return;
     _orderBy = orderBy;
     _ascending = ascending;
-    _offset = 0;
-    _totalCount = 0;
-    state = const AsyncValue.loading();
-    final Staff? user = ref.read(currentUserProvider).value;
-    if (user == null) return;
-    _fetch(user.id).then(
-      (data) {
-        if (!ref.mounted) return;
-        state = AsyncValue.data(data);
-      },
-      onError: (err, stack) {
-        if (!ref.mounted) return;
-        state = AsyncValue.error(err, stack);
-      },
-    );
+    _applyFilter();
   }
 
   /// Loads the next page of results.
   Future<void> loadMore() async {
-    if (!hasMore) return;
+    if (!hasMore || _isLoadingMore || state.isLoading) return;
     final Staff? user = ref.read(currentUserProvider).value;
     if (user == null) return;
     final List<Patient> currentData = List<Patient>.from(state.value ?? []);
+    _isLoadingMore = true;
     _offset += _pageSize;
+    final int reqId = _requestId;
     try {
       final newPatients = await _fetch(user.id);
-      if (!ref.mounted) return;
+      if (!ref.mounted || reqId != _requestId) return;
       state = AsyncValue.data([...currentData, ...newPatients]);
     } catch (err, stack) {
-      if (!ref.mounted) return;
+      if (!ref.mounted || reqId != _requestId) return;
       _offset -= _pageSize;
       state = AsyncValue.error(err, stack);
+    } finally {
+      _isLoadingMore = false;
     }
   }
 
   /// Refreshes the assigned patients list.
   Future<void> refresh() async {
-    _offset = 0;
-    _totalCount = 0;
-    state = const AsyncValue.loading();
     final Staff? user = ref.read(currentUserProvider).value;
     if (user == null) return;
+    _offset = 0;
+    _totalCount = 0;
+    final int reqId = ++_requestId;
+    state = const AsyncValue.loading();
     try {
       final data = await _fetch(user.id);
-      if (!ref.mounted) return;
+      if (!ref.mounted || reqId != _requestId) return;
       state = AsyncValue.data(data);
     } catch (err, stack) {
-      if (!ref.mounted) return;
+      if (!ref.mounted || reqId != _requestId) return;
       state = AsyncValue.error(err, stack);
     }
   }

@@ -12,12 +12,12 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import 'package:spine_clinic_app/core/errors/app_exception.dart';
 import 'package:spine_clinic_app/core/errors/result.dart';
+import 'package:spine_clinic_app/features/admin/presentation/branch_providers.dart';
+import 'package:spine_clinic_app/features/auth/domain/user_role.dart';
+import 'package:spine_clinic_app/features/auth/presentation/auth_providers.dart';
 import 'package:spine_clinic_app/features/patient/domain/clinic_location.dart';
 import 'package:spine_clinic_app/features/patient/domain/patient.dart';
 import 'package:spine_clinic_app/features/patient/presentation/patient_providers.dart';
-import 'package:spine_clinic_app/features/auth/presentation/auth_providers.dart';
-import 'package:spine_clinic_app/features/admin/presentation/branch_providers.dart';
-import 'package:spine_clinic_app/features/auth/domain/user_role.dart';
 
 part 'patient_list_providers.g.dart';
 
@@ -33,6 +33,10 @@ class PatientList extends _$PatientList {
   String _orderBy = 'full_name';
   bool _ascending = true;
   bool _hasInitializedClinic = false;
+  bool _isLoadingMore = false;
+  int _requestId = 0;
+  int _totalCount = 0;
+  static const int _pageSize = 30;
 
   /// The currently active clinic/branch filter, or null for all branches.
   ClinicLocation? get currentClinicFilter => _clinicFilter;
@@ -43,18 +47,16 @@ class PatientList extends _$PatientList {
   /// The currently active doctor filter, or null for all doctors.
   String? get currentDoctorFilter => _doctorId;
 
-  /// The current sort column (e.g. `full_name`, `last_appointment_date`, `created_at`).
+  /// The current sort column.
   String get orderBy => _orderBy;
 
   /// Whether the current sort is ascending.
   bool get isAscending => _ascending;
 
-  static const int _pageSize = 30;
-
+  /// Whether more records exist beyond current loaded count.
   bool get hasMore => (state.value?.length ?? 0) < _totalCount;
-  int _totalCount = 0;
 
-  /// The total count of patients matching the current query/filters.
+  /// Total count of patients matching current query/filters.
   int get totalCount => _totalCount;
 
   @override
@@ -65,9 +67,9 @@ class PatientList extends _$PatientList {
       }
     });
 
-    if (!_hasInitializedClinic) {
-      final user = ref.read(currentUserProvider).value;
-      if (user != null && user.role == UserRole.receptionist) {
+    final user = ref.watch(currentUserProvider).value;
+    if (!_hasInitializedClinic && user != null) {
+      if (user.role == UserRole.receptionist) {
         _clinicFilter = ref.read(activeBranchProvider);
       } else {
         _clinicFilter = null;
@@ -80,22 +82,16 @@ class PatientList extends _$PatientList {
 
   Future<List<Patient>> _fetch() async {
     final repo = ref.read(patientRepositoryProvider);
-    // last_appointment_date is not a real DB column — it's computed
-    // client-side from embedded appointments. Map to a valid column
-    // for the SQL ORDER BY so the query doesn't error.
-    final String sqlOrderBy =
-        _orderBy == 'last_appointment_date' ? 'full_name' : _orderBy;
     final Result<List<Patient>> result = await repo.getAllPatients(
       query: _currentQuery.isEmpty ? null : _currentQuery,
       doctorId: _doctorId,
       clinic: _clinicFilter,
       offset: _offset,
       limit: _pageSize,
-      orderBy: sqlOrderBy,
+      orderBy: _orderBy,
       ascending: _ascending,
     );
 
-    // Also get total count on first page load
     if (_offset == 0) {
       final Result<int> countResult = await repo.countAllPatients(
         query: _currentQuery.isEmpty ? null : _currentQuery,
@@ -114,92 +110,69 @@ class PatientList extends _$PatientList {
     );
   }
 
-  /// Immediately searches with the given query (debounce handled upstream).
-  void searchNow(String query) {
-    _currentQuery = query;
+  void _applyFilter() {
     _offset = 0;
     _totalCount = 0;
+    final int reqId = ++_requestId;
     state = const AsyncValue.loading();
     _fetch().then(
       (data) {
-        if (!ref.mounted) return;
+        if (!ref.mounted || reqId != _requestId) return;
         state = AsyncValue.data(data);
       },
       onError: (err, stack) {
-        if (!ref.mounted) return;
+        if (!ref.mounted || reqId != _requestId) return;
         state = AsyncValue.error(err, stack);
       },
     );
+  }
+
+  /// Immediately searches with the given query.
+  void searchNow(String query) {
+    if (_currentQuery == query) return;
+    _currentQuery = query;
+    _applyFilter();
   }
 
   /// Applies doctor filter.
   void setDoctorFilter(String? doctorId) {
+    if (_doctorId == doctorId) return;
     _doctorId = doctorId;
-    _offset = 0;
-    _totalCount = 0;
-    state = const AsyncValue.loading();
-    _fetch().then(
-      (data) {
-        if (!ref.mounted) return;
-        state = AsyncValue.data(data);
-      },
-      onError: (err, stack) {
-        if (!ref.mounted) return;
-        state = AsyncValue.error(err, stack);
-      },
-    );
+    _applyFilter();
   }
 
   /// Applies clinic filter.
   void setClinicFilter(ClinicLocation? clinic) {
+    if (_clinicFilter == clinic) return;
     _clinicFilter = clinic;
-    _offset = 0;
-    _totalCount = 0;
-    state = const AsyncValue.loading();
-    _fetch().then(
-      (data) {
-        if (!ref.mounted) return;
-        state = AsyncValue.data(data);
-      },
-      onError: (err, stack) {
-        if (!ref.mounted) return;
-        state = AsyncValue.error(err, stack);
-      },
-    );
+    _applyFilter();
   }
 
-  /// Applies server-side sort by the given column and direction.
+  /// Applies server-side sort by column and direction.
   void setSort(String orderBy, bool ascending) {
+    if (_orderBy == orderBy && _ascending == ascending) return;
     _orderBy = orderBy;
     _ascending = ascending;
-    _offset = 0;
-    _totalCount = 0;
-    state = const AsyncValue.loading();
-    _fetch().then(
-      (data) {
-        if (!ref.mounted) return;
-        state = AsyncValue.data(data);
-      },
-      onError: (err, stack) {
-        if (!ref.mounted) return;
-        state = AsyncValue.error(err, stack);
-      },
-    );
+    _applyFilter();
   }
 
-  /// Loads the next page of results.
+  /// Loads next page of results with mutex locking.
   Future<void> loadMore() async {
-    if (!hasMore) return;
+    if (!hasMore || _isLoadingMore || state.isLoading) return;
     final List<Patient> currentData = List<Patient>.from(state.value ?? []);
+    _isLoadingMore = true;
     _offset += _pageSize;
+    final int reqId = _requestId;
     try {
       final newPatients = await _fetch();
-      if (!ref.mounted) return;
+      if (!ref.mounted || reqId != _requestId) return;
       state = AsyncValue.data([...currentData, ...newPatients]);
     } catch (err, stack) {
-      if (!ref.mounted) return;
+      if (!ref.mounted || reqId != _requestId) return;
       _offset -= _pageSize;
       state = AsyncValue.error(err, stack);
+    } finally {
+      _isLoadingMore = false;
     }
   }
 
@@ -207,13 +180,14 @@ class PatientList extends _$PatientList {
   Future<void> refresh() async {
     _offset = 0;
     _totalCount = 0;
+    final int reqId = ++_requestId;
     state = const AsyncValue.loading();
     try {
       final data = await _fetch();
-      if (!ref.mounted) return;
+      if (!ref.mounted || reqId != _requestId) return;
       state = AsyncValue.data(data);
     } catch (err, stack) {
-      if (!ref.mounted) return;
+      if (!ref.mounted || reqId != _requestId) return;
       state = AsyncValue.error(err, stack);
     }
   }
