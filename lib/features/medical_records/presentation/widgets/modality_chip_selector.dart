@@ -20,7 +20,7 @@ class ModalityChipSelector extends StatelessWidget {
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
-        final isDesktop = constraints.maxWidth >= 720;
+        final isDesktop = constraints.maxWidth >= 540;
 
         if (isDesktop) {
           return Wrap(
