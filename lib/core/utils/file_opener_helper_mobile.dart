@@ -1,30 +1,57 @@
 import 'dart:io';
 import 'dart:typed_data';
 
+import 'package:http/http.dart' as http;
 import 'package:open_filex/open_filex.dart';
-import 'package:supabase_flutter/supabase_flutter.dart' hide StorageException;
+import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:spine_clinic_app/core/network/supabase_service.dart';
+import 'package:spine_clinic_app/features/patient/data/patient_document_storage.dart';
 
 /// Mobile/desktop implementation that downloads a document from
-/// Supabase Storage to a temp file and opens it via the platform's
+/// Cloudflare R2 (or legacy Supabase storage) to a temp file and opens it via the platform's
 /// native viewer.
-///
-/// No client cache: every open call downloads fresh bytes via the
-/// authenticated Supabase client.
 Future<void> openFileImpl(String url, String filename) async {
-  const String bucket = 'patient-documents';
-  final String key = '$bucket/';
-  final int index = url.indexOf(key);
-  if (index == -1) {
-    throw Exception('Invalid document URL format: $url');
-  }
-  final String storagePath =
-      Uri.decodeComponent(url.substring(index + key.length));
-  if (storagePath.isEmpty) {
+  final String? storagePath = patientDocumentStoragePath(url);
+  if (storagePath == null || storagePath.isEmpty) {
     throw Exception('Invalid document URL format: $url');
   }
 
-  final Uint8List bytes =
-      await Supabase.instance.client.storage.from(bucket).download(storagePath);
+  Uint8List? bytes;
+
+  // Check if legacy Supabase storage URL
+  final bool isLegacySupabase = url.contains('supabase.co/storage') ||
+      url.contains('/storage/v1/object');
+  if (isLegacySupabase) {
+    try {
+      bytes = await Supabase.instance.client.storage
+          .from('patient-documents')
+          .download(storagePath);
+    } catch (_) {}
+  }
+
+  if (bytes == null) {
+    final FunctionResponse fnRes = await SupabaseService.instance.invokeFunction(
+      'document-storage',
+      body: {'action': 'get-download-url', 'objectKey': storagePath},
+    );
+    final data = fnRes.data as Map<String, dynamic>;
+    final String downloadUrl = data['downloadUrl'] as String;
+
+    final http.Response getRes = await http.get(Uri.parse(downloadUrl));
+    if (getRes.statusCode >= 200 && getRes.statusCode < 300) {
+      bytes = getRes.bodyBytes;
+    } else {
+      // Fallback to Supabase storage
+      try {
+        bytes = await Supabase.instance.client.storage
+            .from('patient-documents')
+            .download(storagePath);
+      } catch (_) {
+        throw Exception(
+            'Failed to download document from storage (HTTP ${getRes.statusCode}).');
+      }
+    }
+  }
 
   final String sanitized =
       filename.replaceAll(RegExp(r'[\\/:*?"<>|]'), '_');

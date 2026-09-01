@@ -982,6 +982,11 @@ abstract final class AppStrings {
   static const String programNotes = 'Program Notes';
   static const String programNotesHint = 'General clinical notes for this program…';
   static const String noProgramsRecorded = 'No rehabilitation programs created yet.';
+  static const String selectProgram = 'Select Program';
+  static const String rehabilitationProgram = 'Rehabilitation Program';
+  static const String programReport = 'Program Report';
+  static const String clinicalAssessmentAndPlan =
+      'Clinical assessment & active treatment plan';
   static const String programSaved = 'Program saved.';
   static const String deleteProgram = 'Delete Program';
   static const String deleteProgramConfirm =

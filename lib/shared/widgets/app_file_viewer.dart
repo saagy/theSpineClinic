@@ -36,7 +36,8 @@ class AppFileViewer extends StatelessWidget {
     final Widget body = switch (extension) {
       '.png' ||
       '.jpg' ||
-      '.jpeg' => ImageViewerView(fileUrl: fileUrl, fileName: fileName),
+      '.jpeg' =>
+        ImageViewerView(fileUrl: fileUrl, fileName: fileName),
       '.pdf' => PdfViewerView(fileUrl: fileUrl, fileName: fileName),
       _ => const _UnsupportedFileView(),
     };

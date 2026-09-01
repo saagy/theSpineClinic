@@ -62,6 +62,10 @@ sealed class AppException implements Exception {
       return StorageException._fromStorage(error);
     }
 
+    if (error is supabase.FunctionException) {
+      return StorageException._fromFunction(error);
+    }
+
     return UnknownException(message: error.toString());
   }
 
@@ -299,6 +303,27 @@ class StorageException extends AppException {
     return StorageException(
       code: code,
       message: error.message,
+      userMessageKey: userMessageKey,
+    );
+  }
+
+  factory StorageException._fromFunction(supabase.FunctionException error) {
+    final String raw = (error.details?.toString() ?? error.reasonPhrase ?? error.status.toString()).toLowerCase();
+    final String code;
+    final String userMessageKey;
+    if (error.status == 403 || raw.contains('forbidden') || raw.contains('permission')) {
+      code = 'storage/rls-violation';
+      userMessageKey = 'error_database_permission_denied';
+    } else if (error.status == 404 || raw.contains('not found')) {
+      code = 'storage/not-found';
+      userMessageKey = 'error_database_record_not_found';
+    } else {
+      code = 'storage/error';
+      userMessageKey = 'error_unknown';
+    }
+    return StorageException(
+      code: code,
+      message: error.details?.toString() ?? error.reasonPhrase ?? 'Edge function storage error',
       userMessageKey: userMessageKey,
     );
   }

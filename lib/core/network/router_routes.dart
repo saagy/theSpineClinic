@@ -145,9 +145,10 @@ List<RouteBase> _buildRoutes(Ref ref) => [
   ShellRoute(
     pageBuilder: (BuildContext context, GoRouterState state, Widget child) {
       final user = ref.read(currentUserProvider).value;
-      final String role = user?.isSeniorDoctor == true
-          ? 'senior_doctor'
-          : (user?.role.dbValue ?? UserRole.receptionist.dbValue);
+      final String role =
+          (user?.role == UserRole.doctor && user?.isSenior == true)
+              ? 'senior_doctor'
+              : (user?.role.dbValue ?? UserRole.receptionist.dbValue);
       return NoTransitionPage(
         child: _SessionGuard(
           child: AppShell(

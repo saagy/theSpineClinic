@@ -54,7 +54,7 @@ bool _isDoctorRoute(String location) =>
 String _homeRouteForRole(UserRole role) => switch (role) {
   UserRole.doctor => AppRoutes.schedule,
   UserRole.receptionist => AppRoutes.allAppointments,
-  UserRole.superAdmin => AppRoutes.reports,
+  UserRole.superAdmin => AppRoutes.allAppointments,
 };
 
 /// Redirects an active session immediately if the account is deactivated.

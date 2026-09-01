@@ -38,6 +38,7 @@ class SortOptionsSheet<T> extends StatelessWidget {
     required this.options,
     required this.selected,
     required this.onSelected,
+    this.scrollController,
   });
 
   /// The list of available sort options.
@@ -48,6 +49,9 @@ class SortOptionsSheet<T> extends StatelessWidget {
 
   /// Called when the user selects an option.
   final ValueChanged<T> onSelected;
+
+  /// Optional scroll controller from the host bottom sheet.
+  final ScrollController? scrollController;
 
   /// Shows a sort options bottom sheet and returns the selected option.
   static Future<T?> show<T>({
@@ -63,6 +67,7 @@ class SortOptionsSheet<T> extends StatelessWidget {
         options: options,
         selected: selected,
         onSelected: (T value) => Navigator.of(context).pop(value),
+        scrollController: scrollController,
       ),
     );
   }
@@ -71,7 +76,7 @@ class SortOptionsSheet<T> extends StatelessWidget {
   Widget build(BuildContext context) {
     final ColorScheme cs = Theme.of(context).colorScheme;
     return ListView.builder(
-      controller: null, // scrollController handled by AppBottomSheet
+      controller: scrollController,
       shrinkWrap: true,
       itemCount: options.length,
       itemBuilder: (context, index) {

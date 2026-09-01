@@ -159,6 +159,23 @@ class SupabaseService {
   /// files from Supabase Storage.
   StorageFileApi storage(String bucket) => _client.storage.from(bucket);
 
+  /// Invokes a Supabase Edge Function with error normalisation.
+  Future<FunctionResponse> invokeFunction(
+    String functionName, {
+    Map<String, String>? headers,
+    Map<String, dynamic>? body,
+    HttpMethod method = HttpMethod.post,
+  }) async {
+    return guardQuery(
+      () => _client.functions.invoke(
+        functionName,
+        headers: headers,
+        body: body,
+        method: method,
+      ),
+    );
+  }
+
   // ---------------------------------------------------------------------------
   // Realtime (placeholder for future use)
   // ---------------------------------------------------------------------------
