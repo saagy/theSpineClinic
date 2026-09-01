@@ -25,6 +25,7 @@ import 'package:spine_clinic_app/features/patient/presentation/widgets/pinned_ta
 import 'package:spine_clinic_app/shared/widgets/app_back_button.dart';
 import 'package:spine_clinic_app/shared/widgets/app_snackbar.dart';
 import 'package:spine_clinic_app/shared/widgets/confirmation_dialog.dart';
+import 'package:spine_clinic_app/shared/widgets/loading_overlay.dart';
 
 /// Full patient profile layout containing header, tab controller, and FAB.
 class PatientProfile extends ConsumerStatefulWidget {
@@ -97,6 +98,8 @@ class _PatientProfileState extends ConsumerState<PatientProfile>
     final isEmptyAsync = ref.watch(patientIsEmptyProvider(patient.id));
     final bool patientIsEmpty = isEmptyAsync.value ?? false;
 
+    final isDeleting = ref.watch(deletePatientControllerProvider).isLoading;
+
     final tabEntries = <(Tab, Widget)>[
       (const Tab(text: AppStrings.tabInfo), PatientTabInfo(patient: patient)),
       (const Tab(text: AppStrings.appointments), PatientTabAppointments(patient: patient)),
@@ -124,67 +127,74 @@ class _PatientProfileState extends ConsumerState<PatientProfile>
             overflow: TextOverflow.ellipsis,
           ),
         ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.edit_outlined),
-            tooltip: AppStrings.edit,
-            onPressed: () => context.push(
-              AppRoutes.editPatient.replaceAll(':id', patient.id),
-              extra: patient,
-            ),
-          ),
-          if (canDelete && patientIsEmpty)
-            PopupMenuButton<String>(
-              icon: const Icon(Icons.more_vert),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(AppSizes.r12),
-              ),
-              onSelected: (_) => _confirmDelete(context),
-              itemBuilder: (_) => [
-                PopupMenuItem(
-                  value: 'delete',
-                  child: Row(
-                    children: [
-                      Icon(Icons.delete_outline, color: cs.error),
-                      const SizedBox(width: AppSizes.p12),
-                      Text(AppStrings.deletePatient),
-                    ],
+        actions: isDeleting
+            ? const []
+            : [
+                IconButton(
+                  icon: const Icon(Icons.edit_outlined),
+                  tooltip: AppStrings.edit,
+                  onPressed: () => context.push(
+                    AppRoutes.editPatient.replaceAll(':id', patient.id),
+                    extra: patient,
                   ),
                 ),
+                if (canDelete && patientIsEmpty)
+                  PopupMenuButton<String>(
+                    icon: const Icon(Icons.more_vert),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(AppSizes.r12),
+                    ),
+                    onSelected: (_) => _confirmDelete(context),
+                    itemBuilder: (_) => [
+                      PopupMenuItem(
+                        value: 'delete',
+                        child: Row(
+                          children: [
+                            Icon(Icons.delete_outline, color: cs.error),
+                            const SizedBox(width: AppSizes.p12),
+                            Text(AppStrings.deletePatient),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
               ],
-            ),
-        ],
       ),
-      body: NestedScrollView(
-        controller: _scrollController,
-        headerSliverBuilder: (_, __) => [
-          SliverToBoxAdapter(
-            child: PatientProfileHeader(
-              patient: patient,
-              isDoctor: isDoctor,
-            ),
-          ),
-          SliverPersistentHeader(
-            pinned: true,
-            delegate: PinnedTabBarDelegate(
-              tabBar: UnderlineTabBar(
-                controller: _tabController,
-                tabs: tabs,
+      body: LoadingOverlay(
+        isLoading: isDeleting,
+        child: NestedScrollView(
+          controller: _scrollController,
+          headerSliverBuilder: (_, __) => [
+            SliverToBoxAdapter(
+              child: PatientProfileHeader(
+                patient: patient,
+                isDoctor: isDoctor,
               ),
-              bgColor: cs.surface,
             ),
+            SliverPersistentHeader(
+              pinned: true,
+              delegate: PinnedTabBarDelegate(
+                tabBar: UnderlineTabBar(
+                  controller: _tabController,
+                  tabs: tabs,
+                ),
+                bgColor: cs.surface,
+              ),
+            ),
+          ],
+          body: TabBarView(
+            controller: _tabController,
+            children: views,
           ),
-        ],
-        body: TabBarView(
-          controller: _tabController,
-          children: views,
         ),
       ),
-      floatingActionButton: PatientQuickActionsFab(
-        patient: patient,
-        isDoctor: isDoctor && !(user?.isSeniorDoctor ?? false),
-        canHandlePayments: canHandlePayments,
-      ),
+      floatingActionButton: isDeleting
+          ? null
+          : PatientQuickActionsFab(
+              patient: patient,
+              isDoctor: isDoctor && !(user?.isSeniorDoctor ?? false),
+              canHandlePayments: canHandlePayments,
+            ),
     );
   }
 

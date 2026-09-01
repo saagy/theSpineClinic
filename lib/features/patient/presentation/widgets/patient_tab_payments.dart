@@ -18,6 +18,7 @@ import 'package:spine_clinic_app/features/patient/presentation/widgets/payment_s
 import 'package:spine_clinic_app/features/payments/presentation/record_payment_controller.dart';
 import 'package:spine_clinic_app/shared/widgets/empty_state.dart';
 import 'package:spine_clinic_app/shared/widgets/error_view.dart';
+import 'package:spine_clinic_app/shared/widgets/loading_overlay.dart';
 
 class PatientTabPayments extends ConsumerWidget {
   const PatientTabPayments({super.key, required this.patient});
@@ -28,6 +29,7 @@ class PatientTabPayments extends ConsumerWidget {
     final cs = Theme.of(context).colorScheme;
     final user = ref.watch(currentUserProvider).value;
     final bool canManagePayments = user?.canHandlePayments ?? false;
+    final isMutating = ref.watch(recordPaymentControllerProvider).isLoading;
     final asyncPayments = ref.watch(patientPaymentsProvider(patient.id));
 
     final Widget content = asyncPayments.when(
@@ -119,13 +121,16 @@ class PatientTabPayments extends ConsumerWidget {
       },
     );
 
-    return AnimatedSwitcher(
-      duration: const Duration(milliseconds: 250),
-      switchInCurve: Curves.easeOutCubic,
-      switchOutCurve: Curves.easeInCubic,
-      transitionBuilder: (child, animation) =>
-          FadeTransition(opacity: animation, child: child),
-      child: content,
+    return LoadingOverlay(
+      isLoading: isMutating,
+      child: AnimatedSwitcher(
+        duration: const Duration(milliseconds: 250),
+        switchInCurve: Curves.easeOutCubic,
+        switchOutCurve: Curves.easeInCubic,
+        transitionBuilder: (child, animation) =>
+            FadeTransition(opacity: animation, child: child),
+        child: content,
+      ),
     );
   }
 }
