@@ -25,7 +25,7 @@ final class PatientNextVisitControllerProvider
         argument: null,
         retry: null,
         name: r'patientNextVisitControllerProvider',
-        isAutoDispose: true,
+        isAutoDispose: false,
         dependencies: null,
         $allTransitiveDependencies: null,
       );
@@ -47,7 +47,7 @@ final class PatientNextVisitControllerProvider
 }
 
 String _$patientNextVisitControllerHash() =>
-    r'23c3de49b1dbe4d4b106d12d31181eccfa4553c5';
+    r'c90823a1840476ee7700ad844bdb2c76d821008d';
 
 /// Controller backing the patient detail's tappable Next-visit stat.
 

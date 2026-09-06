@@ -20,6 +20,7 @@ dependencies:
   # Backend & Declarative Shell
   supabase_flutter: ^2.8.0
   go_router: ^14.0.0
+  sentry_flutter: ^8.14.0
 
   # Serialization Contracts
   freezed_annotation: ^3.0.0-dev.1

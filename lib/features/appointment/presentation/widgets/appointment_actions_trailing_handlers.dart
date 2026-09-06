@@ -111,6 +111,7 @@ mixin _AppointmentActionsTrailingHandlers
 
   void _invalidateCaches() {
     final String patientId = widget.appointment.patientId;
+    ref.invalidate(patientDetailProvider(patientId));
     ref.invalidate(todayAppointmentsProvider);
     ref.read(allAppointmentsProvider.notifier).refresh();
     ref.read(patientAppointmentsProvider(patientId).notifier).refresh(silent: true);

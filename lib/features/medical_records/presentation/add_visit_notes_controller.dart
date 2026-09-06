@@ -24,7 +24,7 @@ typedef AddVisitNotesState = ({
 });
 
 /// Controller managing a single appointment's visit notes state and updates.
-@riverpod
+@Riverpod(keepAlive: true)
 class AddVisitNotesController extends _$AddVisitNotesController {
   @override
   Future<AddVisitNotesState> build(String appointmentId) async {

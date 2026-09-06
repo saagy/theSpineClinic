@@ -29,7 +29,7 @@ final class EditPatientControllerProvider
         argument: null,
         retry: null,
         name: r'editPatientControllerProvider',
-        isAutoDispose: true,
+        isAutoDispose: false,
         dependencies: null,
         $allTransitiveDependencies: null,
       );
@@ -43,7 +43,7 @@ final class EditPatientControllerProvider
 }
 
 String _$editPatientControllerHash() =>
-    r'7d249e7e27fd5425ef2a24e7fcef1225df996836';
+    r'4af3700b27db5659076c6f9205f2fbc5c9d13552';
 
 /// Riverpod presentation controller coordinating patient updates.
 ///

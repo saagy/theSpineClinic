@@ -12,7 +12,7 @@ part 'edit_patient_controller.g.dart';
 /// Riverpod presentation controller coordinating patient updates.
 ///
 /// Inherits AsyncNotifier to represent transaction lifecycle: loading, success, error.
-@riverpod
+@Riverpod(keepAlive: true)
 class EditPatientController extends _$EditPatientController {
   @override
   FutureOr<void> build() {
@@ -21,7 +21,7 @@ class EditPatientController extends _$EditPatientController {
 
   /// Submits the patient updates and assigned doctor junction changes.
   ///
-  /// Invokes repository methods sequentially and invalidates detail caches on success.
+  /// Saves demographics and assignment changes in one database transaction.
   /// Skips the doctor assignment RPC when [initialDoctorIds] matches
   /// [selectedDoctorIds] to avoid an unnecessary delete+insert cycle.
   /// Returns `true` if update succeeds, `false` otherwise.
@@ -71,34 +71,19 @@ class EditPatientController extends _$EditPatientController {
       }
     }
 
-    // 1. Update patient core fields
-    final Result<void> patientResult = await repo.updatePatient(patient);
+    final bool canManageDoctors =
+        currentUser.role != UserRole.doctor || currentUser.isSeniorDoctor;
+    final bool doctorsChanged =
+        selectedDoctorIds.toSet().length != initialDoctorIds.toSet().length ||
+        !selectedDoctorIds.toSet().containsAll(initialDoctorIds);
+    final Result<void> result = await repo.updatePatient(
+      patient,
+      doctorIds: canManageDoctors && doctorsChanged ? selectedDoctorIds : null,
+    );
     if (!ref.mounted) return false;
-    if (patientResult is Failure<void>) {
-      state = AsyncValue.error(patientResult.exception, StackTrace.current);
+    if (result is Failure<void>) {
+      state = AsyncValue.error(result.exception, StackTrace.current);
       return false;
-    }
-
-    // 2. Update patient doctor assignments (for admin/receptionist/senior doctor,
-    //    and only when the list has actually changed)
-    if (currentUser.role != UserRole.doctor || currentUser.isSeniorDoctor) {
-      final currentSet = selectedDoctorIds.toSet();
-      final initialSet = initialDoctorIds.toSet();
-      final doctorsChanged =
-          currentSet.length != initialSet.length ||
-          !currentSet.every(initialSet.contains);
-
-      if (doctorsChanged) {
-        final Result<void> doctorsResult = await repo.updatePatientDoctors(
-          patient.id,
-          selectedDoctorIds,
-        );
-        if (!ref.mounted) return false;
-        if (doctorsResult is Failure<void>) {
-          state = AsyncValue.error(doctorsResult.exception, StackTrace.current);
-          return false;
-        }
-      }
     }
 
     // Invalidate detail data upstream to refresh presentation layer

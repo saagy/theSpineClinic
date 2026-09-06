@@ -7,6 +7,7 @@ library;
 
 import 'dart:io';
 
+import 'package:spine_clinic_app/core/errors/error_reporter.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' as supabase;
 
 /// Base class for all application-level exceptions.
@@ -40,33 +41,30 @@ sealed class AppException implements Exception {
   /// - [SocketException] → [NetworkException]
   /// - Everything else → [UnknownException]
   static AppException fromSupabaseException(Object error) {
+    final AppException appException;
     if (error is supabase.AuthException) {
-      return AuthException._fromAuth(error);
-    }
-
-    if (error is supabase.PostgrestException) {
+      appException = AuthException._fromAuth(error);
+    } else if (error is supabase.PostgrestException) {
       if (error.code == 'PGRST116') {
-        return NotFoundException(message: error.message);
+        appException = NotFoundException(message: error.message);
+      } else {
+        appException = DatabaseException._fromPostgrest(error);
       }
-      return DatabaseException._fromPostgrest(error);
-    }
-
-    if (error is SocketException) {
-      return NetworkException(
+    } else if (error is SocketException) {
+      appException = NetworkException(
         code: 'network/socket-error',
         message: error.message,
       );
+    } else if (error is supabase.StorageException) {
+      appException = StorageException._fromStorage(error);
+    } else if (error is supabase.FunctionException) {
+      appException = StorageException._fromFunction(error);
+    } else {
+      appException = UnknownException(message: error.toString());
     }
 
-    if (error is supabase.StorageException) {
-      return StorageException._fromStorage(error);
-    }
-
-    if (error is supabase.FunctionException) {
-      return StorageException._fromFunction(error);
-    }
-
-    return UnknownException(message: error.toString());
+    ErrorReporter.reportIfUnexpected(error, appException);
+    return appException;
   }
 
   @override
@@ -308,10 +306,16 @@ class StorageException extends AppException {
   }
 
   factory StorageException._fromFunction(supabase.FunctionException error) {
-    final String raw = (error.details?.toString() ?? error.reasonPhrase ?? error.status.toString()).toLowerCase();
+    final String raw =
+        (error.details?.toString() ??
+                error.reasonPhrase ??
+                error.status.toString())
+            .toLowerCase();
     final String code;
     final String userMessageKey;
-    if (error.status == 403 || raw.contains('forbidden') || raw.contains('permission')) {
+    if (error.status == 403 ||
+        raw.contains('forbidden') ||
+        raw.contains('permission')) {
       code = 'storage/rls-violation';
       userMessageKey = 'error_database_permission_denied';
     } else if (error.status == 404 || raw.contains('not found')) {
@@ -323,7 +327,10 @@ class StorageException extends AppException {
     }
     return StorageException(
       code: code,
-      message: error.details?.toString() ?? error.reasonPhrase ?? 'Edge function storage error',
+      message:
+          error.details?.toString() ??
+          error.reasonPhrase ??
+          'Edge function storage error',
       userMessageKey: userMessageKey,
     );
   }

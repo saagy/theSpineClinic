@@ -10,7 +10,7 @@ import 'package:spine_clinic_app/features/patient/presentation/patient_providers
 part 'package_balance_controller.g.dart';
 
 /// Presentation controller managing the state of manual package balance edits.
-@riverpod
+@Riverpod(keepAlive: true)
 class PackageBalanceController extends _$PackageBalanceController {
   @override
   FutureOr<void> build() {
@@ -39,11 +39,11 @@ class PackageBalanceController extends _$PackageBalanceController {
     }
 
     final repo = ref.read(patientRepositoryProvider);
-    final updatedPatient = patient.copyWith(
-      sessionBalance: newSessionBalance ?? patient.sessionBalance,
-      tractionBalance: newTractionBalance ?? patient.tractionBalance,
+    final Result<void> result = await repo.updatePackageBalances(
+      patient.id,
+      sessionBalance: newSessionBalance,
+      tractionBalance: newTractionBalance,
     );
-    final Result<void> result = await repo.updatePatient(updatedPatient);
     if (!ref.mounted) return result;
 
     state = result.when(

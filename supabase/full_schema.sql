@@ -1,5 +1,11 @@
--- Spine Clinic full database schema DDL. Verified 100% against live Supabase project (ujketpugttdqpcixrnga).
+-- Canonical schema snapshot through the 2026-09-06 review migrations.
+-- Verified in isolated PostgreSQL tests; live deployment must be checked separately.
 -- Run this script to recreate the database schema from scratch.
+
+CREATE SCHEMA IF NOT EXISTS extensions;
+CREATE EXTENSION IF NOT EXISTS pgcrypto WITH SCHEMA extensions;
+CREATE EXTENSION IF NOT EXISTS pg_trgm WITH SCHEMA extensions;
+SET search_path=public,extensions;
 
 -- Custom Enum Types
 CREATE TYPE public.user_role AS ENUM (
@@ -2008,3 +2014,466 @@ GRANT SELECT, INSERT, UPDATE, DELETE ON public.program_conditions TO authenticat
 GRANT SELECT, INSERT, UPDATE, DELETE ON public.treatment_plans TO authenticated;
 GRANT SELECT, INSERT, UPDATE, DELETE ON public.plan_modalities TO authenticated;
 GRANT SELECT, INSERT, UPDATE, DELETE ON public.modality_regions TO authenticated;
+
+-- Review synchronization: security hardening and 2026-09-06 fixes.
+-- Migration: 20260901010000_production_security_and_performance_hardening.sql
+-- Purpose:
+--   1. Add performance indexes for unindexed foreign keys and high-frequency search fields.
+--   2. Harden search_path on all existing functions/triggers via ALTER FUNCTION.
+--   3. Revoke public/anon EXECUTE privileges from internal/admin functions while preserving anon access on register_doctor_application.
+
+-- ============================================================================
+-- 1. EXTENSIONS & PERFORMANCE INDEXES
+-- ============================================================================
+
+CREATE EXTENSION IF NOT EXISTS pg_trgm;
+
+-- Unindexed foreign keys
+CREATE INDEX IF NOT EXISTS idx_appointment_doctors_doctor_id ON public.appointment_doctors(doctor_id);
+CREATE INDEX IF NOT EXISTS idx_appointment_doctors_appointment_id ON public.appointment_doctors(appointment_id);
+CREATE INDEX IF NOT EXISTS idx_appointment_doctors_added_by ON public.appointment_doctors(added_by);
+CREATE INDEX IF NOT EXISTS idx_appointments_created_by ON public.appointments(created_by);
+CREATE INDEX IF NOT EXISTS idx_patient_doctors_doctor_id ON public.patient_doctors(doctor_id);
+CREATE INDEX IF NOT EXISTS idx_patient_documents_patient_id ON public.patient_documents(patient_id);
+CREATE INDEX IF NOT EXISTS idx_patient_documents_uploaded_by ON public.patient_documents(uploaded_by);
+CREATE INDEX IF NOT EXISTS idx_patient_medical_history_updated_by ON public.patient_medical_history(updated_by);
+CREATE INDEX IF NOT EXISTS idx_patient_notes_appointment_id ON public.patient_notes(appointment_id);
+CREATE INDEX IF NOT EXISTS idx_patient_notes_created_by ON public.patient_notes(created_by);
+CREATE INDEX IF NOT EXISTS idx_patient_programs_created_by ON public.patient_programs(created_by);
+CREATE INDEX IF NOT EXISTS idx_patients_created_by ON public.patients(created_by);
+CREATE INDEX IF NOT EXISTS idx_payment_records_patient_id ON public.payment_records(patient_id);
+CREATE INDEX IF NOT EXISTS idx_payment_records_recorded_by ON public.payment_records(recorded_by);
+CREATE INDEX IF NOT EXISTS idx_program_conditions_condition_id ON public.program_conditions(condition_id);
+CREATE INDEX IF NOT EXISTS idx_treatment_plans_created_by ON public.treatment_plans(created_by);
+
+-- High-frequency search indexes
+CREATE INDEX IF NOT EXISTS idx_patients_phone ON public.patients(phone_number);
+CREATE INDEX IF NOT EXISTS idx_patients_full_name_trgm ON public.patients USING gin (full_name gin_trgm_ops);
+
+-- ============================================================================
+-- 2. HARDEN search_path ON ALL FUNCTIONS
+-- ============================================================================
+
+ALTER FUNCTION public.clinic_timezone() SET search_path = public, pg_temp;
+ALTER FUNCTION public.get_auth_staff_profile() SET search_path = public, pg_temp;
+ALTER FUNCTION public.can_current_staff_access_patient(uuid) SET search_path = public, pg_temp;
+ALTER FUNCTION public.can_current_staff_modify_patient_programs(uuid) SET search_path = public, pg_temp;
+ALTER FUNCTION public.current_staff_can_manage_payments() SET search_path = public, pg_temp;
+ALTER FUNCTION public.check_patient_has_doctors() SET search_path = public, pg_temp;
+ALTER FUNCTION public.enforce_doctor_reference_roles() SET search_path = public, pg_temp;
+ALTER FUNCTION public.prevent_referenced_doctor_role_change() SET search_path = public, pg_temp;
+ALTER FUNCTION public.sync_staff_email_to_auth_users() SET search_path = public, pg_temp;
+ALTER FUNCTION public.verify_staff_update_permissions() SET search_path = public, pg_temp;
+ALTER FUNCTION public.handle_package_deduction() SECURITY DEFINER;
+ALTER FUNCTION public.handle_package_deduction() SET search_path = public, pg_temp;
+ALTER FUNCTION public.handle_payment_package_sync() SET search_path = public, pg_temp;
+
+ALTER FUNCTION public.create_patient_with_doctors(text, text, text, public.clinic_location, uuid, uuid[]) SET search_path = public, pg_temp;
+ALTER FUNCTION public.update_patient_doctors(uuid, uuid[]) SET search_path = public, pg_temp;
+ALTER FUNCTION public.create_staff_user(text, text, text, public.user_role, text, boolean, public.clinic_location) SET search_path = public, extensions, pg_temp;
+ALTER FUNCTION public.update_user_password(uuid, text) SET search_path = public, extensions, pg_temp;
+ALTER FUNCTION public.delete_doctor_user(uuid) SET search_path = public, pg_temp;
+ALTER FUNCTION public.get_due_patients(date, uuid, public.clinic_location) SET search_path = public, pg_temp;
+ALTER FUNCTION public.book_recurring_appointments(uuid, public.appointment_type, timestamp with time zone[], boolean, uuid, uuid[], date) SET search_path = public, pg_temp;
+ALTER FUNCTION public.bulk_replace_appointment_doctor(uuid, uuid[], uuid[], date) SET search_path = public, pg_temp;
+ALTER FUNCTION public.register_doctor_application(text, text, text, text, public.user_role, public.clinic_location) SET search_path = public, extensions, pg_temp;
+ALTER FUNCTION public.update_appointment_doctors(uuid, uuid[], uuid) SET search_path = public, pg_temp;
+ALTER FUNCTION public.collect_payment_due(uuid, numeric) SET search_path = public, pg_temp;
+ALTER FUNCTION public.create_patient_program(uuid, uuid[], text, text, text, text, text, jsonb, jsonb) SET search_path = public, pg_temp;
+ALTER FUNCTION public.update_patient_program(uuid, uuid[], text, text, text, text, text, public.program_status, jsonb, jsonb) SET search_path = public, pg_temp;
+ALTER FUNCTION public.upsert_treatment_plan(uuid, uuid, text, boolean, text, jsonb) SET search_path = public, pg_temp;
+ALTER FUNCTION public.delete_treatment_plan(uuid) SET search_path = public, pg_temp;
+ALTER FUNCTION public.activate_treatment_plan(uuid, uuid) SET search_path = public, pg_temp;
+
+-- ============================================================================
+-- 3. REVOKE ANON/PUBLIC PRIVILEGES & GRANT APPROPRIATE ACCESS
+-- ============================================================================
+
+-- Revoke EXECUTE from PUBLIC and ANON on all sensitive functions
+REVOKE EXECUTE ON FUNCTION public.clinic_timezone() FROM PUBLIC, anon;
+REVOKE EXECUTE ON FUNCTION public.get_auth_staff_profile() FROM PUBLIC, anon;
+REVOKE EXECUTE ON FUNCTION public.can_current_staff_access_patient(uuid) FROM PUBLIC, anon;
+REVOKE EXECUTE ON FUNCTION public.can_current_staff_modify_patient_programs(uuid) FROM PUBLIC, anon;
+REVOKE EXECUTE ON FUNCTION public.current_staff_can_manage_payments() FROM PUBLIC, anon;
+REVOKE EXECUTE ON FUNCTION public.check_patient_has_doctors() FROM PUBLIC, anon;
+REVOKE EXECUTE ON FUNCTION public.enforce_doctor_reference_roles() FROM PUBLIC, anon;
+REVOKE EXECUTE ON FUNCTION public.prevent_referenced_doctor_role_change() FROM PUBLIC, anon;
+REVOKE EXECUTE ON FUNCTION public.sync_staff_email_to_auth_users() FROM PUBLIC, anon;
+REVOKE EXECUTE ON FUNCTION public.verify_staff_update_permissions() FROM PUBLIC, anon;
+REVOKE EXECUTE ON FUNCTION public.handle_package_deduction() FROM PUBLIC, anon;
+REVOKE EXECUTE ON FUNCTION public.handle_payment_package_sync() FROM PUBLIC, anon;
+
+REVOKE EXECUTE ON FUNCTION public.create_patient_with_doctors(text, text, text, public.clinic_location, uuid, uuid[]) FROM PUBLIC, anon;
+REVOKE EXECUTE ON FUNCTION public.update_patient_doctors(uuid, uuid[]) FROM PUBLIC, anon;
+REVOKE EXECUTE ON FUNCTION public.create_staff_user(text, text, text, public.user_role, text, boolean, public.clinic_location) FROM PUBLIC, anon;
+REVOKE EXECUTE ON FUNCTION public.update_user_password(uuid, text) FROM PUBLIC, anon;
+REVOKE EXECUTE ON FUNCTION public.delete_doctor_user(uuid) FROM PUBLIC, anon;
+REVOKE EXECUTE ON FUNCTION public.get_due_patients(date, uuid, public.clinic_location) FROM PUBLIC, anon;
+REVOKE EXECUTE ON FUNCTION public.book_recurring_appointments(uuid, public.appointment_type, timestamp with time zone[], boolean, uuid, uuid[], date) FROM PUBLIC, anon;
+REVOKE EXECUTE ON FUNCTION public.bulk_replace_appointment_doctor(uuid, uuid[], uuid[], date) FROM PUBLIC, anon;
+REVOKE EXECUTE ON FUNCTION public.update_appointment_doctors(uuid, uuid[], uuid) FROM PUBLIC, anon;
+REVOKE EXECUTE ON FUNCTION public.collect_payment_due(uuid, numeric) FROM PUBLIC, anon;
+REVOKE EXECUTE ON FUNCTION public.create_patient_program(uuid, uuid[], text, text, text, text, text, jsonb, jsonb) FROM PUBLIC, anon;
+REVOKE EXECUTE ON FUNCTION public.update_patient_program(uuid, uuid[], text, text, text, text, text, public.program_status, jsonb, jsonb) FROM PUBLIC, anon;
+REVOKE EXECUTE ON FUNCTION public.upsert_treatment_plan(uuid, uuid, text, boolean, text, jsonb) FROM PUBLIC, anon;
+REVOKE EXECUTE ON FUNCTION public.delete_treatment_plan(uuid) FROM PUBLIC, anon;
+REVOKE EXECUTE ON FUNCTION public.activate_treatment_plan(uuid, uuid) FROM PUBLIC, anon;
+
+-- Grant EXECUTE to AUTHENTICATED on all required operational functions
+GRANT EXECUTE ON FUNCTION public.clinic_timezone() TO authenticated;
+GRANT EXECUTE ON FUNCTION public.get_auth_staff_profile() TO authenticated;
+GRANT EXECUTE ON FUNCTION public.can_current_staff_access_patient(uuid) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.can_current_staff_modify_patient_programs(uuid) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.current_staff_can_manage_payments() TO authenticated;
+GRANT EXECUTE ON FUNCTION public.create_patient_with_doctors(text, text, text, public.clinic_location, uuid, uuid[]) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.update_patient_doctors(uuid, uuid[]) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.create_staff_user(text, text, text, public.user_role, text, boolean, public.clinic_location) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.update_user_password(uuid, text) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.delete_doctor_user(uuid) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.get_due_patients(date, uuid, public.clinic_location) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.book_recurring_appointments(uuid, public.appointment_type, timestamp with time zone[], boolean, uuid, uuid[], date) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.bulk_replace_appointment_doctor(uuid, uuid[], uuid[], date) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.update_appointment_doctors(uuid, uuid[], uuid) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.collect_payment_due(uuid, numeric) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.create_patient_program(uuid, uuid[], text, text, text, text, text, jsonb, jsonb) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.update_patient_program(uuid, uuid[], text, text, text, text, text, public.program_status, jsonb, jsonb) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.upsert_treatment_plan(uuid, uuid, text, boolean, text, jsonb) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.delete_treatment_plan(uuid) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.activate_treatment_plan(uuid, uuid) TO authenticated;
+
+-- Explicitly ensure register_doctor_application is executable by anon and authenticated for doctor applications
+REVOKE EXECUTE ON FUNCTION public.register_doctor_application(text, text, text, text, public.user_role, public.clinic_location) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION public.register_doctor_application(text, text, text, text, public.user_role, public.clinic_location) TO anon, authenticated;
+
+-- Close direct API routes around the client role checks.
+CREATE OR REPLACE FUNCTION public.current_staff_has_management_access()
+RETURNS boolean LANGUAGE sql STABLE SECURITY DEFINER
+SET search_path = public, pg_temp AS $$
+  SELECT EXISTS(SELECT 1 FROM public.staff WHERE user_id=auth.uid() AND is_active
+    AND (role IN ('super_admin','receptionist') OR (role='doctor' AND is_senior)));
+$$;
+REVOKE ALL ON FUNCTION public.current_staff_has_management_access() FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.current_staff_has_management_access() TO authenticated;
+
+DROP POLICY IF EXISTS "Staff can view all appointments" ON public.appointments;
+DROP POLICY IF EXISTS "Staff can modify appointments" ON public.appointments;
+CREATE POLICY "Read accessible appointments" ON public.appointments FOR SELECT TO authenticated
+  USING (public.can_current_staff_access_patient(patient_id));
+CREATE POLICY "Management creates appointments" ON public.appointments FOR INSERT TO authenticated
+  WITH CHECK (public.current_staff_has_management_access());
+CREATE POLICY "Update accessible appointments" ON public.appointments FOR UPDATE TO authenticated
+  USING (public.can_current_staff_access_patient(patient_id))
+  WITH CHECK (public.can_current_staff_access_patient(patient_id));
+CREATE POLICY "Delete accessible appointments" ON public.appointments FOR DELETE TO authenticated
+  USING (public.can_current_staff_access_patient(patient_id));
+
+DROP POLICY IF EXISTS "Staff can modify appointment doctor assignments" ON public.appointment_doctors;
+CREATE POLICY "Management modifies appointment assignments" ON public.appointment_doctors
+  FOR ALL TO authenticated USING (public.current_staff_has_management_access())
+  WITH CHECK (public.current_staff_has_management_access());
+DROP POLICY IF EXISTS "Staff can view appointment doctor assignments" ON public.appointment_doctors;
+CREATE POLICY "Read accessible appointment assignments" ON public.appointment_doctors
+  FOR SELECT TO authenticated USING (EXISTS(SELECT 1 FROM public.appointments a
+    WHERE a.id=appointment_id AND public.can_current_staff_access_patient(a.patient_id)));
+
+DROP POLICY IF EXISTS "All active staff can view payment history logs" ON public.payment_records;
+CREATE POLICY "Read accessible payment history" ON public.payment_records FOR SELECT TO authenticated
+  USING (public.can_current_staff_access_patient(patient_id));
+
+DROP POLICY IF EXISTS "Allow users to insert their own profile" ON public.staff;
+CREATE POLICY "Allow users to insert their own profile" ON public.staff FOR INSERT TO authenticated
+  WITH CHECK (user_id=auth.uid() AND NOT is_active AND NOT can_manage_payments
+    AND NOT is_senior AND role IN ('doctor','receptionist'));
+
+CREATE OR REPLACE FUNCTION public.guard_patient_balance_write()
+RETURNS trigger LANGUAGE plpgsql SET search_path = public, pg_temp AS $$
+BEGIN
+  -- Nested database balance triggers remain authorized; direct doctor writes do not.
+  IF auth.uid() IS NOT NULL AND pg_trigger_depth() = 1
+     AND (NEW.session_balance IS DISTINCT FROM OLD.session_balance
+       OR NEW.traction_balance IS DISTINCT FROM OLD.traction_balance)
+     AND NOT EXISTS(SELECT 1 FROM public.get_auth_staff_profile()
+       WHERE staff_active AND staff_role IN ('super_admin','receptionist')) THEN
+    RAISE EXCEPTION 'Permission denied: cannot manually change package balances'
+      USING ERRCODE='42501';
+  END IF;
+  RETURN NEW;
+END;
+$$;
+CREATE TRIGGER guard_patient_balance_write BEFORE UPDATE ON public.patients
+  FOR EACH ROW EXECUTE FUNCTION public.guard_patient_balance_write();
+
+CREATE OR REPLACE FUNCTION public.can_current_staff_edit_appointment(p_appointment_id uuid)
+RETURNS boolean LANGUAGE sql STABLE SECURITY DEFINER SET search_path=public,pg_temp AS $$
+  SELECT public.current_staff_has_management_access() OR EXISTS (
+    SELECT 1 FROM public.appointments a JOIN public.staff s ON s.user_id=auth.uid()
+    WHERE a.id=p_appointment_id AND s.is_active AND s.role='doctor' AND (
+      EXISTS(SELECT 1 FROM public.patient_doctors pd WHERE pd.patient_id=a.patient_id AND pd.doctor_id=s.id)
+      OR (abs((a.scheduled_at AT TIME ZONE public.clinic_timezone())::date -
+          (now() AT TIME ZONE public.clinic_timezone())::date)<=2
+        AND EXISTS(SELECT 1 FROM public.appointment_doctors ad
+          WHERE ad.appointment_id=a.id AND ad.doctor_id=s.id AND ad.is_active))));
+$$;
+REVOKE ALL ON FUNCTION public.can_current_staff_edit_appointment(uuid) FROM PUBLIC,anon;
+GRANT EXECUTE ON FUNCTION public.can_current_staff_edit_appointment(uuid) TO authenticated;
+
+CREATE OR REPLACE FUNCTION public.guard_appointment_edit()
+RETURNS trigger LANGUAGE plpgsql SET search_path=public,pg_temp AS $$
+BEGIN
+  IF auth.uid() IS NULL THEN RETURN coalesce(NEW,OLD); END IF;
+  IF TG_OP='UPDATE' AND (NEW.patient_id IS DISTINCT FROM OLD.patient_id
+      OR NEW.created_by IS DISTINCT FROM OLD.created_by OR NEW.id IS DISTINCT FROM OLD.id) THEN
+    RAISE EXCEPTION 'Appointment identity cannot be changed' USING ERRCODE='42501';
+  END IF;
+  IF TG_OP='DELETE' OR NEW.scheduled_at IS DISTINCT FROM OLD.scheduled_at
+      OR NEW.type IS DISTINCT FROM OLD.type OR NEW.use_package IS DISTINCT FROM OLD.use_package THEN
+    IF NOT public.can_current_staff_edit_appointment(OLD.id) THEN
+      RAISE EXCEPTION 'Permission denied: cannot edit appointment' USING ERRCODE='42501';
+    END IF;
+  END IF;
+  RETURN coalesce(NEW,OLD);
+END;
+$$;
+CREATE TRIGGER guard_appointment_edit BEFORE UPDATE OR DELETE ON public.appointments
+  FOR EACH ROW EXECUTE FUNCTION public.guard_appointment_edit();
+
+-- Explicit base grants for reproducible fresh Supabase databases.
+GRANT SELECT,INSERT,UPDATE,DELETE ON public.staff,public.patients,public.patient_doctors,
+  public.appointments,public.appointment_doctors,public.patient_notes,public.payment_records TO authenticated;
+GRANT SELECT,INSERT,DELETE ON public.patient_documents TO authenticated;
+GRANT UPDATE(file_name) ON public.patient_documents TO authenticated;
+REVOKE ALL ON FUNCTION public.guard_patient_balance_write(),public.guard_appointment_edit() FROM PUBLIC,anon;
+
+-- Restore the senior-role guard missing from the incremental migration path.
+CREATE OR REPLACE FUNCTION public.verify_staff_update_permissions()
+ RETURNS trigger
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path=public,pg_temp
+AS $function$
+DECLARE
+  caller_role public.user_role;
+  caller_active boolean;
+BEGIN
+  IF auth.uid() IS NULL THEN
+    RETURN NEW;
+  END IF;
+
+  SELECT role, is_active INTO caller_role, caller_active
+  FROM staff
+  WHERE user_id = auth.uid();
+
+  IF caller_role = 'super_admin' AND caller_active = true THEN
+    RETURN NEW;
+  END IF;
+
+  IF OLD.user_id = auth.uid() AND NEW.user_id = auth.uid() THEN
+    IF NEW.role IS DISTINCT FROM OLD.role THEN
+      RAISE EXCEPTION 'You cannot change your own role.';
+    END IF;
+    IF NEW.is_active IS DISTINCT FROM OLD.is_active THEN
+      RAISE EXCEPTION 'You cannot change your active status.';
+    END IF;
+    IF NEW.can_manage_payments IS DISTINCT FROM OLD.can_manage_payments THEN
+      RAISE EXCEPTION 'You cannot change your payment access.';
+    END IF;
+    IF NEW.is_senior IS DISTINCT FROM OLD.is_senior THEN
+      RAISE EXCEPTION 'You cannot change your senior doctor status.';
+    END IF;
+    IF NEW.id IS DISTINCT FROM OLD.id OR NEW.user_id IS DISTINCT FROM OLD.user_id THEN
+      RAISE EXCEPTION 'You cannot change your ID or User ID.';
+    END IF;
+    RETURN NEW;
+  END IF;
+
+  RAISE EXCEPTION 'Permission denied.';
+END;
+$function$;
+
+-- Synchronize balances from old/new charged state, including edits and deletion.
+CREATE OR REPLACE FUNCTION public.handle_package_deduction()
+RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER SET search_path=public,pg_temp AS $$
+DECLARE old_pt integer:=0; old_tr integer:=0; new_pt integer:=0; new_tr integer:=0;
+BEGIN
+  IF TG_OP<>'INSERT' AND OLD.status='checked_in' AND OLD.use_package THEN
+    old_pt := (OLD.type='normal_pt_session')::integer;
+    old_tr := (OLD.type='spinal_traction_session')::integer;
+  END IF;
+  IF TG_OP<>'DELETE' AND NEW.status='checked_in' AND NEW.use_package THEN
+    new_pt := (NEW.type='normal_pt_session')::integer;
+    new_tr := (NEW.type='spinal_traction_session')::integer;
+  END IF;
+  IF TG_OP='UPDATE' AND OLD.patient_id=NEW.patient_id AND old_pt=new_pt AND old_tr=new_tr THEN
+    RETURN NEW;
+  END IF;
+  IF old_pt+old_tr>0 THEN
+    UPDATE public.patients SET session_balance=session_balance+old_pt,
+      traction_balance=traction_balance+old_tr WHERE id=OLD.patient_id;
+  END IF;
+  IF new_pt+new_tr>0 THEN
+    UPDATE public.patients SET session_balance=session_balance-new_pt,
+      traction_balance=traction_balance-new_tr WHERE id=NEW.patient_id
+      AND session_balance>=new_pt AND traction_balance>=new_tr;
+    IF NOT FOUND THEN RAISE EXCEPTION 'Insufficient package balance' USING ERRCODE='22000'; END IF;
+  END IF;
+  RETURN coalesce(NEW,OLD);
+END;
+$$;
+DROP TRIGGER IF EXISTS trigger_appointment_package_deduction ON public.appointments;
+CREATE TRIGGER trigger_appointment_package_deduction AFTER INSERT OR UPDATE OR DELETE ON public.appointments
+  FOR EACH ROW EXECUTE FUNCTION public.handle_package_deduction();
+
+CREATE OR REPLACE FUNCTION public.handle_payment_package_sync()
+RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER SET search_path=public,pg_temp AS $$
+BEGIN
+  IF TG_OP='UPDATE' AND OLD.patient_id=NEW.patient_id
+      AND OLD.session_balance_added=NEW.session_balance_added
+      AND OLD.traction_balance_added=NEW.traction_balance_added THEN RETURN NULL; END IF;
+  IF TG_OP<>'INSERT' THEN
+    UPDATE public.patients SET session_balance=session_balance-OLD.session_balance_added,
+      traction_balance=traction_balance-OLD.traction_balance_added WHERE id=OLD.patient_id;
+  END IF;
+  IF TG_OP<>'DELETE' THEN
+    UPDATE public.patients SET session_balance=session_balance+NEW.session_balance_added,
+      traction_balance=traction_balance+NEW.traction_balance_added WHERE id=NEW.patient_id;
+  END IF;
+  RETURN NULL;
+END;
+$$;
+CREATE TRIGGER trigger_payment_update_package_sync AFTER UPDATE ON public.payment_records
+  FOR EACH ROW EXECUTE FUNCTION public.handle_payment_package_sync();
+
+-- NOT VALID preserves historical rows for an explicit audit; new writes are checked.
+ALTER TABLE public.payment_records ADD CONSTRAINT payment_amount_valid
+  CHECK(amount>0 AND amount::text NOT IN ('NaN','Infinity','-Infinity')) NOT VALID;
+ALTER TABLE public.payment_records ADD CONSTRAINT payment_total_valid
+  CHECK(total_price IS NULL OR (total_price>=amount AND total_price::text NOT IN ('NaN','Infinity','-Infinity'))) NOT VALID;
+ALTER TABLE public.payment_records ADD CONSTRAINT payment_credits_valid
+  CHECK(session_balance_added>=0 AND traction_balance_added>=0) NOT VALID;
+
+CREATE OR REPLACE FUNCTION public.collect_payment_due(p_payment_id uuid,p_additional_amount numeric)
+RETURNS void LANGUAGE plpgsql SECURITY DEFINER SET search_path=public,pg_temp AS $$
+DECLARE payment public.payment_records;
+BEGIN
+  IF NOT public.current_staff_can_manage_payments() THEN
+    RAISE EXCEPTION 'Permission denied: cannot manage payments' USING ERRCODE='42501';
+  END IF;
+  IF p_additional_amount IS NULL OR p_additional_amount<=0
+      OR p_additional_amount::text IN ('NaN','Infinity','-Infinity') THEN
+    RAISE EXCEPTION 'Additional amount must be positive and finite' USING ERRCODE='22000';
+  END IF;
+  SELECT * INTO payment FROM public.payment_records WHERE id=p_payment_id FOR UPDATE;
+  IF NOT FOUND THEN RAISE EXCEPTION 'Payment not found' USING ERRCODE='P0002'; END IF;
+  IF payment.total_price IS NULL OR payment.amount+p_additional_amount>payment.total_price THEN
+    RAISE EXCEPTION 'Collection exceeds outstanding due' USING ERRCODE='22000';
+  END IF;
+  UPDATE public.payment_records SET amount=amount+p_additional_amount WHERE id=p_payment_id;
+END;
+$$;
+
+CREATE OR REPLACE FUNCTION public.book_recurring_appointments(
+  p_patient_id uuid, p_type public.appointment_type, p_slots timestamptz[],
+  p_use_package boolean, p_creator_id uuid, p_doctor_ids uuid[],
+  p_expected_next_visit_date date DEFAULT NULL
+) RETURNS void LANGUAGE plpgsql SECURITY DEFINER SET search_path=public,pg_temp AS $$
+DECLARE patient public.patients; slot timestamptz; appt uuid; doctor uuid;
+  available integer; commitments integer; use_credit boolean;
+BEGIN
+  IF NOT public.current_staff_has_management_access()
+      OR p_creator_id IS DISTINCT FROM (SELECT staff_id FROM public.get_auth_staff_profile()) THEN
+    RAISE EXCEPTION 'Permission denied' USING ERRCODE='42501';
+  END IF;
+  IF coalesce(cardinality(p_slots),0)=0 OR coalesce(cardinality(p_doctor_ids),0)=0
+      OR array_position(p_slots,NULL) IS NOT NULL THEN
+    RAISE EXCEPTION 'At least one valid slot and doctor are required' USING ERRCODE='22000';
+  END IF;
+  IF (SELECT count(DISTINCT value) FROM unnest(p_slots) value)<>cardinality(p_slots) THEN
+    RAISE EXCEPTION 'Duplicate booking slots' USING ERRCODE='22000';
+  END IF;
+  IF (SELECT count(*) FROM public.staff WHERE id=ANY(p_doctor_ids) AND role='doctor' AND is_active)
+      <>cardinality(p_doctor_ids) THEN
+    RAISE EXCEPTION 'Every assigned doctor must be active' USING ERRCODE='22000';
+  END IF;
+  -- Serialize package checks and due-queue claims for this patient.
+  SELECT * INTO patient FROM public.patients WHERE id=p_patient_id FOR UPDATE;
+  IF NOT FOUND THEN RAISE EXCEPTION 'Patient not found' USING ERRCODE='P0002'; END IF;
+  IF p_expected_next_visit_date IS NOT NULL AND (
+      patient.next_visit_date IS DISTINCT FROM p_expected_next_visit_date
+      OR EXISTS(SELECT 1 FROM public.appointments WHERE patient_id=p_patient_id
+        AND status='scheduled' AND (scheduled_at AT TIME ZONE public.clinic_timezone())::date>=patient.next_visit_date)
+      OR EXISTS(SELECT 1 FROM unnest(p_slots) s
+        WHERE (s AT TIME ZONE public.clinic_timezone())::date<patient.next_visit_date)) THEN
+    RAISE EXCEPTION 'Patient is no longer due for booking.' USING ERRCODE='P0001';
+  END IF;
+  use_credit := coalesce(p_use_package,false) AND p_type IN ('normal_pt_session','spinal_traction_session');
+  IF use_credit THEN
+    SELECT count(*) INTO commitments FROM public.appointments WHERE patient_id=p_patient_id
+      AND type=p_type AND use_package AND status='scheduled' AND scheduled_at>now();
+    available := CASE WHEN p_type='normal_pt_session' THEN patient.session_balance ELSE patient.traction_balance END - commitments;
+    IF cardinality(p_slots)>available THEN
+      RAISE EXCEPTION 'Insufficient package balance' USING ERRCODE='22000';
+    END IF;
+  END IF;
+  FOREACH slot IN ARRAY p_slots LOOP
+    INSERT INTO public.appointments(patient_id,type,scheduled_at,status,use_package,created_by)
+      VALUES(p_patient_id,p_type,slot,'scheduled',use_credit,p_creator_id) RETURNING id INTO appt;
+    FOREACH doctor IN ARRAY p_doctor_ids LOOP
+      INSERT INTO public.appointment_doctors(appointment_id,doctor_id,is_active,added_by)
+        VALUES(appt,doctor,true,p_creator_id);
+    END LOOP;
+  END LOOP;
+  IF p_expected_next_visit_date IS NULL THEN
+    UPDATE public.patients SET next_visit_date=(SELECT (scheduled_at AT TIME ZONE public.clinic_timezone())::date
+      FROM public.appointments WHERE patient_id=p_patient_id AND status='scheduled' AND scheduled_at>=now()
+      ORDER BY scheduled_at LIMIT 1) WHERE id=p_patient_id;
+  END IF;
+END;
+$$;
+
+CREATE OR REPLACE FUNCTION public.update_patient_details(
+  p_patient_id uuid,p_name text,p_phone text,p_program text,p_clinic public.clinic_location,
+  p_doctor_ids uuid[] DEFAULT NULL
+) RETURNS void LANGUAGE plpgsql SECURITY DEFINER SET search_path=public,pg_temp AS $$
+BEGIN
+  IF NOT public.can_current_staff_access_patient(p_patient_id) THEN
+    RAISE EXCEPTION 'Permission denied' USING ERRCODE='42501';
+  END IF;
+  -- Demographic edits never write stale balances, authorship, or recall dates.
+  UPDATE public.patients SET full_name=p_name,phone_number=p_phone,program=p_program,clinic=p_clinic
+    WHERE id=p_patient_id;
+  IF NOT FOUND THEN RAISE EXCEPTION 'Patient not found' USING ERRCODE='P0002'; END IF;
+  IF p_doctor_ids IS NOT NULL THEN
+    PERFORM public.update_patient_doctors(p_patient_id,p_doctor_ids);
+  END IF;
+END;
+$$;
+REVOKE ALL ON FUNCTION public.update_patient_details(uuid,text,text,text,public.clinic_location,uuid[]) FROM PUBLIC,anon;
+GRANT EXECUTE ON FUNCTION public.update_patient_details(uuid,text,text,text,public.clinic_location,uuid[]) TO authenticated;
+
+CREATE OR REPLACE FUNCTION public.update_appointment_details(
+  p_appointment_id uuid,p_scheduled_at timestamptz,p_type public.appointment_type,
+  p_use_package boolean,p_doctor_ids uuid[] DEFAULT NULL
+) RETURNS void LANGUAGE plpgsql SECURITY DEFINER SET search_path=public,pg_temp AS $$
+DECLARE existing_ids uuid[]; editor uuid;
+BEGIN
+  PERFORM 1 FROM public.appointments WHERE id=p_appointment_id FOR UPDATE;
+  IF NOT FOUND THEN RAISE EXCEPTION 'Appointment not found' USING ERRCODE='P0002'; END IF;
+  IF NOT public.can_current_staff_edit_appointment(p_appointment_id) THEN
+    RAISE EXCEPTION 'Permission denied' USING ERRCODE='42501';
+  END IF;
+  IF p_doctor_ids IS NOT NULL THEN
+    SELECT array_agg(doctor_id ORDER BY doctor_id) INTO existing_ids
+      FROM public.appointment_doctors WHERE appointment_id=p_appointment_id AND is_active;
+    IF coalesce(existing_ids,'{}'::uuid[]) IS DISTINCT FROM
+        (SELECT coalesce(array_agg(id ORDER BY id),'{}'::uuid[]) FROM unnest(p_doctor_ids) id) THEN
+      SELECT staff_id INTO editor FROM public.get_auth_staff_profile();
+      PERFORM public.update_appointment_doctors(p_appointment_id,p_doctor_ids,editor);
+    END IF;
+  END IF;
+  UPDATE public.appointments SET scheduled_at=p_scheduled_at,type=p_type,
+    use_package=p_use_package AND p_type IN ('normal_pt_session','spinal_traction_session')
+    WHERE id=p_appointment_id;
+END;
+$$;
+REVOKE ALL ON FUNCTION public.update_appointment_details(uuid,timestamptz,public.appointment_type,boolean,uuid[]) FROM PUBLIC,anon;
+GRANT EXECUTE ON FUNCTION public.update_appointment_details(uuid,timestamptz,public.appointment_type,boolean,uuid[]) TO authenticated;

@@ -74,7 +74,7 @@ final class StaffApplicationsActionProvider
         argument: null,
         retry: null,
         name: r'staffApplicationsActionProvider',
-        isAutoDispose: true,
+        isAutoDispose: false,
         dependencies: null,
         $allTransitiveDependencies: null,
       );
@@ -96,7 +96,7 @@ final class StaffApplicationsActionProvider
 }
 
 String _$staffApplicationsActionHash() =>
-    r'7e5a0fecd03a16c2d82e01a8cc145a363ecc3858';
+    r'ae49cd58bf4f1826d9dd4291de9a5ba5f50f335d';
 
 /// Controller managing approval and rejection actions for staff applications.
 

@@ -10,6 +10,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:spine_clinic_app/core/constants/app_strings.dart';
 import 'package:spine_clinic_app/features/auth/presentation/auth_providers.dart';
 import 'package:spine_clinic_app/shared/widgets/confirmation_dialog.dart';
+import 'package:spine_clinic_app/shared/widgets/app_snackbar.dart';
 
 /// Shows the destructive sign-out confirmation dialog and, on confirm,
 /// triggers [AuthNotifier.logout] via the [currentUserProvider].
@@ -28,7 +29,18 @@ Future<bool?> confirmAndSignOut(BuildContext context, WidgetRef ref) async {
     ),
   );
   if (confirm == true) {
-    await ref.read(currentUserProvider.notifier).logout();
+    final result = await ref.read(currentUserProvider.notifier).logout();
+    if (!context.mounted) return confirm;
+    result.when(
+      success: (_) {},
+      failure: (error) {
+        AppSnackbar.show(
+          context,
+          message: AppStrings.fromKey(error.userMessageKey),
+          variant: AppSnackbarVariant.error,
+        );
+      },
+    );
   }
   return confirm;
 }

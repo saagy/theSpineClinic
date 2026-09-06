@@ -5,8 +5,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:sentry_flutter/sentry_flutter.dart';
 import 'package:spine_clinic_app/core/network/app_page_transitions.dart';
 import 'package:spine_clinic_app/core/network/app_routes.dart';
+import 'package:spine_clinic_app/core/network/auth_redirect.dart';
 import 'package:spine_clinic_app/features/admin/presentation/admin_hub_screen.dart';
 import 'package:spine_clinic_app/features/admin/presentation/analytics_screen.dart';
 import 'package:spine_clinic_app/features/appointment/presentation/appointment_detail_screen.dart';
@@ -53,10 +55,19 @@ final GlobalKey<NavigatorState> _rootNavigatorKey = GlobalKey<NavigatorState>();
 
 class _RouterRefreshNotifier extends ChangeNotifier {
   _RouterRefreshNotifier(Ref ref) {
-    ref.listen<AsyncValue<Staff?>>(
-      currentUserProvider,
-      (_, __) => notifyListeners(),
-    );
+    ref.listen<AsyncValue<Staff?>>(currentUserProvider, (_, next) {
+      final staff = next.value;
+      if (staff != null) {
+        Sentry.configureScope((scope) {
+          scope.setUser(
+            SentryUser(id: staff.id, data: {'role': staff.role.name}),
+          );
+        });
+      } else {
+        Sentry.configureScope((scope) => scope.setUser(null));
+      }
+      notifyListeners();
+    });
   }
 }
 
@@ -67,8 +78,9 @@ GoRouter router(Ref ref) {
     navigatorKey: _rootNavigatorKey,
     initialLocation: AppRoutes.splash,
     refreshListenable: refreshNotifier,
+    observers: [SentryNavigatorObserver()],
     redirect: (BuildContext context, GoRouterState state) =>
-        _redirect(ref, state),
+        authRedirect(ref.read(currentUserProvider), state.uri),
     routes: _buildRoutes(ref),
   );
   ref.onDispose(() {

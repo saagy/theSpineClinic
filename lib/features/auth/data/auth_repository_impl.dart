@@ -7,8 +7,8 @@
 /// Rule 4 — every method returns `Result<T>`.
 library;
 
-import 'package:flutter/foundation.dart';
-import 'package:supabase_flutter/supabase_flutter.dart' show Supabase, UserAttributes;
+import 'package:supabase_flutter/supabase_flutter.dart'
+    show Supabase, UserAttributes;
 import 'package:spine_clinic_app/core/errors/app_exception.dart';
 import 'package:spine_clinic_app/core/errors/result.dart';
 import 'package:spine_clinic_app/core/network/supabase_service.dart';
@@ -21,7 +21,7 @@ import 'package:spine_clinic_app/features/patient/domain/clinic_location.dart';
 class AuthRepositoryImpl implements AuthRepository {
   /// Creates an [AuthRepositoryImpl].
   AuthRepositoryImpl({required SupabaseService supabaseService})
-      : _service = supabaseService;
+    : _service = supabaseService;
 
   final SupabaseService _service;
 
@@ -138,7 +138,6 @@ class AuthRepositoryImpl implements AuthRepository {
     ClinicLocation? branch,
   }) async {
     try {
-      debugPrint('REGISTER: Starting atomic registration for $email as ${role.dbValue}');
       await _service.guardQuery(
         () => _service.rpc(
           'register_doctor_application',
@@ -152,13 +151,10 @@ class AuthRepositoryImpl implements AuthRepository {
           },
         ),
       );
-      debugPrint('REGISTER: Registration complete');
       return const Result.success(null);
     } on AppException catch (error) {
-      debugPrint('REGISTER: AppException — ${error.code}: ${error.message}');
       return Result.failure(error);
     } on Exception catch (error) {
-      debugPrint('REGISTER: Exception — $error');
       return Result.failure(AppException.fromSupabaseException(error));
     }
   }
@@ -167,11 +163,7 @@ class AuthRepositoryImpl implements AuthRepository {
   Future<Result<Staff>> getStaffProfile(String staffId) async {
     try {
       final Map<String, dynamic> row = await _service.guardQuery(
-        () => _service
-            .from(_staffTable)
-            .select()
-            .eq('id', staffId)
-            .single(),
+        () => _service.from(_staffTable).select().eq('id', staffId).single(),
       );
       return Result.success(Staff.fromJson(row));
     } on AppException catch (error) {
@@ -198,21 +190,27 @@ class AuthRepositoryImpl implements AuthRepository {
         } else {
           // Admin-initiated password change for another user — uses RPC.
           await _service.guardQuery(
-            () => _service.rpc('update_user_password', params: {
-              'target_user_id': staff.userId,
-              'new_password': newPassword,
-            }),
+            () => _service.rpc(
+              'update_user_password',
+              params: {
+                'target_user_id': staff.userId,
+                'new_password': newPassword,
+              },
+            ),
           );
         }
       }
 
       await _service.guardQuery(
-        () => _service.from(_staffTable).update({
-          'full_name': staff.fullName,
-          'email': staff.email,
-          'phone': staff.phone,
-          'branch': staff.branch?.dbValue,
-        }).eq('id', staff.id),
+        () => _service
+            .from(_staffTable)
+            .update({
+              'full_name': staff.fullName,
+              'email': staff.email,
+              'phone': staff.phone,
+              'branch': staff.branch?.dbValue,
+            })
+            .eq('id', staff.id),
       );
 
       return const Result.success(null);
@@ -223,4 +221,3 @@ class AuthRepositoryImpl implements AuthRepository {
     }
   }
 }
-

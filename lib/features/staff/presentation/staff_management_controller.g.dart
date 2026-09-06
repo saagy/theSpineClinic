@@ -77,7 +77,7 @@ final class StaffFormControllerProvider
         argument: null,
         retry: null,
         name: r'staffFormControllerProvider',
-        isAutoDispose: true,
+        isAutoDispose: false,
         dependencies: null,
         $allTransitiveDependencies: null,
       );
@@ -99,7 +99,7 @@ final class StaffFormControllerProvider
 }
 
 String _$staffFormControllerHash() =>
-    r'01711ae51302d00f059474be7d90fe4181690dee';
+    r'4b0df61d1c8347e81e5ed7aaae4dfdc73067892e';
 
 /// Controller managing staff account registration and modifications.
 

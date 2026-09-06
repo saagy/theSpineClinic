@@ -16,7 +16,7 @@ PaymentAmountResult readPositiveAmount(
   final String trimmed = text.trim();
   if (trimmed.isEmpty) return PaymentAmountResult.error(emptyMessage);
   final double? value = double.tryParse(trimmed);
-  if (value == null || value <= 0) {
+  if (value == null || !value.isFinite || value <= 0) {
     return PaymentAmountResult.error(positiveMessage);
   }
   return PaymentAmountResult.value(value);

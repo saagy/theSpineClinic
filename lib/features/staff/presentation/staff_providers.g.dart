@@ -177,7 +177,7 @@ final class MyPatientsControllerProvider
         argument: null,
         retry: null,
         name: r'myPatientsControllerProvider',
-        isAutoDispose: true,
+        isAutoDispose: false,
         dependencies: null,
         $allTransitiveDependencies: null,
       );
@@ -191,7 +191,7 @@ final class MyPatientsControllerProvider
 }
 
 String _$myPatientsControllerHash() =>
-    r'4ee09af844e1281b9bc4c58a59cdd0b1117827b2';
+    r'99a606869ac030d590f6449f85f6eac640033bd3';
 
 /// Controller managing the roster of patients assigned to the logged-in doctor with pagination.
 

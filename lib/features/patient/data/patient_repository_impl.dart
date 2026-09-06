@@ -142,17 +142,54 @@ class PatientRepositoryImpl implements PatientRepository {
   }
 
   @override
-  Future<Result<void>> updatePatient(Patient patient) async {
+  Future<Result<void>> updatePatient(
+    Patient patient, {
+    List<String>? doctorIds,
+  }) async {
     try {
-      final Map<String, dynamic> patientJson = patient.toJson();
-      patientJson.remove('id');
-      patientJson.remove('created_at');
       await _service.guardQuery(
-        () => _service.from(_table).update(patientJson).eq('id', patient.id),
+        () => _service.rpc(
+          'update_patient_details',
+          params: {
+            'p_patient_id': patient.id,
+            'p_name': patient.fullName,
+            'p_phone': patient.phoneNumber,
+            'p_program': patient.program,
+            'p_clinic': patient.clinic.dbValue,
+            'p_doctor_ids': doctorIds,
+          },
+        ),
       );
       return const Result.success(null);
     } on AppException catch (e) {
       return Result.failure(e);
+    } catch (e) {
+      return Result.failure(AppException.fromSupabaseException(e));
+    }
+  }
+
+  @override
+  Future<Result<void>> updatePackageBalances(
+    String patientId, {
+    int? sessionBalance,
+    int? tractionBalance,
+  }) async {
+    if (sessionBalance == null && tractionBalance == null) {
+      return const Result.success(null);
+    }
+    try {
+      await _service.guardQuery(
+        () => _service
+            .from(_table)
+            .update({
+              if (sessionBalance != null) 'session_balance': sessionBalance,
+              if (tractionBalance != null) 'traction_balance': tractionBalance,
+            })
+            .eq('id', patientId)
+            .select('id')
+            .single(),
+      );
+      return const Result.success(null);
     } catch (e) {
       return Result.failure(AppException.fromSupabaseException(e));
     }

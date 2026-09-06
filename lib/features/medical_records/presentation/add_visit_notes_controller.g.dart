@@ -24,7 +24,7 @@ final class AddVisitNotesControllerProvider
   }) : super(
          retry: null,
          name: r'addVisitNotesControllerProvider',
-         isAutoDispose: true,
+         isAutoDispose: false,
          dependencies: null,
          $allTransitiveDependencies: null,
        );
@@ -56,7 +56,7 @@ final class AddVisitNotesControllerProvider
 }
 
 String _$addVisitNotesControllerHash() =>
-    r'4615354c7fc1e5e61838980135b3f2f443a1d757';
+    r'56cbe54fc394267a0ea08b0760b3dd34a9bd59e9';
 
 /// Controller managing a single appointment's visit notes state and updates.
 
@@ -75,7 +75,7 @@ final class AddVisitNotesControllerFamily extends $Family
         name: r'addVisitNotesControllerProvider',
         dependencies: null,
         $allTransitiveDependencies: null,
-        isAutoDispose: true,
+        isAutoDispose: false,
       );
 
   /// Controller managing a single appointment's visit notes state and updates.

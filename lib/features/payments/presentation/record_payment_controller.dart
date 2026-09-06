@@ -32,7 +32,7 @@ Future<List<PaymentRecord>> patientPayments(Ref ref, String patientId) async {
 }
 
 /// Controller managing form submission state for the record payment screen.
-@riverpod
+@Riverpod(keepAlive: true)
 class RecordPaymentController extends _$RecordPaymentController {
   @override
   FutureOr<void> build() {

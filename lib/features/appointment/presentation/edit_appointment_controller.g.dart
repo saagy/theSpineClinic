@@ -23,7 +23,7 @@ final class EditAppointmentControllerProvider
         argument: null,
         retry: null,
         name: r'editAppointmentControllerProvider',
-        isAutoDispose: true,
+        isAutoDispose: false,
         dependencies: null,
         $allTransitiveDependencies: null,
       );
@@ -37,7 +37,7 @@ final class EditAppointmentControllerProvider
 }
 
 String _$editAppointmentControllerHash() =>
-    r'18712aa37e6d41391cbaa740c5fcb6e0b9489848';
+    r'0a05fe5d2ddbab57d5466e63299b8d755a9f4e09';
 
 /// Notifier state class for editing appointment.
 

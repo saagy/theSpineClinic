@@ -42,7 +42,7 @@ class StaffList extends _$StaffList {
 }
 
 /// Controller managing staff account registration and modifications.
-@riverpod
+@Riverpod(keepAlive: true)
 class StaffFormController extends _$StaffFormController {
   @override
   AsyncValue<void> build() => const AsyncValue.data(null);

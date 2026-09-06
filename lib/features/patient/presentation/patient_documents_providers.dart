@@ -25,6 +25,8 @@ part 'patient_documents_providers.g.dart';
 /// Provides a singleton [PatientDocumentsRepository] instance.
 @Riverpod(keepAlive: true)
 PatientDocumentsRepository patientDocumentsRepository(Ref ref) {
+  // Dispose the in-memory document cache whenever the staff session changes.
+  ref.watch(currentUserProvider);
   return PatientDocumentsRepositoryImpl(
     supabaseService: SupabaseService.instance,
   );
@@ -176,9 +178,7 @@ class PatientDocumentsNotifierNotifier
     result.when(
       success: (_) {
         state.whenData((current) {
-          state = AsyncData(
-            current.where((d) => d.id != doc.id).toList(),
-          );
+          state = AsyncData(current.where((d) => d.id != doc.id).toList());
         });
         ref.invalidateSelf();
       },

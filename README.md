@@ -1,9 +1,9 @@
 <div align="center">
 
 # 🏥 The Spine Clinic
-### **Enterprise Clinical Operations, Patient EHR & Practice Management System**
+### **Clinical Operations & Practice Management App**
 
-An enterprise-grade, multi-role medical clinic operations platform engineered with **Flutter**, **Riverpod**, and **Supabase (PostgreSQL)**. Built for high-volume outpatient healthcare centers, featuring **Clean Architecture**, database-level transactional integrity, automated package credit ledgers, and strict role-based access control (RBAC).
+A multi-role medical clinic operations platform engineered with **Flutter**, **Riverpod**, and **Supabase (PostgreSQL)**. Designed for outpatient clinic workflows, featuring **Clean Architecture**, database-level transactional integrity, automated package credit ledgers, and strict role-based access control (RBAC).
 
 [![Live Demo](https://img.shields.io/badge/Live_Demo-spine--clinic--app.web.app-2BB5A0?style=for-the-badge&logo=google-chrome&logoColor=white)](https://spine-clinic-app.web.app/)
 [![Flutter](https://img.shields.io/badge/Flutter-3.x-02569B?style=for-the-badge&logo=flutter&logoColor=white)](https://flutter.dev)
@@ -23,13 +23,20 @@ An enterprise-grade, multi-role medical clinic operations platform engineered wi
 
 ---
 
+## Review status
+
+The 2026-09-06 local review found and fixed access-control and financial defects.
+These changes are not deployed. Read the [plan](docs/pre-delivery-review-plan.md),
+[results](docs/pre-delivery-review-results.md) and [meeting checklist](docs/client-review-checklist.md)
+before using the live application for client acceptance.
+
 ## 🚀 Live Interactive Demo
 
 Experience the live multi-role application directly in your browser:
 
 👉 **[Launch Live Web Application (spine-clinic-app.web.app)](https://spine-clinic-app.web.app/)**
 
-> **Note:** Production-ready web distribution compiled with CanvasKit renderer for native-grade typography and 60fps animations.
+> **Note:** Web build available. Release readiness depends on the checks and open gates in [the pre-delivery review](docs/pre-delivery-review-results.md).
 
 ---
 
@@ -63,12 +70,12 @@ Experience the live multi-role application directly in your browser:
 
 ## 📌 Executive Overview
 
-**The Spine Clinic** is a production-grade healthcare management system designed to eliminate clinical bottlenecking, prevent package revenue leakage, and provide unified workflows for receptionists, physical therapists, and medical administrators.
+**The Spine Clinic** is a clinic management application designed to eliminate clinical bottlenecking, prevent package revenue leakage, and provide unified workflows for receptionists, physical therapists, and medical administrators.
 
 Unlike standard CRUD templates, this platform solves complex domain challenges in outpatient clinical operations:
 * **Transactional Ledger & Quota Integrity**: Session package credits, remaining dues, and cancellation rollbacks are governed by **atomic PostgreSQL server-side triggers**.
 * **Zero UI-Data Coupling**: Presentation widgets contain zero database calls—all state transitions and asynchronous I/O flow through type-safe **Riverpod Notifiers** and **Repository interfaces**.
-* **Strict Role-Based Security (RBAC)**: Multi-tenant role isolation (Receptionist, Doctor, Super Admin) enforced via **PostgreSQL Row-Level Security (RLS)** and declarative router guards.
+* **Strict Role-Based Security (RBAC)**: Multi-role access control (Receptionist, Doctor, Super Admin) enforced via **PostgreSQL Row-Level Security (RLS)** and declarative router guards.
 
 ---
 
@@ -81,8 +88,8 @@ What differentiates this project from typical mobile apps:
 * **ACID Multi-Slot Booking RPCs**: Recurring multi-week appointments execute inside single PostgreSQL stored procedures (`book_recurring_appointments`). If any validation fails mid-batch, the entire batch automatically rolls back.
 
 ### 2. Resilient Functional Error Handling (`Result<T>` Monad)
-* **No Unhandled Async Exceptions**: Every repository contract returns a functional `Result<T>` (`Success<T>` | `Failure<AppException>`) instead of throwing unhandled exceptions across the widget tree.
-* **Mandatory 4-State UI Contract**: Every functional screen explicitly renders four discrete states: `Loading`, `Error`, `Empty`, and `Data`, guaranteeing zero infinite spinners or silent white screens.
+* **Structured Repository Errors**: Every repository contract returns a functional `Result<T>` (`Success<T>` | `Failure<AppException>`) instead of throwing unhandled exceptions across the widget tree.
+* **Mandatory 4-State UI Contract**: Every functional screen explicitly renders four discrete states: `Loading`, `Error`, `Empty`, and `Data`, with regression coverage for selected failure and loading scenarios.
 
 ### 3. Defensive State Architecture & Concurrency Resilience
 * **Immutable Riverpod Code-Gen**: State classes utilize `@freezed` with strict `copyWith` mutations to prevent partial state resets.
@@ -90,7 +97,7 @@ What differentiates this project from typical mobile apps:
 
 ### 4. Defense-in-Depth Multi-Role Security
 * **PostgreSQL Row-Level Security (RLS)**: Access control is enforced at the database level. Doctors can only query their assigned patients, receptionists manage daily clinic scheduling, and admins oversee financial ledgers.
-* **Private Encrypted Document Vault**: Medical imaging and sensitive lab reports are isolated in authenticated storage buckets and rendered directly via `pdfrx` with zero local disk leakage.
+* **Private Encrypted Document Vault**: Medical imaging and sensitive lab reports are isolated in authenticated storage buckets and rendered directly via `pdfrx` with platform-specific document handling.
 
 ---
 

@@ -69,7 +69,8 @@ abstract class AppointmentRepository {
   });
 
   /// Resolves the list of appointments for a patient, paginated, sorted, and filtered.
-  Future<Result<List<AppointmentWithPatient>>> getAppointmentsForPatientPaginated({
+  Future<Result<List<AppointmentWithPatient>>>
+  getAppointmentsForPatientPaginated({
     required String patientId,
     int offset = 0,
     int limit = 30,
@@ -150,7 +151,10 @@ abstract class AppointmentRepository {
   });
 
   /// Updates appointment details (scheduled_at, type, use_package).
-  Future<Result<void>> updateAppointment(Appointment appointment);
+  Future<Result<void>> updateAppointment(
+    Appointment appointment, {
+    List<String>? doctorIds,
+  });
 
   /// Hard-deletes an appointment by its ID.
   Future<Result<void>> deleteAppointment(String appointmentId);

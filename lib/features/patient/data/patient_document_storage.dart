@@ -9,16 +9,17 @@ import 'package:spine_clinic_app/features/patient/data/patient_document_cache.da
 /// from a stored URL or raw key string.
 String? patientDocumentStoragePath(String? url) {
   if (url == null || url.trim().isEmpty) return null;
-  final String trimmed = url.trim();
+  final String trimmed = url.trim().split(RegExp(r'[?#]')).first;
   const String marker = 'patient-documents/';
   final int index = trimmed.indexOf(marker);
   if (index != -1) {
-    return Uri.decodeComponent(trimmed.substring(index + marker.length));
+    return _decodeStoragePath(trimmed.substring(index + marker.length));
   }
   // Strip any query parameters if a signed URL was passed
   final int queryIndex = trimmed.indexOf('?');
-  final String pathPart =
-      queryIndex != -1 ? trimmed.substring(0, queryIndex) : trimmed;
+  final String pathPart = queryIndex != -1
+      ? trimmed.substring(0, queryIndex)
+      : trimmed;
   // If it's a full http/https URL with standard S3/R2 path
   if (pathPart.startsWith('http://') || pathPart.startsWith('https://')) {
     final uri = Uri.tryParse(pathPart);
@@ -26,7 +27,17 @@ String? patientDocumentStoragePath(String? url) {
       return uri.pathSegments.sublist(uri.pathSegments.length - 2).join('/');
     }
   }
-  return Uri.decodeComponent(pathPart);
+  return _decodeStoragePath(pathPart);
+}
+
+String? _decodeStoragePath(String path) {
+  try {
+    return Uri.decodeComponent(path);
+  } on FormatException {
+    return null;
+  } on ArgumentError {
+    return null;
+  }
 }
 
 /// Deletes metadata first, then best-effort linked Storage objects from R2.
@@ -56,10 +67,10 @@ Future<Result<void>> deleteStoredPatientDocument({
 
       if (paths.isNotEmpty) {
         try {
-          await service.invokeFunction('document-storage', body: {
-            'action': 'delete-objects',
-            'objectKeys': paths,
-          });
+          await service.invokeFunction(
+            'document-storage',
+            body: {'action': 'delete-objects', 'objectKeys': paths},
+          );
         } catch (_) {
           // Best-effort cleanup per Rule 27
         }

@@ -29,16 +29,21 @@ mixin _AppointmentMutations on _AppointmentRepositoryBase {
   }
 
   @override
-  Future<Result<void>> updateAppointment(Appointment appointment) {
+  Future<Result<void>> updateAppointment(
+    Appointment appointment, {
+    List<String>? doctorIds,
+  }) {
     return _run(
-      () => _service
-          .from(_appointmentsTable)
-          .update(<String, dynamic>{
-            'scheduled_at': appointment.scheduledAt.toIso8601String(),
-            'type': appointment.type.dbValue,
-            'use_package': appointment.usePackage,
-          })
-          .eq('id', appointment.id),
+      () => _service.rpc(
+        'update_appointment_details',
+        params: {
+          'p_appointment_id': appointment.id,
+          'p_scheduled_at': appointment.scheduledAt.toUtc().toIso8601String(),
+          'p_type': appointment.type.dbValue,
+          'p_use_package': appointment.usePackage,
+          'p_doctor_ids': doctorIds,
+        },
+      ),
     );
   }
 

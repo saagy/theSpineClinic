@@ -2,6 +2,23 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:spine_clinic_app/features/payments/domain/payment_record.dart';
 
 void main() {
+  test('local payment timestamps preserve their instant across JSON', () {
+    final DateTime localTime = DateTime(2026, 9, 6, 4, 17);
+    final PaymentRecord payment = PaymentRecord(
+      id: 'qa',
+      patientId: 'qa',
+      amount: 20,
+      reason: 'QA',
+      recordedAt: localTime,
+    );
+    final Map<String, dynamic> json = payment.toJson();
+    expect(json['recorded_at'], endsWith('Z'));
+    expect(
+      PaymentRecord.fromJson(json).recordedAt.isAtSameMomentAs(localTime),
+      isTrue,
+    );
+  });
+
   group('PaymentRecord Model Tests', () {
     test('remainingDue and hasOutstandingDue calculate correctly', () {
       final now = DateTime.now();

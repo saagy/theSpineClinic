@@ -1,0 +1,42 @@
+name: Web review checks
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  flutter:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.44.1'
+          cache: true
+      - run: cp .env.example .env
+      - run: flutter pub get --enforce-lockfile
+      - run: dart run build_runner build
+      - run: flutter analyze --no-pub
+      - run: flutter test --no-pub --coverage
+      - run: flutter build web --release --no-pub
+      - uses: actions/upload-artifact@v4
+        with:
+          name: review-coverage
+          path: coverage/lcov.info
+
+  backend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24.12.0'
+      - run: node --test test/document_storage_security_test.ts
+      - run: npm install --prefix "$RUNNER_TEMP/review-tools" --no-save @electric-sql/pglite@0.5.8
+      - run: node test/review_database.mjs "$RUNNER_TEMP/review-tools/node_modules/@electric-sql/pglite"
+      - run: node test/review_database.mjs "$RUNNER_TEMP/review-tools/node_modules/@electric-sql/pglite" --migrations

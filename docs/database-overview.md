@@ -1,66 +1,57 @@
-# Database Overview
+# Database overview
 
-The Spine Clinic backend uses Supabase Postgres as the system of record. The
-database owns the most important integrity rules: role checks, patient-doctor
-assignment safety, package-balance sync, payment-balance sync, and document
-storage access.
+Supabase PostgreSQL owns staff, patient, scheduling, payment, program and
+treatment-plan records. Cloudflare R2 stores current document objects;
+patient_documents stores metadata. Legacy Supabase storage policies remain.
 
-- Full reference: [Database Schema](database-schema.md)
-- Policies & rationale: [Security Model](security-model.md)
+- [Schema reference](database-schema.md)
+- [Security model](security-model.md)
+- [Review results](pre-delivery-review-results.md)
 
-## Source of Truth
+## Reproduction and changes
 
-[`supabase/full_schema.sql`](../supabase/full_schema.sql) is the verified full DDL — run it to recreate the
-schema from scratch. Incremental changes live in `supabase/migrations/`:
+The review replayed all 27 migrations in an isolated PostgreSQL engine and
+separately loaded supabase/full_schema.sql. Both passed six SQL scripts.
+The harness imitates Supabase-managed auth/storage schemas; this does not
+verify hosted configuration or exact parity of every schema detail.
 
-```text
-20260705000000_baseline.sql                              # initial schema
-20260705010000_add_payment_receptionist_permission.sql    # can_manage_payments
-20260706000000_add_branch_to_create_staff_user.sql        # staff branch field
-20260712000000_separate_admin_doctor_identities.sql       # admin/doctor role split
-20260713000000_allow_document_rename.sql                  # file_name-only updates
-20260713010000_remove_dormant_workflows.sql               # dormant feature cleanup
-20260713020000_add_booking_workboard.sql                  # due-queue booking RPC
-20260713030000_allow_unfiltered_due_patients.sql          # receptionist queue scope
-```
+The snapshot is for **fresh recreation**, never for applying to an existing
+project. Keep it and schema documentation aligned with new migrations.
+Do not overwrite an applied baseline with a new production dump. Compare a
+separate schema-only export, reconcile drift and add a new migration instead.
 
-## Main Data Areas
+## Review migrations
 
-- **Staff**: auth-linked staff records, roles, activation, payment permission,
-  branch, and deactivation.
-- **Patients**: patient registry, assigned doctors, clinic branch, package
-  balances, and next-visit recall dates.
-- **Appointments**: visit schedule, appointment type, status, package usage,
-  and appointment doctor assignments.
-- **Clinical records**: patient notes and uploaded documents.
-- **Payments**: payment records, due amounts, and package credits.
+1. 20260906000000_review_access_boundaries.sql: scoped appointments/payments,
+   management assignment writes, direct-balance/appointment guards, grants and
+   protection against self-promotion to senior doctor.
+2. 20260906010000_review_financial_integrity.sql: charged-state balance sync,
+   payment-credit update sync, input constraints and bounded due collection.
+3. 20260906020000_review_booking_integrity.sql: package/cash behavior,
+   reservation counting, stale due-date guards and atomic booking.
+4. 20260906030000_review_atomic_edits.sql: atomic patient/appointment edits
+   with assignments, preserving unrelated fields and balances.
 
-## App-Owned Storage
+Validate in staging before deploying the matching Flutter client, which calls
+new edit RPCs. Deploy the document edge function with the reviewed release.
+No deployment occurred during the review.
 
-Documents use the private `patient-documents` Supabase storage bucket. The
-baseline creates the bucket row if needed and defines storage-object policies
-for select, insert, update, and delete access.
+Financial constraints use NOT VALID so historical rows are not silently changed
+or assumed correct. Audit invalid values and reconcile balances before validating
+constraints. Take backups and test restoration first. See [testing](testing.md).
 
-## Database Change Workflow
+## Pre-production deployment — 2026-09-06
 
-1. Start from the baseline migration and apply every change as a new
-   timestamped migration in `supabase/migrations/`.
-2. Keep migrations idempotent when practical.
-3. After applying a change, update `supabase/full_schema.sql` **and**
-   [database-schema.md](database-schema.md) so the canonical reference stays
-   truthful — tables, columns, functions, triggers, or policies that changed.
-4. Run the SQL sanity scripts after trigger, balance, or permission changes
-   (see [Testing](testing.md)).
+Applied the four `20260906*` review migrations to project
+`ujketpugttdqpcixrnga` with the Supabase CLI. The existing remote migration
+versions differ from local historical filenames. Deployment used an isolated
+`build/review-deploy` directory: copy the linked `.temp` configuration, fetch
+remote migration history, copy only the four new migrations, inspect `db push
+--dry-run`, then `db push --yes`. No old migrations or full schema were replayed;
+no remote history was marked reverted or repaired. Future deployment must
+reconcile history or repeat this isolated approach rather than blindly push
+all local historical files.
 
-### Remote baseline verification
-
-Before delivery, link the Supabase CLI to the real project and regenerate or
-verify the baseline:
-
-```bash
-supabase link --project-ref your-project-ref
-supabase db dump --linked --schema public --file supabase/migrations/20260705000000_baseline.sql
-```
-
-Back up the remote schema before replacing local baseline files. Do not commit
-data-only dumps.
+Live verification: receptionist `update_patient_details` saved the fictional
+QA patient while retaining package balances. The `document-storage` edge
+function was also deployed. This does not publish the web frontend.

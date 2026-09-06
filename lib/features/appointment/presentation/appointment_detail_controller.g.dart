@@ -26,9 +26,9 @@ final class AppointmentDetailControllerProvider
     required AppointmentDetailControllerFamily super.from,
     required String super.argument,
   }) : super(
-         retry: null,
+         retry: retryTransientErrors,
          name: r'appointmentDetailControllerProvider',
-         isAutoDispose: true,
+         isAutoDispose: false,
          dependencies: null,
          $allTransitiveDependencies: null,
        );
@@ -60,7 +60,7 @@ final class AppointmentDetailControllerProvider
 }
 
 String _$appointmentDetailControllerHash() =>
-    r'1f8cd21a7099e879b2daf599e1e0bd4252eb3397';
+    r'e33a0fda808093ca5faf592532ed538208db2059';
 
 /// Controller managing a single appointment's detail view and mutations.
 
@@ -75,11 +75,11 @@ final class AppointmentDetailControllerFamily extends $Family
         > {
   AppointmentDetailControllerFamily._()
     : super(
-        retry: null,
+        retry: retryTransientErrors,
         name: r'appointmentDetailControllerProvider',
         dependencies: null,
         $allTransitiveDependencies: null,
-        isAutoDispose: true,
+        isAutoDispose: false,
       );
 
   /// Controller managing a single appointment's detail view and mutations.

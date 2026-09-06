@@ -29,7 +29,7 @@ part 'patient_providers.g.dart';
 PatientRepository patientRepository(Ref ref) {
   return PatientRepositoryImpl(
     supabaseService: SupabaseService.instance,
-    documentsRepository: ref.read(patientDocumentsRepositoryProvider),
+    documentsRepository: ref.watch(patientDocumentsRepositoryProvider),
   );
 }
 
@@ -143,4 +143,3 @@ class PatientActiveTab extends _$PatientActiveTab {
     if (state != index) state = index;
   }
 }
-

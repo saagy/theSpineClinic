@@ -111,7 +111,8 @@ Every screen that uses `ReceptionistAppointmentCard` with `showMenu: true`
 (the default) MUST pass an `onStatusChanged` callback that refreshes that
 screen's data source. The callback chain must be unbroken: Screen → tab
 widget → day list → every card. A missing callback means status changes
-disappear until the user manually pulls to refresh.
+disappear until the user manually pulls to refresh. Card action cache refreshes
+also invalidate `patientDetailProvider(patientId)` so package balances update.
 ```dart
 // Screen
 onStatusChanged: () => ref.read(myProvider.notifier).refresh()
@@ -188,6 +189,10 @@ lib/
 - Providers are created via `@riverpod` annotations and `riverpod_generator`.
   Never hand-write Provider classes — use the annotation pattern and run
   `build_runner` to generate `.g.dart` files.
+- **Docs stay in sync:** when a task changes anything documented in AGENTS.md or
+  `docs/`, update the doc in the same task — never "later". If docs and code
+  disagree, code is the source of truth: fix the doc, then mention the fix in
+  your summary. Never "fix" working code to match a stale doc.
 
 ## Build & Test Commands
 - Check compilation/errors: `flutter analyze`
@@ -220,6 +225,6 @@ Target aesthetic: Medics Medical App UI Kit vibe.
 
 ## Active Technical Debt & Deferred Tasks
 - **Forgot Password Flow**: Secure and free password recovery is supported by the Supabase backend (`resetPasswordForEmail`), but the frontend views (Forgot/Reset screens and routing) are deferred.
-- **Progressive Onboarding**: The registration form has 6+ fields and should eventually be broken into a 2-step wizard (identity details → credentials) to minimize form fatigue.
-- **Clinic Package Settings Product Definition**: The existing Clinic Settings management UI is intentionally unrouted. Before reconnecting it, define who may change packages, how changes affect existing balances and payments, what audit/version history is required, and the final admin UX. The `clinic_settings` data and payment package-reading flow remain active.
+- **Progressive Onboarding**: Registration already uses a two-step role/identity then credentials flow; preserve its validation and back-navigation behavior.
+- **Clinic Package Settings Product Definition**: The dormant `clinic_settings` table was removed by migration `20260713010000`; no active client references remain. Any future settings feature needs explicit package/balance semantics, change permissions, audit history and an admin UX.
 - **Staff Feature Domain Layer**: `lib/features/staff/` currently has only `data/` and `presentation/`; extract its repository interface and models into a `domain/` layer to match every other feature.

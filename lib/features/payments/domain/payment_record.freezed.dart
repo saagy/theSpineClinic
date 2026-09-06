@@ -15,7 +15,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$PaymentRecord {
 
- String get id;@JsonKey(name: 'patient_id') String get patientId;@JsonKey(fromJson: _amountFromJson, toJson: _amountToJson) double get amount; String get reason;@JsonKey(name: 'recorded_by') String? get recordedBy;@JsonKey(name: 'recorded_at') DateTime get recordedAt;/// Number of Normal PT sessions added to patient balance by this payment.
+ String get id;@JsonKey(name: 'patient_id') String get patientId;@JsonKey(fromJson: _amountFromJson, toJson: _amountToJson) double get amount; String get reason;@JsonKey(name: 'recorded_by') String? get recordedBy;@JsonKey(name: 'recorded_at', toJson: _recordedAtToJson) DateTime get recordedAt;/// Number of Normal PT sessions added to patient balance by this payment.
 @JsonKey(name: 'session_balance_added') int get sessionBalanceAdded;/// Number of Spinal Traction sessions added to patient balance by this payment.
 @JsonKey(name: 'traction_balance_added') int get tractionBalanceAdded;/// Full price of the service (null = paid in full, meaning total_price is equal to amount).
 @JsonKey(name: 'total_price', fromJson: _nullableAmountFromJson, toJson: _nullableAmountToJson) double? get totalPrice;
@@ -51,7 +51,7 @@ abstract mixin class $PaymentRecordCopyWith<$Res>  {
   factory $PaymentRecordCopyWith(PaymentRecord value, $Res Function(PaymentRecord) _then) = _$PaymentRecordCopyWithImpl;
 @useResult
 $Res call({
- String id,@JsonKey(name: 'patient_id') String patientId,@JsonKey(fromJson: _amountFromJson, toJson: _amountToJson) double amount, String reason,@JsonKey(name: 'recorded_by') String? recordedBy,@JsonKey(name: 'recorded_at') DateTime recordedAt,@JsonKey(name: 'session_balance_added') int sessionBalanceAdded,@JsonKey(name: 'traction_balance_added') int tractionBalanceAdded,@JsonKey(name: 'total_price', fromJson: _nullableAmountFromJson, toJson: _nullableAmountToJson) double? totalPrice
+ String id,@JsonKey(name: 'patient_id') String patientId,@JsonKey(fromJson: _amountFromJson, toJson: _amountToJson) double amount, String reason,@JsonKey(name: 'recorded_by') String? recordedBy,@JsonKey(name: 'recorded_at', toJson: _recordedAtToJson) DateTime recordedAt,@JsonKey(name: 'session_balance_added') int sessionBalanceAdded,@JsonKey(name: 'traction_balance_added') int tractionBalanceAdded,@JsonKey(name: 'total_price', fromJson: _nullableAmountFromJson, toJson: _nullableAmountToJson) double? totalPrice
 });
 
 
@@ -164,7 +164,7 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id, @JsonKey(name: 'patient_id')  String patientId, @JsonKey(fromJson: _amountFromJson, toJson: _amountToJson)  double amount,  String reason, @JsonKey(name: 'recorded_by')  String? recordedBy, @JsonKey(name: 'recorded_at')  DateTime recordedAt, @JsonKey(name: 'session_balance_added')  int sessionBalanceAdded, @JsonKey(name: 'traction_balance_added')  int tractionBalanceAdded, @JsonKey(name: 'total_price', fromJson: _nullableAmountFromJson, toJson: _nullableAmountToJson)  double? totalPrice)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id, @JsonKey(name: 'patient_id')  String patientId, @JsonKey(fromJson: _amountFromJson, toJson: _amountToJson)  double amount,  String reason, @JsonKey(name: 'recorded_by')  String? recordedBy, @JsonKey(name: 'recorded_at', toJson: _recordedAtToJson)  DateTime recordedAt, @JsonKey(name: 'session_balance_added')  int sessionBalanceAdded, @JsonKey(name: 'traction_balance_added')  int tractionBalanceAdded, @JsonKey(name: 'total_price', fromJson: _nullableAmountFromJson, toJson: _nullableAmountToJson)  double? totalPrice)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _PaymentRecord() when $default != null:
 return $default(_that.id,_that.patientId,_that.amount,_that.reason,_that.recordedBy,_that.recordedAt,_that.sessionBalanceAdded,_that.tractionBalanceAdded,_that.totalPrice);case _:
@@ -185,7 +185,7 @@ return $default(_that.id,_that.patientId,_that.amount,_that.reason,_that.recorde
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id, @JsonKey(name: 'patient_id')  String patientId, @JsonKey(fromJson: _amountFromJson, toJson: _amountToJson)  double amount,  String reason, @JsonKey(name: 'recorded_by')  String? recordedBy, @JsonKey(name: 'recorded_at')  DateTime recordedAt, @JsonKey(name: 'session_balance_added')  int sessionBalanceAdded, @JsonKey(name: 'traction_balance_added')  int tractionBalanceAdded, @JsonKey(name: 'total_price', fromJson: _nullableAmountFromJson, toJson: _nullableAmountToJson)  double? totalPrice)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id, @JsonKey(name: 'patient_id')  String patientId, @JsonKey(fromJson: _amountFromJson, toJson: _amountToJson)  double amount,  String reason, @JsonKey(name: 'recorded_by')  String? recordedBy, @JsonKey(name: 'recorded_at', toJson: _recordedAtToJson)  DateTime recordedAt, @JsonKey(name: 'session_balance_added')  int sessionBalanceAdded, @JsonKey(name: 'traction_balance_added')  int tractionBalanceAdded, @JsonKey(name: 'total_price', fromJson: _nullableAmountFromJson, toJson: _nullableAmountToJson)  double? totalPrice)  $default,) {final _that = this;
 switch (_that) {
 case _PaymentRecord():
 return $default(_that.id,_that.patientId,_that.amount,_that.reason,_that.recordedBy,_that.recordedAt,_that.sessionBalanceAdded,_that.tractionBalanceAdded,_that.totalPrice);case _:
@@ -205,7 +205,7 @@ return $default(_that.id,_that.patientId,_that.amount,_that.reason,_that.recorde
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id, @JsonKey(name: 'patient_id')  String patientId, @JsonKey(fromJson: _amountFromJson, toJson: _amountToJson)  double amount,  String reason, @JsonKey(name: 'recorded_by')  String? recordedBy, @JsonKey(name: 'recorded_at')  DateTime recordedAt, @JsonKey(name: 'session_balance_added')  int sessionBalanceAdded, @JsonKey(name: 'traction_balance_added')  int tractionBalanceAdded, @JsonKey(name: 'total_price', fromJson: _nullableAmountFromJson, toJson: _nullableAmountToJson)  double? totalPrice)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id, @JsonKey(name: 'patient_id')  String patientId, @JsonKey(fromJson: _amountFromJson, toJson: _amountToJson)  double amount,  String reason, @JsonKey(name: 'recorded_by')  String? recordedBy, @JsonKey(name: 'recorded_at', toJson: _recordedAtToJson)  DateTime recordedAt, @JsonKey(name: 'session_balance_added')  int sessionBalanceAdded, @JsonKey(name: 'traction_balance_added')  int tractionBalanceAdded, @JsonKey(name: 'total_price', fromJson: _nullableAmountFromJson, toJson: _nullableAmountToJson)  double? totalPrice)?  $default,) {final _that = this;
 switch (_that) {
 case _PaymentRecord() when $default != null:
 return $default(_that.id,_that.patientId,_that.amount,_that.reason,_that.recordedBy,_that.recordedAt,_that.sessionBalanceAdded,_that.tractionBalanceAdded,_that.totalPrice);case _:
@@ -220,7 +220,7 @@ return $default(_that.id,_that.patientId,_that.amount,_that.reason,_that.recorde
 @JsonSerializable()
 
 class _PaymentRecord extends PaymentRecord {
-  const _PaymentRecord({required this.id, @JsonKey(name: 'patient_id') required this.patientId, @JsonKey(fromJson: _amountFromJson, toJson: _amountToJson) required this.amount, required this.reason, @JsonKey(name: 'recorded_by') this.recordedBy, @JsonKey(name: 'recorded_at') required this.recordedAt, @JsonKey(name: 'session_balance_added') this.sessionBalanceAdded = 0, @JsonKey(name: 'traction_balance_added') this.tractionBalanceAdded = 0, @JsonKey(name: 'total_price', fromJson: _nullableAmountFromJson, toJson: _nullableAmountToJson) this.totalPrice}): super._();
+  const _PaymentRecord({required this.id, @JsonKey(name: 'patient_id') required this.patientId, @JsonKey(fromJson: _amountFromJson, toJson: _amountToJson) required this.amount, required this.reason, @JsonKey(name: 'recorded_by') this.recordedBy, @JsonKey(name: 'recorded_at', toJson: _recordedAtToJson) required this.recordedAt, @JsonKey(name: 'session_balance_added') this.sessionBalanceAdded = 0, @JsonKey(name: 'traction_balance_added') this.tractionBalanceAdded = 0, @JsonKey(name: 'total_price', fromJson: _nullableAmountFromJson, toJson: _nullableAmountToJson) this.totalPrice}): super._();
   factory _PaymentRecord.fromJson(Map<String, dynamic> json) => _$PaymentRecordFromJson(json);
 
 @override final  String id;
@@ -228,7 +228,7 @@ class _PaymentRecord extends PaymentRecord {
 @override@JsonKey(fromJson: _amountFromJson, toJson: _amountToJson) final  double amount;
 @override final  String reason;
 @override@JsonKey(name: 'recorded_by') final  String? recordedBy;
-@override@JsonKey(name: 'recorded_at') final  DateTime recordedAt;
+@override@JsonKey(name: 'recorded_at', toJson: _recordedAtToJson) final  DateTime recordedAt;
 /// Number of Normal PT sessions added to patient balance by this payment.
 @override@JsonKey(name: 'session_balance_added') final  int sessionBalanceAdded;
 /// Number of Spinal Traction sessions added to patient balance by this payment.
@@ -269,7 +269,7 @@ abstract mixin class _$PaymentRecordCopyWith<$Res> implements $PaymentRecordCopy
   factory _$PaymentRecordCopyWith(_PaymentRecord value, $Res Function(_PaymentRecord) _then) = __$PaymentRecordCopyWithImpl;
 @override @useResult
 $Res call({
- String id,@JsonKey(name: 'patient_id') String patientId,@JsonKey(fromJson: _amountFromJson, toJson: _amountToJson) double amount, String reason,@JsonKey(name: 'recorded_by') String? recordedBy,@JsonKey(name: 'recorded_at') DateTime recordedAt,@JsonKey(name: 'session_balance_added') int sessionBalanceAdded,@JsonKey(name: 'traction_balance_added') int tractionBalanceAdded,@JsonKey(name: 'total_price', fromJson: _nullableAmountFromJson, toJson: _nullableAmountToJson) double? totalPrice
+ String id,@JsonKey(name: 'patient_id') String patientId,@JsonKey(fromJson: _amountFromJson, toJson: _amountToJson) double amount, String reason,@JsonKey(name: 'recorded_by') String? recordedBy,@JsonKey(name: 'recorded_at', toJson: _recordedAtToJson) DateTime recordedAt,@JsonKey(name: 'session_balance_added') int sessionBalanceAdded,@JsonKey(name: 'traction_balance_added') int tractionBalanceAdded,@JsonKey(name: 'total_price', fromJson: _nullableAmountFromJson, toJson: _nullableAmountToJson) double? totalPrice
 });
 
 

@@ -161,7 +161,7 @@ final class RecordPaymentControllerProvider
         argument: null,
         retry: null,
         name: r'recordPaymentControllerProvider',
-        isAutoDispose: true,
+        isAutoDispose: false,
         dependencies: null,
         $allTransitiveDependencies: null,
       );
@@ -175,7 +175,7 @@ final class RecordPaymentControllerProvider
 }
 
 String _$recordPaymentControllerHash() =>
-    r'c0e29a28814ba6eb43313ff50e4498a9a29327cf';
+    r'72f78c4a608065850d3e98c5b4ae5dea64cbceed';
 
 /// Controller managing form submission state for the record payment screen.
 

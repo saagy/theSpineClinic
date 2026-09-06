@@ -23,7 +23,7 @@ final class PackageBalanceControllerProvider
         argument: null,
         retry: null,
         name: r'packageBalanceControllerProvider',
-        isAutoDispose: true,
+        isAutoDispose: false,
         dependencies: null,
         $allTransitiveDependencies: null,
       );
@@ -37,7 +37,7 @@ final class PackageBalanceControllerProvider
 }
 
 String _$packageBalanceControllerHash() =>
-    r'dd13414e3a6915259dd2917b5a3850fdeca4791a';
+    r'8ca25848ddc78b1b72cac5cbfabfbb70b88abf0f';
 
 /// Presentation controller managing the state of manual package balance edits.
 

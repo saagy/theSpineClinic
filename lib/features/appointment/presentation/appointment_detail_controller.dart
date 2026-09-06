@@ -4,6 +4,7 @@ library;
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:spine_clinic_app/core/errors/app_exception.dart';
 import 'package:spine_clinic_app/core/errors/result.dart';
+import 'package:spine_clinic_app/core/errors/provider_retry.dart';
 import 'package:spine_clinic_app/features/appointment/domain/appointment.dart';
 import 'package:spine_clinic_app/features/appointment/domain/appointment_doctor.dart';
 import 'package:spine_clinic_app/features/appointment/domain/appointment_repository.dart';
@@ -33,15 +34,16 @@ typedef AppointmentDetailState = ({
 });
 
 /// Controller managing a single appointment's detail view and mutations.
-@riverpod
+@Riverpod(keepAlive: true, retry: retryTransientErrors)
 class AppointmentDetailController extends _$AppointmentDetailController {
   @override
   Future<AppointmentDetailState> build(String appointmentId) async {
     final AppointmentRepository repo = ref.read(appointmentRepositoryProvider);
 
     // 1. Fetch appointment
-    final Result<Appointment> appointmentResult =
-        await repo.getAppointmentById(appointmentId);
+    final Result<Appointment> appointmentResult = await repo.getAppointmentById(
+      appointmentId,
+    );
     final Appointment appointment = switch (appointmentResult) {
       Success<Appointment>(:final data) => data,
       Failure<Appointment>(:final exception) => throw exception,
@@ -76,14 +78,16 @@ class AppointmentDetailController extends _$AppointmentDetailController {
     // 6. Enforce doctor-level access control
     final Staff? user = ref.watch(currentUserProvider).value;
     if (user != null && user.role == UserRole.doctor && !user.isSeniorDoctor) {
-      final bool isDoctorOnAppointment =
-          active.any((d) => d.doctor.id == user.id);
+      final bool isDoctorOnAppointment = active.any(
+        (d) => d.doctor.id == user.id,
+      );
       if (!isDoctorOnAppointment) {
         final List<Staff> patientDoctors = await ref.watch(
           patientAssignedDoctorsProvider(appointment.patientId).future,
         );
-        final bool isDoctorOnPatient =
-            patientDoctors.any((d) => d.id == user.id);
+        final bool isDoctorOnPatient = patientDoctors.any(
+          (d) => d.id == user.id,
+        );
         if (!isDoctorOnPatient) {
           throw const DatabaseException(
             code: 'db/permission-denied',
@@ -164,8 +168,9 @@ class AppointmentDetailController extends _$AppointmentDetailController {
     if (user.role == UserRole.doctor && !user.isSeniorDoctor) {
       final current = state.value;
       if (current == null) return;
-      final bool isDoctorOnAppointment =
-          current.activeDoctors.any((d) => d.doctor.id == user.id);
+      final bool isDoctorOnAppointment = current.activeDoctors.any(
+        (d) => d.doctor.id == user.id,
+      );
       if (!isDoctorOnAppointment) {
         final List<Staff> patientDoctors = await ref.read(
           patientAssignedDoctorsProvider(current.appointment.patientId).future,
@@ -184,11 +189,19 @@ class AppointmentDetailController extends _$AppointmentDetailController {
   void _updateRelatedProviders(AppointmentStatus newStatus) {
     final patientId = state.value?.appointment.patientId;
     ref.invalidate(todayAppointmentsProvider);
-    ref.read(allAppointmentsProvider.notifier).updateStatus(appointmentId, newStatus);
-    ref.read(doctorScheduleProvider.notifier).changeStatus(appointmentId, newStatus);
-    ref.read(receptionistAppointmentsProvider.notifier).changeStatus(appointmentId, newStatus);
+    ref
+        .read(allAppointmentsProvider.notifier)
+        .updateStatus(appointmentId, newStatus);
+    ref
+        .read(doctorScheduleProvider.notifier)
+        .changeStatus(appointmentId, newStatus);
+    ref
+        .read(receptionistAppointmentsProvider.notifier)
+        .changeStatus(appointmentId, newStatus);
     if (patientId != null) {
-      ref.read(patientAppointmentsProvider(patientId).notifier).changeStatus(appointmentId, newStatus);
+      ref
+          .read(patientAppointmentsProvider(patientId).notifier)
+          .changeStatus(appointmentId, newStatus);
       ref.invalidate(futureScheduledAppointmentsCountProvider(patientId));
       ref.invalidate(availablePackageBalanceProvider(patientId));
     }

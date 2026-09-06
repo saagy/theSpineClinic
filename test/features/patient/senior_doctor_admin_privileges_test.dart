@@ -37,12 +37,20 @@ class _MockPatientRepository implements PatientRepository {
   }
 
   @override
-  Future<Result<void>> updatePatient(Patient patient) async {
+  Future<Result<void>> updatePatient(
+    Patient patient, {
+    List<String>? doctorIds,
+  }) async {
+    updateDoctorsCalled = doctorIds != null;
+    updatedDoctorIds = doctorIds;
     return const Result.success(null);
   }
 
   @override
-  Future<Result<void>> updatePatientDoctors(String id, List<String> docIds) async {
+  Future<Result<void>> updatePatientDoctors(
+    String id,
+    List<String> docIds,
+  ) async {
     updateDoctorsCalled = true;
     updatedDoctorIds = docIds;
     return const Result.success(null);
@@ -53,8 +61,7 @@ class _MockPatientRepository implements PatientRepository {
     required DateTime date,
     String? doctorId,
     required ClinicLocation clinic,
-  }) async =>
-      const Result.success([]);
+  }) async => const Result.success([]);
 
   @override
   Future<Result<List<Patient>>> getAllPatients({
@@ -65,8 +72,7 @@ class _MockPatientRepository implements PatientRepository {
     int limit = 30,
     String orderBy = 'full_name',
     bool ascending = true,
-  }) async =>
-      const Result.success([]);
+  }) async => const Result.success([]);
 
   @override
   dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
@@ -81,12 +87,14 @@ class _MockAppointmentRepository implements AppointmentRepository {
       Result.success(appt);
 
   @override
-  Future<Result<List<AppointmentDoctor>>> getAllAppointmentDoctors(String id) async =>
-      const Result.success([]);
+  Future<Result<List<AppointmentDoctor>>> getAllAppointmentDoctors(
+    String id,
+  ) async => const Result.success([]);
 
   @override
-  Future<Result<List<AppointmentDoctor>>> getAppointmentDoctors(String id) async =>
-      const Result.success([]);
+  Future<Result<List<AppointmentDoctor>>> getAppointmentDoctors(
+    String id,
+  ) async => const Result.success([]);
 
   @override
   Future<Result<List<AppointmentWithPatient>>> getAllAppointments({
@@ -100,12 +108,13 @@ class _MockAppointmentRepository implements AppointmentRepository {
     int offset = 0,
     int limit = 20,
     bool ascending = true,
-  }) async =>
-      const Result.success([]);
+  }) async => const Result.success([]);
 
   @override
-  Future<Result<void>> updateAppointmentStatus(String id, AppointmentStatus status) async =>
-      const Result.success(null);
+  Future<Result<void>> updateAppointmentStatus(
+    String id,
+    AppointmentStatus status,
+  ) async => const Result.success(null);
 
   @override
   dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
@@ -152,33 +161,40 @@ void main() {
   );
 
   group('Senior Doctor Admin Privileges Tests', () {
-    test('Senior doctor can delete a patient via DeletePatientController', () async {
-      final mockRepo = _MockPatientRepository();
-      final mockApptRepo = _MockAppointmentRepository(testAppt);
-      final container = ProviderContainer(
-        overrides: [
-          currentUserProvider.overrideWith(() => _StaticCurrentUser(seniorDoc)),
-          patientRepositoryProvider.overrideWithValue(mockRepo),
-          appointmentRepositoryProvider.overrideWithValue(mockApptRepo),
-        ],
-      );
-      addTearDown(container.dispose);
-      await container.read(currentUserProvider.future);
+    test(
+      'Senior doctor can delete a patient via DeletePatientController',
+      () async {
+        final mockRepo = _MockPatientRepository();
+        final mockApptRepo = _MockAppointmentRepository(testAppt);
+        final container = ProviderContainer(
+          overrides: [
+            currentUserProvider.overrideWith(
+              () => _StaticCurrentUser(seniorDoc),
+            ),
+            patientRepositoryProvider.overrideWithValue(mockRepo),
+            appointmentRepositoryProvider.overrideWithValue(mockApptRepo),
+          ],
+        );
+        addTearDown(container.dispose);
+        await container.read(currentUserProvider.future);
 
-      final result = await container
-          .read(deletePatientControllerProvider.notifier)
-          .deletePatient('pat-100');
+        final result = await container
+            .read(deletePatientControllerProvider.notifier)
+            .deletePatient('pat-100');
 
-      expect(result.isSuccess, isTrue);
-      expect(mockRepo.deleteCalled, isTrue);
-    });
+        expect(result.isSuccess, isTrue);
+        expect(mockRepo.deleteCalled, isTrue);
+      },
+    );
 
     test('Regular doctor is blocked from deleting a patient', () async {
       final mockRepo = _MockPatientRepository();
       final mockApptRepo = _MockAppointmentRepository(testAppt);
       final container = ProviderContainer(
         overrides: [
-          currentUserProvider.overrideWith(() => _StaticCurrentUser(regularDoc)),
+          currentUserProvider.overrideWith(
+            () => _StaticCurrentUser(regularDoc),
+          ),
           patientRepositoryProvider.overrideWithValue(mockRepo),
           appointmentRepositoryProvider.overrideWithValue(mockApptRepo),
         ],
@@ -200,8 +216,12 @@ void main() {
         overrides: [
           currentUserProvider.overrideWith(() => _StaticCurrentUser(seniorDoc)),
           patientRepositoryProvider.overrideWithValue(mockRepo),
-          patientDetailProvider('pat-100').overrideWith((ref) async => testPatient),
-          patientAssignedDoctorsProvider('pat-100').overrideWith((ref) async => []),
+          patientDetailProvider(
+            'pat-100',
+          ).overrideWith((ref) async => testPatient),
+          patientAssignedDoctorsProvider(
+            'pat-100',
+          ).overrideWith((ref) async => []),
         ],
       );
       addTearDown(container.dispose);
@@ -220,44 +240,64 @@ void main() {
       expect(mockRepo.updatedDoctorIds, ['doc-1', 'doc-2']);
     });
 
-    test('Senior doctor can access unassigned appointment in AppointmentDetailController', () async {
-      final mockApptRepo = _MockAppointmentRepository(testAppt);
-      final container = ProviderContainer(
-        overrides: [
-          currentUserProvider.overrideWith(() => _StaticCurrentUser(seniorDoc)),
-          appointmentRepositoryProvider.overrideWithValue(mockApptRepo),
-          patientDetailProvider('pat-100').overrideWith((ref) async => testPatient),
-          patientAssignedDoctorsProvider('pat-100').overrideWith((ref) async => []),
-        ],
-      );
-      addTearDown(container.dispose);
-      await container.read(currentUserProvider.future);
+    test(
+      'Senior doctor can access unassigned appointment in AppointmentDetailController',
+      () async {
+        final mockApptRepo = _MockAppointmentRepository(testAppt);
+        final container = ProviderContainer(
+          overrides: [
+            currentUserProvider.overrideWith(
+              () => _StaticCurrentUser(seniorDoc),
+            ),
+            appointmentRepositoryProvider.overrideWithValue(mockApptRepo),
+            patientDetailProvider(
+              'pat-100',
+            ).overrideWith((ref) async => testPatient),
+            patientAssignedDoctorsProvider(
+              'pat-100',
+            ).overrideWith((ref) async => []),
+          ],
+        );
+        addTearDown(container.dispose);
+        await container.read(currentUserProvider.future);
 
-      final detailState = await container.read(
-        appointmentDetailControllerProvider('appt-100').future,
-      );
+        final detailState = await container.read(
+          appointmentDetailControllerProvider('appt-100').future,
+        );
 
-      expect(detailState.appointment.id, 'appt-100');
-      expect(detailState.patient.id, 'pat-100');
-    });
+        expect(detailState.appointment.id, 'appt-100');
+        expect(detailState.patient.id, 'pat-100');
+      },
+    );
 
-    test('Regular doctor cannot access unassigned appointment in AppointmentDetailController', () async {
-      final mockApptRepo = _MockAppointmentRepository(testAppt);
-      final container = ProviderContainer(
-        overrides: [
-          currentUserProvider.overrideWith(() => _StaticCurrentUser(regularDoc)),
-          appointmentRepositoryProvider.overrideWithValue(mockApptRepo),
-          patientDetailProvider('pat-100').overrideWith((ref) async => testPatient),
-          patientAssignedDoctorsProvider('pat-100').overrideWith((ref) async => []),
-        ],
-      );
-      addTearDown(container.dispose);
-      await container.read(currentUserProvider.future);
+    test(
+      'Regular doctor cannot access unassigned appointment in AppointmentDetailController',
+      () async {
+        final mockApptRepo = _MockAppointmentRepository(testAppt);
+        final container = ProviderContainer(
+          overrides: [
+            currentUserProvider.overrideWith(
+              () => _StaticCurrentUser(regularDoc),
+            ),
+            appointmentRepositoryProvider.overrideWithValue(mockApptRepo),
+            patientDetailProvider(
+              'pat-100',
+            ).overrideWith((ref) async => testPatient),
+            patientAssignedDoctorsProvider(
+              'pat-100',
+            ).overrideWith((ref) async => []),
+          ],
+        );
+        addTearDown(container.dispose);
+        await container.read(currentUserProvider.future);
 
-      expect(
-        container.read(appointmentDetailControllerProvider('appt-100').future),
-        throwsA(anything),
-      );
-    });
+        expect(
+          container.read(
+            appointmentDetailControllerProvider('appt-100').future,
+          ),
+          throwsA(anything),
+        );
+      },
+    );
   });
 }

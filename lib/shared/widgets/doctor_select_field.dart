@@ -16,10 +16,10 @@ class DoctorSelectField extends FormField<List<Staff>> {
     bool enabled = true,
     bool showDeactivated = false,
   }) : super(
-         initialValue: initialValue,
+         initialValue: List<Staff>.of(initialValue),
          onSaved: onSavedDoctors == null
              ? null
-             : (val) => onSavedDoctors(val ?? []),
+             : (val) => onSavedDoctors(List<Staff>.of(val ?? [])),
          builder: (FormFieldState<List<Staff>> state) {
            return _DoctorSelectFieldWidget(
              state: state,
@@ -54,7 +54,7 @@ class _DoctorSelectFieldWidget extends StatelessWidget {
     );
     if (picked != null) {
       state.didChange(picked);
-      onChanged?.call(picked);
+      onChanged?.call(List<Staff>.of(picked));
       state.validate();
     }
   }
@@ -64,7 +64,7 @@ class _DoctorSelectFieldWidget extends StatelessWidget {
     final current = List<Staff>.from(state.value ?? []);
     current.removeWhere((d) => d.id == doctor.id);
     state.didChange(current);
-    onChanged?.call(current);
+    onChanged?.call(List<Staff>.of(current));
     state.validate();
   }
 

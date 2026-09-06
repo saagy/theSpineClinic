@@ -34,6 +34,8 @@ double? _nullableAmountFromJson(Object? value) {
 
 Object? _nullableAmountToJson(double? value) => value;
 
+String _recordedAtToJson(DateTime value) => value.toUtc().toIso8601String();
+
 /// A payment record in the Spine Clinic system.
 @freezed
 abstract class PaymentRecord with _$PaymentRecord {
@@ -44,19 +46,28 @@ abstract class PaymentRecord with _$PaymentRecord {
   const factory PaymentRecord({
     required String id,
     @JsonKey(name: 'patient_id') required String patientId,
-    @JsonKey(fromJson: _amountFromJson, toJson: _amountToJson) required double amount,
+    @JsonKey(fromJson: _amountFromJson, toJson: _amountToJson)
+    required double amount,
     required String reason,
     @JsonKey(name: 'recorded_by') String? recordedBy,
-    @JsonKey(name: 'recorded_at') required DateTime recordedAt,
+    @JsonKey(name: 'recorded_at', toJson: _recordedAtToJson)
+    required DateTime recordedAt,
 
     /// Number of Normal PT sessions added to patient balance by this payment.
     @JsonKey(name: 'session_balance_added') @Default(0) int sessionBalanceAdded,
 
     /// Number of Spinal Traction sessions added to patient balance by this payment.
-    @JsonKey(name: 'traction_balance_added') @Default(0) int tractionBalanceAdded,
+    @JsonKey(name: 'traction_balance_added')
+    @Default(0)
+    int tractionBalanceAdded,
 
     /// Full price of the service (null = paid in full, meaning total_price is equal to amount).
-    @JsonKey(name: 'total_price', fromJson: _nullableAmountFromJson, toJson: _nullableAmountToJson) double? totalPrice,
+    @JsonKey(
+      name: 'total_price',
+      fromJson: _nullableAmountFromJson,
+      toJson: _nullableAmountToJson,
+    )
+    double? totalPrice,
   }) = _PaymentRecord;
 
   /// Computed helper for outstanding due.

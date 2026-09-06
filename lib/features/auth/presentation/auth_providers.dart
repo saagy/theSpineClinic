@@ -7,7 +7,6 @@
 ///
 /// Rule 3 — all state via Riverpod, no setState.
 /// Rule 4 — repository calls always return [Result<T>].
-// ignore_for_file: avoid_print
 library;
 
 import 'package:riverpod_annotation/riverpod_annotation.dart';
@@ -24,9 +23,7 @@ part 'auth_providers.g.dart';
 /// Provides the singleton [AuthRepository] backed by Supabase.
 @Riverpod(keepAlive: true)
 AuthRepository authRepository(Ref ref) {
-  return AuthRepositoryImpl(
-    supabaseService: SupabaseService.instance,
-  );
+  return AuthRepositoryImpl(supabaseService: SupabaseService.instance);
 }
 
 /// Reactive authentication state holding the current [Staff] profile.
@@ -42,31 +39,23 @@ AuthRepository authRepository(Ref ref) {
 class CurrentUser extends _$CurrentUser {
   @override
   Future<Staff?> build() async {
-    print('AUTH_PROVIDER: CurrentUser.build() started');
     final AuthRepository repo = ref.read(authRepositoryProvider);
 
     final isAuth = repo.isAuthenticated;
-    print('AUTH_PROVIDER: isAuthenticated = $isAuth');
     if (!isAuth) {
-      print('AUTH_PROVIDER: Not authenticated, returning null');
       return null;
     }
 
-    print('AUTH_PROVIDER: Authenticated, fetching profile...');
     final Result<Staff?> result = await repo.getCurrentUserStaffProfile();
-    print('AUTH_PROVIDER: Profile fetch completed');
 
     switch (result) {
       case Success<Staff?>(:final data):
-        print('AUTH_PROVIDER: Profile fetch success: ${data?.fullName}');
         if (data != null && !data.isActive) {
-          print('AUTH_PROVIDER: Account inactive, signing out...');
           await repo.signOut();
           return null;
         }
         return data;
       case Failure<Staff?>(:final exception):
-        print('AUTH_PROVIDER: Profile fetch failure: $exception');
         throw exception;
     }
   }
@@ -80,8 +69,10 @@ class CurrentUser extends _$CurrentUser {
     state = const AsyncValue.loading();
 
     final AuthRepository repo = ref.read(authRepositoryProvider);
-    final Result<Staff> result =
-        await repo.signInWithEmailAndPassword(email, password);
+    final Result<Staff> result = await repo.signInWithEmailAndPassword(
+      email,
+      password,
+    );
 
     switch (result) {
       case Success<Staff>(:final data):
@@ -103,10 +94,11 @@ class CurrentUser extends _$CurrentUser {
   }
 
   /// Signs out and resets the state to unauthenticated.
-  Future<void> logout() async {
+  Future<Result<void>> logout() async {
     final AuthRepository repo = ref.read(authRepositoryProvider);
-    await repo.signOut();
-    state = const AsyncValue<Staff?>.data(null);
+    final Result<void> result = await repo.signOut();
+    if (result is Success<void>) state = const AsyncValue<Staff?>.data(null);
+    return result;
   }
 
   /// Clears any stale error state without changing the current data.
@@ -132,4 +124,3 @@ Future<Staff> staffProfile(Ref ref, String staffId) async {
       throw exception;
   }
 }
-

@@ -1,52 +1,68 @@
-# Security Model
+# Security model
 
-Supabase RLS is the primary backend security boundary. The Flutter app also
-performs role checks before write actions (via `currentUserProvider`), but
-client checks are never trusted as the only enforcement layer.
+This describes the local candidate through the 2026-09-06 migrations.
+Deployment to the existing Supabase project has **not** been verified.
+See [review results](pre-delivery-review-results.md) for evidence and open gates.
 
-## Roles
+## Roles and enforcement
 
-| Role | Access Model |
+Supabase RLS and permission-checked functions enforce access. Flutter checks
+currentUserProvider before mutations for early rejection; client checks alone
+are not a security boundary.
+
+| Role | Intended access |
 | --- | --- |
-| `super_admin` | Full administrative access: staff management, patient registry, payments, documents, and clinic-wide analytics. |
-| `receptionist` | Operational access for patients, appointments, and documents. Payment writes additionally require `can_manage_payments = true`. |
-| `doctor` | Clinical access, scoped to patients they are assigned to or booked with through an active appointment assignment. |
+| Super admin | Staff administration, clinic operations, finance and clinical records. |
+| Receptionist | Patient/appointment operations; payment writes require can_manage_payments. |
+| Ordinary doctor | Patients assigned permanently or linked through active appointment assignments. |
+| Senior doctor | Broader patient management and program privileges; no payment-write permission. |
+| Inactive staff | Own application/profile only; no operational patient access. |
 
-## Enforcement Layers
+The isolated database contains 15 public application tables. Table grants
+must exist before RLS can authorize queries. Sensitive SECURITY DEFINER
+functions check the staff profile and use explicit search paths and execute ACLs.
 
-1. **Row-Level Security on every table.** All eight app tables and the
-   documents storage bucket have RLS enabled. Policy summary:
-   [Database Schema §7](database-schema.md#7-row-level-security-summary).
-2. **RLS helper functions.** Every policy resolves the caller through
-   `get_auth_staff_profile()` (`staff_id`, `staff_role`, `staff_active`), so
-   inactive staff lose operational access everywhere at once. Payment writes
-   go through `current_staff_can_manage_payments()`.
-3. **Permission-checked RPCs.** Sensitive writes run inside `SECURITY DEFINER`
-   functions that re-verify the caller's role and active status before acting
-   (e.g. `create_patient_with_doctors`, `book_recurring_appointments`,
-   `bulk_replace_appointment_doctor`, `create_staff_user`).
-4. **Integrity triggers.** Database triggers enforce business invariants that
-   RLS cannot express: package balance deduct/refund on status transitions,
-   payment-credit sync, no-patient-without-doctor, doctor-role guarantees on
-   assignments, and self-service privilege escalation prevention
-   ([Database Schema §6](database-schema.md#6-triggers)).
-5. **Column-level grants.** `patient_documents` updates are revoked at table
-   level and re-granted for `file_name` only; storage-object rename is limited
-   to super admins and receptionists.
-6. **Scoped storage paths.** Object paths are prefixed with the patient id, and
-   storage policies scope doctor access through `path_tokens[1]`.
+Review migrations scope appointments and payment reads to patient access,
+restrict assignment writes to management, prevent direct doctor balance edits,
+and protect self-service role, activation, payment and senior privileges.
+Appointment identity is immutable for authenticated callers. Schedule edits and
+deletion have a separate permission guard. Temporary covering doctors have a
+clinic-local edit window; patient-read scope is broader and needs policy review.
 
-## Staff Application Flow
+Financial triggers account for charged appointment state on insert/update/delete
+and synchronize payment-credit changes. Due collection locks its row. New
+financial constraints are NOT VALID until historical values are audited.
+These controls do not make uncertain network retries idempotent.
 
-New staff self-register as **inactive** profiles (`is_active = false`, role
-restricted to `doctor` or `receptionist`). A super admin reviews and activates
-them, or rejects them via `delete_doctor_user()`. Until activation the profile
-grants no operational access.
+## Documents
 
-## Public Repo Safety
+Current uploads use private Cloudflare R2 objects through the document-storage
+Supabase Edge Function. Legacy Supabase storage policies remain in the schema.
+Metadata lives in patient_documents.
 
-- Do not commit `.env` or service-role keys.
-- Do not commit real patient, payment, appointment, or document data.
-- Do not publish Supabase project refs in public-facing docs.
-- Treat the anon key as browser-public but still keep it out of checked-in
-  config files.
+The edge handler authorizes the patient UUID derived from the object key,
+rejects conflicting supplied patient IDs, and checks all keys before batch
+deletion. Uploads require an existing accessible patient and use random keys.
+Whole-folder cleanup requires prior patient deletion. Metadata deletion precedes
+best-effort object cleanup; failed metadata creation compensates by deleting
+the uploaded object.
+
+Download URLs expire after 15 minutes; upload URLs after 5 minutes. Issued
+bearer URLs can remain usable until expiry after access changes. Extension/type
+allowlisting is not malware scanning. The client size limit is not yet enforced
+by the signing service.
+
+## Identity, configuration and telemetry
+
+Registration creates inactive doctor/receptionist applications using an
+anonymous RPC that directly creates auth rows. Supported Auth signup controls,
+server password validation and abuse prevention require follow-up review.
+Self-service password recovery UI remains deferred.
+
+.env is a browser asset: only public configuration belongs in it. The reviewed
+copy contains a Supabase URL, anon-role JWT and Sentry DSN. Never add service-role
+keys, database passwords or R2 credentials. R2 credentials belong only in Edge
+Function secrets. Never commit real patient data.
+
+Custom error reporting removes raw database details and staff names. Complete
+automatic Sentry events and breadcrumbs still need staging privacy verification.

@@ -283,7 +283,7 @@ appointments             <- patient_notes.appointment_id (optional)
 
 | Trigger | Fires on | Effect |
 | --- | --- | --- |
-| `trigger_appointment_package_deduction` | `AFTER UPDATE` on `appointments` | Deducts/refunds session balances on status transitions. |
+| `trigger_appointment_package_deduction` | `AFTER INSERT/UPDATE/DELETE` on `appointments` | Reconciles old/new charged state, including type/package changes and deletion. |
 | `trigger_payment_insert_package_sync` | `AFTER INSERT` on `payment_records` | Adds purchased credits to patient balance. |
 | `trigger_payment_delete_package_sync` | `AFTER DELETE` on `payment_records` | Reverses credits of deleted payment. |
 | `tr_check_patient_has_doctors` | `AFTER DELETE OR UPDATE` on `patient_doctors` (deferred) | Rejects change if patient would have zero doctors. |
@@ -307,8 +307,37 @@ appointments             <- patient_notes.appointment_id (optional)
 | `plan_modalities` | Staff with patient access | Super admin + senior doctors |
 | `modality_regions` | Staff with patient access | Super admin + senior doctors |
 | `patient_doctors` | All active staff | Super admin + receptionist |
-| `appointments`, `appointment_doctors` | All active staff | All active staff |
+| `appointments` | Staff with patient access | Management creates; scoped status updates; guarded schedule edits/deletion. |
+| `appointment_doctors` | Staff with appointment patient access | Management only. |
 | `patient_documents` | Staff with patient access | Staff with patient access (file_name rename only) |
 | `patient_notes` | Staff with patient access | Staff with patient access |
-| `payment_records` | All active staff | Only `current_staff_can_manage_payments()` callers |
+| `payment_records` | Staff with patient access | Only `current_staff_can_manage_payments()` callers |
 | `storage.objects` (`patient-documents`) | Staff with patient access | Super admin + receptionist + doctors |
+
+
+## 8. Local review additions (2026-09-06)
+
+Deployment is unverified; see [review results](pre-delivery-review-results.md).
+
+| Function / guard | Contract |
+| --- | --- |
+| current_staff_has_management_access() | Active admin, receptionist or senior doctor. |
+| can_current_staff_edit_appointment(id) | Management, permanent assignment, or covering doctor within the clinic-local edit window. |
+| update_patient_details(...) | Demographics and optional doctor assignments in one transaction; preserves balances. |
+| update_appointment_details(...) | Schedule/type/package and optional doctor assignments in one transaction. |
+| guard_patient_balance_write() | Rejects direct balance changes by doctors; permits nested balance triggers. |
+| guard_appointment_edit() | Protects identity and enforces schedule/delete permission. |
+| trigger_payment_update_package_sync | Reconciles old/new purchased credit deltas after payment updates. |
+
+collect_payment_due locks the payment and rejects nonpositive, nonfinite and
+excess collection. book_recurring_appointments respects cash/package selection,
+counts only matching future package reservations and validates the expected
+recall date. Assessment appointments do not consume package credits.
+
+Financial constraints require finite positive amounts, a finite total at least
+as large as the amount (when present), and nonnegative purchased credits. They
+are initially NOT VALID: historical rows require a separate audit/validation.
+Self-service staff updates cannot change senior status or other privilege flags.
+
+Current document storage is R2 behind the document-storage Edge Function;
+storage.objects policies below describe legacy Supabase object access only.

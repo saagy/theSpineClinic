@@ -1,66 +1,68 @@
 # Testing
 
-The suite has two layers: **Dart tests** (unit + widget, run by `flutter test`)
-and **SQL sanity scripts** (transactional, rollback-safe, run against a
-disposable Postgres/Supabase database with `psql`).
+The review combines Flutter unit/widget tests, a pure edge-handler suite and
+SQL tests in ephemeral PostgreSQL (PGlite). Automated suites do not write live data.
+The separately authorized pre-production browser/API checks use one fictional
+patient; see [hands-on review](hands-on-browser-review.md).
 
-## Commands
+## Flutter
 
-```bash
-flutter test                                   # whole suite
-flutter test test/features/appointment          # one feature area
-flutter test test/widgets/rename_document_dialog_test.dart   # one file
+Validated toolchain: Flutter 3.44.1 / Dart 3.12.1.
 
-# SQL sanity scripts (after trigger / balance / permission changes)
-psql "$DATABASE_URL" -f test/trigger_sanity.sql
-psql "$DATABASE_URL" -f test/doctor_role_integrity.sql
-psql "$DATABASE_URL" -f test/patient_document_permissions.sql
+```sh
+flutter analyze --no-pub
+flutter test --no-pub --coverage
+flutter build web --release --no-pub
 ```
 
-Each SQL script runs inside a transaction and rolls back, so it is safe against
-a disposable copy of the schema — never point them at production data.
+There are 43 Dart test files. Repository fakes keep widget tests independent
+of live services; they do not prove HTTP/RLS behavior. There is no complete
+authenticated browser integration suite.
 
-## Dart Test Layout (29 files)
+## Document edge handler
 
-```text
-test/
-├── features/               # Feature-scoped unit & widget tests
-│   ├── admin/              # Attendance analytics calculations
-│   ├── appointment/        # Largest area (10 files): status transitions,
-│   │                       # booking workboard, doctor replacement, schedule
-│   │                       # density/autoscroll, week navigator, access rules
-│   ├── auth/               # Auth screen flow, staff model
-│   ├── medical_records/    # Visit-notes form
-│   ├── patient/            # Doctor patient-access scoping
-│   └── payments/           # Payment recording logic + UI components
-├── shared/                 # NavTabs role-based tab sets
-├── widgets/                # Shared widgets: context menus, doctor search sheet,
-│                           # sheet text fields, document viewer navigation,
-│                           # patient tab documents, rename dialog, skeletons
-├── appointment_type_redesign_test.dart   # Appointment-type domain rules
-├── per_type_future_commitments_test.dart # Future-commitment rules per type
-├── trigger_sanity_test.dart              # Dart-side mirror of the SQL sanity checks
-└── widget_test.dart                      # Placeholder smoke test
+With Node 24.12.0:
+
+```sh
+node --test test/document_storage_security_test.ts
 ```
 
-Naming convention mirrors the file under test, placed in the matching
-`test/features/<feature>/` or `test/widgets/` folder.
+Seven tests call the real handler with fake authorization/storage services.
+Coverage includes object-key access, conflicting IDs, mixed-patient deletion,
+folder cleanup ordering, malformed inputs, unique keys and errors. This does
+not exercise Deno, deployed JWT verification, R2 CORS or the AWS client.
 
-## What Is Covered Where
+## Isolated PostgreSQL
 
-| Concern | Dart tests | SQL scripts |
-| --- | --- | --- |
-| Package balance deduct/refund, payment sync | `trigger_sanity_test.dart` | `trigger_sanity.sql` |
-| Doctor role integrity (assignments, role changes) | `doctor_patient_access_test.dart`, feature tests | `doctor_role_integrity.sql` |
-| Document access & rename permissions | `patient_tab_documents_test.dart`, `rename_document_dialog_test.dart` | `patient_document_permissions.sql` |
-| Recurring/due-patient booking rules | `booking_workboard_test.dart`, `per_type_future_commitments_test.dart` | — |
+Install the test-only dependency outside the application:
 
-## Conventions
+```sh
+npm install --prefix /tmp/spine-review-tools --no-save @electric-sql/pglite@0.5.8
+node test/review_database.mjs /tmp/spine-review-tools/node_modules/@electric-sql/pglite
+node test/review_database.mjs /tmp/spine-review-tools/node_modules/@electric-sql/pglite --migrations
+```
 
-- Widget tests pump real screens/components with ProviderScope overrides — no
-  live Supabase connections; repositories are faked at the boundary.
-- There are currently no golden tests and no `integration_test/` suite; when
-  adding UI regression coverage, prefer behavior assertions over pixels.
-- After any schema/trigger change, update the SQL scripts alongside
-  [`supabase/full_schema.sql`](../supabase/full_schema.sql) and
-  [database-schema.md](database-schema.md).
+On Windows use a directory under $env:TEMP. The harness accepts no database URL.
+It creates an ephemeral database, loads the snapshot or replays migrations,
+then runs these six scripts:
+
+- trigger_sanity.sql
+- doctor_role_integrity.sql
+- patient_document_permissions.sql
+- review_access_boundaries.sql
+- review_financial_integrity.sql
+- review_booking_and_edits.sql
+
+Bootstrap definitions imitate Supabase roles, auth.uid() and storage tables.
+Hosted services and multi-connection concurrency require separate staging checks.
+Never run fixture scripts against production, even if they include rollback.
+
+## CI and acceptance
+
+.github/workflows/web-review.yml runs analysis, Flutter tests/build, the edge
+suite and both database setup paths. It uses placeholder public configuration
+and does not deploy. Its first hosted run remains unverified.
+
+See [meeting checklist](client-review-checklist.md) for browser, failure/retry,
+recovery and client acceptance checks, and [results](pre-delivery-review-results.md)
+for exact local outcomes and limitations.

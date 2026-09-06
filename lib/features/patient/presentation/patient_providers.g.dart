@@ -58,7 +58,7 @@ final class PatientRepositoryProvider
   }
 }
 
-String _$patientRepositoryHash() => r'5dd5786575598fcdfbfb72a40a296b0435b495d2';
+String _$patientRepositoryHash() => r'03de062e8eb64fcfa8c379b69c523b7245132cc0';
 
 /// Fetches a single patient record by its ID using the repository.
 

@@ -61,7 +61,7 @@ Future<List<Staff>> allDoctorsForFilter(Ref ref) async {
 }
 
 /// Controller managing the roster of patients assigned to the logged-in doctor with pagination.
-@riverpod
+@Riverpod(keepAlive: true)
 class MyPatientsController extends _$MyPatientsController {
   String _currentQuery = '';
   ClinicLocation? _clinicFilter;

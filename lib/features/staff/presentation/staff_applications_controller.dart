@@ -40,7 +40,7 @@ class PendingStaffApplications extends _$PendingStaffApplications {
 }
 
 /// Controller managing approval and rejection actions for staff applications.
-@riverpod
+@Riverpod(keepAlive: true)
 class StaffApplicationsAction extends _$StaffApplicationsAction {
   @override
   AsyncValue<void> build() => const AsyncValue.data(null);

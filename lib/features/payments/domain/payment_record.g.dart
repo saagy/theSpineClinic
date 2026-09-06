@@ -27,7 +27,7 @@ Map<String, dynamic> _$PaymentRecordToJson(_PaymentRecord instance) =>
       'amount': _amountToJson(instance.amount),
       'reason': instance.reason,
       'recorded_by': instance.recordedBy,
-      'recorded_at': instance.recordedAt.toIso8601String(),
+      'recorded_at': _recordedAtToJson(instance.recordedAt),
       'session_balance_added': instance.sessionBalanceAdded,
       'traction_balance_added': instance.tractionBalanceAdded,
       'total_price': _nullableAmountToJson(instance.totalPrice),

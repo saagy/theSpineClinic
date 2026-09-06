@@ -10,7 +10,7 @@ describes the codebase as it is; the prescriptive engineering rules live in
 
 ```text
 lib/
-├── main.dart                 # Startup: SharedPreferences, Supabase init, ProviderScope
+├── main.dart                 # Startup: SharedPreferences, Supabase, Sentry, ProviderScope
 ├── core/
 │   ├── constants/            # AppTheme, AppColors/AppPalette, AppSizes, AppStrings, AppTextStyles
 │   ├── errors/               # Result<T>, AppException hierarchy
@@ -35,7 +35,7 @@ notifiers, providers). One known deviation: `staff/` has no `domain/` layer yet
 
 ## Data Flow Contract
 
-Every feature follows the same unidirectional flow — no shortcuts:
+The intended feature flow is:
 
 ```text
 Widget (user action)
@@ -53,7 +53,7 @@ raw row maps.
 
 - [`core/errors/result.dart`](../lib/core/errors/result.dart) defines a sealed `Result<T>` (`Success` / `Failure`)
   with `when`, `map`, `flatMap`, and `dataOrNull`. Every async repository method
-  returns `Result<T>` — no unhandled exceptions cross into the widget tree.
+  returns `Result<T>` by contract; this does not rule out unexpected runtime errors.
 - [`core/errors/app_exception.dart`](../lib/core/errors/app_exception.dart) defines the failure taxonomy (`AuthException`,
   `DatabaseException` with Postgres-code mapping including RLS `42501`,
   `NetworkException`, `NotFoundException`, `StorageException`, `UnknownException`).
@@ -130,3 +130,29 @@ All six platform folders exist (Android, iOS, web, Windows, Linux, macOS).
 The product is **phone-first** (see [PRODUCT.md](../PRODUCT.md)); web is the
 primary demo target (Firebase Hosting), and iOS IPAs build through GitHub
 Actions ([`.github/workflows/build_ios.yml`](../.github/workflows/build_ios.yml)).
+
+
+## Review changes (2026-09-06)
+
+Patient and appointment edits now call atomic database RPCs, including optional
+assignment changes. Balance-only edits have a separate repository method.
+Mutation controllers use generated keepAlive providers. Appointment detail
+stops retrying permanent application errors. Document repositories follow
+session changes to avoid reusing another account's in-memory cache.
+
+The custom Sentry reporter sanitizes database failures and omits staff names;
+automatic event/breadcrumb privacy still needs staging verification. Registration
+is already a two-step form. Current file objects use R2 through a Supabase edge
+function, with PostgreSQL metadata as the source of truth.
+
+These changes are local and require coordinated backend/client deployment.
+See [review results](pre-delivery-review-results.md) for known remaining issues.
+
+## Browser review fixes (2026-09-06)
+
+Authentication redirects preserve protected deep links through the splash screen
+and re-check role access before restoring them. Payment JSON emits `recorded_at`
+in UTC with an explicit `Z`; views continue converting timestamps to local time.
+Doctor selection callbacks receive list copies so form saving cannot clear the
+field through an aliased parent list. Appointment status actions invalidate the
+patient detail cache as well as appointment lists, refreshing package balances.

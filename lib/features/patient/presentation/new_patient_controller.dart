@@ -52,7 +52,7 @@ class CreatePatientOutcome {
 }
 
 /// Notifier provider handling form submission states for NewPatientScreen.
-@riverpod
+@Riverpod(keepAlive: true)
 class NewPatientController extends _$NewPatientController {
   @override
   FutureOr<void> build() {
@@ -91,8 +91,10 @@ class NewPatientController extends _$NewPatientController {
       createdAt: DateTime.now(),
     );
 
-    final Result<Patient> result =
-        await patientRepo.createPatient(patient, assignedDoctorIds);
+    final Result<Patient> result = await patientRepo.createPatient(
+      patient,
+      assignedDoctorIds,
+    );
     if (!ref.mounted) return result;
 
     final List<Result<PatientDocument>> attachmentResults = [];
@@ -101,12 +103,14 @@ class NewPatientController extends _$NewPatientController {
       final docRepo = ref.read(patientDocumentsRepositoryProvider);
 
       for (int i = 0; i < attachments.length; i++) {
-        ref.read(indexedAttachmentStatusProvider(i).notifier)
+        ref
+            .read(indexedAttachmentStatusProvider(i).notifier)
             .set(AttachmentStatus.uploading);
         final file = attachments[i];
         final bytes = file.bytes;
         if (bytes == null) {
-          ref.read(indexedAttachmentStatusProvider(i).notifier)
+          ref
+              .read(indexedAttachmentStatusProvider(i).notifier)
               .set(AttachmentStatus.failed);
           continue;
         }
@@ -118,7 +122,9 @@ class NewPatientController extends _$NewPatientController {
         );
         attachmentResults.add(uploadResult);
         if (!ref.mounted) return result;
-        ref.read(indexedAttachmentStatusProvider(i).notifier).set(
+        ref
+            .read(indexedAttachmentStatusProvider(i).notifier)
+            .set(
               uploadResult is Success<PatientDocument>
                   ? AttachmentStatus.done
                   : AttachmentStatus.failed,

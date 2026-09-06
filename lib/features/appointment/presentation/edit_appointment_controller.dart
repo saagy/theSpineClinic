@@ -18,7 +18,7 @@ import 'package:spine_clinic_app/features/patient/presentation/patient_providers
 part 'edit_appointment_controller.g.dart';
 
 /// Notifier state class for editing appointment.
-@riverpod
+@Riverpod(keepAlive: true)
 class EditAppointmentController extends _$EditAppointmentController {
   @override
   FutureOr<void> build() {}
@@ -29,7 +29,16 @@ class EditAppointmentController extends _$EditAppointmentController {
     required List<String> doctorIds,
   }) async {
     final user = ref.read(currentUserProvider).value;
-    if (user != null && user.role == UserRole.doctor) {
+    if (user == null || !user.isActive) {
+      return const Result.failure(
+        AuthException(
+          code: 'auth/unauthorized',
+          message: 'An active staff session is required.',
+          userMessageKey: 'error_auth_generic',
+        ),
+      );
+    }
+    if (user.role == UserRole.doctor) {
       final canEdit = await ref.read(
         canEditAppointmentProvider(
           appointmentId: appointment.id,
@@ -49,17 +58,11 @@ class EditAppointmentController extends _$EditAppointmentController {
     }
 
     final repo = ref.read(appointmentRepositoryProvider);
-    final editorId = user?.id;
-
-    final Result<void> updateResult = await repo.updateAppointment(appointment);
-    if (updateResult is Failure<void>) return updateResult;
-
-    final Result<void> docResult = await repo.updateAppointmentDoctors(
-      appointment.id,
-      doctorIds,
-      editorId,
+    final Result<void> updateResult = await repo.updateAppointment(
+      appointment,
+      doctorIds: doctorIds,
     );
-    if (docResult is Failure<void>) return docResult;
+    if (updateResult is Failure<void>) return updateResult;
 
     if (ref.mounted) _invalidateCaches(appointment.id, appointment.patientId);
 
@@ -71,6 +74,16 @@ class EditAppointmentController extends _$EditAppointmentController {
     required String appointmentId,
     required String patientId,
   }) async {
+    final user = ref.read(currentUserProvider).value;
+    if (user == null || !user.isActive) {
+      return const Result.failure(
+        AuthException(
+          code: 'auth/unauthorized',
+          message: 'An active staff session is required.',
+          userMessageKey: 'error_auth_generic',
+        ),
+      );
+    }
     final repo = ref.read(appointmentRepositoryProvider);
 
     final Result<void> result = await repo.deleteAppointment(appointmentId);

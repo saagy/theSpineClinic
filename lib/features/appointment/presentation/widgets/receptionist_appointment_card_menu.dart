@@ -191,6 +191,7 @@ mixin _ReceptionistAppointmentCardMenu
 
   void _invalidateCaches() {
     final String patientId = widget.item.appointment.patientId;
+    ref.invalidate(patientDetailProvider(patientId));
     ref.invalidate(todayAppointmentsProvider);
     ref.read(allAppointmentsProvider.notifier).refresh();
     ref.read(patientAppointmentsProvider(patientId).notifier).refresh(silent: true);

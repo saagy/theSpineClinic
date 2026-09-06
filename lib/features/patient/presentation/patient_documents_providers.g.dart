@@ -60,7 +60,7 @@ final class PatientDocumentsRepositoryProvider
 }
 
 String _$patientDocumentsRepositoryHash() =>
-    r'48e8874d5d2daace8b41c273ab3581aca29a6a10';
+    r'4c2895eca4d7794871f7fde934677e19d1ace565';
 
 /// Family AsyncNotifier managing the document list state for a patient.
 

@@ -64,7 +64,7 @@ class PatientNextVisitState {
 }
 
 /// Controller backing the patient detail's tappable Next-visit stat.
-@riverpod
+@Riverpod(keepAlive: true)
 class PatientNextVisitController extends _$PatientNextVisitController {
   @override
   PatientNextVisitState build() => const PatientNextVisitState();
@@ -91,25 +91,16 @@ class PatientNextVisitController extends _$PatientNextVisitController {
       clearSuccess: true,
     );
     final PatientRepository repo = ref.read(patientRepositoryProvider);
-    final Result<void> result = await repo.updateNextVisitDate(
-      patientId,
-      date,
-    );
+    final Result<void> result = await repo.updateNextVisitDate(patientId, date);
     if (!ref.mounted) return result;
     switch (result) {
       case Success<void>():
         await _refreshCaches(patientId);
         if (ref.mounted) {
-          state = state.copyWith(
-            isMutating: false,
-            lastActionSuccess: true,
-          );
+          state = state.copyWith(isMutating: false, lastActionSuccess: true);
         }
       case Failure<void>(:final exception):
-        state = state.copyWith(
-          isMutating: false,
-          error: exception,
-        );
+        state = state.copyWith(isMutating: false, error: exception);
     }
     return result;
   }

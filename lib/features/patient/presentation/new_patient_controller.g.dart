@@ -144,7 +144,7 @@ final class NewPatientControllerProvider
         argument: null,
         retry: null,
         name: r'newPatientControllerProvider',
-        isAutoDispose: true,
+        isAutoDispose: false,
         dependencies: null,
         $allTransitiveDependencies: null,
       );
@@ -158,7 +158,7 @@ final class NewPatientControllerProvider
 }
 
 String _$newPatientControllerHash() =>
-    r'8e374063ed125decf3af4ceab69d00aa8bdd95cb';
+    r'bf8f4bc9e1dbea06a19f01a888f2f459f0e0e6f5';
 
 /// Notifier provider handling form submission states for NewPatientScreen.
 

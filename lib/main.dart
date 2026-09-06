@@ -3,12 +3,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart' show ScrollDirection;
 import 'package:flutter/services.dart' show rootBundle;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:sentry_flutter/sentry_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'package:spine_clinic_app/core/constants/app_palette.dart';
 import 'package:spine_clinic_app/core/constants/app_strings.dart';
 import 'package:spine_clinic_app/core/constants/app_theme.dart';
+import 'package:spine_clinic_app/core/errors/app_provider_observer.dart';
 import 'package:spine_clinic_app/core/network/router.dart';
 import 'package:spine_clinic_app/core/utils/local_settings_providers.dart';
 import 'package:spine_clinic_app/core/utils/theme_mode_controller.dart';
@@ -16,6 +18,8 @@ import 'package:spine_clinic_app/core/utils/theme_mode_controller.dart';
 const String _defaultSupabaseUrl = 'https://ujketpugttdqpcixrnga.supabase.co';
 const String _defaultSupabaseAnonKey =
     'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVqa2V0cHVndHRkcXBjaXhybmdhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA1MDczOTAsImV4cCI6MjA5NjA4MzM5MH0.TOUZwiAX6-GMygzXPriHKtYjd-FKGg0zOl8maI5cDa0';
+const String _defaultSentryDsn =
+    'https://12c07ec41f62850e3229e79ecc0f38b8@o4512016804282368.ingest.de.sentry.io/4512016812605520';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -23,10 +27,11 @@ void main() async {
   final SharedPreferences sharedPrefs = await SharedPreferences.getInstance();
   String url = const String.fromEnvironment('SUPABASE_URL');
   String key = const String.fromEnvironment('SUPABASE_ANON_KEY');
+  String sentryDsn = const String.fromEnvironment('SENTRY_DSN');
 
   print('MAIN: Initializing Supabase...');
 
-  if (url.isEmpty || key.isEmpty) {
+  if (url.isEmpty || key.isEmpty || sentryDsn.isEmpty) {
     print('MAIN: Compile-time variables not found. Loading from .env asset...');
     try {
       final String envContent = await rootBundle.loadString('.env');
@@ -39,10 +44,16 @@ void main() async {
 
         final String envKey = parts[0].trim();
         final String envValue = parts.sublist(1).join('=').trim();
-        if (envKey == 'SUPABASE_URL' && envValue.isNotEmpty) {
+        if (envKey == 'SUPABASE_URL' && envValue.isNotEmpty && url.isEmpty) {
           url = envValue;
-        } else if (envKey == 'SUPABASE_ANON_KEY' && envValue.isNotEmpty) {
+        } else if (envKey == 'SUPABASE_ANON_KEY' &&
+            envValue.isNotEmpty &&
+            key.isEmpty) {
           key = envValue;
+        } else if (envKey == 'SENTRY_DSN' &&
+            envValue.isNotEmpty &&
+            sentryDsn.isEmpty) {
+          sentryDsn = envValue;
         }
       }
     } catch (e) {
@@ -52,14 +63,22 @@ void main() async {
 
   if (url.isEmpty) url = _defaultSupabaseUrl;
   if (key.isEmpty) key = _defaultSupabaseAnonKey;
+  if (sentryDsn.isEmpty) sentryDsn = _defaultSentryDsn;
 
   await Supabase.initialize(url: url, anonKey: key);
   print('MAIN: Supabase initialized successfully!');
 
-  runApp(
-    ProviderScope(
-      overrides: [sharedPreferencesProvider.overrideWithValue(sharedPrefs)],
-      child: const SpineClinicApp(),
+  await SentryFlutter.init(
+    (options) {
+      options.dsn = sentryDsn;
+      options.tracesSampleRate = 0.2;
+    },
+    appRunner: () => runApp(
+      ProviderScope(
+        observers: const [AppProviderObserver()],
+        overrides: [sharedPreferencesProvider.overrideWithValue(sharedPrefs)],
+        child: const SpineClinicApp(),
+      ),
     ),
   );
 }

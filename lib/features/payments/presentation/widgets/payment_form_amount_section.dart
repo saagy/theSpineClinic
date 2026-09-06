@@ -117,13 +117,17 @@ class PaymentFormAmountSection extends StatelessWidget {
 
   String? _positiveTotal(String? value) {
     final double? parsed = double.tryParse(value ?? '');
-    if (parsed == null || parsed <= 0) return AppStrings.totalAmountPositive;
+    if (parsed == null || !parsed.isFinite || parsed <= 0) {
+      return AppStrings.totalAmountPositive;
+    }
     return null;
   }
 
   String? _positiveAmount(String? value) {
     final double? parsed = double.tryParse(value ?? '');
-    if (parsed == null || parsed <= 0) return AppStrings.amountMustBePositive;
+    if (parsed == null || !parsed.isFinite || parsed <= 0) {
+      return AppStrings.amountMustBePositive;
+    }
     return null;
   }
 
