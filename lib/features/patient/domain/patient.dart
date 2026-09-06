@@ -18,7 +18,6 @@ abstract class Patient with _$Patient {
     required String id,
     @JsonKey(name: 'full_name') required String fullName,
     @JsonKey(name: 'phone_number') required String phoneNumber,
-    String? program,
     required ClinicLocation clinic,
     @JsonKey(name: 'session_balance') @Default(0) int sessionBalance,
     @JsonKey(name: 'traction_balance') @Default(0) int tractionBalance,

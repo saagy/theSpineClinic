@@ -39,12 +39,6 @@ class PatientInfoContactSection extends StatelessWidget {
           ),
           const SizedBox(height: AppSizes.p12),
           _ContactRow(
-            icon: Icons.medical_services_outlined,
-            label: AppStrings.program,
-            value: patient.program ?? AppStrings.programNone,
-          ),
-          const SizedBox(height: AppSizes.p12),
-          _ContactRow(
             icon: Icons.event_outlined,
             label: AppStrings.lastVisit,
             value: patient.lastAppointmentDate != null

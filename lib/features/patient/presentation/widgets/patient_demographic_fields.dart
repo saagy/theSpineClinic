@@ -13,7 +13,6 @@ class PatientDemographicFields extends StatelessWidget {
     super.key,
     required this.nameCtrl,
     required this.phoneCtrl,
-    required this.programCtrl,
     required this.selectedClinic,
     required this.onClinicChanged,
     required this.enabled,
@@ -24,9 +23,6 @@ class PatientDemographicFields extends StatelessWidget {
 
   /// Controller for the patient's phone number.
   final TextEditingController phoneCtrl;
-
-  /// Controller for the patient's program.
-  final TextEditingController programCtrl;
 
   /// Currently selected clinic location.
   final ClinicLocation? selectedClinic;
@@ -55,12 +51,6 @@ class PatientDemographicFields extends StatelessWidget {
           enabled: enabled,
           keyboardType: TextInputType.phone,
           validator: (val) => (val == null || val.trim().isEmpty) ? 'Phone number is required' : null,
-        ),
-        const SizedBox(height: AppSizes.p16),
-        AppTextField(
-          controller: programCtrl,
-          labelText: AppStrings.program,
-          enabled: enabled,
         ),
         const SizedBox(height: AppSizes.p16),
         _buildClinicDropdown(context),

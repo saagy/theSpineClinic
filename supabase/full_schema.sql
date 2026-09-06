@@ -92,7 +92,6 @@ CREATE TABLE public.patients (
   id                uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   full_name         text NOT NULL,
   phone_number      text NOT NULL,
-  program           text,
   clinic            public.clinic_location NOT NULL,
   session_balance   integer NOT NULL DEFAULT 0,
   created_by        uuid REFERENCES public.staff(id) ON DELETE SET NULL,
@@ -809,7 +808,7 @@ BEGIN
 END;
 $function$;
 
-CREATE OR REPLACE FUNCTION public.create_patient_with_doctors(p_name text, p_phone text, p_program text, p_clinic public.clinic_location, p_created_by uuid, p_doctor_ids uuid[])
+CREATE OR REPLACE FUNCTION public.create_patient_with_doctors(p_name text, p_phone text, p_clinic public.clinic_location, p_created_by uuid, p_doctor_ids uuid[])
  RETURNS public.patients
  LANGUAGE plpgsql
  SECURITY DEFINER
@@ -852,10 +851,10 @@ AS $function$
       END IF;
 
       INSERT INTO public.patients (
-        full_name, phone_number, program, clinic,
+        full_name, phone_number, clinic,
         session_balance, traction_balance, created_by, created_at
       )
-      VALUES (p_name, p_phone, p_program, p_clinic, 0, 0, p_created_by, NOW())
+      VALUES (p_name, p_phone, p_clinic, 0, 0, p_created_by, NOW())
       RETURNING * INTO new_patient;
 
       IF p_doctor_ids IS NOT NULL AND array_length(p_doctor_ids, 1) > 0 THEN
@@ -2431,7 +2430,7 @@ END;
 $$;
 
 CREATE OR REPLACE FUNCTION public.update_patient_details(
-  p_patient_id uuid,p_name text,p_phone text,p_program text,p_clinic public.clinic_location,
+  p_patient_id uuid,p_name text,p_phone text,p_clinic public.clinic_location,
   p_doctor_ids uuid[] DEFAULT NULL
 ) RETURNS void LANGUAGE plpgsql SECURITY DEFINER SET search_path=public,pg_temp AS $$
 BEGIN
@@ -2439,7 +2438,7 @@ BEGIN
     RAISE EXCEPTION 'Permission denied' USING ERRCODE='42501';
   END IF;
   -- Demographic edits never write stale balances, authorship, or recall dates.
-  UPDATE public.patients SET full_name=p_name,phone_number=p_phone,program=p_program,clinic=p_clinic
+  UPDATE public.patients SET full_name=p_name,phone_number=p_phone,clinic=p_clinic
     WHERE id=p_patient_id;
   IF NOT FOUND THEN RAISE EXCEPTION 'Patient not found' USING ERRCODE='P0002'; END IF;
   IF p_doctor_ids IS NOT NULL THEN
@@ -2447,8 +2446,8 @@ BEGIN
   END IF;
 END;
 $$;
-REVOKE ALL ON FUNCTION public.update_patient_details(uuid,text,text,text,public.clinic_location,uuid[]) FROM PUBLIC,anon;
-GRANT EXECUTE ON FUNCTION public.update_patient_details(uuid,text,text,text,public.clinic_location,uuid[]) TO authenticated;
+REVOKE ALL ON FUNCTION public.update_patient_details(uuid,text,text,public.clinic_location,uuid[]) FROM PUBLIC,anon;
+GRANT EXECUTE ON FUNCTION public.update_patient_details(uuid,text,text,public.clinic_location,uuid[]) TO authenticated;
 
 CREATE OR REPLACE FUNCTION public.update_appointment_details(
   p_appointment_id uuid,p_scheduled_at timestamptz,p_type public.appointment_type,

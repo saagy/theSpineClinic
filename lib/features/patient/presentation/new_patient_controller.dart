@@ -70,7 +70,6 @@ class NewPatientController extends _$NewPatientController {
   Future<Result<Patient>> createPatient({
     required String fullName,
     required String phoneNumber,
-    required String? program,
     required ClinicLocation clinic,
     required List<String> assignedDoctorIds,
     required List<PlatformFile> attachments,
@@ -83,7 +82,6 @@ class NewPatientController extends _$NewPatientController {
       id: '',
       fullName: fullName,
       phoneNumber: phoneNumber,
-      program: program?.trim().isEmpty == true ? null : program,
       clinic: clinic,
       sessionBalance: 0,
       tractionBalance: 0,

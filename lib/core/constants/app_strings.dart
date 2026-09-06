@@ -166,6 +166,29 @@ abstract final class AppStrings {
   static const String packageBalances = 'Package Balances';
   static const String assignedDoctors = 'Assigned Doctors';
 
+  // Patients Screen Overhaul (2026 SaaS Table / List)
+  static const String patientsSubtitle = 'Find and manage patient records';
+  static const String patientColName = 'Patient';
+  static const String patientColContact = 'Contact';
+  static const String patientColBranch = 'Branch';
+  static const String patientColBalances = 'Balances';
+  static const String patientColNextVisit = 'Next Visit';
+  static const String newPatientButton = 'New Patient';
+  static const String sessionsShort = 'S';
+  static const String tractionShort = 'T';
+  static const String noUpcomingVisit = 'No upcoming visit';
+  static const String paginationShowing = 'Showing';
+  static const String paginationTo = 'to';
+  static const String paginationOf = 'of';
+  static const String paginationPatients = 'patients';
+  static const String paginationPrevious = 'Previous';
+  static const String paginationNext = 'Next';
+  static const String filtersButton = 'Filters';
+  static const String filterAllBranches = 'All Branches';
+  static const String filterAllDoctors = 'All Doctors';
+  static const String resetFilters = 'Reset Filters';
+  static const String activeFiltersCount = 'active';
+
   // Appointment
   static const String bookAppointment = 'Book Appointment';
   static const String appointmentDetails = 'Appointment Details';
@@ -769,7 +792,6 @@ abstract final class AppStrings {
   static const String lastVisit = 'Last Visit';
   static const String lastVisitLabelShort = 'Last:';
   static const String noVisitsYet = 'No visits yet';
-  static const String programNone = 'None';
   static const String recordedBy = 'Recorded by';
 
   // ── Document Actions ──

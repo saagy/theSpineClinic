@@ -33,7 +33,7 @@ class EditPatientForm extends ConsumerStatefulWidget {
 
 class _EditPatientFormState extends ConsumerState<EditPatientForm> {
   final _formKey = GlobalKey<FormState>();
-  late final TextEditingController _nameCtrl, _phoneCtrl, _programCtrl;
+  late final TextEditingController _nameCtrl, _phoneCtrl;
   ClinicLocation? _selectedClinic;
   final List<Staff> _selectedDoctors = [];
   late final List<String> _initialDoctorIds;
@@ -43,7 +43,6 @@ class _EditPatientFormState extends ConsumerState<EditPatientForm> {
     super.initState();
     _nameCtrl = TextEditingController(text: widget.patient.fullName);
     _phoneCtrl = TextEditingController(text: widget.patient.phoneNumber);
-    _programCtrl = TextEditingController(text: widget.patient.program ?? '');
     _selectedClinic = widget.patient.clinic;
     _selectedDoctors.addAll(widget.assignedDoctors);
     _initialDoctorIds = widget.assignedDoctors.map((d) => d.id).toList();
@@ -53,18 +52,15 @@ class _EditPatientFormState extends ConsumerState<EditPatientForm> {
   void dispose() {
     _nameCtrl.dispose();
     _phoneCtrl.dispose();
-    _programCtrl.dispose();
     super.dispose();
   }
 
   bool _hasChanges() {
     final patient = widget.patient;
     final initialSet = _initialDoctorIds.toSet();
-    final programVal = _programCtrl.text.trim();
     final currentIds = _selectedDoctors.map((d) => d.id).toSet();
     return _nameCtrl.text.trim() != patient.fullName ||
         _phoneCtrl.text.trim() != patient.phoneNumber ||
-        (programVal.isEmpty ? null : programVal) != patient.program ||
         _selectedClinic != patient.clinic ||
         currentIds.length != initialSet.length ||
         !currentIds.every(initialSet.contains);
@@ -97,7 +93,6 @@ class _EditPatientFormState extends ConsumerState<EditPatientForm> {
     final updated = widget.patient.copyWith(
       fullName: _nameCtrl.text.trim(),
       phoneNumber: _phoneCtrl.text.trim(),
-      program: _programCtrl.text.trim().isEmpty ? null : _programCtrl.text.trim(),
       clinic: _selectedClinic!,
     );
     
@@ -161,7 +156,6 @@ class _EditPatientFormState extends ConsumerState<EditPatientForm> {
                     child: PatientDemographicFields(
                       nameCtrl: _nameCtrl,
                       phoneCtrl: _phoneCtrl,
-                      programCtrl: _programCtrl,
                       selectedClinic: _selectedClinic,
                       onClinicChanged: (val) => setState(() => _selectedClinic = val),
                       enabled: !isSaving,

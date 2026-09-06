@@ -2,13 +2,15 @@
 /// [PatientRepositoryImpl] to keep the main file under 200 lines.
 library;
 
-import 'package:supabase_flutter/supabase_flutter.dart' show CountOption;
+import 'package:supabase_flutter/supabase_flutter.dart'
+    show CountOption, PostgrestFilterBuilder;
 
 import 'package:spine_clinic_app/core/errors/app_exception.dart';
 import 'package:spine_clinic_app/core/errors/result.dart';
 import 'package:spine_clinic_app/core/network/supabase_service.dart';
 import 'package:spine_clinic_app/features/patient/domain/clinic_location.dart';
 import 'package:spine_clinic_app/features/patient/domain/patient.dart';
+import 'package:spine_clinic_app/features/patient/domain/patient_filters.dart';
 
 class PatientRepositoryQueries {
   PatientRepositoryQueries(this._service);
@@ -44,7 +46,33 @@ class PatientRepositoryQueries {
       '${date.month.toString().padLeft(2, '0')}-'
       '${date.day.toString().padLeft(2, '0')}';
 
+  PostgrestFilterBuilder<List<Map<String, dynamic>>> _buildFilteredQuery(
+    PatientFilters filters, {
+    required String selectColumns,
+  }) {
+    final String querySelect = filters.doctorId != null
+        ? '$selectColumns, patient_doctors!inner(doctor_id)'
+        : selectColumns;
+    var query = _service.from(_table).select(querySelect);
+
+    if (filters.doctorId != null) {
+      query = query.eq('patient_doctors.doctor_id', filters.doctorId!);
+    }
+    if (filters.clinic != null) {
+      query = query.eq('clinic', filters.clinic!.dbValue);
+    }
+    final search = filters.search?.trim();
+    if (search != null && search.isNotEmpty) {
+      final tokens = search.split(RegExp(r'\s+')).where((t) => t.isNotEmpty);
+      for (final token in tokens) {
+        query = query.or('full_name.ilike.%$token%,phone_number.ilike.%$token%');
+      }
+    }
+    return query;
+  }
+
   Future<Result<List<Patient>>> getAllPatients({
+    PatientFilters filters = const PatientFilters(),
     String? query,
     String? doctorId,
     ClinicLocation? clinic,
@@ -54,30 +82,11 @@ class PatientRepositoryQueries {
     bool ascending = true,
   }) async {
     try {
+      final effective = filters.isNotEmpty
+          ? filters
+          : PatientFilters(clinic: clinic, doctorId: doctorId, search: query);
       final List<Map<String, dynamic>> rows = await _service.guardQuery(() {
-        final base = doctorId != null
-            ? _service
-                  .from(_table)
-                  .select('*, patient_doctors!inner(doctor_id)')
-                  .eq('patient_doctors.doctor_id', doctorId)
-            : _service.from(_table).select('*');
-        final withClinic = clinic != null
-            ? base.eq('clinic', clinic.dbValue)
-            : base;
-        if (query != null && query.trim().isNotEmpty) {
-          final tokens = query
-              .trim()
-              .split(RegExp(r'\s+'))
-              .where((t) => t.isNotEmpty);
-          final built = tokens.fold(
-            withClinic,
-            (q, t) => q.or('full_name.ilike.%$t%,phone_number.ilike.%$t%'),
-          );
-          return built
-              .order(orderBy, ascending: ascending)
-              .range(offset, offset + limit - 1);
-        }
-        return withClinic
+        return _buildFilteredQuery(effective, selectColumns: '*')
             .order(orderBy, ascending: ascending)
             .range(offset, offset + limit - 1);
       });
@@ -90,47 +99,20 @@ class PatientRepositoryQueries {
   }
 
   Future<Result<int>> countAllPatients({
+    PatientFilters filters = const PatientFilters(),
     String? query,
     String? doctorId,
     ClinicLocation? clinic,
   }) async {
     try {
+      final effective = filters.isNotEmpty
+          ? filters
+          : PatientFilters(clinic: clinic, doctorId: doctorId, search: query);
       final int count = await _service.guardQuery(() async {
-        if (doctorId != null) {
-          var base = _service
-              .from('patient_doctors')
-              .count(CountOption.exact)
-              .eq('doctor_id', doctorId);
-          if (clinic != null) {
-            base = base.eq('patients.clinic', clinic.dbValue);
-          }
-          if (query != null && query.trim().isNotEmpty) {
-            for (final token in query.trim().split(RegExp(r'\s+'))) {
-              if (token.isNotEmpty) {
-                base = base.or(
-                  'full_name.ilike.%$token%,phone_number.ilike.%$token%',
-                  referencedTable: 'patients',
-                );
-              }
-            }
-          }
-          return await base;
-        }
-
-        var base = _service.from(_table).count(CountOption.exact);
-        if (clinic != null) {
-          base = base.eq('clinic', clinic.dbValue);
-        }
-        if (query != null && query.trim().isNotEmpty) {
-          for (final token in query.trim().split(RegExp(r'\s+'))) {
-            if (token.isNotEmpty) {
-              base = base.or(
-                'full_name.ilike.%$token%,phone_number.ilike.%$token%',
-              );
-            }
-          }
-        }
-        return await base;
+        final res = await _buildFilteredQuery(effective, selectColumns: 'id')
+            .limit(1)
+            .count(CountOption.exact);
+        return res.count;
       });
       return Result.success(count);
     } on AppException catch (e) {

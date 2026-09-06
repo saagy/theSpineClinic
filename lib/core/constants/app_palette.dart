@@ -32,12 +32,12 @@ class AppPalette {
   final Color outlineStrong;
 }
 
-/// Light-mode clinical-blue palette.
+/// Light-mode clinical-blue palette with brand #2B4D73 identity.
 const AppPalette clinicalBluePaletteLight = AppPalette(
-  primary: Color(0xFF2563EB),
+  primary: Color(0xFF2B4D73),
   onPrimary: Color(0xFFFFFFFF),
-  primaryContainer: Color(0xFFDBEAFE),
-  onPrimaryContainer: Color(0xFF1E3A8A),
+  primaryContainer: Color(0xFFE2EAF1),
+  onPrimaryContainer: Color(0xFF162A40),
   background: Color(0xFFF8FAFC),
   surface: Color(0xFFFFFFFF),
   surfaceContainer: Color(0xFFF1F5F9),
@@ -48,12 +48,12 @@ const AppPalette clinicalBluePaletteLight = AppPalette(
   outlineStrong: Color(0xFFCBD5E1),
 );
 
-/// Dark-mode clinical-blue palette.
+/// Dark-mode clinical-blue palette with brand #2B4D73 identity.
 const AppPalette clinicalBluePaletteDark = AppPalette(
-  primary: Color(0xFF3B82F6),
+  primary: Color(0xFF6C93C0),
   onPrimary: Color(0xFFFFFFFF),
-  primaryContainer: Color(0xFF1E3A5F),
-  onPrimaryContainer: Color(0xFF93C5FD),
+  primaryContainer: Color(0xFF1E3248),
+  onPrimaryContainer: Color(0xFFD2E3F5),
   background: Color(0xFF0F141C),
   surface: Color(0xFF171E28),
   surfaceContainer: Color(0xFF1E2836),

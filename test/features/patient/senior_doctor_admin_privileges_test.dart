@@ -13,6 +13,7 @@ import 'package:spine_clinic_app/features/auth/domain/user_role.dart';
 import 'package:spine_clinic_app/features/auth/presentation/auth_providers.dart';
 import 'package:spine_clinic_app/features/patient/domain/clinic_location.dart';
 import 'package:spine_clinic_app/features/patient/domain/patient.dart';
+import 'package:spine_clinic_app/features/patient/domain/patient_filters.dart';
 import 'package:spine_clinic_app/features/patient/domain/patient_repository.dart';
 import 'package:spine_clinic_app/features/patient/presentation/delete_patient_controller.dart';
 import 'package:spine_clinic_app/features/patient/presentation/edit_patient_controller.dart';
@@ -65,6 +66,7 @@ class _MockPatientRepository implements PatientRepository {
 
   @override
   Future<Result<List<Patient>>> getAllPatients({
+    PatientFilters filters = const PatientFilters(),
     String? query,
     String? doctorId,
     ClinicLocation? clinic,

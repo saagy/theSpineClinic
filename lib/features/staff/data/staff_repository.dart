@@ -113,23 +113,23 @@ class StaffRepositoryImpl implements StaffRepository {
     try {
       final int count = await _service.guardQuery(() async {
         var builder = _service
-            .from('patient_doctors')
-            .count(CountOption.exact)
-            .eq('doctor_id', doctorId);
+            .from('patients')
+            .select('id, patient_doctors!inner(doctor_id)')
+            .eq('patient_doctors.doctor_id', doctorId);
         if (clinic != null) {
-          builder = builder.eq('patients.clinic', clinic.dbValue);
+          builder = builder.eq('clinic', clinic.dbValue);
         }
         if (query != null && query.trim().isNotEmpty) {
           for (final token in query.trim().split(RegExp(r'\s+'))) {
             if (token.isNotEmpty) {
               builder = builder.or(
                 'full_name.ilike.%$token%,phone_number.ilike.%$token%',
-                referencedTable: 'patients',
               );
             }
           }
         }
-        return await builder;
+        final res = await builder.limit(1).count(CountOption.exact);
+        return res.count;
       });
       return Result.success(count);
     } on AppException catch (e) {

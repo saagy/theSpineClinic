@@ -53,7 +53,7 @@ final class StaffRepositoryProvider
   }
 }
 
-String _$staffRepositoryHash() => r'699ba4610d67e407c097cd066f8afce5869443f7';
+String _$staffRepositoryHash() => r'3ba368c8f6795b30ed9068a9129e8433cfde3fd6';
 
 /// Fetches all active/approved staff members with the doctor role.
 
@@ -97,26 +97,14 @@ final class ActiveDoctorsProvider
   }
 }
 
-String _$activeDoctorsHash() => r'63a8cabbf18d26a853e0e31abf9a215b2536d74b';
+String _$activeDoctorsHash() => r'a0059252e266680f9dcc4ee21660081d9ef19579';
 
-/// Fetches all approved doctors (both active and deactivated, excluding pending applications).
-///
-/// Used by filter/search dropdowns (PatientListFilters, UnifiedFilterSheet)
-/// where users need to filter by historical records tied to deactivated staff.
-/// Deactivated doctors are visually distinguished with a "(Deactivated)" badge
-/// in the UI. Operational dropdowns (creating/editing) continue to use
-/// [activeDoctorsProvider] which strictly excludes inactive staff.
+/// Fetches approved doctors (active and deactivated) for filter dropdowns.
 
 @ProviderFor(allDoctorsForFilter)
 final allDoctorsForFilterProvider = AllDoctorsForFilterProvider._();
 
-/// Fetches all approved doctors (both active and deactivated, excluding pending applications).
-///
-/// Used by filter/search dropdowns (PatientListFilters, UnifiedFilterSheet)
-/// where users need to filter by historical records tied to deactivated staff.
-/// Deactivated doctors are visually distinguished with a "(Deactivated)" badge
-/// in the UI. Operational dropdowns (creating/editing) continue to use
-/// [activeDoctorsProvider] which strictly excludes inactive staff.
+/// Fetches approved doctors (active and deactivated) for filter dropdowns.
 
 final class AllDoctorsForFilterProvider
     extends
@@ -126,13 +114,7 @@ final class AllDoctorsForFilterProvider
           FutureOr<List<Staff>>
         >
     with $FutureModifier<List<Staff>>, $FutureProvider<List<Staff>> {
-  /// Fetches all approved doctors (both active and deactivated, excluding pending applications).
-  ///
-  /// Used by filter/search dropdowns (PatientListFilters, UnifiedFilterSheet)
-  /// where users need to filter by historical records tied to deactivated staff.
-  /// Deactivated doctors are visually distinguished with a "(Deactivated)" badge
-  /// in the UI. Operational dropdowns (creating/editing) continue to use
-  /// [activeDoctorsProvider] which strictly excludes inactive staff.
+  /// Fetches approved doctors (active and deactivated) for filter dropdowns.
   AllDoctorsForFilterProvider._()
     : super(
         from: null,
@@ -160,17 +142,17 @@ final class AllDoctorsForFilterProvider
 }
 
 String _$allDoctorsForFilterHash() =>
-    r'80e6acb30753416a47acbd89a3c37107fe780842';
+    r'f77c3862328d0d1630480220fc57d7f1689b75cc';
 
-/// Controller managing the roster of patients assigned to the logged-in doctor with pagination.
+/// Controller managing the roster of patients assigned to the doctor.
 
 @ProviderFor(MyPatientsController)
 final myPatientsControllerProvider = MyPatientsControllerProvider._();
 
-/// Controller managing the roster of patients assigned to the logged-in doctor with pagination.
+/// Controller managing the roster of patients assigned to the doctor.
 final class MyPatientsControllerProvider
     extends $AsyncNotifierProvider<MyPatientsController, List<Patient>> {
-  /// Controller managing the roster of patients assigned to the logged-in doctor with pagination.
+  /// Controller managing the roster of patients assigned to the doctor.
   MyPatientsControllerProvider._()
     : super(
         from: null,
@@ -191,9 +173,9 @@ final class MyPatientsControllerProvider
 }
 
 String _$myPatientsControllerHash() =>
-    r'99a606869ac030d590f6449f85f6eac640033bd3';
+    r'c0daf662f604539d24701dc554637b3ddcac23c9';
 
-/// Controller managing the roster of patients assigned to the logged-in doctor with pagination.
+/// Controller managing the roster of patients assigned to the doctor.
 
 abstract class _$MyPatientsController extends $AsyncNotifier<List<Patient>> {
   FutureOr<List<Patient>> build();

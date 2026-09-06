@@ -90,19 +90,6 @@ class PatientFormFields extends StatelessWidget {
         ),
         const SizedBox(height: AppSizes.p16),
 
-
-        // ── Program ──
-        FormBuilderTextField(
-          name: 'program',
-          enabled: enabled,
-          decoration: _buildDecoration(
-            context,
-            labelText: '${AppStrings.program} (optional)',
-            hintText: 'Enter program details',
-          ),
-        ),
-        const SizedBox(height: AppSizes.p16),
-
         // ── Clinic Selection ──
         FormBuilderDropdown<ClinicLocation>(
           name: 'clinic',

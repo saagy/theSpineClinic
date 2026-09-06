@@ -7,6 +7,7 @@ import 'package:spine_clinic_app/features/patient/data/patient_repository_querie
 import 'package:spine_clinic_app/features/patient/domain/clinic_location.dart';
 import 'package:spine_clinic_app/features/patient/domain/patient.dart';
 import 'package:spine_clinic_app/features/patient/domain/patient_documents_repository.dart';
+import 'package:spine_clinic_app/features/patient/domain/patient_filters.dart';
 import 'package:spine_clinic_app/features/patient/domain/patient_repository.dart';
 
 /// Supabase-backed implementation of [PatientRepository].
@@ -126,7 +127,6 @@ class PatientRepositoryImpl implements PatientRepository {
           params: {
             'p_name': patient.fullName,
             'p_phone': patient.phoneNumber,
-            'p_program': patient.program,
             'p_clinic': patient.clinic.dbValue,
             'p_created_by': patient.createdBy,
             'p_doctor_ids': assignedDoctorIds,
@@ -154,7 +154,6 @@ class PatientRepositoryImpl implements PatientRepository {
             'p_patient_id': patient.id,
             'p_name': patient.fullName,
             'p_phone': patient.phoneNumber,
-            'p_program': patient.program,
             'p_clinic': patient.clinic.dbValue,
             'p_doctor_ids': doctorIds,
           },
@@ -270,6 +269,7 @@ class PatientRepositoryImpl implements PatientRepository {
 
   @override
   Future<Result<List<Patient>>> getAllPatients({
+    PatientFilters filters = const PatientFilters(),
     String? query,
     String? doctorId,
     ClinicLocation? clinic,
@@ -279,6 +279,7 @@ class PatientRepositoryImpl implements PatientRepository {
     bool ascending = true,
   }) {
     return _queries.getAllPatients(
+      filters: filters,
       query: query,
       doctorId: doctorId,
       clinic: clinic,
@@ -291,11 +292,13 @@ class PatientRepositoryImpl implements PatientRepository {
 
   @override
   Future<Result<int>> countAllPatients({
+    PatientFilters filters = const PatientFilters(),
     String? query,
     String? doctorId,
     ClinicLocation? clinic,
   }) {
     return _queries.countAllPatients(
+      filters: filters,
       query: query,
       doctorId: doctorId,
       clinic: clinic,

@@ -44,7 +44,6 @@ Patient registry plus package credit balances.
 - `id` (`uuid`, PK, default `gen_random_uuid()`)
 - `full_name` (`text`, NOT NULL)
 - `phone_number` (`text`, NOT NULL)
-- `program` (`text`, nullable) — legacy single-line program descriptor
 - `clinic` (`clinic_location`, NOT NULL)
 - `session_balance` (`integer`, NOT NULL, default `0`) — PT session credits
 - `traction_balance` (`integer`, NOT NULL, default `0`) — traction session credits

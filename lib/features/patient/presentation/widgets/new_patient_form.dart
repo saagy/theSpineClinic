@@ -75,13 +75,10 @@ class _NewPatientFormState extends ConsumerState<NewPatientForm> {
     final bool hasName = (values['full_name'] as String?)?.isNotEmpty == true;
     final bool hasPhone =
         (values['phone_number'] as String?)?.isNotEmpty == true;
-    final bool hasProgram =
-        (values['program'] as String?)?.isNotEmpty == true;
     final bool hasDoctors =
         (values['assigned_doctors'] as List?)?.isNotEmpty == true;
     return hasName ||
         hasPhone ||
-        hasProgram ||
         hasDoctors ||
         _selectedFiles.isNotEmpty;
   }
@@ -110,7 +107,6 @@ class _NewPatientFormState extends ConsumerState<NewPatientForm> {
 
     final String fullName = state.fields['full_name']!.value as String;
     final String phoneNumber = state.fields['phone_number']!.value as String;
-    final String? program = state.fields['program']?.value as String?;
     final ClinicLocation clinic =
         state.fields['clinic']!.value as ClinicLocation;
     final assignedDoctors =
@@ -124,7 +120,6 @@ class _NewPatientFormState extends ConsumerState<NewPatientForm> {
         .createPatient(
           fullName: fullName.trim(),
           phoneNumber: phoneNumber.trim(),
-          program: program,
           clinic: clinic,
           assignedDoctorIds: assignedDoctorIds,
           attachments: _selectedFiles,

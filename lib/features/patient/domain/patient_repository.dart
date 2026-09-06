@@ -7,6 +7,7 @@ library;
 import 'package:spine_clinic_app/core/errors/result.dart';
 import 'package:spine_clinic_app/features/patient/domain/clinic_location.dart';
 import 'package:spine_clinic_app/features/patient/domain/patient.dart';
+import 'package:spine_clinic_app/features/patient/domain/patient_filters.dart';
 
 /// Defines the patient data operations available to the application.
 ///
@@ -48,7 +49,7 @@ abstract class PatientRepository {
     List<String> assignedDoctorIds,
   );
 
-  /// Updates core patient demographics (name, phone, program, clinic).
+  /// Updates core patient demographics (name, phone, clinic).
   Future<Result<void>> updatePatient(
     Patient patient, {
     List<String>? doctorIds,
@@ -83,6 +84,7 @@ abstract class PatientRepository {
   /// [orderBy] specifies the column to sort by (defaults to `full_name`).
   /// [ascending] controls sort direction (defaults to `true`).
   Future<Result<List<Patient>>> getAllPatients({
+    PatientFilters filters = const PatientFilters(),
     String? query,
     String? doctorId,
     ClinicLocation? clinic,
@@ -94,6 +96,7 @@ abstract class PatientRepository {
 
   /// Counts total patients matching the given filters (for pagination).
   Future<Result<int>> countAllPatients({
+    PatientFilters filters = const PatientFilters(),
     String? query,
     String? doctorId,
     ClinicLocation? clinic,
