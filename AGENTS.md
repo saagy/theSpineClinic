@@ -9,11 +9,11 @@
 8. **Semantic Size Mapping:** No hardcoded layout sizing parameters. Dimensions must map completely to layout configurations inside the `AppSizes` token file.
 9. **Mandatory UI States:** Every functional screen layout must explicitly handle and display four foundational structural states: `loading`, `error`, `empty`, and `data`.
 10. **Zero-Tolerance Analysis:** Run `flutter analyze` and confirm zero warnings or errors before marking any individual task as complete.
-11. (cancelled, the app is used a lot on PCs and mobile) **Mobile-Touch Focus:** Phone-only design paradigm. No hover states, no `MouseRegion` widgets, and no desktop/web-first interaction patterns. Ensure all touch targets use `InkWell` or `GestureDetector` optimized for immediate touch feedback. 
+11. **Desktop and Mobile:** Both PCs and phones are primary usage contexts. Adapt structure to available window space, not device labels. Support touch, keyboard, focus, and pointer feedback; essential actions must never depend on hover. Maintain touch targets of at least 44 logical pixels through semantic `AppSizes` tokens.
 12. **Debounced Network Queries:** Any interactive text search input or real-time filter execution hitting a Repository or Supabase must utilize a minimum 300ms debounce pattern via Riverpod or an explicit debouncer mechanism. Never trigger database operations on individual keystrokes.
-13. **Modern Component Spacing:** Zero usage of raw `Divider()` lines between list components. Every list item row must be configured as a distinct Material 3 container/card element styled with uniform `BorderRadius.circular(16)`. Every row or card target must enforce a minimum internal layout padding of `EdgeInsets.all(16)` for physical touch comfort.
-14. **Clean Mobile Control Layouts:** Never stack more than two filter inputs or dropdown controls vertically directly on a main screen surface. If a feature demands deeper control variables (e.g., Doctor, Status, Date Ranges), implement a horizontal scrolling row of Material 3 `ChoiceChip` components for primary selectors, alongside a trailing button that opens a structured `showModalBottomSheet`.
-15. **Context-Driven Theme Tokens:** Zero usage of absolute color constants from `AppColors` directly within widget styling or visual component declarations. `AppColors` constants are seed values for `ThemeData` construction in `main.dart` only. Widgets must never reference `AppColors` directly — use `Theme.of(context).colorScheme.*` or component theme defaults to ensure instant system theme and light/dark mode compliance.
+13. **Task-Appropriate Containers:** Choose rows, tables, cards, or panels according to information hierarchy and scanning needs. Theme-driven separators are allowed. Cards, shadows, rounded corners, and 16-pixel padding are not mandatory on every row. Keep touch targets comfortable; define component density, spacing, and shape in tokens.
+14. **Task-Appropriate Controls:** Keep frequent search and filter actions visible and group related controls. On narrow windows, avoid long stacks of secondary controls; use progressive disclosure when useful. On wide windows, use aligned toolbars or panels where appropriate. Chips and bottom sheets are options, not universal requirements. Keep active filters visible and easy to clear.
+15. **Context-Driven Theme Tokens:** Raw palette values belong exclusively in theme construction under `core/constants/`. Widgets use `Theme.of(context).colorScheme`, registered theme extensions, or component theme defaults. Never reference `AppColors` or raw palette constants directly inside widgets; preserve light/dark mode compliance.
 16. **Design System Compliance:** Zero usage of raw color values or hardcoded
     hex codes in any widget. All colors must come from the active theme via
     Theme.of(context). All spacing must reference AppSizes tokens. All text
@@ -21,45 +21,20 @@
     *Status note: the legacy `AppColors` migration is complete — widget files
     reference the theme exclusively. Keep it that way; never re-introduce
     `AppColors` references inside widgets.*
-17. **Component Reuse Mandate:** Before building any new visual element, check
-    shared/widgets/ first. If a suitable component exists, use it. If a new
-    pattern is needed, build it in shared/widgets/ first, then use it. Never
-    build one-off styled containers inline inside screens.
-18. **Audit Before Restyle:** When rebuilding any screen, 
-    treat it as a blank canvas. Explicitly list every UX 
-    problem found before writing a single line of code. 
-    Do not preserve legacy widgets or layout structures 
-    unless they make UX sense.
+17. **Purposeful Component Reuse:** Inspect shared/widgets/ before building visual elements. Reuse components that fit the redesigned workflow; replace unsuitable legacy components instead of retaining them for consistency alone. Build reusable visual patterns in shared/widgets/ and keep feature composition in its presentation layer. Avoid one-off inline styling and speculative abstractions.
+18. **Audit Before Restyle:** Treat each screen as a blank canvas. Explicitly list every UX problem found before writing implementation code. Preserve legacy widgets or layouts only when they make UX sense.
 
-19. **No Legacy Preservation:** Never restyle a widget 
-    that shouldn't exist. If a component has no clear 
-    UX purpose, remove it entirely and redesign that 
-    section from scratch.
+19. **No Legacy Preservation:** Remove components without a clear UX purpose and redesign that section from scratch instead of restyling them.
 
-20. **Initials Avatar Fallback:** The CircleAvatar initials 
-    logic must always handle edge cases — names starting 
-    with numbers, single character names, empty names. 
-    Always show Icons.person as fallback when valid letter 
-    initials cannot be derived.
+20. **Initials Avatar Fallback:** When initials avatars are used, handle names starting with numbers, single-character names, and empty names. Show Icons.person when valid letter initials cannot be derived.
 
-21. **FAB Shape Consistency:** All FABs must be perfect 
-    circles. Never use rounded square FABs.
+21. **Primary Action Placement:** Make the main permitted action clear and accessible. Choose a labeled toolbar button, inline action, or FAB according to the layout; FABs are not required. Use consistent component shape tokens and prevent floating actions from obscuring content.
 
-22. **Data That Doesn't Fit Gets Removed:** If a data 
-    point breaks the layout or has no clean natural place 
-    in a list item, remove it from the list view entirely 
-    and show it only in the detail screen.
-23. **Explicit Height and Scrolling Containment:** Never wrap infinite or dynamic-length lists (`ListView.builder`) inside an unconstrained vertical container or an unbounded `Column` that risks layout crashes. Always combine with explicit structural primitives (`Expanded`, `SliverList`, or `Flexible`) and ensure list views utilize native iOS/Android bounce physics (`AlwaysScrollableScrollPhysics`).
-24. **No Arbitrary Hardcoded Spacing Tweaks:** All spacing adjustments between stacked elements must use uniform `SizedBox(height: AppSizes.spacingMedium)` or corresponding padding tokens from the design tokens file. Never inject inline magic numbers (e.g., `SizedBox(height: 13.5)`) to "force" an element into place.
+22. **Prioritize Information:** Keep identification and task-critical information readable. Adapt columns, wrapping, or secondary detail placement when space is limited. Move nonessential metadata to details; do not silently remove essential information or shrink names to make a legacy layout fit.
+23. **Explicit Height and Scrolling Containment:** Never wrap infinite or dynamic-length lists (`ListView.builder`) inside an unconstrained vertical container or an unbounded `Column`. Use `Expanded`, `SliverList`, or `Flexible` as appropriate. Preserve platform-appropriate scrolling; `AlwaysScrollableScrollPhysics` permits scrolling with short content and does not itself prescribe bounce behavior. Ensure pull-to-refresh works with short or empty content where offered.
+24. **Semantic Spacing:** All spacing uses `AppSizes` tokens. Select token levels to distinguish related items from separate groups; equal gaps everywhere are not required. Add a meaningful reusable token when needed instead of inserting magic numbers to force a layout into place.
 
-25. **Defensive State Construction — copyWith Only:** Never construct a state
-    object directly for a mutation (e.g. `state = MyState(loading: true)`).
-    Always mutate via `state.copyWith(loading: true)` so every field you don't
-    explicitly name retains its current value. Constructor defaults are only
-    valid for the *initial* state inside `build()`. A direct constructor call
-    that omits `todayLoading` will silently reset it to the default — this bug
-    has shipped 4 times across 3 screens. The `copyWith` method must be defined
-    on every state class. Every `Notifier` that mutates `state` must use it.
+25. **Defensive State Construction — copyWith Only:** Never construct a state object directly for a mutation (e.g. `state = MyState(loading: true)`). Always mutate via `state.copyWith(loading: true)` to retain unspecified fields. Constructor defaults are only valid for the initial state inside `build()`. Every state class must define `copyWith`; every Notifier state mutation must use it. Direct construction can silently reset fields such as `todayLoading`, a recurring regression in this app.
 
 26. **Async Provider Resilience:** When a `Notifier.build()` depends on data
     from an async provider (e.g. `currentUserProvider`), you MUST `ref.watch`
@@ -206,19 +181,16 @@ lib/
 - **Schema DDL (recreation):** `supabase/full_schema.sql` — run this to recreate the DB schema from scratch
 - **Migrations:** `supabase/migrations/` — incremental changes; `full_schema.sql` stays in sync with them
 
-## Design Reference
-Target aesthetic: Medics Medical App UI Kit vibe.
-- Primary accent: #2BB5A0 (teal)
-- All primary buttons: pill-shaped (BorderRadius.circular(999))
-- Cards: white, soft shadow, BorderRadius.circular(16), padding 16
-- Avatars: initials circle, teal background, white text
-- Typography: large bold dark titles, small muted gray subtitles
-- Active filter chips: teal fill + white text
-- Inactive filter chips: gray text on white
-- Bottom nav: icon + label, teal on active
-- See AppTheme for full token definitions
+## Design Direction and UI Overhaul
+
+- Read [PRODUCT.md](PRODUCT.md), [DESIGN.md](DESIGN.md), and [docs/ui-overhaul.md](docs/ui-overhaul.md) before redesigning screens.
+- The user authorizes replacing unsuitable UI structures from scratch. Preserve capabilities, role permissions, data integrity, and action refresh behavior; existing widget trees do not constrain the redesign.
+- The implemented baseline uses clinical blue from `app_palette.dart` and Plus Jakarta Sans from `AppTextStyles`. This describes current code, not an immutable future aesthetic.
+- Retire the former Medics/teal target and blanket pill/card/avatar styling rules. Establish any new visual direction through rendered mobile and desktop pilots, then record its tokens and component decisions in DESIGN.md.
+- Complete a screen audit before implementation; inspect rendered results and real workflows before expanding the design to other screens. Static analysis alone does not establish UI quality.
 
 ## Autonomy
+
 - Auto-accept all file edits and creations
 - Auto-accept all bash commands except: git push, flutter clean, pub get on unknown packages
 - Never ask for confirmation on read operations

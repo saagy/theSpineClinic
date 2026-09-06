@@ -8,8 +8,10 @@ app (Flutter + Riverpod + Supabase). The product brief is
 ## Start Here
 
 1. **[Product Brief](../PRODUCT.md)** — who uses the app and the design principles behind it.
-2. **[Architecture](architecture.md)** — layered design, data-flow contract, state management, routing.
-3. **[Contributing](../CONTRIBUTING.md)** — environment setup, commands, and validation gates.
+2. **[Design Guidance](../DESIGN.md)** — desktop/mobile principles, implemented baseline, and design decision process.
+3. **[UI Overhaul](ui-overhaul.md)** — screen priorities, initial findings, pilot scope, and acceptance checks.
+4. **[Architecture](architecture.md)** — layered design, data-flow contract, state management, routing.
+5. **[Contributing](../CONTRIBUTING.md)** — environment setup, commands, and validation gates.
 
 ## Reference
 

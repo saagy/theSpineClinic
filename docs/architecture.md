@@ -104,14 +104,17 @@ There is no patient login — patients are data, not users.
   [`app_theme.dart`](../lib/core/constants/app_theme.dart)
   (+ `app_theme_components.dart`) from the palettes in `app_colors.dart`,
   `app_palette.dart`, and `clinic_colors.dart`. Palettes are **seed values only** —
-  widgets read `Theme.of(context).colorScheme`.
+  widgets read `Theme.of(context).colorScheme` or the registered `ClinicColors`
+  theme extension.
 - Spacing/sizing map to `AppSizes`; typography to `AppTextStyles`; user-visible
   strings to `AppStrings` (English-only constants; `intl` handles date/number
   formatting). There is no ARB/l10n pipeline.
 - Bundled fonts: Inter and Plus Jakarta Sans variable fonts; icons via
   `flutter_lucide`; motion via `flutter_animate`.
-- The target aesthetic (Medics-style teal clinic UI, pill buttons, 16-radius
-  cards, initials avatars) is defined in AGENTS.md → Design Reference.
+- The current theme uses clinical blue; `AppTextStyles` uses Plus Jakarta Sans.
+  Existing pill buttons and rounded cards describe current components, not a
+  required layout for every future screen. [DESIGN.md](../DESIGN.md) contains
+  design guidance; [the UI overhaul plan](ui-overhaul.md) tracks proposed work.
 
 ## Startup Sequence
 
@@ -127,8 +130,12 @@ There is no patient login — patients are data, not users.
 ## Platform Targets
 
 All six platform folders exist (Android, iOS, web, Windows, Linux, macOS).
-The product is **phone-first** (see [PRODUCT.md](../PRODUCT.md)); web is the
-primary demo target (Firebase Hosting), and iOS IPAs build through GitHub
+Both **desktop and mobile are primary usage contexts** (see
+[PRODUCT.md](../PRODUCT.md)). `AppShell` already switches between bottom
+navigation and a navigation rail, but this does not establish that every screen
+adapts its content well. The overhaul targets content and interaction structure
+as well as navigation. Web is the primary demo target (Firebase Hosting), and
+iOS IPAs build through GitHub
 Actions ([`.github/workflows/build_ios.yml`](../.github/workflows/build_ios.yml)).
 
 
