@@ -12,6 +12,8 @@ class ScheduleWeekHeader extends StatelessWidget {
     required this.selected,
     required this.onPickDate,
     required this.onToday,
+    required this.onPreviousWeek,
+    required this.onNextWeek,
     this.showCancelled = false,
     this.onToggleCancelled,
   });
@@ -20,6 +22,8 @@ class ScheduleWeekHeader extends StatelessWidget {
   final DateTime selected;
   final VoidCallback onPickDate;
   final VoidCallback onToday;
+  final VoidCallback onPreviousWeek;
+  final VoidCallback onNextWeek;
   final bool showCancelled;
   final VoidCallback? onToggleCancelled;
 
@@ -63,9 +67,7 @@ class ScheduleWeekHeader extends StatelessWidget {
                 showCancelled
                     ? AppStrings.hideCancelled
                     : AppStrings.showCancelled,
-                style: AppTextStyles.captionBold.copyWith(
-                  color: cs.primary,
-                ),
+                style: AppTextStyles.captionBold.copyWith(color: cs.primary),
               ),
             ),
           ),
@@ -81,6 +83,18 @@ class ScheduleWeekHeader extends StatelessWidget {
             icon: const Icon(Icons.today_rounded),
             label: const Text(AppStrings.today),
           ),
+        if (!compact) ...<Widget>[
+          IconButton(
+            onPressed: onPreviousWeek,
+            tooltip: AppStrings.previousWeek,
+            icon: const Icon(Icons.chevron_left_rounded),
+          ),
+          IconButton(
+            onPressed: onNextWeek,
+            tooltip: AppStrings.nextWeek,
+            icon: const Icon(Icons.chevron_right_rounded),
+          ),
+        ],
       ],
     );
   }

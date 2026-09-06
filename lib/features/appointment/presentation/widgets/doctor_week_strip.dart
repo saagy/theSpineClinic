@@ -112,6 +112,20 @@ class _DoctorWeekStripState extends State<DoctorWeekStrip> {
                     selected: _selected,
                     onPickDate: _pickDate,
                     onToday: () => widget.onDateSelected(DateTime.now()),
+                    onPreviousWeek: () => widget.onDateSelected(
+                      DateTime(
+                        _selected.year,
+                        _selected.month,
+                        _selected.day - ScheduleWeek.span.inDays,
+                      ),
+                    ),
+                    onNextWeek: () => widget.onDateSelected(
+                      DateTime(
+                        _selected.year,
+                        _selected.month,
+                        _selected.day + ScheduleWeek.span.inDays,
+                      ),
+                    ),
                     showCancelled: widget.showCancelled,
                     onToggleCancelled: widget.onToggleCancelled,
                   ),
