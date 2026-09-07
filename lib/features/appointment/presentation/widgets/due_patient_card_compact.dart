@@ -29,9 +29,9 @@ class _DuePatientCompactRow extends StatelessWidget {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        AppAvatar(
+        PatientMonogramBadge(
           name: patient.fullName,
-          radius: 12,
+          size: 26.0,
         ),
         const SizedBox(width: AppSizes.p8),
         Expanded(

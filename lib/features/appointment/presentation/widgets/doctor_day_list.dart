@@ -1,22 +1,14 @@
-/// Appointment list for a single day with now-indicator, time-sorted items,
-/// and status-aware styling.
-///
-/// Rule 1 — under 200 lines.
-library;
-
 import 'package:flutter/material.dart';
-
+import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:spine_clinic_app/core/constants/app_sizes.dart';
 import 'package:spine_clinic_app/core/constants/app_strings.dart';
-import 'package:spine_clinic_app/core/constants/app_text_styles.dart';
-import 'package:spine_clinic_app/features/appointment/domain/appointment_repository.dart';
 import 'package:spine_clinic_app/features/appointment/presentation/doctor_schedule_providers.dart';
-import 'package:spine_clinic_app/features/appointment/presentation/widgets/receptionist_appointment_card.dart';
+import 'package:spine_clinic_app/features/appointment/presentation/widgets/appointment_agenda_row.dart';
 import 'package:spine_clinic_app/features/appointment/presentation/widgets/receptionist_day_list_helpers.dart';
+import 'package:spine_clinic_app/shared/widgets/empty_state.dart';
 
-/// The appointment list for a single day selected in the week strip.
+/// The doctor's daily appointment agenda list.
 class DoctorDayList extends StatelessWidget {
-  /// Creates a [DoctorDayList].
   const DoctorDayList({
     super.key,
     required this.state,
@@ -30,7 +22,7 @@ class DoctorDayList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
+    final cs = Theme.of(context).colorScheme;
     final items = state.itemsForSelectedDay;
 
     if (items.isEmpty) {
@@ -42,21 +34,17 @@ class DoctorDayList extends StatelessWidget {
           AppSizes.p20,
           AppSizes.p32,
         ),
-        children: [
-          Center(
-            child: Text(
-              AppStrings.noAppointmentsFound,
-              style: AppTextStyles.bodyMedium.copyWith(
-                color: theme.colorScheme.onSurfaceVariant,
-              ),
-            ),
+        children: const [
+          EmptyState(
+            icon: LucideIcons.calendar_check,
+            message: AppStrings.noAppointmentsFound,
           ),
         ],
       );
 
       if (onRefresh != null) {
         return RefreshIndicator(
-          color: theme.colorScheme.primary,
+          color: cs.primary,
           onRefresh: onRefresh!,
           child: emptyWidget,
         );
@@ -71,34 +59,43 @@ class DoctorDayList extends StatelessWidget {
     final hasNow = nowIndex >= 0;
     final totalCount = items.length + (hasNow ? 1 : 0);
 
-    final list = ListView.builder(
+    final list = ListView.separated(
       physics: const AlwaysScrollableScrollPhysics(),
-      padding: const EdgeInsets.fromLTRB(0, AppSizes.p8, 0, AppSizes.p32),
+      padding: const EdgeInsets.symmetric(vertical: AppSizes.p4),
       itemCount: totalCount,
+      separatorBuilder: (_, index) {
+        if (hasNow && (index == nowIndex || index == nowIndex - 1)) {
+          return const SizedBox.shrink();
+        }
+        return Divider(
+          height: AppSizes.borderWidth,
+          thickness: AppSizes.borderWidth,
+          indent: AppSizes.p16,
+          endIndent: AppSizes.p16,
+          color: cs.outlineVariant.withAlpha(80),
+        );
+      },
       itemBuilder: (_, index) {
         if (hasNow && index == nowIndex) {
           return const ScheduleNowIndicator();
         }
 
         final cardIndex = hasNow && index > nowIndex ? index - 1 : index;
-        return _buildCard(items[cardIndex]);
+        return AppointmentAgendaRow(
+          item: items[cardIndex],
+          showDoctor: false,
+          onStatusChanged: onStatusChanged,
+        );
       },
     );
 
     if (onRefresh != null) {
       return RefreshIndicator(
-        color: theme.colorScheme.primary,
+        color: cs.primary,
         onRefresh: onRefresh!,
         child: list,
       );
     }
     return list;
-  }
-
-  Widget _buildCard(AppointmentWithPatient item) {
-    return ReceptionistAppointmentCard(
-      item: item,
-      onStatusChanged: onStatusChanged,
-    );
   }
 }

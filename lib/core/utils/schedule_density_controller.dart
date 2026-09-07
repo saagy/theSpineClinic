@@ -10,14 +10,7 @@ import 'package:spine_clinic_app/shared/widgets/sort_options_sheet.dart';
 class ScheduleCompactController extends Notifier<bool> {
   @override
   bool build() {
-    try {
-      final LocalSettingsService service = ref.watch(
-        localSettingsServiceProvider,
-      );
-      return service.isScheduleCompact();
-    } catch (_) {
-      return false;
-    }
+    return true;
   }
 
   /// Toggles between standard and compact view modes.

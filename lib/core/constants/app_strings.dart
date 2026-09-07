@@ -188,6 +188,10 @@ abstract final class AppStrings {
   static const String filterAllDoctors = 'All Doctors';
   static const String resetFilters = 'Reset Filters';
   static const String activeFiltersCount = 'active';
+  static const String selectPatient = 'Select Patient';
+  static const String searchPatientHint = 'Search by name or phone…';
+  static const String errorLoadingPatients = 'Error loading patients';
+  static const String noPatientsFound = 'No patients found';
 
   // Appointment
   static const String bookAppointment = 'Book Appointment';

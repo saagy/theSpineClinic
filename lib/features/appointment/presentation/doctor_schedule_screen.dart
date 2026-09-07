@@ -1,12 +1,6 @@
-/// Doctor schedule screen with time-of-day greeting, 7-day week strip,
-/// and day appointment list with now-indicator.
-///
-/// Rule 1 — under 200 lines.
-library;
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-
+import 'package:intl/intl.dart';
 import 'package:spine_clinic_app/core/constants/app_sizes.dart';
 import 'package:spine_clinic_app/core/constants/app_strings.dart';
 import 'package:spine_clinic_app/core/constants/app_text_styles.dart';
@@ -122,6 +116,9 @@ class _GreetingHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    final doctorName = doctor != null ? 'Dr. ${doctor!.fullName}' : '';
+
     return Padding(
       padding: const EdgeInsets.fromLTRB(
         AppSizes.p20,
@@ -134,14 +131,34 @@ class _GreetingHeader extends StatelessWidget {
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
               children: [
-                Text(_greeting, style: AppTextStyles.headingLarge),
+                Row(
+                  children: [
+                    Text(
+                      _greeting,
+                      style: AppTextStyles.headingLarge.copyWith(color: cs.onSurface),
+                    ),
+                    if (doctorName.isNotEmpty) ...[
+                      Text(
+                        ', ',
+                        style: AppTextStyles.headingLarge.copyWith(color: cs.onSurface),
+                      ),
+                      Flexible(
+                        child: Text(
+                          doctorName,
+                          style: AppTextStyles.headingLarge.copyWith(color: cs.primary),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
                 const SizedBox(height: AppSizes.p2),
                 Text(
-                  doctor?.fullName ?? '',
-                  style: AppTextStyles.headingMedium.copyWith(
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
-                  ),
+                  DateFormat('EEEE, MMMM d').format(DateTime.now()),
+                  style: AppTextStyles.caption.copyWith(color: cs.onSurfaceVariant),
                 ),
               ],
             ),

@@ -1,4 +1,4 @@
-/// A CircleAvatar that derives initials from a name string.
+/// An avatar widget that derives initials from a name string.
 ///
 /// Edge cases (Rule 20): names starting with numbers, single-character
 /// names, and empty names all fall back to [Icons.person].
@@ -7,12 +7,14 @@
 library;
 
 import 'package:flutter/material.dart';
+import 'package:flutter_lucide/flutter_lucide.dart';
+import 'package:spine_clinic_app/core/constants/app_sizes.dart';
 import 'package:spine_clinic_app/core/constants/app_text_styles.dart';
 
 /// A dynamic avatar that extracts up to two letter initials from [name].
 ///
 /// When valid letter initials cannot be derived the widget renders
-/// [Icons.person] as a fallback.
+/// [LucideIcons.user] as a fallback.
 class AppAvatar extends StatelessWidget {
   /// Creates an [AppAvatar].
   const AppAvatar({
@@ -29,7 +31,7 @@ class AppAvatar extends StatelessWidget {
   /// Avatar radius. Defaults to 23 (matching [AppSizes.avatarTile] / 2).
   final double? radius;
 
-  /// Avatar background color. Defaults to the active theme primary color.
+  /// Avatar background color. Defaults to the active theme primaryContainer color.
   final Color? color;
 
   /// Optional icon to display instead of initials or default person icon.
@@ -44,20 +46,29 @@ class AppAvatar extends StatelessWidget {
         ? (initials.length == 1 ? r * 0.90 : r * 0.78)
         : r * 0.78;
 
-    return CircleAvatar(
-      radius: r,
-      backgroundColor: color ?? cs.primary,
+    return Container(
+      width: r * 2,
+      height: r * 2,
+      decoration: BoxDecoration(
+        color: color ?? cs.primaryContainer,
+        shape: BoxShape.circle,
+        border: Border.all(
+          color: cs.outlineVariant.withAlpha(120),
+          width: AppSizes.borderWidth,
+        ),
+      ),
+      alignment: Alignment.center,
       child: icon != null
-          ? Icon(icon, color: cs.onPrimary, size: r * 1.1)
+          ? Icon(icon, color: cs.onPrimaryContainer, size: r * 1.0)
           : initials != null
               ? Text(
                   initials,
                   style: AppTextStyles.avatarInitials(
                     fontSize: fontSize,
-                    color: cs.onPrimary,
+                    color: cs.onPrimaryContainer,
                   ),
                 )
-              : Icon(Icons.person, color: cs.onPrimary, size: r * 1.1),
+              : Icon(LucideIcons.user, color: cs.onPrimaryContainer, size: r * 1.0),
     );
   }
 

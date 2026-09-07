@@ -5,6 +5,7 @@ import 'package:spine_clinic_app/core/constants/app_strings.dart';
 import 'package:spine_clinic_app/core/constants/app_text_styles.dart';
 import 'package:spine_clinic_app/features/auth/domain/staff.dart';
 import 'package:spine_clinic_app/features/staff/presentation/staff_providers.dart';
+import 'package:spine_clinic_app/shared/widgets/app_avatar.dart';
 import 'package:spine_clinic_app/shared/widgets/app_bottom_sheet.dart';
 import 'package:spine_clinic_app/shared/widgets/app_button.dart';
 import 'package:spine_clinic_app/shared/widgets/doctor_picker_tile.dart';
@@ -279,10 +280,10 @@ class _AllDoctorsOptionTile extends StatelessWidget {
             padding: const EdgeInsets.all(AppSizes.p16),
             child: Row(
               children: [
-                CircleAvatar(
+                AppAvatar(
+                  name: '',
+                  icon: Icons.people_alt_rounded,
                   radius: AppSizes.avatarMedium / 2,
-                  backgroundColor: cs.primaryContainer,
-                  child: Icon(Icons.people_alt_rounded, color: cs.primary),
                 ),
                 const SizedBox(width: AppSizes.p12),
                 Expanded(

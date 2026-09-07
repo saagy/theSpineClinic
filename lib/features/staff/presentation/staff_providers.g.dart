@@ -173,7 +173,7 @@ final class MyPatientsControllerProvider
 }
 
 String _$myPatientsControllerHash() =>
-    r'c0daf662f604539d24701dc554637b3ddcac23c9';
+    r'603d9ac2e5e771f050b165e003e09e10e045f755';
 
 /// Controller managing the roster of patients assigned to the doctor.
 

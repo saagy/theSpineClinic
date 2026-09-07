@@ -94,7 +94,12 @@ enough density for repeated daily work.
    outside the repository unless explicitly requested. Keep proposals
    distinct from implemented behavior; do not call unreviewed work approved.
 
-Current decision status: Patients plus the shared shell is the first pilot.
-The initial concepts were rejected as too dull; their styling is not an approved
-direction. Reference-led exploration comes next. The replacement visual style
-and component specifications are not yet selected.
+Current decision status:
+1. Patients directory redesign established the clean modern 2026 SaaS aesthetic (hairline dividers, monogram badges, Lucide icons, high density, and clean table/list responsive layouts).
+2. Schedule screens (Receptionist & Doctor) implemented:
+   - Modern medical agenda & timeline, strictly chronological by scheduled time.
+   - High-density 2-line agenda rows (`AppointmentAgendaRow`, minHeight 58px mobile, 62px desktop) with hairline dividers.
+   - Restrained status indicators: compact tonal "Check In" button for scheduled items, subtle green "Checked In" badge, muted cancelled styling.
+   - 3-dot menu sheet (`AppointmentRowActionsSheet`) for secondary actions (details, edit, cancel, restore).
+   - Minimal header with branch selector and primary "+ New Appointment" CTA; modernized 7-day week strip with dot indicators and sleek day pills.
+   - Role-aware density: doctor names omitted on doctor's own schedule.

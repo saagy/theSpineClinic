@@ -6,8 +6,8 @@ import 'package:spine_clinic_app/core/constants/app_sizes.dart';
 import 'package:spine_clinic_app/core/constants/app_strings.dart';
 import 'package:spine_clinic_app/core/constants/app_text_styles.dart';
 import 'package:spine_clinic_app/core/constants/clinic_colors.dart';
-import 'package:spine_clinic_app/core/utils/schedule_density_controller.dart';
 import 'package:spine_clinic_app/features/patient/domain/patient.dart';
+import 'package:spine_clinic_app/features/patient/presentation/widgets/patient_monogram_badge.dart';
 import 'package:spine_clinic_app/shared/widgets/app_avatar.dart';
 import 'package:spine_clinic_app/shared/widgets/app_button.dart';
 
@@ -42,8 +42,7 @@ class DuePatientCard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final bool compact =
-        isCompact ?? ref.watch(scheduleCompactControllerProvider);
+    final bool compact = isCompact ?? true;
     final ColorScheme colors = Theme.of(context).colorScheme;
     final ClinicColors clinic = ClinicColors.of(context);
     final DateTime? due = patient.nextVisitDate;
@@ -66,10 +65,9 @@ class DuePatientCard extends ConsumerWidget {
           color: colors.surface,
           borderRadius: BorderRadius.all(Radius.circular(radius)),
           border: Border.all(
-            color: colors.outlineVariant,
+            color: colors.outlineVariant.withAlpha(120),
             width: AppSizes.borderWidth,
           ),
-          boxShadow: [clinic.cardShadow],
         ),
         child: ClipRRect(
           borderRadius: BorderRadius.all(Radius.circular(radius)),

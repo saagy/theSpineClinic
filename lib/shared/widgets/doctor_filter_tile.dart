@@ -55,14 +55,10 @@ class DoctorFilterTile extends StatelessWidget {
                   radius: AppSizes.avatarSmall / 2,
                 )
               else
-                CircleAvatar(
+                AppAvatar(
+                  name: '',
+                  icon: Icons.people_alt_rounded,
                   radius: AppSizes.avatarSmall / 2,
-                  backgroundColor: cs.primaryContainer,
-                  child: Icon(
-                    Icons.people_alt_rounded,
-                    size: AppSizes.iconDefault,
-                    color: cs.primary,
-                  ),
                 ),
               const SizedBox(width: AppSizes.p12),
               Expanded(

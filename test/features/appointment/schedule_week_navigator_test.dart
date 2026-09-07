@@ -65,6 +65,7 @@ void main() {
           .width,
       AppSizes.scheduleNavigatorMaxWidth,
     );
+    expect(find.text('4'), findsOneWidget);
     await tester.drag(find.byType(PageView), const Offset(-600, 0));
     await tester.pumpAndSettle();
 

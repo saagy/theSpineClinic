@@ -2,12 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:spine_clinic_app/core/constants/app_sizes.dart';
 import 'package:spine_clinic_app/core/constants/app_strings.dart';
-import 'package:spine_clinic_app/core/constants/app_text_styles.dart';
 import 'package:spine_clinic_app/core/errors/app_exception.dart';
 import 'package:spine_clinic_app/core/network/app_routes.dart';
 import 'package:spine_clinic_app/features/appointment/presentation/booking_workboard_state.dart';
+import 'package:spine_clinic_app/features/appointment/presentation/widgets/appointment_agenda_row.dart';
+import 'package:spine_clinic_app/features/appointment/presentation/widgets/booking_workboard_pane.dart';
 import 'package:spine_clinic_app/features/appointment/presentation/widgets/due_patient_card.dart';
-import 'package:spine_clinic_app/features/appointment/presentation/widgets/receptionist_appointment_card.dart';
 import 'package:spine_clinic_app/features/patient/domain/patient.dart';
 import 'package:spine_clinic_app/shared/widgets/empty_state.dart';
 import 'package:spine_clinic_app/shared/widgets/error_view.dart';
@@ -43,7 +43,7 @@ class BookingWorkboardLists extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Expanded(
-            child: _Pane(
+            child: BookingWorkboardPane(
               title: AppStrings.duePatients,
               count: state.duePatients.length,
               child: _dueContent(context),
@@ -51,10 +51,10 @@ class BookingWorkboardLists extends StatelessWidget {
           ),
           const SizedBox(width: AppSizes.p16),
           Expanded(
-            child: _Pane(
+            child: BookingWorkboardPane(
               title: AppStrings.schedule,
               count: state.schedule.length,
-              child: _scheduleContent(),
+              child: _scheduleContent(context),
             ),
           ),
         ],
@@ -63,7 +63,7 @@ class BookingWorkboardLists extends StatelessWidget {
     return Column(
       children: [
         if (state.dueLoading || state.scheduleLoading)
-          const _SegmentedTabsSkeleton()
+          const BookingWorkboardTabsSkeleton()
         else
           SegmentedCountTabs(
             items: [
@@ -97,7 +97,7 @@ class BookingWorkboardLists extends StatelessWidget {
                   )
                 : KeyedSubtree(
                     key: ValueKey('workboard_sched_${state.scheduleLoading}'),
-                    child: _scheduleContent(),
+                    child: _scheduleContent(context),
                   ),
           ),
         ),
@@ -111,10 +111,10 @@ class BookingWorkboardLists extends StatelessWidget {
     return _dueList(context);
   }
 
-  Widget _scheduleContent() {
+  Widget _scheduleContent(BuildContext context) {
     if (state.scheduleLoading) return const SkeletonTileList(count: 5);
     if (state.scheduleError != null) return _error(state.scheduleError!);
-    return _scheduleList();
+    return _scheduleList(context);
   }
 
   Widget _error(Object error) => ErrorView(
@@ -148,20 +148,26 @@ class BookingWorkboardLists extends StatelessWidget {
     );
   }
 
-  Widget _scheduleList() {
+  Widget _scheduleList(BuildContext context) {
     if (state.schedule.isEmpty) {
       return _refreshableEmpty(
         AppStrings.noScheduleForDate,
         Icons.calendar_today_outlined,
       );
     }
+    final cs = Theme.of(context).colorScheme;
     return RefreshIndicator(
       onRefresh: onRefresh,
-      child: ListView.builder(
+      child: ListView.separated(
         physics: const AlwaysScrollableScrollPhysics(),
         padding: const EdgeInsets.only(bottom: AppSizes.p24),
         itemCount: state.schedule.length,
-        itemBuilder: (_, index) => ReceptionistAppointmentCard(
+        separatorBuilder: (_, _) => Divider(
+          height: 1,
+          thickness: AppSizes.borderWidth,
+          color: cs.outlineVariant.withAlpha(80),
+        ),
+        itemBuilder: (_, index) => AppointmentAgendaRow(
           item: state.schedule[index],
           onStatusChanged: onRefresh,
         ),
@@ -179,49 +185,6 @@ class BookingWorkboardLists extends StatelessWidget {
             hasScrollBody: false,
             child: EmptyState(message: message, icon: icon),
           ),
-        ],
-      ),
-    );
-  }
-}
-
-class _Pane extends StatelessWidget {
-  const _Pane({required this.title, required this.count, required this.child});
-  final String title;
-  final int count;
-  final Widget child;
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Text(
-          AppStrings.sectionCount(title, count),
-          style: AppTextStyles.headingSmall,
-        ),
-        const SizedBox(height: AppSizes.p12),
-        Expanded(child: child),
-      ],
-    );
-  }
-}
-
-class _SegmentedTabsSkeleton extends StatelessWidget {
-  const _SegmentedTabsSkeleton();
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppSizes.p12,
-        vertical: AppSizes.p8,
-      ),
-      child: Row(
-        children: const [
-          Expanded(child: SkeletonBox(height: 44, borderRadius: 999)),
-          SizedBox(width: AppSizes.p8),
-          Expanded(child: SkeletonBox(height: 44, borderRadius: 999)),
         ],
       ),
     );

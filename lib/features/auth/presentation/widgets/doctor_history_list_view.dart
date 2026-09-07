@@ -3,7 +3,7 @@ import 'package:intl/intl.dart';
 import 'package:spine_clinic_app/core/constants/app_sizes.dart';
 import 'package:spine_clinic_app/core/constants/app_text_styles.dart';
 import 'package:spine_clinic_app/features/appointment/domain/appointment_repository.dart';
-import 'package:spine_clinic_app/features/appointment/presentation/widgets/receptionist_appointment_card.dart';
+import 'package:spine_clinic_app/features/appointment/presentation/widgets/appointment_agenda_row.dart';
 import 'package:spine_clinic_app/shared/widgets/animated_list_item.dart';
 
 class DoctorHistoryListView extends StatefulWidget {
@@ -38,15 +38,14 @@ class _DoctorHistoryListViewState extends State<DoctorHistoryListView> {
   @override
   Widget build(BuildContext context) {
     final List<_ListItem> displayItems = _buildListItems(widget.items);
+    final cs = Theme.of(context).colorScheme;
 
     return RefreshIndicator(
       onRefresh: widget.onRefresh,
       child: ListView.builder(
         physics: const AlwaysScrollableScrollPhysics(),
         controller: widget.scrollController,
-        padding: const EdgeInsets.only(
-          bottom: AppSizes.p32,
-        ),
+        padding: const EdgeInsets.only(bottom: AppSizes.p32),
         itemCount: displayItems.length,
         itemBuilder: (context, int index) {
           final _ListItem listItem = displayItems[index];
@@ -58,24 +57,34 @@ class _DoctorHistoryListViewState extends State<DoctorHistoryListView> {
               child: Text(
                 listItem.title,
                 style: AppTextStyles.captionBold.copyWith(
-                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  color: cs.onSurfaceVariant,
                 ),
               ),
             );
           }
           final DoctorScheduleItem item = (listItem as _HistoryItem).item;
-          return AnimatedListItem(
-            index: index,
-            animatedIndices: _animatedIndices,
-            child: ReceptionistAppointmentCard(
-              key: ValueKey(item.appointment.id),
-              item: AppointmentWithPatient(
-                appointment: item.appointment,
-                patient: item.patient,
+          return Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              AnimatedListItem(
+                index: index,
+                animatedIndices: _animatedIndices,
+                child: AppointmentAgendaRow(
+                  key: ValueKey(item.appointment.id),
+                  item: AppointmentWithPatient(
+                    appointment: item.appointment,
+                    patient: item.patient,
+                  ),
+                  showDoctor: false,
+                  onStatusChanged: widget.onStatusChanged,
+                ),
               ),
-              showMenu: true,
-              onStatusChanged: widget.onStatusChanged,
-            ),
+              Divider(
+                height: 1,
+                thickness: AppSizes.borderWidth,
+                color: cs.outlineVariant.withAlpha(80),
+              ),
+            ],
           );
         },
       ),
@@ -102,7 +111,8 @@ class _DoctorHistoryListViewState extends State<DoctorHistoryListView> {
     final DateTime localDate = date.toLocal();
     final DateTime now = DateTime.now();
     final DateTime today = DateTime(now.year, now.month, now.day);
-    final DateTime comparisonDate = DateTime(localDate.year, localDate.month, localDate.day);
+    final DateTime comparisonDate =
+        DateTime(localDate.year, localDate.month, localDate.day);
 
     final int difference = today.difference(comparisonDate).inDays;
 

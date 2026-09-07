@@ -158,7 +158,7 @@ final class NewPatientControllerProvider
 }
 
 String _$newPatientControllerHash() =>
-    r'bf8f4bc9e1dbea06a19f01a888f2f459f0e0e6f5';
+    r'00628e87bcc95c3d0e0215f723ebbbd3fffd8b39';
 
 /// Notifier provider handling form submission states for NewPatientScreen.
 

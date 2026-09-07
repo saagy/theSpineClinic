@@ -9,20 +9,14 @@ part of 'patient_list_providers.dart';
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // ignore_for_file: type=lint, type=warning
 /// Manages the patient list with filters and pagination.
-///
-/// Search debounce is handled by [AppSearchBar]; call [searchNow] directly.
 
 @ProviderFor(PatientList)
 final patientListProvider = PatientListProvider._();
 
 /// Manages the patient list with filters and pagination.
-///
-/// Search debounce is handled by [AppSearchBar]; call [searchNow] directly.
 final class PatientListProvider
     extends $AsyncNotifierProvider<PatientList, List<Patient>> {
   /// Manages the patient list with filters and pagination.
-  ///
-  /// Search debounce is handled by [AppSearchBar]; call [searchNow] directly.
   PatientListProvider._()
     : super(
         from: null,
@@ -42,11 +36,9 @@ final class PatientListProvider
   PatientList create() => PatientList();
 }
 
-String _$patientListHash() => r'cf43b27b9af47f444aa9cd2aa7372434200426fd';
+String _$patientListHash() => r'25f7bb9cd46626107dc38a91a08a7bfdde3b00a5';
 
 /// Manages the patient list with filters and pagination.
-///
-/// Search debounce is handled by [AppSearchBar]; call [searchNow] directly.
 
 abstract class _$PatientList extends $AsyncNotifier<List<Patient>> {
   FutureOr<List<Patient>> build();

@@ -6,30 +6,23 @@ library;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-
 import 'package:spine_clinic_app/core/constants/app_sizes.dart';
 import 'package:spine_clinic_app/core/constants/app_strings.dart';
 import 'package:spine_clinic_app/core/constants/app_text_styles.dart';
 import 'package:spine_clinic_app/features/appointment/domain/appointment_repository.dart';
 import 'package:spine_clinic_app/features/appointment/presentation/all_appointments_providers.dart';
-import 'package:spine_clinic_app/features/appointment/presentation/widgets/appointment_filter_content.dart';
-import 'package:spine_clinic_app/features/appointment/presentation/widgets/receptionist_appointment_card.dart';
 import 'package:spine_clinic_app/features/appointment/presentation/widgets/all_filter_chips_helper.dart';
 import 'package:spine_clinic_app/features/appointment/presentation/widgets/receptionist_all_helpers.dart';
+import 'package:spine_clinic_app/features/appointment/presentation/widgets/receptionist_all_list.dart';
 import 'package:spine_clinic_app/shared/widgets/active_filter_chips_row.dart';
 import 'package:spine_clinic_app/shared/widgets/app_async_state_handler.dart';
-import 'package:spine_clinic_app/shared/widgets/app_bottom_sheet.dart';
 import 'package:spine_clinic_app/shared/widgets/app_search_bar.dart';
-import 'package:spine_clinic_app/shared/widgets/empty_state.dart';
 import 'package:spine_clinic_app/shared/widgets/sort_filter_bar.dart';
-import 'package:spine_clinic_app/shared/widgets/sort_options_sheet.dart';
-import 'package:spine_clinic_app/shared/widgets/animated_list_item.dart';
 
 /// The "All" tab for the receptionist dashboard. Mirrors the standalone
-/// [AllAppointmentsScreen] but embeds as a tab and uses [ReceptionistAppointmentCard]
-/// for visual consistency with the Today / Booking tabs.
+/// [AllAppointmentsScreen] but embeds as a tab and uses [AppointmentAgendaRow]
+/// for unified operational density and visual consistency.
 class ReceptionistAllTab extends ConsumerStatefulWidget {
-  /// Creates a [ReceptionistAllTab].
   const ReceptionistAllTab({super.key, required this.onStatusChanged});
   final VoidCallback onStatusChanged;
 
@@ -60,40 +53,13 @@ class _ReceptionistAllTabState extends ConsumerState<ReceptionistAllTab> {
     }
   }
 
-  // ── Sort ────────────────────────────────────────────────────────────────────
-
   String get _sortLabel {
     return ref.read(allAppointmentsProvider.notifier).isAscending
-        ? 'Date ↑'
-        : 'Date ↓';
-  }
-
-  Future<void> _showSortSheet() async {
-    final n = ref.read(allAppointmentsProvider.notifier);
-    final currentAsc = n.isAscending;
-    final selected = await SortOptionsSheet.show<String>(
-      context: context,
-      title: 'Sort by Date',
-      options: const [
-        SortOption(
-          value: 'newest',
-          label: 'Date (Newest)',
-          buttonLabel: 'Date ↓',
-        ),
-        SortOption(
-          value: 'oldest',
-          label: 'Date (Oldest)',
-          buttonLabel: 'Date ↑',
-        ),
-      ],
-      selected: currentAsc ? 'oldest' : 'newest',
-    );
-    if (selected != null && mounted) n.setSortAscending(selected == 'oldest');
+        ? 'Date \u2191'
+        : 'Date \u2193';
   }
 
   List<ActiveFilterChip> get _chips => buildAllFilterChips(ref);
-
-  // ── Build ───────────────────────────────────────────────────────────────────
 
   @override
   Widget build(BuildContext context) {
@@ -118,9 +84,9 @@ class _ReceptionistAllTabState extends ConsumerState<ReceptionistAllTab> {
         ),
         SortFilterBar(
           sortLabel: 'Sort: $_sortLabel',
-          onSortTap: _showSortSheet,
+          onSortTap: () => showAllSortSheet(context, ref),
           activeFilterCount: _chips.length,
-          onFilterTap: () => _openFilterSheet(context),
+          onFilterTap: () => openAllFilterSheet(context),
         ),
         ActiveFilterChipsRow(
           chips: _chips,
@@ -152,86 +118,15 @@ class _ReceptionistAllTabState extends ConsumerState<ReceptionistAllTab> {
             emptyMessage: AppStrings.noAppointmentsFound,
             emptyIcon: Icons.event_busy_rounded,
             skeletonCount: 6,
-            onData: (items) => _buildDataView(items),
+            onData: (items) => ReceptionistAllList(
+              items: items,
+              scrollController: _scrollCtrl,
+              animatedIndices: _animatedIndices,
+              onStatusChanged: widget.onStatusChanged,
+            ),
           ),
         ),
       ],
-    );
-  }
-
-  Widget _buildDataView(List<AppointmentWithPatient> items) {
-    if (items.isEmpty) {
-      return const EmptyState(
-        message: AppStrings.noAppointmentsFound,
-        icon: Icons.event_busy_rounded,
-      );
-    }
-    final bool loadingMore = ref.watch(isLoadingMoreProvider);
-    final list = buildDateGroupedList(items);
-    return RefreshIndicator(
-      color: Theme.of(context).colorScheme.primary,
-      onRefresh: () async =>
-          ref.read(allAppointmentsProvider.notifier).refresh(),
-      child: ListView.builder(
-        physics: const AlwaysScrollableScrollPhysics(),
-        controller: _scrollCtrl,
-        padding: const EdgeInsets.only(bottom: AppSizes.p32),
-        itemCount: list.length + (loadingMore ? 1 : 0),
-        itemBuilder: (_, i) {
-          if (i == list.length) {
-            return Padding(
-              padding: const EdgeInsets.symmetric(vertical: AppSizes.p16),
-              child: Center(
-                child: SizedBox(
-                  width: AppSizes.iconDefault,
-                  height: AppSizes.iconDefault,
-                  child: CircularProgressIndicator(
-                    strokeWidth: AppSizes.strokeWidthThin,
-                    color: Theme.of(context).colorScheme.primary,
-                  ),
-                ),
-              ),
-            );
-          }
-          final item = list[i];
-          if (item is AllHeaderItem) {
-            return Padding(
-              padding: const EdgeInsets.fromLTRB(
-                AppSizes.p20,
-                AppSizes.p16,
-                AppSizes.p20,
-                AppSizes.p8,
-              ),
-              child: Text(
-                item.title,
-                style: AppTextStyles.captionBold.copyWith(
-                  color: Theme.of(context).colorScheme.onSurfaceVariant,
-                ),
-              ),
-            );
-          }
-          final a = (item as AllApptItem).item;
-          return AnimatedListItem(
-            index: i,
-            animatedIndices: _animatedIndices,
-            child: ReceptionistAppointmentCard(
-              item: a,
-              showMenu: true,
-              onStatusChanged: widget.onStatusChanged,
-            ),
-          );
-        },
-      ),
-    );
-  }
-
-  void _openFilterSheet(BuildContext context) {
-    AppBottomSheet.show(
-      context: context,
-      title: AppStrings.advancedFilters,
-      initialChildSize: AppSizes.sheetMax,
-      builder: (ctx, scrollCtrl) =>
-          AppointmentFilterContent(scrollController: scrollCtrl),
     );
   }
 }

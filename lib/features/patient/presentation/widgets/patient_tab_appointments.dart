@@ -1,27 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 import 'package:spine_clinic_app/core/constants/app_sizes.dart';
 import 'package:spine_clinic_app/core/constants/app_strings.dart';
-import 'package:spine_clinic_app/core/network/app_routes.dart';
-import 'package:spine_clinic_app/features/appointment/presentation/appointment_refresh.dart';
-import 'package:spine_clinic_app/features/appointment/presentation/widgets/receptionist_appointment_card.dart';
+import 'package:spine_clinic_app/features/appointment/presentation/widgets/appointment_agenda_row.dart';
 import 'package:spine_clinic_app/features/auth/domain/user_role.dart';
 import 'package:spine_clinic_app/features/auth/presentation/auth_providers.dart';
 import 'package:spine_clinic_app/features/patient/domain/patient.dart';
-import 'package:spine_clinic_app/features/patient/domain/patient_appointment_sort_option.dart';
 import 'package:spine_clinic_app/features/patient/presentation/patient_appointments_notifier.dart';
+import 'package:spine_clinic_app/features/patient/presentation/widgets/patient_appointment_chips_helper.dart';
+import 'package:spine_clinic_app/features/patient/presentation/widgets/patient_appointment_tab_actions.dart';
+import 'package:spine_clinic_app/features/patient/presentation/widgets/patient_appointments_error_state.dart';
 import 'package:spine_clinic_app/shared/widgets/active_filter_chips_row.dart';
 import 'package:spine_clinic_app/shared/widgets/animated_list_item.dart';
-import 'package:spine_clinic_app/shared/widgets/app_bottom_sheet.dart';
 import 'package:spine_clinic_app/shared/widgets/app_button.dart';
 import 'package:spine_clinic_app/shared/widgets/empty_state.dart';
 import 'package:spine_clinic_app/shared/widgets/skeleton_loader.dart';
 import 'package:spine_clinic_app/shared/widgets/slim_sort_filter_bar.dart';
-import 'package:spine_clinic_app/shared/widgets/sort_options_sheet.dart';
-import 'patient_appointment_chips_helper.dart';
-import 'patient_appointments_error_state.dart';
-import 'patient_appointment_filter_content.dart';
 
 class PatientTabAppointments extends ConsumerStatefulWidget {
   const PatientTabAppointments({super.key, required this.patient});
@@ -52,41 +46,6 @@ class _PatientTabAppointmentsState
     return false;
   }
 
-  Future<void> _showSortSheet() async {
-    final state = ref.read(patientAppointmentsProvider(widget.patient.id));
-    final notifier = ref.read(
-      patientAppointmentsProvider(widget.patient.id).notifier,
-    );
-
-    final selected = await SortOptionsSheet.show<PatientAppointmentSortOption>(
-      context: context,
-      title: AppStrings.sortOptions,
-      options: PatientAppointmentSortOption.values
-          .map(
-            (o) => SortOption(
-              value: o,
-              label: o.displayLabel,
-              buttonLabel: o.buttonLabel,
-            ),
-          )
-          .toList(),
-      selected: state.sort,
-    );
-    if (selected != null && mounted) notifier.setSort(selected);
-  }
-
-  void _openFilterSheet() {
-    AppBottomSheet.show(
-      context: context,
-      title: AppStrings.filters,
-      initialChildSize: AppSizes.sheetMax,
-      builder: (context, scrollController) => PatientAppointmentFilterContent(
-        patientId: widget.patient.id,
-        scrollController: scrollController,
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
@@ -114,15 +73,26 @@ class _PatientTabAppointmentsState
               ),
               child: AppButton(
                 labelText: AppStrings.bookAppointment,
-                onPressed: _openNewAppointment,
+                onPressed: () => PatientAppointmentTabActions.openNewAppointment(
+                  context: context,
+                  ref: ref,
+                  patientId: widget.patient.id,
+                ),
                 shape: AppButtonShape.pill,
               ),
             ),
           SlimSortFilterBar(
             sortLabel: state.sort.buttonLabel,
-            onSortTap: _showSortSheet,
+            onSortTap: () => PatientAppointmentTabActions.showSortSheet(
+              context: context,
+              ref: ref,
+              patientId: widget.patient.id,
+            ),
             activeFilterCount: chips.length,
-            onFilterTap: _openFilterSheet,
+            onFilterTap: () => PatientAppointmentTabActions.openFilterSheet(
+              context,
+              widget.patient.id,
+            ),
             totalCount: state.appointments.isNotEmpty ? state.totalCount : null,
           ),
           if (chips.isNotEmpty)
@@ -184,16 +154,24 @@ class _PatientTabAppointmentsState
                               );
                             }
                             final item = state.appointments[index];
-                            return AnimatedListItem(
-                              index: index,
-                              animatedIndices: _animatedIndices,
-                              child: ReceptionistAppointmentCard(
-                                item: item,
-                                showMenu: true,
-                                showDate: true,
-                                isPatientContext: true,
-                                onStatusChanged: notifier.refresh,
-                              ),
+                            return Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                AnimatedListItem(
+                                  index: index,
+                                  animatedIndices: _animatedIndices,
+                                  child: AppointmentAgendaRow(
+                                    item: item,
+                                    showDoctor: true,
+                                    onStatusChanged: notifier.refresh,
+                                  ),
+                                ),
+                                Divider(
+                                  height: 1,
+                                  thickness: AppSizes.borderWidth,
+                                  color: cs.outlineVariant.withAlpha(80),
+                                ),
+                              ],
                             );
                           },
                         ),
@@ -205,13 +183,4 @@ class _PatientTabAppointmentsState
       ),
     );
   }
-
-  Future<void> _openNewAppointment() async {
-    final route =
-        '${AppRoutes.newAppointment}?patientId=${widget.patient.id}';
-    await context.push(route);
-    if (!mounted) return;
-    AppointmentRefresh.patientAndDashboards(ref, patientId: widget.patient.id);
-  }
 }
-

@@ -23,19 +23,10 @@ import 'package:spine_clinic_app/shared/widgets/app_button.dart';
 
 void main() {
   group('Schedule Density Controller Tests', () {
-    test('defaults to standard mode and toggles correctly', () {
+    test('defaults to compact mode and toggles correctly', () {
       final container = ProviderContainer();
       addTearDown(container.dispose);
 
-      expect(container.read(scheduleCompactControllerProvider), isFalse);
-      expect(
-        scheduleDensityLabel(
-          container.read(scheduleCompactControllerProvider),
-        ),
-        AppStrings.scheduleDensityStandard,
-      );
-
-      container.read(scheduleCompactControllerProvider.notifier).toggle();
       expect(container.read(scheduleCompactControllerProvider), isTrue);
       expect(
         scheduleDensityLabel(
@@ -44,10 +35,19 @@ void main() {
         AppStrings.scheduleDensityCompact,
       );
 
+      container.read(scheduleCompactControllerProvider.notifier).toggle();
+      expect(container.read(scheduleCompactControllerProvider), isFalse);
+      expect(
+        scheduleDensityLabel(
+          container.read(scheduleCompactControllerProvider),
+        ),
+        AppStrings.scheduleDensityStandard,
+      );
+
       container
           .read(scheduleCompactControllerProvider.notifier)
-          .setCompact(false);
-      expect(container.read(scheduleCompactControllerProvider), isFalse);
+          .setCompact(true);
+      expect(container.read(scheduleCompactControllerProvider), isTrue);
     });
   });
 

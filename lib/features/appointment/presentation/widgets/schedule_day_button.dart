@@ -4,6 +4,7 @@ import 'package:spine_clinic_app/core/constants/app_sizes.dart';
 import 'package:spine_clinic_app/core/constants/app_strings.dart';
 import 'package:spine_clinic_app/core/constants/app_text_styles.dart';
 
+/// Modern 2026 SaaS day button for the schedule week strip.
 class ScheduleDayButton extends StatelessWidget {
   const ScheduleDayButton({
     super.key,
@@ -40,7 +41,7 @@ class ScheduleDayButton extends StatelessWidget {
         type: MaterialType.transparency,
         child: InkWell(
           onTap: onPressed,
-          borderRadius: AppSizes.borderRadiusCard,
+          borderRadius: BorderRadius.circular(AppSizes.r12),
           child: SizedBox(
             height: AppSizes.scheduleWeekHeight,
             child: ExcludeSemantics(
@@ -48,12 +49,14 @@ class ScheduleDayButton extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: <Widget>[
                   Text(
-                    DateFormat('EEE').format(date),
-                    style: AppTextStyles.captionMedium.copyWith(
+                    DateFormat('EEE').format(date).toUpperCase(),
+                    style: AppTextStyles.captionBold.copyWith(
                       color: labelColor,
+                      fontSize: 10.5,
+                      letterSpacing: 0.5,
                     ),
                   ),
-                  const SizedBox(height: AppSizes.p2),
+                  const SizedBox(height: AppSizes.p4),
                   Container(
                     width: AppSizes.scheduleDayMarkerSize,
                     height: AppSizes.scheduleDayMarkerSize,
@@ -61,11 +64,13 @@ class ScheduleDayButton extends StatelessWidget {
                     decoration: BoxDecoration(
                       color: selected
                           ? colors.primary
-                          : colors.surface.withValues(alpha: 0),
-                      shape: BoxShape.circle,
+                          : (today
+                              ? colors.primary.withAlpha(24)
+                              : Colors.transparent),
+                      borderRadius: BorderRadius.circular(AppSizes.r8),
                       border: today && !selected
                           ? Border.all(
-                              color: colors.primary,
+                              color: colors.primary.withAlpha(180),
                               width: AppSizes.borderWidthFocused,
                             )
                           : null,
@@ -73,15 +78,24 @@ class ScheduleDayButton extends StatelessWidget {
                     child: Text(
                       date.day.toString(),
                       style: AppTextStyles.bodyBold.copyWith(
-                        color: selected ? colors.onPrimary : colors.onSurface,
-                        fontFeatures: AppTextStyles.number.fontFeatures,
+                        color: selected
+                            ? colors.onPrimary
+                            : (today ? colors.primary : colors.onSurface),
+                        fontFeatures: const [FontFeature.tabularFigures()],
+                        fontSize: 14.0,
                       ),
                     ),
                   ),
-                  Text(
-                    appointmentCount == 0 ? '' : appointmentCount.toString(),
-                    style: AppTextStyles.captionBold.copyWith(
-                      color: selected ? colors.primary : labelColor,
+                  const SizedBox(height: 2.0),
+                  SizedBox(
+                    height: 14.0,
+                    child: Text(
+                      appointmentCount == 0 ? '' : appointmentCount.toString(),
+                      style: AppTextStyles.captionBold.copyWith(
+                        color: selected ? colors.primary : colors.onSurfaceVariant,
+                        fontSize: 10.5,
+                        fontFeatures: const [FontFeature.tabularFigures()],
+                      ),
                     ),
                   ),
                 ],

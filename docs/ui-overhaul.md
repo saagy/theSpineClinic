@@ -1,12 +1,8 @@
 # UI Overhaul Plan
 
 ## Status
-
-Initial screenshot/code audit, 2026-09-06. The first Patients concepts were
-rejected as too dull; no redesigned Flutter screen has been implemented or
-visually accepted. The user authorizes complete
-replacement of unsuitable layouts and components. [DESIGN.md](../DESIGN.md)
-defines working principles; [PRODUCT.md](../PRODUCT.md) defines the users.
+ 
+Schedules (Receptionist & Doctor) redesign implemented in alignment with the modern 2026 SaaS aesthetic established in the Patients pilot. Replaced heavy nested containers and aggressive status tinting with a strictly chronological agenda timeline, hairline dividers, compact inline Check-In actions, and streamlined week navigation. [DESIGN.md](../DESIGN.md) records adopted patterns.
 
 ## Screen Order
 
