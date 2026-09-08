@@ -87,6 +87,7 @@ class ReceptionistAllList extends ConsumerWidget {
                 index: i,
                 animatedIndices: animatedIndices,
                 child: AppointmentAgendaRow(
+                  key: ValueKey(a.appointment.id),
                   item: a,
                   showDoctor: true,
                   onStatusChanged: onStatusChanged,

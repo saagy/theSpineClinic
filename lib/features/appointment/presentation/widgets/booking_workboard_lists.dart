@@ -167,10 +167,14 @@ class BookingWorkboardLists extends StatelessWidget {
           thickness: AppSizes.borderWidth,
           color: cs.outlineVariant.withAlpha(80),
         ),
-        itemBuilder: (_, index) => AppointmentAgendaRow(
-          item: state.schedule[index],
-          onStatusChanged: onRefresh,
-        ),
+        itemBuilder: (_, index) {
+          final item = state.schedule[index];
+          return AppointmentAgendaRow(
+            key: ValueKey(item.appointment.id),
+            item: item,
+            onStatusChanged: onRefresh,
+          );
+        },
       ),
     );
   }

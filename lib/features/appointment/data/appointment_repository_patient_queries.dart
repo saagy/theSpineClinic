@@ -42,7 +42,9 @@ mixin _PatientAppointmentQueries on _AppointmentRepositoryBase {
           .from(_appointmentsTable)
           .select()
           .eq('patient_id', patientId)
-          .order('scheduled_at');
+          .order('scheduled_at')
+          .order('created_at')
+          .order('id');
       return rows.map(Appointment.fromJson).toList();
     });
   }
@@ -59,7 +61,9 @@ mixin _PatientAppointmentQueries on _AppointmentRepositoryBase {
           .eq('patient_id', patientId)
           .eq('appointment_doctors.doctor_id', doctorId)
           .eq('appointment_doctors.is_active', true)
-          .order('scheduled_at');
+          .order('scheduled_at')
+          .order('created_at')
+          .order('id');
       return rows.map(Appointment.fromJson).toList();
     });
   }

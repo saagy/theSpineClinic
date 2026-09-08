@@ -1,53 +1,73 @@
 /// Date-grouped list builder and action helpers for the "All" appointments tab.
-///
-/// Extracted to keep [ReceptionistAllTab] under 200 lines.
-/// Rule 1 — under 200 lines.
 library;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
-import 'package:spine_clinic_app/core/constants/app_sizes.dart';
-import 'package:spine_clinic_app/core/constants/app_strings.dart';
 import 'package:spine_clinic_app/features/appointment/domain/appointment_repository.dart';
+import 'package:spine_clinic_app/features/appointment/domain/appointment_status.dart';
+import 'package:spine_clinic_app/features/appointment/domain/appointment_type.dart';
 import 'package:spine_clinic_app/features/appointment/presentation/all_appointments_providers.dart';
-import 'package:spine_clinic_app/features/appointment/presentation/widgets/appointment_filter_content.dart';
-import 'package:spine_clinic_app/shared/widgets/app_bottom_sheet.dart';
-import 'package:spine_clinic_app/shared/widgets/sort_options_sheet.dart';
+import 'package:spine_clinic_app/features/appointment/presentation/widgets/appointment_filter_sheet.dart';
+import 'package:spine_clinic_app/features/appointment/presentation/widgets/appointment_sort_options.dart';
+import 'package:spine_clinic_app/features/auth/domain/user_role.dart';
+import 'package:spine_clinic_app/features/auth/presentation/auth_providers.dart';
+import 'package:spine_clinic_app/features/patient/domain/clinic_location.dart';
 
-/// Shows the sort by date bottom sheet for the All tab.
-Future<void> showAllSortSheet(BuildContext context, WidgetRef ref) async {
-  final n = ref.read(allAppointmentsProvider.notifier);
-  final currentAsc = n.isAscending;
-  final selected = await SortOptionsSheet.show<String>(
-    context: context,
-    title: 'Sort by Date',
-    options: const [
-      SortOption(
-        value: 'newest',
-        label: 'Date (Newest)',
-        buttonLabel: 'Date \u2193',
-      ),
-      SortOption(
-        value: 'oldest',
-        label: 'Date (Oldest)',
-        buttonLabel: 'Date \u2191',
-      ),
-    ],
-    selected: currentAsc ? 'oldest' : 'newest',
-  );
-  if (selected != null) n.setSortAscending(selected == 'oldest');
-}
+/// Opens the filter and sort bottom sheet for the All appointments tab.
+Future<void> openAllFilterSheet(BuildContext context, WidgetRef ref) async {
+  final notifier = ref.read(allAppointmentsProvider.notifier);
+  final user = ref.read(currentUserProvider).value;
+  final canFilterDoctor = user?.role == UserRole.receptionist ||
+      (user?.role == UserRole.doctor && (user?.isSeniorDoctor ?? false)) ||
+      user?.role == UserRole.superAdmin;
+  final canFilterClinic = user?.role != UserRole.receptionist;
 
-/// Opens the advanced filter bottom sheet for the All tab.
-void openAllFilterSheet(BuildContext context) {
-  AppBottomSheet.show(
+  ClinicLocation? clinicLoc;
+  if (notifier.clinic != null) {
+    clinicLoc = ClinicLocation.values
+        .cast<ClinicLocation?>()
+        .firstWhere((c) => c?.dbValue == notifier.clinic, orElse: () => null);
+  }
+
+  AppointmentStatus? status;
+  if (notifier.status != null) {
+    status = AppointmentStatus.values
+        .cast<AppointmentStatus?>()
+        .firstWhere((s) => s?.dbValue == notifier.status, orElse: () => null);
+  }
+
+  AppointmentType? type;
+  if (notifier.type != null) {
+    type = AppointmentType.values
+        .cast<AppointmentType?>()
+        .firstWhere((t) => t?.dbValue == notifier.type, orElse: () => null);
+  }
+
+  final result = await AppointmentFilterSheet.show(
     context: context,
-    title: AppStrings.advancedFilters,
-    initialChildSize: AppSizes.sheetMax,
-    builder: (ctx, scrollCtrl) =>
-        AppointmentFilterContent(scrollController: scrollCtrl),
+    dateFrom: notifier.dateFrom,
+    dateTo: notifier.dateTo,
+    doctorId: notifier.doctorId,
+    clinic: clinicLoc,
+    status: status,
+    type: type,
+    sort: AppointmentSortOption.fromAscending(notifier.isAscending),
+    canFilterDoctor: canFilterDoctor,
+    canFilterClinic: canFilterClinic,
   );
+
+  if (result != null) {
+    notifier.applyFilters(
+      from: result.dateFrom,
+      to: result.dateTo,
+      docId: result.doctorId,
+      clinicLoc: result.clinic?.dbValue,
+      statusFilter: result.status?.dbValue,
+      typeFilter: result.type?.dbValue,
+      ascending: result.sortOption.ascending,
+    );
+  }
 }
 
 /// Builds a date-grouped list from raw appointment items.

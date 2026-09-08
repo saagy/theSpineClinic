@@ -3,6 +3,7 @@ import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:spine_clinic_app/core/constants/app_sizes.dart';
 import 'package:spine_clinic_app/core/constants/app_strings.dart';
 import 'package:spine_clinic_app/core/constants/app_text_styles.dart';
+import 'package:spine_clinic_app/features/patient/presentation/widgets/patient_search_field.dart';
 
 /// Top header bar for the patients screen featuring title, search,
 /// filter button with active count indicator, and "+ New Patient" CTA.
@@ -29,8 +30,6 @@ class PatientListHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
-    final isDesktop = MediaQuery.sizeOf(context).width >= 768;
-
     return Padding(
       padding: const EdgeInsets.fromLTRB(
         AppSizes.p20,
@@ -48,12 +47,17 @@ class PatientListHeader extends StatelessWidget {
                 children: [
                   Text(
                     AppStrings.patients,
-                    style: AppTextStyles.headingLarge.copyWith(color: cs.onSurface),
+                    style: AppTextStyles.headingLarge.copyWith(
+                      color: cs.onSurface,
+                    ),
                   ),
                   if (totalCount != null) ...[
                     const SizedBox(width: AppSizes.p10),
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: AppSizes.p8, vertical: AppSizes.p2),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: AppSizes.p8,
+                        vertical: AppSizes.p2,
+                      ),
                       decoration: BoxDecoration(
                         color: cs.surfaceContainerHighest,
                         borderRadius: BorderRadius.circular(AppSizes.r12),
@@ -74,12 +78,20 @@ class PatientListHeader extends StatelessWidget {
                 FilledButton.icon(
                   onPressed: onNewPatientTap,
                   icon: const Icon(LucideIcons.plus, size: 16.0),
-                  label: Text(AppStrings.newPatientButton, style: AppTextStyles.bodyBold),
+                  label: Text(
+                    AppStrings.newPatientButton,
+                    style: AppTextStyles.bodyBold,
+                  ),
                   style: FilledButton.styleFrom(
                     backgroundColor: cs.primary,
                     foregroundColor: cs.onPrimary,
-                    padding: const EdgeInsets.symmetric(horizontal: AppSizes.p16, vertical: AppSizes.p10),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppSizes.r8)),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: AppSizes.p16,
+                      vertical: AppSizes.p10,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(AppSizes.r8),
+                    ),
                   ),
                 ),
             ],
@@ -87,55 +99,21 @@ class PatientListHeader extends StatelessWidget {
           const SizedBox(height: AppSizes.p4),
           Text(
             AppStrings.patientsSubtitle,
-            style: AppTextStyles.caption.copyWith(
-              color: cs.onSurfaceVariant,
-            ),
+            style: AppTextStyles.caption.copyWith(color: cs.onSurfaceVariant),
           ),
           const SizedBox(height: AppSizes.p16),
-          _buildControlsRow(context, isDesktop),
+          _buildControlsRow(context),
         ],
       ),
     );
   }
 
-  Widget _buildControlsRow(BuildContext context, bool isDesktop) {
+  Widget _buildControlsRow(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
 
     return Row(
       children: [
-        Expanded(
-          child: Container(
-            height: 40.0,
-            decoration: BoxDecoration(
-              color: cs.surface,
-              borderRadius: BorderRadius.circular(AppSizes.r8),
-              border: Border.all(
-                color: cs.outlineVariant.withAlpha(140),
-                width: AppSizes.borderWidth,
-              ),
-            ),
-            child: TextField(
-              onChanged: onSearchChanged,
-              style: AppTextStyles.bodyMedium.copyWith(color: cs.onSurface),
-              decoration: InputDecoration(
-                hintText: AppStrings.searchPatients,
-                hintStyle: AppTextStyles.caption.copyWith(
-                  color: cs.onSurfaceVariant.withAlpha(140),
-                ),
-                prefixIcon: Icon(
-                  LucideIcons.search,
-                  size: 16.0,
-                  color: cs.onSurfaceVariant,
-                ),
-                border: InputBorder.none,
-                contentPadding: const EdgeInsets.symmetric(
-                  horizontal: AppSizes.p12,
-                  vertical: AppSizes.p8,
-                ),
-              ),
-            ),
-          ),
-        ),
+        Expanded(child: PatientSearchField(onChanged: onSearchChanged)),
         const SizedBox(width: AppSizes.p8),
         OutlinedButton.icon(
           onPressed: onFilterTap,
@@ -156,7 +134,10 @@ class PatientListHeader extends StatelessWidget {
               if (activeFiltersCount > 0) ...[
                 const SizedBox(width: AppSizes.p6),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 5,
+                    vertical: 1,
+                  ),
                   decoration: BoxDecoration(
                     color: cs.primary,
                     shape: BoxShape.circle,
@@ -187,7 +168,7 @@ class PatientListHeader extends StatelessWidget {
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(AppSizes.r8),
             ),
-            minimumSize: const Size(0, 40.0),
+            minimumSize: const Size(0, AppSizes.tappableMin),
           ),
         ),
       ],

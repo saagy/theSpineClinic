@@ -2,7 +2,7 @@
 ///
 /// Accessible to admin and receptionist roles only. Supports combinable
 /// filters: date range, doctor, branch, status, and patient name search.
-/// Infinite-scroll pagination loads 30 items at a time.
+/// Desktop page navigation on wide screens; infinite scroll on mobile.
 ///
 /// Rule 1 — under 200 lines.
 /// Rule 9 — handles loading, error, empty, and data states.
@@ -20,7 +20,8 @@ import 'package:spine_clinic_app/features/auth/domain/user_role.dart';
 import 'package:spine_clinic_app/features/auth/presentation/auth_providers.dart';
 import 'package:spine_clinic_app/shared/widgets/error_view.dart';
 
-/// Full-screen management view of all appointments with infinite-scroll pagination.
+/// Full-screen management view of all appointments with desktop page navigation
+/// and mobile infinite scroll.
 class AllAppointmentsScreen extends ConsumerWidget {
   /// Creates an [AllAppointmentsScreen].
   const AllAppointmentsScreen({super.key});

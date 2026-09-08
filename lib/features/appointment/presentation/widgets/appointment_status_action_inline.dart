@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:spine_clinic_app/core/constants/app_sizes.dart';
 import 'package:spine_clinic_app/core/constants/app_strings.dart';
 import 'package:spine_clinic_app/core/constants/clinic_colors.dart';
 import 'package:spine_clinic_app/features/appointment/domain/appointment_status.dart';
@@ -26,7 +27,8 @@ class AppointmentStatusActionInline extends ConsumerWidget {
 
     if (status == AppointmentStatus.scheduled) {
       final user = ref.watch(currentUserProvider).value;
-      final canCheckIn = user?.role == UserRole.receptionist ||
+      final canCheckIn =
+          user?.role == UserRole.receptionist ||
           user?.role == UserRole.superAdmin ||
           user?.role == UserRole.doctor;
 
@@ -38,14 +40,13 @@ class AppointmentStatusActionInline extends ConsumerWidget {
             radius: 20.0,
             splashColor: cs.primary.withAlpha(30),
             highlightColor: cs.primary.withAlpha(15),
-            child: SizedBox(
-              width: 40.0,
-              height: 40.0,
+            child: SizedBox.square(
+              dimension: AppSizes.tappableMin,
               child: Center(
                 child: isCheckingIn
                     ? SizedBox(
-                        width: 16.0,
-                        height: 16.0,
+                        width: AppSizes.iconSmall,
+                        height: AppSizes.iconSmall,
                         child: CircularProgressIndicator(
                           strokeWidth: 2.0,
                           color: cs.primary,
@@ -53,7 +54,7 @@ class AppointmentStatusActionInline extends ConsumerWidget {
                       )
                     : Icon(
                         Icons.check_circle_outline_rounded,
-                        size: 20.0,
+                        size: AppSizes.iconDefault,
                         color: cs.primary,
                       ),
               ),
@@ -67,13 +68,12 @@ class AppointmentStatusActionInline extends ConsumerWidget {
     if (status == AppointmentStatus.checkedIn) {
       return Tooltip(
         message: AppStrings.checkedIn,
-        child: SizedBox(
-          width: 32.0,
-          height: 40.0,
+        child: SizedBox.square(
+          dimension: AppSizes.tappableMin,
           child: Center(
             child: Icon(
               Icons.check_circle_rounded,
-              size: 18.0,
+              size: AppSizes.iconDefault,
               color: clinic.success,
             ),
           ),
@@ -84,13 +84,12 @@ class AppointmentStatusActionInline extends ConsumerWidget {
     if (status == AppointmentStatus.cancelled) {
       return Tooltip(
         message: AppStrings.cancelled,
-        child: SizedBox(
-          width: 32.0,
-          height: 40.0,
+        child: SizedBox.square(
+          dimension: AppSizes.tappableMin,
           child: Center(
             child: Icon(
               Icons.cancel_outlined,
-              size: 18.0,
+              size: AppSizes.iconDefault,
               color: cs.onSurfaceVariant.withAlpha(160),
             ),
           ),
@@ -100,13 +99,12 @@ class AppointmentStatusActionInline extends ConsumerWidget {
 
     return Tooltip(
       message: status.displayLabel,
-      child: SizedBox(
-        width: 32.0,
-        height: 40.0,
+      child: SizedBox.square(
+        dimension: AppSizes.tappableMin,
         child: Center(
           child: Icon(
             Icons.info_outline_rounded,
-            size: 18.0,
+            size: AppSizes.iconDefault,
             color: cs.onSurfaceVariant.withAlpha(160),
           ),
         ),

@@ -16,7 +16,9 @@ mixin _TodayAppointmentQueries on _AppointmentRepositoryBase {
       final List<Map<String, dynamic>> rows = await query
           .gte('scheduled_at', start.toIso8601String())
           .lt('scheduled_at', end.toIso8601String())
-          .order('scheduled_at');
+          .order('scheduled_at')
+          .order('created_at')
+          .order('id');
       return rows.map(Appointment.fromJson).toList();
     });
   }
@@ -31,20 +33,27 @@ mixin _TodayAppointmentQueries on _AppointmentRepositoryBase {
       final DateTime end = start.add(const Duration(days: 1));
       var query = _service
           .from(_appointmentsTable)
-          .select('*, patient:patients!inner(*)');
+          .select(
+            '*, patient:patients!inner(*), appointment_doctors(is_active, staff:staff!doctor_id(full_name))',
+          );
       if (clinic != null) query = query.eq('patient.clinic', clinic.dbValue);
       final List<Map<String, dynamic>> rows = await query
           .gte('scheduled_at', start.toIso8601String())
           .lt('scheduled_at', end.toIso8601String())
-          .order('scheduled_at');
+          .order('scheduled_at')
+          .order('created_at')
+          .order('id');
       return rows.map(_withPatient).toList();
     });
   }
 
   AppointmentWithPatient _withPatient(Map<String, dynamic> row) {
+    final names = _extractDoctorNames(row);
     return AppointmentWithPatient(
       appointment: Appointment.fromJson(row),
       patient: Patient.fromJson(row['patient'] as Map<String, dynamic>),
+      doctorName: names.isEmpty ? null : names.first,
+      doctorNames: names,
     );
   }
 }

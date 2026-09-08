@@ -117,18 +117,34 @@ class DoctorHistoryState {
 
     filtered.sort((a, b) {
       return switch (sortOption) {
-        HistorySortOption.dateNewest =>
-          b.appointment.scheduledAt.compareTo(a.appointment.scheduledAt),
-        HistorySortOption.dateOldest =>
-          a.appointment.scheduledAt.compareTo(b.appointment.scheduledAt),
-        HistorySortOption.patientNameAsc =>
-          a.patient.fullName.toLowerCase().compareTo(
-                b.patient.fullName.toLowerCase(),
-              ),
-        HistorySortOption.patientNameDesc =>
-          b.patient.fullName.toLowerCase().compareTo(
-                a.patient.fullName.toLowerCase(),
-              ),
+        HistorySortOption.dateNewest => () {
+            final t = b.appointment.scheduledAt.compareTo(a.appointment.scheduledAt);
+            if (t != 0) return t;
+            final c = b.appointment.createdAt.compareTo(a.appointment.createdAt);
+            if (c != 0) return c;
+            return b.appointment.id.compareTo(a.appointment.id);
+          }(),
+        HistorySortOption.dateOldest => () {
+            final t = a.appointment.scheduledAt.compareTo(b.appointment.scheduledAt);
+            if (t != 0) return t;
+            final c = a.appointment.createdAt.compareTo(b.appointment.createdAt);
+            if (c != 0) return c;
+            return a.appointment.id.compareTo(b.appointment.id);
+          }(),
+        HistorySortOption.patientNameAsc => () {
+            final n = a.patient.fullName.toLowerCase().compareTo(
+                  b.patient.fullName.toLowerCase(),
+                );
+            if (n != 0) return n;
+            return a.appointment.scheduledAt.compareTo(b.appointment.scheduledAt);
+          }(),
+        HistorySortOption.patientNameDesc => () {
+            final n = b.patient.fullName.toLowerCase().compareTo(
+                  a.patient.fullName.toLowerCase(),
+                );
+            if (n != 0) return n;
+            return b.appointment.scheduledAt.compareTo(a.appointment.scheduledAt);
+          }(),
       };
     });
 

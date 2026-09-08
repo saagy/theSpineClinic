@@ -90,8 +90,10 @@ class ReceptionistDayList extends StatelessWidget {
         }
 
         final itemIndex = hasNow && index > nowIndex ? index - 1 : index;
+        final item = items[itemIndex];
         return AppointmentAgendaRow(
-          item: items[itemIndex],
+          key: ValueKey(item.appointment.id),
+          item: item,
           showDoctor: true,
           onStatusChanged: onStatusChanged,
         );

@@ -7,7 +7,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:spine_clinic_app/core/errors/app_exception.dart';
 import 'package:spine_clinic_app/core/errors/result.dart';
 import 'package:spine_clinic_app/features/admin/presentation/branch_providers.dart';
-import 'package:spine_clinic_app/features/appointment/domain/appointment.dart';
 import 'package:spine_clinic_app/features/appointment/domain/appointment_repository.dart';
 import 'package:spine_clinic_app/features/appointment/domain/appointment_status.dart';
 import 'package:spine_clinic_app/features/appointment/presentation/appointment_providers.dart';
@@ -38,21 +37,18 @@ class ReceptionistAppointmentsNotifier
       Future<void>.microtask(() => _loadWeek(today, useCache: false));
       return ReceptionistAppointmentsState(selectedDate: today);
     }
-    return user != null
-        ? state
-        : ReceptionistAppointmentsState(selectedDate: today);
+    return user != null ? state : ReceptionistAppointmentsState(selectedDate: today);
   }
 
-  AppointmentRepository get _repository =>
-      ref.read(appointmentRepositoryProvider);
+  AppointmentRepository get _repository => ref.read(appointmentRepositoryProvider);
 
   ClinicLocation? get _clinic {
     final Staff? user = ref.read(currentUserProvider).value;
     if (user?.role == UserRole.superAdmin) {
       final String? override = ref.read(adminBranchFilterProvider);
-      if (override == null) return null;
       if (override == 'tagamoa') return ClinicLocation.tagamoa;
       if (override == 'masr_elgedida') return ClinicLocation.masrElgedida;
+      return null;
     }
     return ref.read(activeBranchProvider);
   }
@@ -83,26 +79,24 @@ class ReceptionistAppointmentsNotifier
 
     final int requestId = ++_requestId;
     final bool hasExisting = state.allItems.isNotEmpty;
-    if (!hasExisting) {
-      state = state.copyWith(
-        allItems: const <AppointmentWithPatient>[],
-        selectedDate: selected,
-        loading: true,
-        clearError: true,
-      );
-    } else {
-      state = state.copyWith(selectedDate: selected, clearError: true);
-    }
-    final Result<List<AppointmentWithPatient>> result = await _repository
-        .getAllAppointments(
-          dateFrom: ScheduleWeek.windowStart(selected),
-          dateTo: ScheduleWeek.windowEnd(selected),
-          doctorId: state.filterDoctorId,
-          clinic: clinic?.dbValue,
-          offset: 0,
-          limit: 1000,
-          ascending: true,
-        );
+    state = hasExisting
+        ? state.copyWith(selectedDate: selected, clearError: true)
+        : state.copyWith(
+            allItems: const <AppointmentWithPatient>[],
+            selectedDate: selected,
+            loading: true,
+            clearError: true,
+          );
+    final Result<List<AppointmentWithPatient>> result =
+        await _repository.getAllAppointments(
+      dateFrom: ScheduleWeek.windowStart(selected),
+      dateTo: ScheduleWeek.windowEnd(selected),
+      doctorId: state.filterDoctorId,
+      clinic: clinic?.dbValue,
+      offset: 0,
+      limit: 1000,
+      ascending: true,
+    );
     if (!ref.mounted || requestId != _requestId) return;
 
     result.when(
@@ -141,31 +135,18 @@ class ReceptionistAppointmentsNotifier
     unawaited(_loadWeek(selected, useCache: true));
   }
 
-  Future<void> changeStatus(
+  void changeStatus(
     String appointmentId,
     AppointmentStatus newStatus,
-  ) async {
-    final Result<void> result = await _repository.updateAppointmentStatus(
-      appointmentId,
-      newStatus,
-    );
-    result.when(
-      success: (_) {
-        final List<AppointmentWithPatient> updated = state.allItems
-            .map(
-              (AppointmentWithPatient item) =>
-                  item.appointment.id == appointmentId
-                  ? AppointmentWithPatient(
-                      appointment: item.appointment.copyWith(status: newStatus),
-                      patient: item.patient,
-                    )
-                  : item,
-            )
-            .toList();
-        _saveCurrentWeek(updated);
-      },
-      failure: (AppException exception) => throw exception,
-    );
+  ) {
+    final List<AppointmentWithPatient> updated = state.allItems
+        .map((item) => item.appointment.id == appointmentId
+            ? item.copyWith(
+                appointment: item.appointment.copyWith(status: newStatus),
+              )
+            : item)
+        .toList();
+    _saveCurrentWeek(updated);
   }
 
   Future<void> changeGroupStatus(
@@ -174,25 +155,16 @@ class ReceptionistAppointmentsNotifier
   ) async {
     final Set<String> ids = appointmentIds.toSet();
     for (final String id in appointmentIds) {
-      final Result<void> result = await _repository.updateAppointmentStatus(
-        id,
-        newStatus,
-      );
+      final Result<void> result = await _repository.updateAppointmentStatus(id, newStatus);
       result.when(
         success: (_) {},
         failure: (AppException exception) => throw exception,
       );
     }
     _saveCurrentWeek(
-      state.allItems.map((AppointmentWithPatient item) {
+      state.allItems.map((item) {
         if (!ids.contains(item.appointment.id)) return item;
-        final Appointment appointment = item.appointment.copyWith(
-          status: newStatus,
-        );
-        return AppointmentWithPatient(
-          appointment: appointment,
-          patient: item.patient,
-        );
+        return item.copyWith(appointment: item.appointment.copyWith(status: newStatus));
       }).toList(),
     );
   }
@@ -216,7 +188,6 @@ class ReceptionistAppointmentsNotifier
 }
 
 final receptionistAppointmentsProvider =
-    NotifierProvider<
-      ReceptionistAppointmentsNotifier,
-      ReceptionistAppointmentsState
-    >(ReceptionistAppointmentsNotifier.new);
+    NotifierProvider<ReceptionistAppointmentsNotifier, ReceptionistAppointmentsState>(
+  ReceptionistAppointmentsNotifier.new,
+);

@@ -91,23 +91,7 @@ class AppointmentAgendaCompactRow extends StatelessWidget {
                       overflow: TextOverflow.ellipsis,
                     ),
                     const SizedBox(height: 2.0),
-                    Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Flexible(child: _buildTypePill(cs, appt.type.displayLabel)),
-                        if (showDoctor && item.doctorName != null && item.doctorName!.isNotEmpty) ...[
-                          const SizedBox(width: AppSizes.p4),
-                          Flexible(
-                            child: Text(
-                              '• Dr. ${item.doctorName}',
-                              style: AppTextStyles.caption.copyWith(color: cs.onSurfaceVariant, fontSize: 10.5),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
-                        ],
-                      ],
-                    ),
+                    _buildTypePill(cs, appt.type.displayLabel),
                   ],
                 ),
               ),

@@ -181,6 +181,8 @@ abstract final class AppStrings {
   static const String paginationTo = 'to';
   static const String paginationOf = 'of';
   static const String paginationPatients = 'patients';
+  static const String paginationAppointments = 'appointments';
+  static const String paginationPage = 'Page';
   static const String paginationPrevious = 'Previous';
   static const String paginationNext = 'Next';
   static const String filtersButton = 'Filters';
@@ -188,6 +190,15 @@ abstract final class AppStrings {
   static const String filterAllDoctors = 'All Doctors';
   static const String resetFilters = 'Reset Filters';
   static const String activeFiltersCount = 'active';
+  static const String sortDateNewest = 'Date (Newest)';
+  static const String sortDateOldest = 'Date (Oldest)';
+  static const String sortOrder = 'Sort Order';
+  static const String dateRange = 'Date Range';
+  static const String allDates = 'All Dates';
+  static const String customDateRange = 'Custom Range';
+  static const String actionDone = 'Done';
+  static const String inactiveLabel = '(Inactive)';
+  static const String status = 'Status';
   static const String selectPatient = 'Select Patient';
   static const String searchPatientHint = 'Search by name or phone…';
   static const String errorLoadingPatients = 'Error loading patients';
@@ -232,6 +243,12 @@ abstract final class AppStrings {
   static const String time = 'Time';
   static const String type = 'Type';
   static const String doctors = 'Doctors';
+  static const String appointmentColTime = 'Time';
+  static const String appointmentColPatient = 'Patient';
+  static const String appointmentColType = 'Type';
+  static const String appointmentColDoctor = 'Doctor';
+  static const String appointmentColStatus = 'Status';
+  static const String filterScheduleTitle = 'Filter Schedule';
   static const String packageStatus = 'Package Status';
   static const String usingPackage = 'Using Package';
   static const String noPackage = 'No Package';

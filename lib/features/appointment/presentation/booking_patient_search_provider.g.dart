@@ -8,25 +8,15 @@ part of 'booking_patient_search_provider.dart';
 
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // ignore_for_file: type=lint, type=warning
-/// Fetches a bounded list of patients (up to 20) for booking selection,
-/// querying the server directly instead of loading the entire patient base.
+/// Loads every matching patient a page at a time for booking selection.
 
-@ProviderFor(bookingPatientSearch)
+@ProviderFor(BookingPatientSearch)
 final bookingPatientSearchProvider = BookingPatientSearchFamily._();
 
-/// Fetches a bounded list of patients (up to 20) for booking selection,
-/// querying the server directly instead of loading the entire patient base.
-
+/// Loads every matching patient a page at a time for booking selection.
 final class BookingPatientSearchProvider
-    extends
-        $FunctionalProvider<
-          AsyncValue<List<Patient>>,
-          List<Patient>,
-          FutureOr<List<Patient>>
-        >
-    with $FutureModifier<List<Patient>>, $FutureProvider<List<Patient>> {
-  /// Fetches a bounded list of patients (up to 20) for booking selection,
-  /// querying the server directly instead of loading the entire patient base.
+    extends $AsyncNotifierProvider<BookingPatientSearch, List<Patient>> {
+  /// Loads every matching patient a page at a time for booking selection.
   BookingPatientSearchProvider._({
     required BookingPatientSearchFamily super.from,
     required String super.argument,
@@ -50,15 +40,7 @@ final class BookingPatientSearchProvider
 
   @$internal
   @override
-  $FutureProviderElement<List<Patient>> $createElement(
-    $ProviderPointer pointer,
-  ) => $FutureProviderElement(pointer);
-
-  @override
-  FutureOr<List<Patient>> create(Ref ref) {
-    final argument = this.argument as String;
-    return bookingPatientSearch(ref, argument);
-  }
+  BookingPatientSearch create() => BookingPatientSearch();
 
   @override
   bool operator ==(Object other) {
@@ -72,13 +54,19 @@ final class BookingPatientSearchProvider
 }
 
 String _$bookingPatientSearchHash() =>
-    r'de58dde278b95618ffa4d654a797183638993308';
+    r'00a4779344c1a7861c9cc1ea7fc4f18d9fa4686f';
 
-/// Fetches a bounded list of patients (up to 20) for booking selection,
-/// querying the server directly instead of loading the entire patient base.
+/// Loads every matching patient a page at a time for booking selection.
 
 final class BookingPatientSearchFamily extends $Family
-    with $FunctionalFamilyOverride<FutureOr<List<Patient>>, String> {
+    with
+        $ClassFamilyOverride<
+          BookingPatientSearch,
+          AsyncValue<List<Patient>>,
+          List<Patient>,
+          FutureOr<List<Patient>>,
+          String
+        > {
   BookingPatientSearchFamily._()
     : super(
         retry: null,
@@ -88,12 +76,34 @@ final class BookingPatientSearchFamily extends $Family
         isAutoDispose: true,
       );
 
-  /// Fetches a bounded list of patients (up to 20) for booking selection,
-  /// querying the server directly instead of loading the entire patient base.
+  /// Loads every matching patient a page at a time for booking selection.
 
   BookingPatientSearchProvider call(String query) =>
       BookingPatientSearchProvider._(argument: query, from: this);
 
   @override
   String toString() => r'bookingPatientSearchProvider';
+}
+
+/// Loads every matching patient a page at a time for booking selection.
+
+abstract class _$BookingPatientSearch extends $AsyncNotifier<List<Patient>> {
+  late final _$args = ref.$arg as String;
+  String get query => _$args;
+
+  FutureOr<List<Patient>> build(String query);
+  @$mustCallSuper
+  @override
+  void runBuild() {
+    final ref = this.ref as $Ref<AsyncValue<List<Patient>>, List<Patient>>;
+    final element =
+        ref.element
+            as $ClassProviderElement<
+              AnyNotifier<AsyncValue<List<Patient>>, List<Patient>>,
+              AsyncValue<List<Patient>>,
+              Object?,
+              Object?
+            >;
+    element.handleCreate(ref, () => build(_$args));
+  }
 }

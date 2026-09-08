@@ -1,4 +1,4 @@
-﻿/// Searchable patient selection bottom sheet for the new-appointment flow.
+/// Searchable patient selection bottom sheet for the new-appointment flow.
 library;
 
 import 'package:flutter/material.dart';
@@ -11,7 +11,7 @@ import 'package:spine_clinic_app/features/patient/domain/patient.dart';
 import 'package:spine_clinic_app/features/patient/presentation/widgets/patient_monogram_badge.dart';
 import 'package:spine_clinic_app/shared/widgets/app_search_bar.dart';
 
-/// Bottom sheet that lets the user search and pick a patient with bounded queries.
+/// Bottom sheet that lets the user browse or search every patient.
 class PatientSearchSheet extends ConsumerStatefulWidget {
   /// Creates a [PatientSearchSheet].
   const PatientSearchSheet({super.key, required this.onSelected});
@@ -29,7 +29,12 @@ class _PatientSearchSheetState extends ConsumerState<PatientSearchSheet> {
   @override
   Widget build(BuildContext context) {
     final ColorScheme cs = Theme.of(context).colorScheme;
-    final AsyncValue<List<Patient>> listAsync = ref.watch(bookingPatientSearchProvider(_q));
+    final AsyncValue<List<Patient>> listAsync = ref.watch(
+      bookingPatientSearchProvider(_q),
+    );
+    final BookingPatientSearch notifier = ref.read(
+      bookingPatientSearchProvider(_q).notifier,
+    );
 
     return DraggableScrollableSheet(
       expand: false,
@@ -59,7 +64,10 @@ class _PatientSearchSheetState extends ConsumerState<PatientSearchSheet> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(AppStrings.selectPatient, style: AppTextStyles.headingSmall),
+                Text(
+                  AppStrings.selectPatient,
+                  style: AppTextStyles.headingSmall,
+                ),
                 const SizedBox(height: AppSizes.p12),
                 AppSearchBar(
                   hintText: AppStrings.searchPatientHint,
@@ -71,9 +79,8 @@ class _PatientSearchSheetState extends ConsumerState<PatientSearchSheet> {
           ),
           Expanded(
             child: listAsync.when(
-              loading: () => Center(
-                child: CircularProgressIndicator(color: cs.primary),
-              ),
+              loading: () =>
+                  Center(child: CircularProgressIndicator(color: cs.primary)),
               error: (_, __) => Center(
                 child: Text(
                   AppStrings.errorLoadingPatients,
@@ -85,27 +92,39 @@ class _PatientSearchSheetState extends ConsumerState<PatientSearchSheet> {
                   return Center(
                     child: Text(
                       AppStrings.noPatientsFound,
-                      style: AppTextStyles.bodySecondary.copyWith(color: cs.onSurfaceVariant),
+                      style: AppTextStyles.bodySecondary.copyWith(
+                        color: cs.onSurfaceVariant,
+                      ),
                     ),
                   );
                 }
                 return ListView.separated(
                   controller: scrollCtrl,
                   padding: const EdgeInsets.symmetric(horizontal: AppSizes.p16),
-                  itemCount: patients.length,
+                  itemCount: patients.length + (notifier.hasMore ? 1 : 0),
                   separatorBuilder: (_, __) => Divider(
                     height: 1.0,
                     thickness: AppSizes.borderWidth,
                     color: cs.outlineVariant.withAlpha(80),
                   ),
                   itemBuilder: (_, i) {
+                    if (i == patients.length) {
+                      notifier.loadMore();
+                      return const Padding(
+                        padding: EdgeInsets.all(AppSizes.p16),
+                        child: Center(child: CircularProgressIndicator()),
+                      );
+                    }
                     final p = patients[i];
                     return ListTile(
                       contentPadding: const EdgeInsets.symmetric(
                         horizontal: AppSizes.p8,
                         vertical: AppSizes.p4,
                       ),
-                      leading: PatientMonogramBadge(name: p.fullName, size: 36.0),
+                      leading: PatientMonogramBadge(
+                        name: p.fullName,
+                        size: 36.0,
+                      ),
                       title: Text(p.fullName, style: AppTextStyles.bodyBold),
                       subtitle: Text(
                         p.phoneNumber,

@@ -86,8 +86,7 @@ class _ReceptionistGroupedAppointmentCardState
     });
 
     final sortedItems = List<AppointmentWithPatient>.from(widget.items)
-      ..sort((a, b) =>
-          a.appointment.scheduledAt.compareTo(b.appointment.scheduledAt));
+      ..sort(compareAppointmentsChronologically);
     final scheduledAt = sortedItems.first.appointment.scheduledAt.toLocal();
 
     final Color cardBg = isAnyPastScheduled

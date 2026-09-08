@@ -5,6 +5,7 @@ import 'package:spine_clinic_app/core/constants/app_text_styles.dart';
 import 'package:spine_clinic_app/core/network/app_routes.dart';
 import 'package:spine_clinic_app/features/appointment/domain/appointment_with_patient.dart';
 import 'package:spine_clinic_app/features/appointment/presentation/widgets/appointment_agenda_menu.dart';
+import 'package:spine_clinic_app/features/appointment/presentation/widgets/appointment_doctor_badge.dart';
 import 'package:spine_clinic_app/features/appointment/presentation/widgets/appointment_status_action_badge.dart';
 import 'package:spine_clinic_app/features/patient/presentation/widgets/patient_monogram_badge.dart';
 
@@ -45,11 +46,6 @@ class AppointmentAgendaWideRow extends StatelessWidget {
     );
   }
 
-  String _formatDoctorName(String name) {
-    final trimmed = name.trim();
-    if (trimmed.toLowerCase().startsWith('dr')) return trimmed;
-    return 'Dr. $trimmed';
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -78,23 +74,30 @@ class AppointmentAgendaWideRow extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: AppSizes.p12),
-              PatientMonogramBadge(name: item.patient.fullName, size: 26.0),
-              const SizedBox(width: AppSizes.p8),
               Expanded(
-                child: Text(
-                  item.patient.fullName,
-                  style: AppTextStyles.bodyBold.copyWith(
-                    color: isCancelled ? cs.onSurfaceVariant.withAlpha(140) : cs.onSurface,
-                    decoration: isCancelled ? TextDecoration.lineThrough : null,
-                    fontSize: 14.0,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
+                flex: 5,
+                child: Row(
+                  children: [
+                    PatientMonogramBadge(name: item.patient.fullName, size: 26.0),
+                    const SizedBox(width: AppSizes.p8),
+                    Expanded(
+                      child: Text(
+                        item.patient.fullName,
+                        style: AppTextStyles.bodyBold.copyWith(
+                          color: isCancelled ? cs.onSurfaceVariant.withAlpha(140) : cs.onSurface,
+                          decoration: isCancelled ? TextDecoration.lineThrough : null,
+                          fontSize: 14.0,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
                 ),
               ),
               const SizedBox(width: AppSizes.p12),
-              SizedBox(
-                width: 110.0,
+              Expanded(
+                flex: 3,
                 child: Align(
                   alignment: Alignment.centerLeft,
                   child: _buildTypePill(cs, appt.type.displayLabel),
@@ -102,16 +105,15 @@ class AppointmentAgendaWideRow extends StatelessWidget {
               ),
               if (showDoctor) ...[
                 const SizedBox(width: AppSizes.p12),
-                SizedBox(
-                  width: 120.0,
-                  child: (item.doctorName != null && item.doctorName!.trim().isNotEmpty)
-                      ? Text(
-                          _formatDoctorName(item.doctorName!),
-                          style: AppTextStyles.caption.copyWith(color: cs.onSurfaceVariant, fontSize: 12.0),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        )
-                      : const SizedBox.shrink(),
+                Expanded(
+                  flex: 4,
+                  child: Align(
+                    alignment: Alignment.centerLeft,
+                    child: AppointmentDoctorBadge(
+                      doctorNames: item.allDoctorNames,
+                      fallbackDoctorName: item.doctorName,
+                    ),
+                  ),
                 ),
               ],
               const SizedBox(width: AppSizes.p12),

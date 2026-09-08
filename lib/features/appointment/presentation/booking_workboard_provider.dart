@@ -126,8 +126,9 @@ class BookingWorkboard extends _$BookingWorkboard {
     if (result case Failure<List<AppointmentWithPatient>>(:final exception)) {
       state = state.copyWith(scheduleError: exception, scheduleLoading: false);
     } else {
+      final items = (result as Success<List<AppointmentWithPatient>>).data;
       state = state.copyWith(
-        schedule: (result as Success<List<AppointmentWithPatient>>).data,
+        schedule: items.toList()..sort(compareAppointmentsChronologically),
         scheduleLoading: false,
       );
     }

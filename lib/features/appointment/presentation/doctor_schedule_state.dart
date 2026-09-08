@@ -33,10 +33,7 @@ class DoctorScheduleState {
             item.appointment.status != AppointmentStatus.cancelled,
       );
     }
-    return matching.toList()..sort(
-      (AppointmentWithPatient a, AppointmentWithPatient b) =>
-          a.appointment.scheduledAt.compareTo(b.appointment.scheduledAt),
-    );
+    return matching.toList()..sort(compareAppointmentsChronologically);
   }
 
   bool get isToday =>

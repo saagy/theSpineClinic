@@ -398,6 +398,11 @@ void main() {
       );
 
       await tester.pumpAndSettle();
+      await tester.scrollUntilVisible(
+        find.byType(ScheduleNowIndicator),
+        200.0,
+        scrollable: find.byType(Scrollable).first,
+      );
       expect(find.byType(ScheduleNowIndicator), findsOneWidget);
       expect(tester.takeException(), isNull);
     });
@@ -457,6 +462,11 @@ void main() {
       );
 
       await tester.pumpAndSettle();
+      await tester.scrollUntilVisible(
+        find.byType(ScheduleNowIndicator),
+        200.0,
+        scrollable: find.byType(Scrollable).first,
+      );
       expect(find.byType(ScheduleNowIndicator), findsOneWidget);
       expect(tester.takeException(), isNull);
     });

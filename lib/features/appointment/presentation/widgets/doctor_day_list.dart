@@ -81,8 +81,10 @@ class DoctorDayList extends StatelessWidget {
         }
 
         final cardIndex = hasNow && index > nowIndex ? index - 1 : index;
+        final item = items[cardIndex];
         return AppointmentAgendaRow(
-          item: items[cardIndex],
+          key: ValueKey(item.appointment.id),
+          item: item,
           showDoctor: false,
           onStatusChanged: onStatusChanged,
         );

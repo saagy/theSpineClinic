@@ -18,6 +18,7 @@ import 'package:spine_clinic_app/features/appointment/presentation/receptionist_
 import 'package:spine_clinic_app/features/appointment/presentation/widgets/receptionist_all_tab.dart';
 import 'package:spine_clinic_app/features/appointment/presentation/widgets/receptionist_booking_tab.dart';
 import 'package:spine_clinic_app/features/appointment/presentation/widgets/receptionist_appointments_header.dart';
+import 'package:spine_clinic_app/features/appointment/presentation/widgets/receptionist_today_actions.dart';
 import 'package:spine_clinic_app/features/appointment/presentation/widgets/receptionist_today_tab.dart';
 import 'package:spine_clinic_app/features/auth/domain/user_role.dart';
 import 'package:spine_clinic_app/features/auth/presentation/auth_providers.dart';
@@ -65,13 +66,25 @@ class _ReceptionistAppointmentsScreenState
     final clinic = ref.watch(activeBranchProvider);
     final user = ref.watch(currentUserProvider).value;
     final isAdmin = user?.role == UserRole.superAdmin;
+    final canReplace = user?.isActive == true &&
+        (user?.role == UserRole.receptionist || isAdmin);
 
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: SafeArea(
         child: Column(
           children: [
-            ReceptionistAppointmentsHeader(clinic: clinic, isAdmin: isAdmin),
+            ReceptionistAppointmentsHeader(
+              clinic: clinic,
+              isAdmin: isAdmin,
+              onReplaceDoctor: canReplace
+                  ? () => ReceptionistTodayActions.replaceDoctor(
+                        context,
+                        ref,
+                        state,
+                      )
+                  : null,
+            ),
             ReceptionistAppointmentsTabStrip(controller: _tabCtrl),
             Expanded(
               child: TabBarView(

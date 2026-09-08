@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:spine_clinic_app/core/constants/app_strings.dart';
@@ -25,19 +25,21 @@ void main() {
     ),
   ];
 
-  testWidgets('renders PatientSearchSheet and displays bounded initial patient list', (tester) async {
+  testWidgets('renders PatientSearchSheet and displays initial patient page', (
+    tester,
+  ) async {
     Patient? selectedPatient;
 
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
-          bookingPatientSearchProvider('').overrideWith((ref) async => testPatients),
+          bookingPatientSearchProvider(
+            '',
+          ).overrideWith(() => _FakeBookingPatientSearch(testPatients)),
         ],
         child: MaterialApp(
           home: Scaffold(
-            body: PatientSearchSheet(
-              onSelected: (p) => selectedPatient = p,
-            ),
+            body: PatientSearchSheet(onSelected: (p) => selectedPatient = p),
           ),
         ),
       ),
@@ -55,18 +57,18 @@ void main() {
     expect(selectedPatient, equals(testPatients.first));
   });
 
-  testWidgets('displays noPatientsFound when search results are empty', (tester) async {
+  testWidgets('displays noPatientsFound when search results are empty', (
+    tester,
+  ) async {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
-          bookingPatientSearchProvider('').overrideWith((ref) async => const <Patient>[]),
+          bookingPatientSearchProvider(
+            '',
+          ).overrideWith(() => _FakeBookingPatientSearch(const <Patient>[])),
         ],
         child: const MaterialApp(
-          home: Scaffold(
-            body: PatientSearchSheet(
-              onSelected: _noop,
-            ),
-          ),
+          home: Scaffold(body: PatientSearchSheet(onSelected: _noop)),
         ),
       ),
     );
@@ -77,3 +79,15 @@ void main() {
 }
 
 void _noop(Patient p) {}
+
+class _FakeBookingPatientSearch extends BookingPatientSearch {
+  _FakeBookingPatientSearch(this.patients);
+
+  final List<Patient> patients;
+
+  @override
+  bool get hasMore => false;
+
+  @override
+  Future<List<Patient>> build(String query) async => patients;
+}

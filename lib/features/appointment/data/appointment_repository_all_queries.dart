@@ -34,15 +34,20 @@ mixin _AllAppointmentQueries on _AppointmentRepositoryBase {
       );
       final List<Map<String, dynamic>> rows = await builder
           .order('scheduled_at', ascending: ascending)
+          .order('created_at', ascending: ascending)
+          .order('id', ascending: ascending)
           .range(offset, offset + limit - 1);
       return rows
           .where((row) => row['patient'] != null)
-          .map(
-            (row) => AppointmentWithPatient(
+          .map((row) {
+            final names = _extractDoctorNames(row);
+            return AppointmentWithPatient(
               appointment: Appointment.fromJson(row),
               patient: Patient.fromJson(row['patient'] as Map<String, dynamic>),
-            ),
-          )
+              doctorName: names.isEmpty ? null : names.first,
+              doctorNames: names,
+            );
+          })
           .toList();
     });
   }
@@ -124,7 +129,9 @@ mixin _AllAppointmentQueries on _AppointmentRepositoryBase {
   }) {
     var builder = _service
         .from(_appointmentsTable)
-        .select('*, patient:patients!inner(*)');
+        .select(
+          '*, patient:patients!inner(*), appointment_doctors(is_active, staff:staff!doctor_id(full_name))',
+        );
     if (dateFrom != null) {
       builder = builder.gte('scheduled_at', dateFrom.toUtc().toIso8601String());
     }

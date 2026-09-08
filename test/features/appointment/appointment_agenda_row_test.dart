@@ -95,7 +95,7 @@ void main() {
     expect(find.byType(AppointmentAgendaWideRow), findsNothing);
     expect(find.text('Youssef Mansour'), findsOneWidget);
     expect(find.text(AppointmentType.normalPtSession.displayLabel), findsOneWidget);
-    expect(find.text('• Dr. Mahmoud'), findsOneWidget);
+    expect(find.textContaining('Mahmoud'), findsNothing);
     expect(find.byTooltip(AppStrings.checkIn), findsOneWidget);
     expect(find.byIcon(Icons.check_circle_outline_rounded), findsOneWidget);
     expect(tester.takeException(), isNull);

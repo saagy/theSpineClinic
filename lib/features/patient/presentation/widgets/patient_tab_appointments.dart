@@ -161,6 +161,7 @@ class _PatientTabAppointmentsState
                                   index: index,
                                   animatedIndices: _animatedIndices,
                                   child: AppointmentAgendaRow(
+                                    key: ValueKey(item.appointment.id),
                                     item: item,
                                     showDoctor: true,
                                     onStatusChanged: notifier.refresh,

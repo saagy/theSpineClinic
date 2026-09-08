@@ -41,9 +41,9 @@ mixin _AppointmentRepositoryBase implements AppointmentRepository {
     return rows.map((row) => row['appointment_id'] as String).toList();
   }
 
-  String? _extractDoctorName(Map<String, dynamic> row) {
+  List<String> _extractDoctorNames(Map<String, dynamic> row) {
     final doctors = row['appointment_doctors'] as List<dynamic>?;
-    if (doctors == null || doctors.isEmpty) return null;
+    if (doctors == null || doctors.isEmpty) return const <String>[];
     final names = <String>[];
     for (final d in doctors) {
       if (d is Map<String, dynamic> && d['is_active'] == true) {
@@ -54,6 +54,6 @@ mixin _AppointmentRepositoryBase implements AppointmentRepository {
         }
       }
     }
-    return names.isEmpty ? null : names.join(', ');
+    return names;
   }
 }

@@ -55,10 +55,15 @@ mixin _AppointmentDetailQueries on _AppointmentRepositoryBase {
           ),
         );
       }
-      items.sort(
-        (a, b) =>
-            a.appointment.scheduledAt.compareTo(b.appointment.scheduledAt),
-      );
+      items.sort((a, b) {
+        final int timeComp =
+            a.appointment.scheduledAt.compareTo(b.appointment.scheduledAt);
+        if (timeComp != 0) return timeComp;
+        final int createdComp =
+            a.appointment.createdAt.compareTo(b.appointment.createdAt);
+        if (createdComp != 0) return createdComp;
+        return a.appointment.id.compareTo(b.appointment.id);
+      });
       return items;
     });
   }

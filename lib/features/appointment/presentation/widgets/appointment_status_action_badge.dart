@@ -46,7 +46,8 @@ class AppointmentStatusActionBadge extends ConsumerWidget {
 
     if (status == AppointmentStatus.scheduled) {
       final user = ref.watch(currentUserProvider).value;
-      final canCheckIn = user?.role == UserRole.receptionist ||
+      final canCheckIn =
+          user?.role == UserRole.receptionist ||
           user?.role == UserRole.superAdmin ||
           user?.role == UserRole.doctor;
 
@@ -74,12 +75,17 @@ class AppointmentStatusActionBadge extends ConsumerWidget {
                 : Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      const Icon(Icons.check_rounded, size: 15.0),
+                      const Icon(
+                        Icons.check_circle_outline_rounded,
+                        size: AppSizes.iconSmall,
+                      ),
                       const SizedBox(width: AppSizes.p4),
                       Flexible(
                         child: Text(
                           AppStrings.checkIn,
-                          style: AppTextStyles.captionBold.copyWith(fontSize: 11.5),
+                          style: AppTextStyles.captionBold.copyWith(
+                            fontSize: 11.5,
+                          ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),

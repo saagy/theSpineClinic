@@ -157,7 +157,13 @@ abstract final class AppSizes {
 
   static const double appointmentWorkspaceBreakpoint = 900.0;
 
+  /// Breakpoint for switching from mobile layout to desktop wide layout (768 px).
+  static const double desktopBreakpoint = 768.0;
+
   static const double adaptiveModalBreakpoint = 600.0;
+
+  /// Height of the table pagination footer bar (52 px).
+  static const double paginationBarHeight = 52.0;
 
   static const double adaptiveDialogMaxWidth = 720.0;
   static const double adaptiveDialogMaxHeight = 720.0;
