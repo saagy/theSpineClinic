@@ -40,10 +40,7 @@ class PatientAppointments extends _$PatientAppointments {
     );
 
     int totalCount = 0;
-    countResult.when(
-      success: (count) => totalCount = count,
-      failure: (_) => totalCount = 0,
-    );
+    countResult.when(success: (count) => totalCount = count, failure: (_) => totalCount = 0);
 
     final result = await repo.getAppointmentsForPatientPaginated(
       patientId: patientId,
@@ -70,10 +67,7 @@ class PatientAppointments extends _$PatientAppointments {
         );
       },
       failure: (error) {
-        state = state.copyWith(
-          isLoading: false,
-          errorMessage: error.message,
-        );
+        state = state.copyWith(isLoading: false, errorMessage: error.message);
       },
     );
   }
@@ -81,13 +75,9 @@ class PatientAppointments extends _$PatientAppointments {
   void changeStatus(String appointmentId, AppointmentStatus newStatus) {
     final List<AppointmentWithPatient> updated = state.appointments
         .map(
-          (AppointmentWithPatient item) =>
-              item.appointment.id == appointmentId
-                  ? AppointmentWithPatient(
-                      appointment: item.appointment.copyWith(status: newStatus),
-                      patient: item.patient,
-                    )
-                  : item,
+          (AppointmentWithPatient item) => item.appointment.id == appointmentId
+              ? item.copyWith(appointment: item.appointment.copyWith(status: newStatus))
+              : item,
         )
         .toList();
     state = state.copyWith(appointments: updated);
@@ -133,10 +123,7 @@ class PatientAppointments extends _$PatientAppointments {
         );
       },
       failure: (error) {
-        state = state.copyWith(
-          isLoadingMore: false,
-          errorMessage: error.message,
-        );
+        state = state.copyWith(isLoadingMore: false, errorMessage: error.message);
       },
     );
   }

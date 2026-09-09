@@ -82,7 +82,7 @@ final class PatientDocumentsNotifierNotifierProvider
   }) : super(
          retry: null,
          name: r'patientDocumentsNotifierProvider',
-         isAutoDispose: true,
+         isAutoDispose: false,
          dependencies: null,
          $allTransitiveDependencies: null,
        );
@@ -115,7 +115,7 @@ final class PatientDocumentsNotifierNotifierProvider
 }
 
 String _$patientDocumentsNotifierNotifierHash() =>
-    r'4dd3333577f8017d8f4f92384c3e1f5de600052d';
+    r'96cff473c60ecdd43ff989d7ea838ab7110d9c9e';
 
 /// Family AsyncNotifier managing the document list state for a patient.
 
@@ -134,7 +134,7 @@ final class PatientDocumentsNotifierNotifierFamily extends $Family
         name: r'patientDocumentsNotifierProvider',
         dependencies: null,
         $allTransitiveDependencies: null,
-        isAutoDispose: true,
+        isAutoDispose: false,
       );
 
   /// Family AsyncNotifier managing the document list state for a patient.

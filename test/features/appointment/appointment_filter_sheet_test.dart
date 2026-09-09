@@ -33,9 +33,7 @@ void main() {
   Widget wrapSheet(Widget sheet, {Size size = const Size(800, 1000)}) {
     return ProviderScope(
       overrides: [
-        allDoctorsForFilterProvider.overrideWith(
-          (ref) async => [testDoctor1, testDoctor2],
-        ),
+        allDoctorsForFilterProvider.overrideWith((ref) async => [testDoctor1, testDoctor2]),
       ],
       child: MaterialApp(
         home: MediaQuery(
@@ -47,9 +45,7 @@ void main() {
   }
 
   group('AppointmentFilterSheet Tests', () {
-    testWidgets('renders date presets, clinic, status, type, and sort options', (
-      WidgetTester tester,
-    ) async {
+    testWidgets('renders date presets, clinic, status, type, and sort options', (WidgetTester tester) async {
       await tester.pumpWidget(
         wrapSheet(
           const AppointmentFilterSheet(
@@ -76,19 +72,13 @@ void main() {
       expect(find.text(AppStrings.today), findsOneWidget);
 
       // Assigned Doctor section
-      expect(
-        find.text(AppStrings.assignedDoctors.toUpperCase()),
-        findsOneWidget,
-      );
+      expect(find.text(AppStrings.assignedDoctors.toUpperCase()), findsOneWidget);
       expect(find.text(AppStrings.filterAllDoctors), findsOneWidget);
 
       // Clinic section
       expect(find.text(AppStrings.filterAllBranches), findsOneWidget);
       expect(find.text(ClinicLocation.tagamoa.displayLabel), findsOneWidget);
-      expect(
-        find.text(ClinicLocation.masrElgedida.displayLabel),
-        findsOneWidget,
-      );
+      expect(find.text(ClinicLocation.masrElgedida.displayLabel), findsOneWidget);
 
       // Status section
       expect(find.text(AppStrings.scheduled), findsOneWidget);
@@ -109,9 +99,7 @@ void main() {
       expect(find.text(AppStrings.applyFilters), findsOneWidget);
     });
 
-    testWidgets('transitions to doctor picker sub-screen on doctor tile tap', (
-      WidgetTester tester,
-    ) async {
+    testWidgets('transitions to doctor picker sub-screen on doctor tile tap', (WidgetTester tester) async {
       await tester.pumpWidget(
         wrapSheet(
           const AppointmentFilterSheet(
@@ -147,17 +135,13 @@ void main() {
       expect(find.text('Dr. Sarah Ahmed'), findsOneWidget);
     });
 
-    testWidgets('resets filters when Reset Filters is tapped', (
-      WidgetTester tester,
-    ) async {
+    testWidgets('resets filters when Reset Filters is tapped', (WidgetTester tester) async {
       AppointmentFilterResult? result;
 
       await tester.pumpWidget(
         ProviderScope(
           overrides: [
-            allDoctorsForFilterProvider.overrideWith(
-              (ref) async => [testDoctor1],
-            ),
+            allDoctorsForFilterProvider.overrideWith((ref) async => [testDoctor1]),
           ],
           child: MaterialApp(
             home: Scaffold(
@@ -210,9 +194,7 @@ void main() {
       expect(result!.sortOption, AppointmentSortOption.dateDesc);
     });
 
-    testWidgets('selects status, type, and sort and applies them', (
-      WidgetTester tester,
-    ) async {
+    testWidgets('selects status, type, and sort and applies them', (WidgetTester tester) async {
       AppointmentFilterResult? result;
 
       await tester.pumpWidget(
@@ -251,14 +233,12 @@ void main() {
       await tester.pumpAndSettle();
 
       // Select PT Session type
+      await tester.ensureVisible(find.text(AppStrings.normalPtSession));
       await tester.tap(find.text(AppStrings.normalPtSession));
       await tester.pumpAndSettle();
 
       // Select Date (Oldest) sort
-      await tester.scrollUntilVisible(
-        find.text(AppStrings.sortDateOldest),
-        100,
-      );
+      await tester.scrollUntilVisible(find.text(AppStrings.sortDateOldest), 100);
       await tester.tap(find.text(AppStrings.sortDateOldest));
       await tester.pumpAndSettle();
 

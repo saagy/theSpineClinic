@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:spine_clinic_app/core/utils/formatters.dart';
+import 'package:spine_clinic_app/core/constants/app_strings.dart';
 import 'package:go_router/go_router.dart';
 import 'package:spine_clinic_app/core/constants/app_sizes.dart';
 import 'package:spine_clinic_app/core/constants/app_text_styles.dart';
@@ -20,6 +22,8 @@ class AppointmentAgendaWideRow extends StatelessWidget {
     required this.onCheckIn,
     required this.showDoctor,
     this.onStatusChanged,
+    this.patientContext = false,
+    this.showDate = false,
   });
 
   final AppointmentWithPatient item;
@@ -29,6 +33,8 @@ class AppointmentAgendaWideRow extends StatelessWidget {
   final VoidCallback onCheckIn;
   final bool showDoctor;
   final VoidCallback? onStatusChanged;
+  final bool patientContext;
+  final bool showDate;
 
   Widget _buildTypePill(ColorScheme cs, String label) {
     return Container(
@@ -39,18 +45,26 @@ class AppointmentAgendaWideRow extends StatelessWidget {
       ),
       child: Text(
         label,
-        style: AppTextStyles.caption.copyWith(color: cs.onSurfaceVariant, fontSize: 10.5, fontWeight: FontWeight.w500),
+        style: AppTextStyles.caption.copyWith(
+          color: cs.onSurfaceVariant,
+          fontSize: 10.5,
+          fontWeight: FontWeight.w500,
+        ),
         maxLines: 1,
         overflow: TextOverflow.ellipsis,
       ),
     );
   }
 
-
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     final appt = item.appointment;
+    final identity = patientContext
+        ? (item.allDoctorNames.isNotEmpty
+              ? item.allDoctorNames.join(', ')
+              : item.doctorName ?? AppStrings.noDoctorsAssigned)
+        : item.patient.fullName;
 
     return Material(
       color: Colors.transparent,
@@ -63,14 +77,25 @@ class AppointmentAgendaWideRow extends StatelessWidget {
           child: Row(
             children: [
               SizedBox(
-                width: 76.0,
-                child: Text(
-                  timeStr,
-                  style: AppTextStyles.bodyBold.copyWith(
-                    color: isCancelled ? cs.onSurfaceVariant.withAlpha(120) : cs.onSurface,
-                    fontFeatures: const [FontFeature.tabularFigures()],
-                    fontSize: 13.0,
-                  ),
+                width: showDate ? AppSizes.appointmentDateColumnWidth : 76.0,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    if (showDate)
+                      Text(
+                        Formatters.formatDateMedium(appt.scheduledAt.toLocal()),
+                        style: AppTextStyles.caption,
+                      ),
+                    Text(
+                      timeStr,
+                      style: AppTextStyles.bodyBold.copyWith(
+                        color: isCancelled ? cs.onSurfaceVariant.withAlpha(120) : cs.onSurface,
+                        fontFeatures: const [FontFeature.tabularFigures()],
+                        fontSize: 13.0,
+                      ),
+                    ),
+                  ],
                 ),
               ),
               const SizedBox(width: AppSizes.p12),
@@ -78,11 +103,11 @@ class AppointmentAgendaWideRow extends StatelessWidget {
                 flex: 5,
                 child: Row(
                   children: [
-                    PatientMonogramBadge(name: item.patient.fullName, size: 26.0),
+                    PatientMonogramBadge(name: identity, size: 26.0),
                     const SizedBox(width: AppSizes.p8),
                     Expanded(
                       child: Text(
-                        item.patient.fullName,
+                        identity,
                         style: AppTextStyles.bodyBold.copyWith(
                           color: isCancelled ? cs.onSurfaceVariant.withAlpha(140) : cs.onSurface,
                           decoration: isCancelled ? TextDecoration.lineThrough : null,
@@ -103,7 +128,7 @@ class AppointmentAgendaWideRow extends StatelessWidget {
                   child: _buildTypePill(cs, appt.type.displayLabel),
                 ),
               ),
-              if (showDoctor) ...[
+              if (showDoctor && !patientContext) ...[
                 const SizedBox(width: AppSizes.p12),
                 Expanded(
                   flex: 4,

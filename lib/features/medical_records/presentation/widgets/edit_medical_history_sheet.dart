@@ -9,7 +9,8 @@ import 'package:spine_clinic_app/features/medical_records/presentation/medical_h
 import 'package:spine_clinic_app/features/medical_records/presentation/medical_history_providers.dart';
 import 'package:spine_clinic_app/features/medical_records/presentation/widgets/medical_history_toggle_card.dart';
 import 'package:spine_clinic_app/shared/widgets/app_bottom_sheet.dart';
-import 'package:spine_clinic_app/shared/widgets/app_button.dart';
+import 'package:spine_clinic_app/shared/widgets/clinical_editor_frame.dart';
+import 'package:spine_clinic_app/features/auth/presentation/auth_providers.dart';
 import 'package:spine_clinic_app/shared/widgets/app_snackbar.dart';
 import 'package:spine_clinic_app/shared/widgets/app_text_field.dart';
 
@@ -34,6 +35,7 @@ class EditMedicalHistorySheet extends ConsumerStatefulWidget {
     return AppBottomSheet.show<void>(
       context: context,
       title: AppStrings.editMedicalHistory,
+      maxWidth: AppSizes.formLayoutMaxWidth,
       initialChildSize: 0.85,
       minChildSize: 0.45,
       maxChildSize: 0.95,
@@ -46,12 +48,10 @@ class EditMedicalHistorySheet extends ConsumerStatefulWidget {
   }
 
   @override
-  ConsumerState<EditMedicalHistorySheet> createState() =>
-      _EditMedicalHistorySheetState();
+  ConsumerState<EditMedicalHistorySheet> createState() => _EditMedicalHistorySheetState();
 }
 
-class _EditMedicalHistorySheetState
-    extends ConsumerState<EditMedicalHistorySheet> {
+class _EditMedicalHistorySheetState extends ConsumerState<EditMedicalHistorySheet> {
   late bool _hasDiabetes;
   late bool _hasHypertension;
   late bool _hasHyperlipidemia;
@@ -73,8 +73,7 @@ class _EditMedicalHistorySheetState
     _hasRheumatology = h?.hasRheumatology ?? false;
 
     _hba1cController = TextEditingController(text: h?.hba1cValue ?? '');
-    _rheumatologyController =
-        TextEditingController(text: h?.rheumatologyDetails ?? '');
+    _rheumatologyController = TextEditingController(text: h?.rheumatologyDetails ?? '');
     _notesController = TextEditingController(text: h?.additionalNotes ?? '');
   }
 
@@ -87,7 +86,8 @@ class _EditMedicalHistorySheetState
   }
 
   Future<void> _handleSave() async {
-    if (_isSubmitting) return;
+    final user = await ref.read(currentUserProvider.future);
+    if (_isSubmitting || user?.isActive != true || user?.isSeniorDoctor != true) return;
     setState(() => _isSubmitting = true);
 
     final history = PatientMedicalHistory(
@@ -113,80 +113,83 @@ class _EditMedicalHistorySheetState
       success: (saved) {
         ref.read(patientMedicalHistoryProvider(widget.patientId).notifier).updateData(saved);
         Navigator.of(context).pop();
-        AppSnackbar.show(context, message: AppStrings.medicalHistorySaved, variant: AppSnackbarVariant.success);
+        AppSnackbar.show(
+          context,
+          message: AppStrings.medicalHistorySaved,
+          variant: AppSnackbarVariant.success,
+        );
       },
-      failure: (error) => AppSnackbar.show(context, message: AppStrings.fromKey(error.userMessageKey), variant: AppSnackbarVariant.error),
+      failure: (error) => AppSnackbar.show(
+        context,
+        message: AppStrings.fromKey(error.userMessageKey),
+        variant: AppSnackbarVariant.error,
+      ),
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    return ListView(
-      controller: widget.scrollController,
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppSizes.p20,
-        vertical: AppSizes.p12,
+    return ClinicalEditorFrame(
+      isSaving: _isSubmitting,
+      onSave: _handleSave,
+      child: ListView(
+        controller: widget.scrollController,
+        padding: const EdgeInsets.symmetric(horizontal: AppSizes.p20, vertical: AppSizes.p12),
+        children: [
+          MedicalHistoryToggleCard(
+            title: AppStrings.diabetes,
+            value: _hasDiabetes,
+            onChanged: (val) => setState(() => _hasDiabetes = val),
+            expandedChild: _hasDiabetes
+                ? Padding(
+                    padding: const EdgeInsets.only(top: AppSizes.p12),
+                    child: AppTextField(
+                      controller: _hba1cController,
+                      labelText: AppStrings.hba1cValue,
+                      hintText: AppStrings.hba1cHint,
+                    ),
+                  )
+                : null,
+          ),
+          const SizedBox(height: AppSizes.p4),
+          MedicalHistoryToggleCard(
+            title: AppStrings.hypertension,
+            value: _hasHypertension,
+            onChanged: (val) => setState(() => _hasHypertension = val),
+          ),
+          const SizedBox(height: AppSizes.p4),
+          MedicalHistoryToggleCard(
+            title: AppStrings.hyperlipidemia,
+            value: _hasHyperlipidemia,
+            onChanged: (val) => setState(() => _hasHyperlipidemia = val),
+          ),
+          const SizedBox(height: AppSizes.p4),
+          MedicalHistoryToggleCard(
+            title: AppStrings.rheumatology,
+            value: _hasRheumatology,
+            onChanged: (val) => setState(() => _hasRheumatology = val),
+            expandedChild: _hasRheumatology
+                ? Padding(
+                    padding: const EdgeInsets.only(top: AppSizes.p12),
+                    child: AppTextField(
+                      controller: _rheumatologyController,
+                      labelText: AppStrings.rheumatologyDetails,
+                      hintText: AppStrings.rheumatologyDetailsHint,
+                      maxLines: 2,
+                    ),
+                  )
+                : null,
+          ),
+          const SizedBox(height: AppSizes.p16),
+          AppTextField(
+            controller: _notesController,
+            labelText: AppStrings.additionalMedicalNotes,
+            hintText: AppStrings.additionalMedicalNotesHint,
+            maxLines: 3,
+          ),
+          const SizedBox(height: AppSizes.p24),
+        ],
       ),
-      children: [
-        MedicalHistoryToggleCard(
-          title: AppStrings.diabetes,
-          value: _hasDiabetes,
-          onChanged: (val) => setState(() => _hasDiabetes = val),
-          expandedChild: _hasDiabetes
-              ? Padding(
-                  padding: const EdgeInsets.only(top: AppSizes.p12),
-                  child: AppTextField(
-                    controller: _hba1cController,
-                    labelText: AppStrings.hba1cValue,
-                    hintText: AppStrings.hba1cHint,
-                  ),
-                )
-              : null,
-        ),
-        const SizedBox(height: AppSizes.p12),
-        MedicalHistoryToggleCard(
-          title: AppStrings.hypertension,
-          value: _hasHypertension,
-          onChanged: (val) => setState(() => _hasHypertension = val),
-        ),
-        const SizedBox(height: AppSizes.p12),
-        MedicalHistoryToggleCard(
-          title: AppStrings.hyperlipidemia,
-          value: _hasHyperlipidemia,
-          onChanged: (val) => setState(() => _hasHyperlipidemia = val),
-        ),
-        const SizedBox(height: AppSizes.p12),
-        MedicalHistoryToggleCard(
-          title: AppStrings.rheumatology,
-          value: _hasRheumatology,
-          onChanged: (val) => setState(() => _hasRheumatology = val),
-          expandedChild: _hasRheumatology
-              ? Padding(
-                  padding: const EdgeInsets.only(top: AppSizes.p12),
-                  child: AppTextField(
-                    controller: _rheumatologyController,
-                    labelText: AppStrings.rheumatologyDetails,
-                    hintText: AppStrings.rheumatologyDetailsHint,
-                    maxLines: 2,
-                  ),
-                )
-              : null,
-        ),
-        const SizedBox(height: AppSizes.p16),
-        AppTextField(
-          controller: _notesController,
-          labelText: AppStrings.additionalMedicalNotes,
-          hintText: AppStrings.additionalMedicalNotesHint,
-          maxLines: 3,
-        ),
-        const SizedBox(height: AppSizes.p24),
-        AppButton(
-          labelText: AppStrings.save,
-          isLoading: _isSubmitting,
-          onPressed: _handleSave,
-        ),
-        const SizedBox(height: AppSizes.p24),
-      ],
     );
   }
 }

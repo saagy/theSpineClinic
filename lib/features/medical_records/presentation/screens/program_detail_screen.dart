@@ -25,8 +25,11 @@ import 'package:spine_clinic_app/shared/widgets/app_snackbar.dart';
 import 'package:spine_clinic_app/shared/widgets/confirmation_dialog.dart';
 import 'package:spine_clinic_app/shared/widgets/empty_state.dart';
 import 'package:spine_clinic_app/shared/widgets/error_view.dart';
-import 'package:spine_clinic_app/shared/widgets/loading_overlay.dart';
+import 'package:spine_clinic_app/shared/widgets/record_section.dart';
+import 'package:spine_clinic_app/shared/widgets/record_action_menu.dart';
 import 'package:spine_clinic_app/shared/widgets/skeleton_loader.dart';
+
+part 'program_detail_actions.dart';
 
 /// Screen displaying comprehensive details of a single rehabilitation program.
 class ProgramDetailScreen extends ConsumerStatefulWidget {
@@ -46,15 +49,17 @@ class ProgramDetailScreen extends ConsumerStatefulWidget {
   @override
   ConsumerState<ProgramDetailScreen> createState() => _ProgramDetailScreenState();
 }
-
 class _ProgramDetailScreenState extends ConsumerState<ProgramDetailScreen> {
   bool _planBuilderOpened = false;
 
   void _checkAutoOpen(PatientProgram program) {
+    final user = ref.read(currentUserProvider).value;
+    if (user?.isActive != true || user?.isSeniorDoctor != true) return;
     if (widget.autoOpenPlanBuilder && !_planBuilderOpened) {
       _planBuilderOpened = true;
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted) {
+        if (mounted && ref.read(currentUserProvider).value?.isActive == true &&
+            ref.read(currentUserProvider).value?.isSeniorDoctor == true) {
           TreatmentPlanBuilderSheet.show(
             context,
             programId: program.id,
@@ -66,72 +71,35 @@ class _ProgramDetailScreenState extends ConsumerState<ProgramDetailScreen> {
     }
   }
 
-  Future<void> _exportPdf(PatientProgram program) async {
-    try {
-      final patient = await ref.read(patientDetailProvider(program.patientId).future);
-      final history = await ref.read(patientMedicalHistoryProvider(program.patientId).future);
-      await ProgramPdfService.printProgramReport(program: program, patient: patient, medicalHistory: history);
-    } catch (_) {
-      if (mounted) AppSnackbar.show(context, message: AppStrings.pdfExportError, variant: AppSnackbarVariant.error);
-    }
-  }
-
-  Future<void> _deleteProgram(PatientProgram program) async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => const ConfirmationDialog(title: AppStrings.deleteProgram, message: AppStrings.deleteProgramConfirm, isDestructive: true),
-    );
-    if (confirmed != true || !mounted) return;
-
-    final result = await ref.read(programControllerProvider.notifier).deleteProgram(programId: program.id, patientId: program.patientId);
-    if (!mounted) return;
-    result.when(
-      success: (_) {
-        AppSnackbar.show(context, message: AppStrings.programDeleted, variant: AppSnackbarVariant.success);
-        context.pop();
-      },
-      failure: (e) => AppSnackbar.show(context, message: AppStrings.fromKey(e.userMessageKey), variant: AppSnackbarVariant.error),
-    );
-  }
-
-  List<Widget> _buildAppBarActions(PatientProgram? program, {required bool isDeleting}) {
-    if (program == null || isDeleting) return const [];
-    final cs = Theme.of(context).colorScheme;
-    final isSenior = ref.watch(currentUserProvider).value?.isSeniorDoctor ?? false;
-
-    return [
-      IconButton(icon: const Icon(Icons.picture_as_pdf_outlined), tooltip: AppStrings.exportPdf, onPressed: () => _exportPdf(program)),
-      if (isSenior) ...[
-        IconButton(
-          icon: const Icon(Icons.edit_outlined),
-          tooltip: AppStrings.edit,
-          onPressed: () => context.push(AppRoutes.editPatientProgram.replaceAll(':id', program.patientId).replaceAll(':programId', program.id), extra: program),
-        ),
-        IconButton(icon: Icon(Icons.delete_outline, color: cs.error), tooltip: AppStrings.delete, onPressed: () => _deleteProgram(program)),
-      ],
-    ];
-  }
-
   @override
   Widget build(BuildContext context) {
     final isDeleting = ref.watch(programControllerProvider).isLoading;
     final isPlanBusy = ref.watch(treatmentPlanControllerProvider).isLoading;
     final isBusy = isDeleting || isPlanBusy;
     final asyncDetail = ref.watch(programDetailProvider(widget.programId));
-    final program = asyncDetail.value ?? widget.initialProgram;
+    final program = asyncDetail.hasValue ? asyncDetail.value : widget.initialProgram;
     if (program != null) _checkAutoOpen(program);
 
     return Scaffold(
+      backgroundColor: Theme.of(context).colorScheme.surface,
       appBar: AppBar(
         leading: const AppBackButton(),
         title: const Text(AppStrings.programDetails),
         actions: _buildAppBarActions(program, isDeleting: isBusy),
       ),
-      body: LoadingOverlay(
-        isLoading: isBusy,
+      bottomNavigationBar: isBusy
+          ? const Padding(
+              padding: EdgeInsets.all(AppSizes.p12),
+              child: Text(AppStrings.savingClinicalRecord, textAlign: TextAlign.center),
+            )
+          : null,
+      body: AbsorbPointer(
+        absorbing: isBusy,
         child: SafeArea(
           child: asyncDetail.when(
-            loading: () => program != null ? _buildLayout(program) : const Padding(padding: EdgeInsets.all(AppSizes.p16), child: SkeletonTileList(count: 4)),
+            loading: () => program != null
+                ? _buildLayout(program)
+                : const Padding(padding: EdgeInsets.all(AppSizes.p16), child: SkeletonTileList(count: 4)),
             error: (err, _) => program != null
                 ? _buildLayout(program)
                 : Center(
@@ -144,8 +112,10 @@ class _ProgramDetailScreenState extends ConsumerState<ProgramDetailScreen> {
                     ),
                   ),
             data: (prog) {
-              final effective = prog ?? widget.initialProgram;
-              if (effective == null) return const EmptyState(message: AppStrings.programNotFound, icon: Icons.search_off_rounded);
+              final effective = prog;
+              if (effective == null) {
+                return const EmptyState(message: AppStrings.programNotFound, icon: Icons.search_off_rounded);
+              }
               return _buildLayout(effective);
             },
           ),
@@ -154,43 +124,31 @@ class _ProgramDetailScreenState extends ConsumerState<ProgramDetailScreen> {
     );
   }
 
-  Widget _buildLayout(PatientProgram program) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final bool isWide = constraints.maxWidth >= 900;
-        final maxW = isWide ? 1280.0 : AppSizes.formLayoutMaxWidth;
-
-        return Center(
-          child: ConstrainedBox(
-            constraints: BoxConstraints(maxWidth: maxW),
-            child: ListView(
-              padding: const EdgeInsets.all(AppSizes.p16),
-              physics: const AlwaysScrollableScrollPhysics(),
-              children: [
-                ProgramDetailHeader(program: program),
-                const SizedBox(height: AppSizes.p16),
-                if (isWide)
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Expanded(flex: 5, child: Column(children: [ProgramDetailConditions(program: program), const SizedBox(height: AppSizes.p16), ProgramDetailFindings(program: program)])),
-                      const SizedBox(width: AppSizes.p16),
-                      Expanded(flex: 6, child: ProgramDetailTreatment(program: program)),
-                    ],
-                  )
-                else ...[
-                  ProgramDetailConditions(program: program),
-                  const SizedBox(height: AppSizes.p16),
-                  ProgramDetailFindings(program: program),
-                  const SizedBox(height: AppSizes.p16),
-                  ProgramDetailTreatment(program: program),
-                ],
-                const SizedBox(height: AppSizes.p24),
-              ],
-            ),
-          ),
-        );
-      },
-    );
-  }
+  Widget _buildLayout(PatientProgram program) => Center(
+    child: ConstrainedBox(
+      constraints: const BoxConstraints(maxWidth: AppSizes.clinicalContentMaxWidth),
+      child: RefreshIndicator(
+        onRefresh: () async {
+          ref.invalidate(programDetailProvider(widget.programId));
+          await ref.read(programDetailProvider(widget.programId).future);
+        },
+        child: ListView(
+          padding: const EdgeInsets.all(AppSizes.p16),
+          physics: const AlwaysScrollableScrollPhysics(),
+          children: [
+            if (ref.watch(programDetailProvider(widget.programId)).hasError)
+              RecordMessage(
+                message: AppStrings.patientSectionError,
+                action: AppStrings.retry,
+                onAction: () => ref.invalidate(programDetailProvider(widget.programId)),
+              ),
+            ProgramDetailHeader(program: program),
+            ProgramDetailTreatment(program: program),
+            ProgramDetailConditions(program: program),
+            ProgramDetailFindings(program: program),
+          ],
+        ),
+      ),
+    ),
+  );
 }

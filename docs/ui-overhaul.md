@@ -1,6 +1,15 @@
 # UI Overhaul Plan
 
 ## Status
+
+Patient details has a corrective Flutter revision after the initial pilot was
+rejected. See the
+[patient workspace direction](patient-workspace-direction.md) for the workflow
+audit, reference rationale, implementation and validation boundary. Overview,
+program rows, appointment history, notes, documents and the patient payment ledger
+have been rebuilt. Program detail and its medical-history/treatment-plan editors
+now share the same bounded, treatment-first clinical language with persistent
+save footers; payment entry/report screens remain separate slices.
  
 Schedules (Receptionist & Doctor) redesign implemented in alignment with the modern 2026 SaaS aesthetic established in the Patients pilot. Replaced heavy nested containers and aggressive status tinting with a strictly chronological agenda timeline, hairline dividers, compact inline Check-In actions, and streamlined week navigation. [DESIGN.md](../DESIGN.md) records adopted patterns.
 

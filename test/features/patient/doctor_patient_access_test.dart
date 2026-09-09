@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:spine_clinic_app/core/constants/app_strings.dart';
 import 'package:spine_clinic_app/core/errors/result.dart';
 import 'package:spine_clinic_app/features/appointment/presentation/widgets/appointment_detail_header.dart';
 import 'package:spine_clinic_app/features/auth/domain/staff.dart';
@@ -18,8 +19,7 @@ import 'package:spine_clinic_app/features/patient/presentation/patient_appointme
 import 'package:spine_clinic_app/features/patient/presentation/patient_detail_screen.dart';
 import 'package:spine_clinic_app/features/patient/presentation/patient_documents_providers.dart';
 import 'package:spine_clinic_app/features/patient/presentation/patient_providers.dart';
-import 'package:spine_clinic_app/features/patient/presentation/widgets/error_scaffold.dart';
-import 'package:spine_clinic_app/features/patient/presentation/widgets/patient_profile.dart';
+import 'package:spine_clinic_app/features/patient/presentation/widgets/workspace_header.dart';
 import 'package:spine_clinic_app/features/payments/domain/payment_record.dart';
 import 'package:spine_clinic_app/features/payments/presentation/record_payment_controller.dart';
 
@@ -72,36 +72,24 @@ void main() {
   group('canAccessPatient Provider Tests', () {
     test('senior doctor has unconditional access to any patient', () async {
       final container = ProviderContainer(
-        overrides: [
-          currentUserProvider.overrideWith(
-            () => _StaticCurrentUser(seniorDoctor),
-          ),
-        ],
+        overrides: [currentUserProvider.overrideWith(() => _StaticCurrentUser(seniorDoctor))],
       );
       addTearDown(container.dispose);
       await container.read(currentUserProvider.future);
 
-      final canAccess = await container.read(
-        canAccessPatientProvider('patient-1').future,
-      );
+      final canAccess = await container.read(canAccessPatientProvider('patient-1').future);
 
       expect(canAccess, isTrue);
     });
 
     test('non-doctor roles (receptionist / superAdmin) have full access to any patient', () async {
       final container = ProviderContainer(
-        overrides: [
-          currentUserProvider.overrideWith(
-            () => _StaticCurrentUser(receptionist),
-          ),
-        ],
+        overrides: [currentUserProvider.overrideWith(() => _StaticCurrentUser(receptionist))],
       );
       addTearDown(container.dispose);
       await container.read(currentUserProvider.future);
 
-      final canAccess = await container.read(
-        canAccessPatientProvider('patient-1').future,
-      );
+      final canAccess = await container.read(canAccessPatientProvider('patient-1').future);
 
       expect(canAccess, isTrue);
     });
@@ -110,18 +98,14 @@ void main() {
       final mockRepo = _MockPatientRepository(canAccessResult: true);
       final container = ProviderContainer(
         overrides: [
-          currentUserProvider.overrideWith(
-            () => _StaticCurrentUser(doctorA),
-          ),
+          currentUserProvider.overrideWith(() => _StaticCurrentUser(doctorA)),
           patientRepositoryProvider.overrideWithValue(mockRepo),
         ],
       );
       addTearDown(container.dispose);
       await container.read(currentUserProvider.future);
 
-      final canAccess = await container.read(
-        canAccessPatientProvider('patient-1').future,
-      );
+      final canAccess = await container.read(canAccessPatientProvider('patient-1').future);
 
       expect(canAccess, isTrue);
       expect(mockRepo.lastPatientId, 'patient-1');
@@ -132,18 +116,14 @@ void main() {
       final mockRepo = _MockPatientRepository(canAccessResult: false);
       final container = ProviderContainer(
         overrides: [
-          currentUserProvider.overrideWith(
-            () => _StaticCurrentUser(doctorB),
-          ),
+          currentUserProvider.overrideWith(() => _StaticCurrentUser(doctorB)),
           patientRepositoryProvider.overrideWithValue(mockRepo),
         ],
       );
       addTearDown(container.dispose);
       await container.read(currentUserProvider.future);
 
-      final canAccess = await container.read(
-        canAccessPatientProvider('patient-1').future,
-      );
+      final canAccess = await container.read(canAccessPatientProvider('patient-1').future);
 
       expect(canAccess, isFalse);
     });
@@ -189,75 +169,53 @@ void main() {
   });
 
   group('PatientDetailScreen Access Control Widget Tests', () {
-    testWidgets('renders patient profile when access is granted', (tester) async {
+    testWidgets('renders patient identity when access is granted', (tester) async {
       await tester.pumpWidget(
         ProviderScope(
           overrides: [
-            currentUserProvider.overrideWith(
-              () => _StaticCurrentUser(doctorA),
-            ),
-            canAccessPatientProvider('patient-1').overrideWith(
-              (ref) async => true,
-            ),
-            patientDetailProvider('patient-1').overrideWith(
-              (ref) async => patient,
-            ),
-            patientAssignedDoctorsProvider('patient-1').overrideWith(
-              (ref) async => [doctorA],
-            ),
-            patientIsEmptyProvider('patient-1').overrideWith(
-              (ref) async => false,
-            ),
-            patientAppointmentsProvider('patient-1').overrideWith(
-              () => _MockPatientAppointments(),
-            ),
-            patientPaymentsProvider('patient-1').overrideWith(
-              (ref) async => <PaymentRecord>[],
-            ),
-            patientNotesListProvider('patient-1').overrideWith(
-              () => _MockPatientNotesList(),
-            ),
-            patientDocumentsRepositoryProvider.overrideWithValue(
-              _MockDocumentsRepository(),
-            ),
+            currentUserProvider.overrideWith(() => _StaticCurrentUser(doctorA)),
+            canAccessPatientProvider('patient-1').overrideWith((ref) async => true),
+            patientDetailProvider('patient-1').overrideWith((ref) async => patient),
+            patientAssignedDoctorsProvider('patient-1').overrideWith((ref) async => [doctorA]),
+            patientIsEmptyProvider('patient-1').overrideWith((ref) async => false),
+            patientAppointmentsProvider('patient-1').overrideWith(() => _MockPatientAppointments()),
+            patientPaymentsProvider('patient-1').overrideWith((ref) async => <PaymentRecord>[]),
+            patientNotesListProvider('patient-1').overrideWith(() => _MockPatientNotesList()),
+            patientDocumentsRepositoryProvider.overrideWithValue(_MockDocumentsRepository()),
           ],
-          child: const MaterialApp(
-            home: PatientDetailScreen(patientId: 'patient-1'),
-          ),
+          child: const MaterialApp(home: PatientDetailScreen(patientId: 'patient-1')),
         ),
       );
 
       await tester.pumpAndSettle();
 
-      expect(find.byType(PatientProfile), findsOneWidget);
+      expect(find.byType(WorkspaceHeader), findsOneWidget);
       expect(find.text('John Doe'), findsWidgets);
-      expect(find.byType(PatientErrorScaffold), findsNothing);
+      expect(find.text(AppStrings.errorDatabasePermissionDenied), findsNothing);
     });
 
-    testWidgets('renders PatientErrorScaffold when doctor access is denied', (tester) async {
+    testWidgets('denied access never loads patient data', (tester) async {
+      var patientLoads = 0;
       await tester.pumpWidget(
         ProviderScope(
           overrides: [
-            currentUserProvider.overrideWith(
-              () => _StaticCurrentUser(doctorB),
-            ),
-            canAccessPatientProvider('patient-1').overrideWith(
-              (ref) async => false,
-            ),
-            patientDetailProvider('patient-1').overrideWith(
-              (ref) async => patient,
-            ),
+            currentUserProvider.overrideWith(() => _StaticCurrentUser(doctorB)),
+            canAccessPatientProvider('patient-1').overrideWith((ref) async => false),
+            patientDetailProvider('patient-1').overrideWith((ref) async {
+              patientLoads++;
+              return patient;
+            }),
           ],
-          child: const MaterialApp(
-            home: PatientDetailScreen(patientId: 'patient-1'),
-          ),
+          child: const MaterialApp(home: PatientDetailScreen(patientId: 'patient-1')),
         ),
       );
 
       await tester.pumpAndSettle();
 
-      expect(find.byType(PatientErrorScaffold), findsOneWidget);
-      expect(find.byType(PatientProfile), findsNothing);
+      expect(find.text(AppStrings.errorDatabasePermissionDenied), findsOneWidget);
+      expect(find.byType(WorkspaceHeader), findsNothing);
+      expect(find.text('John Doe'), findsNothing);
+      expect(patientLoads, 0);
     });
   });
 
@@ -266,17 +224,11 @@ void main() {
       await tester.pumpWidget(
         ProviderScope(
           overrides: [
-            currentUserProvider.overrideWith(
-              () => _StaticCurrentUser(doctorB),
-            ),
-            canAccessPatientProvider('patient-1').overrideWith(
-              (ref) async => false,
-            ),
+            currentUserProvider.overrideWith(() => _StaticCurrentUser(doctorB)),
+            canAccessPatientProvider('patient-1').overrideWith((ref) async => false),
           ],
           child: MaterialApp(
-            home: Scaffold(
-              body: AppointmentDetailHeader(patient: patient),
-            ),
+            home: Scaffold(body: AppointmentDetailHeader(patient: patient)),
           ),
         ),
       );
@@ -306,10 +258,7 @@ class _MockPatientRepository implements PatientRepository {
   String? lastDoctorId;
 
   @override
-  Future<Result<bool>> canDoctorAccessPatient({
-    required String patientId,
-    required String doctorId,
-  }) async {
+  Future<Result<bool>> canDoctorAccessPatient({required String patientId, required String doctorId}) async {
     lastPatientId = patientId;
     lastDoctorId = doctorId;
     return Result.success(canAccessResult);
@@ -322,22 +271,14 @@ class _MockPatientRepository implements PatientRepository {
 class _MockPatientAppointments extends PatientAppointments {
   @override
   PatientAppointmentsState build(String patientId) {
-    return const PatientAppointmentsState(
-      appointments: [],
-      totalCount: 0,
-      isLoading: false,
-    );
+    return const PatientAppointmentsState(appointments: [], totalCount: 0, isLoading: false);
   }
 }
 
 class _MockPatientNotesList extends PatientNotesList {
   @override
   PatientNotesListState build(String patientId) {
-    return const PatientNotesListState(
-      notes: [],
-      totalCount: 0,
-      isLoading: false,
-    );
+    return const PatientNotesListState(notes: [], totalCount: 0, isLoading: false);
   }
 }
 

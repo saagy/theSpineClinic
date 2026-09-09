@@ -36,30 +36,37 @@ class AppointmentAgendaMenu extends ConsumerWidget {
   final AppointmentStatus status;
   final VoidCallback? onStatusChanged;
 
-  Future<void> _updateStatus(
-    BuildContext context,
-    WidgetRef ref,
-    AppointmentStatus newStatus,
-  ) async {
+  Future<void> _updateStatus(BuildContext context, WidgetRef ref, AppointmentStatus newStatus) async {
+    if (ref.read(currentUserProvider).value?.isActive != true) return;
     ref.read(receptionistAppointmentsProvider.notifier).changeStatus(appointmentId, newStatus);
     ref.read(doctorScheduleProvider.notifier).changeStatus(appointmentId, newStatus);
     ref.read(allAppointmentsProvider.notifier).updateStatus(appointmentId, newStatus);
     ref.read(patientAppointmentsProvider(patientId).notifier).changeStatus(appointmentId, newStatus);
 
-    final result = await ref.read(appointmentRepositoryProvider).updateAppointmentStatus(appointmentId, newStatus);
+    final result = await ref
+        .read(appointmentRepositoryProvider)
+        .updateAppointmentStatus(appointmentId, newStatus);
     if (!context.mounted) return;
 
     result.when(
       success: (_) {
         AppointmentRefresh.patientAndDashboards(ref, patientId: patientId);
         onStatusChanged?.call();
-        AppSnackbar.show(context, message: AppStrings.statusUpdateSuccess, variant: AppSnackbarVariant.success);
+        AppSnackbar.show(
+          context,
+          message: AppStrings.statusUpdateSuccess,
+          variant: AppSnackbarVariant.success,
+        );
       },
       failure: (err) {
         ref.read(receptionistAppointmentsProvider.notifier).changeStatus(appointmentId, status);
         ref.read(doctorScheduleProvider.notifier).changeStatus(appointmentId, status);
         ref.read(allAppointmentsProvider.notifier).updateStatus(appointmentId, status);
-        AppSnackbar.show(context, message: AppStrings.fromKey(err.userMessageKey), variant: AppSnackbarVariant.error);
+        AppSnackbar.show(
+          context,
+          message: AppStrings.fromKey(err.userMessageKey),
+          variant: AppSnackbarVariant.error,
+        );
       },
     );
   }
@@ -94,9 +101,13 @@ class AppointmentAgendaMenu extends ConsumerWidget {
     final isDoctor = user?.role == UserRole.doctor;
 
     final canAccess = isDoctor
-        ? (ref.watch(canAccessAppointmentProvider(appointmentId: appointmentId, patientId: patientId)).value ?? false)
+        ? (ref
+                  .watch(canAccessAppointmentProvider(appointmentId: appointmentId, patientId: patientId))
+                  .value ??
+              false)
         : (user?.role == UserRole.receptionist || user?.role == UserRole.superAdmin);
-    final canEdit = user?.role == UserRole.receptionist || user?.role == UserRole.superAdmin || (isDoctor && canAccess);
+    final canEdit =
+        user?.role == UserRole.receptionist || user?.role == UserRole.superAdmin || (isDoctor && canAccess);
 
     return PopupMenuButton<_AgendaAction>(
       tooltip: AppStrings.moreActions,

@@ -16,7 +16,7 @@ and data integrity. Reusing an existing widget is a choice based on suitability.
 
 - Material 3, with light and dark themes in `lib/core/constants/app_theme.dart`.
 - Clinical-blue palettes in `lib/core/constants/app_palette.dart`; the light
-  primary is `#2563EB`. The former teal design reference is obsolete.
+  primary is `#2B4D73`. The former teal design reference is obsolete.
 - Plus Jakarta Sans typography is selected by `AppTextStyles`. Existing fonts
   and token values can be reassessed during the visual pilot.
 - `AppShell` currently switches between bottom navigation and a navigation rail
@@ -95,6 +95,20 @@ enough density for repeated daily work.
    distinct from implemented behavior; do not call unreviewed work approved.
 
 Current decision status:
+0. Patient detail now implements the [patient workspace direction](docs/patient-workspace-direction.md)
+   with a corrective pass after the first pilot was rejected. It uses the current
+   palette, Plus Jakarta Sans, text tabs, flat sections with heading rules,
+   compact fact grids and 8px control corners. Doctors see active programs and
+   medical history first, with no outstanding balances. Reception sees
+   warning-colored outstanding balances and basic details. Both see upcoming
+   visits. Overview is a single full-width reading column so unrelated sections
+   never form uneven paired cards. Patient/attending-staff initials avatars are
+   reused from Patients; phone stays in Patient Details. History is one list with
+   contextual date/time within each appointment row. Program folders open the
+   existing gallery; private image previews use authenticated repository bytes.
+   Program detail is treatment-first, and medical-history/treatment-plan editors
+   use a bounded form with a persistent Save/Cancel footer. Payment mutations
+   retain the existing capability checks.
 1. Patients directory redesign established the clean modern 2026 SaaS aesthetic (hairline dividers, monogram badges, Lucide icons, high density, and clean table/list responsive layouts).
 2. Schedule screens (Receptionist & Doctor) implemented:
    - Modern medical agenda & timeline, strictly chronological by scheduled time.

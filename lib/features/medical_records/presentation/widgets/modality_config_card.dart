@@ -93,8 +93,8 @@ class _ModalityConfigCardState extends State<ModalityConfigCard> {
     return Container(
       margin: const EdgeInsets.only(bottom: AppSizes.p12),
       decoration: BoxDecoration(
-        color: cs.surfaceContainerLow,
-        borderRadius: BorderRadius.circular(AppSizes.r16),
+        color: cs.surface,
+        borderRadius: BorderRadius.circular(AppSizes.r8),
         border: Border.all(
           color: widget.isSelected ? cs.primary.withAlpha(120) : cs.outlineVariant,
           width: 1.0,
@@ -102,10 +102,7 @@ class _ModalityConfigCardState extends State<ModalityConfigCard> {
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _buildHeader(cs),
-          if (widget.isSelected && _isExpanded) _buildBody(),
-        ],
+        children: [_buildHeader(cs), if (widget.isSelected && _isExpanded) _buildBody()],
       ),
     );
   }
@@ -113,17 +110,14 @@ class _ModalityConfigCardState extends State<ModalityConfigCard> {
   Widget _buildHeader(ColorScheme cs) {
     return InkWell(
       onTap: () => setState(() => _isExpanded = !_isExpanded),
-      borderRadius: BorderRadius.circular(AppSizes.r16),
+      borderRadius: BorderRadius.circular(AppSizes.r8),
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: AppSizes.p16, vertical: AppSizes.p12),
         child: Row(
           children: [
             Container(
               padding: const EdgeInsets.all(AppSizes.p6),
-              decoration: BoxDecoration(
-                color: cs.primaryContainer,
-                shape: BoxShape.circle,
-              ),
+              decoration: BoxDecoration(color: cs.primaryContainer, shape: BoxShape.circle),
               child: Icon(widget.modalityType.icon, size: 16, color: cs.onPrimaryContainer),
             ),
             const SizedBox(width: AppSizes.p12),
@@ -133,7 +127,7 @@ class _ModalityConfigCardState extends State<ModalityConfigCard> {
                 children: [
                   Text(
                     widget.modalityType.displayLabel,
-                    style: AppTextStyles.cardTitle.copyWith(color: cs.onSurface),
+                    style: AppTextStyles.bodyBold.copyWith(color: cs.onSurface),
                   ),
                   if (widget.modalityType.hasRegionSubSelections)
                     Text(

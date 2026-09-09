@@ -11,6 +11,18 @@ import 'package:flutter/material.dart';
 
 /// Application-wide dimension constants.
 abstract final class AppSizes {
+  static const double recordFactWidth = 240;
+  static const double clinicalContentMaxWidth = 1040;
+  static const double appointmentDateColumnWidth = 112;
+  static const double patientHeaderAvatarSize = 48;
+  static const double patientWorkspaceMaxWidth = 1240;
+  static const double patientWorkspaceBreakpoint = 960;
+  static const double patientContextWidth = 292;
+  static const double recordMenuWidth = 220;
+  static const double recordDocumentTileWidth = 260;
+  static const double patientPaymentActionWidth = 176;
+  static const double documentPreviewSize = 64;
+  static const double recordSectionLoadingHeight = 72;
   // ──────────────── 4px Spacing Scale ────────────────
 
   /// 2 px — micro adjustments (icon-to-text nudges).
@@ -89,29 +101,19 @@ abstract final class AppSizes {
   static const double h48 = 48.0;
 
   /// Pre-built [BorderRadius] for badges and chips.
-  static const BorderRadius borderRadiusBadge = BorderRadius.all(
-    Radius.circular(r4),
-  );
+  static const BorderRadius borderRadiusBadge = BorderRadius.all(Radius.circular(r4));
 
   /// Pre-built [BorderRadius] for inputs and dropdowns.
-  static const BorderRadius borderRadiusInput = BorderRadius.all(
-    Radius.circular(r24),
-  );
+  static const BorderRadius borderRadiusInput = BorderRadius.all(Radius.circular(r24));
 
   /// Pre-built [BorderRadius] for cards and containers.
-  static const BorderRadius borderRadiusCard = BorderRadius.all(
-    Radius.circular(r16),
-  );
+  static const BorderRadius borderRadiusCard = BorderRadius.all(Radius.circular(r16));
 
   /// Pre-built [BorderRadius] for modals and dialogs.
-  static const BorderRadius borderRadiusDialog = BorderRadius.all(
-    Radius.circular(r16),
-  );
+  static const BorderRadius borderRadiusDialog = BorderRadius.all(Radius.circular(r16));
 
   /// Pre-built [BorderRadius] for pill-shaped elements.
-  static const BorderRadius borderRadiusPill = BorderRadius.all(
-    Radius.circular(r999),
-  );
+  static const BorderRadius borderRadiusPill = BorderRadius.all(Radius.circular(r999));
 
   // ──────────────── Component Dimensions ────────────────
 
@@ -223,18 +225,13 @@ abstract final class AppSizes {
   // ──────────────── Convenience EdgeInsets ────────────────
 
   /// Symmetric horizontal screen padding (24 px).
-  static const EdgeInsets paddingScreenH = EdgeInsets.symmetric(
-    horizontal: p24,
-  );
+  static const EdgeInsets paddingScreenH = EdgeInsets.symmetric(horizontal: p24);
 
   /// Standard card inner padding (20 px all sides).
   static const EdgeInsets paddingCard = EdgeInsets.all(p20);
 
   /// Compact cell padding (12 px vertical, 16 px horizontal).
-  static const EdgeInsets paddingCell = EdgeInsets.symmetric(
-    horizontal: p16,
-    vertical: p12,
-  );
+  static const EdgeInsets paddingCell = EdgeInsets.symmetric(horizontal: p16, vertical: p12);
 
   /// Dialog body padding (20 px all sides).
   static const EdgeInsets paddingDialog = EdgeInsets.all(p20);

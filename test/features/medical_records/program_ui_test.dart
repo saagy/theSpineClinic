@@ -285,13 +285,15 @@ void main() {
     // Verify AppBar action buttons are present
     expect(find.byIcon(Icons.picture_as_pdf_outlined), findsOneWidget);
     expect(find.byIcon(Icons.edit_outlined), findsOneWidget);
-    expect(find.byIcon(Icons.delete_outline), findsOneWidget);
-    expect(find.byIcon(Icons.more_horiz_rounded), findsWidgets);
+    expect(find.byTooltip(AppStrings.moreActions), findsWidgets);
+    await tester.tap(find.descendant(of: find.byType(AppBar), matching: find.byTooltip(AppStrings.moreActions)).first);
+    await tester.pumpAndSettle();
+    expect(find.text(AppStrings.deleteProgram), findsOneWidget);
 
-    // Verify Treatment Plan is rendered after Findings
-    final findingsTop = tester.getTopLeft(find.text(AppStrings.clinicalFindingsSection)).dy;
+    // Treatment is the primary clinical decision surface and leads the detail page.
     final treatmentTop = tester.getTopLeft(find.text(AppStrings.treatmentPlan)).dy;
-    expect(treatmentTop, greaterThan(findingsTop));
+    final findingsTop = tester.getTopLeft(find.text(AppStrings.clinicalFindingsSection)).dy;
+    expect(treatmentTop, lessThan(findingsTop));
   });
 
   testWidgets('ProgramFormScreen renders form content with pinned bottom save bar', (tester) async {

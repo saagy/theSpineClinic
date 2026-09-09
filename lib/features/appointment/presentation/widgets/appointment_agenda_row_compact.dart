@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:spine_clinic_app/core/utils/formatters.dart';
+import 'package:spine_clinic_app/core/constants/app_strings.dart';
 import 'package:go_router/go_router.dart';
 import 'package:spine_clinic_app/core/constants/app_sizes.dart';
 import 'package:spine_clinic_app/core/constants/app_text_styles.dart';
@@ -19,6 +21,8 @@ class AppointmentAgendaCompactRow extends StatelessWidget {
     required this.onCheckIn,
     required this.showDoctor,
     this.onStatusChanged,
+    this.patientContext = false,
+    this.showDate = false,
   });
 
   final AppointmentWithPatient item;
@@ -28,6 +32,8 @@ class AppointmentAgendaCompactRow extends StatelessWidget {
   final VoidCallback onCheckIn;
   final bool showDoctor;
   final VoidCallback? onStatusChanged;
+  final bool patientContext;
+  final bool showDate;
 
   Widget _buildTypePill(ColorScheme cs, String label) {
     return Container(
@@ -38,7 +44,11 @@ class AppointmentAgendaCompactRow extends StatelessWidget {
       ),
       child: Text(
         label,
-        style: AppTextStyles.caption.copyWith(color: cs.onSurfaceVariant, fontSize: 10.5, fontWeight: FontWeight.w500),
+        style: AppTextStyles.caption.copyWith(
+          color: cs.onSurfaceVariant,
+          fontSize: 10.5,
+          fontWeight: FontWeight.w500,
+        ),
         maxLines: 1,
         overflow: TextOverflow.ellipsis,
       ),
@@ -49,6 +59,11 @@ class AppointmentAgendaCompactRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     final appt = item.appointment;
+    final identity = patientContext
+        ? (item.allDoctorNames.isNotEmpty
+              ? item.allDoctorNames.join(', ')
+              : item.doctorName ?? AppStrings.noDoctorsAssigned)
+        : item.patient.fullName;
 
     return Material(
       color: Colors.transparent,
@@ -61,19 +76,20 @@ class AppointmentAgendaCompactRow extends StatelessWidget {
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              SizedBox(
-                width: 62.0,
-                child: Text(
-                  timeStr,
-                  style: AppTextStyles.bodyBold.copyWith(
-                    color: isCancelled ? cs.onSurfaceVariant.withAlpha(120) : cs.onSurface,
-                    fontFeatures: const [FontFeature.tabularFigures()],
-                    fontSize: 12.0,
+              if (!showDate)
+                SizedBox(
+                  width: 62.0,
+                  child: Text(
+                    timeStr,
+                    style: AppTextStyles.bodyBold.copyWith(
+                      color: isCancelled ? cs.onSurfaceVariant.withAlpha(120) : cs.onSurface,
+                      fontFeatures: const [FontFeature.tabularFigures()],
+                      fontSize: 12.0,
+                    ),
                   ),
                 ),
-              ),
-              const SizedBox(width: AppSizes.p6),
-              PatientMonogramBadge(name: item.patient.fullName, size: 26.0),
+              if (!showDate) const SizedBox(width: AppSizes.p6),
+              PatientMonogramBadge(name: identity, size: 26.0),
               const SizedBox(width: AppSizes.p8),
               Expanded(
                 child: Column(
@@ -81,7 +97,7 @@ class AppointmentAgendaCompactRow extends StatelessWidget {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Text(
-                      item.patient.fullName,
+                      identity,
                       style: AppTextStyles.bodyBold.copyWith(
                         color: isCancelled ? cs.onSurfaceVariant.withAlpha(140) : cs.onSurface,
                         decoration: isCancelled ? TextDecoration.lineThrough : null,
@@ -91,6 +107,11 @@ class AppointmentAgendaCompactRow extends StatelessWidget {
                       overflow: TextOverflow.ellipsis,
                     ),
                     const SizedBox(height: 2.0),
+                    if (showDate)
+                      Text(
+                        '${Formatters.formatDateMedium(appt.scheduledAt.toLocal())} · $timeStr',
+                        style: AppTextStyles.caption.copyWith(color: cs.onSurfaceVariant),
+                      ),
                     _buildTypePill(cs, appt.type.displayLabel),
                   ],
                 ),

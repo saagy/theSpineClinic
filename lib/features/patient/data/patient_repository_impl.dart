@@ -21,18 +21,13 @@ class PatientRepositoryImpl implements PatientRepository {
 
   final SupabaseService _service;
   final PatientDocumentsRepository _documentsRepo;
-  late final PatientRepositoryQueries _queries = PatientRepositoryQueries(
-    _service,
-  );
+  late final PatientRepositoryQueries _queries = PatientRepositoryQueries(_service);
   static const String _table = 'patients';
   static const String _doctorsTable = 'patient_doctors';
   static const int _searchLimit = 50;
 
   @override
-  Future<Result<List<Patient>>> searchPatients({
-    required String query,
-    ClinicLocation? clinic,
-  }) async {
+  Future<Result<List<Patient>>> searchPatients({required String query, ClinicLocation? clinic}) async {
     try {
       final String trimmed = query.trim();
       if (trimmed.isEmpty) return const Result.success([]);
@@ -41,14 +36,8 @@ class PatientRepositoryImpl implements PatientRepository {
         final base = _service.from(_table).select('*');
         final filtered = tokens
             .where((t) => t.isNotEmpty)
-            .fold(
-              base,
-              (q, token) =>
-                  q.or('full_name.ilike.%$token%,phone_number.ilike.%$token%'),
-            );
-        final withClinic = clinic != null
-            ? filtered.eq('clinic', clinic.dbValue)
-            : filtered;
+            .fold(base, (q, token) => q.or('full_name.ilike.%$token%,phone_number.ilike.%$token%'));
+        final withClinic = clinic != null ? filtered.eq('clinic', clinic.dbValue) : filtered;
         return withClinic.order('full_name').limit(_searchLimit);
       });
       return Result.success(rows.map(Patient.fromJson).toList());
@@ -63,11 +52,7 @@ class PatientRepositoryImpl implements PatientRepository {
   Future<Result<Patient>> getPatientById(String id) async {
     try {
       final Map<String, dynamic> row = await _service.guardQuery(
-        () => _service
-            .from(_table)
-            .select('*, appointments(scheduled_at, status)')
-            .eq('id', id)
-            .single(),
+        () => _service.from(_table).select('*, appointments(scheduled_at, status)').eq('id', id).single(),
       );
       return Result.success(parsePatientRowWithLastAppt(row));
     } on AppException catch (e) {
@@ -83,18 +68,11 @@ class PatientRepositoryImpl implements PatientRepository {
     String? doctorId,
     required ClinicLocation clinic,
   }) {
-    return _queries.getDuePatients(
-      date: date,
-      doctorId: doctorId,
-      clinic: clinic,
-    );
+    return _queries.getDuePatients(date: date, doctorId: doctorId, clinic: clinic);
   }
 
   @override
-  Future<Result<void>> updateNextVisitDate(
-    String patientId,
-    DateTime? nextVisitDate,
-  ) async {
+  Future<Result<void>> updateNextVisitDate(String patientId, DateTime? nextVisitDate) async {
     try {
       final String? value = nextVisitDate == null
           ? null
@@ -102,10 +80,7 @@ class PatientRepositoryImpl implements PatientRepository {
                 '${nextVisitDate.month.toString().padLeft(2, '0')}-'
                 '${nextVisitDate.day.toString().padLeft(2, '0')}';
       await _service.guardQuery(
-        () => _service
-            .from(_table)
-            .update(<String, dynamic>{'next_visit_date': value})
-            .eq('id', patientId),
+        () => _service.from(_table).update(<String, dynamic>{'next_visit_date': value}).eq('id', patientId),
       );
       return const Result.success(null);
     } on AppException catch (e) {
@@ -116,10 +91,7 @@ class PatientRepositoryImpl implements PatientRepository {
   }
 
   @override
-  Future<Result<Patient>> createPatient(
-    Patient patient,
-    List<String> assignedDoctorIds,
-  ) async {
+  Future<Result<Patient>> createPatient(Patient patient, List<String> assignedDoctorIds) async {
     try {
       final Map<String, dynamic> row = await _service.guardQuery(
         () => _service.rpc(
@@ -142,10 +114,7 @@ class PatientRepositoryImpl implements PatientRepository {
   }
 
   @override
-  Future<Result<void>> updatePatient(
-    Patient patient, {
-    List<String>? doctorIds,
-  }) async {
+  Future<Result<void>> updatePatient(Patient patient, {List<String>? doctorIds}) async {
     try {
       await _service.guardQuery(
         () => _service.rpc(
@@ -195,10 +164,7 @@ class PatientRepositoryImpl implements PatientRepository {
   }
 
   @override
-  Future<Result<void>> updatePatientDoctors(
-    String patientId,
-    List<String> currentDoctorIds,
-  ) async {
+  Future<Result<void>> updatePatientDoctors(String patientId, List<String> currentDoctorIds) async {
     try {
       await _service.guardQuery(
         () => _service.rpc(
@@ -215,26 +181,17 @@ class PatientRepositoryImpl implements PatientRepository {
   }
 
   @override
-  Future<Result<bool>> canDoctorAccessPatient({
-    required String patientId,
-    required String doctorId,
-  }) async {
+  Future<Result<bool>> canDoctorAccessPatient({required String patientId, required String doctorId}) async {
     try {
       final List<Map<String, dynamic>> directRows = await _service.guardQuery(
-        () => _service
-            .from(_doctorsTable)
-            .select()
-            .eq('patient_id', patientId)
-            .eq('doctor_id', doctorId),
+        () => _service.from(_doctorsTable).select().eq('patient_id', patientId).eq('doctor_id', doctorId),
       );
       if (directRows.isNotEmpty) return const Result.success(true);
 
       final List<Map<String, dynamic>> apptDocRows = await _service.guardQuery(
         () => _service
             .from('appointments')
-            .select(
-              'scheduled_at, status, appointment_doctors!inner(doctor_id, is_active)',
-            )
+            .select('scheduled_at, status, appointment_doctors!inner(doctor_id, is_active)')
             .eq('patient_id', patientId)
             .eq('appointment_doctors.doctor_id', doctorId)
             .eq('appointment_doctors.is_active', true),
@@ -297,12 +254,7 @@ class PatientRepositoryImpl implements PatientRepository {
     String? doctorId,
     ClinicLocation? clinic,
   }) {
-    return _queries.countAllPatients(
-      filters: filters,
-      query: query,
-      doctorId: doctorId,
-      clinic: clinic,
-    );
+    return _queries.countAllPatients(filters: filters, query: query, doctorId: doctorId, clinic: clinic);
   }
 
   // ── Patient deletion ──
@@ -310,38 +262,26 @@ class PatientRepositoryImpl implements PatientRepository {
   @override
   Future<Result<bool>> isPatientEmpty(String patientId) async {
     try {
-      final results = await Future.wait([
-        _service.guardQuery(
-          () => _service
-              .from('appointments')
-              .select('id')
-              .eq('patient_id', patientId)
-              .limit(1),
-        ),
-        _service.guardQuery(
-          () => _service
-              .from('payment_records')
-              .select('id')
-              .eq('patient_id', patientId)
-              .limit(1),
-        ),
-        _service.guardQuery(
-          () => _service
-              .from('patient_notes')
-              .select('id')
-              .eq('patient_id', patientId)
-              .limit(1),
-        ),
-        _service.guardQuery(
-          () => _service
-              .from('patient_documents')
-              .select('id')
-              .eq('patient_id', patientId)
-              .limit(1),
-        ),
+      final row = await _service
+          .from('patients')
+          .select('session_balance, traction_balance')
+          .eq('id', patientId)
+          .maybeSingle();
+      if (row == null || row['session_balance'] != 0 || row['traction_balance'] != 0) {
+        return const Result.success(false);
+      }
+      final checks = await Future.wait([
+        for (final table in [
+          'appointments',
+          'payment_records',
+          'patient_notes',
+          'patient_documents',
+          'patient_programs',
+          'patient_medical_history',
+        ])
+          _service.from(table).select('id').eq('patient_id', patientId).limit(1),
       ]);
-      final bool isEmpty = results.every((r) => (r as List).isEmpty);
-      return Result.success(isEmpty);
+      return Result.success(checks.every((rows) => rows.isEmpty));
     } on AppException catch (e) {
       return Result.failure(e);
     } catch (e) {
@@ -357,9 +297,7 @@ class PatientRepositoryImpl implements PatientRepository {
       // side effects. Storage cleanup is intentionally NOT inside
       // this try block so a transient bucket/RPC failure doesn't
       // block the user-visible DB delete.
-      await _service.guardQuery(
-        () => _service.from(_table).delete().eq('id', patientId),
-      );
+      await _service.rpc<void>('delete_empty_patient', params: {'p_patient_id': patientId});
 
       // Best-effort storage sweep. Catches orphans from earlier
       // upload failures. Any error here is silently tolerated;

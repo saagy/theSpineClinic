@@ -40,10 +40,7 @@ class PatientNotesList extends _$PatientNotesList {
     if (!ref.mounted) return;
 
     int totalCount = 0;
-    countResult.when(
-      success: (count) => totalCount = count,
-      failure: (_) => totalCount = 0,
-    );
+    countResult.when(success: (count) => totalCount = count, failure: (_) => totalCount = 0);
 
     final result = await repo.getNotesForPatientPaginated(
       patientId: patientId,
@@ -66,10 +63,7 @@ class PatientNotesList extends _$PatientNotesList {
         );
       },
       failure: (error) {
-        state = state.copyWith(
-          isLoading: false,
-          errorMessage: error.message,
-        );
+        state = state.copyWith(isLoading: false, errorMessage: error.message);
       },
     );
   }
@@ -77,7 +71,7 @@ class PatientNotesList extends _$PatientNotesList {
   void _reloadDebounced() {
     _generation++;
     final int currentGen = _generation;
-    Future.delayed(const Duration(milliseconds: 150), () {
+    Future.delayed(const Duration(milliseconds: 300), () {
       if (ref.mounted && currentGen == _generation) {
         _fetchFirstPage();
       }
@@ -107,17 +101,10 @@ class PatientNotesList extends _$PatientNotesList {
     result.when(
       success: (List<PatientNote> newNotes) {
         final all = [...state.notes, ...newNotes];
-        state = state.copyWith(
-          notes: all,
-          isLoadingMore: false,
-          hasMore: all.length < state.totalCount,
-        );
+        state = state.copyWith(notes: all, isLoadingMore: false, hasMore: all.length < state.totalCount);
       },
       failure: (error) {
-        state = state.copyWith(
-          isLoadingMore: false,
-          errorMessage: error.message,
-        );
+        state = state.copyWith(isLoadingMore: false, errorMessage: error.message);
       },
     );
   }
@@ -141,10 +128,7 @@ class PatientNotesList extends _$PatientNotesList {
 
   void clearFilters() {
     if (!ref.mounted) return;
-    state = state.copyWith(
-      dateFrom: null,
-      dateTo: null,
-    );
+    state = state.copyWith(dateFrom: null, dateTo: null);
     _fetchFirstPage();
   }
 }

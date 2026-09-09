@@ -1,4 +1,5 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
+import 'package:spine_clinic_app/features/auth/presentation/auth_providers.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:spine_clinic_app/core/constants/app_strings.dart';
@@ -24,11 +25,15 @@ class AppointmentAgendaRow extends ConsumerStatefulWidget {
     required this.item,
     this.showDoctor = true,
     this.onStatusChanged,
+    this.patientContext = false,
+    this.showDate = false,
   });
 
   final AppointmentWithPatient item;
   final bool showDoctor;
   final VoidCallback? onStatusChanged;
+  final bool patientContext;
+  final bool showDate;
 
   @override
   ConsumerState<AppointmentAgendaRow> createState() => _AppointmentAgendaRowState();
@@ -38,17 +43,20 @@ class _AppointmentAgendaRowState extends ConsumerState<AppointmentAgendaRow> {
   bool _isCheckingIn = false;
 
   Future<void> _checkIn() async {
-    if (_isCheckingIn) return;
+    if (_isCheckingIn || ref.read(currentUserProvider).value?.isActive != true) return;
     setState(() => _isCheckingIn = true);
 
     final id = widget.item.appointment.id;
     final patientId = widget.item.patient.id;
+    final previousStatus = widget.item.appointment.status;
     ref.read(receptionistAppointmentsProvider.notifier).changeStatus(id, AppointmentStatus.checkedIn);
     ref.read(doctorScheduleProvider.notifier).changeStatus(id, AppointmentStatus.checkedIn);
     ref.read(allAppointmentsProvider.notifier).updateStatus(id, AppointmentStatus.checkedIn);
     ref.read(patientAppointmentsProvider(patientId).notifier).changeStatus(id, AppointmentStatus.checkedIn);
 
-    final result = await ref.read(appointmentRepositoryProvider).updateAppointmentStatus(id, AppointmentStatus.checkedIn);
+    final result = await ref
+        .read(appointmentRepositoryProvider)
+        .updateAppointmentStatus(id, AppointmentStatus.checkedIn);
     if (!mounted) return;
     setState(() => _isCheckingIn = false);
 
@@ -56,13 +64,22 @@ class _AppointmentAgendaRowState extends ConsumerState<AppointmentAgendaRow> {
       success: (_) {
         AppointmentRefresh.patientAndDashboards(ref, patientId: patientId);
         widget.onStatusChanged?.call();
-        AppSnackbar.show(context, message: AppStrings.statusUpdateSuccess, variant: AppSnackbarVariant.success);
+        AppSnackbar.show(
+          context,
+          message: AppStrings.statusUpdateSuccess,
+          variant: AppSnackbarVariant.success,
+        );
       },
       failure: (err) {
-        ref.read(receptionistAppointmentsProvider.notifier).changeStatus(id, widget.item.appointment.status);
-        ref.read(doctorScheduleProvider.notifier).changeStatus(id, widget.item.appointment.status);
-        ref.read(allAppointmentsProvider.notifier).updateStatus(id, widget.item.appointment.status);
-        AppSnackbar.show(context, message: AppStrings.fromKey(err.userMessageKey), variant: AppSnackbarVariant.error);
+        ref.read(receptionistAppointmentsProvider.notifier).changeStatus(id, previousStatus);
+        ref.read(doctorScheduleProvider.notifier).changeStatus(id, previousStatus);
+        ref.read(allAppointmentsProvider.notifier).updateStatus(id, previousStatus);
+        ref.read(patientAppointmentsProvider(patientId).notifier).changeStatus(id, previousStatus);
+        AppSnackbar.show(
+          context,
+          message: AppStrings.fromKey(err.userMessageKey),
+          variant: AppSnackbarVariant.error,
+        );
       },
     );
   }
@@ -84,6 +101,8 @@ class _AppointmentAgendaRowState extends ConsumerState<AppointmentAgendaRow> {
             isCheckingIn: _isCheckingIn,
             onCheckIn: _checkIn,
             showDoctor: widget.showDoctor,
+            patientContext: widget.patientContext,
+            showDate: widget.showDate,
             onStatusChanged: widget.onStatusChanged,
           );
         }
@@ -95,6 +114,8 @@ class _AppointmentAgendaRowState extends ConsumerState<AppointmentAgendaRow> {
           isCheckingIn: _isCheckingIn,
           onCheckIn: _checkIn,
           showDoctor: widget.showDoctor,
+          patientContext: widget.patientContext,
+          showDate: widget.showDate,
           onStatusChanged: widget.onStatusChanged,
         );
       },

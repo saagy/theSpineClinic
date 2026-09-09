@@ -81,6 +81,13 @@
 
 ## Known Gotchas
 
+### Empty Patient Deletion
+All permitted roles may delete only completely empty patients. Keep client
+preflight and `delete_empty_patient` RPC wired; the database delete trigger
+rejects related appointments, payments, programs, notes, documents, medical
+history and nonzero session/traction balances. Do not restore a privileged-role
+bypass or replace the RPC with a direct client delete.
+
 ### Status Callback Wiring
 Every screen that uses `ReceptionistAppointmentCard` with `showMenu: true`
 (the default) MUST pass an `onStatusChanged` callback that refreshes that

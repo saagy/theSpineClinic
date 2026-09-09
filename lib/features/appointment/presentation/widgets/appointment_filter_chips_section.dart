@@ -2,6 +2,7 @@
 library;
 
 import 'package:flutter/material.dart';
+import 'package:spine_clinic_app/shared/widgets/filter_option_chip.dart';
 import 'package:spine_clinic_app/core/constants/app_sizes.dart';
 import 'package:spine_clinic_app/core/constants/app_strings.dart';
 import 'package:spine_clinic_app/core/constants/app_text_styles.dart';
@@ -20,6 +21,8 @@ class AppointmentFilterChipsSection extends StatelessWidget {
     required this.onClinicChanged,
     required this.onStatusChanged,
     required this.onTypeChanged,
+    this.selectedStatuses,
+    this.selectedTypes,
   });
 
   final ClinicLocation? selectedClinic;
@@ -29,6 +32,8 @@ class AppointmentFilterChipsSection extends StatelessWidget {
   final ValueChanged<ClinicLocation?> onClinicChanged;
   final ValueChanged<AppointmentStatus?> onStatusChanged;
   final ValueChanged<AppointmentType?> onTypeChanged;
+  final Set<AppointmentStatus>? selectedStatuses;
+  final Set<AppointmentType>? selectedTypes;
 
   @override
   Widget build(BuildContext context) {
@@ -55,32 +60,20 @@ class AppointmentFilterChipsSection extends StatelessWidget {
       padding: const EdgeInsets.only(bottom: AppSizes.p8),
       child: Text(
         title.toUpperCase(),
-        style: AppTextStyles.captionBold.copyWith(
-          color: cs.onSurfaceVariant,
-          letterSpacing: 0.8,
-        ),
+        style: AppTextStyles.captionBold.copyWith(color: cs.onSurfaceVariant, letterSpacing: 0.8),
       ),
     );
   }
 
   Widget _buildClinicOptions(ColorScheme cs) {
-    final clinics = <ClinicLocation?>[
-      null,
-      ClinicLocation.tagamoa,
-      ClinicLocation.masrElgedida,
-    ];
+    final clinics = <ClinicLocation?>[null, ClinicLocation.tagamoa, ClinicLocation.masrElgedida];
     return Wrap(
       spacing: AppSizes.p8,
       runSpacing: AppSizes.p8,
       children: clinics.map((c) {
         final isSelected = selectedClinic == c;
         final label = c == null ? AppStrings.filterAllBranches : c.displayLabel;
-        return _buildChip(
-          cs: cs,
-          label: label,
-          isSelected: isSelected,
-          onTap: () => onClinicChanged(c),
-        );
+        return _buildChip(cs: cs, label: label, isSelected: isSelected, onTap: () => onClinicChanged(c));
       }).toList(),
     );
   }
@@ -96,14 +89,13 @@ class AppointmentFilterChipsSection extends StatelessWidget {
       spacing: AppSizes.p8,
       runSpacing: AppSizes.p8,
       children: statuses.map((s) {
-        final isSelected = selectedStatus == s;
+        final isSelected = selectedStatuses == null
+            ? selectedStatus == s
+            : s == null
+            ? selectedStatuses!.isEmpty
+            : selectedStatuses!.contains(s);
         final label = s == null ? AppStrings.all : s.displayLabel;
-        return _buildChip(
-          cs: cs,
-          label: label,
-          isSelected: isSelected,
-          onTap: () => onStatusChanged(s),
-        );
+        return _buildChip(cs: cs, label: label, isSelected: isSelected, onTap: () => onStatusChanged(s));
       }).toList(),
     );
   }
@@ -120,14 +112,13 @@ class AppointmentFilterChipsSection extends StatelessWidget {
       spacing: AppSizes.p8,
       runSpacing: AppSizes.p8,
       children: types.map((t) {
-        final isSelected = selectedType == t;
+        final isSelected = selectedTypes == null
+            ? selectedType == t
+            : t == null
+            ? selectedTypes!.isEmpty
+            : selectedTypes!.contains(t);
         final label = t == null ? AppStrings.all : t.displayLabel;
-        return _buildChip(
-          cs: cs,
-          label: label,
-          isSelected: isSelected,
-          onTap: () => onTypeChanged(t),
-        );
+        return _buildChip(cs: cs, label: label, isSelected: isSelected, onTap: () => onTypeChanged(t));
       }).toList(),
     );
   }
@@ -137,34 +128,5 @@ class AppointmentFilterChipsSection extends StatelessWidget {
     required String label,
     required bool isSelected,
     required VoidCallback onTap,
-  }) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(AppSizes.r8),
-      child: Container(
-        padding: const EdgeInsets.symmetric(
-          horizontal: AppSizes.p12,
-          vertical: AppSizes.p8,
-        ),
-        decoration: BoxDecoration(
-          color: isSelected
-              ? cs.primaryContainer
-              : cs.surfaceContainerHighest.withAlpha(120),
-          borderRadius: BorderRadius.circular(AppSizes.r8),
-          border: Border.all(
-            color: isSelected
-                ? cs.primary
-                : cs.outlineVariant.withAlpha(100),
-            width: AppSizes.borderWidth,
-          ),
-        ),
-        child: Text(
-          label,
-          style: AppTextStyles.captionBold.copyWith(
-            color: isSelected ? cs.onPrimaryContainer : cs.onSurface,
-          ),
-        ),
-      ),
-    );
-  }
+  }) => FilterOptionChip(label: label, isSelected: isSelected, onTap: onTap);
 }

@@ -27,23 +27,16 @@ part 'patient_documents_providers.g.dart';
 PatientDocumentsRepository patientDocumentsRepository(Ref ref) {
   // Dispose the in-memory document cache whenever the staff session changes.
   ref.watch(currentUserProvider);
-  return PatientDocumentsRepositoryImpl(
-    supabaseService: SupabaseService.instance,
-  );
+  return PatientDocumentsRepositoryImpl(supabaseService: SupabaseService.instance);
 }
 
 /// Family AsyncNotifier managing the document list state for a patient.
-@riverpod
-class PatientDocumentsNotifierNotifier
-    extends _$PatientDocumentsNotifierNotifier {
+@Riverpod(keepAlive: true)
+class PatientDocumentsNotifierNotifier extends _$PatientDocumentsNotifierNotifier {
   @override
   FutureOr<List<PatientDocument>> build(String patientId) async {
-    final PatientDocumentsRepository repo = ref.watch(
-      patientDocumentsRepositoryProvider,
-    );
-    final Result<List<PatientDocument>> result = await repo.fetchDocuments(
-      patientId,
-    );
+    final PatientDocumentsRepository repo = ref.watch(patientDocumentsRepositoryProvider);
+    final Result<List<PatientDocument>> result = await repo.fetchDocuments(patientId);
 
     return result.when(
       success: (List<PatientDocument> data) => data,
@@ -76,9 +69,7 @@ class PatientDocumentsNotifierNotifier
       );
     }
 
-    final PatientDocumentsRepository repo = ref.read(
-      patientDocumentsRepositoryProvider,
-    );
+    final PatientDocumentsRepository repo = ref.read(patientDocumentsRepositoryProvider);
     final Result<PatientDocument> result = await repo.uploadDocument(
       patientId: patientId,
       fileName: fileName,
@@ -122,9 +113,7 @@ class PatientDocumentsNotifierNotifier
       );
     }
 
-    final PatientDocumentsRepository repo = ref.read(
-      patientDocumentsRepositoryProvider,
-    );
+    final PatientDocumentsRepository repo = ref.read(patientDocumentsRepositoryProvider);
     final Result<PatientDocument> result = await repo.renameDocument(
       documentId: document.id,
       fileName: fileName,
@@ -134,9 +123,7 @@ class PatientDocumentsNotifierNotifier
     result.when(
       success: (PatientDocument updatedDoc) {
         state.whenData((current) {
-          state = AsyncData(
-            current.map((d) => d.id == updatedDoc.id ? updatedDoc : d).toList(),
-          );
+          state = AsyncData(current.map((d) => d.id == updatedDoc.id ? updatedDoc : d).toList());
         });
         ref.invalidateSelf();
       },
@@ -169,9 +156,7 @@ class PatientDocumentsNotifierNotifier
       );
     }
 
-    final PatientDocumentsRepository repo = ref.read(
-      patientDocumentsRepositoryProvider,
-    );
+    final PatientDocumentsRepository repo = ref.read(patientDocumentsRepositoryProvider);
     final Result<void> result = await repo.deleteDocument(documentId: doc.id);
     if (!ref.mounted) return result;
 
@@ -198,8 +183,6 @@ FutureOr<List<PatientDocument>> programDocuments(
   required String patientId,
   required String programId,
 }) async {
-  final docs = await ref.watch(
-    patientDocumentsNotifierProvider(patientId).future,
-  );
+  final docs = await ref.watch(patientDocumentsNotifierProvider(patientId).future);
   return docs.where((d) => d.programId == programId).toList();
 }

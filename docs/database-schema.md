@@ -11,6 +11,15 @@ All times are stored as `timestamptz`; clinic-local calendar logic goes through
 
 ## 1. Enums
 
+Patient deletion safeguard (migration `20260909010000`): `delete_empty_patient(p_patient_id uuid)`
+checks an active receptionist, senior doctor or administrator, locks the patient
+row and deletes atomically. A `BEFORE DELETE` trigger rejects any patient with
+appointments, payment records, programs, notes, documents, medical history or
+nonzero session/traction balances, including direct deletes. The private
+`patient_has_records` helper is not callable by client roles. Storage cleanup
+occurs only after successful database deletion. The schema snapshot also corrects
+the existing `create_patient_with_doctors` grants to its current five-argument signature.
+
 | Type | Values | Notes |
 | --- | --- | --- |
 | `user_role` | `super_admin`, `receptionist`, `doctor` | `doctor` = physical therapist. No patient login exists — patients are data, not users. |

@@ -26,10 +26,7 @@ class _FakeDocumentsRepository implements PatientDocumentsRepository {
   }
 
   @override
-  Future<Result<Uint8List>> downloadDocumentBytes({
-    required String fileUrl,
-    required String fileName,
-  }) async {
+  Future<Result<Uint8List>> downloadDocumentBytes({required String fileUrl, required String fileName}) async {
     return Result.success(
       base64Decode(
         'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwC'
@@ -39,18 +36,13 @@ class _FakeDocumentsRepository implements PatientDocumentsRepository {
   }
 
   @override
-  Future<Result<void>> deleteDocument({required String documentId}) =>
-      throw UnimplementedError();
+  Future<Result<void>> deleteDocument({required String documentId}) => throw UnimplementedError();
 
   @override
-  Future<Result<void>> deletePatientStorageFolder(String patientId) =>
-      throw UnimplementedError();
+  Future<Result<void>> deletePatientStorageFolder(String patientId) => throw UnimplementedError();
 
   @override
-  Future<Result<PatientDocument>> renameDocument({
-    required String documentId,
-    required String fileName,
-  }) =>
+  Future<Result<PatientDocument>> renameDocument({required String documentId, required String fileName}) =>
       throw UnimplementedError();
 
   @override
@@ -60,18 +52,14 @@ class _FakeDocumentsRepository implements PatientDocumentsRepository {
     required Uint8List fileBytes,
     required String uploadedBy,
     String? programId,
-  }) =>
-      throw UnimplementedError();
+  }) => throw UnimplementedError();
 }
 
 void main() {
   group('FileDisplayHelper Tests', () {
     test('sanitizes Unix timestamp prefixes', () {
       const raw = '1780936664913_Screenshot 2026-01-06 070326.png';
-      expect(
-        FileDisplayHelper.sanitizeFileName(raw),
-        'Screenshot 2026-01-06 070326.png',
-      );
+      expect(FileDisplayHelper.sanitizeFileName(raw), 'Screenshot 2026-01-06 070326.png');
     });
 
     test('sanitizes UUID prefixes', () {
@@ -112,49 +100,35 @@ void main() {
       ),
     ];
 
-    testWidgets('ProgramMediaCard displays sanitized name and PDF badge', (
-      tester,
-    ) async {
+    testWidgets('ProgramMediaCard displays sanitized name and PDF badge', (tester) async {
       await tester.pumpWidget(
         ProviderScope(
           overrides: [
-            patientDocumentsRepositoryProvider.overrideWithValue(
-              _FakeDocumentsRepository(testDocs),
-            ),
+            patientDocumentsRepositoryProvider.overrideWithValue(_FakeDocumentsRepository(testDocs)),
           ],
           child: MaterialApp(
-            home: Scaffold(
-              body: ProgramMediaCard(
-                document: testDocs[0],
-              ),
-            ),
+            home: Scaffold(body: ProgramMediaCard(document: testDocs[0])),
           ),
         ),
       );
 
+      await tester.pumpAndSettle();
       // Should display sanitized name without '1780936664913_' prefix
       expect(find.text('Cervical_MRI.png'), findsOneWidget);
       expect(find.text('1780936664913_Cervical_MRI.png'), findsNothing);
     });
 
-    testWidgets('ProgramMediaReel renders scan count and triggers onTap', (
-      tester,
-    ) async {
+    testWidgets('ProgramMediaReel renders scan count and triggers onTap', (tester) async {
       int? tappedIndex;
 
       await tester.pumpWidget(
         ProviderScope(
           overrides: [
-            patientDocumentsRepositoryProvider.overrideWithValue(
-              _FakeDocumentsRepository(testDocs),
-            ),
+            patientDocumentsRepositoryProvider.overrideWithValue(_FakeDocumentsRepository(testDocs)),
           ],
           child: MaterialApp(
             home: Scaffold(
-              body: ProgramMediaReel(
-                documents: testDocs,
-                onOpenDocument: (index) => tappedIndex = index,
-              ),
+              body: ProgramMediaReel(documents: testDocs, onOpenDocument: (index) => tappedIndex = index),
             ),
           ),
         ),
@@ -171,43 +145,33 @@ void main() {
       expect(tappedIndex, equals(1));
     });
 
-    testWidgets(
-      'ProgramGalleryViewerScreen navigates via swipe and keyboard',
-      (tester) async {
-        await tester.pumpWidget(
-          ProviderScope(
-            overrides: [
-              patientDocumentsRepositoryProvider.overrideWithValue(
-                _FakeDocumentsRepository(testDocs),
-              ),
-            ],
-            child: MaterialApp(
-              home: ProgramGalleryViewerScreen(
-                documents: testDocs,
-                initialIndex: 0,
-              ),
-            ),
-          ),
-        );
-        await tester.pumpAndSettle();
+    testWidgets('ProgramGalleryViewerScreen navigates via swipe and keyboard', (tester) async {
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            patientDocumentsRepositoryProvider.overrideWithValue(_FakeDocumentsRepository(testDocs)),
+          ],
+          child: MaterialApp(home: ProgramGalleryViewerScreen(documents: testDocs, initialIndex: 0)),
+        ),
+      );
+      await tester.pumpAndSettle();
 
-        expect(find.text('1 of 2'), findsOneWidget);
-        expect(find.byIcon(Icons.chevron_right_rounded), findsNothing);
-        expect(find.byIcon(Icons.chevron_left_rounded), findsNothing);
+      expect(find.text('1 of 2'), findsOneWidget);
+      expect(find.byIcon(Icons.chevron_right_rounded), findsNothing);
+      expect(find.byIcon(Icons.chevron_left_rounded), findsNothing);
 
-        // Swipe to next document
-        await tester.drag(find.byType(PageView), const Offset(-500, 0));
-        await tester.pumpAndSettle();
+      // Swipe to next document
+      await tester.drag(find.byType(PageView), const Offset(-500, 0));
+      await tester.pumpAndSettle();
 
-        expect(find.text('2 of 2'), findsOneWidget);
+      expect(find.text('2 of 2'), findsOneWidget);
 
-        // Navigate back using Left arrow key
-        await tester.sendKeyEvent(LogicalKeyboardKey.arrowLeft);
-        await tester.pumpAndSettle();
+      // Navigate back using Left arrow key
+      await tester.sendKeyEvent(LogicalKeyboardKey.arrowLeft);
+      await tester.pumpAndSettle();
 
-        expect(find.text('1 of 2'), findsOneWidget);
-      },
-    );
+      expect(find.text('1 of 2'), findsOneWidget);
+    });
 
     testWidgets(
       'ProgramGalleryViewerScreen.open pushes gallery and close button returns to previous screen',
@@ -220,11 +184,8 @@ void main() {
               builder: (context, _) => Scaffold(
                 body: Center(
                   child: ElevatedButton(
-                    onPressed: () => ProgramGalleryViewerScreen.open(
-                      context,
-                      documents: testDocs,
-                      initialIndex: 0,
-                    ),
+                    onPressed: () =>
+                        ProgramGalleryViewerScreen.open(context, documents: testDocs, initialIndex: 0),
                     child: const Text('Open Gallery'),
                   ),
                 ),
@@ -237,9 +198,7 @@ void main() {
         await tester.pumpWidget(
           ProviderScope(
             overrides: [
-              patientDocumentsRepositoryProvider.overrideWithValue(
-                _FakeDocumentsRepository(testDocs),
-              ),
+              patientDocumentsRepositoryProvider.overrideWithValue(_FakeDocumentsRepository(testDocs)),
             ],
             child: MaterialApp.router(routerConfig: router),
           ),
