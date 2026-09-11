@@ -29,11 +29,11 @@ BEGIN
   EXCEPTION WHEN raise_exception THEN
     IF SQLERRM='Stale due booking accepted' THEN RAISE; END IF;
   END;
-  PERFORM public.update_patient_details(p,'Changed','001',NULL,'tagamoa',NULL);
+  PERFORM public.update_patient_details(p,'Changed','001','tagamoa',NULL);
   SELECT session_balance INTO b FROM public.patients WHERE id=p;
   IF b<>2 THEN RAISE EXCEPTION 'Demographic edit changed credits'; END IF;
   BEGIN
-    PERFORM public.update_patient_details(p,'Partial write','002',NULL,'tagamoa',ARRAY[admin]);
+    PERFORM public.update_patient_details(p,'Partial write','002','tagamoa',ARRAY[admin]);
     RAISE EXCEPTION 'Invalid doctor accepted';
   EXCEPTION WHEN OTHERS THEN
     IF SQLERRM='Invalid doctor accepted' THEN RAISE; END IF;

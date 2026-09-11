@@ -1,7 +1,13 @@
-﻿platform :ios, '15.0'
+platform :ios, '15.0'
 
 # CocoaPods analytics sends network stats which slows down builds.
 ENV['COCOAPODS_DISABLE_STATS'] = 'true'
+
+# Disable unused media and audio picker dependencies in file_picker (avoids broken DKPhotoGallery)
+Pod::PICKER_MEDIA = false
+PICKER_MEDIA = false
+Pod::PICKER_AUDIO = false
+PICKER_AUDIO = false
 
 project 'Runner', {
   'Debug' => :debug,
