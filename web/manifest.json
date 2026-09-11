@@ -3,9 +3,9 @@
     "short_name": "Spine Clinic",
     "start_url": ".",
     "display": "standalone",
-    "background_color": "#0175C2",
-    "theme_color": "#0175C2",
-    "description": "A new Flutter project.",
+    "background_color": "#F8FAFC",
+    "theme_color": "#2B4D73",
+    "description": "The Spine Clinic - Enterprise Management System",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [
