@@ -1,14 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:spine_clinic_app/core/constants/app_strings.dart';
+import 'package:spine_clinic_app/features/patient/presentation/widgets/workspace_appointments.dart';
 import 'package:spine_clinic_app/features/patient/presentation/widgets/workspace_due.dart';
-import 'package:spine_clinic_app/features/patient/presentation/widgets/workspace_info.dart';
 import 'package:spine_clinic_app/features/patient/presentation/widgets/workspace_medical_history.dart';
 import 'package:spine_clinic_app/features/patient/presentation/widgets/workspace_programs.dart';
 import 'package:spine_clinic_app/features/patient/presentation/widgets/workspace_documents.dart';
 import 'package:spine_clinic_app/features/medical_records/presentation/screens/program_gallery_viewer_screen.dart';
 import 'package:spine_clinic_app/features/appointment/presentation/widgets/appointment_filter_sheet.dart';
 import 'package:spine_clinic_app/features/appointment/presentation/widgets/appointment_agenda_row.dart';
+import 'package:spine_clinic_app/features/patient/presentation/widgets/patient_summary_sidebar.dart';
 import '../../fixtures/workspace_harness.dart';
 
 void main() {
@@ -45,10 +46,7 @@ void main() {
   for (final role in ['reception', 'reception-payments']) {
     testWidgets('$role prioritizes details and gates payment actions', (tester) async {
       await mount(tester, WorkspaceHarness(role: role), const Size(1280, 1000));
-      expect(
-        tester.getTopLeft(find.byType(WorkspaceInfo)).dy,
-        lessThan(tester.getTopLeft(find.byType(WorkspacePrograms)).dy),
-      );
+      expect(find.byType(PatientSummarySidebar), findsOneWidget);
       await tester.tap(find.text(AppStrings.payments));
       await tester.pumpAndSettle();
       expect(find.text('600 EGP'), findsWidgets);
@@ -57,10 +55,8 @@ void main() {
         role == 'reception-payments' ? findsOneWidget : findsNothing,
       );
       expect(find.text(AppStrings.collectDue), role == 'reception-payments' ? findsOneWidget : findsNothing);
-      for (final label in [AppStrings.patientPrice, AppStrings.patientPaid, AppStrings.patientDue]) {
-        final cells = find.text(label);
-        expect(tester.getTopLeft(cells.first).dx, tester.getTopLeft(cells.last).dx);
-      }
+      expect(find.text(AppStrings.totalOutstanding), findsWidgets);
+      expect(find.text(AppStrings.totalPaid), findsWidgets);
       expect(tester.takeException(), isNull);
     });
   }
@@ -128,10 +124,10 @@ void main() {
     await mount(tester, const WorkspaceHarness(), const Size(1280, 1000));
     await tester.tap(find.text(AppStrings.appointments).first);
     await tester.pumpAndSettle();
-    expect(find.text('Dr. Mariam Khaled'), findsOneWidget);
+    expect(find.descendant(of: find.byType(WorkspaceAppointments), matching: find.text('Dr. Mariam Khaled')), findsOneWidget);
     expect(find.byType(ExpansionTile), findsNothing);
     expect(find.text('Dr. Omar Salem'), findsOneWidget);
-    expect(find.text('Aug 12, 2026'), findsOneWidget);
+    expect(find.descendant(of: find.byType(WorkspaceAppointments), matching: find.text('Aug 12, 2026')), findsOneWidget);
     await tester.tap(find.byTooltip(AppStrings.filterSort));
     await tester.pumpAndSettle();
     expect(find.byType(BottomSheet), findsOneWidget);
@@ -149,8 +145,9 @@ void main() {
       await tester.pumpAndSettle();
       final rows = find.byType(AppointmentAgendaRow);
       expect(rows, findsNWidgets(2));
-      expect(tester.getSize(rows.first).width, width - 32);
-      expect(find.textContaining('Aug 12, 2026'), findsOneWidget);
+      final expectedWidth = width >= 960 ? (width - 320 - 48) : (width - 32);
+      expect(tester.getSize(rows.first).width, expectedWidth);
+      expect(find.descendant(of: find.byType(WorkspaceAppointments), matching: find.textContaining('Aug 12, 2026')), findsOneWidget);
       expect(tester.takeException(), isNull);
     });
   }
@@ -164,5 +161,29 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Lumbar disc prolapse'), findsNWidgets(2));
     expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('narrow screen compact action and filter buttons match in size and have filled styling', (tester) async {
+    await mount(tester, const WorkspaceHarness(), const Size(360, 900));
+    await tester.ensureVisible(find.text(AppStrings.appointments).first);
+    await tester.tap(find.text(AppStrings.appointments).first);
+    await tester.pumpAndSettle();
+
+    final filterBtnFinder = find.byTooltip(AppStrings.filterSort);
+    final actionBtnFinder = find.byTooltip(AppStrings.bookAppointment);
+    expect(filterBtnFinder, findsOneWidget);
+    expect(actionBtnFinder, findsOneWidget);
+
+    final filterSize = tester.getSize(filterBtnFinder);
+    final actionSize = tester.getSize(actionBtnFinder);
+    expect(actionSize, equals(filterSize));
+
+    final actionButtonWidget = tester.widget<IconButton>(
+      find.ancestor(of: actionBtnFinder, matching: find.byType(IconButton)),
+    );
+    final actionStyle = actionButtonWidget.style;
+    final theme = Theme.of(tester.element(actionBtnFinder));
+    expect(actionStyle?.backgroundColor?.resolve({}), equals(theme.colorScheme.primary));
+    expect(actionStyle?.foregroundColor?.resolve({}), equals(theme.colorScheme.onPrimary));
   });
 }

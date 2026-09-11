@@ -25,10 +25,40 @@ class WorkspaceInfo extends ConsumerWidget {
       title: AppStrings.patientDetails,
       child: RecordFactGrid(
         children: [
-          TextButton.icon(
-            onPressed: () => PatientPhoneOptionsSheet.show(context, patient.phoneNumber),
-            icon: const Icon(Icons.phone_outlined, size: AppSizes.iconSmall),
-            label: Text(Formatters.formatPhone(patient.phoneNumber), style: AppTextStyles.bodyMedium),
+          InkWell(
+            onTap: () => PatientPhoneOptionsSheet.show(context, patient.phoneNumber),
+            borderRadius: BorderRadius.circular(AppSizes.r6),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: AppSizes.p8),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    AppStrings.phone,
+                    style: AppTextStyles.caption.copyWith(
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                  const SizedBox(height: AppSizes.p4),
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.phone_outlined, size: AppSizes.iconSmall, color: Theme.of(context).colorScheme.primary),
+                      const SizedBox(width: AppSizes.p6),
+                      Flexible(
+                        child: Text(
+                          Formatters.formatPhone(patient.phoneNumber),
+                          style: AppTextStyles.bodyMedium.copyWith(
+                            color: Theme.of(context).colorScheme.primary,
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
           ),
           RecordFact(label: AppStrings.clinic, value: patient.clinic.displayLabel),
           RecordFact(label: AppStrings.registered, value: Formatters.formatDateMedium(patient.createdAt)),

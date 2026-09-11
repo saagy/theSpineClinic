@@ -8,175 +8,139 @@ import 'package:spine_clinic_app/core/constants/app_text_styles.dart';
 import 'package:spine_clinic_app/core/network/app_routes.dart';
 import 'package:spine_clinic_app/core/utils/formatters.dart';
 import 'package:spine_clinic_app/features/auth/presentation/auth_providers.dart';
-import 'package:spine_clinic_app/features/payments/domain/payment_record.dart';
 import 'package:spine_clinic_app/features/payments/domain/patient_payment_summary.dart';
 import 'package:spine_clinic_app/features/payments/presentation/record_payment_controller.dart';
-import 'package:spine_clinic_app/features/patient/presentation/widgets/workspace_payment_actions.dart';
+import 'package:spine_clinic_app/features/patient/presentation/widgets/workspace_payment_entry.dart';
+import 'package:spine_clinic_app/features/patient/presentation/widgets/workspace_tab_header.dart';
 import 'package:spine_clinic_app/shared/widgets/record_section.dart';
 
 class WorkspacePayments extends ConsumerWidget {
   const WorkspacePayments({super.key, required this.patientId, this.dueOnly = false});
   final String patientId;
   final bool dueOnly;
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final provider = patientPaymentsProvider(patientId);
     final canPay = ref.watch(currentUserProvider).value?.canHandlePayments ?? false;
-    return RecordSection(
-      showTitle: dueOnly,
-      primaryAction: true,
-      title: dueOnly ? AppStrings.totalOutstanding : AppStrings.payments,
-      action: canPay && !dueOnly ? AppStrings.recordPayment : null,
-      onAction: () {
-        if (ref.read(currentUserProvider).value?.canHandlePayments != true) return;
-        context.push(AppRoutes.recordPayment.replaceFirst(':id', patientId));
-      },
-      child: RecordAsync(
-        value: ref.watch(provider),
-        onRetry: () => ref.invalidate(provider),
-        data: (records) {
-          final summary = PatientPaymentSummary(records);
-          final shown = dueOnly ? summary.outstanding : records;
-          if (shown.isEmpty) {
-            return RecordMessage(
-              message: dueOnly ? AppStrings.noOutstandingPayments : AppStrings.noPaymentsRecorded,
-            );
-          }
-          return Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Wrap(
-                spacing: AppSizes.p40,
-                runSpacing: AppSizes.p12,
-                children: [
-                  _Amount(label: AppStrings.totalOutstanding, amount: summary.totalDue, large: true),
-                  if (!dueOnly) _Amount(label: AppStrings.totalPaid, amount: summary.totalPaid, large: true),
+    final cs = Theme.of(context).colorScheme;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        WorkspaceTabHeader(
+          title: dueOnly ? AppStrings.totalOutstanding : AppStrings.payments,
+          actionLabel: canPay && !dueOnly ? AppStrings.recordPayment : null,
+          onAction: canPay && !dueOnly
+              ? () {
+                  if (ref.read(currentUserProvider).value?.canHandlePayments != true) return;
+                  context.push(AppRoutes.recordPayment.replaceFirst(':id', patientId));
+                }
+              : null,
+        ),
+        const SizedBox(height: AppSizes.p14),
+        RecordAsync(
+          value: ref.watch(provider),
+          onRetry: () => ref.invalidate(provider),
+          data: (records) {
+            final summary = PatientPaymentSummary(records);
+            final shown = dueOnly ? summary.outstanding : records;
+            if (shown.isEmpty) {
+              return Container(
+                padding: const EdgeInsets.all(AppSizes.p24),
+                decoration: BoxDecoration(
+                  color: cs.surface,
+                  borderRadius: BorderRadius.circular(AppSizes.r12),
+                  border: Border.all(color: cs.outlineVariant.withAlpha(80)),
+                ),
+                child: RecordMessage(
+                  message: dueOnly ? AppStrings.noOutstandingPayments : AppStrings.noPaymentsRecorded,
+                ),
+              );
+            }
+
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                if (!dueOnly) ...[
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _StatCard(
+                          label: AppStrings.totalOutstanding,
+                          amount: summary.totalDue,
+                          isDue: true,
+                        ),
+                      ),
+                      const SizedBox(width: AppSizes.p10),
+                      Expanded(
+                        child: _StatCard(
+                          label: AppStrings.totalPaid,
+                          amount: summary.totalPaid,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: AppSizes.p14),
                 ],
-              ),
-              const SizedBox(height: AppSizes.p24),
-              for (final record in shown) _PaymentEntry(payment: record),
-            ],
-          );
-        },
-      ),
+                Container(
+                  decoration: BoxDecoration(
+                    color: cs.surface,
+                    borderRadius: BorderRadius.circular(AppSizes.r12),
+                    border: Border.all(color: cs.outlineVariant.withAlpha(80)),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      for (int i = 0; i < shown.length; i++) ...[
+                        WorkspacePaymentEntry(payment: shown[i]),
+                        if (i < shown.length - 1) const Divider(height: AppSizes.borderWidth),
+                      ],
+                    ],
+                  ),
+                ),
+              ],
+            );
+          },
+        ),
+      ],
     );
   }
 }
 
-class _Amount extends StatelessWidget {
-  const _Amount({required this.label, required this.amount, this.large = false});
+class _StatCard extends StatelessWidget {
+  const _StatCard({required this.label, required this.amount, this.isDue = false});
   final String label;
   final double amount;
-  final bool large;
-  @override
-  Widget build(BuildContext context) => Column(
-    crossAxisAlignment: CrossAxisAlignment.start,
-    children: [
-      Text(
-        label,
-        style: AppTextStyles.caption.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
-      ),
-      const SizedBox(height: AppSizes.p6),
-      Text(
-        Formatters.formatCurrency(amount),
-        style: (large ? AppTextStyles.numberLarge : AppTextStyles.number).copyWith(
-          color: label == AppStrings.totalOutstanding && amount > 0
-              ? Theme.of(context).extension<ClinicColors>()!.warning
-              : null,
-        ),
-      ),
-    ],
-  );
-}
+  final bool isDue;
 
-class _PaymentEntry extends ConsumerWidget {
-  const _PaymentEntry({required this.payment});
-  final PaymentRecord payment;
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final colors = Theme.of(context).colorScheme;
-    final recorder = payment.recordedBy == null
-        ? null
-        : ref.watch(staffProfileProvider(payment.recordedBy!)).value;
-    final description = Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(payment.reason, style: AppTextStyles.bodyBold),
-        const SizedBox(height: AppSizes.p6),
-        Text(
-          Formatters.formatDateMedium(payment.recordedAt),
-          style: AppTextStyles.caption.copyWith(color: colors.onSurfaceVariant),
-        ),
-        if (recorder != null) Text(recorder.fullName, style: AppTextStyles.caption),
-        if (payment.sessionBalanceAdded != 0)
-          Text(
-            '${AppStrings.sessionBalanceAddedField}: ${payment.sessionBalanceAdded}',
-            style: AppTextStyles.caption,
-          ),
-        if (payment.tractionBalanceAdded != 0)
-          Text(
-            '${AppStrings.tractionBalanceAddedField}: ${payment.tractionBalanceAdded}',
-            style: AppTextStyles.caption,
-          ),
-      ],
-    );
-    final amountCells = [
-      _Amount(label: AppStrings.patientPrice, amount: payment.totalPrice ?? payment.amount),
-      _Amount(label: AppStrings.patientPaid, amount: payment.amount),
-      _Amount(label: AppStrings.patientDue, amount: payment.remainingDue),
-    ];
-    final amounts = Wrap(spacing: AppSizes.p24, runSpacing: AppSizes.p12, children: amountCells);
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    final warningColor = Theme.of(context).extension<ClinicColors>()?.warning ?? cs.error;
+
     return Container(
-      padding: const EdgeInsets.symmetric(vertical: AppSizes.p20),
+      padding: const EdgeInsets.all(AppSizes.p12),
       decoration: BoxDecoration(
-        border: Border(bottom: BorderSide(color: colors.outlineVariant)),
+        color: cs.surface,
+        borderRadius: BorderRadius.circular(AppSizes.r12),
+        border: Border.all(
+          color: isDue && amount > 0 ? warningColor.withAlpha(120) : cs.outlineVariant.withAlpha(80),
+        ),
       ),
-      child: LayoutBuilder(
-        builder: (context, constraints) {
-          if (constraints.maxWidth >= AppSizes.desktopBreakpoint &&
-              MediaQuery.textScalerOf(context).scale(1) < 1.5) {
-            return Row(
-              children: [
-                Expanded(child: description),
-                const SizedBox(width: AppSizes.p24),
-                Expanded(
-                  child: Row(
-                    children: [
-                      for (final cell in amountCells)
-                        Expanded(
-                          child: Padding(
-                            padding: const EdgeInsets.only(right: AppSizes.p8),
-                            child: cell,
-                          ),
-                        ),
-                    ],
-                  ),
-                ),
-                const SizedBox(width: AppSizes.p16),
-                if (ref.watch(currentUserProvider).value?.canHandlePayments == true)
-                  SizedBox(
-                    width: AppSizes.patientPaymentActionWidth,
-                    child: Align(
-                      alignment: Alignment.centerRight,
-                      child: WorkspacePaymentActions(payment: payment),
-                    ),
-                  ),
-              ],
-            );
-          }
-          return Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              description,
-              const SizedBox(height: AppSizes.p16),
-              amounts,
-              Align(
-                alignment: Alignment.centerRight,
-                child: WorkspacePaymentActions(payment: payment),
-              ),
-            ],
-          );
-        },
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(label, style: AppTextStyles.caption.copyWith(color: cs.onSurfaceVariant)),
+          const SizedBox(height: AppSizes.p4),
+          Text(
+            Formatters.formatCurrency(amount),
+            style: AppTextStyles.headingSmall.copyWith(
+              color: isDue && amount > 0 ? warningColor : cs.onSurface,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ],
       ),
     );
   }

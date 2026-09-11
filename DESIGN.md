@@ -98,7 +98,13 @@ Current decision status:
 0. Patient detail now implements the [patient workspace direction](docs/patient-workspace-direction.md)
    with a corrective pass after the first pilot was rejected. It uses the current
    palette, Plus Jakarta Sans, text tabs, flat sections with heading rules,
-   compact fact grids and 8px control corners. Doctors see active programs and
+   compact fact grids and 8px control corners. The September 11 correction
+   unifies app bar, patient header, tabs and body on the theme surface (white
+   in light mode). Medical history uses the same flat heading rule as patient
+   facts; document folders are rows within one group, without nested cards.
+   Compact primary actions use a surface background, blue icon and outline
+   with a 44px minimum target. Native text tabs animate their indicator and
+   horizontal reveal without scrolling the outer page. Doctors see active programs and
    medical history first, with no outstanding balances. Reception sees
    warning-colored outstanding balances and basic details. Both see upcoming
    visits. Overview is a single full-width reading column so unrelated sections

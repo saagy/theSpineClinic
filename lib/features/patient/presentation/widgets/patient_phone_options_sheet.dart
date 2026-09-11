@@ -1,35 +1,21 @@
-/// Bottom-sheet helper that lets users call or copy a patient's phone number
-/// from the patient details screen.
-///
-/// Rule 1 — under 200 lines.
-library;
-
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:url_launcher/url_launcher.dart';
-
+import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:spine_clinic_app/core/constants/app_sizes.dart';
 import 'package:spine_clinic_app/core/constants/app_strings.dart';
 import 'package:spine_clinic_app/core/constants/app_text_styles.dart';
+import 'package:spine_clinic_app/core/utils/formatters.dart';
+import 'package:spine_clinic_app/core/utils/patient_communication_helper.dart';
 import 'package:spine_clinic_app/shared/widgets/app_snackbar.dart';
 
-/// Available actions for the phone number bottom sheet.
-enum PhoneAction { call, copy }
+enum PhoneAction { call, whatsApp, copy }
 
-/// Bottom-sheet for selecting call or copy actions on a phone number.
+/// Bottom-sheet for selecting call, WhatsApp, or copy actions on a patient phone number.
 class PatientPhoneOptionsSheet extends StatelessWidget {
-  const PatientPhoneOptionsSheet({
-    super.key,
-    required this.phoneNumber,
-    required this.onCall,
-    required this.onCopy,
-  });
+  const PatientPhoneOptionsSheet({super.key, required this.phoneNumber});
 
   final String phoneNumber;
-  final VoidCallback onCall;
-  final VoidCallback onCopy;
 
-  /// Shows the bottom sheet and triggers the corresponding action.
   static Future<void> show(BuildContext context, String phoneNumber) async {
     if (phoneNumber.trim().isEmpty) return;
 
@@ -41,6 +27,7 @@ class PatientPhoneOptionsSheet extends StatelessWidget {
       builder: (sheetContext) => _SheetChrome(
         phoneNumber: phoneNumber,
         onCall: () => Navigator.of(sheetContext).pop(PhoneAction.call),
+        onWhatsApp: () => Navigator.of(sheetContext).pop(PhoneAction.whatsApp),
         onCopy: () => Navigator.of(sheetContext).pop(PhoneAction.copy),
       ),
     );
@@ -49,28 +36,13 @@ class PatientPhoneOptionsSheet extends StatelessWidget {
 
     switch (action) {
       case PhoneAction.call:
-        final Uri uri = Uri(scheme: 'tel', path: phoneNumber);
-        final bool launched = await canLaunchUrl(uri) &&
-            await launchUrl(uri, mode: LaunchMode.externalApplication);
-        if (!launched) {
-          // Fallback to copying if the dialer cannot be launched
-          await Clipboard.setData(ClipboardData(text: phoneNumber));
-          if (context.mounted) {
-            AppSnackbar.show(
-              context,
-              message: AppStrings.phoneCopied,
-              variant: AppSnackbarVariant.success,
-            );
-          }
-        }
+        await PatientCommunicationHelper.callPhone(context, phoneNumber);
+      case PhoneAction.whatsApp:
+        await PatientCommunicationHelper.openWhatsApp(context, phoneNumber);
       case PhoneAction.copy:
         await Clipboard.setData(ClipboardData(text: phoneNumber));
         if (context.mounted) {
-          AppSnackbar.show(
-            context,
-            message: AppStrings.phoneCopied,
-            variant: AppSnackbarVariant.success,
-          );
+          AppSnackbar.show(context, message: AppStrings.phoneCopied, variant: AppSnackbarVariant.success);
         }
     }
   }
@@ -78,8 +50,9 @@ class PatientPhoneOptionsSheet extends StatelessWidget {
   @override
   Widget build(BuildContext context) => _SheetChrome(
         phoneNumber: phoneNumber,
-        onCall: onCall,
-        onCopy: onCopy,
+        onCall: () => Navigator.of(context).pop(PhoneAction.call),
+        onWhatsApp: () => Navigator.of(context).pop(PhoneAction.whatsApp),
+        onCopy: () => Navigator.of(context).pop(PhoneAction.copy),
       );
 }
 
@@ -87,11 +60,13 @@ class _SheetChrome extends StatelessWidget {
   const _SheetChrome({
     required this.phoneNumber,
     required this.onCall,
+    required this.onWhatsApp,
     required this.onCopy,
   });
 
   final String phoneNumber;
   final VoidCallback onCall;
+  final VoidCallback onWhatsApp;
   final VoidCallback onCopy;
 
   @override
@@ -102,14 +77,9 @@ class _SheetChrome extends StatelessWidget {
       child: Container(
         decoration: BoxDecoration(
           color: cs.surface,
-          borderRadius: const BorderRadius.vertical(
-            top: Radius.circular(AppSizes.r16),
-          ),
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(AppSizes.r16)),
         ),
-        padding: const EdgeInsets.symmetric(
-          horizontal: AppSizes.p20,
-          vertical: AppSizes.p16,
-        ),
+        padding: const EdgeInsets.symmetric(horizontal: AppSizes.p20, vertical: AppSizes.p16),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -120,8 +90,7 @@ class _SheetChrome extends StatelessWidget {
                 height: AppSizes.handleHeight,
                 decoration: BoxDecoration(
                   color: cs.outlineVariant,
-                  borderRadius:
-                      const BorderRadius.all(Radius.circular(AppSizes.p2)),
+                  borderRadius: const BorderRadius.all(Radius.circular(AppSizes.p2)),
                 ),
               ),
             ),
@@ -129,15 +98,22 @@ class _SheetChrome extends StatelessWidget {
             Padding(
               padding: const EdgeInsets.symmetric(vertical: AppSizes.p4),
               child: Text(
-                phoneNumber,
-                style: AppTextStyles.bodyBold.copyWith(color: cs.onSurface),
+                Formatters.formatPhone(phoneNumber),
+                style: AppTextStyles.headingSmall.copyWith(color: cs.onSurface),
               ),
+            ),
+            const SizedBox(height: AppSizes.p12),
+            _PhoneOption(
+              icon: LucideIcons.phone,
+              label: AppStrings.call,
+              onTap: onCall,
+              iconColor: cs.primary,
             ),
             const SizedBox(height: AppSizes.p8),
             _PhoneOption(
-              icon: Icons.phone_outlined,
-              label: AppStrings.call,
-              onTap: onCall,
+              icon: LucideIcons.message_circle,
+              label: AppStrings.whatsApp,
+              onTap: onWhatsApp,
               iconColor: cs.primary,
             ),
             const SizedBox(height: AppSizes.p8),
@@ -171,32 +147,22 @@ class _PhoneOption extends StatelessWidget {
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     return Material(
-      color: cs.surfaceContainerHigh,
+      color: cs.surfaceContainerHigh.withAlpha(120),
       borderRadius: const BorderRadius.all(Radius.circular(AppSizes.r12)),
       child: InkWell(
         borderRadius: const BorderRadius.all(Radius.circular(AppSizes.r12)),
         onTap: onTap,
         child: Container(
           constraints: const BoxConstraints(minHeight: AppSizes.tappableMin),
-          padding: const EdgeInsets.symmetric(
-            horizontal: AppSizes.p16,
-            vertical: AppSizes.p12,
-          ),
+          padding: const EdgeInsets.symmetric(horizontal: AppSizes.p16, vertical: AppSizes.p12),
           child: Row(
             children: [
               Icon(icon, color: iconColor, size: AppSizes.iconDefault),
               const SizedBox(width: AppSizes.p12),
               Expanded(
-                child: Text(
-                  label,
-                  style: AppTextStyles.bodyBold.copyWith(color: cs.onSurface),
-                ),
+                child: Text(label, style: AppTextStyles.bodyBold.copyWith(color: cs.onSurface)),
               ),
-              Icon(
-                Icons.chevron_right_rounded,
-                size: AppSizes.iconDefault,
-                color: cs.onSurfaceVariant,
-              ),
+              Icon(Icons.chevron_right_rounded, size: AppSizes.iconDefault, color: cs.onSurfaceVariant),
             ],
           ),
         ),

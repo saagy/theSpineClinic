@@ -37,13 +37,10 @@ class RecordTransition extends StatelessWidget {
     final duration = MediaQuery.disableAnimationsOf(context)
         ? Duration.zero
         : const Duration(milliseconds: 200);
-    return AnimatedSize(
+    if (duration == Duration.zero) return child;
+    return AnimatedSwitcher(
       duration: duration,
-      alignment: Alignment.topCenter,
-      child: AnimatedSwitcher(
-        duration: duration,
-        child: SizedBox(key: ValueKey(child.runtimeType), width: double.infinity, child: child),
-      ),
+      child: SizedBox(key: ValueKey(child.runtimeType), width: double.infinity, child: child),
     );
   }
 }

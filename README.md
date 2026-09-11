@@ -1,304 +1,153 @@
-<div align="center">
+# The Spine Clinic
 
-# 🏥 The Spine Clinic
-### **Clinical Operations & Practice Management App**
+Clinic management for the people coordinating care.
 
-A multi-role medical clinic operations platform engineered with **Flutter**, **Riverpod**, and **Supabase (PostgreSQL)**. Designed for outpatient clinic workflows, featuring **Clean Architecture**, database-level transactional integrity, automated package credit ledgers, and strict role-based access control (RBAC).
+A Flutter application that brings appointments, patient records, treatment programs, and payments into one workspace. Receptionists coordinate schedules and follow-ups; doctors review patients and document care; administrators manage staff and operational access.
 
-[![Live Demo](https://img.shields.io/badge/Live_Demo-spine--clinic--app.web.app-2BB5A0?style=for-the-badge&logo=google-chrome&logoColor=white)](https://spine-clinic-app.web.app/)
-[![Flutter](https://img.shields.io/badge/Flutter-3.x-02569B?style=for-the-badge&logo=flutter&logoColor=white)](https://flutter.dev)
-[![Riverpod](https://img.shields.io/badge/State_Management-Riverpod_3-blueviolet?style=for-the-badge)](https://riverpod.dev)
-[![Supabase](https://img.shields.io/badge/Backend-Supabase_PostgreSQL-3ECF8E?style=for-the-badge&logo=supabase&logoColor=white)](https://supabase.com)
-[![LinkedIn](https://img.shields.io/badge/Connect-LinkedIn-0A66C2?style=for-the-badge&logo=linkedin&logoColor=white)](https://www.linkedin.com/in/sagy-tamer/)
+Built for phone and desktop layouts, with role-aware workflows and light and dark themes.
 
-[🚀 Live Demo](https://spine-clinic-app.web.app/) •
-[📱 App Tour & Screenshots](#-application-tour--showcase) •
-[💎 Engineering Highlights](#-core-engineering-highlights) •
-[🏛️ System Architecture](#-system-architecture) •
-[🔒 Database & Security](#-database-engineering--transactional-integrity) •
-[🛠️ Tech Stack](#-tech-stack) •
-[👨‍💻 Author](#-author--connect)
+[Engineering](#engineering-decisions) · [Run locally](#run-locally) · [Documentation](docs/README.md) · [Contact](#author)
 
-</div>
+![Desktop appointment schedule with weekly navigation, patient search, doctor assignments, and check-in actions](docs/screenshots/appointment-schedule.png)
 
----
+*The reception schedule keeps appointment times, patients, clinicians, and status actions together in a scannable desktop table.*
 
-## Review status
+## Product walkthrough
 
-The 2026-09-06 local review found and fixed access-control and financial defects.
-These changes are not deployed. Read the [plan](docs/pre-delivery-review-plan.md),
-[results](docs/pre-delivery-review-results.md) and [meeting checklist](docs/client-review-checklist.md)
-before using the live application for client acceptance.
+| Workflow | What the application supports |
+| --- | --- |
+| Coordinate appointments | Branch schedules, single and recurring bookings, doctor assignments, and appointment status changes. |
+| Follow up with patients | Due-patient queues with contact and booking actions alongside the selected day's schedule. |
+| Review a patient | A workspace connecting medical history, programs, appointments, notes, documents, and payments. |
+| Document treatment | Clinical programs, assessments, treatment plans, and patient documents. |
+| Track payments and sessions | Payment recording, outstanding dues, collection actions, and physical therapy / traction balances. |
+| Manage access | Staff activation, doctor and senior-doctor workflows, and permission-controlled payment actions. |
 
-## 🚀 Live Interactive Demo
+<details>
+<summary><strong>More screenshots — booking and the patient workspace</strong></summary>
 
-Experience the live multi-role application directly in your browser:
+### Booking workboard
 
-👉 **[Launch Live Web Application (spine-clinic-app.web.app)](https://spine-clinic-app.web.app/)**
+Due patients and the day's appointments sit side by side, so reception can follow up without losing scheduling context.
 
-> **Note:** Web build available. Release readiness depends on the checks and open gates in [the pre-delivery review](docs/pre-delivery-review-results.md).
+![Booking workboard with due-patient contact actions beside the day's appointments](docs/screenshots/booking-workboard.png)
 
----
+### Patient workspace in dark mode
 
-## 📱 Application Tour & Showcase
+Patient identity, session balances, and attending staff remain visible while the main area presents programs and medical history.
 
-<div align="center">
+![Dark-mode patient workspace showing balances, care team, programs, and medical history](docs/screenshots/patient-workspace-dark.png)
 
-| 📅 Dynamic Schedule & Live Timeline | 🩺 Clinical Check-In & Linked Sessions |
-| :---: | :---: |
-| <img src="docs/screenshots/schedule_timeline.jpg" width="300" alt="Dynamic Schedule & Live Timeline"/> | <img src="docs/screenshots/appointment_checkin.jpg" width="300" alt="Clinical Check-In & Linked Sessions"/> |
-| *Real-time day picker, live red timeline indicator, status-coded cards, and 300ms debounced search.* | *One-tap patient check-in banner, multi-session linkage, clinical notes shortcut, & doctor assignments.* |
+</details>
 
-| 💳 Financial Ledger & Package Quotas | 📋 Longitudinal Patient Dossier |
-| :---: | :---: |
-| <img src="docs/screenshots/financial_ledger.jpg" width="300" alt="Financial Ledger & Package Quotas"/> | <img src="docs/screenshots/patient_dossier.jpg" width="300" alt="Longitudinal Patient Dossier"/> |
-| *Total revenue vs. outstanding dues summary, package breakdown (+10 PT), and 1-tap "Collect Due" POS action.* | *Live session quota counters (`PT 178`, `Tr 143`), appointment history, contact card, and care team directory.* |
+## Engineering decisions
 
-| ⚡ Due Patients & Rapid Rebooking Queue | 🌙 Dark Theme & Operations Hub |
-| :---: | :---: |
-| <img src="docs/screenshots/due_patients_queue.jpg" width="300" alt="Due Patients & Rapid Rebooking Queue"/> | <img src="docs/screenshots/dark_mode_profile.jpg" width="300" alt="Dark Theme & Operations Hub"/> |
-| *Overdue recall tracking, date-filtered queues, one-touch patient phone outreach, and instant appointment booking.* | *OLED-optimized dark theme, multi-branch switching (`Masr El-Gedida`), and schedule density controls.* |
+The most interesting work is where scheduling, access permissions, and financial state intersect.
 
-| 🩺 Doctor Workstation | 🗓️ Receptionist Booking Workboard |
-| :---: | :---: |
-| <img src="docs/screenshots/doctor_workstation.jpg" width="300" alt="Doctor Workstation"/> | <img src="docs/screenshots/receptionist_due_patients.jpg" width="300" alt="Receptionist Booking Workboard"/> |
-| *Role-scoped doctor portal: personal day queue, live "now" timeline indicator, and status-coded visit cards.* | *Branch-scoped workboard with Schedule / Booking / All tabs, due-patient queue, and one-tap Call / Book actions.* |
+- **Keep related writes atomic.** PostgreSQL RPCs handle recurring bookings and patient edits with assignments in one transaction. Financial triggers reconcile session charges when appointments change; due collection locks the payment row before updating it.
+- **Enforce access beyond the interface.** Controllers check the current staff profile before mutations; PostgreSQL row-level security and permission-checked functions enforce database access. Receptionist payment writes require a separate permission.
+- **Make async failures explicit.** Repository operations use `Result<T>` so providers can expose success and failure states. Generated Riverpod providers coordinate shared state, while immutable updates preserve unrelated fields during partial changes.
+- **Separate document metadata from objects.** PostgreSQL stores metadata; a Supabase Edge Function authorizes private Cloudflare R2 objects. Failed metadata creation triggers upload cleanup; deletion removes database records before best-effort object cleanup.
+- **Adapt to the workspace.** Shared tokens support light/dark themes and responsive layouts. Wide screens use tables and persistent patient context; interactive searches debounce network queries.
 
-</div>
-
----
-
-## 📌 Executive Overview
-
-**The Spine Clinic** is a clinic management application designed to eliminate clinical bottlenecking, prevent package revenue leakage, and provide unified workflows for receptionists, physical therapists, and medical administrators.
-
-Unlike standard CRUD templates, this platform solves complex domain challenges in outpatient clinical operations:
-* **Transactional Ledger & Quota Integrity**: Session package credits, remaining dues, and cancellation rollbacks are governed by **atomic PostgreSQL server-side triggers**.
-* **Zero UI-Data Coupling**: Presentation widgets contain zero database calls—all state transitions and asynchronous I/O flow through type-safe **Riverpod Notifiers** and **Repository interfaces**.
-* **Strict Role-Based Security (RBAC)**: Multi-role access control (Receptionist, Doctor, Super Admin) enforced via **PostgreSQL Row-Level Security (RLS)** and declarative router guards.
-
----
-
-## 💎 Core Engineering Highlights
-
-What differentiates this project from typical mobile apps:
-
-### 1. Database-Enforced Financial & Quota Integrity
-* **Atomic PostgreSQL Triggers**: Session status transitions (e.g. checking a patient in with `checked_in`, or cancelling a visit) fire database triggers (`trigger_appointment_package_deduction`, `trigger_payment_insert_package_sync`) that calculate and mutate balances atomically on the database server.
-* **ACID Multi-Slot Booking RPCs**: Recurring multi-week appointments execute inside single PostgreSQL stored procedures (`book_recurring_appointments`). If any validation fails mid-batch, the entire batch automatically rolls back.
-
-### 2. Resilient Functional Error Handling (`Result<T>` Monad)
-* **Structured Repository Errors**: Every repository contract returns a functional `Result<T>` (`Success<T>` | `Failure<AppException>`) instead of throwing unhandled exceptions across the widget tree.
-* **Mandatory 4-State UI Contract**: Every functional screen explicitly renders four discrete states: `Loading`, `Error`, `Empty`, and `Data`, with regression coverage for selected failure and loading scenarios.
-
-### 3. Defensive State Architecture & Concurrency Resilience
-* **Immutable Riverpod Code-Gen**: State classes utilize `@freezed` with strict `copyWith` mutations to prevent partial state resets.
-* **Debounced Network Queries**: Interactive search across patient records and real-time filters use a 300ms debounce pipeline, eliminating redundant database strain and race conditions.
-
-### 4. Defense-in-Depth Multi-Role Security
-* **PostgreSQL Row-Level Security (RLS)**: Access control is enforced at the database level. Doctors can only query their assigned patients, receptionists manage daily clinic scheduling, and admins oversee financial ledgers.
-* **Private Encrypted Document Vault**: Medical imaging and sensitive lab reports are isolated in authenticated storage buckets and rendered directly via `pdfrx` with platform-specific document handling.
-
----
-
-## 🎯 Role-Based Clinical Portals
-
-```
-┌─────────────────────────────────────────────────────────────────────────┐
-│                           THE SPINE CLINIC                              │
-├───────────────────┬───────────────────────────┬─────────────────────────┤
-│  🩺 DOCTOR DESK   │  📋 RECEPTIONIST WORKDESK │  🛡️ ADMIN GOVERNANCE   │
-├───────────────────┼───────────────────────────┼─────────────────────────┤
-│ • Daily Queue     │ • Live Schedule Board     │ • Staff Onboarding      │
-│ • Patient Dossier │ • Single/Recurring Booking│ • RBAC & Permissions    │
-│ • SOAP Notes      │ • Conflict Resolution     │ • Financial Auth        │
-│ • Document Vault  │ • Package Quota Sync      │ • Operational Analytics │
-│ • Reassignments   │ • POS Invoicing & Dues    │ • Branch Management     │
-└───────────────────┴───────────────────────────┴─────────────────────────┘
-```
-
-* **🩺 Doctor Workstation**: Live patient queue with check-in status indicators, longitudinal patient histories, structured SOAP clinical charting, and encrypted document viewing.
-* **📋 Receptionist Operations Desk**: Interactive booking matrix, multi-week recurring schedule generator, rapid 300ms debounced patient lookup, and POS due collection.
-* **🛡️ Super Admin Control Center**: Granular staff RBAC management, financial capability gating, clinic-wide utilization analytics, and multi-branch configuration.
-
----
-
-## 🏛️ System Architecture
-
-The codebase adheres strictly to **Feature-First Clean Architecture**, separating business logic, state orchestration, and data access into unidirectional layers.
-
-```
-┌────────────────────────────────────────────────────────────────────────┐
-│                        PRESENTATION LAYER                              │
-│    UI Screens • Reusable Widgets • Riverpod Code-Gen Notifiers         │
-└───────────────────────────────────┬────────────────────────────────────┘
-                                    │ (Dispatches User Actions / Watches State)
-                                    ▼
-┌────────────────────────────────────────────────────────────────────────┐
-│                          DOMAIN LAYER                                  │
-│    Freezed Entities • Repository Interfaces • Result<T> Monad          │
-└───────────────────────────────────┬────────────────────────────────────┘
-                                    │ (Calls Abstract Contracts)
-                                    ▼
-┌────────────────────────────────────────────────────────────────────────┐
-│                           DATA LAYER                                   │
-│    Repository Implementations • Data Transfer Objects (DTOs)          │
-└───────────────────────────────────┬────────────────────────────────────┘
-                                    │ (Invokes Network Client)
-                                    ▼
-┌────────────────────────────────────────────────────────────────────────┐
-│                      SUPABASE / POSTGRESQL                             │
-│    Postgres Triggers • ACID RPCs • Row Level Security • S3 Storage     │
-└────────────────────────────────────────────────────────────────────────┘
-```
-
----
-
-## 🔒 Database Engineering & Transactional Integrity
+### Architecture
 
 ```mermaid
-sequenceDiagram
-    autonumber
-    actor Receptionist
-    participant FlutterApp as Flutter UI (Riverpod)
-    participant RPC as Postgres RPC (book_recurring)
-    participant DB as PostgreSQL Tables
-    participant Trigger as Postgres Trigger (Balance Sync)
-
-    Receptionist->>FlutterApp: Schedule 5 Recurring Visits
-    FlutterApp->>RPC: Execute book_recurring_appointments()
-    critical Transaction
-        RPC->>DB: Verify due state & doctor roles
-        RPC->>DB: Batch Insert 5 Appointments
-    end
-    DB-->>FlutterApp: Booking Confirmed (Atomic)
-    Note over DB,Trigger: Patient Attends & Is Checked In
-    Receptionist->>FlutterApp: Mark Appointment "Checked In"
-    FlutterApp->>DB: UPDATE appointment status = 'checked_in'
-    DB->>Trigger: Fires trigger_appointment_package_deduction
-    Trigger->>DB: Decrement session/traction balance by 1
+flowchart LR
+    UI[Widgets] --> State[Riverpod providers]
+    State --> Contract[Repository interfaces]
+    Contract --> Data[Repository implementations]
+    Data --> Service[SupabaseService]
+    Service --> DB[Supabase Auth + PostgreSQL]
+    Data --> Edge[Document Edge Function]
+    Edge --> R2[Private Cloudflare R2]
 ```
 
----
+Features use presentation, domain, and data layers. Shared UI lives in `lib/shared/widgets/`; themes, errors, and network infrastructure live in `lib/core/`. The staff feature's domain-layer extraction remains a documented follow-up.
 
-## 🛠️ Tech Stack
+### Stack
 
-| Domain | Technology / Library | Purpose & Rationale |
-| :--- | :--- | :--- |
-| **Framework** | [Flutter](https://flutter.dev) (3.x) & [Dart](https://dart.dev) (≥ 3.10) | Cross-platform client targeting Web, iOS, and Android |
-| **State Management** | [Flutter Riverpod](https://pub.dev/packages/flutter_riverpod) + `riverpod_generator` | Reactive, compile-safe dependency injection and state caching |
-| **Backend & Database** | [Supabase](https://supabase.com) (PostgreSQL 15+) | Managed PostgreSQL, Row Level Security (RLS), Realtime & Auth |
-| **Navigation** | [GoRouter](https://pub.dev/packages/go_router) | Declarative URL routing with asynchronous authentication redirect guards |
-| **Data Modeling** | [Freezed](https://pub.dev/packages/freezed) & `json_serializable` | Type-safe immutable data classes with zero mutable leak |
-| **Document Rendering** | [Pdfrx](https://pub.dev/packages/pdfrx) | In-memory secure rendering of medical imaging and patient files |
-| **Design System** | `flutter_animate`, `flutter_lucide`, `google_fonts` | Material 3 tokenized design system with responsive dark/light modes |
-| **Hosting & CI/CD** | [Firebase Hosting](https://firebase.google.com/docs/hosting) | Global CDN deployment for instant web performance |
+| Area | Tools |
+| --- | --- |
+| Client | Flutter, Dart |
+| State and models | Riverpod code generation, Freezed, JSON serialization |
+| Navigation | GoRouter |
+| Backend | Supabase Auth, PostgreSQL, RLS, RPCs and triggers |
+| Documents | Supabase Edge Functions, Cloudflare R2, pdfrx |
+| Delivery and checks | Firebase Hosting, GitHub Actions, Flutter tests, Node tests, isolated PostgreSQL tests |
 
----
+For a closer code review, start with [appointments](lib/features/appointment/), [payments](lib/features/payments/), [database migrations](supabase/migrations/), or the [document authorization handler](supabase/functions/document-storage/handler.ts).
 
-## 📂 Project Structure
-
-```text
-lib/
-├── core/
-│   ├── constants/         # AppSizes, AppStrings, AppTextStyles, AppTheme
-│   ├── errors/            # Result<T>, AppException, Failure contracts
-│   ├── network/           # SupabaseService, GoRouter, Route guards
-│   └── utils/             # Formatters, local storage, document helpers
-├── shared/
-│   └── widgets/           # AppButton, AppTextField, AppBottomSheet, ErrorView, EmptyState
-└── features/
-    ├── admin/             # Staff management, analytics, clinic configuration
-    ├── appointment/       # Booking workboard, schedule calendar, recurring visits
-    ├── auth/              # Authentication, session validation, registration
-    ├── medical_records/   # Clinical notes (SOAP), document vault, file viewers
-    ├── patient/           # Patient directory, dossier tabs, profile editing
-    ├── payments/          # Payment recording, package credit sync, due collections
-    └── staff/             # Clinician directories, doctor search, account activation
-supabase/
-├── migrations/            # Versioned SQL migrations (RLS, triggers, schema)
-└── full_schema.sql        # Canonical database DDL baseline
-```
-
----
-
-## 🚀 Quick Start & Setup
+## Run locally
 
 ### Prerequisites
-* [Flutter SDK](https://docs.flutter.dev/get-started/install) (`>= 3.10.0`)
-* [Supabase CLI](https://supabase.com/docs/guides/cli) or an active Supabase project
 
-```bash
-# 1. Clone & Install Dependencies
+- Flutter **3.44.1**, pinned in the repository's review workflow. The package requires Dart **>=3.10.0 <4.0.0**.
+- Chrome for the web target.
+- Your own Supabase project for authentication and application data.
+
+### 1. Get the client
+
+```sh
 git clone https://github.com/saagy/theSpineClinic.git
 cd theSpineClinic
 flutter pub get
+```
 
-# 2. Configure Environment (.env)
-cp .env.example .env
+Copy `.env.example` to `.env` and replace both placeholders with your project's URL and public anon key. The file must exist because it is declared as a Flutter asset.
 
-# 3. Run with Secure Compile-Time Flags
-flutter run \
-  --dart-define=SUPABASE_URL=https://your-project.supabase.co \
-  --dart-define=SUPABASE_ANON_KEY=your-anon-key-here
+```dotenv
+SUPABASE_URL=https://your-project.supabase.co
+SUPABASE_ANON_KEY=your-supabase-anon-key
+```
 
-# 4. Code Generation
+Configuration resolves from `--dart-define` values, then `.env`, then compiled defaults. Set your own values explicitly to avoid connecting to the default project. Both bundled assets and compile-time client configuration are public: never put service-role keys, database passwords, or R2 secrets in either.
+
+### 2. Prepare the backend
+
+For a **fresh Supabase project**, apply [`supabase/full_schema.sql`](supabase/full_schema.sql) using the SQL editor. Existing databases require incremental migrations instead. See the [database setup and migration notes](docs/database-overview.md).
+
+Operational screens require an authenticated, active staff profile with the appropriate role. Self-registration creates an inactive application; a project administrator must bootstrap the first administrator and activate staff. This is a connected application without a bundled offline demo account.
+
+Documents additionally require the [`document-storage` Edge Function](supabase/functions/document-storage/) and a private R2 bucket. Configure `R2_ACCOUNT_ID`, `R2_BUCKET_NAME`, `R2_ACCESS_KEY_ID`, and `R2_SECRET_ACCESS_KEY` as server-side function secrets, plus browser CORS for your app origin. See the [document security model](docs/security-model.md#documents).
+
+### 3. Generate and run
+
+```sh
 dart run build_runner build --delete-conflicting-outputs
+flutter run -d chrome
 ```
 
-> **Credential resolution order:** compile-time `--dart-define` flags → bundled
-> `.env` asset → compiled-in defaults. Passing the flags explicitly keeps
-> credentials out of built web assets; the `.env` fallback exists for
-> convenience during local development.
+Further development and deployment conventions are in [CONTRIBUTING.md](CONTRIBUTING.md).
 
----
+## Validation
 
-## 🧪 Testing & Quality Assurance
-
-```bash
-# 1. Static Analysis (Strict zero-warning & zero-error policy)
+```sh
 flutter analyze
-
-# 2. Run Unit & Widget Test Suite
 flutter test
-
-# 3. Verify Database Business Rules (Rollback-safe SQL scripts)
-psql "$DATABASE_URL" -f test/trigger_sanity.sql
+flutter build web --release
 ```
 
-Details, suite layout, and the additional SQL sanity scripts: [docs/testing.md](docs/testing.md).
+The [review workflow](.github/workflows/web-review.yml) also runs document-handler security tests and SQL regression scripts against isolated PostgreSQL, using both the schema snapshot and migration replay.
 
----
+Tests cover access boundaries, financial reconciliation, booking integrity, and provider/widget behavior. Isolated backend tests substitute for hosted services; they do not establish deployed configuration or full browser acceptance. Commands and boundaries are in [the testing guide](docs/testing.md).
 
-## 📚 Technical Documentation
+## Project status
 
-Full documentation lives in [`docs/`](docs/README.md):
+Actively developed. Screenshots show the current desktop interface; the [hosted web application](https://spine-clinic-app.web.app/) may differ from this checkout and requires staff access.
 
-| Document | Contents |
-| :--- | :--- |
-| 🏛️ [Architecture](docs/architecture.md) | Layered design, data-flow contract, state-management patterns, routing & role guards. |
-| 🗄️ [Database Overview](docs/database-overview.md) | System-of-record orientation, migration history, DB change workflow. |
-| 📋 [Database Schema](docs/database-schema.md) | Canonical table/column/enum reference, RPCs, triggers, RLS summary. |
-| 🔐 [Security Model](docs/security-model.md) | Role policies, enforcement layers, private storage rules. |
-| 🧪 [Testing](docs/testing.md) | Dart test suite layout and SQL sanity scripts. |
-| 🤝 [Contributing](CONTRIBUTING.md) | Environment setup, commands, and development conventions. |
+Release acceptance and remaining issues are tracked in the [review results](docs/pre-delivery-review-results.md) and [client review checklist](docs/client-review-checklist.md). Password recovery screens remain deferred.
 
----
+## Documentation
 
-## 👨‍💻 Author & Connect
+- [Architecture](docs/architecture.md) — layers, providers, and routing.
+- [Database schema](docs/database-schema.md) — tables, functions, triggers, and policies.
+- [Security model](docs/security-model.md) — staff permissions and document access.
+- [Testing](docs/testing.md) — client and backend verification.
+- [Design system](DESIGN.md) — visual direction and component conventions.
 
-**Sagy Tamer** — *Mobile Software Engineer*
+## Author
 
-[![LinkedIn](https://img.shields.io/badge/LinkedIn-0A66C2?style=for-the-badge&logo=linkedin&logoColor=white)](https://www.linkedin.com/in/sagy-tamer/)
-[![Email](https://img.shields.io/badge/Email-D14836?style=for-the-badge&logo=gmail&logoColor=white)](mailto:sagyelmoghazy1@gmail.com)
-[![Web Demo](https://img.shields.io/badge/Live_App-2BB5A0?style=for-the-badge&logo=googlechrome&logoColor=white)](https://spine-clinic-app.web.app/)
+**Sagy Tamer · Mobile Software Engineer**
 
-* **LinkedIn**: [linkedin.com/in/sagy-tamer](https://www.linkedin.com/in/sagy-tamer/)
-* **Email**: [sagyelmoghazy1@gmail.com](mailto:sagyelmoghazy1@gmail.com)
-* **Live Web App**: [spine-clinic-app.web.app](https://spine-clinic-app.web.app/)
-
----
-
-<div align="center">
-  <sub>Built with precision for modern healthcare operations. Engineered for speed, reliability, and clinical clarity.</sub>
-</div>
+[LinkedIn](https://www.linkedin.com/in/sagy-tamer/) · [GitHub](https://github.com/saagy) · [Email](mailto:sagyelmoghazy1@gmail.com)

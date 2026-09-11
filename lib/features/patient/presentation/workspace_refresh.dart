@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:spine_clinic_app/features/appointment/presentation/appointment_providers.dart'
     as appointments;
+import 'package:spine_clinic_app/features/auth/presentation/auth_providers.dart';
 import 'package:spine_clinic_app/features/medical_records/presentation/medical_history_providers.dart';
 import 'package:spine_clinic_app/features/medical_records/presentation/patient_programs_providers.dart';
 import 'package:spine_clinic_app/features/medical_records/presentation/patient_notes_list_notifier.dart';
@@ -22,6 +23,10 @@ Future<void> refreshPatientWorkspace(WidgetRef ref, String patientId) async {
   ref.invalidate(patientNotesListProvider(patientId));
   try {
     await ref.read(patientDetailProvider(patientId).future);
+    final doctors = await ref.read(patientAssignedDoctorsProvider(patientId).future);
+    for (final doc in doctors) {
+      ref.read(staffProfileProvider(doc.id));
+    }
   } catch (_) {
     // The provider's error state renders the retry action in the workspace.
   }

@@ -126,42 +126,35 @@ class _GreetingHeader extends StatelessWidget {
         AppSizes.p20,
         AppSizes.p8,
       ),
-      child: Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
         children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Row(
-                  children: [
-                    Text(
-                      _greeting,
-                      style: AppTextStyles.headingLarge.copyWith(color: cs.onSurface),
-                    ),
-                    if (doctorName.isNotEmpty) ...[
-                      Text(
-                        ', ',
-                        style: AppTextStyles.headingLarge.copyWith(color: cs.onSurface),
-                      ),
-                      Flexible(
-                        child: Text(
-                          doctorName,
-                          style: AppTextStyles.headingLarge.copyWith(color: cs.primary),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                    ],
-                  ],
-                ),
-                const SizedBox(height: AppSizes.p2),
-                Text(
+          Row(
+            children: [
+              Text(
+                _greeting,
+                style: AppTextStyles.captionMedium.copyWith(color: cs.onSurfaceVariant),
+              ),
+              Text(
+                ' · ',
+                style: AppTextStyles.caption.copyWith(color: cs.outline),
+              ),
+              Expanded(
+                child: Text(
                   DateFormat('EEEE, MMMM d').format(DateTime.now()),
                   style: AppTextStyles.caption.copyWith(color: cs.onSurfaceVariant),
+                  overflow: TextOverflow.ellipsis,
                 ),
-              ],
-            ),
+              ),
+            ],
+          ),
+          const SizedBox(height: AppSizes.p4),
+          Text(
+            doctorName.isNotEmpty ? doctorName : _greeting,
+            style: AppTextStyles.headingLarge.copyWith(color: cs.primary),
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
           ),
         ],
       ),

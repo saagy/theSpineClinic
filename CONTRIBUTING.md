@@ -28,7 +28,10 @@ The app resolves Supabase credentials in this order:
 2. The bundled `.env` asset (convenient local fallback — web builds expose it)
 3. Compiled-in defaults
 
-Prefer explicit `--dart-define` flags for anything beyond local development.
+Set your own project values explicitly to avoid the compiled-in defaults.
+Both `--dart-define` values and bundled `.env` assets are public client
+configuration. Neither protects secrets; never include service-role keys,
+database passwords, or R2 credentials.
 
 ### Run
 

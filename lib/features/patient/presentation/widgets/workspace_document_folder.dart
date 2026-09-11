@@ -22,10 +22,9 @@ class WorkspaceDocumentFolder extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.only(bottom: AppSizes.p12),
       child: Material(
-        color: cs.surfaceContainerHighest.withAlpha(70),
+        color: cs.surface,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppSizes.r8),
-          side: BorderSide(color: cs.outlineVariant),
+          side: BorderSide.none,
         ),
         child: InkWell(
           borderRadius: BorderRadius.circular(AppSizes.r8),

@@ -38,6 +38,18 @@ abstract final class AppStrings {
   static const String patientDue = 'Due';
   static String patientSince(String date) => 'Patient since $date';
   static String outstandingPaymentsCount(int count) => '$count outstanding payments';
+  static String morePrograms(int count) => '+$count more';
+  static const String whatsApp = 'WhatsApp';
+  static const String searchAppointments = 'Search appointments\u2026';
+  static const String searchNotes = 'Search notes\u2026';
+  static const String targetReview = 'Next visit date';
+  static const String nextVisitDate = 'Next visit date';
+  static const String confirmedNextAppointment = 'Confirmed next appointment';
+  static const String ptSessions = 'PT Sessions';
+  static const String spinalTraction = 'Spinal Traction';
+  static const String availableBalance = 'Available';
+  static const String overdueBalance = 'Overdue';
+  static const String quickContact = 'Quick contact';
   // App Identity
   static const String appName = 'Spine Clinic';
   static const String home = 'Home';

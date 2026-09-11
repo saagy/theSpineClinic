@@ -16,16 +16,20 @@ class PatientAppointments extends _$PatientAppointments {
 
   @override
   PatientAppointmentsState build(String patientId) {
-    Future.microtask(() => _fetchFirstPage());
+    ref.onDispose(() => _generation++);
+    Future.microtask(() {
+      if (ref.mounted) _fetchFirstPage();
+    });
     return const PatientAppointmentsState(isLoading: true);
   }
 
   Future<void> _fetchFirstPage({bool silent = false}) async {
+    if (!ref.mounted) return;
     _generation++;
     final int currentGen = _generation;
 
     if (!silent || state.appointments.isEmpty) {
-      state = state.copyWith(isLoading: true, errorMessage: null);
+      state = state.copyWith(isLoading: true, isLoadingMore: false, errorMessage: null);
     }
 
     final AppointmentRepository repo = ref.read(appointmentRepositoryProvider);
@@ -38,6 +42,8 @@ class PatientAppointments extends _$PatientAppointments {
       doctorId: state.doctorId,
       usePackageFilter: state.usePackageFilter,
     );
+
+    if (!ref.mounted || currentGen != _generation) return;
 
     int totalCount = 0;
     countResult.when(success: (count) => totalCount = count, failure: (_) => totalCount = 0);
@@ -55,7 +61,7 @@ class PatientAppointments extends _$PatientAppointments {
       ascending: state.sort == PatientAppointmentSortOption.dateOldest,
     );
 
-    if (currentGen != _generation) return;
+    if (!ref.mounted || currentGen != _generation) return;
 
     result.when(
       success: (List<AppointmentWithPatient> appointments) {
@@ -87,14 +93,15 @@ class PatientAppointments extends _$PatientAppointments {
     _generation++;
     final int currentGen = _generation;
     Future.delayed(const Duration(milliseconds: 300), () {
-      if (currentGen == _generation) {
+      if (ref.mounted && currentGen == _generation) {
         _fetchFirstPage();
       }
     });
   }
 
   Future<void> loadMore() async {
-    if (state.isLoading || state.isLoadingMore || !state.hasMore) return;
+    if (!ref.mounted || state.isLoading || state.isLoadingMore || !state.hasMore) return;
+    final int currentGen = _generation;
 
     state = state.copyWith(isLoadingMore: true);
 
@@ -112,6 +119,8 @@ class PatientAppointments extends _$PatientAppointments {
       usePackageFilter: state.usePackageFilter,
       ascending: state.sort == PatientAppointmentSortOption.dateOldest,
     );
+
+    if (!ref.mounted || currentGen != _generation) return;
 
     result.when(
       success: (List<AppointmentWithPatient> newAppointments) {

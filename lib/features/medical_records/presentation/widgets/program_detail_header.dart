@@ -15,47 +15,45 @@ import 'package:spine_clinic_app/shared/widgets/app_snackbar.dart';
 class ProgramDetailHeader extends ConsumerWidget {
   const ProgramDetailHeader({super.key, required this.program});
   final PatientProgram program;
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final user = ref.watch(currentUserProvider).value;
+    final cs = Theme.of(context).colorScheme;
     final title = program.affectedRegions.isEmpty
         ? AppStrings.program
         : program.affectedRegions.map((r) => r.displayName).join(' · ');
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: AppSizes.p12),
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: AppSizes.p16),
+      padding: const EdgeInsets.all(AppSizes.p20),
+      decoration: BoxDecoration(
+        color: cs.surface,
+        borderRadius: BorderRadius.circular(AppSizes.r12),
+        border: Border.all(color: cs.outlineVariant.withAlpha(90)),
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(title, style: AppTextStyles.headingLarge),
-          const SizedBox(height: AppSizes.p8),
-          Wrap(
-            spacing: AppSizes.p12,
-            crossAxisAlignment: WrapCrossAlignment.center,
+          Row(
             children: [
-              ProgramStatusBadge(status: program.status),
-              Text(
-                AppStrings.createdLabel(Formatters.formatDateMedium(program.createdAt)),
-                style: AppTextStyles.caption.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
+              Expanded(
+                child: Text(
+                  title,
+                  style: AppTextStyles.headingLarge.copyWith(color: cs.onSurface),
+                ),
               ),
               if (user?.isActive == true && user?.isSeniorDoctor == true)
                 RecordActionMenu<ProgramStatus>(
                   tooltip: AppStrings.setStatus,
                   actions: const [
-                    RecordMenuAction(
-                      ProgramStatus.active,
-                      AppStrings.programActive,
-                      Icons.play_circle_outline,
-                    ),
+                    RecordMenuAction(ProgramStatus.active, AppStrings.programActive, Icons.play_circle_outline),
                     RecordMenuAction(ProgramStatus.completed, AppStrings.programCompleted, Icons.task_alt),
-                    RecordMenuAction(
-                      ProgramStatus.archived,
-                      AppStrings.programArchived,
-                      Icons.archive_outlined,
-                    ),
+                    RecordMenuAction(ProgramStatus.archived, AppStrings.programArchived, Icons.archive_outlined),
                   ],
                   onSelected: (status) async {
-                    final user = ref.read(currentUserProvider).value;
-                    if (user?.isActive != true || user?.isSeniorDoctor != true || status == program.status) {
+                    final currentUser = ref.read(currentUserProvider).value;
+                    if (currentUser?.isActive != true || currentUser?.isSeniorDoctor != true || status == program.status) {
                       return;
                     }
                     final result = await ref
@@ -63,19 +61,31 @@ class ProgramDetailHeader extends ConsumerWidget {
                         .updateStatus(programId: program.id, patientId: program.patientId, status: status);
                     if (!context.mounted) return;
                     result.when(
-                      success: (_) => AppSnackbar.show(
-                        context,
-                        message: AppStrings.programSaved,
-                        variant: AppSnackbarVariant.success,
-                      ),
-                      failure: (e) => AppSnackbar.show(
-                        context,
-                        message: AppStrings.fromKey(e.userMessageKey),
-                        variant: AppSnackbarVariant.error,
-                      ),
+                      success: (_) => AppSnackbar.show(context, message: AppStrings.programSaved, variant: AppSnackbarVariant.success),
+                      failure: (e) => AppSnackbar.show(context, message: AppStrings.fromKey(e.userMessageKey), variant: AppSnackbarVariant.error),
                     );
                   },
                 ),
+            ],
+          ),
+          const SizedBox(height: AppSizes.p12),
+          Wrap(
+            spacing: AppSizes.p10,
+            runSpacing: AppSizes.p6,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            children: [
+              ProgramStatusBadge(status: program.status),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: AppSizes.p8, vertical: AppSizes.p2),
+                decoration: BoxDecoration(
+                  color: cs.surfaceContainerHigh.withAlpha(120),
+                  borderRadius: BorderRadius.circular(AppSizes.r6),
+                ),
+                child: Text(
+                  AppStrings.createdLabel(Formatters.formatDateMedium(program.createdAt)),
+                  style: AppTextStyles.captionBold.copyWith(color: cs.onSurfaceVariant),
+                ),
+              ),
             ],
           ),
         ],

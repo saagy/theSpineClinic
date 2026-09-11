@@ -1,27 +1,83 @@
-# Patient workspace — September 2026
+# Patient workspace — Modern 2026 SaaS Architecture
 
-The first Flutter pilot was rejected. The [correction audit](patient-workspace-corrections.md) records the user's thirteen issues before implementation. No skills were used. Existing Patients/Schedule controls and working gallery behavior were inspected as requested for this corrective pass. This revision awaits user visual acceptance.
+This specification documents the patient detail workspace and program clinical dossier architecture established in September 2026.
 
-## Structure
+## Workspace Architecture
 
-Doctors see active programs and medical history first, with no financial overview request, outstanding amount or payment tab. Reception sees outstanding balances prominently in the theme warning color, followed by patient details and upcoming visits. Payment writes retain capability checks. Both roles see next appointment and next visit.
+The workspace implements a responsive SaaS two-column workspace on desktop and a high-density stacked flow on mobile:
 
-Overview is a single full-width clinical reading column; compact fact grids are used only where facts genuinely compare, avoiding uneven paired columns and artificial blank space. Tabs use the available width with 16px page gutters. Flat section toolbars, heading rules and deliberate spacing distinguish content; removing separate card outlines avoids mismatched box heights without artificial blank space. The header has an initials avatar and clinic; phone remains in Patient Details rather than competing with identity. Attending doctors have small avatars. Document previews were removed from Overview, keeping documents in their dedicated tab. Plus Jakarta Sans and clinical blue remain the baseline. Each actionable tab uses one compact toolbar row with a consistent add action and icon-only filter when space is tight. Patient edit is an app-bar icon. Menus have icons, themed borders and destructive emphasis. Initial loading uses section/page skeletons; async transitions respect reduced motion and preserve available width.
+### Desktop Viewport (`>= 960px`)
+- **Sticky Patient Summary Rail (320px):** Fixed left navigation rail featuring:
+  - Patient hero with monogram initials avatar and clinic badge.
+  - Action pills for instant communication: direct Phone Call, WhatsApp (`wa.me`), and Edit Patient.
+  - Available Sessions KPI Card displaying PT Sessions and Spinal Traction balances with interactive edit access for authorized staff.
+  - Attending Clinical Staff section with monogram avatars.
+  - Metadata breakdown (formatted phone number, registration date, last visit).
+- **Primary Work Area (Flexible Right Pane):**
+  - Segmented top workspace tab bar (`Overview`, `Programs`, `Appointments`, `Notes`, `Documents`, `Payments`).
+  - Constrained max-width container (1040px) maintaining comfortable reading lines.
+  - Pull-to-refresh container invalidating patient detail and tab-specific caches simultaneously.
 
-## Preserved workflows
+### Mobile Viewport (`< 960px`)
+- Stacked header layout with patient monogram avatar, clinic badge, and quick communication pills (Call, WhatsApp, Edit).
+- Horizontally scrollable text tabs with a native animated underline.
+- Adaptive overview column prioritizing role-specific tasks.
 
-Active programs lead; inactive programs collapse. Appointments reuse Schedule agenda rows with doctor names and opt-in date/time inside each row. All loaded appointments appear in one list, without date grouping or past-record disclosure. Existing pagination remains available. Schedule retains time-only rows by default. Status updates refresh the patient source and balances; failure restores status without losing doctor metadata.
+## Role-Based Structure & Information Hierarchy
 
-Appointment and note filters open the actual `AppointmentFilterSheet` used by All Appointments, including its header/footer, date presets, doctor sub-page, rectangular chips and sort rows. Optional filter content preserves patient multi-selection and package filtering. The separate look-alike sheet was removed after user feedback. Network query debounce remains at least 300ms. Notes keep linked appointment access in metadata controls.
+- **Doctors & Senior Doctors:**
+  - Overview leads directly with Active Treatment Programs, upcoming confirmed visits, target review dates, and medical history.
+  - Financial data (outstanding balances, payments tab) is completely hidden.
+- **Reception & Management:**
+  - Overview leads with Patient Details and Outstanding Balances (highlighted in theme warning color) followed by upcoming visits.
+  - Payments tab features KPI metric stat cards for Total Outstanding and Total Paid, followed by a transaction ledger with remaining balance indicators.
+  - Actions like `Record Payment` and `Collect Due` are strictly gated by `canHandlePayments` capability.
 
-Program documents form one folder opening the existing gallery. Private storage keys resolve through the authenticated repository, with image skeletons, retry and original fallback. Standalone documents remain individually accessible.
+## Tab & Section Implementation
 
-Deletion requires a completely empty patient for every permitted role: no appointments, payments, programs, notes, documents, medical history or nonzero session balances. Client preflight, an atomic database RPC and a delete trigger enforce this. The safeguard migration was deployed independently of unrelated migration-history differences.
+1. **Active Programs:** High-density card layout highlighting anatomical condition badges, active treatment plans, program status, and creation date. Inactive/completed programs are grouped into an archived expandable section.
+2. **Appointments:** Single-row SaaS toolbar with compact filter button and primary "+ Book Appointment" CTA. Renders full agenda rows with status actions, attending doctor metadata, and date/time chips.
+3. **Clinical Notes:** Toolbar with "+ Add Note" CTA, displaying structured cards with author monogram, date, visit type, and note text.
+4. **Documents & Imaging:** Grouped list with upload action, file type badges, thumbnail previews for scans, and integration with the private image gallery.
+5. **Medical History:** Diagnostic condition tags (Diabetes with HbA1c, Hypertension, Hyperlipidemia, Rheumatology) with inline edit trigger for senior doctors.
 
-## Scope and verification
+## Program Dossier (`program_detail_screen.dart`)
 
-Program detail now leads with treatment, followed by affected regions and findings. Medical-history and treatment-plan editors use bounded forms with a persistent Save/Cancel footer, validation, role checks and keyboard-safe content. Booking forms and payment-entry/report screens retain existing flows; this slice covers the patient and program workspaces. Fictional fixtures test role visibility, payment permissions, failure, long names at 1.8 text scale, gallery grouping, disclosures and navigation. These are not live clinical or financial transaction acceptance tests.
+The program screen is structured as a professional clinical dossier:
+1. **Header Hero:** Anatomical region badges, status pill (Active, Completed, Paused), attending doctor info, and overflow menu (Edit, Change Status, Print).
+2. **Prescription Table:** Treatment modalities formatted with target region pills, duration badges, specific instructions, and version history.
+3. **Anatomical Findings Matrix:** 2-column clinical findings card and responsive imaging scan reel linking to full-screen lightbox inspection.
 
-The final validation passed `flutter analyze` with zero issues and the full Flutter suite after updating the program-detail ordering assertion to match treatment-first priority. Tests cover width/date/header regressions, unified filters, editor save behavior, role visibility, gallery grouping, deletion guards and existing Schedule flows. The database safeguard passed disposable PostgreSQL-compatible tests for related-record categories, empty deletion and unauthorized deletion. No real patient was deleted during validation.
+## Verification & Quality Standards
 
-Initial references were Attio record hierarchy, Linear navigation and Healthie profile coverage. The user's corrections and actual app components govern this revision. See the correction audit for remaining acceptance context.
+- Prior full-suite results are historical and do not establish verification of
+  subsequent edits. Record the commands actually run for each correction.
+- **Responsive Layout:** Tested at 360px mobile (with 1.8x text scale) and 1280px desktop.
+
+
+## September 11 Surface and Lifecycle Correction
+
+Audit: gray scaffold contrasted with white section bodies, boxed medical history
+used a different hierarchy, and document folders nested a second card inside a
+list panel. Compact actions inherited dark filled backgrounds. Tab reveal used
+an immediate outer-scroll ensureVisible call. Intermediate widths omitted patient
+facts before the sidebar became available.
+
+The workspace now uses a continuous theme surface, flat medical-history section,
+single-level document rows, outlined surface compact buttons and native animated
+text tabs. Desktop context and inline patient facts share the workspace breakpoint.
+Shared async transitions fade without animating layout size, and reduced motion
+returns content directly. The web loading element is removed after Flutter's
+first frame.
+
+Patient appointment requests check disposal and request generation after awaits;
+delayed filters and pagination cannot write into a disposed or superseded state.
+The screenshot's disposed-ref failure matches this defect, but reproducing the
+client's Safari keyboard/viewport distortion still requires that device workflow.
+
+Validation: `flutter analyze` reports no issues. The final targeted rerun passed
+all 13 workspace tests, 3 delayed-request/disposal regressions and 2 motion
+regressions. Rendered checks covered 390px mobile and 1280px desktop in light
+mode, plus 800px intermediate width in dark mode. Notes and documents tab
+navigation and compact actions were inspected in the browser. The final
+horizontal-scroll guard is covered by its targeted widget regression.
