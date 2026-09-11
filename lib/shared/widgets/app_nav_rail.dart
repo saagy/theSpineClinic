@@ -5,9 +5,12 @@
 library;
 
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:spine_clinic_app/core/constants/app_sizes.dart';
 import 'package:spine_clinic_app/core/constants/app_strings.dart';
 import 'package:spine_clinic_app/core/constants/app_text_styles.dart';
+import 'package:spine_clinic_app/core/constants/brand_vectors.dart';
+import 'package:spine_clinic_app/shared/widgets/nav_rail_tile.dart';
 import 'package:spine_clinic_app/shared/widgets/nav_tabs.dart';
 
 class AppNavRail extends StatefulWidget {
@@ -58,20 +61,32 @@ class _AppNavRailState extends State<AppNavRail> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // Logo Section
+            // Branded Logo Section
             SizedBox(
               height: _logoHeight,
-              child: _isCollapsed
-                  ? Center(child: _Logo())
-                  : Row(
-                      children: [
-                        const SizedBox(width: AppSizes.p16),
-                        _Logo(),
-                        const SizedBox(width: AppSizes.p12),
-                        const Expanded(child: _LogoText()),
-                        const SizedBox(width: AppSizes.p16),
-                      ],
-                    ),
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  final showExpanded =
+                      !_isCollapsed && constraints.maxWidth > 100;
+                  return AnimatedSwitcher(
+                    duration: const Duration(milliseconds: 200),
+                    child: showExpanded
+                        ? const Padding(
+                            key: ValueKey('expanded_brand_logo'),
+                            padding:
+                                EdgeInsets.symmetric(horizontal: AppSizes.p20),
+                            child: Align(
+                              alignment: Alignment.centerLeft,
+                              child: _ExpandedBrandLogo(),
+                            ),
+                          )
+                        : const Center(
+                            key: ValueKey('collapsed_brand_mark'),
+                            child: _CollapsedBrandMark(),
+                          ),
+                  );
+                },
+              ),
             ),
             const SizedBox(height: AppSizes.p16),
             // Navigation Items
@@ -82,89 +97,11 @@ class _AppNavRailState extends State<AppNavRail> {
                 itemExtent: _itemHeight,
                 physics: const NeverScrollableScrollPhysics(),
                 itemBuilder: (context, index) {
-                  final tab = tabs[index];
-                  final isSelected = index == widget.currentIndex;
-
-                  return Container(
-                    margin: const EdgeInsets.symmetric(
-                      horizontal: AppSizes.p8,
-                      vertical: AppSizes.p2,
-                    ),
-                    decoration: BoxDecoration(
-                      color: isSelected
-                          ? colorScheme.primaryContainer.withAlpha(120)
-                          : transparent,
-                      borderRadius: const BorderRadius.all(
-                        Radius.circular(AppSizes.r8),
-                      ),
-                    ),
-                    child: InkWell(
-                      onTap: () => widget.onTabSelected(index),
-                      borderRadius: const BorderRadius.all(
-                        Radius.circular(AppSizes.r8),
-                      ),
-                      splashColor: colorScheme.primary.withAlpha(20),
-                      highlightColor: transparent,
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: AppSizes.p12,
-                          vertical: AppSizes.p8,
-                        ),
-                        child: Row(
-                          mainAxisAlignment: _isCollapsed
-                              ? MainAxisAlignment.center
-                              : MainAxisAlignment.start,
-                          children: [
-                            // Icon pop and color transition
-                            AnimatedScale(
-                              scale: isSelected ? 1.08 : 1.0,
-                              duration: const Duration(milliseconds: 180),
-                              curve: isSelected
-                                  ? Curves.easeOutBack
-                                  : Curves.easeOutCubic,
-                              child: TweenAnimationBuilder<Color?>(
-                                duration: const Duration(milliseconds: 180),
-                                curve: Curves.easeOutCubic,
-                                tween: ColorTween(
-                                  begin: isSelected
-                                      ? colorScheme.onSurfaceVariant
-                                      : colorScheme.primary,
-                                  end: isSelected
-                                      ? colorScheme.primary
-                                      : colorScheme.onSurfaceVariant,
-                                ),
-                                builder: (context, color, child) {
-                                  return Icon(
-                                    isSelected ? tab.selectedIcon : tab.icon,
-                                    color: color,
-                                    size: AppSizes.iconDefault,
-                                  );
-                                },
-                              ),
-                            ),
-                            if (!_isCollapsed) ...[
-                              const SizedBox(width: AppSizes.p12),
-                              Expanded(
-                                child: Text(
-                                  tab.label,
-                                  maxLines: 1,
-                                  overflow: TextOverflow.clip,
-                                  softWrap: false,
-                                  style: (isSelected
-                                          ? AppTextStyles.bodyBold
-                                          : AppTextStyles.bodyMedium)
-                                      .copyWith(
-                                    color: isSelected
-                                        ? colorScheme.primary
-                                        : colorScheme.onSurfaceVariant,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ],
-                        ),
-                      ),
-                    ),
+                  return NavRailTile(
+                    tab: tabs[index],
+                    isSelected: index == widget.currentIndex,
+                    isCollapsed: _isCollapsed,
+                    onTap: () => widget.onTabSelected(index),
                   );
                 },
               ),
@@ -186,29 +123,40 @@ class _AppNavRailState extends State<AppNavRail> {
                 ),
                 child: Padding(
                   padding: const EdgeInsets.symmetric(vertical: AppSizes.p12),
-                  child: Row(
-                    mainAxisAlignment: _isCollapsed
-                        ? MainAxisAlignment.center
-                        : MainAxisAlignment.start,
-                    children: [
-                      const SizedBox(width: AppSizes.p4),
-                      Icon(
-                        _isCollapsed
-                            ? Icons.chevron_right_rounded
-                            : Icons.chevron_left_rounded,
-                        color: colorScheme.onSurfaceVariant,
-                        size: AppSizes.iconDefault,
-                      ),
-                      if (!_isCollapsed) ...[
-                        const SizedBox(width: AppSizes.p12),
-                        Text(
-                          AppStrings.collapse,
-                          style: AppTextStyles.bodyMedium.copyWith(
+                  child: LayoutBuilder(
+                    builder: (context, constraints) {
+                      final showText =
+                          !_isCollapsed && constraints.maxWidth > 100;
+                      return Row(
+                        mainAxisAlignment: showText
+                            ? MainAxisAlignment.start
+                            : MainAxisAlignment.center,
+                        children: [
+                          if (showText) const SizedBox(width: AppSizes.p4),
+                          Icon(
+                            _isCollapsed
+                                ? Icons.chevron_right_rounded
+                                : Icons.chevron_left_rounded,
                             color: colorScheme.onSurfaceVariant,
+                            size: AppSizes.iconDefault,
                           ),
-                        ),
-                      ],
-                    ],
+                          if (showText) ...[
+                            const SizedBox(width: AppSizes.p12),
+                            Expanded(
+                              child: Text(
+                                AppStrings.collapse,
+                                maxLines: 1,
+                                overflow: TextOverflow.clip,
+                                softWrap: false,
+                                style: AppTextStyles.bodyMedium.copyWith(
+                                  color: colorScheme.onSurfaceVariant,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ],
+                      );
+                    },
                   ),
                 ),
               ),
@@ -220,7 +168,9 @@ class _AppNavRailState extends State<AppNavRail> {
   }
 }
 
-class _Logo extends StatelessWidget {
+class _CollapsedBrandMark extends StatelessWidget {
+  const _CollapsedBrandMark();
+
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
@@ -231,42 +181,32 @@ class _Logo extends StatelessWidget {
         color: cs.primary,
         borderRadius: BorderRadius.circular(AppSizes.r8),
       ),
-      child: Icon(
-        Icons.spa_rounded,
-        color: cs.onPrimary,
-        size: AppSizes.iconDefault,
+      padding: const EdgeInsets.all(AppSizes.p6),
+      child: SvgPicture.string(
+        spineEmblemSvg,
+        colorFilter: ColorFilter.mode(
+          cs.onPrimary,
+          BlendMode.srcIn,
+        ),
       ),
     );
   }
 }
 
-class _LogoText extends StatelessWidget {
-  const _LogoText();
+class _ExpandedBrandLogo extends StatelessWidget {
+  const _ExpandedBrandLogo();
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          AppStrings.appName,
-          maxLines: 1,
-          overflow: TextOverflow.clip,
-          softWrap: false,
-          style: AppTextStyles.headingSmall,
-        ),
-        Text(
-          AppStrings.appTagline,
-          maxLines: 1,
-          overflow: TextOverflow.clip,
-          softWrap: false,
-          style: AppTextStyles.caption.copyWith(
-            color: colorScheme.onSurfaceVariant,
-          ),
-        ),
-      ],
+    final cs = Theme.of(context).colorScheme;
+    return SvgPicture.string(
+      spineLogoSvg,
+      width: 140,
+      fit: BoxFit.contain,
+      colorFilter: ColorFilter.mode(
+        cs.primary,
+        BlendMode.srcIn,
+      ),
     );
   }
 }
