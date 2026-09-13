@@ -56,6 +56,7 @@ class RegionInputRow extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
+            crossAxisAlignment: CrossAxisAlignment.end,
             children: [
               Expanded(child: _buildRegionDropdown(context)),
               const SizedBox(width: AppSizes.p8),

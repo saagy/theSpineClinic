@@ -74,7 +74,7 @@ class TargetRegionPicker extends StatelessWidget {
               child: Row(
                 children: [
                   Icon(
-                    Icons.location_on_outlined,
+                    Icons.accessibility_new_outlined,
                     color: cs.primary,
                     size: AppSizes.iconDefault,
                   ),
