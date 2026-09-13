@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:spine_clinic_app/core/constants/app_sizes.dart';
 import 'package:spine_clinic_app/core/constants/app_strings.dart';
 import 'package:spine_clinic_app/core/errors/app_exception.dart';
 import 'package:spine_clinic_app/features/auth/domain/user_role.dart';
@@ -50,14 +49,7 @@ class NewPatientScreen extends ConsumerWidget {
         foregroundColor: Theme.of(context).colorScheme.onSurface,
         elevation: 0,
       ),
-      body: LoadingOverlay(
-        isLoading: isSaving,
-        child: const SingleChildScrollView(
-          keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
-          padding: EdgeInsets.all(AppSizes.p16),
-          child: NewPatientForm(),
-        ),
-      ),
+      body: LoadingOverlay(isLoading: isSaving, child: const NewPatientForm()),
     );
   }
 }

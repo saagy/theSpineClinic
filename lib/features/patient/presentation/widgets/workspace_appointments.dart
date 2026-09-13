@@ -1,3 +1,5 @@
+import 'package:spine_clinic_app/features/patient/domain/patient_appointments_state.dart';
+import 'package:spine_clinic_app/shared/widgets/search_filter_toolbar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:spine_clinic_app/core/constants/app_sizes.dart';
@@ -9,7 +11,6 @@ import 'package:spine_clinic_app/features/patient/presentation/widgets/patient_a
 import 'package:spine_clinic_app/features/patient/presentation/widgets/patient_appointment_tab_actions.dart';
 import 'package:spine_clinic_app/features/patient/presentation/widgets/workspace_appointment_filters.dart';
 import 'package:spine_clinic_app/features/patient/presentation/widgets/workspace_tab_header.dart';
-import 'package:spine_clinic_app/shared/widgets/record_filter_sheet.dart';
 import 'package:spine_clinic_app/shared/widgets/record_section.dart';
 import 'package:spine_clinic_app/shared/widgets/record_skeleton.dart';
 
@@ -28,10 +29,6 @@ class WorkspaceAppointments extends ConsumerWidget {
       children: [
         WorkspaceTabHeader(
           title: AppStrings.appointmentHistory,
-          filterButton: RecordFilterButton(
-            activeFiltersCount: chips.length,
-            onPressed: () => WorkspaceAppointmentFilters.show(context, ref, patientId),
-          ),
           actionLabel: AppStrings.bookAppointment,
           onAction: () => PatientAppointmentTabActions.openNewAppointment(
             context: context,
@@ -39,14 +36,26 @@ class WorkspaceAppointments extends ConsumerWidget {
             patientId: patientId,
           ),
         ),
+        const SizedBox(height: AppSizes.p12),
+        SearchFilterToolbar(
+          query: state.searchQuery,
+          hint: AppStrings.searchAppointmentTypes,
+          onSearch: notifier.search,
+          activeCount: chips.length,
+          onFilter: () => WorkspaceAppointmentFilters.show(context, ref, patientId),
+        ),
         if (chips.isNotEmpty) ...[
           const SizedBox(height: AppSizes.p10),
           Wrap(
             spacing: AppSizes.p8,
             runSpacing: AppSizes.p4,
             children: [
-              for (final chip in chips) InputChip(label: Text(chip.label), onDeleted: chip.onRemove),
-              TextButton(onPressed: notifier.clearFilters, child: const Text(AppStrings.clearFilters)),
+              for (final chip in chips)
+                InputChip(label: Text(chip.label), onDeleted: chip.onRemove),
+              TextButton(
+                onPressed: notifier.clearFilters,
+                child: const Text(AppStrings.clearFilters),
+              ),
             ],
           ),
         ],
@@ -63,8 +72,8 @@ class WorkspaceAppointments extends ConsumerWidget {
   Widget _buildContent(
     BuildContext context,
     WidgetRef ref,
-    dynamic state,
-    dynamic notifier,
+    PatientAppointmentsState state,
+    PatientAppointments notifier,
   ) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -83,11 +92,7 @@ class WorkspaceAppointments extends ConsumerWidget {
             padding: EdgeInsets.all(AppSizes.p24),
             child: RecordMessage(message: AppStrings.noAppointmentsFound),
           ),
-        if (state.appointments.isNotEmpty)
-          _AgendaRecords(
-            items: state.appointments,
-            onChanged: () => ref.invalidate(patientAppointmentsProvider(patientId)),
-          ),
+        if (state.appointments.isNotEmpty) _AgendaRecords(items: state.appointments),
         if (state.hasMore)
           Padding(
             padding: const EdgeInsets.symmetric(vertical: AppSizes.p8),
@@ -102,9 +107,8 @@ class WorkspaceAppointments extends ConsumerWidget {
 }
 
 class _AgendaRecords extends StatelessWidget {
-  const _AgendaRecords({required this.items, required this.onChanged});
+  const _AgendaRecords({required this.items});
   final List<AppointmentWithPatient> items;
-  final VoidCallback onChanged;
 
   @override
   Widget build(BuildContext context) => Column(
@@ -112,11 +116,11 @@ class _AgendaRecords extends StatelessWidget {
     children: [
       for (int i = 0; i < items.length; i++) ...[
         AppointmentAgendaRow(
+          key: ValueKey(items[i].appointment.id),
           item: items[i],
           patientContext: true,
           showDate: true,
           showDoctor: true,
-          onStatusChanged: onChanged,
         ),
         if (i < items.length - 1) const Divider(height: AppSizes.borderWidth),
       ],

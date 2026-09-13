@@ -5,11 +5,7 @@ import 'package:spine_clinic_app/features/medical_records/domain/modality_type.d
 
 /// Single target body region configuration input for a modality.
 class RegionInput {
-  const RegionInput({
-    required this.targetRegion,
-    this.laterality,
-    this.timeMinutes = 15,
-  });
+  const RegionInput({required this.targetRegion, this.laterality, this.timeMinutes = 15});
 
   final String targetRegion;
   final Laterality? laterality;
@@ -18,11 +14,12 @@ class RegionInput {
   RegionInput copyWith({
     String? targetRegion,
     Laterality? laterality,
+    bool clearLaterality = false,
     int? timeMinutes,
   }) {
     return RegionInput(
       targetRegion: targetRegion ?? this.targetRegion,
-      laterality: laterality ?? this.laterality,
+      laterality: clearLaterality ? null : laterality ?? this.laterality,
       timeMinutes: timeMinutes ?? this.timeMinutes,
     );
   }
@@ -38,21 +35,13 @@ class RegionInput {
 
 /// Modality configuration input for creating or updating a treatment plan.
 class ModalityInput {
-  const ModalityInput({
-    required this.modalityType,
-    this.notes,
-    this.regions = const [],
-  });
+  const ModalityInput({required this.modalityType, this.notes, this.regions = const []});
 
   final ModalityType modalityType;
   final String? notes;
   final List<RegionInput> regions;
 
-  ModalityInput copyWith({
-    ModalityType? modalityType,
-    String? notes,
-    List<RegionInput>? regions,
-  }) {
+  ModalityInput copyWith({ModalityType? modalityType, String? notes, List<RegionInput>? regions}) {
     return ModalityInput(
       modalityType: modalityType ?? this.modalityType,
       notes: notes ?? this.notes,

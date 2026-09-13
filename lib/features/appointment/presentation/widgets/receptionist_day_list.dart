@@ -95,7 +95,6 @@ class ReceptionistDayList extends StatelessWidget {
           key: ValueKey(item.appointment.id),
           item: item,
           showDoctor: true,
-          onStatusChanged: onStatusChanged,
         );
       },
     );

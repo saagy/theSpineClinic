@@ -81,3 +81,15 @@ regressions. Rendered checks covered 390px mobile and 1280px desktop in light
 mode, plus 800px intermediate width in dark mode. Notes and documents tab
 navigation and compact actions were inspected in the browser. The final
 horizontal-scroll guard is covered by its targeted widget regression.
+
+## September 13 surface and action correction
+
+The user selected an open workspace, superseding the September 11 continuous
+white surface. The scaffold, app bar and pinned tabs now share the standard slate
+background. Overview groups use separate bordered surfaces; appointment, note and
+document lists sit directly on the scaffold. The mobile nested scroll uses overlap
+absorption/injection so pinned tabs cannot cover the section heading or action.
+Appointments and notes use the shared search/filter toolbar. Appointment search
+matches session types before pagination; note search queries note text in the
+repository. Appointment status indicators are passive and never delegate taps to the row;
+Check in and Undo check-in are the first contextual menu actions.

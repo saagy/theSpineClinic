@@ -1,3 +1,4 @@
+import 'package:spine_clinic_app/shared/widgets/search_filter_toolbar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:spine_clinic_app/core/constants/app_sizes.dart';
@@ -8,7 +9,6 @@ import 'package:spine_clinic_app/features/patient/presentation/widgets/workspace
 import 'package:spine_clinic_app/features/patient/presentation/widgets/workspace_note_filters.dart';
 import 'package:spine_clinic_app/features/patient/presentation/widgets/workspace_note_row.dart';
 import 'package:spine_clinic_app/features/patient/presentation/widgets/workspace_tab_header.dart';
-import 'package:spine_clinic_app/shared/widgets/record_filter_sheet.dart';
 import 'package:spine_clinic_app/shared/widgets/record_section.dart';
 import 'package:spine_clinic_app/shared/widgets/record_skeleton.dart';
 
@@ -20,7 +20,6 @@ class WorkspaceNotes extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final state = ref.watch(patientNotesListProvider(patientId));
     final notifier = ref.read(patientNotesListProvider(patientId).notifier);
-    final cs = Theme.of(context).colorScheme;
     final int activeCount = (state.dateFrom != null || state.dateTo != null) ? 1 : 0;
 
     return Column(
@@ -28,12 +27,16 @@ class WorkspaceNotes extends ConsumerWidget {
       children: [
         WorkspaceTabHeader(
           title: AppStrings.notes,
-          filterButton: RecordFilterButton(
-            activeFiltersCount: activeCount,
-            onPressed: () => WorkspaceNoteFilters.show(context, ref, patientId),
-          ),
           actionLabel: AppStrings.addNote,
           onAction: () => WorkspaceNoteEditor.show(context, patientId),
+        ),
+        const SizedBox(height: AppSizes.p12),
+        SearchFilterToolbar(
+          query: state.searchQuery,
+          hint: AppStrings.searchNotes,
+          onSearch: notifier.search,
+          activeCount: activeCount,
+          onFilter: () => WorkspaceNoteFilters.show(context, ref, patientId),
         ),
         if (state.dateFrom != null || state.dateTo != null) ...[
           const SizedBox(height: AppSizes.p10),
@@ -50,12 +53,8 @@ class WorkspaceNotes extends ConsumerWidget {
           ),
         ],
         const SizedBox(height: AppSizes.p14),
-        Container(
-          decoration: BoxDecoration(
-            color: cs.surface,
-            borderRadius: BorderRadius.circular(AppSizes.r12),
-            border: Border.all(color: cs.outlineVariant.withAlpha(80)),
-          ),
+        Padding(
+          padding: EdgeInsets.zero,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [

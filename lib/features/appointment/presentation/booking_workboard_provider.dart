@@ -1,4 +1,5 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:spine_clinic_app/features/appointment/domain/appointment_status.dart';
 import 'package:spine_clinic_app/core/errors/app_exception.dart';
 import 'package:spine_clinic_app/core/errors/result.dart';
 import 'package:spine_clinic_app/features/admin/presentation/branch_providers.dart';
@@ -28,9 +29,7 @@ class BookingWorkboard extends _$BookingWorkboard {
     _clinic = user == null
         ? null
         : user.role == UserRole.superAdmin
-        ? ClinicLocation.values
-              .where((branch) => branch.dbValue == adminBranch)
-              .firstOrNull
+        ? ClinicLocation.values.where((branch) => branch.dbValue == adminBranch).firstOrNull
         : activeBranch;
     final DateTime tomorrow = DateTime.now().add(const Duration(days: 1));
     final BookingWorkboardState initial = BookingWorkboardState(
@@ -55,6 +54,23 @@ class BookingWorkboard extends _$BookingWorkboard {
 
   void selectView(BookingWorkboardView view) {
     state = state.copyWith(view: view);
+  }
+
+  void changeStatus(String id, AppointmentStatus status) {
+    state = state.copyWith(
+      schedule: [
+        for (final item in state.schedule)
+          if (item.appointment.id == id)
+            item.copyWith(appointment: item.appointment.copyWith(status: status))
+          else
+            item,
+      ],
+    );
+    // Package/next-visit changes may affect the due queue; retain both panes.
+    final clinic = _clinic;
+    if (clinic != null) {
+      _loadDue(_refreshGeneration, state.date, state.doctorId, clinic);
+    }
   }
 
   Future<void> refresh() async {
@@ -138,8 +154,7 @@ class BookingWorkboard extends _$BookingWorkboard {
     final user = ref.read(currentUserProvider).value;
     if (user == null ||
         !user.isActive ||
-        (user.role != UserRole.receptionist &&
-            user.role != UserRole.superAdmin)) {
+        (user.role != UserRole.receptionist && user.role != UserRole.superAdmin)) {
       return Result.failure(
         const DatabaseException(
           code: 'db/permission-denied',
@@ -148,9 +163,7 @@ class BookingWorkboard extends _$BookingWorkboard {
         ),
       );
     }
-    final result = await ref
-        .read(patientRepositoryProvider)
-        .updateNextVisitDate(patientId, date);
+    final result = await ref.read(patientRepositoryProvider).updateNextVisitDate(patientId, date);
     if (result is Success<void>) await refresh();
     return result;
   }
@@ -164,8 +177,7 @@ class BookingWorkboard extends _$BookingWorkboard {
     final user = ref.read(currentUserProvider).value;
     if (user == null ||
         !user.isActive ||
-        (user.role != UserRole.receptionist &&
-            user.role != UserRole.superAdmin)) {
+        (user.role != UserRole.receptionist && user.role != UserRole.superAdmin)) {
       return Result.failure(
         const DatabaseException(
           code: 'db/permission-denied',

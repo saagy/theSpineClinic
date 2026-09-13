@@ -28,7 +28,7 @@ class WorkspaceTabHeader extends StatelessWidget {
 
     return LayoutBuilder(
       builder: (context, constraints) {
-        final isNarrow = constraints.maxWidth < 480;
+        final isNarrow = constraints.maxWidth < AppSizes.formPairBreakpoint;
 
         final effectiveFilterButton = filterButton is RecordFilterButton
             ? RecordFilterButton(
@@ -40,40 +40,44 @@ class WorkspaceTabHeader extends StatelessWidget {
 
         final actionBtn = onAction != null && actionLabel != null
             ? (isNarrow
-                ? IconButton.filled(
-                    onPressed: onAction,
-                    tooltip: actionLabel,
-                    icon: Icon(actionIcon, size: AppSizes.iconSmall),
-                    style: IconButton.styleFrom(
-                      backgroundColor: cs.primary,
-                      foregroundColor: cs.onPrimary,
-                      minimumSize: const Size(AppSizes.tappableMin, AppSizes.buttonHeightSmall),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppSizes.r8)),
-                    ),
-                  )
-                : FilledButton.icon(
-                    onPressed: onAction,
-                    icon: Icon(actionIcon, size: AppSizes.iconSmall),
-                    label: Text(actionLabel!, style: AppTextStyles.captionBold),
-                    style: FilledButton.styleFrom(
-                      minimumSize: const Size(AppSizes.tappableMin, AppSizes.buttonHeightSmall),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppSizes.r8)),
-                      padding: const EdgeInsets.symmetric(horizontal: AppSizes.p12),
-                    ),
-                  ))
+                  ? IconButton.filled(
+                      onPressed: onAction,
+                      tooltip: actionLabel,
+                      icon: Icon(actionIcon, size: AppSizes.iconSmall),
+                      style: IconButton.styleFrom(
+                        backgroundColor: cs.primary,
+                        foregroundColor: cs.onPrimary,
+                        minimumSize: const Size(AppSizes.tappableMin, AppSizes.tappableMin),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(AppSizes.r8),
+                        ),
+                      ),
+                    )
+                  : FilledButton.icon(
+                      onPressed: onAction,
+                      icon: Icon(actionIcon, size: AppSizes.iconSmall),
+                      label: Text(actionLabel!, style: AppTextStyles.captionBold),
+                      style: FilledButton.styleFrom(
+                        minimumSize: const Size(AppSizes.tappableMin, AppSizes.tappableMin),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(AppSizes.r8),
+                        ),
+                        padding: const EdgeInsets.symmetric(horizontal: AppSizes.p12),
+                      ),
+                    ))
             : null;
 
         final trWidget = trailing != null
             ? (isNarrow
-                ? ConstrainedBox(
-                    constraints: BoxConstraints(maxWidth: constraints.maxWidth * 0.45),
-                    child: FittedBox(
-                      fit: BoxFit.scaleDown,
-                      alignment: Alignment.centerRight,
-                      child: trailing!,
-                    ),
-                  )
-                : trailing!)
+                  ? ConstrainedBox(
+                      constraints: BoxConstraints(maxWidth: constraints.maxWidth * 0.45),
+                      child: FittedBox(
+                        fit: BoxFit.scaleDown,
+                        alignment: Alignment.centerRight,
+                        child: trailing!,
+                      ),
+                    )
+                  : trailing!)
             : null;
 
         return Row(
@@ -97,8 +101,7 @@ class WorkspaceTabHeader extends StatelessWidget {
                   if (effectiveFilterButton != null && (trWidget != null || actionBtn != null))
                     const SizedBox(width: AppSizes.p8),
                   if (trWidget != null) trWidget,
-                  if (trWidget != null && actionBtn != null)
-                    const SizedBox(width: AppSizes.p8),
+                  if (trWidget != null && actionBtn != null) const SizedBox(width: AppSizes.p8),
                   if (actionBtn != null) actionBtn,
                 ],
               ),

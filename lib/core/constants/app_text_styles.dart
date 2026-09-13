@@ -19,6 +19,9 @@ import 'package:flutter/material.dart';
 /// as compile-time `const` typography tokens. Colors are supplied by the active
 /// theme so light and dark modes can resolve the right contrast.
 abstract final class AppTextStyles {
+  /// Bounded appointment-name fitting; larger accessibility text never shrinks.
+  static const List<double> appointmentNameSizes = [14, 13.5, 13];
+
   static const String _fontFamily = 'Plus Jakarta Sans';
 
   // ──────────────── Headings ────────────────

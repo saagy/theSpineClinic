@@ -90,7 +90,6 @@ class ReceptionistAllList extends ConsumerWidget {
                   key: ValueKey(a.appointment.id),
                   item: a,
                   showDoctor: true,
-                  onStatusChanged: onStatusChanged,
                 ),
               ),
               Divider(

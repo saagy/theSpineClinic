@@ -23,8 +23,10 @@ class AppointmentFilterChipsSection extends StatelessWidget {
     required this.onTypeChanged,
     this.selectedStatuses,
     this.selectedTypes,
+    this.showStatus = true,
   });
 
+  final bool showStatus;
   final ClinicLocation? selectedClinic;
   final AppointmentStatus? selectedStatus;
   final AppointmentType? selectedType;
@@ -46,9 +48,11 @@ class AppointmentFilterChipsSection extends StatelessWidget {
           _buildClinicOptions(cs),
           const SizedBox(height: AppSizes.p20),
         ],
-        _buildSectionTitle(cs, AppStrings.status),
-        _buildStatusOptions(cs),
-        const SizedBox(height: AppSizes.p20),
+        if (showStatus) ...[
+          _buildSectionTitle(cs, AppStrings.status),
+          _buildStatusOptions(cs),
+          const SizedBox(height: AppSizes.p20),
+        ],
         _buildSectionTitle(cs, AppStrings.type),
         _buildTypeOptions(cs),
       ],
@@ -73,7 +77,12 @@ class AppointmentFilterChipsSection extends StatelessWidget {
       children: clinics.map((c) {
         final isSelected = selectedClinic == c;
         final label = c == null ? AppStrings.filterAllBranches : c.displayLabel;
-        return _buildChip(cs: cs, label: label, isSelected: isSelected, onTap: () => onClinicChanged(c));
+        return _buildChip(
+          cs: cs,
+          label: label,
+          isSelected: isSelected,
+          onTap: () => onClinicChanged(c),
+        );
       }).toList(),
     );
   }
@@ -95,7 +104,12 @@ class AppointmentFilterChipsSection extends StatelessWidget {
             ? selectedStatuses!.isEmpty
             : selectedStatuses!.contains(s);
         final label = s == null ? AppStrings.all : s.displayLabel;
-        return _buildChip(cs: cs, label: label, isSelected: isSelected, onTap: () => onStatusChanged(s));
+        return _buildChip(
+          cs: cs,
+          label: label,
+          isSelected: isSelected,
+          onTap: () => onStatusChanged(s),
+        );
       }).toList(),
     );
   }
@@ -118,7 +132,12 @@ class AppointmentFilterChipsSection extends StatelessWidget {
             ? selectedTypes!.isEmpty
             : selectedTypes!.contains(t);
         final label = t == null ? AppStrings.all : t.displayLabel;
-        return _buildChip(cs: cs, label: label, isSelected: isSelected, onTap: () => onTypeChanged(t));
+        return _buildChip(
+          cs: cs,
+          label: label,
+          isSelected: isSelected,
+          onTap: () => onTypeChanged(t),
+        );
       }).toList(),
     );
   }

@@ -36,9 +36,9 @@ class _PatientDetailScreenState extends ConsumerState<PatientDetailScreen> {
     final patient = canAccess ? ref.watch(patientDetailProvider(widget.patientId)).value : null;
 
     return Scaffold(
-      backgroundColor: Theme.of(context).colorScheme.surface,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: Theme.of(context).colorScheme.surface,
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         scrolledUnderElevation: 0,
         leading: const AppBackButton(),
         title: Align(
@@ -75,7 +75,9 @@ class _PatientDetailScreenState extends ConsumerState<PatientDetailScreen> {
           onRetry: () => ref.invalidate(canAccessPatientProvider(widget.patientId)),
           data: (allowed) {
             if (!allowed) {
-              return const Center(child: RecordMessage(message: AppStrings.errorDatabasePermissionDenied));
+              return const Center(
+                child: RecordMessage(message: AppStrings.errorDatabasePermissionDenied),
+              );
             }
             return RecordAsync(
               skeleton: const WorkspacePageSkeleton(),

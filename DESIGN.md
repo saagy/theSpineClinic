@@ -95,12 +95,23 @@ enough density for repeated daily work.
    distinct from implemented behavior; do not call unreviewed work approved.
 
 Current decision status:
+The September 13 shipping-polish directions were explicitly selected by the user
+and implemented. See [the audit and validation](docs/shipping-ui-polish.md).
+The user selected the density correction: all appointment actions are in the
+three-dot menu, led by Check in / Undo check-in / Restore as appropriate. Outside
+status is passive (clock / green check / cancelled symbol); compact rows keep
+identity and type together without an extra action line. Wide rows retain aligned
+columns and passive status labels. Appointment names fit between 14 and 13 logical pixels before wrapping in full; enlarged accessibility text is never reduced. Types wrap instead of clipping.
+Patient tabs use the slate scaffold with separate overview group surfaces.
+Create/edit forms use semantic sections, responsive columns and persistent actions.
+The existing appointment filter sheet now supports doctor-history and staff sorts.
+
 0. Patient detail now implements the [patient workspace direction](docs/patient-workspace-direction.md)
    with a corrective pass after the first pilot was rejected. It uses the current
    palette, Plus Jakarta Sans, text tabs, flat sections with heading rules,
-   compact fact grids and 8px control corners. The September 11 correction
-   unifies app bar, patient header, tabs and body on the theme surface (white
-   in light mode). Medical history uses the same flat heading rule as patient
+   compact fact grids and 8px control corners. The September 13 correction
+   uses the slate scaffold behind the app bar, tabs and list content, with white
+   bordered overview groups and a desktop summary rail. Medical history uses the same flat heading rule as patient
    facts; document folders are rows within one group, without nested cards.
    Compact primary actions use a surface background, blue icon and outline
    with a 44px minimum target. Native text tabs animate their indicator and
@@ -115,11 +126,15 @@ Current decision status:
    Program detail is treatment-first, and medical-history/treatment-plan editors
    use a bounded form with a persistent Save/Cancel footer. Payment mutations
    retain the existing capability checks.
+   Target-region selection uses a compact themed field that opens an adaptive,
+   searchable clinical option list: a bounded dialog on wide windows and a
+   draggable sheet on narrow windows. The active selection stays visible and
+   marked by the theme's selected state; every option keeps a 44px target.
 1. Patients directory redesign established the clean modern 2026 SaaS aesthetic (hairline dividers, monogram badges, Lucide icons, high density, and clean table/list responsive layouts).
 2. Schedule screens (Receptionist & Doctor) implemented:
    - Modern medical agenda & timeline, strictly chronological by scheduled time.
    - High-density 2-line agenda rows (`AppointmentAgendaRow`, minHeight 58px mobile, 62px desktop) with hairline dividers.
-   - Restrained status indicators: compact tonal "Check In" button for scheduled items, subtle green "Checked In" badge, muted cancelled styling.
+   - Restrained status indicators: neutral scheduled clock, solid green checked-in check, muted cancelled styling. All actions live in the three-dot menu.
    - 3-dot menu sheet (`AppointmentRowActionsSheet`) for secondary actions (details, edit, cancel, restore).
    - Minimal header with branch selector and primary "+ New Appointment" CTA; modernized 7-day week strip with dot indicators and sleek day pills.
    - Role-aware density: doctor names omitted on doctor's own schedule.

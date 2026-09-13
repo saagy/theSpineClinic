@@ -10,6 +10,11 @@ part 'patient_notes_list_notifier.g.dart';
 
 @riverpod
 class PatientNotesList extends _$PatientNotesList {
+  void search(String query) {
+    state = state.copyWith(searchQuery: query.trim());
+    _reloadDebounced();
+  }
+
   int _generation = 0;
   static const int _pageSize = 30;
 
@@ -27,7 +32,7 @@ class PatientNotesList extends _$PatientNotesList {
     final int currentGen = _generation;
 
     if (!silent || state.notes.isEmpty) {
-      state = state.copyWith(isLoading: true, errorMessage: null);
+      state = state.copyWith(isLoading: true, isLoadingMore: false, errorMessage: null);
     }
 
     final PatientNotesRepository repo = ref.read(patientNotesRepositoryProvider);
@@ -35,9 +40,10 @@ class PatientNotesList extends _$PatientNotesList {
       patientId: patientId,
       dateFrom: state.dateFrom,
       dateTo: state.dateTo,
+      searchQuery: state.searchQuery,
     );
 
-    if (!ref.mounted) return;
+    if (!ref.mounted || currentGen != _generation) return;
 
     int totalCount = 0;
     countResult.when(success: (count) => totalCount = count, failure: (_) => totalCount = 0);
@@ -48,6 +54,7 @@ class PatientNotesList extends _$PatientNotesList {
       limit: _pageSize,
       dateFrom: state.dateFrom,
       dateTo: state.dateTo,
+      searchQuery: state.searchQuery,
       ascending: state.sort == PatientNotesSortOption.dateOldest,
     );
 
@@ -83,6 +90,7 @@ class PatientNotesList extends _$PatientNotesList {
       return;
     }
 
+    final currentGen = _generation;
     state = state.copyWith(isLoadingMore: true);
 
     final PatientNotesRepository repo = ref.read(patientNotesRepositoryProvider);
@@ -93,15 +101,20 @@ class PatientNotesList extends _$PatientNotesList {
       limit: _pageSize,
       dateFrom: state.dateFrom,
       dateTo: state.dateTo,
+      searchQuery: state.searchQuery,
       ascending: state.sort == PatientNotesSortOption.dateOldest,
     );
 
-    if (!ref.mounted) return;
+    if (!ref.mounted || currentGen != _generation) return;
 
     result.when(
       success: (List<PatientNote> newNotes) {
         final all = [...state.notes, ...newNotes];
-        state = state.copyWith(notes: all, isLoadingMore: false, hasMore: all.length < state.totalCount);
+        state = state.copyWith(
+          notes: all,
+          isLoadingMore: false,
+          hasMore: all.length < state.totalCount,
+        );
       },
       failure: (error) {
         state = state.copyWith(isLoadingMore: false, errorMessage: error.message);

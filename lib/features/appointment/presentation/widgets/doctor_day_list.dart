@@ -86,7 +86,6 @@ class DoctorDayList extends StatelessWidget {
           key: ValueKey(item.appointment.id),
           item: item,
           showDoctor: false,
-          onStatusChanged: onStatusChanged,
         );
       },
     );

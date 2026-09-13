@@ -8,6 +8,8 @@ import 'package:spine_clinic_app/features/appointment/domain/appointment_type.da
 import 'package:spine_clinic_app/features/appointment/presentation/appointment_providers.dart';
 import 'package:spine_clinic_app/features/patient/presentation/patient_providers.dart';
 
+part 'appointment_balance_rows.dart';
+
 /// A live ledger preview card scoped to a single bucket (PT or Traction).
 ///
 /// Renders an "assessments are paid separately" caption for assessment
@@ -38,7 +40,10 @@ class AppointmentBalanceDiagnostics extends ConsumerWidget {
         padding: const EdgeInsets.all(AppSizes.p16),
         decoration: BoxDecoration(
           color: ClinicColors.of(context).infoContainer,
-          border: Border.all(color: ClinicColors.of(context).info, width: AppSizes.borderWidthMedium),
+          border: Border.all(
+            color: ClinicColors.of(context).info,
+            width: AppSizes.borderWidthMedium,
+          ),
           borderRadius: const BorderRadius.all(Radius.circular(AppSizes.r16)),
         ),
         child: Row(
@@ -48,7 +53,9 @@ class AppointmentBalanceDiagnostics extends ConsumerWidget {
             Expanded(
               child: Text(
                 AppStrings.assessmentPaidSeparatelyCaption,
-                style: AppTextStyles.bodySecondary.copyWith(color: Theme.of(context).colorScheme.onSurface),
+                style: AppTextStyles.bodySecondary.copyWith(
+                  color: Theme.of(context).colorScheme.onSurface,
+                ),
               ),
             ),
           ],
@@ -66,17 +73,16 @@ class AppointmentBalanceDiagnostics extends ConsumerWidget {
       availableBalanceForTypeProvider((patientId: patientId, type: appointmentType)),
     );
     final futureForTypeAsync = ref.watch(
-      futureScheduledAppointmentsCountForTypeProvider(
-        (patientId: patientId, type: appointmentType),
-      ),
+      futureScheduledAppointmentsCountForTypeProvider((
+        patientId: patientId,
+        type: appointmentType,
+      )),
     );
 
-    final bool isLoading = patientAsync.isLoading ||
-        bucketBalanceAsync.isLoading ||
-        futureForTypeAsync.isLoading;
-    final bool hasError = patientAsync.hasError ||
-        bucketBalanceAsync.hasError ||
-        futureForTypeAsync.hasError;
+    final bool isLoading =
+        patientAsync.isLoading || bucketBalanceAsync.isLoading || futureForTypeAsync.isLoading;
+    final bool hasError =
+        patientAsync.hasError || bucketBalanceAsync.hasError || futureForTypeAsync.hasError;
 
     if (isLoading) {
       return _wrapContainer(
@@ -105,9 +111,15 @@ class AppointmentBalanceDiagnostics extends ConsumerWidget {
     final bool isDeficit = requestedCount > netAvailable;
     final int leftover = netAvailable - requestedCount;
 
-    final Color cardBorderColor = isDeficit ? Theme.of(context).colorScheme.error : ClinicColors.of(context).success;
-    final Color cardBgColor = isDeficit ? Theme.of(context).colorScheme.errorContainer : ClinicColors.of(context).successContainer;
-    final Color statusTextColor = isDeficit ? Theme.of(context).colorScheme.error : ClinicColors.of(context).success;
+    final Color cardBorderColor = isDeficit
+        ? Theme.of(context).colorScheme.error
+        : ClinicColors.of(context).success;
+    final Color cardBgColor = isDeficit
+        ? Theme.of(context).colorScheme.errorContainer
+        : ClinicColors.of(context).successContainer;
+    final Color statusTextColor = isDeficit
+        ? Theme.of(context).colorScheme.error
+        : ClinicColors.of(context).success;
     final IconData statusIcon = isDeficit ? Icons.error_outline : Icons.check_circle_outline;
 
     return Container(
@@ -136,30 +148,42 @@ class AppointmentBalanceDiagnostics extends ConsumerWidget {
           _buildRow(context, AppStrings.currentBucket, '$baseline'),
           _buildRow(context, AppStrings.upcomingInBucket, '-$futureCommitments'),
           _buildRow(context, AppStrings.netAvailableLabel, '$netAvailable', isBold: true),
-          _buildRow(context, AppStrings.thisOrderCount, '$requestedCount',
-              valueColor: requestedCount > 0 ? ClinicColors.of(context).warning : Theme.of(context).colorScheme.onSurfaceVariant,
-              isBold: requestedCount > 0),
+          _buildRow(
+            context,
+            AppStrings.thisOrderCount,
+            '$requestedCount',
+            valueColor: requestedCount > 0
+                ? ClinicColors.of(context).warning
+                : Theme.of(context).colorScheme.onSurfaceVariant,
+            isBold: requestedCount > 0,
+          ),
           const SizedBox(height: AppSizes.p8),
           Text(
             isDeficit
                 ? AppStrings.packageDeficitMessage(requestedCount - netAvailable)
                 : AppStrings.projectedLeftoverMessage(leftover),
             style: AppTextStyles.bodySecondary.copyWith(
-              color: isDeficit ? Theme.of(context).colorScheme.error : Theme.of(context).colorScheme.onSurfaceVariant,
+              color: isDeficit
+                  ? Theme.of(context).colorScheme.error
+                  : Theme.of(context).colorScheme.onSurfaceVariant,
             ),
           ),
           if (baseline < 0) ...[
             const SizedBox(height: AppSizes.p8),
             Row(
               children: [
-                Icon(Icons.warning_amber_rounded,
-                    size: AppSizes.iconSmall, color: ClinicColors.of(context).warning),
+                Icon(
+                  Icons.warning_amber_rounded,
+                  size: AppSizes.iconSmall,
+                  color: ClinicColors.of(context).warning,
+                ),
                 const SizedBox(width: AppSizes.p8),
                 Expanded(
                   child: Text(
                     AppStrings.negativeBalanceOutstanding,
-                    style: AppTextStyles.bodySecondary
-                        .copyWith(color: ClinicColors.of(context).warning),
+                    style: AppTextStyles.bodySecondary.copyWith(
+                      color: ClinicColors.of(context).warning,
+                    ),
                   ),
                 ),
               ],
@@ -169,8 +193,9 @@ class AppointmentBalanceDiagnostics extends ConsumerWidget {
             const SizedBox(height: AppSizes.p8),
             Text(
               AppStrings.insufficientPackageBalance,
-              style: AppTextStyles.bodySecondary
-                  .copyWith(color: Theme.of(context).colorScheme.error),
+              style: AppTextStyles.bodySecondary.copyWith(
+                color: Theme.of(context).colorScheme.error,
+              ),
             ),
           ],
         ],
@@ -178,42 +203,4 @@ class AppointmentBalanceDiagnostics extends ConsumerWidget {
     );
   }
 
-  Widget _wrapContainer(BuildContext context, Color bg, Widget child) {
-    return Container(
-      padding: const EdgeInsets.all(AppSizes.p16),
-      decoration: BoxDecoration(
-        color: bg,
-        borderRadius: const BorderRadius.all(Radius.circular(AppSizes.r16)),
-        border: Border.all(color: Theme.of(context).colorScheme.outline),
-      ),
-      child: child,
-    );
-  }
-
-  Widget _buildRow(
-    BuildContext context,
-    String label,
-    String value, {
-    Color? valueColor,
-    bool isBold = false,
-  }) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: AppSizes.p4),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(
-            label,
-            style: AppTextStyles.bodySecondary.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
-          ),
-          Text(
-            value,
-            style: (isBold ? AppTextStyles.bodyBold : AppTextStyles.bodySecondary).copyWith(
-              color: valueColor ?? Theme.of(context).colorScheme.onSurface,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
 }

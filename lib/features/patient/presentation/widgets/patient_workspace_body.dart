@@ -67,7 +67,12 @@ class PatientWorkspaceBody extends ConsumerWidget {
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     Padding(
-                      padding: const EdgeInsets.fromLTRB(AppSizes.p24, AppSizes.p12, AppSizes.p24, 0),
+                      padding: const EdgeInsets.fromLTRB(
+                        AppSizes.p24,
+                        AppSizes.p12,
+                        AppSizes.p24,
+                        0,
+                      ),
                       child: WorkspaceTabs(patientId: patient.id, labels: labels),
                     ),
                     const Divider(height: AppSizes.borderWidth),
@@ -77,10 +82,15 @@ class PatientWorkspaceBody extends ConsumerWidget {
                         child: ListView(
                           key: PageStorageKey('${patient.id}/$index'),
                           physics: const AlwaysScrollableScrollPhysics(),
-                          padding: const EdgeInsets.symmetric(horizontal: AppSizes.p24, vertical: AppSizes.p16),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: AppSizes.p24,
+                            vertical: AppSizes.p16,
+                          ),
                           children: [
                             ConstrainedBox(
-                              constraints: const BoxConstraints(maxWidth: AppSizes.clinicalContentMaxWidth),
+                              constraints: const BoxConstraints(
+                                maxWidth: AppSizes.clinicalContentMaxWidth,
+                              ),
                               child: content,
                             ),
                           ],
@@ -104,24 +114,41 @@ class PatientWorkspaceBody extends ConsumerWidget {
               SliverToBoxAdapter(
                 child: WorkspaceHeader(patient: patient, isDoctor: isDoctor),
               ),
-              SliverPersistentHeader(
-                pinned: true,
-                delegate: WorkspaceTabsDelegate(
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: AppSizes.p16),
-                    child: WorkspaceTabs(patientId: patient.id, labels: labels),
+              SliverOverlapAbsorber(
+                handle: NestedScrollView.sliverOverlapAbsorberHandleFor(context),
+                sliver: SliverPersistentHeader(
+                  pinned: true,
+                  delegate: WorkspaceTabsDelegate(
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: AppSizes.p16),
+                      child: WorkspaceTabs(patientId: patient.id, labels: labels),
+                    ),
+                    backgroundColor: Theme.of(context).scaffoldBackgroundColor,
                   ),
-                  backgroundColor: Theme.of(context).colorScheme.surface,
                 ),
               ),
             ],
             body: RefreshIndicator(
               onRefresh: () => refreshPatientWorkspace(ref, patient.id),
-              child: ListView(
-                key: PageStorageKey('${patient.id}/$index'),
-                physics: const AlwaysScrollableScrollPhysics(),
-                padding: const EdgeInsets.fromLTRB(AppSizes.p16, AppSizes.p12, AppSizes.p16, AppSizes.p24),
-                children: [content],
+              child: Builder(
+                builder: (context) => CustomScrollView(
+                  key: PageStorageKey('${patient.id}/$index'),
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  slivers: [
+                    SliverOverlapInjector(
+                      handle: NestedScrollView.sliverOverlapAbsorberHandleFor(context),
+                    ),
+                    SliverPadding(
+                      padding: const EdgeInsets.fromLTRB(
+                        AppSizes.p16,
+                        AppSizes.p12,
+                        AppSizes.p16,
+                        AppSizes.p24,
+                      ),
+                      sliver: SliverToBoxAdapter(child: content),
+                    ),
+                  ],
+                ),
               ),
             ),
           ),

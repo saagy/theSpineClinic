@@ -36,7 +36,9 @@ class RecordSection extends StatelessWidget {
           Container(
             padding: const EdgeInsets.symmetric(vertical: AppSizes.p4),
             decoration: BoxDecoration(
-              border: Border(bottom: BorderSide(color: Theme.of(context).colorScheme.outlineVariant)),
+              border: Border(
+                bottom: BorderSide(color: Theme.of(context).colorScheme.outlineVariant),
+              ),
             ),
             child: Wrap(
               alignment: WrapAlignment.spaceBetween,
@@ -69,7 +71,7 @@ class RecordSection extends StatelessWidget {
             ),
           ),
         Material(
-          color: Theme.of(context).colorScheme.surface,
+          type: MaterialType.transparency,
           child: Padding(
             padding: const EdgeInsets.symmetric(vertical: AppSizes.p16),
             child: child,
@@ -99,8 +101,11 @@ class RecordAsync<T> extends StatelessWidget {
     child: value.when(
       data: data,
       loading: () => skeleton,
-      error: (_, _) =>
-          RecordMessage(message: AppStrings.patientSectionError, action: AppStrings.retry, onAction: onRetry),
+      error: (_, _) => RecordMessage(
+        message: AppStrings.patientSectionError,
+        action: AppStrings.retry,
+        onAction: onRetry,
+      ),
     ),
   );
 }
@@ -156,7 +161,9 @@ class RecordFact extends StatelessWidget {
       children: [
         Text(
           label,
-          style: AppTextStyles.caption.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
+          style: AppTextStyles.caption.copyWith(
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
+          ),
         ),
         const SizedBox(height: AppSizes.p4),
         SelectableText(value, style: AppTextStyles.bodyMedium),

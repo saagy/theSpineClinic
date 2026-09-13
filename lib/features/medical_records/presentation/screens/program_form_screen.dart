@@ -14,9 +14,12 @@ import 'package:spine_clinic_app/features/medical_records/presentation/program_c
 import 'package:spine_clinic_app/features/medical_records/presentation/widgets/program_clinical_inputs.dart';
 import 'package:spine_clinic_app/features/medical_records/presentation/widgets/program_condition_selector.dart';
 import 'package:spine_clinic_app/features/patient/presentation/patient_documents_providers.dart';
+import 'package:spine_clinic_app/features/patient/domain/patient_document.dart';
 import 'package:spine_clinic_app/shared/widgets/app_back_button.dart';
-import 'package:spine_clinic_app/shared/widgets/app_button.dart';
+import 'package:spine_clinic_app/shared/widgets/form_page_body.dart';
 import 'package:spine_clinic_app/shared/widgets/app_snackbar.dart';
+
+part 'program_form_view.dart';
 
 /// Screen for creating a new program (with auto-transition to plan builder) or editing clinical findings.
 class ProgramFormScreen extends ConsumerStatefulWidget {
@@ -48,7 +51,8 @@ class _ProgramFormScreenState extends ConsumerState<ProgramFormScreen> {
     _exaggeratingPositionsController = TextEditingController(text: p?.exaggeratingPositions ?? '');
     _relievingPositionsController = TextEditingController(text: p?.relievingPositions ?? '');
     _notesController = TextEditingController(text: p?.notes ?? '');
-    _selectedConditions = p?.conditions.where((c) => c.condition != null).map((c) => c.condition!).toList() ?? [];
+    _selectedConditions =
+        p?.conditions.where((c) => c.condition != null).map((c) => c.condition!).toList() ?? [];
   }
 
   @override
@@ -62,15 +66,23 @@ class _ProgramFormScreenState extends ConsumerState<ProgramFormScreen> {
   }
 
   Future<void> _submit() async {
+    if (_isSubmitting || !(_formKey.currentState?.validate() ?? false)) return;
     if (_selectedConditions.isEmpty) {
-      AppSnackbar.show(context, message: AppStrings.selectConditionRequired, variant: AppSnackbarVariant.info);
+      AppSnackbar.show(
+        context,
+        message: AppStrings.selectConditionRequired,
+        variant: AppSnackbarVariant.info,
+      );
       return;
     }
 
     setState(() => _isSubmitting = true);
     final notifier = ref.read(programControllerProvider.notifier);
     final conditionIds = _selectedConditions.map((c) => c.id).toList();
-    final attachments = _pendingFiles.where((f) => f.bytes != null).map((f) => ProgramAttachment(fileName: f.name, bytes: f.bytes!)).toList();
+    final attachments = _pendingFiles
+        .where((f) => f.bytes != null)
+        .map((f) => ProgramAttachment(fileName: f.name, bytes: f.bytes!))
+        .toList();
 
     if (widget.program == null) {
       final result = await notifier.createProgram(
@@ -89,11 +101,21 @@ class _ProgramFormScreenState extends ConsumerState<ProgramFormScreen> {
 
       result.when(
         success: (program) {
-          AppSnackbar.show(context, message: AppStrings.programSaved, variant: AppSnackbarVariant.success);
-          final targetUrl = AppRoutes.patientProgramDetail.replaceAll(':id', widget.patientId).replaceAll(':programId', program.id);
+          AppSnackbar.show(
+            context,
+            message: AppStrings.programSaved,
+            variant: AppSnackbarVariant.success,
+          );
+          final targetUrl = AppRoutes.patientProgramDetail
+              .replaceAll(':id', widget.patientId)
+              .replaceAll(':programId', program.id);
           context.pushReplacement('$targetUrl?openPlan=true', extra: program);
         },
-        failure: (e) => AppSnackbar.show(context, message: AppStrings.fromKey(e.userMessageKey), variant: AppSnackbarVariant.error),
+        failure: (e) => AppSnackbar.show(
+          context,
+          message: AppStrings.fromKey(e.userMessageKey),
+          variant: AppSnackbarVariant.error,
+        ),
       );
     } else {
       final result = await notifier.updateProgram(
@@ -113,77 +135,24 @@ class _ProgramFormScreenState extends ConsumerState<ProgramFormScreen> {
 
       result.when(
         success: (_) {
-          AppSnackbar.show(context, message: AppStrings.programSaved, variant: AppSnackbarVariant.success);
+          AppSnackbar.show(
+            context,
+            message: AppStrings.programSaved,
+            variant: AppSnackbarVariant.success,
+          );
           context.pop();
         },
-        failure: (e) => AppSnackbar.show(context, message: AppStrings.fromKey(e.userMessageKey), variant: AppSnackbarVariant.error),
+        failure: (e) => AppSnackbar.show(
+          context,
+          message: AppStrings.fromKey(e.userMessageKey),
+          variant: AppSnackbarVariant.error,
+        ),
       );
     }
   }
 
-  @override
-  Widget build(BuildContext context) {
-    final isEdit = widget.program != null;
-    final programId = widget.program?.id;
-    final existingDocs = programId != null ? ref.watch(programDocumentsProvider(patientId: widget.patientId, programId: programId)).value ?? [] : const [];
+  void _mutate(VoidCallback change) => setState(change);
 
-    return Scaffold(
-      appBar: AppBar(leading: const AppBackButton(), title: Text(isEdit ? AppStrings.editProgram : AppStrings.newProgram)),
-      bottomNavigationBar: SafeArea(
-        top: false,
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(AppSizes.p16, AppSizes.p8, AppSizes.p16, AppSizes.p16),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Flexible(
-                child: ConstrainedBox(
-                  constraints: const BoxConstraints(maxWidth: AppSizes.formLayoutMaxWidth),
-                  child: AppButton(
-                    labelText: isEdit ? AppStrings.saveChanges : AppStrings.saveAndPrescribePlan,
-                    icon: isEdit ? null : Icons.arrow_forward_rounded,
-                    isLoading: _isSubmitting,
-                    shape: AppButtonShape.pill,
-                    onPressed: _submit,
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-      body: SafeArea(
-        child: Center(
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: AppSizes.formLayoutMaxWidth),
-            child: Form(
-              key: _formKey,
-              child: ListView(
-                padding: const EdgeInsets.all(AppSizes.p16),
-                children: [
-                  ProgramConditionSelector(
-                    selectedConditions: _selectedConditions,
-                    onConditionsChanged: (items) => setState(() => _selectedConditions = items),
-                  ),
-                  const SizedBox(height: AppSizes.p16),
-                  ProgramClinicalInputs(
-                    examinationController: _examinationController,
-                    imagingNotesController: _imagingNotesController,
-                    exaggeratingPositionsController: _exaggeratingPositionsController,
-                    relievingPositionsController: _relievingPositionsController,
-                    notesController: _notesController,
-                    pendingFiles: _pendingFiles,
-                    existingDocuments: existingDocs.cast(),
-                    onPendingFilesChanged: (files) => setState(() => _pendingFiles = files),
-                    onDeleteExistingDocument: (doc) => ref.read(patientDocumentsNotifierProvider(widget.patientId).notifier).deleteDocument(doc),
-                  ),
-                  const SizedBox(height: AppSizes.p24),
-                ],
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
+  @override
+  Widget build(BuildContext context) => _buildForm(context);
 }

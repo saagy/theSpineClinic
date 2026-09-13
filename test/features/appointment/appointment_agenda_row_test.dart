@@ -60,7 +60,7 @@ void main() {
     createdAt: DateTime(2026),
   );
 
-  testWidgets('renders agenda row with patient name, type, and Check-In button when scheduled', (
+  testWidgets('renders agenda row with patient name, type, and passive status when scheduled', (
     tester,
   ) async {
     tester.view.physicalSize = const Size(390, 844);
@@ -72,9 +72,7 @@ void main() {
 
     await tester.pumpWidget(
       ProviderScope(
-        overrides: [
-          currentUserProvider.overrideWith(() => _FakeCurrentUser(staff)),
-        ],
+        overrides: [currentUserProvider.overrideWith(() => _FakeCurrentUser(staff))],
         child: MaterialApp(
           home: Scaffold(
             body: AppointmentAgendaRow(
@@ -96,8 +94,8 @@ void main() {
     expect(find.text('Youssef Mansour'), findsOneWidget);
     expect(find.text(AppointmentType.normalPtSession.displayLabel), findsOneWidget);
     expect(find.textContaining('Mahmoud'), findsNothing);
-    expect(find.byTooltip(AppStrings.checkIn), findsOneWidget);
-    expect(find.byIcon(Icons.check_circle_outline_rounded), findsOneWidget);
+    expect(find.byTooltip(AppointmentStatus.scheduled.displayLabel), findsOneWidget);
+    expect(find.byIcon(Icons.schedule_outlined), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 
@@ -113,9 +111,7 @@ void main() {
 
     await tester.pumpWidget(
       ProviderScope(
-        overrides: [
-          currentUserProvider.overrideWith(() => _FakeCurrentUser(staff)),
-        ],
+        overrides: [currentUserProvider.overrideWith(() => _FakeCurrentUser(staff))],
         child: MaterialApp(
           home: Scaffold(
             body: AppointmentAgendaRow(
@@ -151,9 +147,7 @@ void main() {
 
     await tester.pumpWidget(
       ProviderScope(
-        overrides: [
-          currentUserProvider.overrideWith(() => _FakeCurrentUser(staff)),
-        ],
+        overrides: [currentUserProvider.overrideWith(() => _FakeCurrentUser(staff))],
         child: MaterialApp(
           home: Scaffold(
             body: AppointmentAgendaRow(
@@ -175,9 +169,8 @@ void main() {
     await tester.tap(menuButton);
     await tester.pumpAndSettle();
 
-    expect(find.text(AppStrings.viewDetails), findsOneWidget);
+    expect(find.text(AppStrings.patientDetails), findsOneWidget);
     expect(find.text(AppStrings.cancelAppointment), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 }
-

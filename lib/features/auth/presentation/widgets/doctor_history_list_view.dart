@@ -76,7 +76,6 @@ class _DoctorHistoryListViewState extends State<DoctorHistoryListView> {
                     patient: item.patient,
                   ),
                   showDoctor: false,
-                  onStatusChanged: widget.onStatusChanged,
                 ),
               ),
               Divider(

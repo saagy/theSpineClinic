@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:spine_clinic_app/features/patient/domain/matching_appointment_types.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:spine_clinic_app/features/appointment/domain/appointment_repository.dart';
 import 'package:spine_clinic_app/features/appointment/domain/appointment_status.dart';
@@ -11,6 +12,13 @@ part 'patient_appointments_notifier.g.dart';
 
 @riverpod
 class PatientAppointments extends _$PatientAppointments {
+  Set<AppointmentType>? get _searchTypes =>
+      matchingAppointmentTypes(state.searchQuery, state.typeFilter);
+  void search(String query) {
+    state = state.copyWith(searchQuery: query.trim());
+    _reloadDebounced();
+  }
+
   int _generation = 0;
   static const int _pageSize = 30;
 
@@ -31,12 +39,21 @@ class PatientAppointments extends _$PatientAppointments {
     if (!silent || state.appointments.isEmpty) {
       state = state.copyWith(isLoading: true, isLoadingMore: false, errorMessage: null);
     }
-
+    if (state.searchQuery.isNotEmpty && _searchTypes!.isEmpty) {
+      state = state.copyWith(
+        appointments: [],
+        totalCount: 0,
+        isLoading: false,
+        isLoadingMore: false,
+        hasMore: false,
+      );
+      return;
+    }
     final AppointmentRepository repo = ref.read(appointmentRepositoryProvider);
     final countResult = await repo.countAppointmentsForPatient(
       patientId: patientId,
       statusFilter: state.statusFilter,
-      typeFilter: state.typeFilter,
+      typeFilter: _searchTypes,
       dateFrom: state.dateFrom,
       dateTo: state.dateTo,
       doctorId: state.doctorId,
@@ -53,7 +70,7 @@ class PatientAppointments extends _$PatientAppointments {
       offset: 0,
       limit: _pageSize,
       statusFilter: state.statusFilter,
-      typeFilter: state.typeFilter,
+      typeFilter: _searchTypes,
       dateFrom: state.dateFrom,
       dateTo: state.dateTo,
       doctorId: state.doctorId,
@@ -79,14 +96,24 @@ class PatientAppointments extends _$PatientAppointments {
   }
 
   void changeStatus(String appointmentId, AppointmentStatus newStatus) {
-    final List<AppointmentWithPatient> updated = state.appointments
-        .map(
-          (AppointmentWithPatient item) => item.appointment.id == appointmentId
-              ? item.copyWith(appointment: item.appointment.copyWith(status: newStatus))
-              : item,
-        )
-        .toList();
-    state = state.copyWith(appointments: updated);
+    final updated = <AppointmentWithPatient>[];
+    int removed = 0;
+    for (final item in state.appointments) {
+      if (item.appointment.id != appointmentId) {
+        updated.add(item);
+      } else if (state.statusFilter?.isNotEmpty == true &&
+          !state.statusFilter!.contains(newStatus)) {
+        removed++;
+      } else {
+        updated.add(item.copyWith(appointment: item.appointment.copyWith(status: newStatus)));
+      }
+    }
+    final total = (state.totalCount - removed).clamp(0, state.totalCount);
+    state = state.copyWith(
+      appointments: updated,
+      totalCount: total,
+      hasMore: updated.length < total,
+    );
   }
 
   void _reloadDebounced() {
@@ -100,7 +127,9 @@ class PatientAppointments extends _$PatientAppointments {
   }
 
   Future<void> loadMore() async {
-    if (!ref.mounted || state.isLoading || state.isLoadingMore || !state.hasMore) return;
+    if (!ref.mounted || state.isLoading || state.isLoadingMore || !state.hasMore) {
+      return;
+    }
     final int currentGen = _generation;
 
     state = state.copyWith(isLoadingMore: true);
@@ -112,7 +141,7 @@ class PatientAppointments extends _$PatientAppointments {
       offset: offset,
       limit: _pageSize,
       statusFilter: state.statusFilter,
-      typeFilter: state.typeFilter,
+      typeFilter: _searchTypes,
       dateFrom: state.dateFrom,
       dateTo: state.dateTo,
       doctorId: state.doctorId,

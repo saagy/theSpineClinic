@@ -1,4 +1,6 @@
-library;
+import 'package:spine_clinic_app/shared/widgets/form_field_label.dart';
+import 'package:spine_clinic_app/shared/widgets/form_columns.dart';
+import 'package:spine_clinic_app/features/medical_records/presentation/widgets/treatment_duration_control.dart';
 
 import 'package:flutter/material.dart';
 import 'package:spine_clinic_app/core/constants/app_sizes.dart';
@@ -9,6 +11,7 @@ import 'package:spine_clinic_app/features/medical_records/domain/modality_input.
 import 'package:spine_clinic_app/features/medical_records/domain/modality_region_catalog.dart';
 import 'package:spine_clinic_app/features/medical_records/domain/modality_target_region.dart';
 import 'package:spine_clinic_app/features/medical_records/domain/modality_type.dart';
+import 'package:spine_clinic_app/features/medical_records/presentation/widgets/target_region_picker.dart';
 
 /// Single region configuration row inside a modality configuration card.
 class RegionInputRow extends StatelessWidget {
@@ -34,16 +37,20 @@ class RegionInputRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
-    final isBilateral = ModalityTargetRegion.isRegionBilateral(modalityType, regionInput.targetRegion);
-    final showDuration = ModalityTargetRegion.hasDuration(modalityType, regionInput.targetRegion);
+    final isBilateral = ModalityTargetRegion.isRegionBilateral(
+      modalityType,
+      regionInput.targetRegion,
+    );
+    final showDuration = ModalityTargetRegion.hasDuration(
+      modalityType,
+      regionInput.targetRegion,
+    );
 
     return Container(
       margin: const EdgeInsets.only(bottom: AppSizes.p10),
-      padding: const EdgeInsets.all(AppSizes.p12),
+      padding: const EdgeInsets.symmetric(vertical: AppSizes.p12),
       decoration: BoxDecoration(
-        color: cs.surfaceContainerHighest.withAlpha(80),
-        borderRadius: BorderRadius.circular(AppSizes.r12),
-        border: Border.all(color: cs.outlineVariant),
+        border: Border(bottom: BorderSide(color: cs.outlineVariant)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -53,7 +60,11 @@ class RegionInputRow extends StatelessWidget {
               Expanded(child: _buildRegionDropdown(context)),
               const SizedBox(width: AppSizes.p8),
               IconButton(
-                icon: Icon(Icons.remove_circle_outline, color: cs.error, size: AppSizes.iconDefault),
+                icon: Icon(
+                  Icons.remove_circle_outline,
+                  color: cs.error,
+                  size: AppSizes.iconDefault,
+                ),
                 tooltip: AppStrings.delete,
                 onPressed: onDelete,
               ),
@@ -62,16 +73,24 @@ class RegionInputRow extends StatelessWidget {
           if (_isParaspinal) _buildParaspinalSubSelector(),
           if (isBilateral || showDuration) ...[
             const SizedBox(height: AppSizes.p8),
-            Row(
-              children: [
-                if (isBilateral) ...[
-                  Expanded(child: _buildLateralitySelector()),
-                  if (showDuration) const SizedBox(width: AppSizes.p12),
-                ] else if (showDuration)
-                  const Spacer(),
-                if (showDuration) _buildDurationStepper(context),
-              ],
-            ),
+            if (isBilateral && showDuration)
+              FormColumns(
+                breakpoint: AppSizes.formPairBreakpoint,
+                first: _buildLateralitySelector(),
+                second: TreatmentDurationControl(
+                  minutes: regionInput.timeMinutes,
+                  onChanged: (value) =>
+                      onChanged(regionInput.copyWith(timeMinutes: value)),
+                ),
+              )
+            else if (isBilateral)
+              _buildLateralitySelector()
+            else
+              TreatmentDurationControl(
+                minutes: regionInput.timeMinutes,
+                onChanged: (value) =>
+                    onChanged(regionInput.copyWith(timeMinutes: value)),
+              ),
           ],
         ],
       ),
@@ -79,31 +98,45 @@ class RegionInputRow extends StatelessWidget {
   }
 
   Widget _buildRegionDropdown(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
     final selectedRaw = regionInput.targetRegion.isNotEmpty
         ? regionInput.targetRegion
         : (availableRegions.isNotEmpty ? availableRegions.first.name : '');
     final dropdownValue = _isParaspinal
         ? 'Paraspinal'
-        : (availableRegions.any((r) => r.name == selectedRaw) ? selectedRaw : (availableRegions.isNotEmpty ? availableRegions.first.name : ''));
+        : (availableRegions.any((r) => r.name == selectedRaw)
+              ? selectedRaw
+              : (availableRegions.isNotEmpty
+                    ? availableRegions.first.name
+                    : ''));
 
-    return DropdownButtonFormField<String>(
-      initialValue: dropdownValue.isNotEmpty ? dropdownValue : null,
-      isExpanded: true,
-      decoration: InputDecoration(
-        labelText: AppStrings.targetRegion,
-        isDense: true,
-        contentPadding: const EdgeInsets.symmetric(horizontal: AppSizes.p12, vertical: AppSizes.p8),
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(AppSizes.r8)),
-      ),
-      items: availableRegions.map((r) => DropdownMenuItem(value: r.name, child: Text(r.name, style: AppTextStyles.body.copyWith(color: cs.onSurface)))).toList(),
+    return TargetRegionPicker(
+      label: modalityType == ModalityType.exercise
+          ? AppStrings.exerciseTarget
+          : AppStrings.targetRegion,
+      value: dropdownValue,
+      regions: availableRegions,
       onChanged: (val) {
-        if (val == null) return;
         if (val == 'Paraspinal') {
-          onChanged(regionInput.copyWith(targetRegion: 'Paraspinal (Cervical)', laterality: regionInput.laterality ?? Laterality.both));
+          onChanged(
+            regionInput.copyWith(
+              targetRegion: 'Paraspinal (Cervical)',
+              laterality: regionInput.laterality ?? Laterality.both,
+            ),
+          );
         } else {
-          final isBilateral = ModalityTargetRegion.isRegionBilateral(modalityType, val);
-          onChanged(regionInput.copyWith(targetRegion: val, laterality: isBilateral ? (regionInput.laterality ?? Laterality.both) : null));
+          final isBilateral = ModalityTargetRegion.isRegionBilateral(
+            modalityType,
+            val,
+          );
+          onChanged(
+            regionInput.copyWith(
+              targetRegion: val,
+              clearLaterality: !isBilateral,
+              laterality: isBilateral
+                  ? (regionInput.laterality ?? Laterality.both)
+                  : null,
+            ),
+          );
         }
       },
     );
@@ -120,62 +153,61 @@ class RegionInputRow extends StatelessWidget {
 
     return Padding(
       padding: const EdgeInsets.only(top: AppSizes.p8),
-      child: SegmentedButton<String>(
-        segments: const [
-          ButtonSegment(value: 'Cervical', label: Text('Cervical')),
-          ButtonSegment(value: 'Thoracic', label: Text('Thoracic')),
-          ButtonSegment(value: 'Lumbar', label: Text('Lumbar')),
-          ButtonSegment(value: 'SI', label: Text('SI')),
-        ],
-        selected: {currentSub},
-        showSelectedIcon: false,
-        style: const ButtonStyle(visualDensity: VisualDensity.compact, tapTargetSize: MaterialTapTargetSize.shrinkWrap, textStyle: WidgetStatePropertyAll(AppTextStyles.captionBold)),
-        onSelectionChanged: (sel) => sel.isNotEmpty ? onChanged(regionInput.copyWith(targetRegion: 'Paraspinal (${sel.first})')) : null,
+      child: FormFieldLabel(
+        label: AppStrings.spinalLevel,
+        child: Wrap(
+          spacing: AppSizes.p6,
+          runSpacing: AppSizes.p4,
+          children: [
+            for (final option in const {
+              'Cervical': AppStrings.cervical,
+              'Thoracic': AppStrings.thoracic,
+              'Lumbar': AppStrings.lumbar,
+              'SI': AppStrings.sacroiliacShort,
+            }.entries)
+              ChoiceChip(
+                label: Text(option.value, style: AppTextStyles.captionBold),
+                selected: currentSub == option.key,
+                showCheckmark: false,
+                onSelected: (_) => onChanged(
+                  regionInput.copyWith(
+                    targetRegion: 'Paraspinal (${option.key})',
+                  ),
+                ),
+              ),
+          ],
+        ),
       ),
     );
   }
 
-  Widget _buildLateralitySelector() {
-    return SegmentedButton<Laterality?>(
+  Widget _buildLateralitySelector() => FormFieldLabel(
+    label: AppStrings.treatmentSide,
+    child: SegmentedButton<Laterality>(
       segments: const [
-        ButtonSegment(value: Laterality.right, label: Text('Right')),
-        ButtonSegment(value: Laterality.left, label: Text('Left')),
-        ButtonSegment(value: Laterality.both, label: Text('Both')),
+        ButtonSegment(
+          value: Laterality.left,
+          label: Text(AppStrings.lateralityLeft),
+        ),
+        ButtonSegment(
+          value: Laterality.right,
+          label: Text(AppStrings.lateralityRight),
+        ),
+        ButtonSegment(
+          value: Laterality.both,
+          label: Text(AppStrings.bilateral),
+        ),
       ],
-      selected: {regionInput.laterality},
-      emptySelectionAllowed: true,
+      selected: {regionInput.laterality ?? Laterality.both},
       showSelectedIcon: false,
-      style: const ButtonStyle(visualDensity: VisualDensity.compact, tapTargetSize: MaterialTapTargetSize.shrinkWrap, textStyle: WidgetStatePropertyAll(AppTextStyles.captionBold)),
-      onSelectionChanged: (sel) => onChanged(regionInput.copyWith(laterality: sel.isEmpty ? null : sel.first)),
-    );
-  }
-
-  Widget _buildDurationStepper(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-    final min = regionInput.timeMinutes;
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: AppSizes.p8, vertical: AppSizes.p4),
-      decoration: BoxDecoration(color: cs.surfaceContainerLowest, borderRadius: BorderRadius.circular(AppSizes.r8), border: Border.all(color: cs.outlineVariant)),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          InkWell(
-            onTap: min > 5 ? () => onChanged(regionInput.copyWith(timeMinutes: min - 5)) : null,
-            borderRadius: BorderRadius.circular(AppSizes.r4),
-            child: Icon(Icons.remove, size: 16, color: min > 5 ? cs.primary : cs.outline),
-          ),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: AppSizes.p8),
-            child: Text(AppStrings.durationFormat(min), style: AppTextStyles.captionBold.copyWith(color: cs.onSurface)),
-          ),
-          InkWell(
-            onTap: min < 60 ? () => onChanged(regionInput.copyWith(timeMinutes: min + 5)) : null,
-            borderRadius: BorderRadius.circular(AppSizes.r4),
-            child: Icon(Icons.add, size: 16, color: min < 60 ? cs.primary : cs.outline),
-          ),
-        ],
+      style: const ButtonStyle(
+        minimumSize: WidgetStatePropertyAll(
+          Size(AppSizes.tappableMin, AppSizes.tappableMin),
+        ),
+        textStyle: WidgetStatePropertyAll(AppTextStyles.captionBold),
       ),
-    );
-  }
+      onSelectionChanged: (selected) =>
+          onChanged(regionInput.copyWith(laterality: selected.first)),
+    ),
+  );
 }

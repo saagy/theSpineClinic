@@ -1,17 +1,15 @@
-/// Modern booking form fields with patient selector card, unified segmented grid,
-/// and soft-filled input decorations.
-///
-/// Rule 1 — under 200 lines.
-library;
-
 import 'package:flutter/material.dart';
-import 'package:spine_clinic_app/core/constants/clinic_colors.dart';
+import 'package:intl/intl.dart';
 import 'package:spine_clinic_app/core/constants/app_sizes.dart';
 import 'package:spine_clinic_app/core/constants/app_strings.dart';
-import 'package:spine_clinic_app/core/constants/app_text_styles.dart';
 import 'package:spine_clinic_app/features/appointment/domain/appointment_type.dart';
 import 'package:spine_clinic_app/features/patient/domain/patient.dart';
-import 'package:spine_clinic_app/shared/widgets/app_avatar.dart';
+import 'package:spine_clinic_app/shared/widgets/form_section.dart';
+import 'package:spine_clinic_app/shared/widgets/form_columns.dart';
+import 'package:spine_clinic_app/features/appointment/presentation/widgets/booking_form_controls.dart';
+import 'package:spine_clinic_app/features/appointment/presentation/widgets/booking_patient_field.dart';
+export 'package:spine_clinic_app/features/appointment/presentation/widgets/booking_form_controls.dart'
+    show SegmentedAppointmentTypeSelector;
 
 class BookingFormFields extends StatelessWidget {
   const BookingFormFields({
@@ -48,118 +46,62 @@ class BookingFormFields extends StatelessWidget {
   final bool enabled;
 
   @override
-  Widget build(BuildContext context) {
-    return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-      // ── Card 1: Patient Selection ──
-      Container(
-        padding: const EdgeInsets.all(AppSizes.p16),
-        decoration: BoxDecoration(
-          color: Theme.of(context).colorScheme.surface,
-          borderRadius: const BorderRadius.all(Radius.circular(AppSizes.r16)),
-          border: Border.all(color: Theme.of(context).colorScheme.outline, width: AppSizes.borderWidth),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const _SectionLabel('Patient'),
-            const SizedBox(height: AppSizes.p12),
-            if (preselectedPatient != null)
-              _PatientCard(patient: preselectedPatient!)
-            else
-              _PatientSearchField(onTap: onPatientTap ?? () {}),
-          ],
+  Widget build(BuildContext context) => Column(
+    crossAxisAlignment: CrossAxisAlignment.stretch,
+    children: [
+      FormSection(
+        title: AppStrings.patient,
+        child: BookingPatientField(
+          patient: preselectedPatient,
+          onSelect: enabled ? onPatientTap : null,
         ),
       ),
-      const SizedBox(height: AppSizes.p16),
-
-      // ── Card 2: Appointment Settings ──
-      Container(
-        padding: const EdgeInsets.all(AppSizes.p16),
-        decoration: BoxDecoration(
-          color: Theme.of(context).colorScheme.surface,
-          borderRadius: const BorderRadius.all(Radius.circular(AppSizes.r16)),
-          border: Border.all(color: Theme.of(context).colorScheme.outline, width: AppSizes.borderWidth),
-        ),
+      const SizedBox(height: AppSizes.p20),
+      FormSection(
+        title: AppStrings.appointmentType,
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            const _SectionLabel(AppStrings.appointmentType),
-            const SizedBox(height: AppSizes.p12),
             SegmentedAppointmentTypeSelector(
               selectedType: selectedType,
               onTypeChanged: onTypeChanged,
               enabled: enabled,
             ),
             const SizedBox(height: AppSizes.p20),
-            
-            // Date & Time pickers
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Expanded(
-                  child: _PickerField(
-                    label: isRecurring ? 'Start Date' : 'Select Date',
-                    valueText: selectedDate != null ? _fmt(selectedDate!) : 'Select',
-                    icon: Icons.calendar_today,
-                    errorText: dateErrorText,
-                    onTap: enabled ? () => _pickDate(context) : () {},
-                  ),
-                ),
-                const SizedBox(width: AppSizes.p12),
-                Expanded(
-                  child: _PickerField(
-                    label: 'Select Time',
-                    valueText: selectedTime != null
-                        ? '${selectedTime!.hour.toString().padLeft(2, '0')}:${selectedTime!.minute.toString().padLeft(2, '0')}'
-                        : 'Select',
-                    icon: Icons.access_time,
-                    errorText: timeErrorText,
-                    onTap: enabled ? () => _pickTime(context) : () {},
-                  ),
-                ),
-              ],
+            FormColumns(
+              breakpoint: AppSizes.formControlPairBreakpoint,
+              first: BookingPickerField(
+                label: isRecurring ? AppStrings.startDate : AppStrings.selectDate,
+                value: selectedDate == null
+                    ? AppStrings.select
+                    : DateFormat.yMMMd().format(selectedDate!),
+                icon: Icons.calendar_today_outlined,
+                error: dateErrorText,
+                onTap: enabled ? () => _pickDate(context) : null,
+              ),
+              second: BookingPickerField(
+                label: AppStrings.selectTime,
+                value: selectedTime?.format(context) ?? AppStrings.select,
+                icon: Icons.schedule,
+                error: timeErrorText,
+                onTap: enabled ? () => _pickTime(context) : null,
+              ),
             ),
-            
-            // Recurring toggle
             if (showRecurringToggle) ...[
-              const SizedBox(height: AppSizes.p16),
-              Divider(color: Theme.of(context).colorScheme.outline, height: 1, thickness: 0.5),
               const SizedBox(height: AppSizes.p12),
-              Row(
-                children: [
-                  SizedBox(
-                    height: 24,
-                    width: 24,
-                    child: Checkbox(
-                      value: isRecurring,
-                      onChanged: enabled ? (v) => onRecurringChanged(v ?? false) : null,
-                      activeColor: Theme.of(context).colorScheme.primary,
-                    ),
-                  ),
-                  const SizedBox(width: AppSizes.p8),
-                  GestureDetector(
-                    onTap: enabled ? () => onRecurringChanged(!isRecurring) : null,
-                    child: Text(
-                      'Recurring booking',
-                      style: AppTextStyles.body.copyWith(
-                        color: Theme.of(context).colorScheme.onSurface,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ),
-                ],
+              CheckboxListTile(
+                contentPadding: EdgeInsets.zero,
+                controlAffinity: ListTileControlAffinity.leading,
+                title: const Text(AppStrings.recurringBooking),
+                value: isRecurring,
+                onChanged: enabled ? (value) => onRecurringChanged(value ?? false) : null,
               ),
             ],
           ],
         ),
       ),
-    ]);
-  }
-
-  String _fmt(DateTime d) {
-    final m = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-    return '${m[d.month-1]} ${d.day}';
-  }
+    ],
+  );
 
   Future<void> _pickDate(BuildContext context) async {
     final now = DateTime.now();
@@ -178,251 +120,5 @@ class BookingFormFields extends StatelessWidget {
       initialTime: selectedTime ?? const TimeOfDay(hour: 9, minute: 0),
     );
     if (picked != null) onTimeChanged(picked);
-  }
-}
-
-/// A responsive, unified segmented controller for selecting AppointmentType.
-///
-/// On Mobile: renders as a 2x2 grid.
-/// On PC: renders as a 1x4 horizontal row.
-class SegmentedAppointmentTypeSelector extends StatelessWidget {
-  const SegmentedAppointmentTypeSelector({
-    super.key,
-    required this.selectedType,
-    required this.onTypeChanged,
-    this.enabled = true,
-  });
-
-  final AppointmentType selectedType;
-  final ValueChanged<AppointmentType> onTypeChanged;
-  final bool enabled;
-
-  @override
-  Widget build(BuildContext context) {
-    return Opacity(
-      opacity: enabled ? 1.0 : 0.6,
-      child: Container(
-        decoration: BoxDecoration(
-          color: Theme.of(context).colorScheme.outline,
-          borderRadius: const BorderRadius.all(Radius.circular(AppSizes.r12)),
-          border: Border.all(color: Theme.of(context).colorScheme.outline, width: AppSizes.borderWidth),
-        ),
-        child: ClipRRect(
-          borderRadius: const BorderRadius.all(Radius.circular(AppSizes.r12 - 1)),
-          child: LayoutBuilder(
-            builder: (context, constraints) {
-              final bool isWide = constraints.maxWidth > 480;
-              if (isWide) {
-                return IntrinsicHeight(
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      Expanded(child: _buildCell(context, AppointmentType.normalPtSession)),
-                      const SizedBox(width: 0.5),
-                      Expanded(child: _buildCell(context, AppointmentType.spinalTractionSession)),
-                      const SizedBox(width: 0.5),
-                      Expanded(child: _buildCell(context, AppointmentType.initialAssessment)),
-                      const SizedBox(width: 0.5),
-                      Expanded(child: _buildCell(context, AppointmentType.reassessment)),
-                    ],
-                  ),
-                );
-              } else {
-                return Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    IntrinsicHeight(
-                      child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          Expanded(child: _buildCell(context, AppointmentType.normalPtSession)),
-                          const SizedBox(width: 0.5),
-                          Expanded(child: _buildCell(context, AppointmentType.spinalTractionSession)),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 0.5),
-                    IntrinsicHeight(
-                      child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          Expanded(child: _buildCell(context, AppointmentType.initialAssessment)),
-                          const SizedBox(width: 0.5),
-                          Expanded(child: _buildCell(context, AppointmentType.reassessment)),
-                        ],
-                      ),
-                    ),
-                  ],
-                );
-              }
-            },
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildCell(BuildContext context, AppointmentType type) {
-    final bool active = selectedType == type;
-    return Material(
-      color: Theme.of(context).colorScheme.surface,
-      child: InkWell(
-        onTap: enabled ? () => onTypeChanged(type) : null,
-        child: Container(
-          padding: const EdgeInsets.all(4.0),
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 150),
-            alignment: Alignment.center,
-            padding: const EdgeInsets.symmetric(vertical: AppSizes.p12, horizontal: AppSizes.p4),
-            decoration: BoxDecoration(
-              color: active ? Theme.of(context).colorScheme.primaryContainer : Theme.of(context).colorScheme.surface.withAlpha(0),
-              border: Border.all(
-                color: active ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.surface.withAlpha(0),
-                width: 1.0,
-              ),
-              borderRadius: const BorderRadius.all(Radius.circular(AppSizes.r8)),
-            ),
-            child: Text(
-              type.displayLabel,
-              textAlign: TextAlign.center,
-              style: (active ? AppTextStyles.bodyBold : AppTextStyles.body).copyWith(
-                color: active ? Theme.of(context).colorScheme.onPrimaryContainer : Theme.of(context).colorScheme.onSurfaceVariant,
-                fontSize: 12,
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-/// Read-only profile card showing avatar, name, phone, truncated ID.
-class _PatientCard extends StatelessWidget {
-  const _PatientCard({required this.patient});
-  final Patient patient;
-  @override
-  Widget build(BuildContext context) {
-    final String shortId = patient.id.length > 8
-        ? '${patient.id.substring(0, 6)}…${patient.id.substring(patient.id.length - 4)}'
-        : patient.id;
-    return Container(
-      padding: const EdgeInsets.all(AppSizes.p16),
-      decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surfaceContainerHighest.withAlpha(100),
-        borderRadius: const BorderRadius.all(Radius.circular(AppSizes.r16)),
-        border: Border.all(color: Theme.of(context).colorScheme.outline, width: AppSizes.borderWidth),
-      ),
-      child: Row(children: [
-        AppAvatar(name: patient.fullName, radius: 22),
-        const SizedBox(width: AppSizes.p12),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(patient.fullName, style: AppTextStyles.bodyBold),
-              const SizedBox(height: AppSizes.p2),
-              Text(patient.phoneNumber, style: AppTextStyles.caption.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant)),
-            ],
-          ),
-        ),
-        Text('ID: $shortId', style: AppTextStyles.caption.copyWith(color: ClinicColors.of(context).textMuted, fontSize: 10)),
-      ]),
-    );
-  }
-}
-
-/// Tappable search field that opens a patient search sheet when tapped.
-class _PatientSearchField extends StatelessWidget {
-  const _PatientSearchField({required this.onTap});
-  final VoidCallback onTap;
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: AppSizes.p16, vertical: AppSizes.p14),
-        decoration: BoxDecoration(
-          color: Theme.of(context).colorScheme.primaryContainer.withAlpha(80),
-          borderRadius: const BorderRadius.all(Radius.circular(AppSizes.r16)),
-          border: Border.all(color: Theme.of(context).colorScheme.primary.withAlpha(60), width: 1),
-        ),
-        child: Row(children: [
-          Icon(Icons.search_rounded, color: Theme.of(context).colorScheme.primary, size: AppSizes.iconDefault),
-          const SizedBox(width: AppSizes.p12),
-          Text('Select Patient…', style: AppTextStyles.body.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant)),
-        ]),
-      ),
-    );
-  }
-}
-
-class _SectionLabel extends StatelessWidget {
-  const _SectionLabel(this.text);
-  final String text;
-  @override
-  Widget build(BuildContext context) {
-    return Text(text, style: AppTextStyles.captionMedium.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant));
-  }
-}
-
-class _PickerField extends StatelessWidget {
-  const _PickerField({required this.label, required this.valueText, required this.icon, required this.onTap, this.errorText});
-  final String label, valueText;
-  final IconData icon;
-  final VoidCallback onTap;
-  final String? errorText;
-  @override
-  Widget build(BuildContext context) {
-    final bool err = errorText != null;
-    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      Text(label, style: AppTextStyles.captionMedium.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant)),
-      const SizedBox(height: AppSizes.p6),
-      InkWell(
-        onTap: onTap,
-        borderRadius: const BorderRadius.all(Radius.circular(AppSizes.r12)),
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: AppSizes.p12, vertical: AppSizes.p12),
-          decoration: BoxDecoration(
-            color: Theme.of(context).colorScheme.surface,
-            borderRadius: const BorderRadius.all(Radius.circular(AppSizes.r12)),
-            border: Border.all(
-              color: err
-                  ? Theme.of(context).colorScheme.error
-                  : Theme.of(context).colorScheme.outline,
-              width: AppSizes.borderWidth,
-            ),
-          ),
-          child: Row(children: [
-            Icon(
-              icon,
-              size: AppSizes.iconDefault,
-              color: ClinicColors.of(context).textMuted,
-            ),
-            const SizedBox(width: AppSizes.p8),
-            Expanded(
-              child: Text(
-                valueText,
-                style: AppTextStyles.body.copyWith(
-                  color: valueText == 'Select'
-                      ? ClinicColors.of(context).textMuted
-                      : Theme.of(context).colorScheme.onSurface,
-                ),
-              ),
-            ),
-          ]),
-        ),
-      ),
-      if (err) ...[
-        const SizedBox(height: AppSizes.p4),
-        Text(
-          errorText!,
-          style: AppTextStyles.caption.copyWith(
-            color: Theme.of(context).colorScheme.error,
-          ),
-        ),
-      ],
-    ]);
   }
 }

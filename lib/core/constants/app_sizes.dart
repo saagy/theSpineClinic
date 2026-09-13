@@ -11,6 +11,17 @@ import 'package:flutter/material.dart';
 
 /// Application-wide dimension constants.
 abstract final class AppSizes {
+  static const double agendaWideBreakpoint = 650;
+  static const double agendaCompactTimeWidth = 62;
+  static const double agendaWideTimeWidth = 76;
+  static const double agendaStatusWidth = 132;
+  static const double agendaAvatarSize = 26;
+  static const double agendaIndicatorWidth = 32;
+  static const double agendaRowMinHeight = 60;
+  static const double formControlPairBreakpoint = 360;
+  static const double formActionWidth = 240;
+  static const double formPairBreakpoint = 480;
+
   static const double recordFactWidth = 240;
   static const double clinicalContentMaxWidth = 1040;
   static const double appointmentDateColumnWidth = 112;
@@ -101,19 +112,29 @@ abstract final class AppSizes {
   static const double h48 = 48.0;
 
   /// Pre-built [BorderRadius] for badges and chips.
-  static const BorderRadius borderRadiusBadge = BorderRadius.all(Radius.circular(r4));
+  static const BorderRadius borderRadiusBadge = BorderRadius.all(
+    Radius.circular(r4),
+  );
 
   /// Pre-built [BorderRadius] for inputs and dropdowns.
-  static const BorderRadius borderRadiusInput = BorderRadius.all(Radius.circular(r24));
+  static const BorderRadius borderRadiusInput = BorderRadius.all(
+    Radius.circular(r24),
+  );
 
   /// Pre-built [BorderRadius] for cards and containers.
-  static const BorderRadius borderRadiusCard = BorderRadius.all(Radius.circular(r16));
+  static const BorderRadius borderRadiusCard = BorderRadius.all(
+    Radius.circular(r16),
+  );
 
   /// Pre-built [BorderRadius] for modals and dialogs.
-  static const BorderRadius borderRadiusDialog = BorderRadius.all(Radius.circular(r16));
+  static const BorderRadius borderRadiusDialog = BorderRadius.all(
+    Radius.circular(r16),
+  );
 
   /// Pre-built [BorderRadius] for pill-shaped elements.
-  static const BorderRadius borderRadiusPill = BorderRadius.all(Radius.circular(r999));
+  static const BorderRadius borderRadiusPill = BorderRadius.all(
+    Radius.circular(r999),
+  );
 
   // ──────────────── Component Dimensions ────────────────
 
@@ -225,13 +246,18 @@ abstract final class AppSizes {
   // ──────────────── Convenience EdgeInsets ────────────────
 
   /// Symmetric horizontal screen padding (24 px).
-  static const EdgeInsets paddingScreenH = EdgeInsets.symmetric(horizontal: p24);
+  static const EdgeInsets paddingScreenH = EdgeInsets.symmetric(
+    horizontal: p24,
+  );
 
   /// Standard card inner padding (20 px all sides).
   static const EdgeInsets paddingCard = EdgeInsets.all(p20);
 
   /// Compact cell padding (12 px vertical, 16 px horizontal).
-  static const EdgeInsets paddingCell = EdgeInsets.symmetric(horizontal: p16, vertical: p12);
+  static const EdgeInsets paddingCell = EdgeInsets.symmetric(
+    horizontal: p16,
+    vertical: p12,
+  );
 
   /// Dialog body padding (20 px all sides).
   static const EdgeInsets paddingDialog = EdgeInsets.all(p20);
@@ -313,4 +339,10 @@ abstract final class AppSizes {
 
   /// Maximum height constraint for doctor dropdown overlay lists.
   static const double overlayDropdownMaxHeight = 220.0;
+
+  /// Bounded desktop width for the treatment target-region selector.
+  static const double targetRegionPickerWidth = 420.0;
+
+  /// Maximum list height inside the target-region selector.
+  static const double targetRegionPickerListHeight = 360.0;
 }

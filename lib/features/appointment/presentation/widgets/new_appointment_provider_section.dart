@@ -2,26 +2,11 @@ part of 'new_appointment_form.dart';
 
 extension _NewAppointmentProviderSection on _NewAppointmentFormState {
   Widget _buildProviderSection(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(AppSizes.p16),
-      decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surface,
-        borderRadius: const BorderRadius.all(Radius.circular(AppSizes.r16)),
-        border: Border.all(
-          color: Theme.of(context).colorScheme.outline,
-          width: AppSizes.borderWidth,
-        ),
-      ),
+    return FormSection(
+      title: AppStrings.providerAndBilling,
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Text(
-            AppStrings.providerAndBilling,
-            style: AppTextStyles.captionMedium.copyWith(
-              color: Theme.of(context).colorScheme.onSurfaceVariant,
-            ),
-          ),
-          const SizedBox(height: AppSizes.p12),
           if (_isFetchingDoctors) ...[
             Padding(
               padding: const EdgeInsets.symmetric(vertical: AppSizes.p8),
@@ -53,19 +38,20 @@ extension _NewAppointmentProviderSection on _NewAppointmentFormState {
             enabled: _doctorFieldEnabled,
             onSavedDoctors: (_) {},
             onChanged: (_) {},
-            validator: (doctors) => doctors == null || doctors.isEmpty
-                ? AppStrings.atLeastOneDoctorRequired
-                : null,
+            validator: (doctors) =>
+                doctors == null || doctors.isEmpty ? AppStrings.atLeastOneDoctorRequired : null,
           ),
           const SizedBox(height: AppSizes.p16),
           if (_selectedType.affectsPackageBalance)
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(
-                  AppStrings.usePackageBalance,
-                  style: AppTextStyles.body.copyWith(
-                    color: Theme.of(context).colorScheme.onSurface,
+                Expanded(
+                  child: Text(
+                    AppStrings.usePackageBalance,
+                    style: AppTextStyles.body.copyWith(
+                      color: Theme.of(context).colorScheme.onSurface,
+                    ),
                   ),
                 ),
                 Switch(
@@ -77,15 +63,10 @@ extension _NewAppointmentProviderSection on _NewAppointmentFormState {
             )
           else
             Container(
-              padding: const EdgeInsets.symmetric(
-                horizontal: AppSizes.p12,
-                vertical: AppSizes.p8,
-              ),
+              padding: const EdgeInsets.symmetric(horizontal: AppSizes.p12, vertical: AppSizes.p8),
               decoration: BoxDecoration(
                 color: ClinicColors.of(context).infoContainer,
-                borderRadius: const BorderRadius.all(
-                  Radius.circular(AppSizes.r12),
-                ),
+                borderRadius: const BorderRadius.all(Radius.circular(AppSizes.r12)),
               ),
               child: Row(
                 children: [

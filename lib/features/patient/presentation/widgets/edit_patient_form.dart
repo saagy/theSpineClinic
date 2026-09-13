@@ -1,3 +1,6 @@
+import 'package:spine_clinic_app/shared/widgets/form_columns.dart';
+import 'package:spine_clinic_app/shared/widgets/form_section.dart';
+import 'package:spine_clinic_app/shared/widgets/form_page_body.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -13,14 +16,14 @@ import 'package:spine_clinic_app/features/patient/domain/patient.dart';
 import 'package:spine_clinic_app/features/patient/presentation/edit_patient_controller.dart';
 import 'package:spine_clinic_app/features/patient/presentation/widgets/patient_demographic_fields.dart';
 import 'package:spine_clinic_app/shared/widgets/doctor_select_field.dart';
-import 'package:spine_clinic_app/shared/widgets/app_button.dart';
 import 'package:spine_clinic_app/shared/widgets/app_chip.dart';
 import 'package:spine_clinic_app/shared/widgets/app_snackbar.dart';
 import 'package:spine_clinic_app/shared/widgets/confirmation_dialog.dart';
 import 'package:spine_clinic_app/shared/widgets/loading_overlay.dart';
-import 'package:spine_clinic_app/shared/widgets/section_card.dart';
 
 /// Form component for editing patient demographics and doctor assignments.
+part 'edit_patient_form_view.dart';
+
 class EditPatientForm extends ConsumerStatefulWidget {
   const EditPatientForm({super.key, required this.patient, required this.assignedDoctors});
 
@@ -33,6 +36,7 @@ class EditPatientForm extends ConsumerStatefulWidget {
 
 class _EditPatientFormState extends ConsumerState<EditPatientForm> {
   final _formKey = GlobalKey<FormState>();
+  bool _allowPop = false;
   late final TextEditingController _nameCtrl, _phoneCtrl;
   ClinicLocation? _selectedClinic;
   final List<Staff> _selectedDoctors = [];
@@ -45,6 +49,8 @@ class _EditPatientFormState extends ConsumerState<EditPatientForm> {
     _phoneCtrl = TextEditingController(text: widget.patient.phoneNumber);
     _selectedClinic = widget.patient.clinic;
     _selectedDoctors.addAll(widget.assignedDoctors);
+    _nameCtrl.addListener(_onInputChanged);
+    _phoneCtrl.addListener(_onInputChanged);
     _initialDoctorIds = widget.assignedDoctors.map((d) => d.id).toList();
   }
 
@@ -70,128 +76,53 @@ class _EditPatientFormState extends ConsumerState<EditPatientForm> {
     final res = await showDialog<bool>(
       context: context,
       builder: (ctx) => const ConfirmationDialog(
-        title: 'Discard Changes',
-        message: 'You have unsaved changes. Discard?',
-        confirmLabel: 'Discard',
-        cancelLabel: 'Keep Editing',
+        title: AppStrings.discardChanges,
+        message: AppStrings.discardChangesMessage,
+        confirmLabel: AppStrings.discard,
+        cancelLabel: AppStrings.keepEditing,
         isDestructive: true,
       ),
     );
     return res ?? false;
   }
 
+  Future<void> _leaveForm() async {
+    setState(() => _allowPop = true);
+    await WidgetsBinding.instance.endOfFrame;
+    if (mounted) context.pop();
+  }
+
   Future<void> _handleCancel() async {
     if ((_hasChanges() && await _showDiscardDialog()) || !_hasChanges()) {
-      if (mounted) context.pop();
+      if (mounted) await _leaveForm();
     }
   }
 
   Future<void> _submit() async {
-    if (!_formKey.currentState!.validate()) return;
+    if (ref.read(editPatientControllerProvider).isLoading || !_formKey.currentState!.validate()) {
+      return;
+    }
     _formKey.currentState!.save();
-    
+
     final updated = widget.patient.copyWith(
       fullName: _nameCtrl.text.trim(),
       phoneNumber: _phoneCtrl.text.trim(),
       clinic: _selectedClinic!,
     );
-    
-    await ref.read(editPatientControllerProvider.notifier).submit(
-      patient: updated,
-      selectedDoctorIds: _selectedDoctors.map((d) => d.id).toList(),
-      initialDoctorIds: _initialDoctorIds,
-    );
+
+    await ref
+        .read(editPatientControllerProvider.notifier)
+        .submit(
+          patient: updated,
+          selectedDoctorIds: _selectedDoctors.map((d) => d.id).toList(),
+          initialDoctorIds: _initialDoctorIds,
+        );
   }
+
+  void _onInputChanged() => setState(() {});
+
+  void _mutate(VoidCallback change) => setState(change);
 
   @override
-  Widget build(BuildContext context) {
-    final isSaving = ref.watch(editPatientControllerProvider).isLoading;
-    final user = ref.watch(currentUserProvider).value;
-    final isRegularDoctor =
-        user?.role == UserRole.doctor && !(user?.isSeniorDoctor ?? false);
-
-    ref.listen<AsyncValue<void>>(
-      editPatientControllerProvider,
-      (previous, next) {
-        next.whenOrNull(
-          data: (_) {
-            AppSnackbar.show(context, message: AppStringsAuth.patientUpdatedSuccess, variant: AppSnackbarVariant.success);
-            context.pop();
-          },
-          error: (error, _) {
-            final ex = error is AppException ? error : UnknownException(message: error.toString());
-            AppSnackbar.show(context, message: AppStrings.fromKey(ex.userMessageKey), variant: AppSnackbarVariant.error);
-          },
-        );
-      },
-    );
-
-    return PopScope(
-      canPop: !_hasChanges() && !isSaving,
-      onPopInvokedWithResult: (didPop, _) async {
-        if (didPop || isSaving) return;
-        if (await _showDiscardDialog() && context.mounted) context.pop();
-      },
-      child: Scaffold(
-        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-        appBar: AppBar(
-          title: const Text(AppStrings.editPatient),
-          leading: IconButton(
-            icon: const Icon(Icons.arrow_back),
-            onPressed: isSaving ? null : _handleCancel,
-          ),
-        ),
-        body: LoadingOverlay(
-          isLoading: isSaving,
-          child: SingleChildScrollView(
-            keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
-            padding: const EdgeInsets.all(AppSizes.p16),
-            child: Form(
-              key: _formKey,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  SectionCard(
-                    title: AppStrings.patientDetails,
-                    child: PatientDemographicFields(
-                      nameCtrl: _nameCtrl,
-                      phoneCtrl: _phoneCtrl,
-                      selectedClinic: _selectedClinic,
-                      onClinicChanged: (val) => setState(() => _selectedClinic = val),
-                      enabled: !isSaving,
-                    ),
-                  ),
-                  const SizedBox(height: AppSizes.p16),
-                  SectionCard(
-                    title: AppStrings.assignedDoctors,
-                    child: isRegularDoctor
-                        ? Wrap(
-                            spacing: AppSizes.p8,
-                            runSpacing: AppSizes.p8,
-                            children: _selectedDoctors
-                                .map((doc) => AppChip(label: doc.fullName))
-                                .toList(),
-                          )
-                        : DoctorSelectField(
-                            initialValue: _selectedDoctors,
-                            onSavedDoctors: (doctors) => setState(() {
-                              _selectedDoctors.clear();
-                              _selectedDoctors.addAll(doctors);
-                            }),
-                            onChanged: (doctors) => setState(() {
-                              _selectedDoctors.clear();
-                              _selectedDoctors.addAll(doctors);
-                            }),
-                          ),
-                  ),
-                  const SizedBox(height: AppSizes.p32),
-                  AppButton(labelText: AppStrings.save, onPressed: isSaving ? null : _submit, debounceMs: 1000),
-                ],
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
+  Widget build(BuildContext context) => _buildForm(context);
 }

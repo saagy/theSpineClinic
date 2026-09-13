@@ -15,7 +15,6 @@ import 'package:spine_clinic_app/features/auth/presentation/auth_providers.dart'
 import 'package:spine_clinic_app/features/patient/domain/clinic_location.dart';
 import 'package:spine_clinic_app/features/patient/domain/patient.dart';
 import 'package:spine_clinic_app/features/patient/presentation/patient_providers.dart';
-import 'package:spine_clinic_app/shared/widgets/app_button.dart';
 
 class _FakeAppointmentRepo implements AppointmentRepository {
   @override
@@ -26,8 +25,7 @@ class _FakeAppointmentRepo implements AppointmentRepository {
   Future<Result<int>> getFutureScheduledAppointmentsCountForType({
     required String patientId,
     required AppointmentType type,
-  }) async =>
-      const Result.success(0);
+  }) async => const Result.success(0);
 
   @override
   dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
@@ -64,8 +62,7 @@ Widget _buildTestWidget() {
   return ProviderScope(
     overrides: [
       appointmentRepositoryProvider.overrideWithValue(_FakeAppointmentRepo()),
-      patientDetailProvider(_testPatient.id)
-          .overrideWith((ref) => Future.value(_testPatient)),
+      patientDetailProvider(_testPatient.id).overrideWith((ref) => Future.value(_testPatient)),
       currentUserProvider.overrideWith(() => _TestCurrentUser(_testStaff)),
       availableBalanceForTypeProvider((
         patientId: _testPatient.id,
@@ -84,75 +81,70 @@ Widget _buildTestWidget() {
 }
 
 void main() {
-  testWidgets(
-    'Ledger preview updates dynamically when typing recurring sessions count',
-    (tester) async {
-      await tester.pumpWidget(_buildTestWidget());
-      await tester.pumpAndSettle();
+  testWidgets('Ledger preview updates dynamically when typing recurring sessions count', (
+    tester,
+  ) async {
+    await tester.pumpWidget(_buildTestWidget());
+    await tester.pumpAndSettle();
 
-      // Tap the 'Recurring booking' text / checkbox
-      final recurringFinder = find.text('Recurring booking');
-      expect(recurringFinder, findsOneWidget);
-      await tester.tap(recurringFinder);
-      await tester.pumpAndSettle();
+    // Tap the 'Recurring booking' text / checkbox
+    final recurringFinder = find.text('Recurring booking');
+    expect(recurringFinder, findsOneWidget);
+    await tester.ensureVisible(recurringFinder);
+    await tester.tap(recurringFinder);
+    await tester.pumpAndSettle();
 
-      expect(find.byType(RecurringPatternPicker), findsOneWidget);
+    expect(find.byType(RecurringPatternPicker), findsOneWidget);
 
-      // Select Saturday
-      await tester.tap(find.text('Sat'));
-      await tester.pumpAndSettle();
+    // Select Saturday
+    await tester.ensureVisible(find.text('Sat'));
+    await tester.tap(find.text('Sat'));
+    await tester.pumpAndSettle();
 
-      // Enter 2 sessions (within available balance of 3)
-      final sessionsInput = find.byType(TextField).last;
-      await tester.enterText(sessionsInput, '2');
-      await tester.pumpAndSettle();
+    // Enter 2 sessions (within available balance of 3)
+    final sessionsInput = find.byType(TextField).last;
+    await tester.enterText(sessionsInput, '2');
+    await tester.pumpAndSettle();
 
-      // Verify Live Ledger Preview shows requested count of 2
-      expect(find.byType(AppointmentBalanceDiagnostics), findsOneWidget);
-      expect(find.text('2'), findsWidgets);
-      expect(find.text(AppStrings.projectedLeftoverMessage(1)), findsOneWidget);
+    // Verify Live Ledger Preview shows requested count of 2
+    expect(find.byType(AppointmentBalanceDiagnostics), findsOneWidget);
+    expect(find.text('2'), findsWidgets);
+    expect(find.text(AppStrings.projectedLeftoverMessage(1)), findsOneWidget);
 
-      // Now enter 5 sessions (exceeding balance of 3)
-      await tester.enterText(sessionsInput, '5');
-      await tester.pumpAndSettle();
+    // Now enter 5 sessions (exceeding balance of 3)
+    await tester.enterText(sessionsInput, '5');
+    await tester.pumpAndSettle();
 
-      // Verify Ledger Preview immediately updates with deficit
-      expect(find.text(AppStrings.packageDeficitMessage(2)), findsOneWidget);
-      expect(find.text(AppStrings.insufficientPackageBalance), findsOneWidget);
+    // Verify Ledger Preview immediately updates with deficit
+    expect(find.text(AppStrings.packageDeficitMessage(2)), findsOneWidget);
+    expect(find.text(AppStrings.insufficientPackageBalance), findsOneWidget);
 
-      // Verify Save button is disabled
-      final saveButton = tester.widget<AppButton>(find.byType(AppButton));
-      expect(saveButton.onPressed, isNull);
+    // Verify Save button is disabled
+    final saveButton = tester.widget<FilledButton>(
+      find.widgetWithText(FilledButton, AppStrings.save),
+    );
+    expect(saveButton.onPressed, isNull);
 
-      // Type 3 sessions (exact balance)
-      await tester.enterText(sessionsInput, '3');
-      await tester.pumpAndSettle();
+    // Type 3 sessions (exact balance)
+    await tester.enterText(sessionsInput, '3');
+    await tester.pumpAndSettle();
 
-      // Verify deficit is gone and leftover is 0
-      expect(find.text(AppStrings.projectedLeftoverMessage(0)), findsOneWidget);
-    },
-  );
+    // Verify deficit is gone and leftover is 0
+    expect(find.text(AppStrings.projectedLeftoverMessage(0)), findsOneWidget);
+  });
 
-  testWidgets(
-    'Bundled assessment does not show secondary package balance toggle',
-    (tester) async {
-      await tester.pumpWidget(_buildTestWidget());
-      await tester.pumpAndSettle();
+  testWidgets('Bundled assessment does not show secondary package balance toggle', (tester) async {
+    await tester.pumpWidget(_buildTestWidget());
+    await tester.pumpAndSettle();
 
-      // Toggle bundling on
-      final bundleSwitch = find.widgetWithText(
-        SwitchListTile,
-        'Bundle with assessment',
-      );
-      expect(bundleSwitch, findsOneWidget);
-      await tester.tap(bundleSwitch);
-      await tester.pumpAndSettle();
+    // Toggle bundling on
+    final bundleSwitch = find.widgetWithText(SwitchListTile, AppStrings.bundleAssessmentHint);
+    expect(bundleSwitch, findsOneWidget);
+    await tester.ensureVisible(bundleSwitch);
+    await tester.tap(bundleSwitch);
+    await tester.pumpAndSettle();
 
-      expect(find.text('Secondary Session Settings'), findsOneWidget);
-      expect(
-        find.text('Use package balance for secondary session'),
-        findsNothing,
-      );
-    },
-  );
+    expect(find.text(AppStrings.secondarySession), findsOneWidget);
+    expect(find.text('Use package balance for secondary session'), findsNothing);
+  });
 }

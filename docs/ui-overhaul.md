@@ -2,6 +2,13 @@
 
 ## Status
 
+September 13 shipping polish implements the user's selected open-workspace and
+section-based form directions. The subsequent density correction restores compact
+appointment rows with passive status indicators and all actions in the menu. Doctor history, patient
+appointments/notes and the explicitly requested staff directory now share the
+search/filter toolbar and updated filter sheet pattern. See
+[shipping UI polish](shipping-ui-polish.md) for scope, audit and verification.
+
 Patient details has a corrective Flutter revision after the initial pilot was
 rejected. See the
 [patient workspace direction](patient-workspace-direction.md) for the workflow
@@ -133,3 +140,14 @@ them into the shared system across all remaining screens.
 - Keep disposable previews and captures outside the repository unless explicitly
   requested. Use fictional data and document unresolved issues.
   Record actual checks, not assumed passes; update DESIGN.md with adopted patterns.
+
+### Schedule refresh and booking patient scope
+
+- Receptionist schedules watch the active branch and admin branch filter, clear
+  cached weeks when their scope changes, and discard obsolete requests.
+- Successful bookings invalidate receptionist/doctor schedules, All appointments,
+  the booking workboard, and the patient appointment tab. Schedule invalidation
+  reloads the selected date even when the signed-in user has not changed.
+- Booking patient selection restricts receptionist queries (including subsequent
+  pages) to the active branch; changing branch resets pagination. The shared
+  search input retains its 300 ms debounce.

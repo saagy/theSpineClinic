@@ -28,11 +28,17 @@ void main() {
       expect(find.text(AppStrings.totalOutstanding), findsNothing);
       expect(find.byType(WorkspaceDue), findsNothing);
       expect(
-        find.descendant(of: find.byType(WorkspacePrograms), matching: find.text('Lumbar disc prolapse')),
+        find.descendant(
+          of: find.byType(WorkspacePrograms),
+          matching: find.text('Lumbar disc prolapse'),
+        ),
         findsOneWidget,
       );
       expect(
-        find.descendant(of: find.byType(WorkspacePrograms), matching: find.text('Cervical spondylosis')),
+        find.descendant(
+          of: find.byType(WorkspacePrograms),
+          matching: find.text('Cervical spondylosis'),
+        ),
         findsOneWidget,
       );
       expect(find.text(AppStrings.medicalHistory), findsOneWidget);
@@ -54,7 +60,10 @@ void main() {
         find.text(AppStrings.recordPayment),
         role == 'reception-payments' ? findsOneWidget : findsNothing,
       );
-      expect(find.text(AppStrings.collectDue), role == 'reception-payments' ? findsOneWidget : findsNothing);
+      expect(
+        find.text(AppStrings.collectDue),
+        role == 'reception-payments' ? findsOneWidget : findsNothing,
+      );
       expect(find.text(AppStrings.totalOutstanding), findsWidgets);
       expect(find.text(AppStrings.totalPaid), findsWidgets);
       expect(tester.takeException(), isNull);
@@ -64,7 +73,7 @@ void main() {
   testWidgets('long name and enlarged text fit a narrow window', (tester) async {
     await mount(tester, const WorkspaceHarness(longName: true, scale: 1.8), const Size(360, 900));
     expect(tester.takeException(), isNull);
-    await tester.drag(find.byType(ListView).first, const Offset(0, -900));
+    await tester.drag(find.byType(CustomScrollView).last, const Offset(0, -900));
     await tester.pumpAndSettle();
     expect(tester.takeException(), isNull);
   });
@@ -86,7 +95,10 @@ void main() {
     );
     expect(find.text(AppStrings.retry), findsOneWidget);
     expect(
-      find.descendant(of: find.byType(WorkspacePrograms), matching: find.text('Lumbar disc prolapse')),
+      find.descendant(
+        of: find.byType(WorkspacePrograms),
+        matching: find.text('Lumbar disc prolapse'),
+      ),
       findsOneWidget,
     );
     expect(find.text(AppStrings.medicalHistory), findsOneWidget);
@@ -106,7 +118,9 @@ void main() {
     expect(find.text(AppStrings.medicalHistory), findsNothing);
   });
 
-  testWidgets('private image documents group into a program folder and open the gallery', (tester) async {
+  testWidgets('private image documents group into a program folder and open the gallery', (
+    tester,
+  ) async {
     await mount(tester, const WorkspaceHarness(), const Size(1280, 1000));
     await tester.tap(find.text(AppStrings.tabDocuments).first);
     await tester.pumpAndSettle();
@@ -124,11 +138,20 @@ void main() {
     await mount(tester, const WorkspaceHarness(), const Size(1280, 1000));
     await tester.tap(find.text(AppStrings.appointments).first);
     await tester.pumpAndSettle();
-    expect(find.descendant(of: find.byType(WorkspaceAppointments), matching: find.text('Dr. Mariam Khaled')), findsOneWidget);
+    expect(
+      find.descendant(
+        of: find.byType(WorkspaceAppointments),
+        matching: find.text('Dr. Mariam Khaled'),
+      ),
+      findsOneWidget,
+    );
     expect(find.byType(ExpansionTile), findsNothing);
     expect(find.text('Dr. Omar Salem'), findsOneWidget);
-    expect(find.descendant(of: find.byType(WorkspaceAppointments), matching: find.text('Aug 12, 2026')), findsOneWidget);
-    await tester.tap(find.byTooltip(AppStrings.filterSort));
+    expect(
+      find.descendant(of: find.byType(WorkspaceAppointments), matching: find.text('Aug 12, 2026')),
+      findsOneWidget,
+    );
+    await tester.tap(find.widgetWithText(OutlinedButton, AppStrings.filtersButton));
     await tester.pumpAndSettle();
     expect(find.byType(BottomSheet), findsOneWidget);
     expect(find.byType(AppointmentFilterSheet), findsOneWidget);
@@ -147,7 +170,13 @@ void main() {
       expect(rows, findsNWidgets(2));
       final expectedWidth = width >= 960 ? (width - 320 - 48) : (width - 32);
       expect(tester.getSize(rows.first).width, expectedWidth);
-      expect(find.descendant(of: find.byType(WorkspaceAppointments), matching: find.textContaining('Aug 12, 2026')), findsOneWidget);
+      expect(
+        find.descendant(
+          of: find.byType(WorkspaceAppointments),
+          matching: find.textContaining('Aug 12, 2026'),
+        ),
+        findsOneWidget,
+      );
       expect(tester.takeException(), isNull);
     });
   }
@@ -163,20 +192,24 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('narrow screen compact action and filter buttons match in size and have filled styling', (tester) async {
+  testWidgets('narrow screen search and filter stay visible with comfortable action targets', (
+    tester,
+  ) async {
     await mount(tester, const WorkspaceHarness(), const Size(360, 900));
     await tester.ensureVisible(find.text(AppStrings.appointments).first);
     await tester.tap(find.text(AppStrings.appointments).first);
     await tester.pumpAndSettle();
 
-    final filterBtnFinder = find.byTooltip(AppStrings.filterSort);
+    final filterBtnFinder = find.widgetWithText(OutlinedButton, AppStrings.filtersButton);
     final actionBtnFinder = find.byTooltip(AppStrings.bookAppointment);
     expect(filterBtnFinder, findsOneWidget);
     expect(actionBtnFinder, findsOneWidget);
 
     final filterSize = tester.getSize(filterBtnFinder);
     final actionSize = tester.getSize(actionBtnFinder);
-    expect(actionSize, equals(filterSize));
+    expect(actionSize.height, greaterThanOrEqualTo(44));
+    expect(filterSize.height, greaterThanOrEqualTo(44));
+    expect(find.byType(TextField), findsOneWidget);
 
     final actionButtonWidget = tester.widget<IconButton>(
       find.ancestor(of: actionBtnFinder, matching: find.byType(IconButton)),

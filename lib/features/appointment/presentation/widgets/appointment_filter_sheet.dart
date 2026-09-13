@@ -52,6 +52,9 @@ class AppointmentFilterSheet extends ConsumerStatefulWidget {
     required this.canFilterDoctor,
     required this.canFilterClinic,
     this.appointmentFiltersBuilder,
+    this.sortOptionsBuilder,
+    this.showDateFilter = true,
+    this.showStatusFilter = true,
     this.showAppointmentFilters = true,
     this.onResetAdditional,
   });
@@ -66,6 +69,9 @@ class AppointmentFilterSheet extends ConsumerStatefulWidget {
   final bool canFilterDoctor;
   final bool canFilterClinic;
   final WidgetBuilder? appointmentFiltersBuilder;
+  final WidgetBuilder? sortOptionsBuilder;
+  final bool showDateFilter;
+  final bool showStatusFilter;
   final bool showAppointmentFilters;
   final VoidCallback? onResetAdditional;
 
@@ -81,6 +87,9 @@ class AppointmentFilterSheet extends ConsumerStatefulWidget {
     required bool canFilterDoctor,
     required bool canFilterClinic,
     WidgetBuilder? appointmentFiltersBuilder,
+    WidgetBuilder? sortOptionsBuilder,
+    bool showDateFilter = true,
+    bool showStatusFilter = true,
     bool showAppointmentFilters = true,
     VoidCallback? onResetAdditional,
   }) {
@@ -99,6 +108,9 @@ class AppointmentFilterSheet extends ConsumerStatefulWidget {
         canFilterDoctor: canFilterDoctor,
         canFilterClinic: canFilterClinic,
         appointmentFiltersBuilder: appointmentFiltersBuilder,
+        sortOptionsBuilder: sortOptionsBuilder,
+        showDateFilter: showDateFilter,
+        showStatusFilter: showStatusFilter,
         showAppointmentFilters: showAppointmentFilters,
         onResetAdditional: onResetAdditional,
       ),

@@ -13,6 +13,7 @@ abstract class PatientNotesListState with _$PatientNotesListState {
     @Default(false) bool hasMore,
     @Default(0) int totalCount,
     String? errorMessage,
+    @Default('') String searchQuery,
     DateTime? dateFrom,
     DateTime? dateTo,
     @Default(PatientNotesSortOption.dateNewest) PatientNotesSortOption sort,

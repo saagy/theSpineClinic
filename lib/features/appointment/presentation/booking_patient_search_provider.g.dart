@@ -54,7 +54,7 @@ final class BookingPatientSearchProvider
 }
 
 String _$bookingPatientSearchHash() =>
-    r'00a4779344c1a7861c9cc1ea7fc4f18d9fa4686f';
+    r'2ab110c3a10a03b95ffb8633b4b4c56be647fa6d';
 
 /// Loads every matching patient a page at a time for booking selection.
 

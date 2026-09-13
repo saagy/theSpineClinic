@@ -45,7 +45,7 @@ void main() {
   final patientB = _makePatient('patient-b', 'Karim Abdelaziz');
   final patientC = _makePatient('patient-c', 'Salma Abdelrahman');
 
-  testWidgets('renders check icon on desktop Check-In button', (tester) async {
+  testWidgets('renders passive scheduled status on desktop', (tester) async {
     tester.view.physicalSize = const Size(1024, 768);
     tester.view.devicePixelRatio = 1;
     addTearDown(() {
@@ -64,16 +64,11 @@ void main() {
 
     await tester.pumpWidget(
       ProviderScope(
-        overrides: [
-          currentUserProvider.overrideWith(() => _FakeCurrentUser(staff)),
-        ],
+        overrides: [currentUserProvider.overrideWith(() => _FakeCurrentUser(staff))],
         child: MaterialApp(
           home: Scaffold(
             body: AppointmentAgendaRow(
-              item: AppointmentWithPatient(
-                appointment: appt,
-                patient: patientA,
-              ),
+              item: AppointmentWithPatient(appointment: appt, patient: patientA),
               showDoctor: true,
             ),
           ),
@@ -83,107 +78,94 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.byType(AppointmentAgendaWideRow), findsOneWidget);
-    expect(find.byIcon(Icons.check_circle_outline_rounded), findsOneWidget);
-    expect(find.text(AppStrings.checkIn), findsOneWidget);
+    expect(find.byIcon(Icons.schedule_outlined), findsOneWidget);
+    expect(find.text(AppointmentStatus.scheduled.displayLabel), findsOneWidget);
   });
 
-  testWidgets(
-    'aligns Type column at identical horizontal position across all rows',
-    (tester) async {
-      tester.view.physicalSize = const Size(1024, 768);
-      tester.view.devicePixelRatio = 1;
-      addTearDown(() {
-        tester.view.resetPhysicalSize();
-        tester.view.resetDevicePixelRatio();
-      });
+  testWidgets('aligns Type column at identical horizontal position across all rows', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(1024, 768);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(() {
+      tester.view.resetPhysicalSize();
+      tester.view.resetDevicePixelRatio();
+    });
 
-      final appt1 = Appointment(
-        id: 'appt-1',
-        patientId: patientA.id,
-        type: AppointmentType.initialAssessment,
-        scheduledAt: DateTime(2026, 8, 20, 11, 0),
-        status: AppointmentStatus.scheduled,
-        createdAt: DateTime(2026),
-      );
-      final appt2 = Appointment(
-        id: 'appt-2',
-        patientId: patientB.id,
-        type: AppointmentType.normalPtSession,
-        scheduledAt: DateTime(2026, 8, 20, 11, 30),
-        status: AppointmentStatus.cancelled,
-        createdAt: DateTime(2026),
-      );
-      final appt3 = Appointment(
-        id: 'appt-3',
-        patientId: patientC.id,
-        type: AppointmentType.spinalTractionSession,
-        scheduledAt: DateTime(2026, 8, 20, 12, 0),
-        status: AppointmentStatus.checkedIn,
-        createdAt: DateTime(2026),
-      );
+    final appt1 = Appointment(
+      id: 'appt-1',
+      patientId: patientA.id,
+      type: AppointmentType.initialAssessment,
+      scheduledAt: DateTime(2026, 8, 20, 11, 0),
+      status: AppointmentStatus.scheduled,
+      createdAt: DateTime(2026),
+    );
+    final appt2 = Appointment(
+      id: 'appt-2',
+      patientId: patientB.id,
+      type: AppointmentType.normalPtSession,
+      scheduledAt: DateTime(2026, 8, 20, 11, 30),
+      status: AppointmentStatus.cancelled,
+      createdAt: DateTime(2026),
+    );
+    final appt3 = Appointment(
+      id: 'appt-3',
+      patientId: patientC.id,
+      type: AppointmentType.spinalTractionSession,
+      scheduledAt: DateTime(2026, 8, 20, 12, 0),
+      status: AppointmentStatus.checkedIn,
+      createdAt: DateTime(2026),
+    );
 
-      await tester.pumpWidget(
-        ProviderScope(
-          overrides: [
-            currentUserProvider.overrideWith(() => _FakeCurrentUser(staff)),
-          ],
-          child: MaterialApp(
-            home: Scaffold(
-              body: ListView(
-                children: [
-                  AppointmentAgendaRow(
-                    item: AppointmentWithPatient(
-                      appointment: appt1,
-                      patient: patientA,
-                      doctorName: null,
-                    ),
-                    showDoctor: true,
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [currentUserProvider.overrideWith(() => _FakeCurrentUser(staff))],
+        child: MaterialApp(
+          home: Scaffold(
+            body: ListView(
+              children: [
+                AppointmentAgendaRow(
+                  item: AppointmentWithPatient(
+                    appointment: appt1,
+                    patient: patientA,
+                    doctorName: null,
                   ),
-                  AppointmentAgendaRow(
-                    item: AppointmentWithPatient(
-                      appointment: appt2,
-                      patient: patientB,
-                      doctorName: 'Sarah Jenkins',
-                    ),
-                    showDoctor: true,
+                  showDoctor: true,
+                ),
+                AppointmentAgendaRow(
+                  item: AppointmentWithPatient(
+                    appointment: appt2,
+                    patient: patientB,
+                    doctorName: 'Sarah Jenkins',
                   ),
-                  AppointmentAgendaRow(
-                    item: AppointmentWithPatient(
-                      appointment: appt3,
-                      patient: patientC,
-                      doctorName: 'Sarah Jenkins',
-                    ),
-                    showDoctor: true,
+                  showDoctor: true,
+                ),
+                AppointmentAgendaRow(
+                  item: AppointmentWithPatient(
+                    appointment: appt3,
+                    patient: patientC,
+                    doctorName: 'Sarah Jenkins',
                   ),
-                ],
-              ),
+                  showDoctor: true,
+                ),
+              ],
             ),
           ),
         ),
-      );
-      await tester.pumpAndSettle();
+      ),
+    );
+    await tester.pumpAndSettle();
 
-      final type1Pos = tester.getTopLeft(
-        find.text(AppStrings.initialAssessment),
-      );
-      final type2Pos = tester.getTopLeft(find.text(AppStrings.normalPtSession));
-      final type3Pos = tester.getTopLeft(
-        find.text(AppStrings.spinalTractionSession),
-      );
+    final type1Pos = tester.getTopLeft(find.text(AppStrings.initialAssessment));
+    final type2Pos = tester.getTopLeft(find.text(AppStrings.normalPtSession));
+    final type3Pos = tester.getTopLeft(find.text(AppStrings.spinalTractionSession));
 
-      expect(type1Pos.dx, equals(type2Pos.dx));
-      expect(type2Pos.dx, equals(type3Pos.dx));
+    expect(type1Pos.dx, equals(type2Pos.dx));
+    expect(type2Pos.dx, equals(type3Pos.dx));
 
-      final menus = find.byTooltip(AppStrings.moreActions);
-      expect(menus, findsNWidgets(3));
-      expect(
-        tester.getTopLeft(menus.at(0)).dx,
-        equals(tester.getTopLeft(menus.at(1)).dx),
-      );
-      expect(
-        tester.getTopLeft(menus.at(1)).dx,
-        equals(tester.getTopLeft(menus.at(2)).dx),
-      );
-    },
-  );
+    final menus = find.byTooltip(AppStrings.moreActions);
+    expect(menus, findsNWidgets(3));
+    expect(tester.getTopLeft(menus.at(0)).dx, equals(tester.getTopLeft(menus.at(1)).dx));
+    expect(tester.getTopLeft(menus.at(1)).dx, equals(tester.getTopLeft(menus.at(2)).dx));
+  });
 }

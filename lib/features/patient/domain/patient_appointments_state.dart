@@ -15,6 +15,7 @@ abstract class PatientAppointmentsState with _$PatientAppointmentsState {
     @Default(false) bool hasMore,
     @Default(0) int totalCount,
     String? errorMessage,
+    @Default('') String searchQuery,
     Set<AppointmentStatus>? statusFilter,
     Set<AppointmentType>? typeFilter,
     DateTime? dateFrom,

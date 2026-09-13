@@ -15,34 +15,26 @@ import 'package:spine_clinic_app/core/constants/app_sizes.dart';
 import 'package:spine_clinic_app/core/constants/app_strings.dart';
 import 'package:spine_clinic_app/core/constants/app_text_styles.dart';
 import 'package:spine_clinic_app/core/errors/app_exception.dart';
-import 'package:spine_clinic_app/features/appointment/domain/appointment_type.dart';
-import 'package:spine_clinic_app/features/auth/domain/history_sort_option.dart';
 import 'package:spine_clinic_app/features/auth/presentation/doctor_history_provider.dart';
-import 'package:spine_clinic_app/features/patient/domain/clinic_location.dart';
 import 'package:spine_clinic_app/shared/widgets/active_filter_chips_row.dart';
 import 'package:spine_clinic_app/shared/widgets/app_back_button.dart';
-import 'package:spine_clinic_app/shared/widgets/app_bottom_sheet.dart';
-import 'package:spine_clinic_app/shared/widgets/app_search_bar.dart';
 import 'package:spine_clinic_app/shared/widgets/empty_state.dart';
 import 'package:spine_clinic_app/shared/widgets/error_view.dart';
 import 'package:spine_clinic_app/shared/widgets/skeleton_loader.dart';
-import 'package:spine_clinic_app/shared/widgets/sort_filter_bar.dart';
-import 'package:spine_clinic_app/shared/widgets/sort_options_sheet.dart';
 
 import 'widgets/doctor_history_list_view.dart';
 import 'widgets/history_filter_content.dart';
+import 'package:spine_clinic_app/shared/widgets/search_filter_toolbar.dart';
 
 /// Full-screen history view for a doctor's appointments.
 class DoctorHistoryScreen extends ConsumerStatefulWidget {
   const DoctorHistoryScreen({super.key});
 
   @override
-  ConsumerState<DoctorHistoryScreen> createState() =>
-      _DoctorHistoryScreenState();
+  ConsumerState<DoctorHistoryScreen> createState() => _DoctorHistoryScreenState();
 }
 
-class _DoctorHistoryScreenState
-    extends ConsumerState<DoctorHistoryScreen> {
+class _DoctorHistoryScreenState extends ConsumerState<DoctorHistoryScreen> {
   final ScrollController _scrollCtrl = ScrollController();
 
   @override
@@ -58,57 +50,9 @@ class _DoctorHistoryScreenState
   }
 
   void _onScroll() {
-    if (_scrollCtrl.position.pixels >=
-        _scrollCtrl.position.maxScrollExtent - 200) {
+    if (_scrollCtrl.position.pixels >= _scrollCtrl.position.maxScrollExtent - 200) {
       ref.read(doctorHistoryProvider.notifier).loadMore();
     }
-  }
-
-  Future<void> _showSortSheet(HistorySortOption current) async {
-    final HistorySortOption? selected = await SortOptionsSheet.show<HistorySortOption>(
-      context: context,
-      title: 'Sort Options',
-      options: HistorySortOption.values
-          .map((o) => SortOption<HistorySortOption>(
-                value: o,
-                label: o.displayLabel,
-                buttonLabel: o.buttonLabel,
-              ))
-          .toList(),
-      selected: current,
-    );
-    if (selected != null && mounted) {
-      ref.read(doctorHistoryProvider.notifier).setSortOption(selected);
-    }
-  }
-
-  void _showFilterSheet(DoctorHistoryState current) {
-    final notifier = ref.read(doctorHistoryProvider.notifier);
-    AppBottomSheet.show<void>(
-      context: context,
-      title: 'Filters',
-      builder: (ctx, scrollCtrl) => HistoryFilterContent(
-        initialDateFrom: current.dateFrom,
-        initialDateTo: current.dateTo,
-        initialType: current.typeFilter,
-        initialBranch: current.branchFilter,
-        scrollController: scrollCtrl,
-        onApplied: ({
-          required DateTime? dateFrom,
-          required DateTime? dateTo,
-          required AppointmentType? type,
-          required ClinicLocation? clinic,
-        }) {
-          // Fan out into per-field setters. Each routes through copyWith
-          // with explicit `null` for cleared values (sentinel pattern
-          // inside copyWith distinguishes null from "leave unchanged").
-          notifier.setDateRange(dateFrom, dateTo);
-          notifier.setTypeFilter(type);
-          notifier.setBranchFilter(clinic);
-          Navigator.of(ctx).pop();
-        },
-      ),
-    );
   }
 
   List<ActiveFilterChip> _buildChips(DoctorHistoryState state) {
@@ -118,15 +62,9 @@ class _DoctorHistoryScreenState
       // ActiveFilterChip contract ("remove this filter") and the
       // behaviour of every other filter surface in the app.
       if (state.dateRangeLabel != null)
-        ActiveFilterChip(
-          label: state.dateRangeLabel!,
-          onRemove: notifier.clearDateRange,
-        ),
+        ActiveFilterChip(label: state.dateRangeLabel!, onRemove: notifier.clearDateRange),
       if (state.typeFilter != null)
-        ActiveFilterChip(
-          label: state.typeFilter!.displayLabel,
-          onRemove: notifier.clearTypeFilter,
-        ),
+        ActiveFilterChip(label: state.typeFilter!.displayLabel, onRemove: notifier.clearTypeFilter),
       if (state.branchFilter != null)
         ActiveFilterChip(
           label: state.branchFilter!.displayLabel,
@@ -137,8 +75,7 @@ class _DoctorHistoryScreenState
 
   @override
   Widget build(BuildContext context) {
-    final DoctorHistoryState state =
-        ref.watch(doctorHistoryProvider);
+    final DoctorHistoryState state = ref.watch(doctorHistoryProvider);
     final notifier = ref.read(doctorHistoryProvider.notifier);
 
     return Scaffold(
@@ -148,30 +85,26 @@ class _DoctorHistoryScreenState
         foregroundColor: Theme.of(context).colorScheme.onSurface,
         elevation: 0,
         leading: const AppBackButton(),
-        title: Text(AppStrings.historicAppointments,
-            style: AppTextStyles.headingSmall),
+        title: Text(AppStrings.historicAppointments, style: AppTextStyles.headingSmall),
       ),
       body: Column(
         children: [
           Padding(
             padding: const EdgeInsets.fromLTRB(
-                AppSizes.p16, AppSizes.p12, AppSizes.p16, AppSizes.p4),
-            child: AppSearchBar(
-              hintText: AppStrings.searchByPatientNameHint,
-              onChanged: notifier.setSearchQuery,
+              AppSizes.p16,
+              AppSizes.p12,
+              AppSizes.p16,
+              AppSizes.p4,
             ),
-          ),
-          SortFilterBar(
-            sortLabel: 'Sort: ${state.sortOption.buttonLabel}',
-            onSortTap: () => _showSortSheet(state.sortOption),
-            activeFilterCount: state.hasFilters ? 1 : 0,
-            onFilterTap: () => _showFilterSheet(state),
+            child: SearchFilterToolbar(
+              query: state.searchQuery,
+              onSearch: notifier.setSearchQuery,
+              activeCount: _buildChips(state).length,
+              onFilter: () => showHistoryFilters(context, ref),
+            ),
           ),
           if (state.hasFilters)
-            ActiveFilterChipsRow(
-              chips: _buildChips(state),
-              onClearAll: notifier.clearFilters,
-            ),
+            ActiveFilterChipsRow(chips: _buildChips(state), onClearAll: notifier.clearFilters),
           Expanded(child: _buildBody(state, notifier)),
         ],
       ),

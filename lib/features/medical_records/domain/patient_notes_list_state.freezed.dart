@@ -14,7 +14,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$PatientNotesListState {
 
- List<PatientNote> get notes; bool get isLoading; bool get isLoadingMore; bool get hasMore; int get totalCount; String? get errorMessage; DateTime? get dateFrom; DateTime? get dateTo; PatientNotesSortOption get sort;
+ List<PatientNote> get notes; bool get isLoading; bool get isLoadingMore; bool get hasMore; int get totalCount; String? get errorMessage; String get searchQuery; DateTime? get dateFrom; DateTime? get dateTo; PatientNotesSortOption get sort;
 /// Create a copy of PatientNotesListState
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -25,16 +25,16 @@ $PatientNotesListStateCopyWith<PatientNotesListState> get copyWith => _$PatientN
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is PatientNotesListState&&const DeepCollectionEquality().equals(other.notes, notes)&&(identical(other.isLoading, isLoading) || other.isLoading == isLoading)&&(identical(other.isLoadingMore, isLoadingMore) || other.isLoadingMore == isLoadingMore)&&(identical(other.hasMore, hasMore) || other.hasMore == hasMore)&&(identical(other.totalCount, totalCount) || other.totalCount == totalCount)&&(identical(other.errorMessage, errorMessage) || other.errorMessage == errorMessage)&&(identical(other.dateFrom, dateFrom) || other.dateFrom == dateFrom)&&(identical(other.dateTo, dateTo) || other.dateTo == dateTo)&&(identical(other.sort, sort) || other.sort == sort));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is PatientNotesListState&&const DeepCollectionEquality().equals(other.notes, notes)&&(identical(other.isLoading, isLoading) || other.isLoading == isLoading)&&(identical(other.isLoadingMore, isLoadingMore) || other.isLoadingMore == isLoadingMore)&&(identical(other.hasMore, hasMore) || other.hasMore == hasMore)&&(identical(other.totalCount, totalCount) || other.totalCount == totalCount)&&(identical(other.errorMessage, errorMessage) || other.errorMessage == errorMessage)&&(identical(other.searchQuery, searchQuery) || other.searchQuery == searchQuery)&&(identical(other.dateFrom, dateFrom) || other.dateFrom == dateFrom)&&(identical(other.dateTo, dateTo) || other.dateTo == dateTo)&&(identical(other.sort, sort) || other.sort == sort));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(notes),isLoading,isLoadingMore,hasMore,totalCount,errorMessage,dateFrom,dateTo,sort);
+int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(notes),isLoading,isLoadingMore,hasMore,totalCount,errorMessage,searchQuery,dateFrom,dateTo,sort);
 
 @override
 String toString() {
-  return 'PatientNotesListState(notes: $notes, isLoading: $isLoading, isLoadingMore: $isLoadingMore, hasMore: $hasMore, totalCount: $totalCount, errorMessage: $errorMessage, dateFrom: $dateFrom, dateTo: $dateTo, sort: $sort)';
+  return 'PatientNotesListState(notes: $notes, isLoading: $isLoading, isLoadingMore: $isLoadingMore, hasMore: $hasMore, totalCount: $totalCount, errorMessage: $errorMessage, searchQuery: $searchQuery, dateFrom: $dateFrom, dateTo: $dateTo, sort: $sort)';
 }
 
 
@@ -45,7 +45,7 @@ abstract mixin class $PatientNotesListStateCopyWith<$Res>  {
   factory $PatientNotesListStateCopyWith(PatientNotesListState value, $Res Function(PatientNotesListState) _then) = _$PatientNotesListStateCopyWithImpl;
 @useResult
 $Res call({
- List<PatientNote> notes, bool isLoading, bool isLoadingMore, bool hasMore, int totalCount, String? errorMessage, DateTime? dateFrom, DateTime? dateTo, PatientNotesSortOption sort
+ List<PatientNote> notes, bool isLoading, bool isLoadingMore, bool hasMore, int totalCount, String? errorMessage, String searchQuery, DateTime? dateFrom, DateTime? dateTo, PatientNotesSortOption sort
 });
 
 
@@ -62,7 +62,7 @@ class _$PatientNotesListStateCopyWithImpl<$Res>
 
 /// Create a copy of PatientNotesListState
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? notes = null,Object? isLoading = null,Object? isLoadingMore = null,Object? hasMore = null,Object? totalCount = null,Object? errorMessage = freezed,Object? dateFrom = freezed,Object? dateTo = freezed,Object? sort = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? notes = null,Object? isLoading = null,Object? isLoadingMore = null,Object? hasMore = null,Object? totalCount = null,Object? errorMessage = freezed,Object? searchQuery = null,Object? dateFrom = freezed,Object? dateTo = freezed,Object? sort = null,}) {
   return _then(_self.copyWith(
 notes: null == notes ? _self.notes : notes // ignore: cast_nullable_to_non_nullable
 as List<PatientNote>,isLoading: null == isLoading ? _self.isLoading : isLoading // ignore: cast_nullable_to_non_nullable
@@ -70,7 +70,8 @@ as bool,isLoadingMore: null == isLoadingMore ? _self.isLoadingMore : isLoadingMo
 as bool,hasMore: null == hasMore ? _self.hasMore : hasMore // ignore: cast_nullable_to_non_nullable
 as bool,totalCount: null == totalCount ? _self.totalCount : totalCount // ignore: cast_nullable_to_non_nullable
 as int,errorMessage: freezed == errorMessage ? _self.errorMessage : errorMessage // ignore: cast_nullable_to_non_nullable
-as String?,dateFrom: freezed == dateFrom ? _self.dateFrom : dateFrom // ignore: cast_nullable_to_non_nullable
+as String?,searchQuery: null == searchQuery ? _self.searchQuery : searchQuery // ignore: cast_nullable_to_non_nullable
+as String,dateFrom: freezed == dateFrom ? _self.dateFrom : dateFrom // ignore: cast_nullable_to_non_nullable
 as DateTime?,dateTo: freezed == dateTo ? _self.dateTo : dateTo // ignore: cast_nullable_to_non_nullable
 as DateTime?,sort: null == sort ? _self.sort : sort // ignore: cast_nullable_to_non_nullable
 as PatientNotesSortOption,
@@ -158,10 +159,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( List<PatientNote> notes,  bool isLoading,  bool isLoadingMore,  bool hasMore,  int totalCount,  String? errorMessage,  DateTime? dateFrom,  DateTime? dateTo,  PatientNotesSortOption sort)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( List<PatientNote> notes,  bool isLoading,  bool isLoadingMore,  bool hasMore,  int totalCount,  String? errorMessage,  String searchQuery,  DateTime? dateFrom,  DateTime? dateTo,  PatientNotesSortOption sort)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _PatientNotesListState() when $default != null:
-return $default(_that.notes,_that.isLoading,_that.isLoadingMore,_that.hasMore,_that.totalCount,_that.errorMessage,_that.dateFrom,_that.dateTo,_that.sort);case _:
+return $default(_that.notes,_that.isLoading,_that.isLoadingMore,_that.hasMore,_that.totalCount,_that.errorMessage,_that.searchQuery,_that.dateFrom,_that.dateTo,_that.sort);case _:
   return orElse();
 
 }
@@ -179,10 +180,10 @@ return $default(_that.notes,_that.isLoading,_that.isLoadingMore,_that.hasMore,_t
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( List<PatientNote> notes,  bool isLoading,  bool isLoadingMore,  bool hasMore,  int totalCount,  String? errorMessage,  DateTime? dateFrom,  DateTime? dateTo,  PatientNotesSortOption sort)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( List<PatientNote> notes,  bool isLoading,  bool isLoadingMore,  bool hasMore,  int totalCount,  String? errorMessage,  String searchQuery,  DateTime? dateFrom,  DateTime? dateTo,  PatientNotesSortOption sort)  $default,) {final _that = this;
 switch (_that) {
 case _PatientNotesListState():
-return $default(_that.notes,_that.isLoading,_that.isLoadingMore,_that.hasMore,_that.totalCount,_that.errorMessage,_that.dateFrom,_that.dateTo,_that.sort);case _:
+return $default(_that.notes,_that.isLoading,_that.isLoadingMore,_that.hasMore,_that.totalCount,_that.errorMessage,_that.searchQuery,_that.dateFrom,_that.dateTo,_that.sort);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -199,10 +200,10 @@ return $default(_that.notes,_that.isLoading,_that.isLoadingMore,_that.hasMore,_t
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( List<PatientNote> notes,  bool isLoading,  bool isLoadingMore,  bool hasMore,  int totalCount,  String? errorMessage,  DateTime? dateFrom,  DateTime? dateTo,  PatientNotesSortOption sort)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( List<PatientNote> notes,  bool isLoading,  bool isLoadingMore,  bool hasMore,  int totalCount,  String? errorMessage,  String searchQuery,  DateTime? dateFrom,  DateTime? dateTo,  PatientNotesSortOption sort)?  $default,) {final _that = this;
 switch (_that) {
 case _PatientNotesListState() when $default != null:
-return $default(_that.notes,_that.isLoading,_that.isLoadingMore,_that.hasMore,_that.totalCount,_that.errorMessage,_that.dateFrom,_that.dateTo,_that.sort);case _:
+return $default(_that.notes,_that.isLoading,_that.isLoadingMore,_that.hasMore,_that.totalCount,_that.errorMessage,_that.searchQuery,_that.dateFrom,_that.dateTo,_that.sort);case _:
   return null;
 
 }
@@ -214,7 +215,7 @@ return $default(_that.notes,_that.isLoading,_that.isLoadingMore,_that.hasMore,_t
 
 
 class _PatientNotesListState implements PatientNotesListState {
-  const _PatientNotesListState({final  List<PatientNote> notes = const [], this.isLoading = true, this.isLoadingMore = false, this.hasMore = false, this.totalCount = 0, this.errorMessage, this.dateFrom, this.dateTo, this.sort = PatientNotesSortOption.dateNewest}): _notes = notes;
+  const _PatientNotesListState({final  List<PatientNote> notes = const [], this.isLoading = true, this.isLoadingMore = false, this.hasMore = false, this.totalCount = 0, this.errorMessage, this.searchQuery = '', this.dateFrom, this.dateTo, this.sort = PatientNotesSortOption.dateNewest}): _notes = notes;
   
 
  final  List<PatientNote> _notes;
@@ -229,6 +230,7 @@ class _PatientNotesListState implements PatientNotesListState {
 @override@JsonKey() final  bool hasMore;
 @override@JsonKey() final  int totalCount;
 @override final  String? errorMessage;
+@override@JsonKey() final  String searchQuery;
 @override final  DateTime? dateFrom;
 @override final  DateTime? dateTo;
 @override@JsonKey() final  PatientNotesSortOption sort;
@@ -243,16 +245,16 @@ _$PatientNotesListStateCopyWith<_PatientNotesListState> get copyWith => __$Patie
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _PatientNotesListState&&const DeepCollectionEquality().equals(other._notes, _notes)&&(identical(other.isLoading, isLoading) || other.isLoading == isLoading)&&(identical(other.isLoadingMore, isLoadingMore) || other.isLoadingMore == isLoadingMore)&&(identical(other.hasMore, hasMore) || other.hasMore == hasMore)&&(identical(other.totalCount, totalCount) || other.totalCount == totalCount)&&(identical(other.errorMessage, errorMessage) || other.errorMessage == errorMessage)&&(identical(other.dateFrom, dateFrom) || other.dateFrom == dateFrom)&&(identical(other.dateTo, dateTo) || other.dateTo == dateTo)&&(identical(other.sort, sort) || other.sort == sort));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _PatientNotesListState&&const DeepCollectionEquality().equals(other._notes, _notes)&&(identical(other.isLoading, isLoading) || other.isLoading == isLoading)&&(identical(other.isLoadingMore, isLoadingMore) || other.isLoadingMore == isLoadingMore)&&(identical(other.hasMore, hasMore) || other.hasMore == hasMore)&&(identical(other.totalCount, totalCount) || other.totalCount == totalCount)&&(identical(other.errorMessage, errorMessage) || other.errorMessage == errorMessage)&&(identical(other.searchQuery, searchQuery) || other.searchQuery == searchQuery)&&(identical(other.dateFrom, dateFrom) || other.dateFrom == dateFrom)&&(identical(other.dateTo, dateTo) || other.dateTo == dateTo)&&(identical(other.sort, sort) || other.sort == sort));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(_notes),isLoading,isLoadingMore,hasMore,totalCount,errorMessage,dateFrom,dateTo,sort);
+int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(_notes),isLoading,isLoadingMore,hasMore,totalCount,errorMessage,searchQuery,dateFrom,dateTo,sort);
 
 @override
 String toString() {
-  return 'PatientNotesListState(notes: $notes, isLoading: $isLoading, isLoadingMore: $isLoadingMore, hasMore: $hasMore, totalCount: $totalCount, errorMessage: $errorMessage, dateFrom: $dateFrom, dateTo: $dateTo, sort: $sort)';
+  return 'PatientNotesListState(notes: $notes, isLoading: $isLoading, isLoadingMore: $isLoadingMore, hasMore: $hasMore, totalCount: $totalCount, errorMessage: $errorMessage, searchQuery: $searchQuery, dateFrom: $dateFrom, dateTo: $dateTo, sort: $sort)';
 }
 
 
@@ -263,7 +265,7 @@ abstract mixin class _$PatientNotesListStateCopyWith<$Res> implements $PatientNo
   factory _$PatientNotesListStateCopyWith(_PatientNotesListState value, $Res Function(_PatientNotesListState) _then) = __$PatientNotesListStateCopyWithImpl;
 @override @useResult
 $Res call({
- List<PatientNote> notes, bool isLoading, bool isLoadingMore, bool hasMore, int totalCount, String? errorMessage, DateTime? dateFrom, DateTime? dateTo, PatientNotesSortOption sort
+ List<PatientNote> notes, bool isLoading, bool isLoadingMore, bool hasMore, int totalCount, String? errorMessage, String searchQuery, DateTime? dateFrom, DateTime? dateTo, PatientNotesSortOption sort
 });
 
 
@@ -280,7 +282,7 @@ class __$PatientNotesListStateCopyWithImpl<$Res>
 
 /// Create a copy of PatientNotesListState
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? notes = null,Object? isLoading = null,Object? isLoadingMore = null,Object? hasMore = null,Object? totalCount = null,Object? errorMessage = freezed,Object? dateFrom = freezed,Object? dateTo = freezed,Object? sort = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? notes = null,Object? isLoading = null,Object? isLoadingMore = null,Object? hasMore = null,Object? totalCount = null,Object? errorMessage = freezed,Object? searchQuery = null,Object? dateFrom = freezed,Object? dateTo = freezed,Object? sort = null,}) {
   return _then(_PatientNotesListState(
 notes: null == notes ? _self._notes : notes // ignore: cast_nullable_to_non_nullable
 as List<PatientNote>,isLoading: null == isLoading ? _self.isLoading : isLoading // ignore: cast_nullable_to_non_nullable
@@ -288,7 +290,8 @@ as bool,isLoadingMore: null == isLoadingMore ? _self.isLoadingMore : isLoadingMo
 as bool,hasMore: null == hasMore ? _self.hasMore : hasMore // ignore: cast_nullable_to_non_nullable
 as bool,totalCount: null == totalCount ? _self.totalCount : totalCount // ignore: cast_nullable_to_non_nullable
 as int,errorMessage: freezed == errorMessage ? _self.errorMessage : errorMessage // ignore: cast_nullable_to_non_nullable
-as String?,dateFrom: freezed == dateFrom ? _self.dateFrom : dateFrom // ignore: cast_nullable_to_non_nullable
+as String?,searchQuery: null == searchQuery ? _self.searchQuery : searchQuery // ignore: cast_nullable_to_non_nullable
+as String,dateFrom: freezed == dateFrom ? _self.dateFrom : dateFrom // ignore: cast_nullable_to_non_nullable
 as DateTime?,dateTo: freezed == dateTo ? _self.dateTo : dateTo // ignore: cast_nullable_to_non_nullable
 as DateTime?,sort: null == sort ? _self.sort : sort // ignore: cast_nullable_to_non_nullable
 as PatientNotesSortOption,

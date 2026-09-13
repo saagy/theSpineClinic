@@ -128,7 +128,7 @@ void main() {
     expect(find.byType(AppointmentAgendaTableHeader), findsOneWidget);
     expect(
       tester.getSize(find.byType(AppointmentAgendaTableHeader)).height,
-      38.0,
+      AppSizes.tappableMin,
     );
 
     // Mobile viewport

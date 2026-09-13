@@ -1,3 +1,4 @@
+import 'package:spine_clinic_app/shared/widgets/adaptive_name_text.dart';
 import 'package:flutter/material.dart';
 import 'package:spine_clinic_app/core/utils/formatters.dart';
 import 'package:spine_clinic_app/core/constants/app_strings.dart';
@@ -7,7 +8,7 @@ import 'package:spine_clinic_app/core/constants/app_text_styles.dart';
 import 'package:spine_clinic_app/core/network/app_routes.dart';
 import 'package:spine_clinic_app/features/appointment/domain/appointment_with_patient.dart';
 import 'package:spine_clinic_app/features/appointment/presentation/widgets/appointment_agenda_menu.dart';
-import 'package:spine_clinic_app/features/appointment/presentation/widgets/appointment_status_action_badge.dart';
+import 'package:spine_clinic_app/features/appointment/presentation/widgets/appointment_status_indicator.dart';
 import 'package:spine_clinic_app/features/patient/presentation/widgets/patient_monogram_badge.dart';
 
 /// Compact two-line appointment agenda row for mobile (<650px).
@@ -18,9 +19,7 @@ class AppointmentAgendaCompactRow extends StatelessWidget {
     required this.timeStr,
     required this.isCancelled,
     required this.isCheckingIn,
-    required this.onCheckIn,
     required this.showDoctor,
-    this.onStatusChanged,
     this.patientContext = false,
     this.showDate = false,
   });
@@ -29,31 +28,9 @@ class AppointmentAgendaCompactRow extends StatelessWidget {
   final String timeStr;
   final bool isCancelled;
   final bool isCheckingIn;
-  final VoidCallback onCheckIn;
   final bool showDoctor;
-  final VoidCallback? onStatusChanged;
   final bool patientContext;
   final bool showDate;
-
-  Widget _buildTypePill(ColorScheme cs, String label) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: AppSizes.p6, vertical: 1.5),
-      decoration: BoxDecoration(
-        color: cs.surfaceContainerHighest.withAlpha(140),
-        borderRadius: BorderRadius.circular(AppSizes.r4),
-      ),
-      child: Text(
-        label,
-        style: AppTextStyles.caption.copyWith(
-          color: cs.onSurfaceVariant,
-          fontSize: 10.5,
-          fontWeight: FontWeight.w500,
-        ),
-        maxLines: 1,
-        overflow: TextOverflow.ellipsis,
-      ),
-    );
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -65,70 +42,64 @@ class AppointmentAgendaCompactRow extends StatelessWidget {
               : item.doctorName ?? AppStrings.noDoctorsAssigned)
         : item.patient.fullName;
 
+    final enlarged = MediaQuery.textScalerOf(context).scale(1) > 1.3;
+    final inlineTime = !showDate && !enlarged;
     return Material(
-      color: Colors.transparent,
+      type: MaterialType.transparency,
       child: InkWell(
         onTap: () => context.push(AppRoutes.appointmentDetail.replaceAll(':id', appt.id)),
         hoverColor: cs.primary.withAlpha(12),
         child: Container(
-          constraints: const BoxConstraints(minHeight: 52.0),
-          padding: const EdgeInsets.symmetric(horizontal: AppSizes.p16, vertical: 4.0),
+          constraints: const BoxConstraints(minHeight: AppSizes.agendaRowMinHeight),
+          padding: const EdgeInsets.symmetric(horizontal: AppSizes.p12, vertical: AppSizes.p8),
           child: Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              if (!showDate)
+              if (inlineTime) ...[
                 SizedBox(
-                  width: 62.0,
+                  width: AppSizes.agendaCompactTimeWidth,
                   child: Text(
                     timeStr,
-                    style: AppTextStyles.bodyBold.copyWith(
-                      color: isCancelled ? cs.onSurfaceVariant.withAlpha(120) : cs.onSurface,
-                      fontFeatures: const [FontFeature.tabularFigures()],
-                      fontSize: 12.0,
-                    ),
+                    style: AppTextStyles.captionBold.copyWith(color: cs.onSurface),
                   ),
                 ),
-              if (!showDate) const SizedBox(width: AppSizes.p6),
-              PatientMonogramBadge(name: identity, size: 26.0),
-              const SizedBox(width: AppSizes.p8),
+                const SizedBox(width: AppSizes.p6),
+              ],
+              if (!enlarged) ...[
+                PatientMonogramBadge(name: identity, size: AppSizes.agendaAvatarSize),
+                const SizedBox(width: AppSizes.p8),
+              ],
               Expanded(
                 child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
+                    AdaptiveNameText(
                       identity,
                       style: AppTextStyles.bodyBold.copyWith(
-                        color: isCancelled ? cs.onSurfaceVariant.withAlpha(140) : cs.onSurface,
+                        color: isCancelled ? cs.onSurfaceVariant : cs.onSurface,
                         decoration: isCancelled ? TextDecoration.lineThrough : null,
-                        fontSize: 13.5,
                       ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
                     ),
-                    const SizedBox(height: 2.0),
-                    if (showDate)
+                    if (showDate || !inlineTime)
                       Text(
-                        '${Formatters.formatDateMedium(appt.scheduledAt.toLocal())} · $timeStr',
+                        showDate
+                            ? '${Formatters.formatDateMedium(appt.scheduledAt.toLocal())} \u00b7 $timeStr'
+                            : timeStr,
                         style: AppTextStyles.caption.copyWith(color: cs.onSurfaceVariant),
                       ),
-                    _buildTypePill(cs, appt.type.displayLabel),
+                    Text(
+                      appt.type.displayLabel,
+                      style: AppTextStyles.caption.copyWith(color: cs.onSurfaceVariant),
+                    ),
                   ],
                 ),
               ),
               const SizedBox(width: AppSizes.p4),
-              AppointmentStatusActionBadge(
-                status: appt.status,
-                isCheckingIn: isCheckingIn,
-                onCheckIn: onCheckIn,
-                isInline: true,
-              ),
-              const SizedBox(width: AppSizes.p2),
+              AppointmentStatusIndicator(status: appt.status, pending: isCheckingIn),
               AppointmentAgendaMenu(
                 appointmentId: appt.id,
                 patientId: item.patient.id,
                 status: appt.status,
-                onStatusChanged: onStatusChanged,
               ),
             ],
           ),

@@ -1,4 +1,4 @@
-library;
+import 'package:spine_clinic_app/shared/widgets/form_section.dart';
 
 import 'package:flutter/material.dart';
 import 'package:spine_clinic_app/core/constants/app_sizes.dart';
@@ -34,91 +34,38 @@ class ProgramConditionSelector extends StatelessWidget {
     final sorted = List<ConditionCatalog>.from(selectedConditions)
       ..sort((a, b) => a.region.displayName.compareTo(b.region.displayName));
 
-    return Container(
-      padding: const EdgeInsets.all(AppSizes.p16),
-      decoration: BoxDecoration(
-        color: cs.surfaceContainerLow,
-        borderRadius: BorderRadius.circular(AppSizes.r16),
-        border: Border.all(color: cs.outlineVariant),
+    return FormSection(
+      title: AppStrings.programConditions,
+      action: TextButton.icon(
+        onPressed: () => _openPicker(context),
+        icon: Icon(
+          selectedConditions.isEmpty ? Icons.add : Icons.edit_outlined,
+          size: AppSizes.iconSmall,
+        ),
+        label: Text(selectedConditions.isEmpty ? AppStrings.add : AppStrings.edit),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Icon(
-                Icons.personal_injury_rounded,
-                size: AppSizes.iconDefault,
-                color: cs.primary,
-              ),
-              const SizedBox(width: AppSizes.p8),
-              Expanded(
-                child: Text(
-                  AppStrings.selectInjuries,
-                  style: AppTextStyles.cardTitle.copyWith(color: cs.onSurface),
-                ),
-              ),
-              TextButton.icon(
-                icon: const Icon(Icons.edit_outlined, size: 18),
-                label: Text(
-                  selectedConditions.isEmpty
-                      ? AppStrings.add
-                      : AppStrings.edit,
-                ),
-                onPressed: () => _openPicker(context),
-              ),
-            ],
-          ),
-          const SizedBox(height: AppSizes.p8),
-          if (sorted.isEmpty)
-            Text(
+      child: sorted.isEmpty
+          ? Text(
               AppStrings.noConditionsSelected,
-              style: AppTextStyles.bodySecondary.copyWith(
-                color: cs.onSurfaceVariant,
-              ),
+              style: AppTextStyles.bodySecondary.copyWith(color: cs.onSurfaceVariant),
             )
-          else
-            Wrap(
-              spacing: AppSizes.p8,
-              runSpacing: AppSizes.p8,
-              children: sorted.map((c) {
-                return Chip(
-                  backgroundColor: cs.primaryContainer,
-                  deleteIcon: Icon(
-                    Icons.close,
-                    size: 16,
-                    color: cs.onPrimaryContainer,
-                  ),
-                  onDeleted: () {
-                    final updated = List<ConditionCatalog>.from(
-                      selectedConditions,
-                    )..removeWhere((item) => item.id == c.id);
-                    onConditionsChanged(updated);
-                  },
-                  label: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        c.conditionName,
-                        style: AppTextStyles.captionBold.copyWith(
-                          color: cs.onPrimaryContainer,
-                        ),
+          : Column(
+              children: [
+                for (final condition in sorted)
+                  ListTile(
+                    contentPadding: EdgeInsets.zero,
+                    title: Text(condition.conditionName, style: AppTextStyles.bodyMedium),
+                    subtitle: Text(condition.region.displayName, style: AppTextStyles.caption),
+                    trailing: IconButton(
+                      tooltip: AppStrings.delete,
+                      icon: const Icon(Icons.close, size: AppSizes.iconSmall),
+                      onPressed: () => onConditionsChanged(
+                        selectedConditions.where((item) => item.id != condition.id).toList(),
                       ),
-                      Text(
-                        c.region.displayName,
-                        style: AppTextStyles.caption.copyWith(
-                          fontSize: 10,
-                          color: cs.onPrimaryContainer.withAlpha(180),
-                        ),
-                      ),
-                    ],
+                    ),
                   ),
-                );
-              }).toList(),
+              ],
             ),
-        ],
-      ),
     );
   }
 }

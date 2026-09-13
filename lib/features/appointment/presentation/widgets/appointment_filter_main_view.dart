@@ -40,6 +40,9 @@ class AppointmentFilterMainView extends StatelessWidget {
     required this.onReset,
     required this.onApply,
     this.appointmentFiltersBuilder,
+    this.sortOptionsBuilder,
+    this.showDateFilter = true,
+    this.showStatusFilter = true,
     this.showAppointmentFilters = true,
   });
 
@@ -62,6 +65,9 @@ class AppointmentFilterMainView extends StatelessWidget {
   final VoidCallback onReset;
   final VoidCallback onApply;
   final WidgetBuilder? appointmentFiltersBuilder;
+  final WidgetBuilder? sortOptionsBuilder;
+  final bool showDateFilter;
+  final bool showStatusFilter;
   final bool showAppointmentFilters;
 
   @override
@@ -78,12 +84,14 @@ class AppointmentFilterMainView extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _buildSectionTitle(cs, AppStrings.dateRange),
-                AppointmentFilterDateSection(
-                  dateFrom: selectedDateFrom,
-                  dateTo: selectedDateTo,
-                  onDateRangeChanged: onDateRangeChanged,
-                ),
+                if (showDateFilter) ...[
+                  _buildSectionTitle(cs, AppStrings.dateRange),
+                  AppointmentFilterDateSection(
+                    dateFrom: selectedDateFrom,
+                    dateTo: selectedDateTo,
+                    onDateRangeChanged: onDateRangeChanged,
+                  ),
+                ],
                 if (canFilterDoctor) ...[
                   const SizedBox(height: AppSizes.p20),
                   _buildSectionTitle(cs, AppStrings.assignedDoctors),
@@ -99,6 +107,7 @@ class AppointmentFilterMainView extends StatelessWidget {
                     appointmentFiltersBuilder!(context)
                   else
                     AppointmentFilterChipsSection(
+                      showStatus: showStatusFilter,
                       selectedClinic: selectedClinic,
                       selectedStatus: selectedStatus,
                       selectedType: selectedType,
@@ -110,7 +119,13 @@ class AppointmentFilterMainView extends StatelessWidget {
                 ],
                 const SizedBox(height: AppSizes.p20),
                 _buildSectionTitle(cs, AppStrings.sortOrder),
-                AppointmentFilterSortList(selectedSort: selectedSort, onSortChanged: onSortChanged),
+                if (sortOptionsBuilder != null)
+                  sortOptionsBuilder!(context)
+                else
+                  AppointmentFilterSortList(
+                    selectedSort: selectedSort,
+                    onSortChanged: onSortChanged,
+                  ),
                 const SizedBox(height: AppSizes.p20),
               ],
             ),

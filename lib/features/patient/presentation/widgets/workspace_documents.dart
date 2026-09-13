@@ -18,7 +18,12 @@ import 'package:spine_clinic_app/features/patient/presentation/widgets/workspace
 import 'package:spine_clinic_app/features/patient/presentation/widgets/workspace_tab_header.dart';
 
 class WorkspaceDocuments extends ConsumerWidget {
-  const WorkspaceDocuments({super.key, required this.patientId, this.preview = false, this.onViewAll});
+  const WorkspaceDocuments({
+    super.key,
+    required this.patientId,
+    this.preview = false,
+    this.onViewAll,
+  });
   final String patientId;
   final bool preview;
   final VoidCallback? onViewAll;
@@ -26,7 +31,6 @@ class WorkspaceDocuments extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final provider = patientDocumentGroupsProvider(patientId);
-    final cs = Theme.of(context).colorScheme;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -36,21 +40,17 @@ class WorkspaceDocuments extends ConsumerWidget {
           trailing: preview && onViewAll != null
               ? TextButton(onPressed: onViewAll, child: const Text(AppStrings.viewAll))
               : (!preview
-                  ? LayoutBuilder(
-                      builder: (context, constraints) => WorkspaceUploadButton(
-                        patientId: patientId,
-                        iconOnly: constraints.maxWidth < 480,
-                      ),
-                    )
-                  : null),
+                    ? LayoutBuilder(
+                        builder: (context, constraints) => WorkspaceUploadButton(
+                          patientId: patientId,
+                          iconOnly: constraints.maxWidth < 480,
+                        ),
+                      )
+                    : null),
         ),
         const SizedBox(height: AppSizes.p14),
-        Container(
-          decoration: BoxDecoration(
-            color: cs.surface,
-            borderRadius: BorderRadius.circular(AppSizes.r12),
-            border: Border.all(color: cs.outlineVariant.withAlpha(80)),
-          ),
+        Padding(
+          padding: EdgeInsets.zero,
           child: RecordAsync(
             value: ref.watch(provider),
             onRetry: () => ref.invalidate(provider),
@@ -66,7 +66,8 @@ class WorkspaceDocuments extends ConsumerWidget {
               return Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  for (final folder in folders) WorkspaceDocumentFolder(group: folder, patientId: patientId),
+                  for (final folder in folders)
+                    WorkspaceDocumentFolder(group: folder, patientId: patientId),
                   for (int i = 0; i < standalone.length; i++) ...[
                     WorkspaceDocumentRow(document: standalone[i], showActions: !preview),
                     if (i < standalone.length - 1) const Divider(height: AppSizes.borderWidth),
@@ -93,7 +94,10 @@ class WorkspaceDocumentRow extends ConsumerWidget {
     String? programName;
     for (final program in programs ?? []) {
       if (program.id == document.programId) {
-        programName = program.conditions.map((p) => p.condition?.conditionName).whereType<String>().join(', ');
+        programName = program.conditions
+            .map((p) => p.condition?.conditionName)
+            .whereType<String>()
+            .join(', ');
       }
     }
     final name = FileDisplayHelper.sanitizeFileName(document.fileName);
@@ -102,7 +106,10 @@ class WorkspaceDocumentRow extends ConsumerWidget {
       color: Colors.transparent,
       child: InkWell(
         onTap: () => context.push(
-          AppRoutes.patientDocumentViewerLocation(patientId: document.patientId, documentId: document.id),
+          AppRoutes.patientDocumentViewerLocation(
+            patientId: document.patientId,
+            documentId: document.id,
+          ),
         ),
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: AppSizes.p16, vertical: AppSizes.p14),
@@ -122,7 +129,9 @@ class WorkspaceDocumentRow extends ConsumerWidget {
                     ),
                     if (document.programId != null)
                       Text(
-                        programName?.isNotEmpty == true ? programName! : AppStrings.rehabilitationProgram,
+                        programName?.isNotEmpty == true
+                            ? programName!
+                            : AppStrings.rehabilitationProgram,
                         style: AppTextStyles.caption.copyWith(color: colors.onSurfaceVariant),
                       ),
                   ],

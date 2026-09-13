@@ -21,6 +21,7 @@ abstract class PatientNotesRepository {
     int limit = 30,
     DateTime? dateFrom,
     DateTime? dateTo,
+    String searchQuery = '',
     bool ascending = false,
   });
 
@@ -29,6 +30,7 @@ abstract class PatientNotesRepository {
     required String patientId,
     DateTime? dateFrom,
     DateTime? dateTo,
+    String searchQuery = '',
   });
 
   /// Inserts a new note.
@@ -43,10 +45,7 @@ abstract class PatientNotesRepository {
   Future<Result<PatientNote?>> getNoteByAppointmentId(String appointmentId);
 
   /// Updates an existing note.
-  Future<Result<PatientNote>> updateNote({
-    required String noteId,
-    required String noteText,
-  });
+  Future<Result<PatientNote>> updateNote({required String noteId, required String noteText});
 
   /// Deletes a note by its ID.
   Future<Result<void>> deleteNote(String noteId);
@@ -56,15 +55,14 @@ abstract class PatientNotesRepository {
 class PatientNotesRepositoryImpl implements PatientNotesRepository {
   /// Creates a [PatientNotesRepositoryImpl].
   PatientNotesRepositoryImpl({required SupabaseService supabaseService})
-      : _service = supabaseService;
+    : _service = supabaseService;
 
   final SupabaseService _service;
 
   @override
   Future<Result<List<PatientNote>>> getNotesForPatient(String patientId) async {
     try {
-      final List<Map<String, dynamic>> rows =
-          await _service.getPatientNotes(patientId);
+      final List<Map<String, dynamic>> rows = await _service.getPatientNotes(patientId);
       final List<PatientNote> notes = rows.map(PatientNote.fromJson).toList();
       return Result.success(notes);
     } on AppException catch (error) {
@@ -81,12 +79,23 @@ class PatientNotesRepositoryImpl implements PatientNotesRepository {
     int limit = 30,
     DateTime? dateFrom,
     DateTime? dateTo,
+    String searchQuery = '',
     bool ascending = false,
   }) async {
     try {
       var query = _service.from('patient_notes').select().eq('patient_id', patientId);
-      if (dateFrom != null) query = query.gte('created_at', dateFrom.toUtc().toIso8601String());
-      if (dateTo != null) query = query.lt('created_at', dateTo.toUtc().toIso8601String());
+      if (searchQuery.trim().isNotEmpty) {
+        query = query.ilike(
+          'note_text',
+          '%${searchQuery.trim().replaceAll('%', r'\%').replaceAll('_', r'\_')}%',
+        );
+      }
+      if (dateFrom != null) {
+        query = query.gte('created_at', dateFrom.toUtc().toIso8601String());
+      }
+      if (dateTo != null) {
+        query = query.lt('created_at', dateTo.toUtc().toIso8601String());
+      }
       final List<Map<String, dynamic>> rows = await _service.guardQuery(
         () => query.order('created_at', ascending: ascending).range(offset, offset + limit - 1),
       );
@@ -101,11 +110,22 @@ class PatientNotesRepositoryImpl implements PatientNotesRepository {
     required String patientId,
     DateTime? dateFrom,
     DateTime? dateTo,
+    String searchQuery = '',
   }) async {
     try {
       var query = _service.from('patient_notes').select('id').eq('patient_id', patientId);
-      if (dateFrom != null) query = query.gte('created_at', dateFrom.toUtc().toIso8601String());
-      if (dateTo != null) query = query.lt('created_at', dateTo.toUtc().toIso8601String());
+      if (searchQuery.trim().isNotEmpty) {
+        query = query.ilike(
+          'note_text',
+          '%${searchQuery.trim().replaceAll('%', r'\%').replaceAll('_', r'\_')}%',
+        );
+      }
+      if (dateFrom != null) {
+        query = query.gte('created_at', dateFrom.toUtc().toIso8601String());
+      }
+      if (dateTo != null) {
+        query = query.lt('created_at', dateTo.toUtc().toIso8601String());
+      }
       final List<Map<String, dynamic>> rows = await _service.guardQuery(() => query);
       return Result.success(rows.length);
     } on Exception catch (e) {
@@ -139,12 +159,9 @@ class PatientNotesRepositoryImpl implements PatientNotesRepository {
   }
 
   @override
-  Future<Result<PatientNote?>> getNoteByAppointmentId(
-    String appointmentId,
-  ) async {
+  Future<Result<PatientNote?>> getNoteByAppointmentId(String appointmentId) async {
     try {
-      final Map<String, dynamic>? row =
-          await _service.getNoteByAppointmentId(appointmentId);
+      final Map<String, dynamic>? row = await _service.getNoteByAppointmentId(appointmentId);
       if (row == null) {
         return const Result.success(null);
       }
@@ -158,10 +175,7 @@ class PatientNotesRepositoryImpl implements PatientNotesRepository {
   }
 
   @override
-  Future<Result<PatientNote>> updateNote({
-    required String noteId,
-    required String noteText,
-  }) async {
+  Future<Result<PatientNote>> updateNote({required String noteId, required String noteText}) async {
     try {
       final Map<String, dynamic> row = await _service.guardQuery(
         () => _service
@@ -183,9 +197,7 @@ class PatientNotesRepositoryImpl implements PatientNotesRepository {
   @override
   Future<Result<void>> deleteNote(String noteId) async {
     try {
-      await _service.guardQuery(
-        () => _service.from('patient_notes').delete().eq('id', noteId),
-      );
+      await _service.guardQuery(() => _service.from('patient_notes').delete().eq('id', noteId));
       return const Result.success(null);
     } on AppException catch (error) {
       return Result.failure(error);

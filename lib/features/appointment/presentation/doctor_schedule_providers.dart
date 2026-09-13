@@ -25,16 +25,28 @@ class DoctorScheduleNotifier extends Notifier<DoctorScheduleState> {
   @override
   DoctorScheduleState build() {
     final Staff? user = ref.watch(currentUserProvider).value;
-    if (user != null && _lastUserId != user.id) {
-      _lastUserId = user.id;
-      _weekCache.clear();
-      final DateTime today = ScheduleWeek.day(DateTime.now());
-      Future<void>.microtask(() => _loadWeek(user, today, useCache: false));
-      return DoctorScheduleState(doctor: user, selectedDate: today);
+    final DateTime today = ScheduleWeek.day(DateTime.now());
+    final DoctorScheduleState next = _lastUserId == user?.id && user != null
+        ? state.copyWith(
+            doctor: user,
+            allItems: const [],
+            loading: true,
+            clearError: true,
+          )
+        : DoctorScheduleState(doctor: user, selectedDate: today);
+    _lastUserId = user?.id;
+    _weekCache.clear();
+    final int generation = ++_requestId;
+    if (user != null) {
+      Future<void>.microtask(() {
+        if (ref.mounted && generation == _requestId) {
+          unawaited(
+            _loadWeek(user, next.selectedDate ?? today, useCache: false),
+          );
+        }
+      });
     }
-    return user != null
-        ? state.copyWith(doctor: user)
-        : DoctorScheduleState(selectedDate: ScheduleWeek.day(DateTime.now()));
+    return next;
   }
 
   Future<void> _loadWeek(
@@ -44,6 +56,7 @@ class DoctorScheduleNotifier extends Notifier<DoctorScheduleState> {
   }) async {
     final DateTime selected = ScheduleWeek.day(date);
     final DateTime weekStart = ScheduleWeek.start(selected);
+    final int requestId = ++_requestId;
     final List<AppointmentWithPatient>? cached = _weekCache[weekStart];
     if (useCache && cached != null) {
       state = state.copyWith(
@@ -55,7 +68,6 @@ class DoctorScheduleNotifier extends Notifier<DoctorScheduleState> {
       return;
     }
 
-    final int requestId = ++_requestId;
     final bool hasExisting = state.allItems.isNotEmpty;
     if (!hasExisting) {
       state = state.copyWith(
@@ -79,7 +91,7 @@ class DoctorScheduleNotifier extends Notifier<DoctorScheduleState> {
           limit: 1000,
           ascending: true,
         );
-    if (requestId != _requestId) return;
+    if (!ref.mounted || requestId != _requestId) return;
 
     result.when(
       success: (List<AppointmentWithPatient> data) {
@@ -107,13 +119,12 @@ class DoctorScheduleNotifier extends Notifier<DoctorScheduleState> {
   void changeStatus(String appointmentId, AppointmentStatus newStatus) {
     final List<AppointmentWithPatient> updated = state.allItems
         .map(
-          (AppointmentWithPatient item) =>
-              item.appointment.id == appointmentId
-                  ? AppointmentWithPatient(
-                      appointment: item.appointment.copyWith(status: newStatus),
-                      patient: item.patient,
-                    )
-                  : item,
+          (AppointmentWithPatient item) => item.appointment.id == appointmentId
+              ? AppointmentWithPatient(
+                  appointment: item.appointment.copyWith(status: newStatus),
+                  patient: item.patient,
+                )
+              : item,
         )
         .toList();
     final DateTime selected = state.selectedDate ?? DateTime.now();
@@ -139,6 +150,7 @@ class DoctorScheduleNotifier extends Notifier<DoctorScheduleState> {
   }
 
   Future<void> refresh() async {
+    _weekCache.clear();
     final Staff? user = ref.read(currentUserProvider).value;
     if (user == null) return;
     await _loadWeek(

@@ -1,3 +1,4 @@
+import 'package:spine_clinic_app/shared/widgets/adaptive_name_text.dart';
 import 'package:flutter/material.dart';
 import 'package:spine_clinic_app/core/utils/formatters.dart';
 import 'package:spine_clinic_app/core/constants/app_strings.dart';
@@ -8,7 +9,7 @@ import 'package:spine_clinic_app/core/network/app_routes.dart';
 import 'package:spine_clinic_app/features/appointment/domain/appointment_with_patient.dart';
 import 'package:spine_clinic_app/features/appointment/presentation/widgets/appointment_agenda_menu.dart';
 import 'package:spine_clinic_app/features/appointment/presentation/widgets/appointment_doctor_badge.dart';
-import 'package:spine_clinic_app/features/appointment/presentation/widgets/appointment_status_action_badge.dart';
+import 'package:spine_clinic_app/features/appointment/presentation/widgets/appointment_status_indicator.dart';
 import 'package:spine_clinic_app/features/patient/presentation/widgets/patient_monogram_badge.dart';
 
 /// Single-line appointment agenda row for PC / wide displays (>=650px).
@@ -19,9 +20,7 @@ class AppointmentAgendaWideRow extends StatelessWidget {
     required this.timeStr,
     required this.isCancelled,
     required this.isCheckingIn,
-    required this.onCheckIn,
     required this.showDoctor,
-    this.onStatusChanged,
     this.patientContext = false,
     this.showDate = false,
   });
@@ -30,15 +29,13 @@ class AppointmentAgendaWideRow extends StatelessWidget {
   final String timeStr;
   final bool isCancelled;
   final bool isCheckingIn;
-  final VoidCallback onCheckIn;
   final bool showDoctor;
-  final VoidCallback? onStatusChanged;
   final bool patientContext;
   final bool showDate;
 
   Widget _buildTypePill(ColorScheme cs, String label) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: AppSizes.p6, vertical: 1.5),
+      padding: const EdgeInsets.symmetric(horizontal: AppSizes.p6, vertical: AppSizes.p2),
       decoration: BoxDecoration(
         color: cs.surfaceContainerHighest.withAlpha(140),
         borderRadius: BorderRadius.circular(AppSizes.r4),
@@ -47,11 +44,8 @@ class AppointmentAgendaWideRow extends StatelessWidget {
         label,
         style: AppTextStyles.caption.copyWith(
           color: cs.onSurfaceVariant,
-          fontSize: 10.5,
           fontWeight: FontWeight.w500,
         ),
-        maxLines: 1,
-        overflow: TextOverflow.ellipsis,
       ),
     );
   }
@@ -67,17 +61,19 @@ class AppointmentAgendaWideRow extends StatelessWidget {
         : item.patient.fullName;
 
     return Material(
-      color: Colors.transparent,
+      type: MaterialType.transparency,
       child: InkWell(
         onTap: () => context.push(AppRoutes.appointmentDetail.replaceAll(':id', appt.id)),
         hoverColor: cs.primary.withAlpha(12),
         child: Container(
-          constraints: const BoxConstraints(minHeight: 46.0),
-          padding: const EdgeInsets.symmetric(horizontal: AppSizes.p20, vertical: 6.0),
+          constraints: const BoxConstraints(minHeight: AppSizes.inputHeight),
+          padding: const EdgeInsets.symmetric(horizontal: AppSizes.p20, vertical: AppSizes.p6),
           child: Row(
             children: [
               SizedBox(
-                width: showDate ? AppSizes.appointmentDateColumnWidth : 76.0,
+                width: showDate
+                    ? AppSizes.appointmentDateColumnWidth
+                    : AppSizes.agendaWideTimeWidth,
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisSize: MainAxisSize.min,
@@ -92,7 +88,6 @@ class AppointmentAgendaWideRow extends StatelessWidget {
                       style: AppTextStyles.bodyBold.copyWith(
                         color: isCancelled ? cs.onSurfaceVariant.withAlpha(120) : cs.onSurface,
                         fontFeatures: const [FontFeature.tabularFigures()],
-                        fontSize: 13.0,
                       ),
                     ),
                   ],
@@ -103,18 +98,15 @@ class AppointmentAgendaWideRow extends StatelessWidget {
                 flex: 5,
                 child: Row(
                   children: [
-                    PatientMonogramBadge(name: identity, size: 26.0),
+                    PatientMonogramBadge(name: identity, size: AppSizes.agendaAvatarSize),
                     const SizedBox(width: AppSizes.p8),
                     Expanded(
-                      child: Text(
+                      child: AdaptiveNameText(
                         identity,
                         style: AppTextStyles.bodyBold.copyWith(
                           color: isCancelled ? cs.onSurfaceVariant.withAlpha(140) : cs.onSurface,
                           decoration: isCancelled ? TextDecoration.lineThrough : null,
-                          fontSize: 14.0,
                         ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
                       ),
                     ),
                   ],
@@ -143,24 +135,23 @@ class AppointmentAgendaWideRow extends StatelessWidget {
               ],
               const SizedBox(width: AppSizes.p12),
               SizedBox(
-                width: 120.0,
+                width: AppSizes.agendaStatusWidth,
                 child: Align(
                   alignment: Alignment.centerRight,
-                  child: AppointmentStatusActionBadge(
+                  child: AppointmentStatusIndicator(
                     status: appt.status,
-                    isCheckingIn: isCheckingIn,
-                    onCheckIn: onCheckIn,
+                    pending: isCheckingIn,
+                    showLabel: true,
                   ),
                 ),
               ),
               const SizedBox(width: AppSizes.p8),
               SizedBox(
-                width: 36.0,
+                width: AppSizes.tappableMin,
                 child: AppointmentAgendaMenu(
                   appointmentId: appt.id,
                   patientId: item.patient.id,
                   status: appt.status,
-                  onStatusChanged: onStatusChanged,
                 ),
               ),
             ],

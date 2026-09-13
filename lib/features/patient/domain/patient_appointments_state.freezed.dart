@@ -14,7 +14,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$PatientAppointmentsState {
 
- List<AppointmentWithPatient> get appointments; bool get isLoading; bool get isLoadingMore; bool get hasMore; int get totalCount; String? get errorMessage; Set<AppointmentStatus>? get statusFilter; Set<AppointmentType>? get typeFilter; DateTime? get dateFrom; DateTime? get dateTo; String? get doctorId; bool? get usePackageFilter; PatientAppointmentSortOption get sort;
+ List<AppointmentWithPatient> get appointments; bool get isLoading; bool get isLoadingMore; bool get hasMore; int get totalCount; String? get errorMessage; String get searchQuery; Set<AppointmentStatus>? get statusFilter; Set<AppointmentType>? get typeFilter; DateTime? get dateFrom; DateTime? get dateTo; String? get doctorId; bool? get usePackageFilter; PatientAppointmentSortOption get sort;
 /// Create a copy of PatientAppointmentsState
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -25,16 +25,16 @@ $PatientAppointmentsStateCopyWith<PatientAppointmentsState> get copyWith => _$Pa
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is PatientAppointmentsState&&const DeepCollectionEquality().equals(other.appointments, appointments)&&(identical(other.isLoading, isLoading) || other.isLoading == isLoading)&&(identical(other.isLoadingMore, isLoadingMore) || other.isLoadingMore == isLoadingMore)&&(identical(other.hasMore, hasMore) || other.hasMore == hasMore)&&(identical(other.totalCount, totalCount) || other.totalCount == totalCount)&&(identical(other.errorMessage, errorMessage) || other.errorMessage == errorMessage)&&const DeepCollectionEquality().equals(other.statusFilter, statusFilter)&&const DeepCollectionEquality().equals(other.typeFilter, typeFilter)&&(identical(other.dateFrom, dateFrom) || other.dateFrom == dateFrom)&&(identical(other.dateTo, dateTo) || other.dateTo == dateTo)&&(identical(other.doctorId, doctorId) || other.doctorId == doctorId)&&(identical(other.usePackageFilter, usePackageFilter) || other.usePackageFilter == usePackageFilter)&&(identical(other.sort, sort) || other.sort == sort));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is PatientAppointmentsState&&const DeepCollectionEquality().equals(other.appointments, appointments)&&(identical(other.isLoading, isLoading) || other.isLoading == isLoading)&&(identical(other.isLoadingMore, isLoadingMore) || other.isLoadingMore == isLoadingMore)&&(identical(other.hasMore, hasMore) || other.hasMore == hasMore)&&(identical(other.totalCount, totalCount) || other.totalCount == totalCount)&&(identical(other.errorMessage, errorMessage) || other.errorMessage == errorMessage)&&(identical(other.searchQuery, searchQuery) || other.searchQuery == searchQuery)&&const DeepCollectionEquality().equals(other.statusFilter, statusFilter)&&const DeepCollectionEquality().equals(other.typeFilter, typeFilter)&&(identical(other.dateFrom, dateFrom) || other.dateFrom == dateFrom)&&(identical(other.dateTo, dateTo) || other.dateTo == dateTo)&&(identical(other.doctorId, doctorId) || other.doctorId == doctorId)&&(identical(other.usePackageFilter, usePackageFilter) || other.usePackageFilter == usePackageFilter)&&(identical(other.sort, sort) || other.sort == sort));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(appointments),isLoading,isLoadingMore,hasMore,totalCount,errorMessage,const DeepCollectionEquality().hash(statusFilter),const DeepCollectionEquality().hash(typeFilter),dateFrom,dateTo,doctorId,usePackageFilter,sort);
+int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(appointments),isLoading,isLoadingMore,hasMore,totalCount,errorMessage,searchQuery,const DeepCollectionEquality().hash(statusFilter),const DeepCollectionEquality().hash(typeFilter),dateFrom,dateTo,doctorId,usePackageFilter,sort);
 
 @override
 String toString() {
-  return 'PatientAppointmentsState(appointments: $appointments, isLoading: $isLoading, isLoadingMore: $isLoadingMore, hasMore: $hasMore, totalCount: $totalCount, errorMessage: $errorMessage, statusFilter: $statusFilter, typeFilter: $typeFilter, dateFrom: $dateFrom, dateTo: $dateTo, doctorId: $doctorId, usePackageFilter: $usePackageFilter, sort: $sort)';
+  return 'PatientAppointmentsState(appointments: $appointments, isLoading: $isLoading, isLoadingMore: $isLoadingMore, hasMore: $hasMore, totalCount: $totalCount, errorMessage: $errorMessage, searchQuery: $searchQuery, statusFilter: $statusFilter, typeFilter: $typeFilter, dateFrom: $dateFrom, dateTo: $dateTo, doctorId: $doctorId, usePackageFilter: $usePackageFilter, sort: $sort)';
 }
 
 
@@ -45,7 +45,7 @@ abstract mixin class $PatientAppointmentsStateCopyWith<$Res>  {
   factory $PatientAppointmentsStateCopyWith(PatientAppointmentsState value, $Res Function(PatientAppointmentsState) _then) = _$PatientAppointmentsStateCopyWithImpl;
 @useResult
 $Res call({
- List<AppointmentWithPatient> appointments, bool isLoading, bool isLoadingMore, bool hasMore, int totalCount, String? errorMessage, Set<AppointmentStatus>? statusFilter, Set<AppointmentType>? typeFilter, DateTime? dateFrom, DateTime? dateTo, String? doctorId, bool? usePackageFilter, PatientAppointmentSortOption sort
+ List<AppointmentWithPatient> appointments, bool isLoading, bool isLoadingMore, bool hasMore, int totalCount, String? errorMessage, String searchQuery, Set<AppointmentStatus>? statusFilter, Set<AppointmentType>? typeFilter, DateTime? dateFrom, DateTime? dateTo, String? doctorId, bool? usePackageFilter, PatientAppointmentSortOption sort
 });
 
 
@@ -62,7 +62,7 @@ class _$PatientAppointmentsStateCopyWithImpl<$Res>
 
 /// Create a copy of PatientAppointmentsState
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? appointments = null,Object? isLoading = null,Object? isLoadingMore = null,Object? hasMore = null,Object? totalCount = null,Object? errorMessage = freezed,Object? statusFilter = freezed,Object? typeFilter = freezed,Object? dateFrom = freezed,Object? dateTo = freezed,Object? doctorId = freezed,Object? usePackageFilter = freezed,Object? sort = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? appointments = null,Object? isLoading = null,Object? isLoadingMore = null,Object? hasMore = null,Object? totalCount = null,Object? errorMessage = freezed,Object? searchQuery = null,Object? statusFilter = freezed,Object? typeFilter = freezed,Object? dateFrom = freezed,Object? dateTo = freezed,Object? doctorId = freezed,Object? usePackageFilter = freezed,Object? sort = null,}) {
   return _then(_self.copyWith(
 appointments: null == appointments ? _self.appointments : appointments // ignore: cast_nullable_to_non_nullable
 as List<AppointmentWithPatient>,isLoading: null == isLoading ? _self.isLoading : isLoading // ignore: cast_nullable_to_non_nullable
@@ -70,7 +70,8 @@ as bool,isLoadingMore: null == isLoadingMore ? _self.isLoadingMore : isLoadingMo
 as bool,hasMore: null == hasMore ? _self.hasMore : hasMore // ignore: cast_nullable_to_non_nullable
 as bool,totalCount: null == totalCount ? _self.totalCount : totalCount // ignore: cast_nullable_to_non_nullable
 as int,errorMessage: freezed == errorMessage ? _self.errorMessage : errorMessage // ignore: cast_nullable_to_non_nullable
-as String?,statusFilter: freezed == statusFilter ? _self.statusFilter : statusFilter // ignore: cast_nullable_to_non_nullable
+as String?,searchQuery: null == searchQuery ? _self.searchQuery : searchQuery // ignore: cast_nullable_to_non_nullable
+as String,statusFilter: freezed == statusFilter ? _self.statusFilter : statusFilter // ignore: cast_nullable_to_non_nullable
 as Set<AppointmentStatus>?,typeFilter: freezed == typeFilter ? _self.typeFilter : typeFilter // ignore: cast_nullable_to_non_nullable
 as Set<AppointmentType>?,dateFrom: freezed == dateFrom ? _self.dateFrom : dateFrom // ignore: cast_nullable_to_non_nullable
 as DateTime?,dateTo: freezed == dateTo ? _self.dateTo : dateTo // ignore: cast_nullable_to_non_nullable
@@ -162,10 +163,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( List<AppointmentWithPatient> appointments,  bool isLoading,  bool isLoadingMore,  bool hasMore,  int totalCount,  String? errorMessage,  Set<AppointmentStatus>? statusFilter,  Set<AppointmentType>? typeFilter,  DateTime? dateFrom,  DateTime? dateTo,  String? doctorId,  bool? usePackageFilter,  PatientAppointmentSortOption sort)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( List<AppointmentWithPatient> appointments,  bool isLoading,  bool isLoadingMore,  bool hasMore,  int totalCount,  String? errorMessage,  String searchQuery,  Set<AppointmentStatus>? statusFilter,  Set<AppointmentType>? typeFilter,  DateTime? dateFrom,  DateTime? dateTo,  String? doctorId,  bool? usePackageFilter,  PatientAppointmentSortOption sort)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _PatientAppointmentsState() when $default != null:
-return $default(_that.appointments,_that.isLoading,_that.isLoadingMore,_that.hasMore,_that.totalCount,_that.errorMessage,_that.statusFilter,_that.typeFilter,_that.dateFrom,_that.dateTo,_that.doctorId,_that.usePackageFilter,_that.sort);case _:
+return $default(_that.appointments,_that.isLoading,_that.isLoadingMore,_that.hasMore,_that.totalCount,_that.errorMessage,_that.searchQuery,_that.statusFilter,_that.typeFilter,_that.dateFrom,_that.dateTo,_that.doctorId,_that.usePackageFilter,_that.sort);case _:
   return orElse();
 
 }
@@ -183,10 +184,10 @@ return $default(_that.appointments,_that.isLoading,_that.isLoadingMore,_that.has
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( List<AppointmentWithPatient> appointments,  bool isLoading,  bool isLoadingMore,  bool hasMore,  int totalCount,  String? errorMessage,  Set<AppointmentStatus>? statusFilter,  Set<AppointmentType>? typeFilter,  DateTime? dateFrom,  DateTime? dateTo,  String? doctorId,  bool? usePackageFilter,  PatientAppointmentSortOption sort)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( List<AppointmentWithPatient> appointments,  bool isLoading,  bool isLoadingMore,  bool hasMore,  int totalCount,  String? errorMessage,  String searchQuery,  Set<AppointmentStatus>? statusFilter,  Set<AppointmentType>? typeFilter,  DateTime? dateFrom,  DateTime? dateTo,  String? doctorId,  bool? usePackageFilter,  PatientAppointmentSortOption sort)  $default,) {final _that = this;
 switch (_that) {
 case _PatientAppointmentsState():
-return $default(_that.appointments,_that.isLoading,_that.isLoadingMore,_that.hasMore,_that.totalCount,_that.errorMessage,_that.statusFilter,_that.typeFilter,_that.dateFrom,_that.dateTo,_that.doctorId,_that.usePackageFilter,_that.sort);case _:
+return $default(_that.appointments,_that.isLoading,_that.isLoadingMore,_that.hasMore,_that.totalCount,_that.errorMessage,_that.searchQuery,_that.statusFilter,_that.typeFilter,_that.dateFrom,_that.dateTo,_that.doctorId,_that.usePackageFilter,_that.sort);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -203,10 +204,10 @@ return $default(_that.appointments,_that.isLoading,_that.isLoadingMore,_that.has
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( List<AppointmentWithPatient> appointments,  bool isLoading,  bool isLoadingMore,  bool hasMore,  int totalCount,  String? errorMessage,  Set<AppointmentStatus>? statusFilter,  Set<AppointmentType>? typeFilter,  DateTime? dateFrom,  DateTime? dateTo,  String? doctorId,  bool? usePackageFilter,  PatientAppointmentSortOption sort)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( List<AppointmentWithPatient> appointments,  bool isLoading,  bool isLoadingMore,  bool hasMore,  int totalCount,  String? errorMessage,  String searchQuery,  Set<AppointmentStatus>? statusFilter,  Set<AppointmentType>? typeFilter,  DateTime? dateFrom,  DateTime? dateTo,  String? doctorId,  bool? usePackageFilter,  PatientAppointmentSortOption sort)?  $default,) {final _that = this;
 switch (_that) {
 case _PatientAppointmentsState() when $default != null:
-return $default(_that.appointments,_that.isLoading,_that.isLoadingMore,_that.hasMore,_that.totalCount,_that.errorMessage,_that.statusFilter,_that.typeFilter,_that.dateFrom,_that.dateTo,_that.doctorId,_that.usePackageFilter,_that.sort);case _:
+return $default(_that.appointments,_that.isLoading,_that.isLoadingMore,_that.hasMore,_that.totalCount,_that.errorMessage,_that.searchQuery,_that.statusFilter,_that.typeFilter,_that.dateFrom,_that.dateTo,_that.doctorId,_that.usePackageFilter,_that.sort);case _:
   return null;
 
 }
@@ -218,7 +219,7 @@ return $default(_that.appointments,_that.isLoading,_that.isLoadingMore,_that.has
 
 
 class _PatientAppointmentsState implements PatientAppointmentsState {
-  const _PatientAppointmentsState({final  List<AppointmentWithPatient> appointments = const [], this.isLoading = true, this.isLoadingMore = false, this.hasMore = false, this.totalCount = 0, this.errorMessage, final  Set<AppointmentStatus>? statusFilter, final  Set<AppointmentType>? typeFilter, this.dateFrom, this.dateTo, this.doctorId, this.usePackageFilter, this.sort = PatientAppointmentSortOption.dateNewest}): _appointments = appointments,_statusFilter = statusFilter,_typeFilter = typeFilter;
+  const _PatientAppointmentsState({final  List<AppointmentWithPatient> appointments = const [], this.isLoading = true, this.isLoadingMore = false, this.hasMore = false, this.totalCount = 0, this.errorMessage, this.searchQuery = '', final  Set<AppointmentStatus>? statusFilter, final  Set<AppointmentType>? typeFilter, this.dateFrom, this.dateTo, this.doctorId, this.usePackageFilter, this.sort = PatientAppointmentSortOption.dateNewest}): _appointments = appointments,_statusFilter = statusFilter,_typeFilter = typeFilter;
   
 
  final  List<AppointmentWithPatient> _appointments;
@@ -233,6 +234,7 @@ class _PatientAppointmentsState implements PatientAppointmentsState {
 @override@JsonKey() final  bool hasMore;
 @override@JsonKey() final  int totalCount;
 @override final  String? errorMessage;
+@override@JsonKey() final  String searchQuery;
  final  Set<AppointmentStatus>? _statusFilter;
 @override Set<AppointmentStatus>? get statusFilter {
   final value = _statusFilter;
@@ -267,16 +269,16 @@ _$PatientAppointmentsStateCopyWith<_PatientAppointmentsState> get copyWith => __
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _PatientAppointmentsState&&const DeepCollectionEquality().equals(other._appointments, _appointments)&&(identical(other.isLoading, isLoading) || other.isLoading == isLoading)&&(identical(other.isLoadingMore, isLoadingMore) || other.isLoadingMore == isLoadingMore)&&(identical(other.hasMore, hasMore) || other.hasMore == hasMore)&&(identical(other.totalCount, totalCount) || other.totalCount == totalCount)&&(identical(other.errorMessage, errorMessage) || other.errorMessage == errorMessage)&&const DeepCollectionEquality().equals(other._statusFilter, _statusFilter)&&const DeepCollectionEquality().equals(other._typeFilter, _typeFilter)&&(identical(other.dateFrom, dateFrom) || other.dateFrom == dateFrom)&&(identical(other.dateTo, dateTo) || other.dateTo == dateTo)&&(identical(other.doctorId, doctorId) || other.doctorId == doctorId)&&(identical(other.usePackageFilter, usePackageFilter) || other.usePackageFilter == usePackageFilter)&&(identical(other.sort, sort) || other.sort == sort));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _PatientAppointmentsState&&const DeepCollectionEquality().equals(other._appointments, _appointments)&&(identical(other.isLoading, isLoading) || other.isLoading == isLoading)&&(identical(other.isLoadingMore, isLoadingMore) || other.isLoadingMore == isLoadingMore)&&(identical(other.hasMore, hasMore) || other.hasMore == hasMore)&&(identical(other.totalCount, totalCount) || other.totalCount == totalCount)&&(identical(other.errorMessage, errorMessage) || other.errorMessage == errorMessage)&&(identical(other.searchQuery, searchQuery) || other.searchQuery == searchQuery)&&const DeepCollectionEquality().equals(other._statusFilter, _statusFilter)&&const DeepCollectionEquality().equals(other._typeFilter, _typeFilter)&&(identical(other.dateFrom, dateFrom) || other.dateFrom == dateFrom)&&(identical(other.dateTo, dateTo) || other.dateTo == dateTo)&&(identical(other.doctorId, doctorId) || other.doctorId == doctorId)&&(identical(other.usePackageFilter, usePackageFilter) || other.usePackageFilter == usePackageFilter)&&(identical(other.sort, sort) || other.sort == sort));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(_appointments),isLoading,isLoadingMore,hasMore,totalCount,errorMessage,const DeepCollectionEquality().hash(_statusFilter),const DeepCollectionEquality().hash(_typeFilter),dateFrom,dateTo,doctorId,usePackageFilter,sort);
+int get hashCode => Object.hash(runtimeType,const DeepCollectionEquality().hash(_appointments),isLoading,isLoadingMore,hasMore,totalCount,errorMessage,searchQuery,const DeepCollectionEquality().hash(_statusFilter),const DeepCollectionEquality().hash(_typeFilter),dateFrom,dateTo,doctorId,usePackageFilter,sort);
 
 @override
 String toString() {
-  return 'PatientAppointmentsState(appointments: $appointments, isLoading: $isLoading, isLoadingMore: $isLoadingMore, hasMore: $hasMore, totalCount: $totalCount, errorMessage: $errorMessage, statusFilter: $statusFilter, typeFilter: $typeFilter, dateFrom: $dateFrom, dateTo: $dateTo, doctorId: $doctorId, usePackageFilter: $usePackageFilter, sort: $sort)';
+  return 'PatientAppointmentsState(appointments: $appointments, isLoading: $isLoading, isLoadingMore: $isLoadingMore, hasMore: $hasMore, totalCount: $totalCount, errorMessage: $errorMessage, searchQuery: $searchQuery, statusFilter: $statusFilter, typeFilter: $typeFilter, dateFrom: $dateFrom, dateTo: $dateTo, doctorId: $doctorId, usePackageFilter: $usePackageFilter, sort: $sort)';
 }
 
 
@@ -287,7 +289,7 @@ abstract mixin class _$PatientAppointmentsStateCopyWith<$Res> implements $Patien
   factory _$PatientAppointmentsStateCopyWith(_PatientAppointmentsState value, $Res Function(_PatientAppointmentsState) _then) = __$PatientAppointmentsStateCopyWithImpl;
 @override @useResult
 $Res call({
- List<AppointmentWithPatient> appointments, bool isLoading, bool isLoadingMore, bool hasMore, int totalCount, String? errorMessage, Set<AppointmentStatus>? statusFilter, Set<AppointmentType>? typeFilter, DateTime? dateFrom, DateTime? dateTo, String? doctorId, bool? usePackageFilter, PatientAppointmentSortOption sort
+ List<AppointmentWithPatient> appointments, bool isLoading, bool isLoadingMore, bool hasMore, int totalCount, String? errorMessage, String searchQuery, Set<AppointmentStatus>? statusFilter, Set<AppointmentType>? typeFilter, DateTime? dateFrom, DateTime? dateTo, String? doctorId, bool? usePackageFilter, PatientAppointmentSortOption sort
 });
 
 
@@ -304,7 +306,7 @@ class __$PatientAppointmentsStateCopyWithImpl<$Res>
 
 /// Create a copy of PatientAppointmentsState
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? appointments = null,Object? isLoading = null,Object? isLoadingMore = null,Object? hasMore = null,Object? totalCount = null,Object? errorMessage = freezed,Object? statusFilter = freezed,Object? typeFilter = freezed,Object? dateFrom = freezed,Object? dateTo = freezed,Object? doctorId = freezed,Object? usePackageFilter = freezed,Object? sort = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? appointments = null,Object? isLoading = null,Object? isLoadingMore = null,Object? hasMore = null,Object? totalCount = null,Object? errorMessage = freezed,Object? searchQuery = null,Object? statusFilter = freezed,Object? typeFilter = freezed,Object? dateFrom = freezed,Object? dateTo = freezed,Object? doctorId = freezed,Object? usePackageFilter = freezed,Object? sort = null,}) {
   return _then(_PatientAppointmentsState(
 appointments: null == appointments ? _self._appointments : appointments // ignore: cast_nullable_to_non_nullable
 as List<AppointmentWithPatient>,isLoading: null == isLoading ? _self.isLoading : isLoading // ignore: cast_nullable_to_non_nullable
@@ -312,7 +314,8 @@ as bool,isLoadingMore: null == isLoadingMore ? _self.isLoadingMore : isLoadingMo
 as bool,hasMore: null == hasMore ? _self.hasMore : hasMore // ignore: cast_nullable_to_non_nullable
 as bool,totalCount: null == totalCount ? _self.totalCount : totalCount // ignore: cast_nullable_to_non_nullable
 as int,errorMessage: freezed == errorMessage ? _self.errorMessage : errorMessage // ignore: cast_nullable_to_non_nullable
-as String?,statusFilter: freezed == statusFilter ? _self._statusFilter : statusFilter // ignore: cast_nullable_to_non_nullable
+as String?,searchQuery: null == searchQuery ? _self.searchQuery : searchQuery // ignore: cast_nullable_to_non_nullable
+as String,statusFilter: freezed == statusFilter ? _self._statusFilter : statusFilter // ignore: cast_nullable_to_non_nullable
 as Set<AppointmentStatus>?,typeFilter: freezed == typeFilter ? _self._typeFilter : typeFilter // ignore: cast_nullable_to_non_nullable
 as Set<AppointmentType>?,dateFrom: freezed == dateFrom ? _self.dateFrom : dateFrom // ignore: cast_nullable_to_non_nullable
 as DateTime?,dateTo: freezed == dateTo ? _self.dateTo : dateTo // ignore: cast_nullable_to_non_nullable

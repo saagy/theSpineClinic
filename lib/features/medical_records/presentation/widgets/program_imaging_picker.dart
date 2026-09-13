@@ -8,7 +8,6 @@ import 'package:spine_clinic_app/core/constants/app_text_styles.dart';
 import 'package:spine_clinic_app/features/medical_records/presentation/widgets/program_picker_card.dart';
 import 'package:spine_clinic_app/features/patient/domain/patient_document.dart';
 import 'package:spine_clinic_app/features/patient/presentation/widgets/patient_document_preview.dart';
-import 'package:spine_clinic_app/shared/widgets/app_button.dart';
 
 /// Form component to pick, preview, and manage imaging files (X-rays, MRI, CT).
 class ProgramImagingPicker extends StatelessWidget {
@@ -59,23 +58,17 @@ class ProgramImagingPicker extends StatelessWidget {
       children: [
         Row(
           children: [
-            Icon(
-              Icons.photo_library_outlined,
-              size: AppSizes.iconDefault,
-              color: cs.primary,
-            ),
+            Icon(Icons.photo_library_outlined, size: AppSizes.iconDefault, color: cs.primary),
             const SizedBox(width: AppSizes.p8),
-            Text(
-              AppStrings.imagingAttachments,
-              style: AppTextStyles.bodyBold.copyWith(color: cs.onSurface),
+            Expanded(
+              child: Text(
+                AppStrings.imagingAttachments,
+                style: AppTextStyles.bodyBold.copyWith(color: cs.onSurface),
+              ),
             ),
-            const Spacer(),
             if (totalCount > 0)
               Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: AppSizes.p8,
-                  vertical: AppSizes.p2,
-                ),
+                padding: const EdgeInsets.symmetric(horizontal: AppSizes.p8, vertical: AppSizes.p2),
                 decoration: BoxDecoration(
                   color: cs.primaryContainer,
                   borderRadius: BorderRadius.circular(AppSizes.r999),
@@ -123,11 +116,21 @@ class ProgramImagingPicker extends StatelessWidget {
           ),
           const SizedBox(height: AppSizes.p12),
         ],
-        AppButton(
-          labelText: AppStrings.attachImagingFiles,
-          icon: Icons.add_photo_alternate_outlined,
-          variant: AppButtonVariant.secondary,
-          onPressed: _pickFiles,
+        SizedBox(
+          width: double.infinity,
+          child: OutlinedButton.icon(
+            label: const Text(
+              AppStrings.attachImagingFiles,
+              style: AppTextStyles.bodyMedium,
+              textAlign: TextAlign.center,
+            ),
+            icon: const Icon(Icons.add_photo_alternate_outlined, size: AppSizes.iconSmall),
+            style: OutlinedButton.styleFrom(
+              minimumSize: const Size.fromHeight(AppSizes.inputHeight),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppSizes.r8)),
+            ),
+            onPressed: _pickFiles,
+          ),
         ),
       ],
     );

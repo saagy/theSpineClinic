@@ -30,7 +30,7 @@
 
 21. **Primary Action Placement:** Make the main permitted action clear and accessible. Choose a labeled toolbar button, inline action, or FAB according to the layout; FABs are not required. Use consistent component shape tokens and prevent floating actions from obscuring content.
 
-22. **Prioritize Information:** Keep identification and task-critical information readable. Adapt columns, wrapping, or secondary detail placement when space is limited. Move nonessential metadata to details; do not silently remove essential information or shrink names to make a legacy layout fit.
+22. **Prioritize Information:** Keep identification and task-critical information readable. Adapt columns, wrapping, or secondary detail placement when space is limited. Move nonessential metadata to details; do not silently remove essential information or shrink names to make a legacy layout fit. User-approved appointment-row exception: names may fit from 14 down to 13 before wrapping in full; preserve enlarged accessibility text.
 23. **Explicit Height and Scrolling Containment:** Never wrap infinite or dynamic-length lists (`ListView.builder`) inside an unconstrained vertical container or an unbounded `Column`. Use `Expanded`, `SliverList`, or `Flexible` as appropriate. Preserve platform-appropriate scrolling; `AlwaysScrollableScrollPhysics` permits scrolling with short content and does not itself prescribe bounce behavior. Ensure pull-to-refresh works with short or empty content where offered.
 24. **Semantic Spacing:** All spacing uses `AppSizes` tokens. Select token levels to distinguish related items from separate groups; equal gaps everywhere are not required. Add a meaningful reusable token when needed instead of inserting magic numbers to force a layout into place.
 
@@ -89,6 +89,12 @@ history and nonzero session/traction balances. Do not restore a privileged-role
 bypass or replace the RPC with a direct client delete.
 
 ### Status Callback Wiring
+Shared `AppointmentAgendaRow` menus are an exception to the legacy callback
+contract below: `AgendaStatusController` patches the schedule, All, patient and
+booking providers after success. Do not attach full-list refresh callbacks to
+agenda rows. Patient balance caches still invalidate in the background. The
+callback requirement below applies to legacy `ReceptionistAppointmentCard`.
+
 Every screen that uses `ReceptionistAppointmentCard` with `showMenu: true`
 (the default) MUST pass an `onStatusChanged` callback that refreshes that
 screen's data source. The callback chain must be unbroken: Screen → tab

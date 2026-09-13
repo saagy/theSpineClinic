@@ -1,3 +1,4 @@
+import 'package:spine_clinic_app/shared/widgets/form_field_label.dart';
 import 'package:flutter/material.dart';
 import 'package:spine_clinic_app/core/constants/clinic_colors.dart';
 import 'package:spine_clinic_app/core/constants/app_sizes.dart';
@@ -42,7 +43,8 @@ class PatientDemographicFields extends StatelessWidget {
           controller: nameCtrl,
           labelText: AppStrings.fullName,
           enabled: enabled,
-          validator: (val) => (val == null || val.trim().isEmpty) ? 'Name is required' : null,
+          validator: (val) =>
+              (val == null || val.trim().isEmpty) ? AppStrings.fullNameRequired : null,
         ),
         const SizedBox(height: AppSizes.p16),
         AppTextField(
@@ -50,7 +52,8 @@ class PatientDemographicFields extends StatelessWidget {
           labelText: AppStrings.phone,
           enabled: enabled,
           keyboardType: TextInputType.phone,
-          validator: (val) => (val == null || val.trim().isEmpty) ? 'Phone number is required' : null,
+          validator: (val) =>
+              (val == null || val.trim().isEmpty) ? AppStrings.phoneNumberRequired : null,
         ),
         const SizedBox(height: AppSizes.p16),
         _buildClinicDropdown(context),
@@ -59,50 +62,31 @@ class PatientDemographicFields extends StatelessWidget {
   }
 
   Widget _buildClinicDropdown(BuildContext context) {
-    final border = OutlineInputBorder(
-      borderRadius: const BorderRadius.all(Radius.circular(AppSizes.r6)),
-      borderSide: BorderSide(color: Theme.of(context).colorScheme.outline, width: AppSizes.borderWidth),
-    );
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           AppStrings.clinic,
           style: AppTextStyles.captionMedium.copyWith(
-            color: enabled ? Theme.of(context).colorScheme.onSurfaceVariant : ClinicColors.of(context).textMuted,
+            color: enabled
+                ? Theme.of(context).colorScheme.onSurfaceVariant
+                : ClinicColors.of(context).textMuted,
           ),
         ),
         const SizedBox(height: AppSizes.p6),
         DropdownButtonFormField<ClinicLocation>(
           initialValue: selectedClinic,
           style: AppTextStyles.body.copyWith(
-            color: enabled ? Theme.of(context).colorScheme.onSurface : ClinicColors.of(context).textMuted,
+            color: enabled
+                ? Theme.of(context).colorScheme.onSurface
+                : ClinicColors.of(context).textMuted,
           ),
-          decoration: InputDecoration(
-            isDense: true,
-            filled: true,
-            fillColor: enabled ? Theme.of(context).colorScheme.surface : Theme.of(context).scaffoldBackgroundColor,
-            contentPadding: AppSizes.paddingCell,
-            enabledBorder: border,
-            disabledBorder: border,
-            focusedBorder: border.copyWith(
-              borderSide: BorderSide(color: ClinicColors.of(context).outlineStrong, width: AppSizes.borderWidthFocused),
-            ),
-            errorBorder: border.copyWith(
-              borderSide: BorderSide(color: Theme.of(context).colorScheme.error, width: AppSizes.borderWidth),
-            ),
-            focusedErrorBorder: border.copyWith(
-              borderSide: BorderSide(color: Theme.of(context).colorScheme.error, width: AppSizes.borderWidthFocused),
-            ),
-          ),
+          decoration: formInputDecoration(context),
           items: ClinicLocation.values
-              .map((c) => DropdownMenuItem(
-                    value: c,
-                    child: Text(c.displayLabel),
-                  ))
+              .map((c) => DropdownMenuItem(value: c, child: Text(c.displayLabel)))
               .toList(),
           onChanged: enabled ? onClinicChanged : null,
-          validator: (val) => val == null ? 'Clinic is required' : null,
+          validator: (val) => val == null ? AppStrings.clinicRequired : null,
         ),
       ],
     );

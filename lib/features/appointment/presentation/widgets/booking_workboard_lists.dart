@@ -172,7 +172,6 @@ class BookingWorkboardLists extends StatelessWidget {
           return AppointmentAgendaRow(
             key: ValueKey(item.appointment.id),
             item: item,
-            onStatusChanged: onRefresh,
           );
         },
       ),

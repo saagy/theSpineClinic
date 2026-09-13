@@ -1,3 +1,5 @@
+import 'package:spine_clinic_app/shared/widgets/search_filter_toolbar.dart';
+import 'package:spine_clinic_app/features/staff/presentation/staff_directory_filters_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -12,12 +14,9 @@ import 'package:spine_clinic_app/features/staff/presentation/widgets/staff_filte
 import 'package:spine_clinic_app/features/staff/presentation/widgets/staff_grouped_list.dart';
 import 'package:spine_clinic_app/features/staff/presentation/widgets/staff_list_filter_models.dart';
 import 'package:spine_clinic_app/shared/widgets/active_filter_chips_row.dart';
-import 'package:spine_clinic_app/shared/widgets/app_search_bar.dart';
 import 'package:spine_clinic_app/shared/widgets/empty_state.dart';
 import 'package:spine_clinic_app/shared/widgets/error_view.dart';
 import 'package:spine_clinic_app/shared/widgets/skeleton_loader.dart';
-import 'package:spine_clinic_app/shared/widgets/sort_filter_bar.dart';
-import 'package:spine_clinic_app/shared/widgets/sort_options_sheet.dart';
 
 /// Tab view displaying the searchable, filterable staff roster for admin management.
 class StaffDirectoryTab extends ConsumerStatefulWidget {
@@ -29,35 +28,41 @@ class StaffDirectoryTab extends ConsumerStatefulWidget {
 }
 
 class _StaffDirectoryTabState extends ConsumerState<StaffDirectoryTab> {
-  StaffSortOption _sort = StaffSortOption.nameAsc;
-  StaffListFilters _filters = const StaffListFilters();
-  String _query = '';
+  StaffSortOption get _sort => ref.read(staffDirectoryFiltersProvider).sort;
+  set _sort(StaffSortOption value) => ref.read(staffDirectoryFiltersProvider.notifier).sort(value);
+  StaffListFilters get _filters => ref.read(staffDirectoryFiltersProvider).filters;
+  set _filters(StaffListFilters value) =>
+      ref.read(staffDirectoryFiltersProvider.notifier).filter(value);
+  String get _query => ref.read(staffDirectoryFiltersProvider).query;
+  set _query(String value) => ref.read(staffDirectoryFiltersProvider.notifier).search(value);
   final Set<int> _animatedIndices = <int>{};
-
-  void _updateFilter(VoidCallback fn) => setState(() {
-    fn();
+  void _updateFilter(VoidCallback change) {
+    change();
     _animatedIndices.clear();
-  });
+  }
 
   @override
   Widget build(BuildContext context) {
+    ref.watch(staffDirectoryFiltersProvider);
     final staffAsync = ref.watch(staffListProvider);
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: Column(
         children: [
           Padding(
-            padding: const EdgeInsets.fromLTRB(AppSizes.p16, AppSizes.p12, AppSizes.p16, AppSizes.p4),
-            child: AppSearchBar(
-              hintText: AppStrings.staffSearchHint,
-              onChanged: (q) => _updateFilter(() => _query = q),
+            padding: const EdgeInsets.fromLTRB(
+              AppSizes.p16,
+              AppSizes.p12,
+              AppSizes.p16,
+              AppSizes.p4,
             ),
-          ),
-          SortFilterBar(
-            sortLabel: '${AppStrings.sort}: ${_sort.displayLabel}',
-            onSortTap: _showSortSheet,
-            activeFilterCount: _filters.activeCount,
-            onFilterTap: _showFilterSheet,
+            child: SearchFilterToolbar(
+              hint: AppStrings.staffSearchHint,
+              query: _query,
+              onSearch: (query) => _updateFilter(() => _query = query),
+              activeCount: _filters.activeCount,
+              onFilter: _showFilterSheet,
+            ),
           ),
           ActiveFilterChipsRow(
             chips: staffActiveFilterChips(
@@ -85,7 +90,9 @@ class _StaffDirectoryTabState extends ConsumerState<StaffDirectoryTab> {
     final Widget body = staffAsync.when(
       data: (staff) {
         final display = _filtered(staff);
-        if (display.isEmpty) return KeyedSubtree(key: const ValueKey('staff_empty'), child: _empty());
+        if (display.isEmpty) {
+          return KeyedSubtree(key: const ValueKey('staff_empty'), child: _empty());
+        }
         return KeyedSubtree(
           key: const ValueKey('staff_data'),
           child: StaffGroupedList(
@@ -95,7 +102,8 @@ class _StaffDirectoryTabState extends ConsumerState<StaffDirectoryTab> {
           ),
         );
       },
-      loading: () => const KeyedSubtree(key: ValueKey('staff_loading'), child: SkeletonTileList(count: 6)),
+      loading: () =>
+          const KeyedSubtree(key: ValueKey('staff_loading'), child: SkeletonTileList(count: 6)),
       error: (error, _) => KeyedSubtree(
         key: const ValueKey('staff_error'),
         child: ErrorView(
@@ -125,7 +133,8 @@ class _StaffDirectoryTabState extends ConsumerState<StaffDirectoryTab> {
   List<Staff> _filtered(List<Staff> staff) {
     final q = _query.trim().toLowerCase();
     final list = staff.where((s) {
-      final queryMatch = q.isEmpty || s.fullName.toLowerCase().contains(q) || s.email.toLowerCase().contains(q);
+      final queryMatch =
+          q.isEmpty || s.fullName.toLowerCase().contains(q) || s.email.toLowerCase().contains(q);
       return queryMatch && _filters.matches(s);
     }).toList();
     switch (_sort) {
@@ -141,19 +150,18 @@ class _StaffDirectoryTabState extends ConsumerState<StaffDirectoryTab> {
     return list;
   }
 
-  Future<void> _showSortSheet() async {
-    final selected = await SortOptionsSheet.show<StaffSortOption>(
-      context: context,
-      title: AppStrings.sortOptions,
-      selected: _sort,
-      options: StaffSortOption.values.map((o) => SortOption(value: o, label: o.displayLabel)).toList(),
-    );
-    if (selected != null && mounted) _updateFilter(() => _sort = selected);
-  }
-
   Future<void> _showFilterSheet() async {
-    final selected = await StaffFilterSheet.show(context: context, initialFilters: _filters);
-    if (selected != null && mounted) _updateFilter(() => _filters = selected);
+    final selected = await StaffFilterSheet.show(
+      context: context,
+      initialFilters: _filters,
+      initialSort: _sort,
+    );
+    if (selected != null && mounted) {
+      _updateFilter(() {
+        _filters = selected.filters;
+        _sort = selected.sort;
+      });
+    }
   }
 
   Widget _empty() => const SingleChildScrollView(

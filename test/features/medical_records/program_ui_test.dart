@@ -305,8 +305,8 @@ void main() {
     await tester.pumpAndSettle();
 
     // Body must render (a collapsed body means the save bar swallowed it).
-    expect(find.text(AppStrings.selectInjuries), findsOneWidget);
-    expect(find.byType(ListView), findsWidgets);
+    expect(find.text(AppStrings.programConditions), findsOneWidget);
+    expect(find.byType(SingleChildScrollView), findsWidgets);
 
     // Save button must be pinned to the bottom edge, not floating mid-screen.
     final saveCenter = tester.getCenter(find.text(AppStrings.saveAndPrescribePlan));

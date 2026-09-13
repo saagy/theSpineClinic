@@ -1,3 +1,4 @@
+import 'package:spine_clinic_app/shared/widgets/record_surface.dart';
 import 'package:flutter/material.dart';
 import 'package:spine_clinic_app/core/constants/app_sizes.dart';
 import 'package:spine_clinic_app/features/patient/domain/patient.dart';
@@ -28,12 +29,14 @@ class WorkspaceOverview extends StatelessWidget {
   Widget build(BuildContext context) {
     final programs = Padding(
       padding: const EdgeInsets.only(bottom: AppSizes.p16),
-      child: WorkspacePrograms(patientId: patient.id, overview: true, onViewAll: onPrograms),
+      child: RecordSurface(
+        child: WorkspacePrograms(patientId: patient.id, overview: true, onViewAll: onPrograms),
+      ),
     );
-    final history = WorkspaceMedicalHistory(patientId: patient.id);
+    final history = RecordSurface(child: WorkspaceMedicalHistory(patientId: patient.id));
     final followUp = Padding(
       padding: const EdgeInsets.only(bottom: AppSizes.p16),
-      child: WorkspaceFollowUp(patient: patient),
+      child: RecordSurface(child: WorkspaceFollowUp(patient: patient)),
     );
 
     return LayoutBuilder(
@@ -48,9 +51,9 @@ class WorkspaceOverview extends StatelessWidget {
             if (!isDoctor) WorkspaceDue(patientId: patient.id, onOpen: onPayments),
             followUp,
             programs,
-            if (isMobile) balances,
+            if (isMobile) ...[RecordSurface(child: balances), const SizedBox(height: AppSizes.p16)],
             history,
-            if (isMobile) info,
+            if (isMobile) ...[const SizedBox(height: AppSizes.p16), RecordSurface(child: info)],
           ],
         );
       },

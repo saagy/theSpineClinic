@@ -7,7 +7,12 @@ extension _AppointmentFilterChrome on AppointmentFilterMainView {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(AppStrings.filtersButton, style: AppTextStyles.headingMedium.copyWith(color: cs.onSurface)),
+          Expanded(
+            child: Text(
+              AppStrings.filtersButton,
+              style: AppTextStyles.headingMedium.copyWith(color: cs.onSurface),
+            ),
+          ),
           Row(
             children: [
               TextButton(
@@ -18,7 +23,7 @@ extension _AppointmentFilterChrome on AppointmentFilterMainView {
                 ),
               ),
               IconButton(
-                icon: const Icon(LucideIcons.x, size: 20),
+                icon: const Icon(LucideIcons.x, size: AppSizes.iconDefault),
                 onPressed: () => Navigator.of(context).pop(),
               ),
             ],
@@ -52,7 +57,7 @@ extension _AppointmentFilterChrome on AppointmentFilterMainView {
         style: FilledButton.styleFrom(
           backgroundColor: cs.primary,
           foregroundColor: cs.onPrimary,
-          minimumSize: const Size.fromHeight(44.0),
+          minimumSize: const Size.fromHeight(AppSizes.tappableMin),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppSizes.r8)),
         ),
         child: Text(AppStrings.applyFilters, style: AppTextStyles.bodyBold),
