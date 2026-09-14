@@ -5,17 +5,19 @@ import 'package:spine_clinic_app/core/constants/app_text_styles.dart';
 import 'package:spine_clinic_app/features/medical_records/domain/modality_target_region.dart';
 import 'package:spine_clinic_app/shared/widgets/form_field_label.dart';
 
-/// Searchable option list shared by the compact and desktop target-region pickers.
+/// Searchable option list shown in the target-region selection step.
 class TargetRegionPickerOptions extends StatefulWidget {
   const TargetRegionPickerOptions({
     super.key,
     required this.value,
     required this.regions,
+    required this.onSelected,
     this.scrollController,
   });
 
   final String value;
   final List<ModalityTargetRegion> regions;
+  final ValueChanged<String> onSelected;
   final ScrollController? scrollController;
 
   @override
@@ -25,11 +27,13 @@ class TargetRegionPickerOptions extends StatefulWidget {
 
 class _TargetRegionPickerOptionsState extends State<TargetRegionPickerOptions> {
   final TextEditingController _searchController = TextEditingController();
+  final ScrollController _listController = ScrollController();
   String _query = '';
 
   @override
   void dispose() {
     _searchController.dispose();
+    _listController.dispose();
     super.dispose();
   }
 
@@ -42,7 +46,6 @@ class _TargetRegionPickerOptionsState extends State<TargetRegionPickerOptions> {
         )
         .toList();
     return Column(
-      mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
@@ -52,7 +55,6 @@ class _TargetRegionPickerOptionsState extends State<TargetRegionPickerOptions> {
         const SizedBox(height: AppSizes.p12),
         TextField(
           controller: _searchController,
-          autofocus: true,
           onChanged: (query) => setState(() => _query = query),
           decoration:
               formInputDecoration(
@@ -73,8 +75,7 @@ class _TargetRegionPickerOptionsState extends State<TargetRegionPickerOptions> {
               ),
         ),
         const SizedBox(height: AppSizes.p12),
-        SizedBox(
-          height: AppSizes.targetRegionPickerListHeight,
+        Expanded(
           child: visibleRegions.isEmpty
               ? Center(
                   child: Text(
@@ -84,18 +85,25 @@ class _TargetRegionPickerOptionsState extends State<TargetRegionPickerOptions> {
                     ),
                   ),
                 )
-              : ListView.separated(
-                  controller: widget.scrollController,
-                  itemCount: visibleRegions.length,
-                  separatorBuilder: (_, _) =>
-                      Divider(height: AppSizes.p2, color: cs.outlineVariant),
-                  itemBuilder: (context, index) {
-                    final ModalityTargetRegion region = visibleRegions[index];
-                    return _TargetRegionOption(
-                      region: region,
-                      selected: region.name == widget.value,
-                    );
-                  },
+              : Scrollbar(
+                  controller: widget.scrollController ?? _listController,
+                  thumbVisibility: true,
+                  child: ListView.separated(
+                    controller: widget.scrollController ?? _listController,
+                    keyboardDismissBehavior:
+                        ScrollViewKeyboardDismissBehavior.onDrag,
+                    itemCount: visibleRegions.length,
+                    separatorBuilder: (_, _) =>
+                        Divider(height: AppSizes.p2, color: cs.outlineVariant),
+                    itemBuilder: (context, index) {
+                      final ModalityTargetRegion region = visibleRegions[index];
+                      return _TargetRegionOption(
+                        region: region,
+                        selected: region.name == widget.value,
+                        onSelected: () => widget.onSelected(region.name),
+                      );
+                    },
+                  ),
                 ),
         ),
       ],
@@ -104,10 +112,15 @@ class _TargetRegionPickerOptionsState extends State<TargetRegionPickerOptions> {
 }
 
 class _TargetRegionOption extends StatelessWidget {
-  const _TargetRegionOption({required this.region, required this.selected});
+  const _TargetRegionOption({
+    required this.region,
+    required this.selected,
+    required this.onSelected,
+  });
 
   final ModalityTargetRegion region;
   final bool selected;
+  final VoidCallback onSelected;
 
   @override
   Widget build(BuildContext context) {
@@ -115,7 +128,7 @@ class _TargetRegionOption extends StatelessWidget {
     return Material(
       color: selected ? cs.secondaryContainer : cs.surface,
       child: InkWell(
-        onTap: () => Navigator.of(context).pop(region.name),
+        onTap: onSelected,
         child: Container(
           constraints: const BoxConstraints(minHeight: AppSizes.tappableMin),
           padding: const EdgeInsets.symmetric(

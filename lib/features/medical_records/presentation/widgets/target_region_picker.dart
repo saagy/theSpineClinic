@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:spine_clinic_app/core/constants/app_sizes.dart';
-import 'package:spine_clinic_app/core/constants/app_strings.dart';
 import 'package:spine_clinic_app/core/constants/app_text_styles.dart';
 import 'package:spine_clinic_app/features/medical_records/domain/modality_target_region.dart';
 import 'package:spine_clinic_app/features/medical_records/presentation/widgets/target_region_picker_options.dart';
 import 'package:spine_clinic_app/shared/widgets/app_bottom_sheet.dart';
 import 'package:spine_clinic_app/shared/widgets/form_field_label.dart';
+import 'package:spine_clinic_app/shared/widgets/sheet_step_host.dart';
 
-/// Adaptive target-region field with a searchable clinical selection surface.
+/// Opens the same searchable selection step at every window size.
 class TargetRegionPicker extends StatelessWidget {
   const TargetRegionPicker({
     super.key,
@@ -23,28 +23,34 @@ class TargetRegionPicker extends StatelessWidget {
   final ValueChanged<String> onChanged;
 
   Future<void> _selectRegion(BuildContext context) async {
-    final String? selected =
-        MediaQuery.sizeOf(context).width >= AppSizes.adaptiveModalBreakpoint
-        ? await showDialog<String>(
-            context: context,
-            builder: (_) => _TargetRegionDialog(
-              title: label,
-              value: value,
-              regions: regions,
-            ),
-          )
+    final SheetStepHostState? host = SheetStepHost.maybeOf(context);
+    Widget options(
+      ValueChanged<String> onSelected, [
+      ScrollController? controller,
+    ]) => Padding(
+      padding: const EdgeInsets.symmetric(horizontal: AppSizes.p16),
+      child: TargetRegionPickerOptions(
+        value: value,
+        regions: regions,
+        onSelected: onSelected,
+        scrollController: controller,
+      ),
+    );
+    final String? selected = host != null
+        ? await host.showStep<String>(title: label, builder: options)
         : await AppBottomSheet.show<String>(
             context: context,
             title: label,
             initialChildSize: AppSizes.sheetInitialLarge,
             minChildSize: AppSizes.sheetInitialLarge,
-            builder: (_, scrollController) => TargetRegionPickerOptions(
-              value: value,
-              regions: regions,
-              scrollController: scrollController,
+            builder: (sheetContext, scrollController) => options(
+              (value) => Navigator.of(sheetContext).pop(value),
+              scrollController,
             ),
           );
-    if (selected != null && selected != value) onChanged(selected);
+    if (context.mounted && selected != null && selected != value) {
+      onChanged(selected);
+    }
   }
 
   @override
@@ -99,57 +105,4 @@ class TargetRegionPicker extends StatelessWidget {
       ),
     );
   }
-}
-
-class _TargetRegionDialog extends StatelessWidget {
-  const _TargetRegionDialog({
-    required this.title,
-    required this.value,
-    required this.regions,
-  });
-
-  final String title;
-  final String value;
-  final List<ModalityTargetRegion> regions;
-
-  @override
-  Widget build(BuildContext context) => Dialog(
-    child: ConstrainedBox(
-      constraints: const BoxConstraints(
-        maxWidth: AppSizes.targetRegionPickerWidth,
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(AppSizes.p20),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    title,
-                    style: AppTextStyles.headingSmall.copyWith(
-                      color: Theme.of(context).colorScheme.onSurface,
-                    ),
-                  ),
-                ),
-                IconButton(
-                  tooltip: AppStrings.close,
-                  icon: Icon(
-                    Icons.close,
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
-                    size: AppSizes.iconDefault,
-                  ),
-                  onPressed: () => Navigator.of(context).pop(),
-                ),
-              ],
-            ),
-            const SizedBox(height: AppSizes.p12),
-            TargetRegionPickerOptions(value: value, regions: regions),
-          ],
-        ),
-      ),
-    ),
-  );
 }

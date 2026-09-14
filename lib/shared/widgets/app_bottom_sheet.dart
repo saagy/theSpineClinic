@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:spine_clinic_app/core/constants/app_sizes.dart';
-import 'package:spine_clinic_app/core/constants/app_text_styles.dart';
+import 'package:spine_clinic_app/shared/widgets/sheet_step_host.dart';
 
 /// Standard bottom sheet shell with shared chrome, draggable resizing, and wide-screen restraint.
 class AppBottomSheet extends StatelessWidget {
@@ -172,13 +172,16 @@ class _BottomSheetFrameState extends State<_BottomSheetFrame> {
                             const SizedBox(height: AppSizes.p8),
                             _Handle(color: cs.outlineVariant),
                             const SizedBox(height: AppSizes.p8),
-                            _Header(title: widget.title),
-                            const SizedBox(height: AppSizes.p8),
                           ],
                         ),
                       ),
                       Expanded(
-                        child: widget.builder(context, scrollController),
+                        child: SheetStepHost(
+                          title: widget.title,
+                          onVerticalDragUpdate: _onDragUpdate,
+                          onVerticalDragEnd: _onDragEnd,
+                          child: widget.builder(context, scrollController),
+                        ),
                       ),
                     ],
                   ),
@@ -206,38 +209,6 @@ class _Handle extends StatelessWidget {
           color: color,
           borderRadius: const BorderRadius.all(Radius.circular(AppSizes.p2)),
         ),
-      ),
-    );
-  }
-}
-
-class _Header extends StatelessWidget {
-  const _Header({required this.title});
-  final String title;
-
-  @override
-  Widget build(BuildContext context) {
-    final ColorScheme cs = Theme.of(context).colorScheme;
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: AppSizes.p20),
-      child: Row(
-        children: [
-          Expanded(
-            child: Text(
-              title,
-              style: AppTextStyles.headingSmall.copyWith(color: cs.onSurface),
-            ),
-          ),
-          const SizedBox(width: AppSizes.p12),
-          IconButton(
-            icon: Icon(
-              Icons.close,
-              color: cs.onSurfaceVariant,
-              size: AppSizes.iconDefault,
-            ),
-            onPressed: () => Navigator.of(context).pop(),
-          ),
-        ],
       ),
     );
   }

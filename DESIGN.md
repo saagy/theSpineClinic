@@ -126,9 +126,11 @@ The existing appointment filter sheet now supports doctor-history and staff sort
    Program detail is treatment-first, and medical-history/treatment-plan editors
    use a bounded form with a persistent Save/Cancel footer. Payment mutations
    retain the existing capability checks.
-   Target-region selection uses a compact themed field that opens an adaptive,
-   searchable clinical option list: a bounded dialog on wide windows and a
-   draggable sheet on narrow windows. The active selection stays visible and
+   Target-region selection uses a compact themed field that opens the same
+   searchable selection step within the existing editor at every window size.
+   Back returns to the unchanged form; selecting returns with the chosen region.
+   The list fills the remaining sheet height with a visible scrollbar, and search
+   does not automatically open the keyboard. The active selection stays visible and
    marked by the theme's selected state; every option keeps a 44px target.
 1. Patients directory redesign established the clean modern 2026 SaaS aesthetic (hairline dividers, monogram badges, Lucide icons, high density, and clean table/list responsive layouts).
 2. Schedule screens (Receptionist & Doctor) implemented:
