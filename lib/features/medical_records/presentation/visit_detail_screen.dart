@@ -19,6 +19,7 @@ import 'package:spine_clinic_app/shared/widgets/error_view.dart';
 import 'package:spine_clinic_app/shared/widgets/info_row.dart';
 import 'package:spine_clinic_app/shared/widgets/section_card.dart';
 import 'package:spine_clinic_app/shared/widgets/app_back_button.dart';
+import 'package:spine_clinic_app/shared/widgets/record_skeleton.dart';
 
 /// Pushed full-screen route for viewing checked-in clinical visit notes.
 class VisitDetailScreen extends ConsumerWidget {
@@ -56,8 +57,10 @@ class VisitDetailScreen extends ConsumerWidget {
         ],
       ),
       body: stateAsync.when(
-        loading: () =>
-            Center(child: CircularProgressIndicator(color: cs.primary)),
+        loading: () => const SingleChildScrollView(
+          padding: EdgeInsets.all(AppSizes.p24),
+          child: RecordSkeleton(rows: 3),
+        ),
         error: (err, stack) => ErrorView(
           exception: err is AppException
               ? err

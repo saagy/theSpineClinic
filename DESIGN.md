@@ -106,6 +106,22 @@ Patient tabs use the slate scaffold with separate overview group surfaces.
 Create/edit forms use semantic sections, responsive columns and persistent actions.
 The existing appointment filter sheet now supports doctor-history and staff sorts.
 
+Appointment creation now preselects the patient's assigned doctors once on patient
+selection and preserves that selection across appointment type changes. Assessment
+types show a review reminder; the doctor picker labels senior doctors. Package
+billing retains its prior session choice when staff switch to an assessment and
+back. Check-in uses the same status controller and actionable balance error in
+agenda and detail views.
+
+The final patient-workspace pass treats program document folders as flat rows with
+the same hairline separators as standalone documents. Folder names appear only
+after the related program data resolves; note author placeholders hold a fixed
+leading position. Booking uses quiet underlined queue tabs and matching flat rows
+for due patients and scheduled appointments. Due-patient actions stay at least
+44 logical pixels and move below the identity when a narrow layout or enlarged
+text needs the space. Initial record, result-list, and form loading use shaped
+placeholders; progress indicators remain for local actions and file viewing.
+
 0. Patient detail now implements the [patient workspace direction](docs/patient-workspace-direction.md)
    with a corrective pass after the first pilot was rejected. It uses the current
    palette, Plus Jakarta Sans, text tabs, flat sections with heading rules,

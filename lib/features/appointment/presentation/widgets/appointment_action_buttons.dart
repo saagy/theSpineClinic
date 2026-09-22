@@ -10,9 +10,11 @@ library;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:spine_clinic_app/core/constants/app_strings.dart';
+import 'package:spine_clinic_app/core/errors/app_exception.dart';
+import 'package:spine_clinic_app/core/errors/result.dart';
 import 'package:spine_clinic_app/features/appointment/domain/appointment.dart';
 import 'package:spine_clinic_app/features/appointment/domain/appointment_status.dart';
-import 'package:spine_clinic_app/features/appointment/presentation/appointment_detail_controller.dart';
+import 'package:spine_clinic_app/features/appointment/presentation/agenda_status_controller.dart';
 import 'package:spine_clinic_app/features/auth/domain/user_role.dart';
 import 'package:spine_clinic_app/features/appointment/presentation/widgets/appointment_status_actions.dart';
 import 'package:spine_clinic_app/shared/widgets/app_snackbar.dart';
@@ -99,6 +101,12 @@ class _AppointmentActionButtonsState
     setState(() => _loading = true);
     try {
       await action();
+    } on AppException catch (error) {
+      if (mounted) {
+        AppSnackbar.show(context,
+            message: AppStrings.fromKey(error.userMessageKey),
+            variant: AppSnackbarVariant.error);
+      }
     } on Exception catch (_) {
       if (mounted) {
         AppSnackbar.show(context,
@@ -119,16 +127,8 @@ class _AppointmentActionButtonsState
           title: AppStrings.checkInPatient,
           message: AppStrings.confirmCheckIn),
     );
-    if (ok != true) { return; }
-    await ref
-        .read(appointmentDetailControllerProvider(widget.appointment.id)
-            .notifier)
-        .checkIn();
-    if (mounted) {
-      AppSnackbar.show(context,
-          message: AppStrings.statusUpdateSuccess,
-          variant: AppSnackbarVariant.success);
-    }
+    if (ok != true) return;
+    await _updateStatus(AppointmentStatus.checkedIn);
   }
 
   Future<void> _cancel() async {
@@ -139,16 +139,8 @@ class _AppointmentActionButtonsState
           message: AppStrings.confirmCancel,
           isDestructive: true),
     );
-    if (ok != true) { return; }
-    await ref
-        .read(appointmentDetailControllerProvider(widget.appointment.id)
-            .notifier)
-        .cancel();
-    if (mounted) {
-      AppSnackbar.show(context,
-          message: AppStrings.statusUpdateSuccess,
-          variant: AppSnackbarVariant.success);
-    }
+    if (ok != true) return;
+    await _updateStatus(AppointmentStatus.cancelled);
   }
 
   Future<void> _revert() async {
@@ -158,16 +150,8 @@ class _AppointmentActionButtonsState
           title: AppStrings.revertToScheduled,
           message: AppStrings.confirmRevert),
     );
-    if (ok != true) { return; }
-    await ref
-        .read(appointmentDetailControllerProvider(widget.appointment.id)
-            .notifier)
-        .revertToScheduled();
-    if (mounted) {
-      AppSnackbar.show(context,
-          message: AppStrings.statusUpdateSuccess,
-          variant: AppSnackbarVariant.success);
-    }
+    if (ok != true) return;
+    await _updateStatus(AppointmentStatus.scheduled);
   }
 
   Future<void> _restore() async {
@@ -177,15 +161,22 @@ class _AppointmentActionButtonsState
           title: AppStrings.restoreToScheduled,
           message: AppStrings.confirmRestore),
     );
-    if (ok != true) { return; }
-    await ref
-        .read(appointmentDetailControllerProvider(widget.appointment.id)
-            .notifier)
-        .revertToScheduled();
-    if (mounted) {
-      AppSnackbar.show(context,
-          message: AppStrings.statusUpdateSuccess,
-          variant: AppSnackbarVariant.success);
+    if (ok != true) return;
+    await _updateStatus(AppointmentStatus.scheduled);
+  }
+
+  Future<void> _updateStatus(AppointmentStatus status) async {
+    final Result<void>? result = await ref
+        .read(agendaStatusControllerProvider(widget.appointment.id).notifier)
+        .update(widget.appointment.patientId, status);
+    if (!mounted || result == null) return;
+    switch (result) {
+      case Success<void>():
+        AppSnackbar.show(context,
+            message: AppStrings.statusUpdateSuccess,
+            variant: AppSnackbarVariant.success);
+      case Failure<void>(:final exception):
+        throw exception;
     }
   }
 }

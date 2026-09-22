@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:spine_clinic_app/core/constants/app_sizes.dart';
 import 'package:spine_clinic_app/core/constants/app_strings.dart';
 import 'package:spine_clinic_app/core/constants/app_text_styles.dart';
+import 'package:spine_clinic_app/shared/widgets/skeleton_loader.dart';
 import 'package:spine_clinic_app/features/appointment/presentation/booking_patient_search_provider.dart';
 import 'package:spine_clinic_app/features/patient/domain/patient.dart';
 import 'package:spine_clinic_app/features/patient/presentation/widgets/patient_monogram_badge.dart';
@@ -79,8 +80,7 @@ class _PatientSearchSheetState extends ConsumerState<PatientSearchSheet> {
           ),
           Expanded(
             child: listAsync.when(
-              loading: () =>
-                  Center(child: CircularProgressIndicator(color: cs.primary)),
+              loading: () => const SkeletonTileList(count: 5),
               error: (_, __) => Center(
                 child: Text(
                   AppStrings.errorLoadingPatients,

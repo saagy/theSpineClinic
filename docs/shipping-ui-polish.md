@@ -124,9 +124,80 @@ The implementation reuses the existing auto_size_text dependency; status/menu
 hit targets and row columns remain fixed.
 
 
+## Check-in and appointment-form follow-up (September 22)
+
+Audit before editing:
+
+- The appointment detail action replaced every failed status mutation with a
+  generic snackbar. The active agenda menu already mapped repository errors to
+  AppStrings, so the same insufficient-balance rejection appeared differently.
+- The shared insufficient-balance message described the booking form's toggle,
+  which is unavailable during check-in.
+- New appointment type and bundle changes reapplied doctor defaults, clearing
+  manually selected doctors. Returning from an assessment also left package
+  billing off. An older assigned-doctor fetch could populate a newly selected
+  patient's form.
+- Doctor selection did not identify senior doctors, even though assessments
+  commonly use them. The form needed a reminder to review this choice.
+
+Decision and implementation: keep the database's atomic nonnegative check-in
+guard. Package check-in consumes one PT or traction credit. If no credit remains,
+staff can add sessions or edit a scheduled appointment to use a paid session.
+The detail screen now uses the same `AgendaStatusController` as the active agenda
+menu for role checks, status writes, cache synchronization, and mapped errors.
+The detail controller only loads the record. The shared message is usable during
+booking, editing, and check-in.
+Assigned doctors are preselected when a patient is chosen and stay selected
+through type and bundle changes; secondary assessment doctors remain an explicit
+choice. The form retains the prior session billing choice when switching away
+and back, rejects stale doctor fetches, and reminds staff to review assessment
+doctors. Senior doctors are identified in the shared picker.
+
+Adjacent audit: the older appointment actions sheet and receptionist cards have
+no current call sites. The dormant grouped-card bulk mutation updates appointments
+one by one and reports a generic failure; it needs an atomic RPC before reuse.
+Active bundled booking also submits primary and secondary bookings separately,
+with a possible partial outcome. Treat that as a separate transaction fix before
+relying on bundled booking for routine production use.
+
+Validation: `flutter analyze` reported no issues. The focused check-in, agenda
+menu, and booking-form tests passed. Existing mobile and desktop form preview
+tests passed; the 360px and 1280px captures were inspected. The fixture previews
+do not include a selected patient, so doctor retention is covered by the widget
+regression test rather than those screenshots.
+
+
 Validation: Flutter analysis reports no issues. The full suite passed 281 tests;
 the remaining name-fit assertion was corrected to accept either permitted
 reduced size under inherited font metrics, and both focused name tests passed.
 Mobile and desktop production-row captures were inspected. Status tests cover
 loaded-page retention, doctor metadata, patient status filters, booking pane
 retention, passive hit targets and reduced-motion transitions.
+
+## Patient detail and booking polish (September 22)
+
+Audit: the Documents folder had a white surface and a bottom gap unlike the
+document rows, leaving no shared hairline separator. Its group provider rendered
+with documents before program metadata resolved, briefly showing “Program”. The
+note author header animated between differently sized loading and loaded children.
+Booking mixed card-like due rows with flat schedule rows, compressed names and due
+dates into very small single-line text, used 30px quick actions, and replaced its
+mobile tabs with a skeleton during refresh. Full-page form and result-list spinners
+also felt disconnected from the content they preceded.
+
+Implementation: document folders now use the row surface and separator rhythm.
+The group provider waits for both source providers; retry refreshes documents and
+programs. Notes keep the badge width fixed and swap the author placeholder in
+place. Booking's due queue uses flat separated rows, readable metadata, 44px
+actions, responsive action placement, and stable underlined count tabs. Initial
+form, visit-detail, and patient-search loading uses shaped placeholders. Small
+progress indicators remain for local mutations, pagination, and file operations.
+
+Validation: `flutter analyze --no-pub` reported no issues. The document-group
+timing and note-position tests passed. Booking widget tests and rendered previews
+passed at 320, 360, and 1280px with normal and 1.6x text. Patient Documents and
+Notes were rendered at 360 and 1280px; Booking was also reviewed in light and
+dark themes. Fixture previews use fictional data and
+do not verify a live backend mutation. The full Flutter suite passed 298 tests;
+the legacy document-grid fixtures now provide the program lookup required by
+the grouped loading state.

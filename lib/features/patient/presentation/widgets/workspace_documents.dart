@@ -9,6 +9,7 @@ import 'package:spine_clinic_app/core/utils/file_display_helper.dart';
 import 'package:spine_clinic_app/core/utils/formatters.dart';
 import 'package:spine_clinic_app/features/medical_records/presentation/patient_programs_providers.dart';
 import 'package:spine_clinic_app/features/patient/domain/patient_document.dart';
+import 'package:spine_clinic_app/features/patient/presentation/patient_documents_providers.dart';
 import 'package:spine_clinic_app/features/patient/presentation/widgets/patient_document_actions.dart';
 import 'package:spine_clinic_app/features/patient/presentation/widgets/workspace_upload_button.dart';
 import 'package:spine_clinic_app/shared/widgets/record_section.dart';
@@ -38,13 +39,17 @@ class WorkspaceDocuments extends ConsumerWidget {
         WorkspaceTabHeader(
           title: AppStrings.tabDocuments,
           trailing: preview && onViewAll != null
-              ? TextButton(onPressed: onViewAll, child: const Text(AppStrings.viewAll))
+              ? TextButton(
+                  onPressed: onViewAll,
+                  child: const Text(AppStrings.viewAll),
+                )
               : (!preview
                     ? LayoutBuilder(
-                        builder: (context, constraints) => WorkspaceUploadButton(
-                          patientId: patientId,
-                          iconOnly: constraints.maxWidth < 480,
-                        ),
+                        builder: (context, constraints) =>
+                            WorkspaceUploadButton(
+                              patientId: patientId,
+                              iconOnly: constraints.maxWidth < 480,
+                            ),
                       )
                     : null),
         ),
@@ -53,7 +58,11 @@ class WorkspaceDocuments extends ConsumerWidget {
           padding: EdgeInsets.zero,
           child: RecordAsync(
             value: ref.watch(provider),
-            onRetry: () => ref.invalidate(provider),
+            onRetry: () {
+              ref.invalidate(patientDocumentsNotifierProvider(patientId));
+              ref.invalidate(patientProgramsProvider(patientId));
+              ref.invalidate(provider);
+            },
             data: (groups) {
               if (groups.isEmpty) {
                 return const Padding(
@@ -62,15 +71,25 @@ class WorkspaceDocuments extends ConsumerWidget {
                 );
               }
               final folders = preview ? groups.folders.take(3) : groups.folders;
-              final standalone = (preview ? groups.standalone.take(3) : groups.standalone).toList();
+              final standalone =
+                  (preview ? groups.standalone.take(3) : groups.standalone)
+                      .toList();
+              final rows = <Widget>[
+                for (final folder in folders)
+                  WorkspaceDocumentFolder(group: folder, patientId: patientId),
+                for (final document in standalone)
+                  WorkspaceDocumentRow(
+                    document: document,
+                    showActions: !preview,
+                  ),
+              ];
               return Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  for (final folder in folders)
-                    WorkspaceDocumentFolder(group: folder, patientId: patientId),
-                  for (int i = 0; i < standalone.length; i++) ...[
-                    WorkspaceDocumentRow(document: standalone[i], showActions: !preview),
-                    if (i < standalone.length - 1) const Divider(height: AppSizes.borderWidth),
+                  for (int i = 0; i < rows.length; i++) ...[
+                    rows[i],
+                    if (i < rows.length - 1)
+                      const Divider(height: AppSizes.borderWidth),
                   ],
                 ],
               );
@@ -83,14 +102,20 @@ class WorkspaceDocuments extends ConsumerWidget {
 }
 
 class WorkspaceDocumentRow extends ConsumerWidget {
-  const WorkspaceDocumentRow({super.key, required this.document, this.showActions = true});
+  const WorkspaceDocumentRow({
+    super.key,
+    required this.document,
+    this.showActions = true,
+  });
   final PatientDocument document;
   final bool showActions;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final colors = Theme.of(context).colorScheme;
-    final programs = ref.watch(patientProgramsProvider(document.patientId)).value;
+    final programs = ref
+        .watch(patientProgramsProvider(document.patientId))
+        .value;
     String? programName;
     for (final program in programs ?? []) {
       if (program.id == document.programId) {
@@ -112,7 +137,10 @@ class WorkspaceDocumentRow extends ConsumerWidget {
           ),
         ),
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: AppSizes.p16, vertical: AppSizes.p14),
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppSizes.p16,
+            vertical: AppSizes.p14,
+          ),
           child: Row(
             children: [
               DocumentThumbnail(document: document),
@@ -121,18 +149,27 @@ class WorkspaceDocumentRow extends ConsumerWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(name, style: AppTextStyles.bodyMedium.copyWith(color: colors.onSurface)),
+                    Text(
+                      name,
+                      style: AppTextStyles.bodyMedium.copyWith(
+                        color: colors.onSurface,
+                      ),
+                    ),
                     const SizedBox(height: AppSizes.p4),
                     Text(
                       Formatters.formatDateMedium(document.uploadedAt),
-                      style: AppTextStyles.caption.copyWith(color: colors.onSurfaceVariant),
+                      style: AppTextStyles.caption.copyWith(
+                        color: colors.onSurfaceVariant,
+                      ),
                     ),
                     if (document.programId != null)
                       Text(
                         programName?.isNotEmpty == true
                             ? programName!
                             : AppStrings.rehabilitationProgram,
-                        style: AppTextStyles.caption.copyWith(color: colors.onSurfaceVariant),
+                        style: AppTextStyles.caption.copyWith(
+                          color: colors.onSurfaceVariant,
+                        ),
                       ),
                   ],
                 ),

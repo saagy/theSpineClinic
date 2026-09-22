@@ -8,7 +8,11 @@ import 'package:spine_clinic_app/features/patient/presentation/patient_document_
 import 'package:spine_clinic_app/features/patient/presentation/widgets/workspace_documents.dart';
 
 class WorkspaceDocumentFolder extends StatelessWidget {
-  const WorkspaceDocumentFolder({super.key, required this.group, required this.patientId});
+  const WorkspaceDocumentFolder({
+    super.key,
+    required this.group,
+    required this.patientId,
+  });
   final ProgramDocumentGroup group;
   final String patientId;
   @override
@@ -18,52 +22,58 @@ class WorkspaceDocumentFolder extends StatelessWidget {
         .map((c) => c.condition?.conditionName)
         .whereType<String>()
         .join(', ');
-    final image = group.documents.where((d) => FileDisplayHelper.isImage(d.fileName)).firstOrNull;
-    return Padding(
-      padding: const EdgeInsets.only(bottom: AppSizes.p12),
-      child: Material(
-        color: cs.surface,
-        shape: RoundedRectangleBorder(
-          side: BorderSide.none,
+    final image = group.documents
+        .where((d) => FileDisplayHelper.isImage(d.fileName))
+        .firstOrNull;
+    return Material(
+      type: MaterialType.transparency,
+      child: InkWell(
+        onTap: () => ProgramGalleryViewerScreen.open(
+          context,
+          documents: group.documents,
+          title: name?.isNotEmpty == true ? name! : AppStrings.program,
+          patientId: patientId,
+          programId: group.program?.id,
         ),
-        child: InkWell(
-          borderRadius: BorderRadius.circular(AppSizes.r8),
-          onTap: () => ProgramGalleryViewerScreen.open(
-            context,
-            documents: group.documents,
-            title: name?.isNotEmpty == true ? name! : AppStrings.program,
-            patientId: patientId,
-            programId: group.program?.id,
-          ),
-          child: Padding(
-            padding: const EdgeInsets.all(AppSizes.p16),
-            child: Row(
-              children: [
-                if (image != null)
-                  DocumentThumbnail(document: image)
-                else
-                  SizedBox.square(
-                    dimension: AppSizes.documentPreviewSize,
-                    child: Icon(Icons.folder_outlined, color: cs.primary, size: AppSizes.iconLarge),
-                  ),
-                const SizedBox(width: AppSizes.p16),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        name?.isNotEmpty == true ? name! : AppStrings.program,
-                        style: AppTextStyles.bodyBold,
-                      ),
-                      const SizedBox(height: AppSizes.p6),
-                      Text(AppStrings.scanCountLabel(group.count), style: AppTextStyles.caption),
-                    ],
+        child: Padding(
+          padding: const EdgeInsets.all(AppSizes.p16),
+          child: Row(
+            children: [
+              if (image != null)
+                DocumentThumbnail(document: image)
+              else
+                SizedBox.square(
+                  dimension: AppSizes.documentPreviewSize,
+                  child: Icon(
+                    Icons.folder_outlined,
+                    color: cs.primary,
+                    size: AppSizes.iconLarge,
                   ),
                 ),
-                const SizedBox(width: AppSizes.p12),
-                Icon(Icons.folder_open_outlined, color: cs.primary, size: AppSizes.iconDefault),
-              ],
-            ),
+              const SizedBox(width: AppSizes.p16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      name?.isNotEmpty == true ? name! : AppStrings.program,
+                      style: AppTextStyles.bodyBold,
+                    ),
+                    const SizedBox(height: AppSizes.p6),
+                    Text(
+                      AppStrings.scanCountLabel(group.count),
+                      style: AppTextStyles.caption,
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: AppSizes.p12),
+              Icon(
+                Icons.folder_open_outlined,
+                color: cs.primary,
+                size: AppSizes.iconDefault,
+              ),
+            ],
           ),
         ),
       ),

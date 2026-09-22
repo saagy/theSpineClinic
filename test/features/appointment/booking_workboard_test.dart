@@ -94,8 +94,8 @@ void main() {
       await _pumpLists(tester, width: 390, wide: false);
 
       expect(find.byType(SegmentedCountTabs), findsOneWidget);
-      expect(find.text(AppStrings.duePatients), findsOneWidget);
-      expect(find.text(AppStrings.schedule), findsOneWidget);
+      expect(find.text(AppStrings.sectionCount(AppStrings.duePatients, 0)), findsOneWidget);
+      expect(find.text(AppStrings.sectionCount(AppStrings.schedule, 0)), findsOneWidget);
       expect(find.text(AppStrings.noDuePatients), findsOneWidget);
       expect(tester.takeException(), isNull);
     },

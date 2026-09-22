@@ -2,19 +2,19 @@ part of 'new_appointment_form.dart';
 
 extension _NewAppointmentFormActions on _NewAppointmentFormState {
   Future<void> _fetchAssignedDoctors() async {
-    if (_patientId == null) return;
+    final String? patientId = _patientId;
+    if (patientId == null) return;
     _mutate(() => _isFetchingDoctors = true);
     try {
       final result = await ref
           .read(appointmentRepositoryProvider)
-          .getAssignedDoctors(_patientId!)
+          .getAssignedDoctors(patientId)
           .timeout(_NewAppointmentFormState._fetchTimeout);
-      if (!mounted) return;
+      if (!mounted || _patientId != patientId) return;
       result.when(
         success: (docs) {
-          final activeDocs = docs.where((s) => s.isActive).toList();
-          _assignedDoctorsCache = activeDocs;
-          _prepopulateDoctorsForBundling();
+          final List<Staff> activeDocs = docs.where((s) => s.isActive).toList();
+          _prepopulateAssignedDoctors(activeDocs);
           _mutate(() {
             _isFetchingDoctors = false;
             _doctorFieldEnabled = true;
@@ -33,7 +33,7 @@ extension _NewAppointmentFormActions on _NewAppointmentFormState {
         },
       );
     } on TimeoutException {
-      if (!mounted) return;
+      if (!mounted || _patientId != patientId) return;
       _mutate(() {
         _isFetchingDoctors = false;
         _doctorFieldEnabled = true;
@@ -44,7 +44,7 @@ extension _NewAppointmentFormActions on _NewAppointmentFormState {
         variant: AppSnackbarVariant.info,
       );
     } catch (_) {
-      if (!mounted) return;
+      if (!mounted || _patientId != patientId) return;
       _mutate(() {
         _isFetchingDoctors = false;
         _doctorFieldEnabled = true;
@@ -52,14 +52,7 @@ extension _NewAppointmentFormActions on _NewAppointmentFormState {
     }
   }
 
-  void _prepopulateDoctorsForBundling() {
-    final docs = _assignedDoctorsCache;
-    final primaryIsPT = _selectedType == AppointmentType.normalPtSession ||
-        _selectedType == AppointmentType.spinalTractionSession;
-    final secondaryIsPT = _bundleSecondarySession &&
-        (_secondaryType == AppointmentType.normalPtSession ||
-            _secondaryType == AppointmentType.spinalTractionSession);
-
+  void _prepopulateAssignedDoctors(List<Staff> docs) {
     final sorted = List<Staff>.from(docs)
       ..sort((a, b) {
         if (a.id == widget.preselectedDoctorId) return -1;
@@ -67,19 +60,7 @@ extension _NewAppointmentFormActions on _NewAppointmentFormState {
         return a.fullName.compareTo(b.fullName);
       });
 
-    if (primaryIsPT) {
-      _doctorFieldKey.currentState?.didChange(sorted);
-      if (_bundleSecondarySession) {
-        _secondaryDoctorFieldKey.currentState?.didChange([]);
-      }
-    } else {
-      _doctorFieldKey.currentState?.didChange([]);
-      if (secondaryIsPT) {
-        _secondaryDoctorFieldKey.currentState?.didChange(sorted);
-      } else {
-        _secondaryDoctorFieldKey.currentState?.didChange([]);
-      }
-    }
+    _doctorFieldKey.currentState?.didChange(sorted);
   }
 
   void _onPatientSelected(Patient patient) {

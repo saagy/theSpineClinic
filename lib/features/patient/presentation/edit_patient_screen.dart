@@ -6,6 +6,7 @@ import 'package:spine_clinic_app/features/patient/domain/patient.dart';
 import 'package:spine_clinic_app/features/patient/presentation/patient_providers.dart';
 import 'package:spine_clinic_app/features/patient/presentation/widgets/edit_patient_form.dart';
 import 'package:spine_clinic_app/shared/widgets/error_view.dart';
+import 'package:spine_clinic_app/shared/widgets/form_page_skeleton.dart';
 
 /// Screen view that loads data and renders the edit patient form.
 class EditPatientScreen extends ConsumerWidget {
@@ -49,7 +50,7 @@ class EditPatientScreen extends ConsumerWidget {
     if (isInitialLoading) {
       return Scaffold(
         appBar: AppBar(title: const Text(AppStrings.editPatient)),
-        body: const Center(child: CircularProgressIndicator()),
+        body: const FormPageSkeleton(),
       );
     }
 

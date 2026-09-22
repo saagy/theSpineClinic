@@ -429,7 +429,9 @@ abstract final class AppStrings {
 
   // ── Booking Balance Diagnostics ──
   static const String insufficientPackageBalance =
-      'Insufficient package balance. Toggle off \'Use Package\' to book as a paid session.';
+      'Not enough package sessions. Add sessions to the patient\'s balance or use a paid session instead.';
+  static const String assessmentDoctorReminder =
+      'Assessments are usually done by a senior doctor. Review the selected doctor.';
   static const String negativeBalanceOutstanding =
       'Outstanding balance — patient owes sessions from previous bookings.';
   static const String errorLoadingPackageMetrics =

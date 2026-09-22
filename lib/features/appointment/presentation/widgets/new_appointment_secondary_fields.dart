@@ -19,7 +19,6 @@ extension _SecondarySessionFields on _NewAppointmentFormState {
           ),
           onSelectionChanged: (types) => _mutate(() {
             _secondaryType = types.first;
-            _prepopulateDoctorsForBundling();
           }),
         ),
         const SizedBox(height: AppSizes.p20),
@@ -40,6 +39,8 @@ extension _SecondarySessionFields on _NewAppointmentFormState {
           validator: (doctors) =>
               doctors == null || doctors.isEmpty ? AppStrings.atLeastOneDoctorRequired : null,
         ),
+        const SizedBox(height: AppSizes.p8),
+        const Text(AppStrings.assessmentDoctorReminder, style: AppTextStyles.caption),
       ],
     ),
   );

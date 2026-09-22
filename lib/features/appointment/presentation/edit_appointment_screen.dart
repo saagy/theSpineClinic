@@ -11,6 +11,7 @@ import 'package:spine_clinic_app/features/auth/presentation/auth_providers.dart'
 import 'package:spine_clinic_app/shared/widgets/app_back_button.dart';
 import 'package:spine_clinic_app/shared/widgets/app_snackbar.dart';
 import 'package:spine_clinic_app/shared/widgets/error_view.dart';
+import 'package:spine_clinic_app/shared/widgets/form_page_skeleton.dart';
 import 'package:spine_clinic_app/shared/widgets/skeleton_loader.dart';
 
 /// Screen for editing an existing appointment's details.
@@ -35,8 +36,8 @@ class EditAppointmentScreen extends ConsumerWidget {
     if (asyncUser.isLoading || user == null) {
       return Scaffold(
         backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-        body: Center(
-            child: CircularProgressIndicator(color: Theme.of(context).colorScheme.primary)),
+        appBar: AppBar(title: const Text(AppStrings.editAppointment)),
+        body: const FormPageSkeleton(),
       );
     }
 

@@ -101,6 +101,13 @@ class DoctorPickerTile extends StatelessWidget {
                           ],
                         ],
                       ),
+                      if (doctor.isSenior) ...[
+                        const SizedBox(height: AppSizes.p2),
+                        Text(
+                          AppStrings.seniorDoctor,
+                          style: AppTextStyles.captionMedium.copyWith(color: cs.primary),
+                        ),
+                      ],
                       if (doctor.branch != null) ...[
                         const SizedBox(height: AppSizes.p2),
                         Text(

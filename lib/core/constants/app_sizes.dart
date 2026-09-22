@@ -12,6 +12,8 @@ import 'package:flutter/material.dart';
 /// Application-wide dimension constants.
 abstract final class AppSizes {
   static const double agendaWideBreakpoint = 650;
+  static const double bookingActionsBelowWidth = 280;
+  static const double bookingEnlargedActionsBelowWidth = 400;
   static const double agendaCompactTimeWidth = 62;
   static const double agendaWideTimeWidth = 76;
   static const double agendaStatusWidth = 132;

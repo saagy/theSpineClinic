@@ -35,6 +35,16 @@ void main() {
       await tester.pumpAndSettle();
       expect(tester.takeException(), isNull);
       await capturePolish(tester, key, 'appointments-$width');
+      await tester.ensureVisible(find.text(AppStrings.tabDocuments).first);
+      await tester.tap(find.text(AppStrings.tabDocuments).first);
+      await tester.pumpAndSettle();
+      expect(tester.takeException(), isNull);
+      await capturePolish(tester, key, 'documents-$width');
+      await tester.ensureVisible(find.text(AppStrings.notes).first);
+      await tester.tap(find.text(AppStrings.notes).first);
+      await tester.pumpAndSettle();
+      expect(tester.takeException(), isNull);
+      await capturePolish(tester, key, 'notes-$width');
       await tester.pumpWidget(
         RepaintBoundary(
           key: key,

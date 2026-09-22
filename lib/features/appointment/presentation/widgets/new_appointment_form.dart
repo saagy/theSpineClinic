@@ -72,6 +72,7 @@ class _NewAppointmentFormState extends ConsumerState<NewAppointmentForm> {
   bool _isRecurring = false;
   bool _isSubmitting = false;
   bool _usePackage = true;
+  bool _sessionUsePackage = true;
   bool _isFetchingDoctors = false;
   bool _doctorFieldEnabled = true;
   DateTime? _selectedDate;
@@ -88,7 +89,6 @@ class _NewAppointmentFormState extends ConsumerState<NewAppointmentForm> {
   final _secondaryDoctorFieldKey = GlobalKey<FormFieldState<List<Staff>>>();
   TimeOfDay? _secondaryTime = const TimeOfDay(hour: 9, minute: 0);
   String? _secondaryTimeErrorText;
-  List<Staff> _assignedDoctorsCache = const [];
 
   static const Duration _fetchTimeout = Duration(seconds: 15);
 

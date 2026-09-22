@@ -32,22 +32,16 @@ class WorkspaceNoteRow extends ConsumerWidget {
         children: [
           Row(
             children: [
-              AnimatedSwitcher(
-                duration: const Duration(milliseconds: 180),
+              SizedBox.square(
+                dimension: AppSizes.p28,
                 child: authorAsync.when(
                   data: (staff) => PatientMonogramBadge(
-                    key: ValueKey('badge_${staff.id}'),
                     name: staff.fullName,
                     size: AppSizes.p28,
                   ),
-                  loading: () => const SkeletonCircle(
-                    key: ValueKey('author_badge_skeleton'),
-                    radius: AppSizes.p28 / 2,
-                  ),
-                  error: (_, _) => const PatientMonogramBadge(
-                    name: '',
-                    size: AppSizes.p28,
-                  ),
+                  loading: () => const SkeletonCircle(radius: AppSizes.p28 / 2),
+                  error: (_, _) =>
+                      const PatientMonogramBadge(name: '', size: AppSizes.p28),
                 ),
               ),
               const SizedBox(width: AppSizes.p10),
@@ -57,22 +51,21 @@ class WorkspaceNoteRow extends ConsumerWidget {
                   children: [
                     Align(
                       alignment: Alignment.centerLeft,
-                      child: AnimatedSwitcher(
-                        duration: const Duration(milliseconds: 180),
-                        child: authorAsync.when(
-                          data: (staff) => Text(
-                            staff.fullName,
-                            key: ValueKey('author_name_${staff.id}'),
-                            style: AppTextStyles.bodyBold.copyWith(color: cs.onSurface),
+                      child: authorAsync.when(
+                        data: (staff) => Text(
+                          staff.fullName,
+                          style: AppTextStyles.bodyBold.copyWith(
+                            color: cs.onSurface,
                           ),
-                          loading: () => const SkeletonBox(
-                            key: ValueKey('author_name_skeleton'),
-                            width: 110,
-                            height: 14,
-                          ),
-                          error: (_, _) => Text(
-                            AppStrings.recordedBy,
-                            style: AppTextStyles.bodyBold.copyWith(color: cs.onSurface),
+                        ),
+                        loading: () => const SkeletonBox(
+                          width: AppSizes.skeletonSubtitleWidth,
+                          height: AppSizes.skeletonLabelHeight,
+                        ),
+                        error: (_, _) => Text(
+                          AppStrings.recordedBy,
+                          style: AppTextStyles.bodyBold.copyWith(
+                            color: cs.onSurface,
                           ),
                         ),
                       ),
@@ -80,7 +73,9 @@ class WorkspaceNoteRow extends ConsumerWidget {
                     const SizedBox(height: AppSizes.p2),
                     Text(
                       Formatters.formatDateTime(note.createdAt),
-                      style: AppTextStyles.caption.copyWith(color: cs.onSurfaceVariant),
+                      style: AppTextStyles.caption.copyWith(
+                        color: cs.onSurfaceVariant,
+                      ),
                     ),
                   ],
                 ),
@@ -88,19 +83,42 @@ class WorkspaceNoteRow extends ConsumerWidget {
               if (note.appointmentId != null)
                 IconButton(
                   tooltip: AppStrings.viewAppointment,
-                  icon: const Icon(Icons.event_note_outlined, size: AppSizes.iconSmall),
-                  onPressed: () => context.push(AppRoutes.appointmentDetail.replaceFirst(':id', note.appointmentId!)),
+                  icon: const Icon(
+                    Icons.event_note_outlined,
+                    size: AppSizes.iconSmall,
+                  ),
+                  onPressed: () => context.push(
+                    AppRoutes.appointmentDetail.replaceFirst(
+                      ':id',
+                      note.appointmentId!,
+                    ),
+                  ),
                 ),
               RecordActionMenu<String>(
                 tooltip: AppStrings.moreActions,
                 actions: const [
-                  RecordMenuAction('edit', AppStrings.edit, Icons.edit_outlined),
-                  RecordMenuAction('delete', AppStrings.delete, Icons.delete_outline, destructive: true),
+                  RecordMenuAction(
+                    'edit',
+                    AppStrings.edit,
+                    Icons.edit_outlined,
+                  ),
+                  RecordMenuAction(
+                    'delete',
+                    AppStrings.delete,
+                    Icons.delete_outline,
+                    destructive: true,
+                  ),
                 ],
                 onSelected: (action) async {
-                  if (ref.read(currentUserProvider).value?.isActive != true) return;
+                  if (ref.read(currentUserProvider).value?.isActive != true) {
+                    return;
+                  }
                   if (action == 'edit') {
-                    await WorkspaceNoteEditor.show(context, note.patientId, note: note);
+                    await WorkspaceNoteEditor.show(
+                      context,
+                      note.patientId,
+                      note: note,
+                    );
                   } else {
                     final confirmed = await showDialog<bool>(
                       context: context,
@@ -112,10 +130,15 @@ class WorkspaceNoteRow extends ConsumerWidget {
                       ),
                     );
                     if (confirmed != true || !context.mounted) return;
-                    final result = await ref.read(patientNoteActionsControllerProvider.notifier).delete(note);
+                    final result = await ref
+                        .read(patientNoteActionsControllerProvider.notifier)
+                        .delete(note);
                     if (!context.mounted) return;
                     result.when(
-                      success: (_) => AppSnackbar.show(context, message: AppStrings.noteDeleted),
+                      success: (_) => AppSnackbar.show(
+                        context,
+                        message: AppStrings.noteDeleted,
+                      ),
                       failure: (e) => AppSnackbar.show(
                         context,
                         message: AppStrings.fromKey(e.userMessageKey),

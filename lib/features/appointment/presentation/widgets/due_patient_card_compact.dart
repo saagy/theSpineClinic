@@ -1,6 +1,6 @@
 part of 'due_patient_card.dart';
 
-/// Compact single-row layout for due patient booking cards.
+/// Due-patient row with actions alongside or below the identity.
 class _DuePatientCompactRow extends StatelessWidget {
   const _DuePatientCompactRow({
     required this.patient,
@@ -26,91 +26,82 @@ class _DuePatientCompactRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final actionsBelow =
+            constraints.maxWidth < AppSizes.bookingActionsBelowWidth ||
+            (MediaQuery.textScalerOf(context).scale(1) > 1.3 &&
+                constraints.maxWidth < AppSizes.bookingEnlargedActionsBelowWidth);
+        if (actionsBelow) {
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              _identity(),
+              const SizedBox(height: AppSizes.p8),
+              Align(alignment: Alignment.centerRight, child: _actions()),
+            ],
+          );
+        }
+        return Row(
+          children: [
+            Expanded(child: _identity()),
+            const SizedBox(width: AppSizes.p4),
+            _actions(),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _identity() {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        PatientMonogramBadge(
-          name: patient.fullName,
-          size: 26.0,
-        ),
+        PatientMonogramBadge(name: patient.fullName, size: AppSizes.p32),
         const SizedBox(width: AppSizes.p8),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
             children: [
-              AutoSizeText(
+              Text(
                 patient.fullName,
-                style: AppTextStyles.bodyBold.copyWith(fontSize: 13),
-                maxLines: 1,
-                minFontSize: 10,
-                overflow: TextOverflow.ellipsis,
+                style: AppTextStyles.bodyBold.copyWith(color: colors.onSurface),
               ),
-              const SizedBox(height: 1),
-              Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Flexible(
-                    flex: 2,
-                    child: Text(
-                      patient.phoneNumber,
-                      style: AppTextStyles.caption.copyWith(
-                        fontSize: 10,
-                        color: colors.onSurfaceVariant,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
+              const SizedBox(height: AppSizes.p2),
+              Text(
+                patient.phoneNumber,
+                style: AppTextStyles.caption.copyWith(
+                  color: colors.onSurfaceVariant,
+                ),
+              ),
+              if (due != null)
+                Text(
+                  overdue
+                      ? AppStrings.overdueSince(DateFormat('MMM d').format(due!))
+                      : AppStrings.dueOn(DateFormat('MMM d').format(due!)),
+                  style: AppTextStyles.captionBold.copyWith(
+                    color: overdue ? clinic.warning : colors.onSurfaceVariant,
                   ),
-                  if (due != null) ...[
-                    Padding(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: AppSizes.p4,
-                      ),
-                      child: Text(
-                        '•',
-                        style: AppTextStyles.caption.copyWith(
-                          fontSize: 10,
-                          color: colors.outline,
-                        ),
-                      ),
-                    ),
-                    Flexible(
-                      flex: 3,
-                      child: AutoSizeText(
-                        overdue
-                            ? AppStrings.overdueSince(
-                                DateFormat('MMM d').format(due!),
-                              )
-                            : AppStrings.dueOn(
-                                DateFormat('MMM d').format(due!),
-                              ),
-                        style: AppTextStyles.captionBold.copyWith(
-                          fontSize: 10,
-                          color: overdue
-                              ? clinic.warning
-                              : colors.onSurfaceVariant,
-                        ),
-                        maxLines: 1,
-                        minFontSize: 8,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                  ],
-                ],
-              ),
+                ),
             ],
           ),
         ),
-        const SizedBox(width: AppSizes.p6),
+      ],
+    );
+  }
+
+  Widget _actions() => Row(
+    mainAxisSize: MainAxisSize.min,
+    children: [
         _CompactActionButton(
           icon: Icons.call_outlined,
           tooltip: AppStrings.call,
-          backgroundColor: colors.surfaceContainerHighest,
+          backgroundColor: colors.surfaceContainerHigh,
           foregroundColor: colors.primary,
           onTap: onCall,
         ),
-        const SizedBox(width: AppSizes.p6),
+        const SizedBox(width: AppSizes.p4),
         _CompactActionButton(
           icon: Icons.event_available_rounded,
           tooltip: AppStrings.book,
@@ -118,15 +109,13 @@ class _DuePatientCompactRow extends StatelessWidget {
           foregroundColor: colors.onPrimaryContainer,
           onTap: onBook,
         ),
-        const SizedBox(width: AppSizes.p2),
         _DuePatientMenu(
           onRemindLater: onRemindLater,
           onStopFollowUp: onStopFollowUp,
           isCompact: true,
         ),
-      ],
-    );
-  }
+    ],
+  );
 }
 
 class _CompactActionButton extends StatelessWidget {
@@ -155,12 +144,12 @@ class _CompactActionButton extends StatelessWidget {
           onTap: onTap,
           borderRadius: const BorderRadius.all(Radius.circular(AppSizes.r8)),
           child: SizedBox(
-            width: 30,
-            height: 30,
+            width: AppSizes.tappableMin,
+            height: AppSizes.tappableMin,
             child: Center(
               child: Icon(
                 icon,
-                size: 15,
+                size: AppSizes.iconDefault,
                 color: foregroundColor,
               ),
             ),

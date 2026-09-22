@@ -9,6 +9,7 @@ import 'package:spine_clinic_app/features/appointment/presentation/appointment_p
 import 'package:spine_clinic_app/features/appointment/presentation/widgets/appointment_balance_diagnostics.dart';
 import 'package:spine_clinic_app/features/appointment/presentation/widgets/new_appointment_form.dart';
 import 'package:spine_clinic_app/features/appointment/presentation/widgets/recurring_pattern_picker.dart';
+import 'package:spine_clinic_app/shared/widgets/doctor_select_field.dart';
 import 'package:spine_clinic_app/features/auth/domain/staff.dart';
 import 'package:spine_clinic_app/features/auth/domain/user_role.dart';
 import 'package:spine_clinic_app/features/auth/presentation/auth_providers.dart';
@@ -17,9 +18,13 @@ import 'package:spine_clinic_app/features/patient/domain/patient.dart';
 import 'package:spine_clinic_app/features/patient/presentation/patient_providers.dart';
 
 class _FakeAppointmentRepo implements AppointmentRepository {
+  _FakeAppointmentRepo({this.assignedDoctors = const []});
+
+  final List<Staff> assignedDoctors;
+
   @override
   Future<Result<List<Staff>>> getAssignedDoctors(String patientId) async =>
-      const Result.success([]);
+      Result.success(assignedDoctors);
 
   @override
   Future<Result<int>> getFutureScheduledAppointmentsCountForType({
@@ -58,10 +63,12 @@ final _testStaff = Staff(
   createdAt: DateTime(2026),
 );
 
-Widget _buildTestWidget() {
+Widget _buildTestWidget({List<Staff> assignedDoctors = const []}) {
   return ProviderScope(
     overrides: [
-      appointmentRepositoryProvider.overrideWithValue(_FakeAppointmentRepo()),
+      appointmentRepositoryProvider.overrideWithValue(
+        _FakeAppointmentRepo(assignedDoctors: assignedDoctors),
+      ),
       patientDetailProvider(_testPatient.id).overrideWith((ref) => Future.value(_testPatient)),
       currentUserProvider.overrideWith(() => _TestCurrentUser(_testStaff)),
       availableBalanceForTypeProvider((
@@ -81,6 +88,43 @@ Widget _buildTestWidget() {
 }
 
 void main() {
+  testWidgets('type changes retain the chosen doctor and session billing choice', (tester) async {
+    final assignedDoctor = _testStaff.copyWith(
+      id: 'doctor-assigned',
+      fullName: 'Assigned Doctor',
+      role: UserRole.doctor,
+    );
+    final selectedDoctor = assignedDoctor.copyWith(
+      id: 'doctor-selected',
+      fullName: 'Selected Doctor',
+      isSenior: true,
+    );
+    await tester.pumpWidget(_buildTestWidget(assignedDoctors: [assignedDoctor]));
+    await tester.pumpAndSettle();
+
+    final doctorField = find.byType(DoctorSelectField).first;
+    final fieldState = tester.state<FormFieldState<List<Staff>>>(doctorField);
+    expect(fieldState.value?.map((doctor) => doctor.id), [assignedDoctor.id]);
+
+    fieldState.didChange([selectedDoctor]);
+    await tester.pumpAndSettle();
+    await tester.tap(find.byType(Switch).last);
+    await tester.pumpAndSettle();
+
+    await tester.ensureVisible(find.text(AppStrings.reassessment));
+    await tester.tap(find.text(AppStrings.reassessment));
+    await tester.pumpAndSettle();
+    expect(fieldState.value?.map((doctor) => doctor.id), [selectedDoctor.id]);
+    expect(find.text(AppStrings.assessmentDoctorReminder), findsOneWidget);
+
+    await tester.ensureVisible(find.text(AppStrings.normalPtSession));
+    await tester.tap(find.text(AppStrings.normalPtSession));
+    await tester.pumpAndSettle();
+    expect(fieldState.value?.map((doctor) => doctor.id), [selectedDoctor.id]);
+    expect(tester.widget<Switch>(find.byType(Switch).last).value, false);
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('Ledger preview updates dynamically when typing recurring sessions count', (
     tester,
   ) async {

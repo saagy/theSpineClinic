@@ -12,6 +12,7 @@ import 'package:spine_clinic_app/shared/widgets/app_back_button.dart';
 import 'package:spine_clinic_app/shared/widgets/error_view.dart';
 import 'package:spine_clinic_app/shared/widgets/info_row.dart';
 import 'package:spine_clinic_app/shared/widgets/section_card.dart';
+import 'package:spine_clinic_app/shared/widgets/form_page_skeleton.dart';
 
 /// Screen allowing authorized doctors or super admins to add/edit visit notes.
 class AddVisitNotesScreen extends ConsumerWidget {
@@ -39,11 +40,7 @@ class AddVisitNotesScreen extends ConsumerWidget {
         leading: const AppBackButton(),
       ),
       body: stateAsync.when(
-        loading: () => Center(
-          child: CircularProgressIndicator(
-            color: Theme.of(context).colorScheme.primary,
-          ),
-        ),
+        loading: () => const FormPageSkeleton(),
         error: (Object error, StackTrace stack) => ErrorView(
           exception: error is AppException
               ? error

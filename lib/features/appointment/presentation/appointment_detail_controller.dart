@@ -8,19 +8,11 @@ import 'package:spine_clinic_app/core/errors/provider_retry.dart';
 import 'package:spine_clinic_app/features/appointment/domain/appointment.dart';
 import 'package:spine_clinic_app/features/appointment/domain/appointment_doctor.dart';
 import 'package:spine_clinic_app/features/appointment/domain/appointment_repository.dart';
-import 'package:spine_clinic_app/features/appointment/domain/appointment_status.dart';
-import 'package:spine_clinic_app/features/appointment/presentation/all_appointments_providers.dart';
-import 'package:spine_clinic_app/features/appointment/presentation/appointment_providers.dart'
-    hide patientAppointmentsProvider;
-import 'package:spine_clinic_app/features/appointment/presentation/booking_workboard_provider.dart';
-import 'package:spine_clinic_app/features/appointment/presentation/doctor_schedule_providers.dart';
-import 'package:spine_clinic_app/features/appointment/presentation/receptionist_appointments_providers.dart';
+import 'package:spine_clinic_app/features/appointment/presentation/appointment_providers.dart';
 import 'package:spine_clinic_app/features/auth/domain/staff.dart';
 import 'package:spine_clinic_app/features/auth/domain/user_role.dart';
 import 'package:spine_clinic_app/features/auth/presentation/auth_providers.dart';
 import 'package:spine_clinic_app/features/patient/domain/patient.dart';
-import 'package:spine_clinic_app/features/patient/presentation/patient_appointments_notifier.dart';
-import 'package:spine_clinic_app/features/patient/presentation/patient_list_providers.dart';
 import 'package:spine_clinic_app/features/patient/presentation/patient_providers.dart';
 
 part 'appointment_detail_controller.g.dart';
@@ -33,7 +25,7 @@ typedef AppointmentDetailState = ({
   List<AppointmentDoctorDetail> inactiveDoctors,
 });
 
-/// Controller managing a single appointment's detail view and mutations.
+/// Controller loading a single appointment's detail view.
 @Riverpod(keepAlive: true, retry: retryTransientErrors)
 class AppointmentDetailController extends _$AppointmentDetailController {
   @override
@@ -115,97 +107,5 @@ class AppointmentDetailController extends _$AppointmentDetailController {
     );
 
     return AppointmentDoctorDetail(assignment: assignment, doctor: doctor);
-  }
-
-  /// Transitions appointment status to [AppointmentStatus.checkedIn].
-  Future<void> checkIn() => _updateStatus(AppointmentStatus.checkedIn);
-
-  /// Transitions appointment status to [AppointmentStatus.cancelled].
-  Future<void> cancel() => _updateStatus(AppointmentStatus.cancelled);
-
-  /// Transitions appointment status back to [AppointmentStatus.scheduled].
-  Future<void> revertToScheduled() =>
-      _updateStatus(AppointmentStatus.scheduled);
-
-  Future<void> _updateStatus(AppointmentStatus newStatus) async {
-    await _assertCanModify();
-    final AppointmentRepository repo = ref.read(appointmentRepositoryProvider);
-
-    final previous = state;
-    if (state.hasValue && state.value != null) {
-      final current = state.value!;
-      state = AsyncValue.data((
-        appointment: current.appointment.copyWith(status: newStatus),
-        patient: current.patient,
-        activeDoctors: current.activeDoctors,
-        inactiveDoctors: current.inactiveDoctors,
-      ));
-    }
-
-    final Result<void> result = await repo.updateAppointmentStatus(
-      appointmentId,
-      newStatus,
-    );
-    if (!ref.mounted) return;
-    switch (result) {
-      case Success<void>():
-        _updateRelatedProviders(newStatus);
-      case Failure<void>(:final exception):
-        state = previous;
-        throw exception;
-    }
-  }
-
-  Future<void> _assertCanModify() async {
-    final user = ref.read(currentUserProvider).value;
-    if (user == null) {
-      throw const DatabaseException(
-        code: 'db/unauthorized',
-        message: 'User is not authenticated',
-        userMessageKey: 'error_auth_generic',
-      );
-    }
-    if (user.role == UserRole.doctor && !user.isSeniorDoctor) {
-      final current = state.value;
-      if (current == null) return;
-      final bool isDoctorOnAppointment = current.activeDoctors.any(
-        (d) => d.doctor.id == user.id,
-      );
-      if (!isDoctorOnAppointment) {
-        final List<Staff> patientDoctors = await ref.read(
-          patientAssignedDoctorsProvider(current.appointment.patientId).future,
-        );
-        if (!patientDoctors.any((d) => d.id == user.id)) {
-          throw const DatabaseException(
-            code: 'db/permission-denied',
-            message: 'Doctor is not assigned to this patient or appointment',
-            userMessageKey: 'error_database_permission_denied',
-          );
-        }
-      }
-    }
-  }
-
-  void _updateRelatedProviders(AppointmentStatus newStatus) {
-    final patientId = state.value?.appointment.patientId;
-    ref.invalidate(todayAppointmentsProvider);
-    ref
-        .read(allAppointmentsProvider.notifier)
-        .updateStatus(appointmentId, newStatus);
-    ref
-        .read(doctorScheduleProvider.notifier)
-        .changeStatus(appointmentId, newStatus);
-    ref
-        .read(receptionistAppointmentsProvider.notifier)
-        .changeStatus(appointmentId, newStatus);
-    if (patientId != null) {
-      ref
-          .read(patientAppointmentsProvider(patientId).notifier)
-          .changeStatus(appointmentId, newStatus);
-      ref.invalidate(futureScheduledAppointmentsCountProvider(patientId));
-      ref.invalidate(availablePackageBalanceProvider(patientId));
-    }
-    ref.invalidate(patientListProvider);
-    ref.read(bookingWorkboardProvider.notifier).refresh();
   }
 }

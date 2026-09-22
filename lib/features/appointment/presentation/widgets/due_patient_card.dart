@@ -1,4 +1,3 @@
-import 'package:auto_size_text/auto_size_text.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
@@ -50,47 +49,53 @@ class DuePatientCard extends ConsumerWidget {
         due != null &&
         DateUtils.dateOnly(due).isBefore(DateUtils.dateOnly(referenceDate));
 
-    final double radius = compact ? AppSizes.r12 : AppSizes.r16;
-    final EdgeInsets internalPadding = compact
-        ? const EdgeInsets.symmetric(horizontal: AppSizes.p12, vertical: 6.0)
-        : const EdgeInsets.all(AppSizes.p16);
-    final EdgeInsets margin = compact
-        ? const EdgeInsets.only(bottom: AppSizes.p4)
-        : const EdgeInsets.only(bottom: AppSizes.p12);
+    if (compact) {
+      return Material(
+        type: MaterialType.transparency,
+        child: InkWell(
+          onTap: onTap,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppSizes.p12,
+              vertical: AppSizes.p10,
+            ),
+            child: _DuePatientCompactRow(
+              patient: patient,
+              due: due,
+              overdue: overdue,
+              colors: colors,
+              clinic: clinic,
+              onCall: onCall,
+              onBook: onBook,
+              onRemindLater: onRemindLater,
+              onStopFollowUp: onStopFollowUp,
+            ),
+          ),
+        ),
+      );
+    }
 
     return Padding(
-      padding: margin,
+      padding: const EdgeInsets.only(bottom: AppSizes.p12),
       child: Container(
         decoration: BoxDecoration(
           color: colors.surface,
-          borderRadius: BorderRadius.all(Radius.circular(radius)),
+          borderRadius: AppSizes.borderRadiusCard,
           border: Border.all(
             color: colors.outlineVariant.withAlpha(120),
             width: AppSizes.borderWidth,
           ),
         ),
         child: ClipRRect(
-          borderRadius: BorderRadius.all(Radius.circular(radius)),
+          borderRadius: AppSizes.borderRadiusCard,
           child: Material(
             color: colors.surface,
             child: InkWell(
               onTap: onTap,
               splashColor: colors.primaryContainer,
               child: Padding(
-                padding: internalPadding,
-                child: compact
-                    ? _DuePatientCompactRow(
-                        patient: patient,
-                        due: due,
-                        overdue: overdue,
-                        colors: colors,
-                        clinic: clinic,
-                        onCall: onCall,
-                        onBook: onBook,
-                        onRemindLater: onRemindLater,
-                        onStopFollowUp: onStopFollowUp,
-                      )
-                    : _buildStandardContent(
+                padding: const EdgeInsets.all(AppSizes.p16),
+                child: _buildStandardContent(
                         context,
                         colors,
                         clinic,

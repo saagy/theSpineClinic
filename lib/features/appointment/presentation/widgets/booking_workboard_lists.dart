@@ -62,20 +62,15 @@ class BookingWorkboardLists extends StatelessWidget {
     }
     return Column(
       children: [
-        if (state.dueLoading || state.scheduleLoading)
-          const BookingWorkboardTabsSkeleton()
-        else
-          SegmentedCountTabs(
+        SegmentedCountTabs(
             items: [
               SegmentedCountTabItem(
-                icon: Icons.groups_2_outlined,
                 label: AppStrings.duePatients,
                 count: state.duePatients.length,
                 isActive: state.view == BookingWorkboardView.due,
                 onTap: () => onViewChanged(BookingWorkboardView.due),
               ),
               SegmentedCountTabItem(
-                icon: Icons.event_outlined,
                 label: AppStrings.schedule,
                 count: state.schedule.length,
                 isActive: state.view == BookingWorkboardView.schedule,
@@ -128,10 +123,11 @@ class BookingWorkboardLists extends StatelessWidget {
     }
     return RefreshIndicator(
       onRefresh: onRefresh,
-      child: ListView.builder(
+      child: ListView.separated(
         physics: const AlwaysScrollableScrollPhysics(),
         padding: const EdgeInsets.only(bottom: AppSizes.p24),
         itemCount: state.duePatients.length,
+        separatorBuilder: (_, _) => const Divider(height: AppSizes.borderWidth),
         itemBuilder: (_, index) {
           final Patient patient = state.duePatients[index];
           return DuePatientCard(

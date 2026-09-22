@@ -33,16 +33,15 @@ extension _NewAppointmentFormView on _NewAppointmentFormState {
               onPatientTap: () => _openPatientSearch(context),
               selectedType: _selectedType,
               onTypeChanged: (type) => _mutate(() {
-                _selectedType = type;
-                if (!type.affectsPackageBalance) _usePackage = false;
-
-                if (type != AppointmentType.normalPtSession &&
-                    type != AppointmentType.spinalTractionSession) {
-                  _bundleSecondarySession = false;
-                } else {
-                  _secondaryType = AppointmentType.initialAssessment;
+                if (_selectedType.affectsPackageBalance) {
+                  _sessionUsePackage = _usePackage;
                 }
-                _prepopulateDoctorsForBundling();
+                _selectedType = type;
+                _usePackage = type.affectsPackageBalance ? _sessionUsePackage : false;
+
+                if (!type.affectsPackageBalance) {
+                  _bundleSecondarySession = false;
+                }
               }),
               isRecurring: _isRecurring,
               onRecurringChanged: (value) => _mutate(() {
@@ -116,7 +115,6 @@ extension _NewAppointmentFormView on _NewAppointmentFormState {
         if (value) {
           _isRecurring = false;
           _secondaryTime ??= _selectedTime;
-          _prepopulateDoctorsForBundling();
         }
       }),
     ),

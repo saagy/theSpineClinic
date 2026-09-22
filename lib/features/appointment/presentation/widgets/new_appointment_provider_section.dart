@@ -41,6 +41,13 @@ extension _NewAppointmentProviderSection on _NewAppointmentFormState {
             validator: (doctors) =>
                 doctors == null || doctors.isEmpty ? AppStrings.atLeastOneDoctorRequired : null,
           ),
+          if (!_selectedType.affectsPackageBalance) ...[
+            const SizedBox(height: AppSizes.p8),
+            const Text(
+              AppStrings.assessmentDoctorReminder,
+              style: AppTextStyles.caption,
+            ),
+          ],
           const SizedBox(height: AppSizes.p16),
           if (_selectedType.affectsPackageBalance)
             Row(

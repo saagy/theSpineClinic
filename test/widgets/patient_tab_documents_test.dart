@@ -162,8 +162,9 @@ void main() {
     return ProviderScope(
       overrides: [
         patientDocumentsRepositoryProvider.overrideWithValue(repo),
-        if (programRepo != null)
-          programRepositoryProvider.overrideWithValue(programRepo),
+        programRepositoryProvider.overrideWithValue(
+          programRepo ?? FakeProgramRepository(const []),
+        ),
       ],
       child: MaterialApp(
         home: Scaffold(

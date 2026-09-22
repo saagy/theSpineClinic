@@ -15,6 +15,7 @@ import 'package:go_router/go_router.dart';
 import 'package:spine_clinic_app/core/constants/app_sizes.dart';
 import 'package:spine_clinic_app/core/constants/app_strings.dart';
 import 'package:spine_clinic_app/core/constants/app_text_styles.dart';
+import 'package:spine_clinic_app/shared/widgets/skeleton_loader.dart';
 import 'package:spine_clinic_app/core/network/app_routes.dart';
 import 'package:spine_clinic_app/features/auth/domain/user_role.dart';
 import 'package:spine_clinic_app/features/auth/presentation/auth_providers.dart';
@@ -123,11 +124,7 @@ class _PatientSearchScreenState extends ConsumerState<PatientSearchScreen> {
           // ── Results ──
           Expanded(
             child: asyncPatients.when(
-              loading: () => Center(
-                child: CircularProgressIndicator(
-                  color: Theme.of(context).colorScheme.primary,
-                ),
-              ),
+              loading: () => const SkeletonTileList(count: 5),
               error: (error, _) => Center(
                 child: Padding(
                   padding: AppSizes.paddingScreenH,
