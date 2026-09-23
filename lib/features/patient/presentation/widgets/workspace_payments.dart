@@ -15,14 +15,19 @@ import 'package:spine_clinic_app/features/patient/presentation/widgets/workspace
 import 'package:spine_clinic_app/shared/widgets/record_section.dart';
 
 class WorkspacePayments extends ConsumerWidget {
-  const WorkspacePayments({super.key, required this.patientId, this.dueOnly = false});
+  const WorkspacePayments({
+    super.key,
+    required this.patientId,
+    this.dueOnly = false,
+  });
   final String patientId;
   final bool dueOnly;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final provider = patientPaymentsProvider(patientId);
-    final canPay = ref.watch(currentUserProvider).value?.canHandlePayments ?? false;
+    final canPay =
+        ref.watch(currentUserProvider).value?.canHandlePayments ?? false;
     final cs = Theme.of(context).colorScheme;
 
     return Column(
@@ -33,8 +38,13 @@ class WorkspacePayments extends ConsumerWidget {
           actionLabel: canPay && !dueOnly ? AppStrings.recordPayment : null,
           onAction: canPay && !dueOnly
               ? () {
-                  if (ref.read(currentUserProvider).value?.canHandlePayments != true) return;
-                  context.push(AppRoutes.recordPayment.replaceFirst(':id', patientId));
+                  if (ref.read(currentUserProvider).value?.canHandlePayments !=
+                      true) {
+                    return;
+                  }
+                  context.push(
+                    AppRoutes.recordPayment.replaceFirst(':id', patientId),
+                  );
                 }
               : null,
         ),
@@ -54,7 +64,9 @@ class WorkspacePayments extends ConsumerWidget {
                   border: Border.all(color: cs.outlineVariant.withAlpha(80)),
                 ),
                 child: RecordMessage(
-                  message: dueOnly ? AppStrings.noOutstandingPayments : AppStrings.noPaymentsRecorded,
+                  message: dueOnly
+                      ? AppStrings.noOutstandingPayments
+                      : AppStrings.noPaymentsRecorded,
                 ),
               );
             }
@@ -63,23 +75,43 @@ class WorkspacePayments extends ConsumerWidget {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 if (!dueOnly) ...[
-                  Row(
-                    children: [
-                      Expanded(
-                        child: _StatCard(
-                          label: AppStrings.totalOutstanding,
-                          amount: summary.totalDue,
-                          isDue: true,
-                        ),
-                      ),
-                      const SizedBox(width: AppSizes.p10),
-                      Expanded(
-                        child: _StatCard(
-                          label: AppStrings.totalPaid,
-                          amount: summary.totalPaid,
-                        ),
-                      ),
-                    ],
+                  LayoutBuilder(
+                    builder: (context, constraints) {
+                      final scale = MediaQuery.textScalerOf(context).scale(1);
+                      final stack =
+                          constraints.maxWidth <
+                              AppSizes.paymentSummaryStackBreakpoint ||
+                          (constraints.maxWidth < AppSizes.formPairBreakpoint &&
+                              scale >
+                                  AppSizes
+                                      .paymentSummaryTextScaleStackThreshold);
+                      final outstanding = _StatCard(
+                        label: AppStrings.totalOutstanding,
+                        amount: summary.totalDue,
+                        isDue: true,
+                      );
+                      final paid = _StatCard(
+                        label: AppStrings.totalPaid,
+                        amount: summary.totalPaid,
+                      );
+                      if (stack) {
+                        return Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            outstanding,
+                            const SizedBox(height: AppSizes.p10),
+                            paid,
+                          ],
+                        );
+                      }
+                      return Row(
+                        children: [
+                          Expanded(child: outstanding),
+                          const SizedBox(width: AppSizes.p10),
+                          Expanded(child: paid),
+                        ],
+                      );
+                    },
                   ),
                   const SizedBox(height: AppSizes.p14),
                 ],
@@ -94,7 +126,8 @@ class WorkspacePayments extends ConsumerWidget {
                     children: [
                       for (int i = 0; i < shown.length; i++) ...[
                         WorkspacePaymentEntry(payment: shown[i]),
-                        if (i < shown.length - 1) const Divider(height: AppSizes.borderWidth),
+                        if (i < shown.length - 1)
+                          const Divider(height: AppSizes.borderWidth),
                       ],
                     ],
                   ),
@@ -109,7 +142,11 @@ class WorkspacePayments extends ConsumerWidget {
 }
 
 class _StatCard extends StatelessWidget {
-  const _StatCard({required this.label, required this.amount, this.isDue = false});
+  const _StatCard({
+    required this.label,
+    required this.amount,
+    this.isDue = false,
+  });
   final String label;
   final double amount;
   final bool isDue;
@@ -117,7 +154,8 @@ class _StatCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
-    final warningColor = Theme.of(context).extension<ClinicColors>()?.warning ?? cs.error;
+    final warningColor =
+        Theme.of(context).extension<ClinicColors>()?.warning ?? cs.error;
 
     return Container(
       padding: const EdgeInsets.all(AppSizes.p12),
@@ -125,13 +163,18 @@ class _StatCard extends StatelessWidget {
         color: cs.surface,
         borderRadius: BorderRadius.circular(AppSizes.r12),
         border: Border.all(
-          color: isDue && amount > 0 ? warningColor.withAlpha(120) : cs.outlineVariant.withAlpha(80),
+          color: isDue && amount > 0
+              ? warningColor.withAlpha(120)
+              : cs.outlineVariant.withAlpha(80),
         ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(label, style: AppTextStyles.caption.copyWith(color: cs.onSurfaceVariant)),
+          Text(
+            label,
+            style: AppTextStyles.caption.copyWith(color: cs.onSurfaceVariant),
+          ),
           const SizedBox(height: AppSizes.p4),
           Text(
             Formatters.formatCurrency(amount),

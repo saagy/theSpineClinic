@@ -151,6 +151,10 @@ placeholders; progress indicators remain for local actions and file viewing.
    Program detail is treatment-first, and medical-history/treatment-plan editors
    use a bounded form with a persistent Save/Cancel footer. Payment mutations
    retain the existing capability checks.
+   Payment history keeps aligned amount and action columns when space permits.
+   Narrow rows give the full reason its own line, then show amount, due, metadata,
+   and a separate Collect Due action. Summary figures stack at very small widths
+   or with enlarged text; light and dark surfaces use the same structure.
    Target-region selection uses a compact themed field that opens the same
    searchable selection step within the existing editor at every window size.
    Back returns to the unchanged form; selecting returns with the chosen region.

@@ -34,6 +34,11 @@ abstract final class AppSizes {
   static const double recordMenuWidth = 220;
   static const double recordDocumentTileWidth = 260;
   static const double patientPaymentActionWidth = 176;
+  static const double paymentEntryWideBreakpoint = 720;
+  static const double paymentAmountColumnWidth = 160;
+  static const double paymentRecorderSkeletonWidth = 80;
+  static const double paymentSummaryStackBreakpoint = 320;
+  static const double paymentSummaryTextScaleStackThreshold = 1.3;
   static const double documentPreviewSize = 64;
   static const double recordSectionLoadingHeight = 72;
   // ──────────────── 4px Spacing Scale ────────────────
