@@ -16,11 +16,20 @@ class RecordSkeleton extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const FractionallySizedBox(widthFactor: 0.65, child: SkeletonBox(height: AppSizes.p20)),
+                const FractionallySizedBox(
+                  widthFactor: 0.65,
+                  child: SkeletonBox(height: AppSizes.p20),
+                ),
                 const SizedBox(height: AppSizes.p12),
-                const FractionallySizedBox(widthFactor: 0.85, child: SkeletonBox(height: AppSizes.p12)),
+                const FractionallySizedBox(
+                  widthFactor: 0.85,
+                  child: SkeletonBox(height: AppSizes.p12),
+                ),
                 const SizedBox(height: AppSizes.p8),
-                const FractionallySizedBox(widthFactor: 0.4, child: SkeletonBox(height: AppSizes.p12)),
+                const FractionallySizedBox(
+                  widthFactor: 0.4,
+                  child: SkeletonBox(height: AppSizes.p12),
+                ),
               ],
             ),
           ),
@@ -40,7 +49,19 @@ class RecordTransition extends StatelessWidget {
     if (duration == Duration.zero) return child;
     return AnimatedSwitcher(
       duration: duration,
-      child: SizedBox(key: ValueKey(child.runtimeType), width: double.infinity, child: child),
+      switchInCurve: Curves.easeOut,
+      switchOutCurve: Curves.easeIn,
+      transitionBuilder: (current, animation) =>
+          FadeTransition(opacity: animation, child: current),
+      layoutBuilder: (current, previous) => Stack(
+        alignment: Alignment.topLeft,
+        children: [...previous, if (current != null) current],
+      ),
+      child: SizedBox(
+        key: ValueKey(child.runtimeType),
+        width: double.infinity,
+        child: child,
+      ),
     );
   }
 }

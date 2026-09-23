@@ -4,7 +4,6 @@
 library;
 
 import 'package:flutter/material.dart';
-import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:spine_clinic_app/core/constants/app_sizes.dart';
 import 'package:spine_clinic_app/core/constants/app_strings.dart';
@@ -58,18 +57,18 @@ class AppointmentDetailBody extends ConsumerWidget {
     );
     final String currentId = state.appointment.id;
 
-    final List<Appointment> linkedAppointments =
-        otherAppointmentsAsync.maybeWhen(
-      data: (list) {
-        return list.where((appt) {
-          final day = DateUtils.dateOnly(appt.scheduledAt.toLocal());
-          return appt.id != currentId &&
-              day == currentDay &&
-              appt.status != AppointmentStatus.cancelled;
-        }).toList();
-      },
-      orElse: () => const <Appointment>[],
-    );
+    final List<Appointment> linkedAppointments = otherAppointmentsAsync
+        .maybeWhen(
+          data: (list) {
+            return list.where((appt) {
+              final day = DateUtils.dateOnly(appt.scheduledAt.toLocal());
+              return appt.id != currentId &&
+                  day == currentDay &&
+                  appt.status != AppointmentStatus.cancelled;
+            }).toList();
+          },
+          orElse: () => const <Appointment>[],
+        );
 
     return Column(
       children: [
@@ -93,9 +92,7 @@ class AppointmentDetailBody extends ConsumerWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  AppointmentDetailHeader(
-                    patient: state.patient,
-                  ).animate().fadeIn(duration: 300.ms),
+                  AppointmentDetailHeader(patient: state.patient),
                   AppointmentStatusBanner(
                     status: state.appointment.status,
                     scheduledAt: state.appointment.scheduledAt,
@@ -105,9 +102,7 @@ class AppointmentDetailBody extends ConsumerWidget {
                     appointment: state.appointment,
                     linkedAppointments: linkedAppointments,
                   ),
-                  AppointmentProgramPdfTile(
-                    patient: state.patient,
-                  ),
+                  AppointmentProgramPdfTile(patient: state.patient),
                   AppointmentNotesCard(
                     appointmentId: state.appointment.id,
                     patientId: state.appointment.patientId,

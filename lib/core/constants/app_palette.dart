@@ -48,18 +48,18 @@ const AppPalette clinicalBluePaletteLight = AppPalette(
   outlineStrong: Color(0xFFCBD5E1),
 );
 
-/// Dark-mode clinical-blue palette with brand #2B4D73 identity.
+/// Dark-mode charcoal surfaces with a restrained clinical-blue accent.
 const AppPalette clinicalBluePaletteDark = AppPalette(
-  primary: Color(0xFF6C93C0),
-  onPrimary: Color(0xFFFFFFFF),
-  primaryContainer: Color(0xFF1E3248),
-  onPrimaryContainer: Color(0xFFD2E3F5),
-  background: Color(0xFF0F141C),
-  surface: Color(0xFF171E28),
-  surfaceContainer: Color(0xFF1E2836),
-  textPrimary: Color(0xFFF1F5F9),
-  textSecondary: Color(0xFF94A3B8),
-  textMuted: Color(0xFF64748B),
-  outline: Color(0xFF263345),
-  outlineStrong: Color(0xFF3B4D66),
+  primary: Color(0xFFA9C8E8),
+  onPrimary: Color(0xFF10263B),
+  primaryContainer: Color(0xFF283F56),
+  onPrimaryContainer: Color(0xFFE1EFFD),
+  background: Color(0xFF12161B),
+  surface: Color(0xFF1C2229),
+  surfaceContainer: Color(0xFF252D36),
+  textPrimary: Color(0xFFF2F5F8),
+  textSecondary: Color(0xFFB4BFCC),
+  textMuted: Color(0xFFA3AEBC),
+  outline: Color(0xFF3A4652),
+  outlineStrong: Color(0xFF6D7B8C),
 );

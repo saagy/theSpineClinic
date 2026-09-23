@@ -17,6 +17,10 @@ and data integrity. Reusing an existing widget is a choice based on suitability.
 - Material 3, with light and dark themes in `lib/core/constants/app_theme.dart`.
 - Clinical-blue palettes in `lib/core/constants/app_palette.dart`; the light
   primary is `#2B4D73`. The former teal design reference is obsolete.
+- The dark theme now uses a charcoal canvas, lighter content surfaces, quiet
+  blue-gray borders, and soft blue action color with dark text on filled controls.
+  Status colors are muted while retaining their meanings. See the
+  [dark-theme audit and validation](docs/dark-theme-polish.md).
 - Plus Jakarta Sans typography is selected by `AppTextStyles`. Existing fonts
   and token values can be reassessed during the visual pilot.
 - `AppShell` currently switches between bottom navigation and a navigation rail
@@ -66,6 +70,11 @@ enough density for repeated daily work.
   Essential actions must work without hover; guard against duplicate submissions.
 - Motion communicates state and respects reduced-motion preferences. It must not
   delay routine actions or hide content behind decorative entrance sequences.
+- Patient record sections use a short, top-aligned fade from skeleton to loaded
+  content. Late fields such as staff names keep their leading edge fixed while
+  fading in place. Appointment details use the same restrained motion and show
+  skeletons rather than generic text while related records resolve. Late linked
+  sessions enter with a short fade and height adjustment.
 
 ### Accessibility and Tokens
 

@@ -1,6 +1,3 @@
-/// Card component showing visit notes for an appointment.
-///
-/// Rule 1 — keep files under 200 lines.
 library;
 
 import 'package:flutter/material.dart';
@@ -19,6 +16,7 @@ import 'package:spine_clinic_app/features/patient/presentation/widgets/add_note_
 import 'package:spine_clinic_app/features/appointment/presentation/widgets/appointment_note_actions.dart';
 import 'package:spine_clinic_app/shared/widgets/eyebrow_label.dart';
 import 'package:spine_clinic_app/shared/widgets/skeleton_loader.dart';
+import 'package:spine_clinic_app/shared/widgets/stable_fade_swap.dart';
 
 /// Section card for viewing, adding, and editing appointment visit notes.
 class AppointmentNotesCard extends ConsumerWidget {
@@ -50,128 +48,137 @@ class AppointmentNotesCard extends ConsumerWidget {
         border: Border.all(color: colorScheme.outlineVariant, width: 0.5),
         boxShadow: [clinic.cardShadow],
       ),
-      child: noteAsync.when(
-        loading: () => Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisSize: MainAxisSize.min,
-          children: const [
-            SkeletonBox(width: 80, height: 14),
-            SizedBox(height: AppSizes.p12),
-            SkeletonBox(
-              width: double.infinity,
-              height: 38,
-              borderRadius: AppSizes.r8,
-            ),
-          ],
-        ),
-        error: (error, _) {
-          final AppException ex = error is AppException
-              ? error
-              : UnknownException(message: '$error');
-          return Padding(
-            padding: const EdgeInsets.symmetric(vertical: AppSizes.p4),
-            child: Text(
-              AppStrings.fromKey(ex.userMessageKey),
-              style: AppTextStyles.body.copyWith(color: colorScheme.error),
-            ),
-          );
-        },
-        data: (note) {
-          final bool canModify = note != null &&
-              currentUser != null &&
-              (currentUser.role == UserRole.doctor ||
-                  currentUser.role == UserRole.superAdmin ||
-                  currentUser.id == note.createdBy);
-
-          return Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              EyebrowLabel(
-                text: AppStrings.visitNotes,
-                isUppercase: false,
-                action: note != null && canModify
-                    ? NoteHeaderActions(
-                        onEdit: () => _showNoteSheet(context, note),
-                        onDelete: () => NoteHeaderActions.confirmAndDelete(
-                          context: context,
-                          ref: ref,
-                          note: note,
-                        ),
-                      )
-                    : null,
+      child: StableFadeSwap(
+        stateKey: noteAsync.hasValue
+            ? 'data'
+            : noteAsync.hasError
+            ? 'error'
+            : 'loading',
+        alignment: Alignment.topLeft,
+        child: noteAsync.when(
+          loading: () => Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: const [
+              SkeletonBox(width: 80, height: 14),
+              SizedBox(height: AppSizes.p12),
+              SkeletonBox(
+                width: double.infinity,
+                height: 38,
+                borderRadius: AppSizes.r8,
               ),
-              const SizedBox(height: AppSizes.p8),
-              if (note != null && note.noteText.isNotEmpty)
-                Container(
-                  padding: const EdgeInsets.fromLTRB(
-                    AppSizes.p12,
-                    AppSizes.p8,
-                    AppSizes.p12,
-                    AppSizes.p8,
-                  ),
-                  decoration: BoxDecoration(
-                    color: clinic.neutralContainer.withValues(alpha: 0.2),
-                    borderRadius: const BorderRadius.all(
-                      Radius.circular(AppSizes.r8),
-                    ),
-                    border: Border(
-                      left: BorderSide(
-                        color: colorScheme.primary,
-                        width: 3.5,
-                      ),
-                    ),
-                  ),
-                  child: Text(
-                    note.noteText,
-                    style: AppTextStyles.body.copyWith(
-                      color: colorScheme.onSurface,
-                    ),
-                  ),
-                )
-              else
-                InkWell(
-                  onTap: () => _showNoteSheet(context, null),
-                  borderRadius: const BorderRadius.all(
-                    Radius.circular(AppSizes.r8),
-                  ),
-                  child: Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.symmetric(
-                      vertical: AppSizes.p12,
+            ],
+          ),
+          error: (error, _) {
+            final AppException ex = error is AppException
+                ? error
+                : UnknownException(message: '$error');
+            return Padding(
+              padding: const EdgeInsets.symmetric(vertical: AppSizes.p4),
+              child: Text(
+                AppStrings.fromKey(ex.userMessageKey),
+                style: AppTextStyles.body.copyWith(color: colorScheme.error),
+              ),
+            );
+          },
+          data: (note) {
+            final bool canModify =
+                note != null &&
+                currentUser != null &&
+                (currentUser.role == UserRole.doctor ||
+                    currentUser.role == UserRole.superAdmin ||
+                    currentUser.id == note.createdBy);
+
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                EyebrowLabel(
+                  text: AppStrings.visitNotes,
+                  isUppercase: false,
+                  action: note != null && canModify
+                      ? NoteHeaderActions(
+                          onEdit: () => _showNoteSheet(context, note),
+                          onDelete: () => NoteHeaderActions.confirmAndDelete(
+                            context: context,
+                            ref: ref,
+                            note: note,
+                          ),
+                        )
+                      : null,
+                ),
+                const SizedBox(height: AppSizes.p8),
+                if (note != null && note.noteText.isNotEmpty)
+                  Container(
+                    padding: const EdgeInsets.fromLTRB(
+                      AppSizes.p12,
+                      AppSizes.p8,
+                      AppSizes.p12,
+                      AppSizes.p8,
                     ),
                     decoration: BoxDecoration(
-                      border: Border.all(
-                        color: colorScheme.outlineVariant,
-                        width: 1.0,
-                      ),
+                      color: clinic.neutralContainer.withValues(alpha: 0.2),
                       borderRadius: const BorderRadius.all(
                         Radius.circular(AppSizes.r8),
                       ),
-                      color: clinic.neutralContainer.withValues(alpha: 0.1),
-                    ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(
-                          Icons.add_rounded,
+                      border: Border(
+                        left: BorderSide(
                           color: colorScheme.primary,
-                          size: AppSizes.iconSmall,
+                          width: 3.5,
                         ),
-                        const SizedBox(width: AppSizes.p6),
-                        Text(
-                          AppStrings.addVisitNotePrompt,
-                          style: AppTextStyles.bodyMedium.copyWith(
+                      ),
+                    ),
+                    child: Text(
+                      note.noteText,
+                      style: AppTextStyles.body.copyWith(
+                        color: colorScheme.onSurface,
+                      ),
+                    ),
+                  )
+                else
+                  InkWell(
+                    onTap: () => _showNoteSheet(context, null),
+                    borderRadius: const BorderRadius.all(
+                      Radius.circular(AppSizes.r8),
+                    ),
+                    child: Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.symmetric(
+                        vertical: AppSizes.p12,
+                      ),
+                      decoration: BoxDecoration(
+                        border: Border.all(
+                          color: colorScheme.outlineVariant,
+                          width: 1.0,
+                        ),
+                        borderRadius: const BorderRadius.all(
+                          Radius.circular(AppSizes.r8),
+                        ),
+                        color: clinic.neutralContainer.withValues(alpha: 0.1),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.add_rounded,
                             color: colorScheme.primary,
-                            fontWeight: FontWeight.w500,
+                            size: AppSizes.iconSmall,
                           ),
-                        ),
-                      ],
+                          const SizedBox(width: AppSizes.p6),
+                          Text(
+                            AppStrings.addVisitNotePrompt,
+                            style: AppTextStyles.bodyMedium.copyWith(
+                              color: colorScheme.primary,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
-                ),
-            ],
-          );
-        },
+              ],
+            );
+          },
+        ),
       ),
     );
   }

@@ -89,15 +89,12 @@ class ReceptionistAppointmentsNotifier
       return;
     }
 
-    final bool hasExisting = state.allItems.isNotEmpty;
-    state = hasExisting
-        ? state.copyWith(selectedDate: selected, clearError: true)
-        : state.copyWith(
-            allItems: const <AppointmentWithPatient>[],
-            selectedDate: selected,
-            loading: true,
-            clearError: true,
-          );
+    state = state.copyWith(
+      allItems: const <AppointmentWithPatient>[],
+      selectedDate: selected,
+      loading: true,
+      clearError: true,
+    );
     final Result<List<AppointmentWithPatient>> result = await _repository
         .getAllAppointments(
           dateFrom: ScheduleWeek.windowStart(selected),

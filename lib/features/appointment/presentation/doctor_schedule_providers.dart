@@ -68,17 +68,12 @@ class DoctorScheduleNotifier extends Notifier<DoctorScheduleState> {
       return;
     }
 
-    final bool hasExisting = state.allItems.isNotEmpty;
-    if (!hasExisting) {
-      state = state.copyWith(
-        allItems: const <AppointmentWithPatient>[],
-        selectedDate: selected,
-        loading: true,
-        clearError: true,
-      );
-    } else {
-      state = state.copyWith(selectedDate: selected, clearError: true);
-    }
+    state = state.copyWith(
+      allItems: const <AppointmentWithPatient>[],
+      selectedDate: selected,
+      loading: true,
+      clearError: true,
+    );
     final AppointmentRepository repository = ref.read(
       appointmentRepositoryProvider,
     );

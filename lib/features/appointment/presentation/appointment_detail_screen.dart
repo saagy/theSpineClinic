@@ -71,7 +71,8 @@ class _AppointmentDetailScreenState
       appointmentDetailControllerProvider(appointmentId),
     );
     final detailState = detailAsync.value;
-    final user = ref.watch(currentUserProvider).value;
+    final userAsync = ref.watch(currentUserProvider);
+    final user = userAsync.value;
     final canEditAsync = detailState != null
         ? ref.watch(
             canEditAppointmentProvider(
@@ -149,10 +150,20 @@ class _AppointmentDetailScreenState
               appointmentDetailControllerProvider(appointmentId),
             ),
           ),
-          data: (AppointmentDetailState state) => AppointmentDetailBody(
-            state: state,
-            scrollController: _scrollController,
-          ),
+          data: (AppointmentDetailState state) => userAsync.isLoading
+              ? const AppointmentDetailSkeleton()
+              : TweenAnimationBuilder<double>(
+                  tween: Tween(begin: 0, end: 1),
+                  duration: MediaQuery.disableAnimationsOf(context)
+                      ? Duration.zero
+                      : const Duration(milliseconds: 180),
+                  builder: (context, opacity, child) =>
+                      Opacity(opacity: opacity, child: child),
+                  child: AppointmentDetailBody(
+                    state: state,
+                    scrollController: _scrollController,
+                  ),
+                ),
         ),
       ),
     );

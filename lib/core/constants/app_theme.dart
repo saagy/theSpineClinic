@@ -22,14 +22,14 @@ abstract final class AppTheme {
       isDark: isDark,
     );
     final Color error = isDark
-        ? const Color(0xFFFB7185)
+        ? const Color(0xFFF1A5AC)
         : const Color(0xFFE11D48);
-    final Color onError = Colors.white;
+    final Color onError = isDark ? const Color(0xFF3D151D) : Colors.white;
     final Color errorContainer = isDark
-        ? const Color(0xFF3A141D)
+        ? const Color(0xFF492B33)
         : const Color(0xFFFFF1F2);
     final Color onErrorContainer = isDark
-        ? const Color(0xFFFDA4AF)
+        ? const Color(0xFFFFCCD1)
         : const Color(0xFF9F1239);
     final ColorScheme cs =
         ColorScheme.fromSeed(
@@ -46,18 +46,24 @@ abstract final class AppTheme {
           onSecondaryContainer: palette.onPrimaryContainer,
           surface: palette.surface,
           onSurface: palette.textPrimary,
+          surfaceDim: isDark ? palette.background : null,
+          surfaceBright: isDark ? const Color(0xFF3A4652) : null,
+          surfaceContainerLowest: isDark ? palette.background : null,
+          surfaceContainerLow: isDark ? palette.surface : null,
           surfaceContainer: palette.surfaceContainer,
+          surfaceContainerHigh: isDark ? palette.surfaceContainer : null,
           surfaceContainerHighest: isDark
-              ? const Color(0xFF283548)
+              ? const Color(0xFF303A45)
               : palette.surfaceContainer,
           onSurfaceVariant: palette.textSecondary,
-          outline: palette.outline,
+          outline: isDark ? palette.outlineStrong : palette.outline,
           outlineVariant: palette.outline,
           error: error,
           onError: onError,
           errorContainer: errorContainer,
           onErrorContainer: onErrorContainer,
           shadow: Colors.black,
+          surfaceTint: isDark ? Colors.transparent : null,
         );
 
     return ThemeData(
@@ -158,7 +164,7 @@ abstract final class AppTheme {
         behavior: SnackBarBehavior.floating,
       ),
       dividerTheme: DividerThemeData(
-        color: cs.outline,
+        color: cs.outlineVariant,
         thickness: AppSizes.borderWidth,
         space: 0,
       ),

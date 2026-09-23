@@ -15,6 +15,7 @@ import 'package:spine_clinic_app/shared/widgets/app_snackbar.dart';
 import 'package:spine_clinic_app/shared/widgets/confirmation_dialog.dart';
 import 'package:spine_clinic_app/shared/widgets/record_action_menu.dart';
 import 'package:spine_clinic_app/shared/widgets/skeleton_loader.dart';
+import 'package:spine_clinic_app/shared/widgets/stable_fade_swap.dart';
 
 class WorkspaceNoteRow extends ConsumerWidget {
   const WorkspaceNoteRow({super.key, required this.note});
@@ -34,14 +35,24 @@ class WorkspaceNoteRow extends ConsumerWidget {
             children: [
               SizedBox.square(
                 dimension: AppSizes.p28,
-                child: authorAsync.when(
-                  data: (staff) => PatientMonogramBadge(
-                    name: staff.fullName,
-                    size: AppSizes.p28,
+                child: StableFadeSwap(
+                  stateKey: authorAsync.isLoading
+                      ? 'loading'
+                      : authorAsync.hasError
+                      ? 'error'
+                      : 'data',
+                  child: authorAsync.when(
+                    data: (staff) => PatientMonogramBadge(
+                      name: staff.fullName,
+                      size: AppSizes.p28,
+                    ),
+                    loading: () =>
+                        const SkeletonCircle(radius: AppSizes.p28 / 2),
+                    error: (_, _) => const PatientMonogramBadge(
+                      name: '',
+                      size: AppSizes.p28,
+                    ),
                   ),
-                  loading: () => const SkeletonCircle(radius: AppSizes.p28 / 2),
-                  error: (_, _) =>
-                      const PatientMonogramBadge(name: '', size: AppSizes.p28),
                 ),
               ),
               const SizedBox(width: AppSizes.p10),
@@ -51,21 +62,28 @@ class WorkspaceNoteRow extends ConsumerWidget {
                   children: [
                     Align(
                       alignment: Alignment.centerLeft,
-                      child: authorAsync.when(
-                        data: (staff) => Text(
-                          staff.fullName,
-                          style: AppTextStyles.bodyBold.copyWith(
-                            color: cs.onSurface,
+                      child: StableFadeSwap(
+                        stateKey: authorAsync.isLoading
+                            ? 'loading'
+                            : authorAsync.hasError
+                            ? 'error'
+                            : 'data',
+                        child: authorAsync.when(
+                          data: (staff) => Text(
+                            staff.fullName,
+                            style: AppTextStyles.bodyBold.copyWith(
+                              color: cs.onSurface,
+                            ),
                           ),
-                        ),
-                        loading: () => const SkeletonBox(
-                          width: AppSizes.skeletonSubtitleWidth,
-                          height: AppSizes.skeletonLabelHeight,
-                        ),
-                        error: (_, _) => Text(
-                          AppStrings.recordedBy,
-                          style: AppTextStyles.bodyBold.copyWith(
-                            color: cs.onSurface,
+                          loading: () => const SkeletonBox(
+                            width: AppSizes.skeletonSubtitleWidth,
+                            height: AppSizes.skeletonLabelHeight,
+                          ),
+                          error: (_, _) => Text(
+                            AppStrings.unknownAuthor,
+                            style: AppTextStyles.bodyBold.copyWith(
+                              color: cs.onSurface,
+                            ),
                           ),
                         ),
                       ),

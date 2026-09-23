@@ -67,36 +67,15 @@ class _Content extends StatelessWidget {
           onDateSelected: onDateSelected,
         ),
         Expanded(
-          child: AnimatedSwitcher(
-            duration: const Duration(milliseconds: 250),
-            switchInCurve: Curves.easeOutCubic,
-            switchOutCurve: Curves.easeInCubic,
-            transitionBuilder: (child, animation) =>
-                FadeTransition(opacity: animation, child: child),
-            child: state.loading
-                ? const KeyedSubtree(
-                    key: ValueKey('doc_schedule_loading'),
-                    child: SkeletonTileList(count: 5),
-                  )
-                : state.error != null
-                ? KeyedSubtree(
-                    key: const ValueKey('doc_schedule_error'),
-                    child: _ErrorView(
-                      error: state.error!,
-                      onRetry: onStatusChanged,
-                    ),
-                  )
-                : KeyedSubtree(
-                    key: ValueKey(
-                      'doc_schedule_data_${state.selectedDate}_${state.itemsForSelectedDay.length}_${state.showCancelled}',
-                    ),
-                    child: DoctorDayList(
-                      state: state,
-                      onStatusChanged: onStatusChanged,
-                      onRefresh: () async => onStatusChanged.call(),
-                    ),
-                  ),
-          ),
+          child: state.loading
+              ? const SkeletonTileList(count: 5)
+              : state.error != null
+              ? _ErrorView(error: state.error!, onRetry: onStatusChanged)
+              : DoctorDayList(
+                  state: state,
+                  onStatusChanged: onStatusChanged,
+                  onRefresh: () async => onStatusChanged.call(),
+                ),
         ),
       ],
     );

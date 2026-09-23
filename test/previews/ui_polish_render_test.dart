@@ -20,13 +20,30 @@ import 'ui_polish_capture.dart';
 void main() {
   setUpAll(loadPolishFonts);
   for (final width in [360.0, 1280.0]) {
+    testWidgets('dark patient workspace renders at $width', (tester) async {
+      tester.view.physicalSize = Size(width, 1000);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+      final key = GlobalKey();
+      await tester.pumpWidget(
+        RepaintBoundary(key: key, child: const WorkspaceHarness(dark: true)),
+      );
+      await tester.pumpAndSettle();
+      expect(tester.takeException(), isNull);
+      await capturePolish(tester, key, 'patient-dark-$width');
+    });
+  }
+  for (final width in [360.0, 1280.0]) {
     testWidgets('workspace and booking render at $width', (tester) async {
       tester.view.physicalSize = Size(width, 1000);
       tester.view.devicePixelRatio = 1;
       addTearDown(tester.view.resetPhysicalSize);
       addTearDown(tester.view.resetDevicePixelRatio);
       final key = GlobalKey();
-      await tester.pumpWidget(RepaintBoundary(key: key, child: const WorkspaceHarness()));
+      await tester.pumpWidget(
+        RepaintBoundary(key: key, child: const WorkspaceHarness()),
+      );
       await tester.pumpAndSettle();
       expect(tester.takeException(), isNull);
       await capturePolish(tester, key, 'patient-$width');
@@ -74,7 +91,9 @@ void main() {
                     child: RegionInputRow(
                       modalityType: ModalityType.musclePain,
                       regionInput: const RegionInput(targetRegion: 'Deltoid'),
-                      availableRegions: ModalityTargetRegion.regionsFor(ModalityType.musclePain),
+                      availableRegions: ModalityTargetRegion.regionsFor(
+                        ModalityType.musclePain,
+                      ),
                       onChanged: (_) {},
                       onDelete: () {},
                     ),
@@ -91,7 +110,9 @@ void main() {
     });
   }
   for (final scale in [1.0, 1.5]) {
-    testWidgets('target controls remain usable at text scale $scale', (tester) async {
+    testWidgets('target controls remain usable at text scale $scale', (
+      tester,
+    ) async {
       tester.view.physicalSize = const Size(360, 900);
       tester.view.devicePixelRatio = 1;
       addTearDown(tester.view.resetPhysicalSize);
@@ -110,7 +131,9 @@ void main() {
                     child: RegionInputRow(
                       modalityType: ModalityType.musclePain,
                       regionInput: region,
-                      availableRegions: ModalityTargetRegion.regionsFor(ModalityType.musclePain),
+                      availableRegions: ModalityTargetRegion.regionsFor(
+                        ModalityType.musclePain,
+                      ),
                       onChanged: (value) => update(() => region = value),
                       onDelete: () {},
                     ),

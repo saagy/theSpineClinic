@@ -11,6 +11,10 @@ import 'package:spine_clinic_app/features/medical_records/presentation/patient_p
 import 'package:spine_clinic_app/features/patient/presentation/patient_document_groups.dart';
 import 'package:spine_clinic_app/features/patient/presentation/patient_documents_providers.dart';
 import 'package:spine_clinic_app/features/patient/presentation/widgets/workspace_note_row.dart';
+import 'package:spine_clinic_app/features/appointment/presentation/widgets/appointment_program_pdf_tile.dart';
+import 'package:spine_clinic_app/features/appointment/presentation/widgets/appointment_program_summary.dart';
+import 'package:spine_clinic_app/features/patient/presentation/patient_providers.dart';
+import 'package:spine_clinic_app/core/constants/app_strings.dart';
 import 'package:spine_clinic_app/shared/widgets/skeleton_loader.dart';
 
 import '../../fixtures/workspace_data.dart';
@@ -82,9 +86,54 @@ void main() {
     final before = tester.getTopLeft(find.byType(SkeletonBox).first).dx;
     author.complete(workspaceStaff('doctor'));
     await tester.pump();
+    final fade = find.ancestor(
+      of: find.text('Dr. Mariam Khaled'),
+      matching: find.byType(FadeTransition),
+    );
+    expect(
+      tester.widget<FadeTransition>(fade.first).opacity.value,
+      lessThan(1),
+    );
     await tester.pump(const Duration(milliseconds: 200));
     final after = tester.getTopLeft(find.text('Dr. Mariam Khaled')).dx;
     expect(after, closeTo(before, 0.01));
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('appointment report shows no generic subtitle while loading', (
+    tester,
+  ) async {
+    final programs = Completer<List<PatientProgram>>();
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          canAccessPatientProvider(
+            workspacePatient.id,
+          ).overrideWith((ref) async => true),
+          patientProgramsProvider(
+            workspacePatient.id,
+          ).overrideWith(() => _DelayedPrograms(programs.future)),
+        ],
+        child: MaterialApp(
+          home: Scaffold(
+            body: AppointmentProgramPdfTile(patient: workspacePatient),
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+    expect(find.text(AppStrings.programReport), findsOneWidget);
+    expect(find.byType(SkeletonBox), findsWidgets);
+    expect(find.text(AppStrings.clinicalAssessmentAndPlan), findsNothing);
+
+    programs.complete(workspacePrograms);
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 200));
+    expect(
+      find.text(appointmentProgramSummary(workspacePrograms)),
+      findsOneWidget,
+    );
+    expect(find.text(AppStrings.clinicalAssessmentAndPlan), findsNothing);
     expect(tester.takeException(), isNull);
   });
 }

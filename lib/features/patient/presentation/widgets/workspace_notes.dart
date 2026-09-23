@@ -20,7 +20,9 @@ class WorkspaceNotes extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final state = ref.watch(patientNotesListProvider(patientId));
     final notifier = ref.read(patientNotesListProvider(patientId).notifier);
-    final int activeCount = (state.dateFrom != null || state.dateTo != null) ? 1 : 0;
+    final int activeCount = (state.dateFrom != null || state.dateTo != null)
+        ? 1
+        : 0;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -53,40 +55,49 @@ class WorkspaceNotes extends ConsumerWidget {
           ),
         ],
         const SizedBox(height: AppSizes.p14),
-        Padding(
-          padding: EdgeInsets.zero,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              if (state.isLoading && state.notes.isEmpty) const RecordSkeleton(),
-              if (state.errorMessage != null)
-                Padding(
-                  padding: const EdgeInsets.all(AppSizes.p16),
-                  child: RecordMessage(
-                    message: AppStrings.patientSectionError,
-                    action: AppStrings.retry,
-                    onAction: () => notifier.refresh(silent: false),
-                  ),
+        RecordTransition(
+          child: state.isLoading && state.notes.isEmpty
+              ? const RecordSkeleton()
+              : Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    if (state.errorMessage != null)
+                      Padding(
+                        padding: const EdgeInsets.all(AppSizes.p16),
+                        child: RecordMessage(
+                          message: AppStrings.patientSectionError,
+                          action: AppStrings.retry,
+                          onAction: () => notifier.refresh(silent: false),
+                        ),
+                      ),
+                    if (!state.isLoading &&
+                        state.errorMessage == null &&
+                        state.notes.isEmpty)
+                      const Padding(
+                        padding: EdgeInsets.all(AppSizes.p24),
+                        child: RecordMessage(
+                          message: AppStrings.noNotesRecorded,
+                        ),
+                      ),
+                    for (int i = 0; i < state.notes.length; i++) ...[
+                      WorkspaceNoteRow(note: state.notes[i]),
+                      if (i < state.notes.length - 1)
+                        const Divider(height: AppSizes.borderWidth),
+                    ],
+                    if (state.hasMore)
+                      Padding(
+                        padding: const EdgeInsets.symmetric(
+                          vertical: AppSizes.p8,
+                        ),
+                        child: TextButton(
+                          onPressed: state.isLoadingMore
+                              ? null
+                              : notifier.loadMore,
+                          child: const Text(AppStrings.showMoreRecords),
+                        ),
+                      ),
+                  ],
                 ),
-              if (!state.isLoading && state.errorMessage == null && state.notes.isEmpty)
-                const Padding(
-                  padding: EdgeInsets.all(AppSizes.p24),
-                  child: RecordMessage(message: AppStrings.noNotesRecorded),
-                ),
-              for (int i = 0; i < state.notes.length; i++) ...[
-                WorkspaceNoteRow(note: state.notes[i]),
-                if (i < state.notes.length - 1) const Divider(height: AppSizes.borderWidth),
-              ],
-              if (state.hasMore)
-                Padding(
-                  padding: const EdgeInsets.symmetric(vertical: AppSizes.p8),
-                  child: TextButton(
-                    onPressed: state.isLoadingMore ? null : notifier.loadMore,
-                    child: const Text(AppStrings.showMoreRecords),
-                  ),
-                ),
-            ],
-          ),
         ),
       ],
     );

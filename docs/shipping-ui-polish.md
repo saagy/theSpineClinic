@@ -201,3 +201,28 @@ dark themes. Fixture previews use fictional data and
 do not verify a live backend mutation. The full Flutter suite passed 298 tests;
 the legacy document-grid fixtures now provide the program lookup required by
 the grouped loading state.
+
+## Patient and appointment detail loading refinement (September 23)
+
+Audit: most patient tabs already faded section skeletons into records, but Notes
+swapped its whole list abruptly and its author replaced a placeholder without
+motion. Appointment visit notes made the same abrupt swap. Its report tile showed
+generic text until a separate program request completed; patient access could
+also make that tile appear suddenly. The detail body had a separate header fade
+that left other content popping into view.
+
+Implementation: section transitions are now top-aligned fades, and author fields
+fade in place without moving their left edge. Notes and visit notes use the same
+short transition. The report tile keeps a skeleton subtitle until program data
+arrives, uses available condition names for its summary, and fades in after
+access resolves. Linked sessions ease into the appointment information card
+when their separate request finishes. Appointment detail content shares one
+short entrance fade.
+Animations are removed when the system requests reduced motion. Empty and error
+messages remain explicit; generic loading text is no longer shown.
+
+Validation: `flutter analyze --no-pub` reported no issues. The full Flutter
+suite passed 307 tests; the linked-session and appointment detail preview tests
+also passed after the last change. Loaded Notes and appointment fields were
+visually checked at 360px and 1280px. Fixture previews use fictional data and
+do not verify a live backend request.

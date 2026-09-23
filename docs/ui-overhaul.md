@@ -145,6 +145,8 @@ them into the shared system across all remaining screens.
 
 - Receptionist schedules watch the active branch and admin branch filter, clear
   cached weeks when their scope changes, and discard obsolete requests.
+- Uncached week navigation clears the previous week's counts and shows agenda
+  skeletons until the fetch resolves; an empty agenda appears only after success.
 - Successful bookings invalidate receptionist/doctor schedules, All appointments,
   the booking workboard, and the patient appointment tab. Schedule invalidation
   reloads the selected date even when the signed-in user has not changed.

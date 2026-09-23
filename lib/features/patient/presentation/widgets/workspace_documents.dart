@@ -101,7 +101,7 @@ class WorkspaceDocuments extends ConsumerWidget {
   }
 }
 
-class WorkspaceDocumentRow extends ConsumerWidget {
+class WorkspaceDocumentRow extends StatelessWidget {
   const WorkspaceDocumentRow({
     super.key,
     required this.document,
@@ -111,20 +111,8 @@ class WorkspaceDocumentRow extends ConsumerWidget {
   final bool showActions;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
-    final programs = ref
-        .watch(patientProgramsProvider(document.patientId))
-        .value;
-    String? programName;
-    for (final program in programs ?? []) {
-      if (program.id == document.programId) {
-        programName = program.conditions
-            .map((p) => p.condition?.conditionName)
-            .whereType<String>()
-            .join(', ');
-      }
-    }
     final name = FileDisplayHelper.sanitizeFileName(document.fileName);
 
     return Material(
@@ -162,15 +150,6 @@ class WorkspaceDocumentRow extends ConsumerWidget {
                         color: colors.onSurfaceVariant,
                       ),
                     ),
-                    if (document.programId != null)
-                      Text(
-                        programName?.isNotEmpty == true
-                            ? programName!
-                            : AppStrings.rehabilitationProgram,
-                        style: AppTextStyles.caption.copyWith(
-                          color: colors.onSurfaceVariant,
-                        ),
-                      ),
                   ],
                 ),
               ),

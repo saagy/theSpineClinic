@@ -11,7 +11,7 @@ import 'package:spine_clinic_app/core/constants/app_text_styles.dart';
 import 'package:spine_clinic_app/core/constants/clinic_colors.dart';
 import 'package:spine_clinic_app/core/utils/formatters.dart';
 import 'package:spine_clinic_app/features/appointment/domain/appointment.dart';
-import 'package:spine_clinic_app/features/appointment/presentation/widgets/appointment_linked_session_row.dart';
+import 'package:spine_clinic_app/features/appointment/presentation/widgets/appointment_linked_sessions_section.dart';
 
 /// Section card displaying appointment schedule information and linked sessions.
 class AppointmentInfoCard extends StatelessWidget {
@@ -154,39 +154,10 @@ class AppointmentInfoCard extends StatelessWidget {
               ),
             ],
           ),
-          if (linkedAppointments.isNotEmpty) ...[
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: AppSizes.p12),
-              child: Divider(
-                color: colorScheme.outlineVariant,
-                height: 1.0,
-                thickness: 0.5,
-              ),
-            ),
-            Row(
-              children: [
-                Icon(
-                  Icons.link_rounded,
-                  size: AppSizes.iconSmall,
-                  color: colorScheme.secondary,
-                ),
-                const SizedBox(width: AppSizes.p6),
-                Text(
-                  (linkedAppointments.length > 1
-                          ? AppStrings.linkedSessions
-                          : AppStrings.linkedSession)
-                      .toUpperCase(),
-                  style: labelStyle.copyWith(
-                    color: colorScheme.secondary,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: AppSizes.p8),
-            ...linkedAppointments.map(
-              (linked) => AppointmentLinkedSessionRow(appointment: linked),
-            ),
-          ],
+          AppointmentLinkedSessionsSection(
+            appointments: linkedAppointments,
+            labelStyle: labelStyle,
+          ),
         ],
       ),
     );
