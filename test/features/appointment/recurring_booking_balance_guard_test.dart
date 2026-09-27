@@ -1,194 +1,155 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:spine_clinic_app/core/constants/app_strings.dart';
-import 'package:spine_clinic_app/core/errors/result.dart';
-import 'package:spine_clinic_app/features/appointment/domain/appointment_repository.dart';
-import 'package:spine_clinic_app/features/appointment/domain/appointment_type.dart';
-import 'package:spine_clinic_app/features/appointment/presentation/appointment_providers.dart';
 import 'package:spine_clinic_app/features/appointment/presentation/widgets/appointment_balance_diagnostics.dart';
-import 'package:spine_clinic_app/features/appointment/presentation/widgets/new_appointment_form.dart';
 import 'package:spine_clinic_app/features/appointment/presentation/widgets/recurring_pattern_picker.dart';
 import 'package:spine_clinic_app/shared/widgets/doctor_select_field.dart';
 import 'package:spine_clinic_app/features/auth/domain/staff.dart';
 import 'package:spine_clinic_app/features/auth/domain/user_role.dart';
-import 'package:spine_clinic_app/features/auth/presentation/auth_providers.dart';
-import 'package:spine_clinic_app/features/patient/domain/clinic_location.dart';
-import 'package:spine_clinic_app/features/patient/domain/patient.dart';
-import 'package:spine_clinic_app/features/patient/presentation/patient_providers.dart';
-
-class _FakeAppointmentRepo implements AppointmentRepository {
-  _FakeAppointmentRepo({this.assignedDoctors = const []});
-
-  final List<Staff> assignedDoctors;
-
-  @override
-  Future<Result<List<Staff>>> getAssignedDoctors(String patientId) async =>
-      Result.success(assignedDoctors);
-
-  @override
-  Future<Result<int>> getFutureScheduledAppointmentsCountForType({
-    required String patientId,
-    required AppointmentType type,
-  }) async => const Result.success(0);
-
-  @override
-  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
-}
-
-class _TestCurrentUser extends CurrentUser {
-  _TestCurrentUser(this.staff);
-  final Staff staff;
-
-  @override
-  Future<Staff?> build() async => staff;
-}
-
-final _testPatient = Patient(
-  id: '11111111-1111-1111-1111-111111111111',
-  fullName: 'Test Patient',
-  phoneNumber: '07700000000',
-  sessionBalance: 3,
-  tractionBalance: 2,
-  clinic: ClinicLocation.tagamoa,
-  createdAt: DateTime(2026),
-);
-
-final _testStaff = Staff(
-  id: '22222222-2222-2222-2222-222222222222',
-  fullName: 'Receptionist User',
-  email: 'receptionist@spine.com',
-  role: UserRole.receptionist,
-  isActive: true,
-  createdAt: DateTime(2026),
-);
-
-Widget _buildTestWidget({List<Staff> assignedDoctors = const []}) {
-  return ProviderScope(
-    overrides: [
-      appointmentRepositoryProvider.overrideWithValue(
-        _FakeAppointmentRepo(assignedDoctors: assignedDoctors),
-      ),
-      patientDetailProvider(_testPatient.id).overrideWith((ref) => Future.value(_testPatient)),
-      currentUserProvider.overrideWith(() => _TestCurrentUser(_testStaff)),
-      availableBalanceForTypeProvider((
-        patientId: _testPatient.id,
-        type: AppointmentType.normalPtSession,
-      )).overrideWith((ref) => Future.value(3)),
-    ],
-    child: MaterialApp(
-      home: Scaffold(
-        body: NewAppointmentForm(
-          preselectedPatientId: _testPatient.id,
-          preselectedDate: DateTime(2026, 9, 1),
-        ),
-      ),
-    ),
-  );
-}
+import '../../fixtures/booking_balance_harness.dart';
 
 void main() {
-  testWidgets('type changes retain the chosen doctor and session billing choice', (tester) async {
-    final assignedDoctor = _testStaff.copyWith(
-      id: 'doctor-assigned',
-      fullName: 'Assigned Doctor',
-      role: UserRole.doctor,
-    );
-    final selectedDoctor = assignedDoctor.copyWith(
-      id: 'doctor-selected',
-      fullName: 'Selected Doctor',
-      isSenior: true,
-    );
-    await tester.pumpWidget(_buildTestWidget(assignedDoctors: [assignedDoctor]));
-    await tester.pumpAndSettle();
+  testWidgets(
+    'type changes retain the chosen doctor and session billing choice',
+    (tester) async {
+      final assignedDoctor = bookingTestStaff.copyWith(
+        id: 'doctor-assigned',
+        fullName: 'Assigned Doctor',
+        role: UserRole.doctor,
+      );
+      final selectedDoctor = assignedDoctor.copyWith(
+        id: 'doctor-selected',
+        fullName: 'Selected Doctor',
+        isSenior: true,
+      );
+      await tester.pumpWidget(
+        buildBookingBalanceHarness(assignedDoctors: [assignedDoctor]),
+      );
+      await tester.pumpAndSettle();
 
-    final doctorField = find.byType(DoctorSelectField).first;
-    final fieldState = tester.state<FormFieldState<List<Staff>>>(doctorField);
-    expect(fieldState.value?.map((doctor) => doctor.id), [assignedDoctor.id]);
+      final doctorField = find.byType(DoctorSelectField).first;
+      final fieldState = tester.state<FormFieldState<List<Staff>>>(doctorField);
+      expect(fieldState.value?.map((doctor) => doctor.id), [assignedDoctor.id]);
 
-    fieldState.didChange([selectedDoctor]);
-    await tester.pumpAndSettle();
-    await tester.tap(find.byType(Switch).last);
-    await tester.pumpAndSettle();
+      fieldState.didChange([selectedDoctor]);
+      await tester.pumpAndSettle();
+      await tester.tap(find.byType(Switch).last);
+      await tester.pumpAndSettle();
 
-    await tester.ensureVisible(find.text(AppStrings.reassessment));
-    await tester.tap(find.text(AppStrings.reassessment));
-    await tester.pumpAndSettle();
-    expect(fieldState.value?.map((doctor) => doctor.id), [selectedDoctor.id]);
-    expect(find.text(AppStrings.assessmentDoctorReminder), findsOneWidget);
+      await tester.ensureVisible(find.text(AppStrings.reassessment));
+      await tester.tap(find.text(AppStrings.reassessment));
+      await tester.pumpAndSettle();
+      expect(fieldState.value?.map((doctor) => doctor.id), [selectedDoctor.id]);
+      expect(find.text(AppStrings.assessmentDoctorReminder), findsOneWidget);
 
-    await tester.ensureVisible(find.text(AppStrings.normalPtSession));
-    await tester.tap(find.text(AppStrings.normalPtSession));
-    await tester.pumpAndSettle();
-    expect(fieldState.value?.map((doctor) => doctor.id), [selectedDoctor.id]);
-    expect(tester.widget<Switch>(find.byType(Switch).last).value, false);
-    expect(tester.takeException(), isNull);
-  });
+      await tester.ensureVisible(find.text(AppStrings.normalPtSession));
+      await tester.tap(find.text(AppStrings.normalPtSession));
+      await tester.pumpAndSettle();
+      expect(fieldState.value?.map((doctor) => doctor.id), [selectedDoctor.id]);
+      expect(tester.widget<Switch>(find.byType(Switch).last).value, false);
+      expect(tester.takeException(), isNull);
+    },
+  );
 
-  testWidgets('Ledger preview updates dynamically when typing recurring sessions count', (
-    tester,
-  ) async {
-    await tester.pumpWidget(_buildTestWidget());
-    await tester.pumpAndSettle();
+  testWidgets(
+    'Ledger preview updates dynamically when typing recurring sessions count',
+    (tester) async {
+      await tester.pumpWidget(buildBookingBalanceHarness());
+      await tester.pumpAndSettle();
 
-    // Tap the 'Recurring booking' text / checkbox
-    final recurringFinder = find.text('Recurring booking');
-    expect(recurringFinder, findsOneWidget);
-    await tester.ensureVisible(recurringFinder);
-    await tester.tap(recurringFinder);
-    await tester.pumpAndSettle();
+      // Tap the 'Recurring booking' text / checkbox
+      final recurringFinder = find.text('Recurring booking');
+      expect(recurringFinder, findsOneWidget);
+      await tester.ensureVisible(recurringFinder);
+      await tester.tap(recurringFinder);
+      await tester.pumpAndSettle();
 
-    expect(find.byType(RecurringPatternPicker), findsOneWidget);
+      expect(find.byType(RecurringPatternPicker), findsOneWidget);
 
-    // Select Saturday
-    await tester.ensureVisible(find.text('Sat'));
-    await tester.tap(find.text('Sat'));
-    await tester.pumpAndSettle();
+      // Select Saturday
+      await tester.ensureVisible(find.text('Sat'));
+      await tester.tap(find.text('Sat'));
+      await tester.pumpAndSettle();
 
-    // Enter 2 sessions (within available balance of 3)
-    final sessionsInput = find.byType(TextField).last;
-    await tester.enterText(sessionsInput, '2');
-    await tester.pumpAndSettle();
+      // Enter 2 sessions (within available balance of 3)
+      final sessionsInput = find.byType(TextField).last;
+      await tester.enterText(sessionsInput, '2');
+      await tester.pumpAndSettle();
 
-    // Verify Live Ledger Preview shows requested count of 2
-    expect(find.byType(AppointmentBalanceDiagnostics), findsOneWidget);
-    expect(find.text('2'), findsWidgets);
-    expect(find.text(AppStrings.projectedLeftoverMessage(1)), findsOneWidget);
+      // Verify Live Ledger Preview shows requested count of 2
+      expect(find.byType(AppointmentBalanceDiagnostics), findsOneWidget);
+      expect(find.text('2'), findsWidgets);
+      expect(find.text(AppStrings.projectedLeftoverMessage(1)), findsOneWidget);
 
-    // Now enter 5 sessions (exceeding balance of 3)
-    await tester.enterText(sessionsInput, '5');
-    await tester.pumpAndSettle();
+      // Now enter 5 sessions (exceeding balance of 3)
+      await tester.enterText(sessionsInput, '5');
+      await tester.pumpAndSettle();
 
-    // Verify Ledger Preview immediately updates with deficit
-    expect(find.text(AppStrings.packageDeficitMessage(2)), findsOneWidget);
-    expect(find.text(AppStrings.insufficientPackageBalance), findsOneWidget);
+      // Verify Ledger Preview immediately updates with deficit
+      expect(find.text(AppStrings.packageDeficitMessage(2)), findsOneWidget);
+      expect(find.text(AppStrings.insufficientPackageBalance), findsOneWidget);
 
-    // Verify Save button is disabled
-    final saveButton = tester.widget<FilledButton>(
-      find.widgetWithText(FilledButton, AppStrings.save),
-    );
-    expect(saveButton.onPressed, isNull);
+      // Verify Save button is disabled
+      final saveButton = tester.widget<FilledButton>(
+        find.widgetWithText(FilledButton, AppStrings.save),
+      );
+      expect(saveButton.onPressed, isNull);
 
-    // Type 3 sessions (exact balance)
-    await tester.enterText(sessionsInput, '3');
-    await tester.pumpAndSettle();
+      // Type 3 sessions (exact balance)
+      await tester.enterText(sessionsInput, '3');
+      await tester.pumpAndSettle();
 
-    // Verify deficit is gone and leftover is 0
-    expect(find.text(AppStrings.projectedLeftoverMessage(0)), findsOneWidget);
-  });
+      // Verify deficit is gone and leftover is 0
+      expect(find.text(AppStrings.projectedLeftoverMessage(0)), findsOneWidget);
+    },
+  );
 
-  testWidgets('Bundled assessment does not show secondary package balance toggle', (tester) async {
-    await tester.pumpWidget(_buildTestWidget());
-    await tester.pumpAndSettle();
+  testWidgets(
+    'an unresolved booking can reach receipt reconciliation despite a balance deficit',
+    (tester) async {
+      await tester.pumpWidget(buildBookingBalanceHarness(pendingRetry: true));
+      await tester.pumpAndSettle();
+      await tester.ensureVisible(find.text(AppStrings.recurringBooking));
+      await tester.tap(find.text(AppStrings.recurringBooking));
+      await tester.pumpAndSettle();
+      await tester.ensureVisible(find.text('Sat'));
+      await tester.tap(find.text('Sat'));
+      await tester.pumpAndSettle();
+      await tester.enterText(find.byType(TextField).last, '5');
+      await tester.pumpAndSettle();
+      expect(find.text(AppStrings.insufficientPackageBalance), findsOneWidget);
+      expect(
+        tester
+            .widget<FilledButton>(
+              find.widgetWithText(FilledButton, AppStrings.save),
+            )
+            .onPressed,
+        isNotNull,
+      );
+    },
+  );
 
-    // Toggle bundling on
-    final bundleSwitch = find.widgetWithText(SwitchListTile, AppStrings.bundleAssessmentHint);
-    expect(bundleSwitch, findsOneWidget);
-    await tester.ensureVisible(bundleSwitch);
-    await tester.tap(bundleSwitch);
-    await tester.pumpAndSettle();
+  testWidgets(
+    'Bundled assessment does not show secondary package balance toggle',
+    (tester) async {
+      await tester.pumpWidget(buildBookingBalanceHarness());
+      await tester.pumpAndSettle();
 
-    expect(find.text(AppStrings.secondarySession), findsOneWidget);
-    expect(find.text('Use package balance for secondary session'), findsNothing);
-  });
+      // Toggle bundling on
+      final bundleSwitch = find.widgetWithText(
+        SwitchListTile,
+        AppStrings.bundleAssessmentHint,
+      );
+      expect(bundleSwitch, findsOneWidget);
+      await tester.ensureVisible(bundleSwitch);
+      await tester.tap(bundleSwitch);
+      await tester.pumpAndSettle();
+
+      expect(find.text(AppStrings.secondarySession), findsOneWidget);
+      expect(
+        find.text('Use package balance for secondary session'),
+        findsNothing,
+      );
+    },
+  );
 }

@@ -4,6 +4,11 @@ library;
 
 /// Application-wide string constants.
 abstract final class AppStrings {
+  static const String paymentChanged = 'This payment changed. Refresh it before collecting another amount.';
+  static const String mutationUnconfirmed =
+      'Could not confirm the result. Retry with the same details to safely check and finish the request.';
+  static const String mutationPreviousCompleted =
+      'The previous request already completed. Refresh and review it before submitting another.';
   static const String searchAppointmentTypes = 'Search appointment type';
   static const String checkedInEditHint =
       'Undo check-in before changing the appointment type or billing.';
@@ -161,6 +166,9 @@ abstract final class AppStrings {
     'error_database_validation_failed': errorDatabaseValidationFailed,
     'error_database_query_failed': errorDatabaseQueryFailed,
     'error_network_generic': errorNetworkGeneric,
+    'mutation_unconfirmed': mutationUnconfirmed,
+    'payment_changed': paymentChanged,
+    'mutation_previous_completed': mutationPreviousCompleted,
     'error_unknown': errorUnknown,
     'error_patient_not_empty': patientNotEmpty,
     'error_doc_image_too_large': errorDocImageTooLarge,

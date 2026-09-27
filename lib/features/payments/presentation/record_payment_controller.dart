@@ -97,6 +97,7 @@ class RecordPaymentController extends _$RecordPaymentController {
     required String paymentId,
     required String patientId,
     required double additionalAmount,
+    required double expectedAmount,
   }) async {
     final AppException? accessError = _paymentAccessError(
       ref.read(currentUserProvider).value,
@@ -109,6 +110,7 @@ class RecordPaymentController extends _$RecordPaymentController {
     final Result<void> result = await repo.collectDue(
       paymentId: paymentId,
       additionalAmount: additionalAmount,
+      expectedAmount: expectedAmount,
     );
     if (!ref.mounted) return result;
 
@@ -190,7 +192,7 @@ class RecordPaymentController extends _$RecordPaymentController {
         message: AppStrings.paymentLoginRequired,
       );
     }
-    if (user.canHandlePayments) {
+    if (user.isActive && user.canHandlePayments) {
       return null;
     }
     return const AuthException(

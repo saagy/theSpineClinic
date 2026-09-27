@@ -97,8 +97,8 @@ mixin _PatientAppointmentQueries on _AppointmentRepositoryBase {
           .eq('use_package', true)
           .gte('scheduled_at', DateTime.now().toUtc().toIso8601String());
       if (type != null) query = query.eq('type', type.dbValue);
-      final List<Map<String, dynamic>> rows = await query;
-      return rows.length;
+      final response = await query.limit(1).count(CountOption.exact);
+      return response.count;
     });
   }
 }

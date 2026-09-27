@@ -3,6 +3,8 @@ library;
 
 import 'dart:async';
 
+import 'package:spine_clinic_app/features/appointment/domain/schedule_loader.dart';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:spine_clinic_app/core/errors/app_exception.dart';
 import 'package:spine_clinic_app/core/errors/result.dart';
@@ -78,26 +80,16 @@ class DoctorScheduleNotifier extends Notifier<DoctorScheduleState> {
       appointmentRepositoryProvider,
     );
     final Result<List<AppointmentWithPatient>> result = await repository
-        .getAllAppointments(
-          dateFrom: ScheduleWeek.windowStart(selected),
-          dateTo: ScheduleWeek.windowEnd(selected),
+        .getScheduleAppointments(
+          dateFrom: weekStart,
+          dateTo: DateTime(weekStart.year, weekStart.month, weekStart.day + 7),
           doctorId: user.id,
-          offset: 0,
-          limit: 1000,
-          ascending: true,
         );
     if (!ref.mounted || requestId != _requestId) return;
 
     result.when(
       success: (List<AppointmentWithPatient> data) {
-        _weekCache.addAll(
-          ScheduleWeek.groupWindow<AppointmentWithPatient>(
-            data,
-            around: selected,
-            dateOf: (AppointmentWithPatient item) =>
-                item.appointment.scheduledAt.toLocal(),
-          ),
-        );
+        _weekCache[weekStart] = data;
         state = state.copyWith(
           allItems: _weekCache[weekStart] ?? <AppointmentWithPatient>[],
           selectedDate: selected,

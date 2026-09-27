@@ -72,7 +72,11 @@ extension _NewAppointmentValidation on _NewAppointmentFormState {
       return;
     }
 
-    if (_selectedType.affectsPackageBalance && _usePackage) {
+    final bool pendingRetry = await ref.read(
+      pendingBookingProvider(_patientId!).future,
+    );
+    if (!mounted) return;
+    if (!pendingRetry && _selectedType.affectsPackageBalance && _usePackage) {
       final available = await ref.read(
         availableBalanceForTypeProvider((
           patientId: _patientId!,

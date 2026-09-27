@@ -5,13 +5,23 @@ extension _NewAppointmentFormView on _NewAppointmentFormState {
     final Patient? patient = _resolvePatient();
     final bool isPatientValid = _patientId != null;
     final availableAsync = isPatientValid
-        ? ref.watch(availableBalanceForTypeProvider((patientId: _patientId!, type: _selectedType)))
+        ? ref.watch(
+            availableBalanceForTypeProvider((
+              patientId: _patientId!,
+              type: _selectedType,
+            )),
+          )
         : null;
-    final int proposedCount = (_selectedType.affectsPackageBalance && _usePackage)
+    final int proposedCount =
+        (_selectedType.affectsPackageBalance && _usePackage)
         ? _computedSlots.length
         : 0;
 
+    final bool pendingRetry =
+        isPatientValid &&
+        (ref.watch(pendingBookingProvider(_patientId!)).value ?? false);
     final bool isSubmissionBlocked =
+        !pendingRetry &&
         isPatientValid &&
         proposedCount > 0 &&
         (availableAsync == null ||
@@ -37,7 +47,9 @@ extension _NewAppointmentFormView on _NewAppointmentFormState {
                   _sessionUsePackage = _usePackage;
                 }
                 _selectedType = type;
-                _usePackage = type.affectsPackageBalance ? _sessionUsePackage : false;
+                _usePackage = type.affectsPackageBalance
+                    ? _sessionUsePackage
+                    : false;
 
                 if (!type.affectsPackageBalance) {
                   _bundleSecondarySession = false;
@@ -108,7 +120,10 @@ extension _NewAppointmentFormView on _NewAppointmentFormState {
     title: AppStrings.bundleAssessment,
     child: SwitchListTile(
       contentPadding: EdgeInsets.zero,
-      title: const Text(AppStrings.bundleAssessmentHint, style: AppTextStyles.body),
+      title: const Text(
+        AppStrings.bundleAssessmentHint,
+        style: AppTextStyles.body,
+      ),
       value: _bundleSecondarySession,
       onChanged: (value) => _mutate(() {
         _bundleSecondarySession = value;

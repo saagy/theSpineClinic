@@ -55,7 +55,7 @@ class _RecordPaymentFormState extends ConsumerState<RecordPaymentForm> {
       },
       failure: (error) => AppSnackbar.show(
         context,
-        message: error.message,
+        message: AppStrings.fromKey(error.userMessageKey),
         variant: AppSnackbarVariant.error,
       ),
     );

@@ -35,8 +35,8 @@ abstract class PatientDocumentsRepository {
     String? programId,
   });
 
-  /// Downloads raw bytes for a stored document. No client cache —
-  /// every call hits Supabase Storage.
+  /// Retrieves raw document bytes from the bounded client cache or private R2,
+  /// with a Supabase Storage fallback for legacy documents.
   Future<Result<Uint8List>> downloadDocumentBytes({
     required String fileUrl,
     required String fileName,

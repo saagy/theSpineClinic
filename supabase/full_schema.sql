@@ -2522,3 +2522,201 @@ END;
 $$;
 REVOKE ALL ON FUNCTION public.delete_empty_patient(uuid) FROM PUBLIC, anon;
 GRANT EXECUTE ON FUNCTION public.delete_empty_patient(uuid) TO authenticated;
+
+-- Durable receipts are deliberately retained: deleting them re-enables old retries.
+CREATE TABLE public.mutation_receipts (
+  request_id uuid PRIMARY KEY,
+  actor_id uuid NOT NULL,
+  kind text NOT NULL,
+  payload_hash text NOT NULL,
+  outcome jsonb NOT NULL,
+  created_at timestamptz NOT NULL DEFAULT now()
+);
+ALTER TABLE public.mutation_receipts ENABLE ROW LEVEL SECURITY;
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.mutation_receipts TO authenticated;
+-- No client policies: only the checked SECURITY DEFINER functions below write.
+
+CREATE FUNCTION public.execute_clinic_mutation(p_request_id uuid, p_kind text, p_payload jsonb)
+RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path=public,pg_temp AS $$
+DECLARE previous public.mutation_receipts; outcome jsonb; payment_id uuid;
+  actor uuid := (SELECT staff_id FROM public.get_auth_staff_profile());
+  error_code text; error_message text; current_amount numeric;
+  request_hash text := encode(sha256(convert_to(p_payload::text,'UTF8')),'hex');
+BEGIN
+  IF actor IS NULL OR NOT EXISTS(SELECT 1 FROM public.staff WHERE id=actor AND is_active) THEN
+    RAISE EXCEPTION 'Permission denied' USING ERRCODE='42501';
+  END IF;
+  IF p_request_id IS NULL OR p_payload IS NULL OR (p_kind IS NULL OR p_kind NOT IN ('payment','collect_due','booking')) THEN
+    RAISE EXCEPTION 'Invalid request' USING ERRCODE='22000';
+  END IF;
+  PERFORM pg_advisory_xact_lock(hashtextextended(p_request_id::text,0));
+  SELECT * INTO previous FROM public.mutation_receipts WHERE request_id=p_request_id;
+  IF FOUND THEN
+    IF previous.actor_id<>actor OR previous.kind<>p_kind OR previous.payload_hash<>request_hash THEN
+      RAISE EXCEPTION 'Request identity mismatch' USING ERRCODE='22000';
+    END IF;
+    RETURN previous.outcome;
+  END IF;
+  -- Roll back every business write on failure, then retain its definitive result.
+  BEGIN
+    IF p_kind IN ('payment','collect_due') AND NOT public.current_staff_can_manage_payments() THEN
+      RAISE EXCEPTION 'Permission denied' USING ERRCODE='42501';
+    END IF;
+    IF p_kind='payment' THEN
+      INSERT INTO public.payment_records(patient_id,amount,reason,recorded_by,
+        session_balance_added,traction_balance_added,total_price)
+      VALUES ((p_payload->>'patient_id')::uuid,(p_payload->>'amount')::numeric,
+        p_payload->>'reason',actor,(p_payload->>'session_balance_added')::integer,
+        (p_payload->>'traction_balance_added')::integer,(p_payload->>'total_price')::numeric)
+      RETURNING id INTO payment_id;
+      outcome := jsonb_build_object('ok',true,'id',payment_id);
+    ELSIF p_kind='collect_due' THEN
+      SELECT amount INTO current_amount FROM public.payment_records
+        WHERE id=(p_payload->>'p_payment_id')::uuid FOR UPDATE;
+      IF current_amount IS DISTINCT FROM (p_payload->>'p_expected_amount')::numeric THEN
+        RAISE EXCEPTION 'Payment changed. Refresh before collecting.' USING ERRCODE='P0001';
+      END IF;
+      PERFORM public.collect_payment_due((p_payload->>'p_payment_id')::uuid,
+        (p_payload->>'p_additional_amount')::numeric);
+      outcome := jsonb_build_object('ok',true);
+    ELSE
+      PERFORM public.book_recurring_appointments(
+        (p_payload->>'p_patient_id')::uuid,(p_payload->>'p_type')::public.appointment_type,
+        ARRAY(SELECT value::timestamptz FROM jsonb_array_elements_text(p_payload->'p_slots')),
+        (p_payload->>'p_use_package')::boolean,actor,
+        ARRAY(SELECT value::uuid FROM jsonb_array_elements_text(p_payload->'p_doctor_ids')),
+        (p_payload->>'p_expected_next_visit_date')::date);
+      IF p_payload->'companion' IS NOT NULL THEN
+        PERFORM public.book_recurring_appointments(
+          (p_payload->>'p_patient_id')::uuid,(p_payload->'companion'->>'type')::public.appointment_type,
+          ARRAY(SELECT value::timestamptz FROM jsonb_array_elements_text(p_payload->'companion'->'slots')),
+          false,actor,
+          ARRAY(SELECT value::uuid FROM jsonb_array_elements_text(p_payload->'companion'->'doctor_ids')),NULL);
+      END IF;
+      outcome := jsonb_build_object('ok',true);
+    END IF;
+  EXCEPTION WHEN OTHERS THEN
+    GET STACKED DIAGNOSTICS error_code=RETURNED_SQLSTATE, error_message=MESSAGE_TEXT;
+    outcome := jsonb_build_object('ok',false,'code',error_code,'message',error_message);
+  END;
+  INSERT INTO public.mutation_receipts(request_id,actor_id,kind,payload_hash,outcome)
+    VALUES(p_request_id,actor,p_kind,request_hash,outcome);
+  RETURN outcome;
+END;
+$$;
+
+-- Fence an unresolved request before allowing edited details to be submitted.
+-- The same lock waits for an in-flight write; a missing write is tombstoned.
+CREATE FUNCTION public.resolve_clinic_mutation(p_request_id uuid) RETURNS boolean
+LANGUAGE plpgsql SECURITY DEFINER SET search_path=public,pg_temp AS $$
+DECLARE previous public.mutation_receipts;
+  actor uuid := (SELECT staff_id FROM public.get_auth_staff_profile());
+BEGIN
+  IF actor IS NULL OR NOT EXISTS(SELECT 1 FROM public.staff WHERE id=actor AND is_active) THEN
+    RAISE EXCEPTION 'Permission denied' USING ERRCODE='42501';
+  END IF;
+  IF p_request_id IS NULL THEN RAISE EXCEPTION 'Invalid request' USING ERRCODE='22000'; END IF;
+  PERFORM pg_advisory_xact_lock(hashtextextended(p_request_id::text,0));
+  SELECT * INTO previous FROM public.mutation_receipts WHERE request_id=p_request_id;
+  IF FOUND THEN
+    IF previous.actor_id<>actor THEN RAISE EXCEPTION 'Permission denied' USING ERRCODE='42501'; END IF;
+    RETURN coalesce((previous.outcome->>'ok')::boolean,false);
+  END IF;
+  INSERT INTO public.mutation_receipts(request_id,actor_id,kind,payload_hash,outcome)
+    VALUES(p_request_id,actor,'cancelled','{}','{"ok":false}');
+  RETURN false;
+END;
+$$;
+REVOKE ALL ON FUNCTION public.execute_clinic_mutation(uuid,text,jsonb),
+  public.resolve_clinic_mutation(uuid) FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.execute_clinic_mutation(uuid,text,jsonb),
+  public.resolve_clinic_mutation(uuid) TO authenticated;
+
+CREATE TABLE public.document_uploads (
+  request_id uuid PRIMARY KEY,
+  actor_id uuid NOT NULL,
+  patient_id uuid NOT NULL,
+  file_name text NOT NULL,
+  program_id uuid,
+  content_hash text NOT NULL,
+  byte_size integer NOT NULL CHECK(byte_size BETWEEN 1 AND 10485760),
+  object_key text NOT NULL UNIQUE,
+  status text NOT NULL DEFAULT 'pending' CHECK(status IN ('pending','completed','failed')),
+  outcome jsonb,
+  created_at timestamptz NOT NULL DEFAULT now()
+);
+ALTER TABLE public.document_uploads ENABLE ROW LEVEL SECURITY;
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.document_uploads TO authenticated;
+-- No client write policies. Receipts survive deleted documents to fence late retries.
+
+CREATE FUNCTION public.begin_document_upload(p_request_id uuid, p_patient_id uuid,
+  p_file_name text, p_program_id uuid, p_content_hash text, p_byte_size integer)
+RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path=public,pg_temp AS $$
+DECLARE upload public.document_uploads;
+  actor uuid := (SELECT staff_id FROM public.get_auth_staff_profile());
+BEGIN
+  IF actor IS NULL OR NOT public.can_current_staff_access_patient(p_patient_id)
+      OR NOT EXISTS(SELECT 1 FROM public.staff WHERE id=actor AND is_active) THEN
+    RAISE EXCEPTION 'Permission denied' USING ERRCODE='42501';
+  END IF;
+  IF p_request_id IS NULL OR p_file_name IS NULL OR length(trim(p_file_name)) NOT BETWEEN 1 AND 255
+      OR p_content_hash IS NULL OR p_content_hash !~ '^[a-f0-9]{64}$'
+      OR p_byte_size IS NULL OR p_byte_size NOT BETWEEN 1 AND 10485760 THEN
+    RAISE EXCEPTION 'Invalid document' USING ERRCODE='22000';
+  END IF;
+  PERFORM pg_advisory_xact_lock(hashtextextended(p_request_id::text,1));
+  SELECT * INTO upload FROM public.document_uploads WHERE request_id=p_request_id;
+  IF FOUND THEN
+    IF upload.actor_id<>actor OR upload.patient_id<>p_patient_id OR upload.file_name<>p_file_name
+      OR upload.program_id IS DISTINCT FROM p_program_id OR upload.content_hash<>p_content_hash
+      OR upload.byte_size<>p_byte_size THEN
+      RAISE EXCEPTION 'Upload identity mismatch' USING ERRCODE='22000';
+    END IF;
+    RETURN to_jsonb(upload);
+  END IF;
+  IF NOT EXISTS(SELECT 1 FROM public.patients WHERE id=p_patient_id) OR
+      (p_program_id IS NOT NULL AND NOT EXISTS(
+        SELECT 1 FROM public.patient_programs WHERE id=p_program_id AND patient_id=p_patient_id)) THEN
+    RAISE EXCEPTION 'Patient or program not found' USING ERRCODE='23503';
+  END IF;
+  INSERT INTO public.document_uploads(request_id,actor_id,patient_id,file_name,program_id,
+    content_hash,byte_size,object_key)
+  VALUES(p_request_id,actor,p_patient_id,p_file_name,p_program_id,p_content_hash,p_byte_size,
+    p_patient_id::text||'/'||p_request_id::text) RETURNING * INTO upload;
+  RETURN to_jsonb(upload);
+END;
+$$;
+
+CREATE FUNCTION public.complete_document_upload(p_request_id uuid) RETURNS jsonb
+LANGUAGE plpgsql SECURITY DEFINER SET search_path=public,pg_temp AS $$
+DECLARE upload public.document_uploads; document public.patient_documents; result_json jsonb;
+  actor uuid := (SELECT staff_id FROM public.get_auth_staff_profile());
+BEGIN
+  SELECT * INTO upload FROM public.document_uploads WHERE request_id=p_request_id FOR UPDATE;
+  IF NOT FOUND OR actor IS NULL OR upload.actor_id<>actor
+      OR NOT public.can_current_staff_access_patient(upload.patient_id)
+      OR NOT EXISTS(SELECT 1 FROM public.staff WHERE id=actor AND is_active) THEN
+    RAISE EXCEPTION 'Permission denied' USING ERRCODE='42501';
+  END IF;
+  IF upload.status<>'pending' THEN RETURN upload.outcome; END IF;
+  BEGIN
+    IF upload.program_id IS NOT NULL AND NOT EXISTS(SELECT 1 FROM public.patient_programs
+        WHERE id=upload.program_id AND patient_id=upload.patient_id) THEN
+      RAISE EXCEPTION 'Program no longer exists' USING ERRCODE='23503';
+    END IF;
+    INSERT INTO public.patient_documents(id,patient_id,file_url,file_name,uploaded_by,program_id)
+    VALUES(upload.request_id,upload.patient_id,upload.object_key,upload.file_name,actor,upload.program_id)
+    RETURNING * INTO document;
+    result_json := jsonb_build_object('ok',true,'document',to_jsonb(document));
+    UPDATE public.document_uploads SET status='completed',outcome=result_json WHERE request_id=p_request_id;
+  EXCEPTION WHEN OTHERS THEN
+    result_json := jsonb_build_object('ok',false);
+    UPDATE public.document_uploads SET status='failed',outcome=result_json WHERE request_id=p_request_id;
+  END;
+  RETURN result_json;
+END;
+$$;
+REVOKE ALL ON FUNCTION public.begin_document_upload(uuid,uuid,text,uuid,text,integer),
+  public.complete_document_upload(uuid) FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.begin_document_upload(uuid,uuid,text,uuid,text,integer),
+  public.complete_document_upload(uuid) TO authenticated;

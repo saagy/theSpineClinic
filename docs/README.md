@@ -21,6 +21,7 @@ app (Flutter + Riverpod + Supabase). The product brief is
 | [Database Schema](database-schema.md) | Canonical tables, columns, enums, indexes, RPCs, triggers, RLS summary. |
 | [Security Model](security-model.md) | Roles, RLS enforcement layers, staff application flow, repo safety rules. |
 | [Testing](testing.md) | Dart suite layout and SQL sanity scripts. |
+| [Production Readiness (27 September 2026)](production-readiness-2026-09-27.md) | Current checks, confirmed launch risks, expected three-branch capacity and acceptance gates. |
 | [AGENTS.md](../AGENTS.md) | Engineering rules for humans and AI agents working in this repo. |
 
 ## Source of Truth
@@ -28,3 +29,6 @@ app (Flutter + Riverpod + Supabase). The product brief is
 - **Database DDL**: [`supabase/full_schema.sql`](../supabase/full_schema.sql) — recreate the schema from scratch.
 - **Migrations**: [`supabase/migrations/`](../supabase/migrations/) — incremental changes.
 - Schema changes must update `full_schema.sql` and [database-schema.md](database-schema.md) together.
+
+- [Production hardening implementation and release order](production-hardening.md)
+- [September 27 production rollout and verification](production-rollout-2026-09-27.md)

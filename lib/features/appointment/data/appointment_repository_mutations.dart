@@ -81,25 +81,35 @@ mixin _AppointmentMutations on _AppointmentRepositoryBase {
     required String? creatorId,
     required List<String> doctorIds,
     DateTime? expectedNextVisitDate,
-  }) {
-    return _run(
-      () => _service.rpc(
-        'book_recurring_appointments',
-        params: <String, dynamic>{
-          'p_patient_id': patientId,
-          'p_type': type.dbValue,
-          'p_slots': slots
-              .map((slot) => slot.toUtc().toIso8601String())
-              .toList(),
-          'p_use_package': type.affectsPackageBalance ? usePackage : false,
-          'p_creator_id': creatorId,
-          'p_doctor_ids': doctorIds,
-          'p_expected_next_visit_date': expectedNextVisitDate == null
-              ? null
-              : _dateOnly(expectedNextVisitDate),
-        },
-      ),
-    );
+    BookingCompanion? companion,
+  }) async {
+    try {
+      await ClinicMutations(
+        _service,
+      ).execute('booking', patientId, <String, dynamic>{
+        'p_patient_id': patientId,
+        if (companion != null)
+          'companion': {
+            'type': companion.type.dbValue,
+            'slots': companion.slots
+                .map((slot) => slot.toUtc().toIso8601String())
+                .toList(),
+            'doctor_ids': [...companion.doctorIds]..sort(),
+          },
+        'p_type': type.dbValue,
+        'p_slots': slots.map((slot) => slot.toUtc().toIso8601String()).toList(),
+        'p_use_package': type.affectsPackageBalance ? usePackage : false,
+        'p_doctor_ids': [...doctorIds]..sort(),
+        'p_expected_next_visit_date': expectedNextVisitDate == null
+            ? null
+            : _dateOnly(expectedNextVisitDate),
+      });
+      return const Result.success(null);
+    } on AppException catch (error) {
+      return Result.failure(error);
+    } on Exception catch (error) {
+      return Result.failure(AppException.fromSupabaseException(error));
+    }
   }
 
   @override

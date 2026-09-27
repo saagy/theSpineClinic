@@ -1,5 +1,5 @@
 import {
-  S3Client, PutObjectCommand, GetObjectCommand, DeleteObjectsCommand, ListObjectsV2Command,
+  S3Client, HeadObjectCommand, PutObjectCommand, GetObjectCommand, DeleteObjectsCommand, ListObjectsV2Command,
 } from "npm:@aws-sdk/client-s3@^3.600.0";
 import { getSignedUrl } from "npm:@aws-sdk/s3-request-presigner@^3.600.0";
 
@@ -38,4 +38,14 @@ export async function removeFolder(patientId: string): Promise<number> {
     continuationToken = page.NextContinuationToken;
   } while (continuationToken);
   return totalDeleted;
+}
+
+export async function size(key: string): Promise<number | null> {
+  try {
+    const result = await client.send(new HeadObjectCommand({ Bucket: bucket, Key: key }));
+    return result.ContentLength ?? null;
+  } catch (error) {
+    if ((error as { $metadata?: { httpStatusCode?: number } }).$metadata?.httpStatusCode === 404) return null;
+    throw error;
+  }
 }

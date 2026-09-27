@@ -1,6 +1,6 @@
 import { createClient } from "npm:@supabase/supabase-js@^2.45.0";
 import { handleStorageRequest } from "./handler.ts";
-import { upload, download, remove, removeFolder } from "./storage.ts";
+import { upload, download, remove, removeFolder, size } from "./storage.ts";
 
 Deno.serve((req: Request) => {
   // Every database request uses the caller's JWT and RLS, never a service key.
@@ -24,6 +24,14 @@ Deno.serve((req: Request) => {
         .select("id").eq("id", patientId).maybeSingle();
       if (error) throw error;
       return data !== null;
+    },
+    tracked: {
+      rpc: async (name, params) => {
+        const { data, error } = await supabase.rpc(name, params);
+        if (error) throw error;
+        return data;
+      },
+      upload, remove, size,
     },
     upload, download, remove, removeFolder,
   });

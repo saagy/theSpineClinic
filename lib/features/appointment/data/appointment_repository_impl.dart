@@ -1,3 +1,4 @@
+import 'package:spine_clinic_app/core/network/clinic_mutations.dart';
 import 'package:spine_clinic_app/core/errors/app_exception.dart';
 import 'package:spine_clinic_app/core/errors/result.dart';
 import 'package:spine_clinic_app/core/network/supabase_service.dart';
@@ -11,7 +12,7 @@ import 'package:spine_clinic_app/features/auth/domain/staff.dart';
 import 'package:spine_clinic_app/features/patient/domain/clinic_location.dart';
 import 'package:spine_clinic_app/features/patient/domain/patient.dart';
 import 'package:supabase_flutter/supabase_flutter.dart'
-    show PostgrestFilterBuilder;
+    show CountOption, PostgrestFilterBuilder;
 
 part 'appointment_repository_all_queries.dart';
 part 'appointment_repository_base.dart';

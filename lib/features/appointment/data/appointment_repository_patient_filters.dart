@@ -2,7 +2,8 @@ part of 'appointment_repository_impl.dart';
 
 mixin _PatientAppointmentFilters on _AppointmentRepositoryBase {
   @override
-  Future<Result<List<AppointmentWithPatient>>> getAppointmentsForPatientPaginated({
+  Future<Result<List<AppointmentWithPatient>>>
+  getAppointmentsForPatientPaginated({
     required String patientId,
     int offset = 0,
     int limit = 30,
@@ -15,17 +16,9 @@ mixin _PatientAppointmentFilters on _AppointmentRepositoryBase {
     bool ascending = false,
   }) {
     return _run(() async {
-      final List<String>? doctorIds = await _resolveDoctorIds(
-        doctorId,
-        dateFrom: dateFrom,
-        dateTo: dateTo,
-      );
-      if (doctorIds != null && doctorIds.isEmpty) {
-        return <AppointmentWithPatient>[];
-      }
       final PostgrestFilterBuilder builder = _patientFilters(
         patientId: patientId,
-        doctorIds: doctorIds,
+        doctorId: doctorId,
         statusFilter: statusFilter,
         typeFilter: typeFilter,
         dateFrom: dateFrom,
@@ -37,18 +30,15 @@ mixin _PatientAppointmentFilters on _AppointmentRepositoryBase {
           .order('created_at', ascending: ascending)
           .order('id', ascending: ascending)
           .range(offset, offset + limit - 1);
-      return rows
-          .where((row) => row['patient'] != null)
-          .map((row) {
-            final names = _extractDoctorNames(row);
-            return AppointmentWithPatient(
-              appointment: Appointment.fromJson(row),
-              patient: Patient.fromJson(row['patient'] as Map<String, dynamic>),
-              doctorName: names.isEmpty ? null : names.first,
-              doctorNames: names,
-            );
-          })
-          .toList();
+      return rows.where((row) => row['patient'] != null).map((row) {
+        final names = _extractDoctorNames(row);
+        return AppointmentWithPatient(
+          appointment: Appointment.fromJson(row),
+          patient: Patient.fromJson(row['patient'] as Map<String, dynamic>),
+          doctorName: names.isEmpty ? null : names.first,
+          doctorNames: names,
+        );
+      }).toList();
     });
   }
 
@@ -63,29 +53,23 @@ mixin _PatientAppointmentFilters on _AppointmentRepositoryBase {
     bool? usePackageFilter,
   }) {
     return _run(() async {
-      final List<String>? doctorIds = await _resolveDoctorIds(
-        doctorId,
-        dateFrom: dateFrom,
-        dateTo: dateTo,
-      );
-      if (doctorIds != null && doctorIds.isEmpty) return 0;
       final PostgrestFilterBuilder builder = _patientCountFilters(
         patientId: patientId,
-        doctorIds: doctorIds,
+        doctorId: doctorId,
         statusFilter: statusFilter,
         typeFilter: typeFilter,
         dateFrom: dateFrom,
         dateTo: dateTo,
         usePackageFilter: usePackageFilter,
       );
-      final List<Map<String, dynamic>> rows = await builder;
-      return rows.length;
+      final response = await builder.limit(1).count(CountOption.exact);
+      return response.count;
     });
   }
 
   PostgrestFilterBuilder _patientCountFilters({
     required String patientId,
-    required List<String>? doctorIds,
+    required String? doctorId,
     Set<AppointmentStatus>? statusFilter,
     Set<AppointmentType>? typeFilter,
     DateTime? dateFrom,
@@ -94,7 +78,7 @@ mixin _PatientAppointmentFilters on _AppointmentRepositoryBase {
   }) {
     var builder = _service
         .from(_appointmentsTable)
-        .select('id')
+        .select('id${_doctorJoin(doctorId)}')
         .eq('patient_id', patientId);
     if (dateFrom != null) {
       builder = builder.gte('scheduled_at', dateFrom.toUtc().toIso8601String());
@@ -117,13 +101,17 @@ mixin _PatientAppointmentFilters on _AppointmentRepositoryBase {
     if (usePackageFilter != null) {
       builder = builder.eq('use_package', usePackageFilter);
     }
-    if (doctorIds != null) builder = builder.inFilter('id', doctorIds);
+    if (doctorId != null) {
+      builder = builder
+          .eq('doctor_filter.doctor_id', doctorId)
+          .eq('doctor_filter.is_active', true);
+    }
     return builder;
   }
 
   PostgrestFilterBuilder _patientFilters({
     required String patientId,
-    required List<String>? doctorIds,
+    required String? doctorId,
     Set<AppointmentStatus>? statusFilter,
     Set<AppointmentType>? typeFilter,
     DateTime? dateFrom,
@@ -133,7 +121,7 @@ mixin _PatientAppointmentFilters on _AppointmentRepositoryBase {
     var builder = _service
         .from(_appointmentsTable)
         .select(
-          '*, patient:patients!inner(*), appointment_doctors(is_active, staff:staff!doctor_id(full_name))',
+          '*, patient:patients!inner(*), appointment_doctors(is_active, staff:staff!doctor_id(full_name))${_doctorJoin(doctorId)}',
         )
         .eq('patient_id', patientId);
     if (dateFrom != null) {
@@ -157,7 +145,11 @@ mixin _PatientAppointmentFilters on _AppointmentRepositoryBase {
     if (usePackageFilter != null) {
       builder = builder.eq('use_package', usePackageFilter);
     }
-    if (doctorIds != null) builder = builder.inFilter('id', doctorIds);
+    if (doctorId != null) {
+      builder = builder
+          .eq('doctor_filter.doctor_id', doctorId)
+          .eq('doctor_filter.is_active', true);
+    }
     return builder;
   }
 }

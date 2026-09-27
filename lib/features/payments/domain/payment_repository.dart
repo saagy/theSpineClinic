@@ -30,5 +30,6 @@ abstract class PaymentRepository {
   Future<Result<void>> collectDue({
     required String paymentId,
     required double additionalAmount,
+    required double expectedAmount,
   });
 }

@@ -7,17 +7,20 @@ extension _NewAppointmentBooking on _NewAppointmentFormState {
     List<Staff> secondaryDoctors,
   ) async {
     _mutate(() => _isSubmitting = true);
-    final result = await BookingSubmitHelper.executeBooking(
-      repo: ref.read(appointmentRepositoryProvider),
-      patientId: _patientId!,
-      type: _selectedType,
-      slots: _computedSlots,
-      time: _selectedTime!,
-      creatorId: creator.id,
-      doctors: doctors,
-      usePackage: _usePackage,
-      expectedNextVisitDate: widget.expectedNextVisitDate,
-    );
+    final result = await ref
+        .read(bookingControllerProvider.notifier)
+        .executeBooking(
+          patientId: _patientId!,
+          type: _selectedType,
+          slots: _computedSlots,
+          time: _selectedTime!,
+          doctors: doctors,
+          usePackage: _usePackage,
+          expectedNextVisitDate: widget.expectedNextVisitDate,
+          companionType: _bundleSecondarySession ? _secondaryType : null,
+          companionTime: _bundleSecondarySession ? _secondaryTime : null,
+          companionDoctors: secondaryDoctors,
+        );
     if (!mounted) return;
     if (result.isFailure) {
       _mutate(() => _isSubmitting = false);
@@ -31,64 +34,24 @@ extension _NewAppointmentBooking on _NewAppointmentFormState {
       );
       return;
     }
+    _mutate(() => _isSubmitting = false);
+    _invalidateBookingData();
     if (_bundleSecondarySession) {
-      final secondaryResult = await BookingSubmitHelper.executeBooking(
-        repo: ref.read(appointmentRepositoryProvider),
-        patientId: _patientId!,
-        type: _secondaryType,
-        slots: _computedSlots,
-        time: _secondaryTime!,
-        creatorId: creator.id,
-        doctors: secondaryDoctors,
-        usePackage: false,
-        expectedNextVisitDate: null,
-      );
-      if (!mounted) return;
-      _mutate(() => _isSubmitting = false);
-      secondaryResult.when(
-        success: (_) {
-          _invalidateBookingData();
-          ref.invalidate(
-            availableBalanceForTypeProvider((
-              patientId: _patientId!,
-              type: _secondaryType,
-            )),
-          );
-          AppSnackbar.show(
-            context,
-            message: 'Bundled sessions booked successfully!',
-            variant: AppSnackbarVariant.success,
-          );
-          context.pop();
-        },
-        failure: (e) {
-          _invalidateBookingData();
-          AppSnackbar.show(
-            context,
-            message:
-                'Primary booked, but secondary failed: ${AppStrings.fromKey(e.userMessageKey)}',
-            variant: AppSnackbarVariant.error,
-          );
-          context.pop();
-        },
-      );
-    } else {
-      _mutate(() => _isSubmitting = false);
-      result.when(
-        success: (_) {
-          _invalidateBookingData();
-          AppSnackbar.show(
-            context,
-            message: _isRecurring
-                ? AppStrings.bookingRecurringSuccess
-                : AppStrings.bookingSuccess,
-            variant: AppSnackbarVariant.success,
-          );
-          context.pop();
-        },
-        failure: (_) {},
+      ref.invalidate(
+        availableBalanceForTypeProvider((
+          patientId: _patientId!,
+          type: _secondaryType,
+        )),
       );
     }
+    AppSnackbar.show(
+      context,
+      message: _isRecurring
+          ? AppStrings.bookingRecurringSuccess
+          : AppStrings.bookingSuccess,
+      variant: AppSnackbarVariant.success,
+    );
+    context.pop();
   }
 
   void _invalidateBookingData() {

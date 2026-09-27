@@ -140,7 +140,7 @@ class _CollectPaymentSheetState extends ConsumerState<CollectPaymentSheet> {
     if (!mounted) return;
     if (result is Failure) {
       setState(() => _submitting = false);
-      return _err(result.exception.message);
+      return _err(AppStrings.fromKey(result.exception.userMessageKey));
     }
     ref.invalidate(patientDetailProvider(widget.patient.id));
     ref.invalidate(patientPaymentsProvider(widget.patient.id));

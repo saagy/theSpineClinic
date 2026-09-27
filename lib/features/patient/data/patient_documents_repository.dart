@@ -1,3 +1,4 @@
+import 'patient_document_upload.dart';
 import 'dart:typed_data';
 
 import 'package:http/http.dart' as http;
@@ -16,14 +17,11 @@ class PatientDocumentsRepositoryImpl implements PatientDocumentsRepository {
   PatientDocumentsRepositoryImpl({
     required SupabaseService supabaseService,
     PatientDocumentCache? cache,
-  })  : _service = supabaseService,
-        _cache = cache ?? PatientDocumentCache();
+  }) : _service = supabaseService,
+       _cache = cache ?? PatientDocumentCache();
 
   final SupabaseService _service;
   final PatientDocumentCache _cache;
-
-  static const int _maxBytes = 10 * 1024 * 1024; // 10 MB
-  static const Duration _uploadTimeout = Duration(seconds: 30);
 
   @override
   Future<Result<List<PatientDocument>>> fetchDocuments(String patientId) async {
@@ -48,100 +46,13 @@ class PatientDocumentsRepositoryImpl implements PatientDocumentsRepository {
     required Uint8List fileBytes,
     required String uploadedBy,
     String? programId,
-  }) =>
-      _upload(
-        patientId: patientId,
-        fileName: fileName,
-        fileBytes: fileBytes,
-        uploadedBy: uploadedBy,
-        programId: programId,
-      ).timeout(
-        _uploadTimeout,
-        onTimeout: () => const Result.failure(
-          StorageException(
-            code: 'storage/upload-timeout',
-            message: 'Upload exceeded 30 seconds and was cancelled.',
-            userMessageKey: 'error_unknown',
-          ),
-        ),
-      );
-
-  Future<Result<PatientDocument>> _upload({
-    required String patientId,
-    required String fileName,
-    required Uint8List fileBytes,
-    required String uploadedBy,
-    String? programId,
-  }) async {
-    if (fileBytes.length > _maxBytes) {
-      return const Result.failure(
-        StorageException(
-          code: 'storage/file-too-large',
-          message: 'File exceeds the 10 MB limit.',
-          userMessageKey: 'error_doc_file_too_large',
-        ),
-      );
-    }
-
-    final String objectKey;
-    try {
-      final FunctionResponse fnRes = await _service.invokeFunction(
-        'document-storage',
-        body: {
-          'action': 'get-upload-url',
-          'patientId': patientId,
-          'fileName': fileName,
-        },
-      );
-      final data = fnRes.data as Map<String, dynamic>;
-      final String uploadUrl = data['uploadUrl'] as String;
-      objectKey = data['objectKey'] as String;
-      final String contentType =
-          (data['contentType'] as String?) ?? 'application/octet-stream';
-
-      final http.Response putRes = await http.put(
-        Uri.parse(uploadUrl),
-        headers: {'Content-Type': contentType},
-        body: fileBytes,
-      );
-
-      if (putRes.statusCode < 200 || putRes.statusCode >= 300) {
-        throw StorageException(
-          code: 'storage/upload-failed',
-          message: 'R2 upload rejected with HTTP ${putRes.statusCode}',
-          userMessageKey: 'error_unknown',
-        );
-      }
-    } on Exception catch (error) {
-      return Result.failure(AppException.fromSupabaseException(error));
-    }
-
-    try {
-      final Map<String, dynamic> row = await _service
-          .from('patient_documents')
-          .insert({
-            'patient_id': patientId,
-            'file_url': objectKey,
-            'thumbnail_url': null,
-            'file_name': fileName,
-            'uploaded_by': uploadedBy,
-            if (programId != null) 'program_id': programId,
-          })
-          .select()
-          .single();
-      _cache.put(objectKey, fileBytes);
-      return Result.success(PatientDocument.fromJson(row));
-    } on Exception catch (error) {
-      // Compensating cleanup per Rule 27
-      try {
-        await _service.invokeFunction('document-storage', body: {
-          'action': 'delete-objects',
-          'objectKeys': [objectKey],
-        });
-      } catch (_) {}
-      return Result.failure(AppException.fromSupabaseException(error));
-    }
-  }
+  }) => PatientDocumentUpload(_service, _cache).upload(
+    patientId: patientId,
+    fileName: fileName,
+    fileBytes: fileBytes,
+    uploadedBy: uploadedBy,
+    programId: programId,
+  );
 
   @override
   Future<Result<Uint8List>> downloadDocumentBytes({
@@ -166,12 +77,14 @@ class PatientDocumentsRepositoryImpl implements PatientDocumentsRepository {
       }
 
       // Legacy fallback: check if already in Supabase Storage
-      final bool isLegacySupabase = fileUrl.contains('supabase.co/storage') ||
+      final bool isLegacySupabase =
+          fileUrl.contains('supabase.co/storage') ||
           fileUrl.contains('/storage/v1/object');
       if (isLegacySupabase) {
         try {
-          final Uint8List bytes =
-              await _service.storage('patient-documents').download(objectKey);
+          final Uint8List bytes = await _service
+              .storage('patient-documents')
+              .download(objectKey);
           _cache.put(objectKey, bytes);
           return Result.success(bytes);
         } catch (_) {}
@@ -192,8 +105,9 @@ class PatientDocumentsRepositoryImpl implements PatientDocumentsRepository {
 
       // If R2 returns 404/403, attempt Supabase Storage fallback
       try {
-        final Uint8List bytes =
-            await _service.storage('patient-documents').download(objectKey);
+        final Uint8List bytes = await _service
+            .storage('patient-documents')
+            .download(objectKey);
         _cache.put(objectKey, bytes);
         return Result.success(bytes);
       } catch (_) {

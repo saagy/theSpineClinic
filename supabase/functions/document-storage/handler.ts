@@ -1,3 +1,5 @@
+import { trackedUpload, type UploadServices } from "./uploads.ts";
+
 export const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
@@ -5,6 +7,7 @@ export const corsHeaders = {
 };
 
 export type StorageServices = {
+  tracked?: UploadServices;
   canAccess: (patientId: string) => Promise<boolean>;
   patientExists: (patientId: string) => Promise<boolean>;
   upload: (key: string, contentType: string) => Promise<string>;
@@ -44,7 +47,7 @@ export async function handleStorageRequest(req: Request, services: StorageServic
     return json({ error: "Invalid JSON" }, 400);
   }
   try {
-    if (body.action === "get-upload-url") {
+    if (body.action === "get-upload-url" || body.action === "start-upload" || body.action === "finish-upload") {
       const { patientId, fileName } = body;
       if (typeof patientId !== "string" || !uuid.test(patientId) ||
           typeof fileName !== "string" || !fileName.trim() || fileName.length > 255) {
@@ -54,6 +57,13 @@ export async function handleStorageRequest(req: Request, services: StorageServic
       if (!await services.patientExists(patientId)) return json({ error: "Patient not found" }, 404);
       const contentType = contentTypes[fileName.split(".").pop()?.toLowerCase() ?? ""];
       if (!contentType) return json({ error: "Unsupported file type" }, 400);
+      if (body.action !== "get-upload-url") {
+        if (!services.tracked || typeof body.requestId !== 'string' || !uuid.test(body.requestId) ||
+            typeof body.contentHash !== 'string' || !/^[a-f0-9]{64}$/.test(body.contentHash) ||
+            !Number.isInteger(body.byteSize) || (body.byteSize as number) < 1 ||
+            (body.byteSize as number) > 10485760) return json({ error: "Invalid upload" }, 400);
+        return json(await trackedUpload(body, contentType, services.tracked));
+      }
       const name = fileName.replace(/[^a-zA-Z0-9._-]/g, "_");
       const objectKey = `${patientId}/${crypto.randomUUID()}_${name}`;
       return json({ uploadUrl: await services.upload(objectKey, contentType), objectKey, contentType });

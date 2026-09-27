@@ -4,6 +4,8 @@
 /// Rule 4 — every method returns `Result<T>`, never a raw future.
 library;
 
+import 'booking_companion.dart';
+export 'booking_companion.dart';
 import 'package:spine_clinic_app/core/errors/result.dart';
 import 'package:spine_clinic_app/features/appointment/domain/appointment.dart';
 import 'package:spine_clinic_app/features/appointment/domain/appointment_doctor.dart';
@@ -168,6 +170,7 @@ abstract class AppointmentRepository {
     required String? creatorId,
     required List<String> doctorIds,
     DateTime? expectedNextVisitDate,
+    BookingCompanion? companion,
   });
 
   Future<Result<BulkDoctorReplacementResult>> bulkReplaceDoctor({

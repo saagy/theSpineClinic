@@ -163,3 +163,7 @@ in UTC with an explicit `Z`; views continue converting timestamps to local time.
 Doctor selection callbacks receive list copies so form saving cannot clear the
 field through an aliased parent list. Appointment status actions invalidate the
 patient detail cache as well as appointment lists, refreshing package balances.
+
+September 27: [durable request receipts](production-hardening.md) protect payments,
+collections, atomic booking bundles and document upload reconciliation. Booking
+submission now uses a generated keepAlive Riverpod controller.

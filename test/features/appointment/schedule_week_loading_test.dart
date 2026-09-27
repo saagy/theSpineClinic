@@ -35,6 +35,9 @@ class _PendingScheduleRepo implements AppointmentRepository {
 
   @override
   Future<Result<List<AppointmentWithPatient>>> noSuchMethod(Invocation call) {
+    if ((call.namedArguments[#offset] as int? ?? 0) > 0) {
+      return Future.value(const Result.success([]));
+    }
     final request = Completer<Result<List<AppointmentWithPatient>>>();
     pending.add(request);
     return request.future;

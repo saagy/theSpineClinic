@@ -86,11 +86,12 @@ class _CollectDueSheetState extends ConsumerState<CollectDueSheet> {
           paymentId: widget.payment.id,
           patientId: widget.patientId,
           additionalAmount: amount,
+          expectedAmount: widget.payment.amount,
         );
     if (!mounted) return;
     if (saveResult is Failure) {
       setState(() => _submitting = false);
-      return _err(saveResult.exception.message);
+      return _err(AppStrings.fromKey(saveResult.exception.userMessageKey));
     }
     ref.invalidate(patientDetailProvider(widget.patientId));
     ref.invalidate(patientPaymentsProvider(widget.patientId));

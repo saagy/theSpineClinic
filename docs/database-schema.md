@@ -9,6 +9,12 @@ that file and this document together. For the narrative architecture see
 All times are stored as `timestamptz`; clinic-local calendar logic goes through
 `clinic_timezone()` (currently `Africa/Cairo`).
 
+September 27 deployed additions: `mutation_receipts` and `document_uploads`, with
+four checked RPCs for durable financial/booking retries and document finalization.
+See [production hardening](production-hardening.md#schema-additions) for every
+column, grant, lifecycle and release requirement. The two migrations are applied
+to the linked project; see the [rollout record](production-rollout-2026-09-27.md).
+
 ## 1. Enums
 
 Patient deletion safeguard (migration `20260909010000`): `delete_empty_patient(p_patient_id uuid)`
@@ -320,6 +326,7 @@ appointments             <- patient_notes.appointment_id (optional)
 | `patient_documents` | Staff with patient access | Staff with patient access (file_name rename only) |
 | `patient_notes` | Staff with patient access | Staff with patient access |
 | `payment_records` | Staff with patient access | Only `current_staff_can_manage_payments()` callers |
+| `mutation_receipts`, `document_uploads` | No direct client reads | Checked SECURITY DEFINER RPCs only |
 | `storage.objects` (`patient-documents`) | Staff with patient access | Super admin + receptionist + doctors |
 
 

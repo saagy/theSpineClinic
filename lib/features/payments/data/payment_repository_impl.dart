@@ -1,3 +1,4 @@
+import 'package:spine_clinic_app/core/network/clinic_mutations.dart';
 import 'package:spine_clinic_app/core/errors/app_exception.dart';
 import 'package:spine_clinic_app/core/errors/result.dart';
 import 'package:spine_clinic_app/core/network/supabase_service.dart';
@@ -17,16 +18,13 @@ class PaymentRepositoryImpl implements PaymentRepository {
   @override
   Future<Result<void>> recordPayment(PaymentRecord payment) async {
     try {
-      final Map<String, dynamic> paymentJson = payment.toJson();
-      if (payment.id.isEmpty) {
-        paymentJson.remove('id');
-      }
-      if (payment.recordedBy == null) {
-        paymentJson.remove('recorded_by');
-      }
-      await _service.guardQuery(
-        () => _service.from(_paymentRecordsTable).insert(paymentJson),
-      );
+      final Map<String, dynamic> payload = payment.toJson()
+        ..remove('id')
+        ..remove('recorded_by')
+        ..remove('recorded_at');
+      await ClinicMutations(
+        _service,
+      ).execute('payment', payment.patientId, payload);
       return const Result.success(null);
     } on AppException catch (error) {
       return Result.failure(error);
@@ -99,17 +97,14 @@ class PaymentRepositoryImpl implements PaymentRepository {
   Future<Result<void>> collectDue({
     required String paymentId,
     required double additionalAmount,
+    required double expectedAmount,
   }) async {
     try {
-      await _service.guardQuery(
-        () => _service.rpc(
-          'collect_payment_due',
-          params: {
-            'p_payment_id': paymentId,
-            'p_additional_amount': additionalAmount,
-          },
-        ),
-      );
+      await ClinicMutations(_service).execute('collect_due', paymentId, {
+        'p_payment_id': paymentId,
+        'p_additional_amount': additionalAmount,
+        'p_expected_amount': expectedAmount,
+      });
       return const Result.success(null);
     } on AppException catch (error) {
       return Result.failure(error);
