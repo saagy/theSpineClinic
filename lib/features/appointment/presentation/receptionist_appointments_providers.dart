@@ -3,6 +3,8 @@ library;
 
 import 'dart:async';
 
+import 'schedule_freshness.dart';
+
 import 'package:spine_clinic_app/features/appointment/domain/schedule_loader.dart';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -21,13 +23,10 @@ import 'package:spine_clinic_app/features/patient/domain/clinic_location.dart';
 
 export 'receptionist_appointments_state.dart';
 
-class ReceptionistAppointmentsNotifier
-    extends Notifier<ReceptionistAppointmentsState> {
-  final Map<DateTime, List<AppointmentWithPatient>> _weekCache =
-      <DateTime, List<AppointmentWithPatient>>{};
-  String? _cacheScope;
-  String? _lastUserId;
-  int _requestId = 0;
+part 'receptionist_schedule_loading.dart';
+
+class ReceptionistAppointmentsNotifier extends _ReceptionistScheduleBase {
+  ReceptionistAppointmentsNotifier({super.now});
 
   @override
   ReceptionistAppointmentsState build() {
@@ -41,6 +40,7 @@ class ReceptionistAppointmentsNotifier
         : ReceptionistAppointmentsState(selectedDate: today);
     _lastUserId = user?.id;
     _weekCache.clear();
+    _freshness.clear();
     final int generation = ++_requestId;
     if (user != null) {
       Future<void>.microtask(() {
@@ -52,78 +52,9 @@ class ReceptionistAppointmentsNotifier
     return next;
   }
 
-  AppointmentRepository get _repository =>
-      ref.read(appointmentRepositoryProvider);
-
-  ClinicLocation? get _clinic {
-    final Staff? user = ref.read(currentUserProvider).value;
-    if (user?.role == UserRole.superAdmin) {
-      final String? override = ref.read(adminBranchFilterProvider);
-      if (override == 'tagamoa') return ClinicLocation.tagamoa;
-      if (override == 'masr_elgedida') return ClinicLocation.masrElgedida;
-      return null;
-    }
-    return ref.read(activeBranchProvider);
-  }
-
-  Future<void> _loadWeek(DateTime date, {required bool useCache}) async {
-    final Staff? user = ref.read(currentUserProvider).value;
-    if (user == null) return;
-    final DateTime selected = ScheduleWeek.day(date);
-    final DateTime weekStart = ScheduleWeek.start(selected);
-    final ClinicLocation? clinic = _clinic;
-    final String scope =
-        '${user.id}|${state.filterDoctorId}|${clinic?.dbValue ?? 'all'}';
-    if (_cacheScope != scope) {
-      _cacheScope = scope;
-      _weekCache.clear();
-    }
-
-    final int requestId = ++_requestId;
-    final List<AppointmentWithPatient>? cached = _weekCache[weekStart];
-    if (useCache && cached != null) {
-      state = state.copyWith(
-        allItems: cached,
-        selectedDate: selected,
-        loading: false,
-        clearError: true,
-      );
-      return;
-    }
-
-    state = state.copyWith(
-      allItems: const <AppointmentWithPatient>[],
-      selectedDate: selected,
-      loading: true,
-      clearError: true,
-    );
-    final Result<List<AppointmentWithPatient>> result = await _repository
-        .getScheduleAppointments(
-          dateFrom: weekStart,
-          dateTo: DateTime(weekStart.year, weekStart.month, weekStart.day + 7),
-          doctorId: state.filterDoctorId,
-          clinic: clinic?.dbValue,
-        );
-    if (!ref.mounted || requestId != _requestId) return;
-
-    result.when(
-      success: (List<AppointmentWithPatient> data) {
-        _weekCache[weekStart] = data;
-        state = state.copyWith(
-          allItems: _weekCache[weekStart] ?? <AppointmentWithPatient>[],
-          selectedDate: selected,
-          loading: false,
-          clearError: true,
-        );
-      },
-      failure: (AppException exception) {
-        state = state.copyWith(error: exception, loading: false);
-      },
-    );
-  }
-
   Future<void> loadToday() {
     _weekCache.clear();
+    _freshness.clear();
     return _loadWeek(state.selectedDate ?? DateTime.now(), useCache: false);
   }
 
@@ -176,6 +107,7 @@ class ReceptionistAppointmentsNotifier
   }
 
   void _saveCurrentWeek(List<AppointmentWithPatient> items) {
+    _freshness.revision++;
     final DateTime selected = state.selectedDate ?? DateTime.now();
     _weekCache[ScheduleWeek.start(selected)] = items;
     state = state.copyWith(allItems: items);

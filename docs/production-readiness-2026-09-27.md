@@ -118,11 +118,15 @@ testing is still needed. No phone crash has been reproduced. Upload limits remai
 
 ### 6. Medium/high — other staff members' screens can remain stale
 
-Schedule caches have no time expiry. No active database-change subscription, periodic
+At the initial audit, schedule caches had no time expiry. No active database-change subscription, periodic
 refresh or app-resume refresh was found in `lib/`; local mutations refresh local providers.
 Another receptionist's booking or check-in may remain invisible until manual refresh.
 Start with foreground/reconnect refresh and expiry of revisited cached weeks; manual refresh stays available.
-Live updates are optional follow-up work. Avoid blanket polling; measure any realtime fan-out and refetch usage.
+The authorized follow-up now checks the selected week's age on browser foreground,
+schedule-route return and reception Schedule-subtab return. It silently reloads
+only after 60 seconds; no polling or realtime subscription. Failures retain data,
+rapid retries are throttled, and obsolete responses cannot undo local edits.
+See [implemented behavior](production-hardening.md).
 
 ### 7. Required before branch three opens — only two branches exist in the model
 

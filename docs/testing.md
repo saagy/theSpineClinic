@@ -15,9 +15,15 @@ flutter test --no-pub --coverage
 flutter build web --release --no-pub
 ```
 
-As of 27 September 2026, there are 86 Dart test files and 341 passing tests. The hardening suite covers
+As of 27 September 2026, there are 88 Dart test files and 353 passing tests. The hardening suite covers
 schedule-cap/count, durable retry, upload reconciliation, booking-role/bundle,
 pending-booking balance guards and bounded-cache regressions.
+The return-refresh follow-up adds 12 tests covering the 60-second boundary,
+no polling, concurrent returns, failed refresh retention/cooldown, local status
+races, independent week ages, branch changes, browser lifecycle events and
+nested-route/subtab visibility. Lifecycle events are simulated in widget tests;
+these are not a two-account live browser acceptance test.
+The full run is logged in `build/schedule-return-tests.log`.
 Repository fakes keep widget tests independent
 of live services; they do not prove HTTP/RLS behavior. There is no complete
 authenticated browser integration suite.

@@ -3,6 +3,8 @@ library;
 
 import 'dart:async';
 
+import 'schedule_freshness.dart';
+
 import 'package:spine_clinic_app/features/appointment/domain/schedule_loader.dart';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -19,6 +21,10 @@ import 'package:spine_clinic_app/features/auth/presentation/auth_providers.dart'
 export 'doctor_schedule_state.dart';
 
 class DoctorScheduleNotifier extends Notifier<DoctorScheduleState> {
+  DoctorScheduleNotifier({DateTime Function()? now})
+    : _freshness = ScheduleFreshness(now: now);
+
+  final ScheduleFreshness _freshness;
   final Map<DateTime, List<AppointmentWithPatient>> _weekCache =
       <DateTime, List<AppointmentWithPatient>>{};
   String? _lastUserId;
@@ -38,6 +44,7 @@ class DoctorScheduleNotifier extends Notifier<DoctorScheduleState> {
         : DoctorScheduleState(doctor: user, selectedDate: today);
     _lastUserId = user?.id;
     _weekCache.clear();
+    _freshness.clear();
     final int generation = ++_requestId;
     if (user != null) {
       Future<void>.microtask(() {
@@ -55,10 +62,12 @@ class DoctorScheduleNotifier extends Notifier<DoctorScheduleState> {
     Staff user,
     DateTime date, {
     required bool useCache,
+    bool background = false,
   }) async {
     final DateTime selected = ScheduleWeek.day(date);
     final DateTime weekStart = ScheduleWeek.start(selected);
     final int requestId = ++_requestId;
+    final int revision = _freshness.revision;
     final List<AppointmentWithPatient>? cached = _weekCache[weekStart];
     if (useCache && cached != null) {
       state = state.copyWith(
@@ -70,12 +79,14 @@ class DoctorScheduleNotifier extends Notifier<DoctorScheduleState> {
       return;
     }
 
-    state = state.copyWith(
-      allItems: const <AppointmentWithPatient>[],
-      selectedDate: selected,
-      loading: true,
-      clearError: true,
-    );
+    if (!background) {
+      state = state.copyWith(
+        allItems: const <AppointmentWithPatient>[],
+        selectedDate: selected,
+        loading: true,
+        clearError: true,
+      );
+    }
     final AppointmentRepository repository = ref.read(
       appointmentRepositoryProvider,
     );
@@ -85,31 +96,53 @@ class DoctorScheduleNotifier extends Notifier<DoctorScheduleState> {
           dateTo: DateTime(weekStart.year, weekStart.month, weekStart.day + 7),
           doctorId: user.id,
         );
-    if (!ref.mounted || requestId != _requestId) return;
+    if (!ref.mounted ||
+        requestId != _requestId ||
+        (background && revision != _freshness.revision)) {
+      return;
+    }
 
     result.when(
       success: (List<AppointmentWithPatient> data) {
         _weekCache[weekStart] = data;
+        _freshness.loaded(weekStart);
         state = state.copyWith(
           allItems: _weekCache[weekStart] ?? <AppointmentWithPatient>[],
-          selectedDate: selected,
           loading: false,
           clearError: true,
         );
       },
       failure: (AppException exception) {
-        state = state.copyWith(error: exception, loading: false);
+        if (!background) {
+          state = state.copyWith(error: exception, loading: false);
+        }
       },
     );
   }
 
+  Future<void> refreshIfStale() async {
+    final DateTime selected = state.selectedDate ?? DateTime.now();
+    if (state.loading ||
+        !_freshness.startRefresh(ScheduleWeek.start(selected))) {
+      return;
+    }
+    try {
+      final Staff? user = ref.read(currentUserProvider).value;
+      if (user != null) {
+        await _loadWeek(user, selected, useCache: false, background: true);
+      }
+    } finally {
+      _freshness.finishRefresh();
+    }
+  }
+
   void changeStatus(String appointmentId, AppointmentStatus newStatus) {
+    _freshness.revision++;
     final List<AppointmentWithPatient> updated = state.allItems
         .map(
           (AppointmentWithPatient item) => item.appointment.id == appointmentId
-              ? AppointmentWithPatient(
+              ? item.copyWith(
                   appointment: item.appointment.copyWith(status: newStatus),
-                  patient: item.patient,
                 )
               : item,
         )
@@ -138,6 +171,7 @@ class DoctorScheduleNotifier extends Notifier<DoctorScheduleState> {
 
   Future<void> refresh() async {
     _weekCache.clear();
+    _freshness.clear();
     final Staff? user = ref.read(currentUserProvider).value;
     if (user == null) return;
     await _loadWeek(

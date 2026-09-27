@@ -10,6 +10,14 @@ remains the target. Backend migrations, upload function and web app are live; se
   ordered pages of up to 500, continuing until an empty page. There is no 1,000-row
   cutoff. A failed page produces an error, not a partially populated schedule.
   Weeks are cached only after the complete read. Adjacent weeks load on navigation.
+- Doctor/reception schedules also check freshness when the browser regains focus,
+  the schedule route is revisited, or reception returns to its Schedule subtab.
+  Only the selected week reloads, and only after 60 seconds since its last
+  successful full read. There is no timer or realtime subscription. Rows stay
+  visible while refreshing; failures retain them and retry only on a later return,
+  with a 60-second attempt cooldown. Concurrent return events share one refresh.
+  Day/filter selections survive; obsolete requests and responses overlapping a
+  local status change are discarded. A local edit does not renew the week's age.
 - Operational appointment, patient appointment and future package-reservation
   counts use exact server counts with at most one returned row. Doctor filters
   use an embedded join instead of downloading a capped list of assignment IDs.
@@ -33,7 +41,7 @@ remains the target. Backend migrations, upload function and web app are live; se
 - The file-byte cache retains at most 50 entries and 64 MiB using LRU eviction.
   Decoded images and active viewers have separate memory usage. No thumbnails.
 
-Admin reports, realtime/focus refresh, the Madinaty branch, account recovery,
+Admin reports, realtime subscriptions, the Madinaty branch, account recovery,
 backup automation and paid hosting changes are outside this patch.
 
 ## Durable retry contract
@@ -131,9 +139,9 @@ cap, exact counts, later-page failure, browser retry persistence, duplicate clic
 changed pending requests, upload response loss, role checks and atomic bundles.
 The SQL runner tests schema snapshot and migration replay in ephemeral PostgreSQL;
 it does not simulate multiple database connections. Edge tests use fake storage.
-Final local results: zero analyzer issues, 341 Flutter tests, 11 Node tests, eight
+Original hardening results: zero analyzer issues, 341 Flutter tests, 11 Node tests, eight
 SQL suites on both setup paths, Deno type check and release web build all pass.
-See [testing](testing.md) for commands and logs.
+See [testing](testing.md) for current follow-up results, commands and logs.
 
 Query syntax references: [PostgREST embedding](https://docs.postgrest.org/en/v13/references/api/resource_embedding.html)
 and [exact counts](https://docs.postgrest.org/en/v13/references/api/pagination_count.html).

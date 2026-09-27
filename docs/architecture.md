@@ -167,3 +167,9 @@ patient detail cache as well as appointment lists, refreshing package balances.
 September 27: [durable request receipts](production-hardening.md) protect payments,
 collections, atomic booking bundles and document upload reconciliation. Booking
 submission now uses a generated keepAlive Riverpod controller.
+
+Schedule return refresh uses a shared lifecycle/route visibility widget and
+Riverpod notifier freshness checks. Successful loads timestamp each cached week;
+local status patches do not. Visible return after 60 seconds triggers one quiet
+week fetch, retaining rows on failure and discarding outdated responses. There is
+no timer, subscription, or direct widget database access.

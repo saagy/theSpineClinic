@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:spine_clinic_app/shared/widgets/refresh_on_return.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:spine_clinic_app/core/constants/app_sizes.dart';
@@ -23,17 +24,20 @@ class DoctorScheduleScreen extends ConsumerWidget {
 
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      body: SafeArea(
-        child: Center(
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(
-              maxWidth: AppSizes.maxContentWidth,
-            ),
-            child: _Content(
-              state: state,
-              onDateSelected: notifier.selectDate,
-              onStatusChanged: notifier.refresh,
-              onToggleCancelled: notifier.toggleShowCancelled,
+      body: RefreshOnReturn(
+        onReturn: notifier.refreshIfStale,
+        child: SafeArea(
+          child: Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(
+                maxWidth: AppSizes.maxContentWidth,
+              ),
+              child: _Content(
+                state: state,
+                onDateSelected: notifier.selectDate,
+                onStatusChanged: notifier.refresh,
+                onToggleCancelled: notifier.toggleShowCancelled,
+              ),
             ),
           ),
         ),
@@ -113,7 +117,9 @@ class _GreetingHeader extends StatelessWidget {
             children: [
               Text(
                 _greeting,
-                style: AppTextStyles.captionMedium.copyWith(color: cs.onSurfaceVariant),
+                style: AppTextStyles.captionMedium.copyWith(
+                  color: cs.onSurfaceVariant,
+                ),
               ),
               Text(
                 ' · ',
@@ -122,7 +128,9 @@ class _GreetingHeader extends StatelessWidget {
               Expanded(
                 child: Text(
                   DateFormat('EEEE, MMMM d').format(DateTime.now()),
-                  style: AppTextStyles.caption.copyWith(color: cs.onSurfaceVariant),
+                  style: AppTextStyles.caption.copyWith(
+                    color: cs.onSurfaceVariant,
+                  ),
                   overflow: TextOverflow.ellipsis,
                 ),
               ),

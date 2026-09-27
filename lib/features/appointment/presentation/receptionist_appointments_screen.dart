@@ -11,6 +11,7 @@
 library;
 
 import 'package:flutter/material.dart';
+import 'package:spine_clinic_app/shared/widgets/refresh_on_return.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:spine_clinic_app/features/admin/presentation/branch_providers.dart';
 import 'package:spine_clinic_app/features/appointment/presentation/all_appointments_providers.dart';
@@ -66,50 +67,61 @@ class _ReceptionistAppointmentsScreenState
     final clinic = ref.watch(activeBranchProvider);
     final user = ref.watch(currentUserProvider).value;
     final isAdmin = user?.role == UserRole.superAdmin;
-    final canReplace = user?.isActive == true &&
+    final canReplace =
+        user?.isActive == true &&
         (user?.role == UserRole.receptionist || isAdmin);
 
-    return Scaffold(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      body: SafeArea(
-        child: Column(
-          children: [
-            ReceptionistAppointmentsHeader(
-              clinic: clinic,
-              isAdmin: isAdmin,
-              onReplaceDoctor: canReplace
-                  ? () => ReceptionistTodayActions.replaceDoctor(
+    return ListenableBuilder(
+      listenable: _tabCtrl,
+      builder: (context, child) => RefreshOnReturn(
+        enabled: _tabCtrl.index == 0,
+        onReturn: () => ref
+            .read(receptionistAppointmentsProvider.notifier)
+            .refreshIfStale(),
+        child: child!,
+      ),
+      child: Scaffold(
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+        body: SafeArea(
+          child: Column(
+            children: [
+              ReceptionistAppointmentsHeader(
+                clinic: clinic,
+                isAdmin: isAdmin,
+                onReplaceDoctor: canReplace
+                    ? () => ReceptionistTodayActions.replaceDoctor(
                         context,
                         ref,
                         state,
                       )
-                  : null,
-            ),
-            ReceptionistAppointmentsTabStrip(controller: _tabCtrl),
-            Expanded(
-              child: TabBarView(
-                controller: _tabCtrl,
-                children: [
-                  ReceptionistTodayTab(
-                    state: state,
-                    searchQuery: _searchQuery,
-                    onSearchChanged: (q) => setState(() => _searchQuery = q),
-                    onRefresh: () => ref
-                        .read(receptionistAppointmentsProvider.notifier)
-                        .loadToday(),
-                    onStatusChanged: () => ref
-                        .read(receptionistAppointmentsProvider.notifier)
-                        .loadToday(),
-                  ),
-                  const ReceptionistBookingTab(),
-                  ReceptionistAllTab(
-                    onStatusChanged: () =>
-                        ref.read(allAppointmentsProvider.notifier).refresh(),
-                  ),
-                ],
+                    : null,
               ),
-            ),
-          ],
+              ReceptionistAppointmentsTabStrip(controller: _tabCtrl),
+              Expanded(
+                child: TabBarView(
+                  controller: _tabCtrl,
+                  children: [
+                    ReceptionistTodayTab(
+                      state: state,
+                      searchQuery: _searchQuery,
+                      onSearchChanged: (q) => setState(() => _searchQuery = q),
+                      onRefresh: () => ref
+                          .read(receptionistAppointmentsProvider.notifier)
+                          .loadToday(),
+                      onStatusChanged: () => ref
+                          .read(receptionistAppointmentsProvider.notifier)
+                          .loadToday(),
+                    ),
+                    const ReceptionistBookingTab(),
+                    ReceptionistAllTab(
+                      onStatusChanged: () =>
+                          ref.read(allAppointmentsProvider.notifier).refresh(),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

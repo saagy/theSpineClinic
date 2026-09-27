@@ -143,6 +143,12 @@ them into the shared system across all remaining screens.
 
 ### Schedule refresh and booking patient scope
 
+- Returning to the foreground, schedule route, or reception Schedule subtab
+  silently reloads the selected week only if its last successful load is at least
+  60 seconds old. No polling. In-flight returns coalesce; failures keep rows and
+  have a 60-second retry cooldown. Local status patches never renew freshness,
+  and an overlapping older refresh cannot undo them. Date/filter selection stays.
+
 - Receptionist schedules watch the active branch and admin branch filter, clear
   cached weeks when their scope changes, and discard obsolete requests.
 - Uncached week navigation clears the previous week's counts and shows agenda

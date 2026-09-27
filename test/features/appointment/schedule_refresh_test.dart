@@ -1,4 +1,3 @@
-import 'dart:async';
 import 'package:spine_clinic_app/features/appointment/domain/appointment.dart';
 import 'package:spine_clinic_app/features/appointment/domain/appointment_type.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -10,42 +9,13 @@ import 'package:spine_clinic_app/features/appointment/presentation/appointment_p
 import 'package:spine_clinic_app/features/appointment/presentation/receptionist_appointments_providers.dart';
 import 'package:spine_clinic_app/features/appointment/presentation/doctor_schedule_providers.dart';
 import 'package:spine_clinic_app/features/appointment/presentation/booking_patient_search_provider.dart';
-import 'package:spine_clinic_app/features/auth/domain/staff.dart';
 import 'package:spine_clinic_app/features/auth/presentation/auth_providers.dart';
 import 'package:spine_clinic_app/features/patient/domain/clinic_location.dart';
 import 'package:spine_clinic_app/features/patient/domain/patient.dart';
 import 'package:spine_clinic_app/features/patient/domain/patient_repository.dart';
 import 'package:spine_clinic_app/features/patient/presentation/patient_providers.dart';
 import '../../fixtures/workspace_data.dart';
-
-class TestUser extends CurrentUser {
-  @override
-  Future<Staff?> build() async => workspaceStaff('reception');
-}
-
-class TestBranch extends ActiveBranch {
-  @override
-  ClinicLocation build() => ClinicLocation.tagamoa;
-  @override
-  Future<void> setBranch(ClinicLocation location) async {
-    state = location;
-  }
-}
-
-class ScheduleRepo implements AppointmentRepository {
-  final calls = <Invocation>[];
-  final pending = <Completer<Result<List<AppointmentWithPatient>>>>[];
-  @override
-  Future<Result<List<AppointmentWithPatient>>> noSuchMethod(Invocation call) {
-    if ((call.namedArguments[#offset] as int? ?? 0) > 0) {
-      return Future.value(const Result.success([]));
-    }
-    calls.add(call);
-    final request = Completer<Result<List<AppointmentWithPatient>>>();
-    pending.add(request);
-    return request.future;
-  }
-}
+import '../../fixtures/schedule_repo.dart';
 
 class PatientRepo implements PatientRepository {
   final calls = <Invocation>[];
@@ -54,12 +24,6 @@ class PatientRepo implements PatientRepository {
     calls.add(call);
     return Result.success(List.filled(30, workspacePatient));
   }
-}
-
-Future<void> settle(ProviderContainer container) async {
-  await container.pump();
-  await Future<void>.delayed(Duration.zero);
-  await container.pump();
 }
 
 void main() {

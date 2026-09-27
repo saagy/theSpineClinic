@@ -79,3 +79,25 @@ anonymous upload access remains 403; both include CORS headers. Downloaded
 deployed sources match the local patch. The user retried the same JPEG and
 confirmed **Upload succeeded**. The initial HTTP 400 response body was not
 available, so that earlier rejection is not attributed to a specific cause.
+
+## Schedule return-refresh follow-up
+
+Published the web-only schedule freshness change to the same Firebase site.
+Doctor and reception schedules quietly reload their selected week on a visible
+return only when the last successful read is at least 60 seconds old. No polling
+or realtime subscription. A refresh keeps rows visible, retains them on failure,
+and cannot undo a status change made while it was loading. Rapid return events
+coalesce; a failed attempt has a 60-second cooldown before a later return retries.
+The receipt migrations and document-storage version 6 remain unchanged.
+
+Validation: zero analyzer issues, all **353 Flutter tests across 88 files** pass,
+and the release web build/Wasm dry run pass. Twelve new tests cover freshness,
+request/status/branch/week races and simulated browser lifecycle/nested-route/
+subtab visibility. Live index, JavaScript and bootstrap files return HTTP 200 and
+match the local build byte-for-byte. The sign-in page renders with no captured
+browser warnings/errors. These checks do not claim live two-account schedule or
+mobile-device acceptance. Existing staff tabs need one reload for the update.
+
+Logs: `build/schedule-return-{tests,web-build,deploy}.log` and
+`build/schedule-return-live-verification.json`. Live `main.dart.js` SHA-256:
+`e3e8868346b8f9e041d3d0e75117341ff46bf250a3ee057589ee8d8c5a3acee4`.
