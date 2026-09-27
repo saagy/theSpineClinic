@@ -74,3 +74,22 @@ test("missing authentication and storage failures cannot report success", async 
   assert.equal(response.status, 500);
   assert.equal((await response.text()).includes("private server details"), false);
 });
+
+test("tracked JPEG uploads pass validation and preserve CORS on rejected metadata", async () => {
+  const { request } = setup({ tracked: {
+    rpc: async () => ({ status: "pending", object_key: `${allowed}/file`, byte_size: 100 }),
+    size: async () => null,
+    upload: async () => "https://example.test/upload",
+    remove: async () => {},
+  } });
+  const body = { action: "start-upload", patientId: allowed, fileName: "scan.JPEG",
+    requestId: denied, contentHash: "a".repeat(64), byteSize: 100 };
+  const response = await request(body);
+  assert.equal(response.status, 200);
+  assert.equal((await response.json()).contentType, "image/jpeg");
+  assert.equal(response.headers.get("Access-Control-Allow-Origin"), "*");
+  const invalid = await request({ ...body, byteSize: "100" });
+  assert.equal(invalid.status, 400);
+  assert.equal(invalid.headers.get("Access-Control-Allow-Origin"), "*");
+  assert.deepEqual(await invalid.json(), { error: "Invalid upload" });
+});

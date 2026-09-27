@@ -2,9 +2,12 @@ import {
   S3Client, HeadObjectCommand, PutObjectCommand, GetObjectCommand, DeleteObjectsCommand, ListObjectsV2Command,
 } from "npm:@aws-sdk/client-s3@^3.600.0";
 import { getSignedUrl } from "npm:@aws-sdk/s3-request-presigner@^3.600.0";
+import { FetchHttpHandler } from "npm:@smithy/fetch-http-handler@5.8.0";
 
 const bucket = (Deno.env.get("R2_BUCKET_NAME") ?? "").trim();
 const client = new S3Client({
+  // Avoid Deno's Node HTTP stream adapter, which can crash on R2 HEAD replies.
+  requestHandler: new FetchHttpHandler(),
   region: "auto",
   endpoint: `https://${(Deno.env.get("R2_ACCOUNT_ID") ?? "").trim()}.r2.cloudflarestorage.com`,
   credentials: {

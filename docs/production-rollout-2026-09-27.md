@@ -58,3 +58,24 @@ and RPCs intact so unknown in-flight operations can still reconcile. Do not drop
 receipt data as part of a rollback.
 
 Implementation and ongoing constraints: [production hardening](production-hardening.md).
+
+## Upload transport follow-up
+
+After rollout, a JPEG upload produced HTTP 503 without CORS headers. Function
+logs at 14:37–14:39 UTC showed repeated uncaught `unexpected end of file` errors
+in Deno's `node:http` IncomingMessage stream adapter, including timestamps
+matching the gateway 503s. Preflight itself returned HTTP 200 with CORS enabled.
+
+Deployed `document-storage` version **6**, ACTIVE with JWT verification retained.
+The shared R2 S3 client now explicitly uses `FetchHttpHandler` 5.8.0 rather than
+Node HTTP. Fixed rejection messages are logged without request bodies, filenames,
+patient identifiers or credentials to distinguish any remaining HTTP 400 errors.
+No database, frontend, account-plan or access-control changes were needed.
+
+Validation: zero Flutter analyzer issues, 12 Node tests, two Deno transport tests
+and Deno type checking pass. The new transport tests fail before the fix and pass
+after it with outbound network access disabled. Live preflight returns 200 and
+anonymous upload access remains 403; both include CORS headers. Downloaded
+deployed sources match the local patch. The user retried the same JPEG and
+confirmed **Upload succeeded**. The initial HTTP 400 response body was not
+available, so that earlier rejection is not attributed to a specific cause.

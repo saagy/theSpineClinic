@@ -21,7 +21,11 @@ const contentTypes: Record<string, string> = {
   pdf: "application/pdf", jpg: "image/jpeg", jpeg: "image/jpeg",
   png: "image/png", webp: "image/webp", txt: "text/plain",
 };
-const json = (body: object, status = 200) => Response.json(body, { status, headers: corsHeaders });
+const json = (body: object, status = 200) => {
+  // Error responses contain fixed messages only; never log request/file data.
+  if (status >= 400) console.warn("document-storage rejection", status, (body as { error: string }).error);
+  return Response.json(body, { status, headers: corsHeaders });
+};
 
 function patientFromKey(key: unknown): string | null {
   if (typeof key !== "string" || key.length > 1024) return null;

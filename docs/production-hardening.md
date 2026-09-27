@@ -27,6 +27,9 @@ remains the target. Backend migrations, upload function and web app are live; se
   failed insert allows compensating deletion. Unknown results retain the receipt.
 - The PUT is aborted/closed after 45 seconds. This is an uncertain outcome, not
   a claim that R2 definitely received nothing. Retrying the same file reconciles it.
+- R2 requests explicitly use the SDK's native-fetch transport. The default Node
+  HTTP adapter crashed deployed Deno workers during upload existence checks;
+  the September 27 follow-up replaces it and adds transport regression coverage.
 - The file-byte cache retains at most 50 entries and 64 MiB using LRU eviction.
   Decoded images and active viewers have separate memory usage. No thumbnails.
 

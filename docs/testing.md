@@ -30,11 +30,23 @@ With Node 24.12.0:
 node --test test/document_storage_security_test.ts test/document_upload_recovery_test.ts
 ```
 
-Eleven tests cover the handler and tracked-upload recovery with fake services.
+Twelve tests cover the handler and tracked-upload recovery with fake services,
+including tracked JPEG validation and CORS on rejected metadata.
 Coverage includes object-key access, conflicting IDs, mixed-patient deletion,
 folder cleanup ordering, malformed inputs, unique keys and errors. This does
 not exercise deployed JWT verification, R2 CORS or the AWS client.
 `deno check supabase/functions/document-storage/index.ts` also passes locally.
+
+Run the actual R2 SDK transport with synthetic configuration and mocked native
+fetch (Deno 2.9.6; outbound network access deliberately disabled):
+
+```sh
+deno test --allow-env --allow-sys test/document_storage_transport_test.ts
+```
+
+Two tests cover HEAD 404/200/403, listing/deletion and upload URL signing. They
+fail if the client switches back to Node HTTP, which crashed deployed Deno
+workers on R2 replies. CI runs these checks alongside the Node handler tests.
 
 ## Isolated PostgreSQL
 
