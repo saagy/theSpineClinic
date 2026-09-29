@@ -17,6 +17,16 @@ to the linked project; see the [rollout record](production-rollout-2026-09-27.md
 
 ## 1. Enums
 
+September 29 additions (see [launch review](launch-hardening-2026-09-29.md)):
+`save_program_mutation(uuid,jsonb)` stores `program_create`/`program_update`
+outcomes in `mutation_receipts`, returning a complete program model in the same
+transaction. Only active senior doctors/admins can execute it successfully.
+`current_staff_accessible_patient_ids()` returns current active-doctor assignment
+membership. Patient/appointment SELECT policies combine that set with a scalar
+management-access check; write policies retain their existing guards. Both new
+functions use fixed search paths and authenticated-only execute grants.
+`idx_patients_full_name_order` indexes `patients(full_name)` for directory ordering.
+
 Patient deletion safeguard (migration `20260909010000`): `delete_empty_patient(p_patient_id uuid)`
 checks an active receptionist, senior doctor or administrator, locks the patient
 row and deletes atomically. A `BEFORE DELETE` trigger rejects any patient with

@@ -40,10 +40,24 @@ sealed class AppException implements Exception {
   /// - [supabase.PostgrestException] → [DatabaseException]
   /// - [SocketException] → [NetworkException]
   /// - Everything else → [UnknownException]
-  static AppException fromSupabaseException(Object error) {
+  static AppException fromSupabaseException(
+    Object error, {
+    StackTrace? stackTrace,
+    String? operation,
+  }) {
+    // A nested repository/service guard must not reclassify or report it twice.
+    if (error is AppException) return error;
     final AppException appException;
     if (error is supabase.AuthException) {
       appException = AuthException._fromAuth(error);
+    } else if (error is supabase.PostgrestException &&
+        operation == 'register_doctor_application' &&
+        error.code == '23505') {
+      appException = AuthException(
+        code: 'auth/user-already-exists',
+        message: error.message,
+        userMessageKey: 'error_auth_user_already_exists',
+      );
     } else if (error is supabase.PostgrestException) {
       if (error.code == 'PGRST116') {
         appException = NotFoundException(message: error.message);
@@ -63,7 +77,12 @@ sealed class AppException implements Exception {
       appException = UnknownException(message: error.toString());
     }
 
-    ErrorReporter.reportIfUnexpected(error, appException);
+    ErrorReporter.reportIfUnexpected(
+      error,
+      appException,
+      stackTrace: stackTrace,
+      operation: operation,
+    );
     return appException;
   }
 

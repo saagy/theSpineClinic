@@ -73,9 +73,9 @@ List<RouteBase> _buildRoutes(Ref ref) => [
     path: AppRoutes.editPatientProgram,
     pageBuilder: (_, state) => appPage(
       key: state.pageKey,
-      child: ProgramFormScreen(
+      child: ProgramEditScreen(
         patientId: state.pathParameters['id'] ?? '',
-        program: _extractProgram(state.extra),
+        programId: state.pathParameters['programId'] ?? '',
       ),
     ),
   ),

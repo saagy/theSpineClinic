@@ -56,9 +56,14 @@ class SupabaseService {
         email: email,
         password: password,
       );
-    } on Exception catch (error) {
-      throw app_errors.AppException.fromSupabaseException(error);
+    } on Exception catch (error, stackTrace) {
+      throw app_errors.AppException.fromSupabaseException(error, stackTrace: stackTrace);
     }
+  }
+
+  /// Changes the signed-in user's password through Supabase Auth.
+  Future<void> updatePassword(String password) async {
+    await guardQuery(() => _client.auth.updateUser(UserAttributes(password: password)));
   }
 
   /// Creates a new auth user with email and password.
@@ -74,8 +79,8 @@ class SupabaseService {
         email: email,
         password: password,
       );
-    } on Exception catch (error) {
-      throw app_errors.AppException.fromSupabaseException(error);
+    } on Exception catch (error, stackTrace) {
+      throw app_errors.AppException.fromSupabaseException(error, stackTrace: stackTrace);
     }
   }
 
@@ -85,8 +90,8 @@ class SupabaseService {
   Future<void> signOut() async {
     try {
       await _client.auth.signOut();
-    } on Exception catch (error) {
-      throw app_errors.AppException.fromSupabaseException(error);
+    } on Exception catch (error, stackTrace) {
+      throw app_errors.AppException.fromSupabaseException(error, stackTrace: stackTrace);
     }
   }
 
@@ -106,7 +111,7 @@ class SupabaseService {
     String fn, {
     Map<String, dynamic>? params,
   }) async {
-    return guardQuery(() => _client.rpc<T>(fn, params: params));
+    return _guardQuery(() => _client.rpc<T>(fn, params: params), operation: fn);
   }
 
   /// Executes an arbitrary async Supabase operation and normalises
@@ -123,7 +128,9 @@ class SupabaseService {
   /// );
   /// return Result.success(Patient.fromJson(data));
   /// ```
-  Future<T> guardQuery<T>(Future<T> Function() query) async {
+  Future<T> guardQuery<T>(Future<T> Function() query) => _guardQuery(query);
+
+  Future<T> _guardQuery<T>(Future<T> Function() query, {String? operation}) async {
     try {
       return await query().timeout(
         const Duration(seconds: 10),
@@ -138,14 +145,14 @@ class SupabaseService {
         code: 'network/timeout',
         message: error.message ?? 'Request timed out. Please check your connection.',
       );
-    } on SocketException catch (error) {
-      throw app_errors.AppException.fromSupabaseException(error);
-    } on PostgrestException catch (error) {
-      throw app_errors.AppException.fromSupabaseException(error);
-    } on AuthException catch (error) {
-      throw app_errors.AppException.fromSupabaseException(error);
-    } on Exception catch (error) {
-      throw app_errors.AppException.fromSupabaseException(error);
+    } on SocketException catch (error, stackTrace) {
+      throw app_errors.AppException.fromSupabaseException(error, stackTrace: stackTrace, operation: operation);
+    } on PostgrestException catch (error, stackTrace) {
+      throw app_errors.AppException.fromSupabaseException(error, stackTrace: stackTrace, operation: operation);
+    } on AuthException catch (error, stackTrace) {
+      throw app_errors.AppException.fromSupabaseException(error, stackTrace: stackTrace, operation: operation);
+    } on Exception catch (error, stackTrace) {
+      throw app_errors.AppException.fromSupabaseException(error, stackTrace: stackTrace, operation: operation);
     }
   }
 
@@ -166,13 +173,14 @@ class SupabaseService {
     Map<String, dynamic>? body,
     HttpMethod method = HttpMethod.post,
   }) async {
-    return guardQuery(
+    return _guardQuery(
       () => _client.functions.invoke(
         functionName,
         headers: headers,
         body: body,
         method: method,
       ),
+      operation: functionName,
     );
   }
 

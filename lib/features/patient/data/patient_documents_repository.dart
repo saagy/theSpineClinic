@@ -61,12 +61,12 @@ class PatientDocumentsRepositoryImpl implements PatientDocumentsRepository {
   }) async {
     try {
       final String? objectKey = patientDocumentStoragePath(fileUrl);
-      if (objectKey == null || objectKey.isEmpty) {
+      if (objectKey == null || !isPatientDocumentStoragePath(objectKey)) {
         return const Result.failure(
           DatabaseException(
             code: 'db/invalid-path',
             message: 'Invalid storage path extracted from file URL.',
-            userMessageKey: 'error_database_record_not_found',
+            userMessageKey: 'error_doc_link_incomplete',
           ),
         );
       }

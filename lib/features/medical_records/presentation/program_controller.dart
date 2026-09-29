@@ -30,7 +30,7 @@ class ProgramController extends _$ProgramController {
         userMessageKey: 'error_auth_generic',
       );
     }
-    if (!user.isSeniorDoctor) {
+    if (!user.isActive || !user.isSeniorDoctor) {
       return const AuthException(
         code: 'auth/permission-denied',
         message: 'Only senior doctors and super admins can perform this action.',
@@ -40,7 +40,7 @@ class ProgramController extends _$ProgramController {
     return null;
   }
 
-  /// Creates a new patient program atomically.
+  /// Saves a program, then finishes tracked attachment uploads.
   Future<Result<PatientProgram>> createProgram({
     required String patientId,
     required List<String> conditionIds,
@@ -80,13 +80,19 @@ class ProgramController extends _$ProgramController {
           ref.invalidate(patientDocumentsNotifierProvider(patientId));
         }
       },
-      failure: (e) => state = AsyncValue.error(e, StackTrace.current),
+      failure: (e) {
+        state = AsyncValue.error(e, StackTrace.current);
+        if (e.code == 'program/attachments-pending') {
+          ref.invalidate(patientProgramsProvider(patientId));
+          ref.invalidate(patientDocumentsNotifierProvider(patientId));
+        }
+      },
     );
 
     return result;
   }
 
-  /// Updates an existing patient program atomically.
+  /// Updates a program, then finishes tracked attachment uploads.
   Future<Result<PatientProgram>> updateProgram({
     required String programId,
     required String patientId,
@@ -131,7 +137,13 @@ class ProgramController extends _$ProgramController {
           ref.invalidate(patientDocumentsNotifierProvider(patientId));
         }
       },
-      failure: (e) => state = AsyncValue.error(e, StackTrace.current),
+      failure: (e) {
+        state = AsyncValue.error(e, StackTrace.current);
+        if (e.code == 'program/attachments-pending') {
+          ref.invalidate(patientProgramsProvider(patientId));
+          ref.invalidate(patientDocumentsNotifierProvider(patientId));
+        }
+      },
     );
 
     return result;

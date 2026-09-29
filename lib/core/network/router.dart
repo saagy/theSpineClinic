@@ -31,6 +31,7 @@ import 'package:spine_clinic_app/features/medical_records/domain/patient_program
 import 'package:spine_clinic_app/features/medical_records/presentation/add_visit_notes_screen.dart';
 import 'package:spine_clinic_app/features/medical_records/presentation/screens/program_detail_screen.dart';
 import 'package:spine_clinic_app/features/medical_records/presentation/screens/program_form_screen.dart';
+import 'package:spine_clinic_app/features/medical_records/presentation/screens/program_edit_screen.dart';
 import 'package:spine_clinic_app/features/medical_records/presentation/screens/program_gallery_viewer_route_screen.dart';
 import 'package:spine_clinic_app/features/medical_records/presentation/visit_detail_screen.dart';
 import 'package:spine_clinic_app/features/patient/domain/patient.dart';

@@ -6,7 +6,7 @@ import 'package:spine_clinic_app/features/medical_records/domain/patient_program
 import 'package:spine_clinic_app/features/medical_records/domain/program_status.dart';
 import 'package:spine_clinic_app/features/medical_records/domain/treatment_plan_input.dart';
 
-/// Represents a raw imaging file to attach atomically with a program.
+/// Represents a file uploaded with a tracked receipt after its program is saved.
 class ProgramAttachment {
   const ProgramAttachment({
     required this.fileName,

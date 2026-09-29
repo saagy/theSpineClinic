@@ -7,8 +7,6 @@
 /// Rule 4 — every method returns `Result<T>`.
 library;
 
-import 'package:supabase_flutter/supabase_flutter.dart'
-    show Supabase, UserAttributes;
 import 'package:spine_clinic_app/core/errors/app_exception.dart';
 import 'package:spine_clinic_app/core/errors/result.dart';
 import 'package:spine_clinic_app/core/network/supabase_service.dart';
@@ -16,6 +14,8 @@ import 'package:spine_clinic_app/features/auth/domain/auth_repository.dart';
 import 'package:spine_clinic_app/features/auth/domain/staff.dart';
 import 'package:spine_clinic_app/features/auth/domain/user_role.dart';
 import 'package:spine_clinic_app/features/patient/domain/clinic_location.dart';
+
+part 'auth_profile_save.dart';
 
 /// Supabase-backed [AuthRepository].
 class AuthRepositoryImpl implements AuthRepository {
@@ -177,47 +177,5 @@ class AuthRepositoryImpl implements AuthRepository {
   Future<Result<void>> updateStaffProfile({
     required Staff staff,
     String? newPassword,
-  }) async {
-    try {
-      if (newPassword != null && newPassword.isNotEmpty) {
-        // Self password change — use Supabase Auth API directly.
-        // The RPC requires super_admin; the Auth API lets any
-        // authenticated user change their own password.
-        if (staff.userId == _service.currentUserId) {
-          await Supabase.instance.client.auth.updateUser(
-            UserAttributes(password: newPassword),
-          );
-        } else {
-          // Admin-initiated password change for another user — uses RPC.
-          await _service.guardQuery(
-            () => _service.rpc(
-              'update_user_password',
-              params: {
-                'target_user_id': staff.userId,
-                'new_password': newPassword,
-              },
-            ),
-          );
-        }
-      }
-
-      await _service.guardQuery(
-        () => _service
-            .from(_staffTable)
-            .update({
-              'full_name': staff.fullName,
-              'email': staff.email,
-              'phone': staff.phone,
-              'branch': staff.branch?.dbValue,
-            })
-            .eq('id', staff.id),
-      );
-
-      return const Result.success(null);
-    } on AppException catch (error) {
-      return Result.failure(error);
-    } on Exception catch (error) {
-      return Result.failure(AppException.fromSupabaseException(error));
-    }
-  }
+  }) => _saveProfile(staff, newPassword);
 }

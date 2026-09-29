@@ -179,6 +179,7 @@ Future<int?> availableBalanceForType(
 ) async {
   if (!args.type.affectsPackageBalance) return null;
   final patient = await ref.watch(patientDetailProvider(args.patientId).future);
+  if (!ref.mounted) return null;
   final repo = ref.read(appointmentRepositoryProvider);
   final Result<int> commitmentsResult = await repo
       .getFutureScheduledAppointmentsCountForType(
@@ -233,7 +234,7 @@ Future<bool> canAccessAppointment(
   required String patientId,
 }) async {
   final user = await ref.watch(currentUserProvider.future);
-  if (user == null) return false;
+  if (!ref.mounted || user == null || !user.isActive) return false;
   if (user.role != UserRole.doctor || user.isSeniorDoctor) return true;
 
   final String doctorId = user.id;
@@ -241,6 +242,7 @@ Future<bool> canAccessAppointment(
   // 1. Check patient-level assignment (Case 1)
   final patientDoctors =
       await ref.watch(patientAssignedDoctorsProvider(patientId).future);
+  if (!ref.mounted) return false;
   if (patientDoctors.any((d) => d.id == doctorId)) {
     return true;
   }
@@ -248,6 +250,7 @@ Future<bool> canAccessAppointment(
   // 2. Check appointment-level assignment (Case 2)
   final apptDoctors =
       await ref.watch(appointmentDoctorsProvider(appointmentId).future);
+  if (!ref.mounted) return false;
   if (apptDoctors.any((d) => d.doctorId == doctorId && d.isActive)) {
     return true;
   }
@@ -260,10 +263,11 @@ Future<bool> canAccessAppointment(
 @riverpod
 Future<bool> isDoctorAssignedToPatient(Ref ref, String patientId) async {
   final user = await ref.watch(currentUserProvider.future);
-  if (user == null) return false;
+  if (!ref.mounted || user == null || !user.isActive) return false;
   if (user.role != UserRole.doctor || user.isSeniorDoctor) return true;
   final patientDoctors =
       await ref.watch(patientAssignedDoctorsProvider(patientId).future);
+  if (!ref.mounted) return false;
   return patientDoctors.any((d) => d.id == user.id);
 }
 
@@ -282,7 +286,7 @@ Future<bool> canEditAppointment(
   required String patientId,
 }) async {
   final user = await ref.watch(currentUserProvider.future);
-  if (user == null) return false;
+  if (!ref.mounted || user == null || !user.isActive) return false;
   if (user.role != UserRole.doctor || user.isSeniorDoctor) return true;
 
   final String doctorId = user.id;
@@ -290,6 +294,7 @@ Future<bool> canEditAppointment(
   // 1. Check patient-level assignment (Case 1: assigned doctor can edit at any time)
   final patientDoctors =
       await ref.watch(patientAssignedDoctorsProvider(patientId).future);
+  if (!ref.mounted) return false;
   if (patientDoctors.any((d) => d.id == doctorId)) {
     return true;
   }
@@ -297,6 +302,7 @@ Future<bool> canEditAppointment(
   // 2. Check appointment-level assignment + ±2 days window (Case 2: covering doctor)
   final apptDoctors =
       await ref.watch(appointmentDoctorsProvider(appointmentId).future);
+  if (!ref.mounted) return false;
   final hasApptAssignment =
       apptDoctors.any((d) => d.doctorId == doctorId && d.isActive);
   if (!hasApptAssignment) return false;

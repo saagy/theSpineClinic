@@ -81,7 +81,7 @@ final class PatientDocumentGroupsProvider
 }
 
 String _$patientDocumentGroupsHash() =>
-    r'90cd5ec4adb2f8af6740be8f951b4378804c2aad';
+    r'e107360cff563bca4eac6c5d7aa59a26d8482aa3';
 
 /// Resolves patient documents into [ProgramDocumentGroup]s.
 ///

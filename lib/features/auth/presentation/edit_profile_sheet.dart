@@ -16,6 +16,8 @@ import 'package:spine_clinic_app/shared/widgets/app_button.dart';
 import 'package:spine_clinic_app/shared/widgets/app_snackbar.dart';
 import 'package:spine_clinic_app/shared/widgets/password_visibility_toggle.dart';
 
+part 'edit_profile_view.dart';
+
 /// Bottom-sheet allowing a staff member to edit name, email, and password.
 class EditProfileSheet extends ConsumerStatefulWidget {
   /// Creates an [EditProfileSheet].
@@ -84,7 +86,16 @@ class _EditProfileSheetState extends ConsumerState<EditProfileSheet> {
   }
 
   Future<void> _handleSave() async {
-    if (!_formKey.currentState!.validate()) return;
+    if (_isSubmitting || !_formKey.currentState!.validate()) return;
+    final actor = ref.read(currentUserProvider).value;
+    if (actor == null || !actor.isActive || actor.id != widget.staff.id) {
+      AppSnackbar.show(
+        context,
+        message: AppStrings.errorDatabasePermissionDenied,
+        variant: AppSnackbarVariant.error,
+      );
+      return;
+    }
 
     setState(() => _isSubmitting = true);
 
@@ -119,9 +130,12 @@ class _EditProfileSheetState extends ConsumerState<EditProfileSheet> {
           Navigator.of(context).pop();
         },
         failure: (error) {
+          if (error.code == 'auth/profile-saved-password-unconfirmed') {
+            ref.invalidate(currentUserProvider);
+          }
           AppSnackbar.show(
             context,
-            message: error.message,
+            message: AppStrings.fromKey(error.userMessageKey),
             variant: AppSnackbarVariant.error,
           );
         },
@@ -131,103 +145,8 @@ class _EditProfileSheetState extends ConsumerState<EditProfileSheet> {
     }
   }
 
-  @override
-  Widget build(BuildContext context) {
-    final bottomInset = MediaQuery.of(context).viewInsets.bottom;
+  void _mutate(VoidCallback change) => setState(change);
 
-    return Padding(
-      padding: EdgeInsets.fromLTRB(
-        AppSizes.p24, AppSizes.p24, AppSizes.p24, AppSizes.p24 + bottomInset,
-      ),
-      child: Form(
-        key: _formKey,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Text(AppStrings.editProfile, style: AppTextStyles.headingSmall),
-            const SizedBox(height: AppSizes.p20),
-            TextFormField(
-              controller: _nameCtrl,
-              enabled: !_isSubmitting,
-              textCapitalization: TextCapitalization.words,
-              decoration: _decoration(AppStrings.fullName),
-              validator: (v) =>
-                  (v == null || v.trim().isEmpty) ? AppStrings.fullNameRequired : null,
-            ),
-            const SizedBox(height: AppSizes.p16),
-            TextFormField(
-              controller: _emailCtrl,
-              enabled: !_isSubmitting,
-              keyboardType: TextInputType.emailAddress,
-              decoration: _decoration(AppStrings.email),
-              validator: (v) {
-                if (v == null || v.trim().isEmpty) return AppStrings.emailRequired;
-                if (!v.contains('@')) return AppStrings.emailInvalid;
-                return null;
-              },
-            ),
-            const SizedBox(height: AppSizes.p16),
-            TextFormField(
-              controller: _phoneCtrl,
-              enabled: !_isSubmitting,
-              keyboardType: TextInputType.phone,
-              decoration: _decoration(AppStrings.phone),
-            ),
-            const SizedBox(height: AppSizes.p20),
-            Text(AppStrings.changePasswordOptional,
-                style: AppTextStyles.bodySecondary),
-            const SizedBox(height: AppSizes.p12),
-            TextFormField(
-              controller: _passwordCtrl,
-              enabled: !_isSubmitting,
-              obscureText: _obscurePassword,
-              decoration: _decoration(
-                AppStrings.newPasswordHint,
-                suffixIcon: PasswordVisibilityToggle(
-                  isObscured: _obscurePassword,
-                  onToggle: () =>
-                      setState(() => _obscurePassword = !_obscurePassword),
-                ),
-              ),
-              validator: (v) {
-                if (v != null && v.trim().isNotEmpty && v.trim().length < 8) {
-                  return AppStrings.passwordMinLength;
-                }
-                return null;
-              },
-            ),
-            const SizedBox(height: AppSizes.p12),
-            TextFormField(
-              controller: _confirmPasswordCtrl,
-              enabled: !_isSubmitting,
-              obscureText: _obscureConfirm,
-              decoration: _decoration(
-                AppStrings.confirmPassword,
-                suffixIcon: PasswordVisibilityToggle(
-                  isObscured: _obscureConfirm,
-                  onToggle: () =>
-                      setState(() => _obscureConfirm = !_obscureConfirm),
-                ),
-              ),
-              validator: (v) {
-                if (_passwordCtrl.text.trim().isNotEmpty) {
-                  if (v != _passwordCtrl.text.trim()) {
-                    return AppStrings.passwordsDoNotMatch;
-                  }
-                }
-                return null;
-              },
-            ),
-            const SizedBox(height: AppSizes.p24),
-            AppButton(
-              labelText: AppStrings.save,
-              isLoading: _isSubmitting,
-              onPressed: _isSubmitting ? null : _handleSave,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
+  @override
+  Widget build(BuildContext context) => _buildForm(context);
 }

@@ -23,7 +23,7 @@ extension _ProgramFormView on _ProgramFormScreenState {
         child: FormPageBody(
           isSaving: _isSubmitting,
           onSave: _submit,
-          onCancel: () => context.pop(),
+          onCancel: _close,
           saveLabel: isEdit ? AppStrings.saveChanges : AppStrings.saveAndPrescribePlan,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,

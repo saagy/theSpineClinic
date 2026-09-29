@@ -1,5 +1,7 @@
 // ignore_for_file: avoid_print
+import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart' show kReleaseMode;
 import 'package:flutter/rendering.dart' show ScrollDirection;
 import 'package:flutter/services.dart' show rootBundle;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -21,7 +23,14 @@ const String _defaultSupabaseAnonKey =
 const String _defaultSentryDsn =
     'https://12c07ec41f62850e3229e79ecc0f38b8@o4512016804282368.ingest.de.sentry.io/4512016812605520';
 
-void main() async {
+void main() {
+  // Flutter bindings and runApp must share a zone, including on web.
+  runZonedGuarded(_startApp, (error, stackTrace) {
+    Sentry.captureException(error, stackTrace: stackTrace);
+  });
+}
+
+Future<void> _startApp() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   final SharedPreferences sharedPrefs = await SharedPreferences.getInstance();
@@ -72,6 +81,12 @@ void main() async {
     (options) {
       options.dsn = sentryDsn;
       options.tracesSampleRate = 0.2;
+      options.environment = const String.fromEnvironment(
+        'SENTRY_ENVIRONMENT',
+        defaultValue: kReleaseMode ? 'production' : 'development',
+      );
+      const release = String.fromEnvironment('SENTRY_RELEASE');
+      if (release.isNotEmpty) options.release = release;
     },
     appRunner: () => runApp(
       ProviderScope(

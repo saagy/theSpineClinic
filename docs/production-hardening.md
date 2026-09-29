@@ -6,6 +6,10 @@ remains the target. Backend migrations, upload function and web app are live; se
 
 ## Behavior
 
+The [September 29 follow-up](launch-hardening-2026-09-29.md) extends durable
+receipts to program create/edit, improves read-policy query plans and fixes
+navigation, partial profile saves and Sentry diagnostics.
+
 - Doctor and reception schedules fetch the selected Saturday–Friday week in
   ordered pages of up to 500, continuing until an empty page. There is no 1,000-row
   cutoff. A failed page produces an error, not a partially populated schedule.
@@ -73,7 +77,7 @@ database snapshot during concurrent rescheduling/deletion; manual refresh remain
 | --- | --- |
 | request_id | UUID primary key; caller-generated |
 | actor_id | Required staff UUID |
-| kind | Required text: payment, collect_due, booking, or cancellation tombstone |
+| kind | Required text: payment, collect_due, booking, program_create, program_update, or cancellation tombstone |
 | payload_hash | Required SHA-256 text digest of canonical JSONB (tombstones use `{}`) |
 | outcome | Required JSONB: success/ID or definitive error |
 | created_at | Required timestamptz, default now() |

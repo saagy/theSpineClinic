@@ -23,6 +23,7 @@ class PatientDocumentUpload {
     required Uint8List fileBytes,
     required String uploadedBy,
     String? programId,
+    String? requestId,
   }) async {
     if (fileBytes.isEmpty || fileBytes.length > 10 * 1024 * 1024) {
       return const Result.failure(
@@ -46,12 +47,17 @@ class PatientDocumentUpload {
     final String lock = '$actor:$scope';
     if (!_inFlight.add(lock)) return const Result.failure(unresolvedMutation);
     try {
-      final pending = await PendingMutation.open(
-        actor: actor,
-        scope: scope,
-        payload: metadata,
-      );
-      final Map<String, dynamic> body = {...metadata, 'requestId': pending.id};
+      final pending = requestId != null
+          ? null
+          : await PendingMutation.open(
+              actor: actor,
+              scope: scope,
+              payload: metadata,
+            );
+      final Map<String, dynamic> body = {
+        ...metadata,
+        'requestId': requestId ?? pending!.id,
+      };
       Map<String, dynamic> response = await _request('start-upload', body);
       if (response['uploadUrl'] != null) {
         await _put(response, fileBytes);
@@ -59,13 +65,22 @@ class PatientDocumentUpload {
       }
       if (response['ok'] != true) {
         // Only a persisted failed receipt permits cleanup and a new operation.
-        if (response['ok'] == false) await pending.clear();
+        if (response['ok'] == false) {
+          await pending?.clear();
+          return const Result.failure(
+            StorageException(
+              code: 'storage/upload-rejected',
+              message: 'The upload receipt records a definitive rejection.',
+              userMessageKey: 'error_unknown',
+            ),
+          );
+        }
         return const Result.failure(unresolvedMutation);
       }
       final document = PatientDocument.fromJson(
         response['document'] as Map<String, dynamic>,
       );
-      await pending.clear();
+      await pending?.clear();
       cache.put(document.fileUrl, fileBytes);
       return Result.success(document);
     } on Exception {

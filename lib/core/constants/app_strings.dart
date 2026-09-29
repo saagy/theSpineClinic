@@ -4,6 +4,15 @@ library;
 
 /// Application-wide string constants.
 abstract final class AppStrings {
+  static const String errorDocLinkIncomplete =
+      'This document has an incomplete file link. Upload the original file again to view it.';
+  static const String profileSavedPasswordUnconfirmed =
+      'Profile saved. The password change could not be confirmed. Retry the password change; your profile details are already saved.';
+  static const String programAttachmentsPending =
+      'Program saved. Some attachments could not be confirmed. Retry with the same details and files to finish safely.';
+  static const String programAttachmentsRejected =
+      'Program saved, but an attachment was rejected. Open the saved program, check its files, and add any missing attachments there.';
+  static const String errorDocUnsupportedType = 'Use a PDF, JPG, PNG, WebP or text file.';
   static const String paymentChanged = 'This payment changed. Refresh it before collecting another amount.';
   static const String mutationUnconfirmed =
       'Could not confirm the result. Retry with the same details to safely check and finish the request.';
@@ -166,6 +175,11 @@ abstract final class AppStrings {
     'error_database_validation_failed': errorDatabaseValidationFailed,
     'error_database_query_failed': errorDatabaseQueryFailed,
     'error_network_generic': errorNetworkGeneric,
+    'profile_saved_password_unconfirmed': profileSavedPasswordUnconfirmed,
+    'program_attachments_pending': programAttachmentsPending,
+    'program_attachments_rejected': programAttachmentsRejected,
+    'error_doc_link_incomplete': errorDocLinkIncomplete,
+    'error_doc_unsupported_type': errorDocUnsupportedType,
     'mutation_unconfirmed': mutationUnconfirmed,
     'payment_changed': paymentChanged,
     'mutation_previous_completed': mutationPreviousCompleted,

@@ -8,20 +8,20 @@ part of 'appointment_detail_controller.dart';
 
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // ignore_for_file: type=lint, type=warning
-/// Controller managing a single appointment's detail view and mutations.
+/// Controller loading a single appointment's detail view.
 
 @ProviderFor(AppointmentDetailController)
 final appointmentDetailControllerProvider =
     AppointmentDetailControllerFamily._();
 
-/// Controller managing a single appointment's detail view and mutations.
+/// Controller loading a single appointment's detail view.
 final class AppointmentDetailControllerProvider
     extends
         $AsyncNotifierProvider<
           AppointmentDetailController,
           AppointmentDetailState
         > {
-  /// Controller managing a single appointment's detail view and mutations.
+  /// Controller loading a single appointment's detail view.
   AppointmentDetailControllerProvider._({
     required AppointmentDetailControllerFamily super.from,
     required String super.argument,
@@ -60,9 +60,9 @@ final class AppointmentDetailControllerProvider
 }
 
 String _$appointmentDetailControllerHash() =>
-    r'e33a0fda808093ca5faf592532ed538208db2059';
+    r'9cd64f9437fdb8a79fd7d04a901534391373f017';
 
-/// Controller managing a single appointment's detail view and mutations.
+/// Controller loading a single appointment's detail view.
 
 final class AppointmentDetailControllerFamily extends $Family
     with
@@ -82,7 +82,7 @@ final class AppointmentDetailControllerFamily extends $Family
         isAutoDispose: false,
       );
 
-  /// Controller managing a single appointment's detail view and mutations.
+  /// Controller loading a single appointment's detail view.
 
   AppointmentDetailControllerProvider call(String appointmentId) =>
       AppointmentDetailControllerProvider._(
@@ -94,7 +94,7 @@ final class AppointmentDetailControllerFamily extends $Family
   String toString() => r'appointmentDetailControllerProvider';
 }
 
-/// Controller managing a single appointment's detail view and mutations.
+/// Controller loading a single appointment's detail view.
 
 abstract class _$AppointmentDetailController
     extends $AsyncNotifier<AppointmentDetailState> {

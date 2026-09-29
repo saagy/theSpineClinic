@@ -40,6 +40,18 @@ String? _decodeStoragePath(String path) {
   }
 }
 
+/// Mirrors the Edge Function's patient-scoped object-key contract.
+bool isPatientDocumentStoragePath(String path) {
+  final parts = path.split('/');
+  return path.length <= 1024 &&
+      parts.length >= 2 &&
+      RegExp(
+        r'^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$',
+      ).hasMatch(parts.first) &&
+      !parts.any((part) => part.isEmpty || part == '.' || part == '..') &&
+      !RegExp(r'[\x00-\x1f\x7f\\]').hasMatch(path);
+}
+
 /// Deletes metadata first, then best-effort linked Storage objects from R2.
 Future<Result<void>> deleteStoredPatientDocument({
   required SupabaseService service,

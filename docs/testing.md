@@ -66,7 +66,7 @@ node test/review_database.mjs /tmp/spine-review-tools/node_modules/@electric-sql
 
 On Windows use a directory under $env:TEMP. The harness accepts no database URL.
 It creates an ephemeral database, loads the snapshot or replays migrations,
-then runs these eight scripts:
+then runs these ten scripts:
 
 - trigger_sanity.sql
 - doctor_role_integrity.sql
@@ -76,12 +76,14 @@ then runs these eight scripts:
 - review_booking_and_edits.sql
 - empty_patient_deletion.sql
 - production_retry_integrity.sql
+- program_save_integrity.sql
+- read_access_equivalence.sql
 
 Bootstrap definitions imitate Supabase roles, auth.uid() and storage tables.
 Hosted services and multi-connection concurrency require separate staging checks.
 Never run fixture scripts against production, even if they include rollback.
 
-The default runner covers all eight scripts above on either setup path.
+The default runner covers all ten scripts above on either setup path.
 Pass explicit SQL filenames after the package path (or after `--migrations`)
 to run a focused subset.
 
@@ -97,6 +99,15 @@ checks. Authenticated PostgREST/R2 concurrency and full device/load acceptance
 remain pending.
 
 ## CI and acceptance
+
+The [September 29 follow-up](launch-hardening-2026-09-29.md) adds regression
+coverage for program/save attachment recovery, edit links, partial profile saves,
+permission-provider disposal, invalid seeded paths and useful sanitized Sentry
+events. Current run logs are under `build/launch-review-20260929/`.
+The full suite passes 370 tests, with zero analyzer issues and ten SQL suites
+passing against both setup paths. Release build and live sign-in smoke checks pass.
+Private Sentry source-map symbolication and source context were verified with a
+labeled synthetic event; this is not a real user crash or authenticated workflow test.
 
 .github/workflows/web-review.yml runs analysis, Flutter tests/build, the edge
 suite and both database setup paths. It uses placeholder public configuration

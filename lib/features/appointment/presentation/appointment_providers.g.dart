@@ -647,7 +647,7 @@ final class AvailableBalanceForTypeProvider
 }
 
 String _$availableBalanceForTypeHash() =>
-    r'5764a0126e1f4e6a0871093326fa318f6bedfe79';
+    r'1f846e8136328f1cd1f2d7cf58caeba75d639bef';
 
 /// Family provider evaluating: Current Balance - Future Commitments for a
 /// given appointment type's bucket.
@@ -933,7 +933,7 @@ final class CanAccessAppointmentProvider
 }
 
 String _$canAccessAppointmentHash() =>
-    r'08a31a8912bbb0925bf685ab82338846e8af4942';
+    r'7d58c83fa43750e49a7fe3e2e071857e245782d6';
 
 /// Checks if the current authenticated user has permission to view and modify
 /// a specific appointment.
@@ -1037,7 +1037,7 @@ final class IsDoctorAssignedToPatientProvider
 }
 
 String _$isDoctorAssignedToPatientHash() =>
-    r'ea99f4dc71f3e1744151316284ce896723b8f9c4';
+    r'0b6e385dd7935fcbea52ed8236ca8a02012463b2';
 
 /// Checks if the current doctor is assigned to the given patient in `patient_doctors`.
 /// Non-doctor staff and senior doctors always return `true`.
@@ -1144,7 +1144,7 @@ final class CanEditAppointmentProvider
 }
 
 String _$canEditAppointmentHash() =>
-    r'c5a0076614a92a449cd0a86d2ef7af8ca1c47066';
+    r'c7cd22c4f2a53bb510d22e7eb75a2ed13e94e513';
 
 /// Checks if the current authenticated user has permission to edit an appointment.
 ///

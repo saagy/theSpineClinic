@@ -140,7 +140,7 @@ class _ProgramFormScreenState extends ConsumerState<ProgramFormScreen> {
             message: AppStrings.programSaved,
             variant: AppSnackbarVariant.success,
           );
-          context.pop();
+          _close();
         },
         failure: (e) => AppSnackbar.show(
           context,
@@ -148,6 +148,18 @@ class _ProgramFormScreenState extends ConsumerState<ProgramFormScreen> {
           variant: AppSnackbarVariant.error,
         ),
       );
+    }
+  }
+
+  void _close() {
+    if (context.canPop()) {
+      context.pop();
+    } else {
+      final program = widget.program;
+      context.go(program == null
+          ? AppRoutes.patientDetail.replaceAll(':id', widget.patientId)
+          : AppRoutes.patientProgramDetail.replaceAll(':id', widget.patientId)
+              .replaceAll(':programId', program.id));
     }
   }
 
