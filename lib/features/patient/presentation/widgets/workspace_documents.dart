@@ -17,6 +17,7 @@ import 'package:spine_clinic_app/features/patient/presentation/widgets/patient_d
 import 'package:spine_clinic_app/features/patient/presentation/patient_document_groups.dart';
 import 'package:spine_clinic_app/features/patient/presentation/widgets/workspace_document_folder.dart';
 import 'package:spine_clinic_app/features/patient/presentation/widgets/workspace_tab_header.dart';
+import 'document_upload_feedback.dart';
 
 class WorkspaceDocuments extends ConsumerWidget {
   const WorkspaceDocuments({
@@ -39,21 +40,18 @@ class WorkspaceDocuments extends ConsumerWidget {
         WorkspaceTabHeader(
           title: AppStrings.tabDocuments,
           trailing: preview && onViewAll != null
-              ? TextButton(
-                  onPressed: onViewAll,
-                  child: const Text(AppStrings.viewAll),
-                )
+              ? TextButton(onPressed: onViewAll, child: const Text(AppStrings.viewAll))
               : (!preview
                     ? LayoutBuilder(
-                        builder: (context, constraints) =>
-                            WorkspaceUploadButton(
-                              patientId: patientId,
-                              iconOnly: constraints.maxWidth < 480,
-                            ),
+                        builder: (context, constraints) => WorkspaceUploadButton(
+                          patientId: patientId,
+                          iconOnly: constraints.maxWidth < 480,
+                        ),
                       )
                     : null),
         ),
         const SizedBox(height: AppSizes.p14),
+        DocumentUploadFeedback(patientId: patientId),
         Padding(
           padding: EdgeInsets.zero,
           child: RecordAsync(
@@ -71,25 +69,19 @@ class WorkspaceDocuments extends ConsumerWidget {
                 );
               }
               final folders = preview ? groups.folders.take(3) : groups.folders;
-              final standalone =
-                  (preview ? groups.standalone.take(3) : groups.standalone)
-                      .toList();
+              final standalone = (preview ? groups.standalone.take(3) : groups.standalone).toList();
               final rows = <Widget>[
                 for (final folder in folders)
                   WorkspaceDocumentFolder(group: folder, patientId: patientId),
                 for (final document in standalone)
-                  WorkspaceDocumentRow(
-                    document: document,
-                    showActions: !preview,
-                  ),
+                  WorkspaceDocumentRow(document: document, showActions: !preview),
               ];
               return Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   for (int i = 0; i < rows.length; i++) ...[
                     rows[i],
-                    if (i < rows.length - 1)
-                      const Divider(height: AppSizes.borderWidth),
+                    if (i < rows.length - 1) const Divider(height: AppSizes.borderWidth),
                   ],
                 ],
               );
@@ -102,11 +94,7 @@ class WorkspaceDocuments extends ConsumerWidget {
 }
 
 class WorkspaceDocumentRow extends StatelessWidget {
-  const WorkspaceDocumentRow({
-    super.key,
-    required this.document,
-    this.showActions = true,
-  });
+  const WorkspaceDocumentRow({super.key, required this.document, this.showActions = true});
   final PatientDocument document;
   final bool showActions;
 
@@ -125,10 +113,7 @@ class WorkspaceDocumentRow extends StatelessWidget {
           ),
         ),
         child: Padding(
-          padding: const EdgeInsets.symmetric(
-            horizontal: AppSizes.p16,
-            vertical: AppSizes.p14,
-          ),
+          padding: const EdgeInsets.symmetric(horizontal: AppSizes.p16, vertical: AppSizes.p14),
           child: Row(
             children: [
               DocumentThumbnail(document: document),
@@ -137,18 +122,11 @@ class WorkspaceDocumentRow extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      name,
-                      style: AppTextStyles.bodyMedium.copyWith(
-                        color: colors.onSurface,
-                      ),
-                    ),
+                    Text(name, style: AppTextStyles.bodyMedium.copyWith(color: colors.onSurface)),
                     const SizedBox(height: AppSizes.p4),
                     Text(
                       Formatters.formatDateMedium(document.uploadedAt),
-                      style: AppTextStyles.caption.copyWith(
-                        color: colors.onSurfaceVariant,
-                      ),
+                      style: AppTextStyles.caption.copyWith(color: colors.onSurfaceVariant),
                     ),
                   ],
                 ),

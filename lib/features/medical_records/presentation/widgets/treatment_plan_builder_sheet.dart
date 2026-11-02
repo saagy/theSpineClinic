@@ -31,6 +31,8 @@ class TreatmentPlanBuilderSheet extends ConsumerStatefulWidget {
     required this.patientId,
     required this.affectedRegions,
     this.existingPlan,
+    this.copyFromPlan,
+    this.currentPlan,
     this.scrollController,
   });
 
@@ -38,6 +40,8 @@ class TreatmentPlanBuilderSheet extends ConsumerStatefulWidget {
   final String patientId;
   final Set<BodyRegion> affectedRegions;
   final TreatmentPlan? existingPlan;
+  final TreatmentPlan? copyFromPlan;
+  final TreatmentPlan? currentPlan;
   final ScrollController? scrollController;
 
   static Future<TreatmentPlan?> show(
@@ -46,6 +50,8 @@ class TreatmentPlanBuilderSheet extends ConsumerStatefulWidget {
     required String patientId,
     required Set<BodyRegion> affectedRegions,
     TreatmentPlan? existingPlan,
+    TreatmentPlan? copyFromPlan,
+    TreatmentPlan? currentPlan,
   }) => AppBottomSheet.show<TreatmentPlan>(
     context: context,
     title: existingPlan != null ? AppStrings.editTreatmentPlan : AppStrings.newTreatmentPlan,
@@ -58,6 +64,8 @@ class TreatmentPlanBuilderSheet extends ConsumerStatefulWidget {
       patientId: patientId,
       affectedRegions: affectedRegions,
       existingPlan: existingPlan,
+      copyFromPlan: copyFromPlan,
+      currentPlan: currentPlan,
       scrollController: scrollController,
     ),
   );

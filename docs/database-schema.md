@@ -27,6 +27,15 @@ management-access check; write policies retain their existing guards. Both new
 functions use fixed search paths and authenticated-only execute grants.
 `idx_patients_full_name_order` indexes `patients(full_name)` for directory ordering.
 
+November 1 prepared migration `20261101010000_staged_program_document_removal.sql`
+extends the same `save_program_mutation(uuid,jsonb)` signature. Optional payload
+`p_removed_document_ids` commits document-row deletions with program edits after
+checking patient/program ownership. The receipt includes `removed_document_ids`
+and `removed_document_paths` (original and thumbnail URLs) for best-effort storage
+cleanup after commit. Missing rows are harmless; cross-program IDs reject and
+roll back the save. Existing payloads and receipts remain compatible. Apply this
+migration before the updated program editor client; it is not deployed by this task.
+
 Patient deletion safeguard (migration `20260909010000`): `delete_empty_patient(p_patient_id uuid)`
 checks an active receptionist, senior doctor or administrator, locks the patient
 row and deletes atomically. A `BEFORE DELETE` trigger rejects any patient with

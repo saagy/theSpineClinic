@@ -5,13 +5,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:spine_clinic_app/core/constants/app_sizes.dart';
 import 'package:spine_clinic_app/core/constants/app_strings.dart';
+import 'package:spine_clinic_app/core/constants/app_text_styles.dart';
 import 'package:spine_clinic_app/core/errors/app_exception.dart';
 import 'package:spine_clinic_app/core/network/app_routes.dart';
 import 'package:spine_clinic_app/features/auth/domain/staff.dart';
 import 'package:spine_clinic_app/features/staff/presentation/staff_management_controller.dart';
 import 'package:spine_clinic_app/features/staff/presentation/widgets/staff_active_filter_chips.dart';
 import 'package:spine_clinic_app/features/staff/presentation/widgets/staff_filter_sheet.dart';
-import 'package:spine_clinic_app/features/staff/presentation/widgets/staff_grouped_list.dart';
+import 'package:spine_clinic_app/features/staff/presentation/widgets/staff_directory_list.dart';
 import 'package:spine_clinic_app/features/staff/presentation/widgets/staff_list_filter_models.dart';
 import 'package:spine_clinic_app/shared/widgets/active_filter_chips_row.dart';
 import 'package:spine_clinic_app/shared/widgets/empty_state.dart';
@@ -35,10 +36,8 @@ class _StaffDirectoryTabState extends ConsumerState<StaffDirectoryTab> {
       ref.read(staffDirectoryFiltersProvider.notifier).filter(value);
   String get _query => ref.read(staffDirectoryFiltersProvider).query;
   set _query(String value) => ref.read(staffDirectoryFiltersProvider.notifier).search(value);
-  final Set<int> _animatedIndices = <int>{};
   void _updateFilter(VoidCallback change) {
     change();
-    _animatedIndices.clear();
   }
 
   @override
@@ -49,6 +48,34 @@ class _StaffDirectoryTabState extends ConsumerState<StaffDirectoryTab> {
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: Column(
         children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(AppSizes.p16, AppSizes.p12, AppSizes.p16, 0),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    staffAsync.hasValue
+                        ? AppStrings.sectionCount(
+                            AppStrings.staff,
+                            _filtered(staffAsync.value!).length,
+                          )
+                        : AppStrings.staff,
+                    style: AppTextStyles.bodyBold,
+                  ),
+                ),
+                const SizedBox(width: AppSizes.p12),
+                FilledButton.icon(
+                  onPressed: () => context.push(AppRoutes.staffForm),
+                  icon: const Icon(Icons.add, size: AppSizes.iconSmall),
+                  label: Text(AppStrings.addStaff, style: AppTextStyles.bodyBold),
+                  style: FilledButton.styleFrom(
+                    minimumSize: const Size(AppSizes.tappableMin, AppSizes.tappableMin),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppSizes.r8)),
+                  ),
+                ),
+              ],
+            ),
+          ),
           Padding(
             padding: const EdgeInsets.fromLTRB(
               AppSizes.p16,
@@ -76,13 +103,6 @@ class _StaffDirectoryTabState extends ConsumerState<StaffDirectoryTab> {
           Expanded(child: _content(staffAsync)),
         ],
       ),
-      floatingActionButton: FloatingActionButton(
-        shape: const CircleBorder(),
-        backgroundColor: Theme.of(context).colorScheme.primary,
-        foregroundColor: Theme.of(context).colorScheme.onPrimary,
-        onPressed: () => context.push(AppRoutes.staffForm),
-        child: const Icon(Icons.add_rounded),
-      ),
     );
   }
 
@@ -95,9 +115,8 @@ class _StaffDirectoryTabState extends ConsumerState<StaffDirectoryTab> {
         }
         return KeyedSubtree(
           key: const ValueKey('staff_data'),
-          child: StaffGroupedList(
+          child: StaffDirectoryList(
             staffList: display,
-            animatedIndices: _animatedIndices,
             onTap: (s) => context.push(AppRoutes.staffForm, extra: s),
           ),
         );
@@ -115,7 +134,6 @@ class _StaffDirectoryTabState extends ConsumerState<StaffDirectoryTab> {
 
     return RefreshIndicator(
       onRefresh: () async {
-        _animatedIndices.clear();
         await ref.read(staffListProvider.notifier).refreshStaff();
       },
       color: Theme.of(context).colorScheme.primary,
@@ -164,12 +182,17 @@ class _StaffDirectoryTabState extends ConsumerState<StaffDirectoryTab> {
     }
   }
 
-  Widget _empty() => const SingleChildScrollView(
+  Widget _empty() => SingleChildScrollView(
     physics: AlwaysScrollableScrollPhysics(),
     child: Center(
       child: Padding(
         padding: EdgeInsets.only(top: AppSizes.emptyStateTopOffset),
-        child: EmptyState(message: AppStrings.noStaff, icon: Icons.people_alt_rounded),
+        child: EmptyState(
+          message: _query.isNotEmpty || _filters.activeCount > 0
+              ? AppStrings.noMatchingStaff
+              : AppStrings.noStaff,
+          icon: Icons.people_alt_rounded,
+        ),
       ),
     ),
   );

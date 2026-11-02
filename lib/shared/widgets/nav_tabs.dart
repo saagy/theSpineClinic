@@ -37,7 +37,6 @@ abstract final class NavTabs {
     'super_admin' => const [
       NavTab(icon: LucideIcons.calendar_check, label: AppStrings.navAppts),
       NavTab(icon: LucideIcons.users, label: AppStrings.patients),
-      NavTab(icon: LucideIcons.trending_up, label: AppStrings.navAnalytics),
       NavTab(icon: LucideIcons.settings, label: AppStrings.navAdmin),
     ],
     _ => const [

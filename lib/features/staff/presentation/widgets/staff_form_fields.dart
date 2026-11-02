@@ -9,7 +9,7 @@ import 'package:spine_clinic_app/features/auth/domain/user_role.dart';
 import 'package:spine_clinic_app/features/patient/domain/clinic_location.dart';
 import 'package:spine_clinic_app/features/staff/presentation/widgets/staff_form_controls.dart';
 import 'package:spine_clinic_app/features/staff/presentation/widgets/staff_password_fields.dart';
-import 'package:spine_clinic_app/shared/widgets/section_card.dart';
+import 'package:spine_clinic_app/shared/widgets/form_section.dart';
 
 class StaffFormFields extends StatefulWidget {
   const StaffFormFields({
@@ -48,17 +48,14 @@ class _StaffFormFieldsState extends State<StaffFormFields> {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         _section(AppStrings.identity, _identityFields),
-        const SizedBox(height: AppSizes.p16),
+        const SizedBox(height: AppSizes.p24),
         _section(AppStrings.access, _accessFields),
-        const SizedBox(height: AppSizes.p16),
+        const SizedBox(height: AppSizes.p24),
         _section(AppStrings.account, [
           if (isEdit) ..._accountFields,
           if (showPasswords) ...[
             if (isEdit) const SizedBox(height: AppSizes.p8),
-            StaffPasswordFields(
-              enabled: widget.enabled,
-              formKey: widget.formKey,
-            ),
+            StaffPasswordFields(enabled: widget.enabled, formKey: widget.formKey),
           ],
         ]),
       ],
@@ -75,10 +72,7 @@ class _StaffFormFieldsState extends State<StaffFormFields> {
       textCapitalization: TextCapitalization.words,
       validator: FormBuilderValidators.compose([
         FormBuilderValidators.required(errorText: AppStrings.fullNameRequired),
-        FormBuilderValidators.minLength(
-          3,
-          errorText: AppStrings.fullNameMinLength,
-        ),
+        FormBuilderValidators.minLength(3, errorText: AppStrings.fullNameMinLength),
       ]),
     ),
     const SizedBox(height: AppSizes.p16),
@@ -108,6 +102,11 @@ class _StaffFormFieldsState extends State<StaffFormFields> {
   List<Widget> get _accessFields => [
     FormBuilderDropdown<UserRole>(
       name: 'role',
+      isExpanded: true,
+      borderRadius: BorderRadius.circular(AppSizes.r8),
+      dropdownColor: Theme.of(context).colorScheme.surface,
+      style: AppTextStyles.body.copyWith(color: Theme.of(context).colorScheme.onSurface),
+      menuMaxHeight: AppSizes.overlayDropdownMaxHeight,
       enabled: widget.enabled && !widget.isSelf,
       initialValue: widget.staff?.role,
       decoration: staffInputDecoration(
@@ -116,29 +115,23 @@ class _StaffFormFieldsState extends State<StaffFormFields> {
         enabled: widget.enabled,
         hint: AppStrings.roleHint,
       ),
-      validator: FormBuilderValidators.required(
-        errorText: AppStrings.roleRequired,
-      ),
+      validator: FormBuilderValidators.required(errorText: AppStrings.roleRequired),
       onChanged: (role) => setState(() => _selectedRole = role),
       items: const [
-        DropdownMenuItem(
-          value: UserRole.superAdmin,
-          child: Text(AppStrings.superAdmin),
-        ),
-        DropdownMenuItem(
-          value: UserRole.receptionist,
-          child: Text(AppStrings.receptionist),
-        ),
-        DropdownMenuItem(
-          value: UserRole.doctor,
-          child: Text(AppStrings.doctor),
-        ),
+        DropdownMenuItem(value: UserRole.superAdmin, child: Text(AppStrings.superAdmin)),
+        DropdownMenuItem(value: UserRole.receptionist, child: Text(AppStrings.receptionist)),
+        DropdownMenuItem(value: UserRole.doctor, child: Text(AppStrings.doctor)),
       ],
     ),
     if (_selectedRole == UserRole.receptionist) ...[
       const SizedBox(height: AppSizes.p16),
       FormBuilderDropdown<ClinicLocation>(
         name: 'branch',
+        isExpanded: true,
+        borderRadius: BorderRadius.circular(AppSizes.r8),
+        dropdownColor: Theme.of(context).colorScheme.surface,
+        style: AppTextStyles.body.copyWith(color: Theme.of(context).colorScheme.onSurface),
+        menuMaxHeight: AppSizes.overlayDropdownMaxHeight,
         enabled: widget.enabled,
         initialValue: widget.staff?.branch,
         decoration: staffInputDecoration(
@@ -148,12 +141,7 @@ class _StaffFormFieldsState extends State<StaffFormFields> {
           hint: AppStrings.selectBranch,
         ),
         items: ClinicLocation.values
-            .map(
-              (branch) => DropdownMenuItem(
-                value: branch,
-                child: Text(branch.displayLabel),
-              ),
-            )
+            .map((branch) => DropdownMenuItem(value: branch, child: Text(branch.displayLabel)))
             .toList(),
       ),
       const SizedBox(height: AppSizes.p8),
@@ -187,12 +175,9 @@ class _StaffFormFieldsState extends State<StaffFormFields> {
   ];
 
   Widget _section(String title, List<Widget> children) {
-    return SectionCard(
+    return FormSection(
       title: title,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: children,
-      ),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: children),
     );
   }
 }

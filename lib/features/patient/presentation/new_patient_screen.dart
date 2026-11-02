@@ -4,10 +4,8 @@ import 'package:spine_clinic_app/core/constants/app_strings.dart';
 import 'package:spine_clinic_app/core/errors/app_exception.dart';
 import 'package:spine_clinic_app/features/auth/domain/user_role.dart';
 import 'package:spine_clinic_app/features/auth/presentation/auth_providers.dart';
-import 'package:spine_clinic_app/features/patient/presentation/new_patient_controller.dart';
 import 'package:spine_clinic_app/features/patient/presentation/widgets/new_patient_form.dart';
 import 'package:spine_clinic_app/shared/widgets/error_view.dart';
-import 'package:spine_clinic_app/shared/widgets/loading_overlay.dart';
 
 /// Screen allowing receptionists and admins to register a new patient.
 class NewPatientScreen extends ConsumerWidget {
@@ -38,9 +36,6 @@ class NewPatientScreen extends ConsumerWidget {
       );
     }
 
-    final submitState = ref.watch(newPatientControllerProvider);
-    final isSaving = submitState.isLoading;
-
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
@@ -49,7 +44,7 @@ class NewPatientScreen extends ConsumerWidget {
         foregroundColor: Theme.of(context).colorScheme.onSurface,
         elevation: 0,
       ),
-      body: LoadingOverlay(isLoading: isSaving, child: const NewPatientForm()),
+      body: const NewPatientForm(),
     );
   }
 }

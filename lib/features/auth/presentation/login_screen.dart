@@ -15,7 +15,6 @@ import 'package:spine_clinic_app/features/patient/domain/clinic_location.dart';
 import 'package:spine_clinic_app/shared/widgets/ambient_glow_background.dart';
 import 'package:spine_clinic_app/shared/widgets/app_snackbar.dart';
 import 'package:spine_clinic_app/shared/widgets/clinic_brand_mark.dart';
-import 'package:spine_clinic_app/shared/widgets/loading_overlay.dart';
 
 /// Unified morphing frosted-glass authentication screen.
 class LoginScreen extends ConsumerStatefulWidget {
@@ -120,8 +119,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
       body: AmbientGlowBackground(
-        child: LoadingOverlay(
-          isLoading: isBusy,
+        child: ExcludeFocus(
+          excluding: isBusy,
           child: SafeArea(
             child: Center(
               child: SingleChildScrollView(

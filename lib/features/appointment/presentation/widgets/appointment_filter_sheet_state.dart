@@ -39,64 +39,51 @@ class _AppointmentFilterSheetState extends ConsumerState<AppointmentFilterSheet>
 
   @override
   Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
     final doctors = widget.canFilterDoctor
         ? (ref.watch(allDoctorsForFilterProvider).value ?? const <Staff>[])
         : const <Staff>[];
 
-    return Container(
-      constraints: BoxConstraints(maxHeight: MediaQuery.sizeOf(context).height * 0.85),
-      decoration: BoxDecoration(
-        color: cs.surface,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(AppSizes.r16)),
-        border: Border.all(color: cs.outlineVariant, width: AppSizes.borderWidth),
-      ),
-      child: Material(
-        type: MaterialType.transparency,
-        child: SafeArea(
-          top: false,
-          child: AnimatedSwitcher(
-            duration: const Duration(milliseconds: 200),
-            child: _page == _FilterSheetPage.doctorPicker
-                ? AppointmentFilterDoctorView(
-                    selectedDoctorId: _doctorId,
-                    doctors: doctors,
-                    onDoctorSelected: (id) => setState(() {
-                      _doctorId = id;
-                      _page = _FilterSheetPage.main;
-                    }),
-                    onBack: () => setState(() => _page = _FilterSheetPage.main),
-                  )
-                : AppointmentFilterMainView(
-                    appointmentFiltersBuilder: widget.appointmentFiltersBuilder,
-                    sortOptionsBuilder: widget.sortOptionsBuilder,
-                    showDateFilter: widget.showDateFilter,
-                    showStatusFilter: widget.showStatusFilter,
-                    showAppointmentFilters: widget.showAppointmentFilters,
-                    selectedDateFrom: _dateFrom,
-                    selectedDateTo: _dateTo,
-                    selectedDoctorId: _doctorId,
-                    selectedClinic: _clinic,
-                    selectedStatus: _status,
-                    selectedType: _type,
-                    selectedSort: _sort,
-                    canFilterDoctor: widget.canFilterDoctor,
-                    canFilterClinic: widget.canFilterClinic,
-                    doctors: doctors,
-                    onDateRangeChanged: (from, to) => setState(() {
-                      _dateFrom = from;
-                      _dateTo = to;
-                    }),
-                    onOpenDoctorPicker: () => setState(() => _page = _FilterSheetPage.doctorPicker),
-                    onClinicChanged: (c) => setState(() => _clinic = c),
-                    onStatusChanged: (s) => setState(() => _status = s),
-                    onTypeChanged: (t) => setState(() => _type = t),
-                    onSortChanged: (s) => setState(() => _sort = s),
-                    onReset: _reset,
-                    onApply: _apply,
-                  ),
-          ),
-        ),
+    return FilterSheetFrame(
+      child: AnimatedSwitcher(
+        duration: const Duration(milliseconds: 200),
+        child: _page == _FilterSheetPage.doctorPicker
+            ? FilterDoctorView(
+                selectedDoctorId: _doctorId,
+                doctors: doctors,
+                onDoctorSelected: (id) => setState(() {
+                  _doctorId = id;
+                  _page = _FilterSheetPage.main;
+                }),
+                onBack: () => setState(() => _page = _FilterSheetPage.main),
+              )
+            : AppointmentFilterMainView(
+                appointmentFiltersBuilder: widget.appointmentFiltersBuilder,
+                sortOptionsBuilder: widget.sortOptionsBuilder,
+                showDateFilter: widget.showDateFilter,
+                showStatusFilter: widget.showStatusFilter,
+                showAppointmentFilters: widget.showAppointmentFilters,
+                selectedDateFrom: _dateFrom,
+                selectedDateTo: _dateTo,
+                selectedDoctorId: _doctorId,
+                selectedClinic: _clinic,
+                selectedStatus: _status,
+                selectedType: _type,
+                selectedSort: _sort,
+                canFilterDoctor: widget.canFilterDoctor,
+                canFilterClinic: widget.canFilterClinic,
+                doctors: doctors,
+                onDateRangeChanged: (from, to) => setState(() {
+                  _dateFrom = from;
+                  _dateTo = to;
+                }),
+                onOpenDoctorPicker: () => setState(() => _page = _FilterSheetPage.doctorPicker),
+                onClinicChanged: (c) => setState(() => _clinic = c),
+                onStatusChanged: (s) => setState(() => _status = s),
+                onTypeChanged: (t) => setState(() => _type = t),
+                onSortChanged: (s) => setState(() => _sort = s),
+                onReset: _reset,
+                onApply: _apply,
+              ),
       ),
     );
   }

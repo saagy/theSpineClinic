@@ -123,6 +123,7 @@ class PatientTabPayments extends ConsumerWidget {
 
     return LoadingOverlay(
       isLoading: isMutating,
+      message: AppStrings.updatingPayments,
       child: AnimatedSwitcher(
         duration: const Duration(milliseconds: 250),
         switchInCurve: Curves.easeOutCubic,

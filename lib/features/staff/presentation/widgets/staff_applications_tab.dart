@@ -10,17 +10,14 @@ import 'package:spine_clinic_app/shared/widgets/app_snackbar.dart';
 import 'package:spine_clinic_app/shared/widgets/confirmation_dialog.dart';
 import 'package:spine_clinic_app/shared/widgets/empty_state.dart';
 import 'package:spine_clinic_app/shared/widgets/error_view.dart';
+import 'package:spine_clinic_app/shared/widgets/skeleton_loader.dart';
 
 /// Tab view displaying pending self-registered staff applications for approval.
 class StaffApplicationsTab extends ConsumerWidget {
   /// Creates a [StaffApplicationsTab] instance.
   const StaffApplicationsTab({super.key});
 
-  Future<void> _approve(
-    BuildContext context,
-    WidgetRef ref,
-    Staff staff,
-  ) async {
+  Future<void> _approve(BuildContext context, WidgetRef ref, Staff staff) async {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (_) => ConfirmationDialog(
@@ -31,9 +28,7 @@ class StaffApplicationsTab extends ConsumerWidget {
     );
     if (confirmed != true || !context.mounted) return;
 
-    final result = await ref
-        .read(staffApplicationsActionProvider.notifier)
-        .approveStaff(staff.id);
+    final result = await ref.read(staffApplicationsActionProvider.notifier).approveStaff(staff.id);
     if (!context.mounted) return;
     result.when(
       success: (_) => AppSnackbar.show(
@@ -41,11 +36,8 @@ class StaffApplicationsTab extends ConsumerWidget {
         message: AppStrings.staffApprovedSuccess,
         variant: AppSnackbarVariant.success,
       ),
-      failure: (error) => AppSnackbar.show(
-        context,
-        message: error.message,
-        variant: AppSnackbarVariant.error,
-      ),
+      failure: (error) =>
+          AppSnackbar.show(context, message: error.message, variant: AppSnackbarVariant.error),
     );
   }
 
@@ -81,11 +73,8 @@ class StaffApplicationsTab extends ConsumerWidget {
         message: AppStrings.staffRejectedSuccess,
         variant: AppSnackbarVariant.success,
       ),
-      failure: (error) => AppSnackbar.show(
-        context,
-        message: error.message,
-        variant: AppSnackbarVariant.error,
-      ),
+      failure: (error) =>
+          AppSnackbar.show(context, message: error.message, variant: AppSnackbarVariant.error),
     );
   }
 
@@ -94,39 +83,31 @@ class StaffApplicationsTab extends ConsumerWidget {
     final pendingAsync = ref.watch(pendingStaffApplicationsProvider);
     final actionState = ref.watch(staffApplicationsActionProvider);
     return RefreshIndicator(
-      onRefresh: () =>
-          ref.read(pendingStaffApplicationsProvider.notifier).refresh(),
+      onRefresh: () => ref.read(pendingStaffApplicationsProvider.notifier).refresh(),
       color: Theme.of(context).colorScheme.primary,
       backgroundColor: Theme.of(context).colorScheme.surface,
       child: pendingAsync.when(
         data: (applications) => applications.isEmpty
             ? _empty()
-            : ListView.builder(
+            : ListView.separated(
                 physics: const AlwaysScrollableScrollPhysics(),
                 padding: const EdgeInsets.all(AppSizes.p16),
                 itemCount: applications.length,
-                itemBuilder: (context, index) => Padding(
-                  padding: const EdgeInsets.only(bottom: AppSizes.p16),
-                  child: StaffApplicationReviewCard(
-                    staff: applications[index],
-                    onApprove: () =>
-                      _approve(context, ref, applications[index]),
-                    onReject: () => _reject(context, ref, applications[index]),
-                    isLoading: actionState.isLoading,
-                  ),
+                separatorBuilder: (context, index) => Divider(
+                  height: AppSizes.borderWidth,
+                  color: Theme.of(context).colorScheme.outlineVariant,
+                ),
+                itemBuilder: (context, index) => StaffApplicationReviewCard(
+                  staff: applications[index],
+                  onApprove: () => _approve(context, ref, applications[index]),
+                  onReject: () => _reject(context, ref, applications[index]),
+                  isLoading: actionState.isLoading,
                 ),
               ),
-        loading: () => Center(
-          child: CircularProgressIndicator(
-            color: Theme.of(context).colorScheme.primary,
-          ),
-        ),
+        loading: () => const SkeletonTileList(count: 6),
         error: (error, _) => ErrorView(
-          exception: error is AppException
-              ? error
-              : AppException.fromSupabaseException(error),
-          onRetry: () =>
-              ref.read(pendingStaffApplicationsProvider.notifier).refresh(),
+          exception: error is AppException ? error : AppException.fromSupabaseException(error),
+          onRetry: () => ref.read(pendingStaffApplicationsProvider.notifier).refresh(),
         ),
       ),
     );

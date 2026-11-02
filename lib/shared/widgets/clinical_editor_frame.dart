@@ -5,10 +5,17 @@ import 'package:spine_clinic_app/core/constants/app_text_styles.dart';
 
 /// Keeps save/cancel reachable while the clinical form scrolls above the keyboard.
 class ClinicalEditorFrame extends StatelessWidget {
-  const ClinicalEditorFrame({super.key, required this.child, required this.isSaving, required this.onSave});
+  const ClinicalEditorFrame({
+    super.key,
+    required this.child,
+    required this.isSaving,
+    required this.onSave,
+    this.saveLabel = AppStrings.save,
+  });
   final Widget child;
   final bool isSaving;
   final VoidCallback onSave;
+  final String saveLabel;
   @override
   Widget build(BuildContext context) => PopScope(
     canPop: !isSaving,
@@ -37,10 +44,7 @@ class ClinicalEditorFrame extends StatelessWidget {
                     minimumSize: const Size.fromHeight(AppSizes.tappableMin),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppSizes.r8)),
                   ),
-                  child: Text(
-                    isSaving ? AppStrings.savingClinicalRecord : AppStrings.save,
-                    style: AppTextStyles.bodyBold,
-                  ),
+                  child: Text(isSaving ? AppStrings.savingClinicalRecord : saveLabel, style: AppTextStyles.bodyBold),
                 ),
               ),
             ],

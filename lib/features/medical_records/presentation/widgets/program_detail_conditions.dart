@@ -26,8 +26,11 @@ class ProgramDetailConditions extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          Wrap(
+            alignment: WrapAlignment.spaceBetween,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            spacing: AppSizes.p12,
+            runSpacing: AppSizes.p8,
             children: [
               Text(AppStrings.affectedRegions, style: AppTextStyles.headingSmall.copyWith(color: cs.onSurface)),
               Container(
@@ -66,18 +69,20 @@ class ProgramDetailConditions extends StatelessWidget {
                       runSpacing: AppSizes.p6,
                       children: program.conditions
                           .where((c) => c.condition?.region == region)
-                          .map((c) => Container(
-                                padding: const EdgeInsets.symmetric(horizontal: AppSizes.p10, vertical: AppSizes.p6),
-                                decoration: BoxDecoration(
-                                  color: cs.surfaceContainerLowest,
-                                  borderRadius: BorderRadius.circular(AppSizes.r8),
-                                  border: Border.all(color: cs.outlineVariant.withAlpha(80)),
-                                ),
-                                child: Text(
-                                  c.condition?.conditionName ?? AppStrings.conditionUnspecified,
-                                  style: AppTextStyles.bodyMedium.copyWith(color: cs.onSurface),
-                                ),
-                              ))
+                          .map(
+                            (c) => Container(
+                              padding: const EdgeInsets.symmetric(horizontal: AppSizes.p10, vertical: AppSizes.p6),
+                              decoration: BoxDecoration(
+                                color: cs.surfaceContainerLowest,
+                                borderRadius: BorderRadius.circular(AppSizes.r8),
+                                border: Border.all(color: cs.outlineVariant.withAlpha(80)),
+                              ),
+                              child: Text(
+                                c.condition?.conditionName ?? AppStrings.conditionUnspecified,
+                                style: AppTextStyles.bodyMedium.copyWith(color: cs.onSurface),
+                              ),
+                            ),
+                          )
                           .toList(),
                     ),
                   ],

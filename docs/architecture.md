@@ -25,7 +25,7 @@ lib/
     ├── medical_records/      # Visit details, visit notes, patient notes
     ├── payments/             # Record payment (amount / package / reason)
     ├── staff/                # Staff directory, applications, staff form
-    └── admin/                # Admin hub, analytics, reports, branch switching
+    └── admin/                # Admin hub, legacy reports, branch switching
 ```
 
 Each feature folder is layered `data/` (repository implementations, DTOs) →
@@ -70,7 +70,7 @@ Riverpod 3 with code generation:
   (run `dart run build_runner build --delete-conflicting-outputs` after edits).
 - Shared, cross-screen, and repository-backed state lives in Notifiers /
   AsyncNotifiers (e.g. `AuthCurrentUser`, `TodayAppointments`, `BookingWorkboard`,
-  `DoctorScheduleNotifier`, `AnalyticsFilterNotifier`).
+  `DoctorScheduleNotifier`).
 - State classes mutate exclusively through `copyWith` so unspecified fields keep
   their value (hand-written `copyWith` or Freezed).
 - Notifiers that depend on async providers `ref.watch` them inside `build()` and
@@ -87,12 +87,15 @@ Routing is declarative GoRouter (`core/network/`):
 
 - `router_routes.dart` declares the route names; `router_guards.dart` applies
   authentication and role redirects.
-- Role-based home: doctor → `/schedule`, receptionist → `/allAppointments`,
-  super admin → `/reports`. `/admin*` routes are admin-only.
+- Role-based home in `auth_redirect.dart`: doctor → `/schedule`, receptionist
+  and super admin → `AppRoutes.allAppointments`. `/admin*` routes are admin-only.
 - Navigation chrome comes from `shared/widgets` (`AppShell`, `AppNavBar`,
   `AppNavRail`, `NavTabs`), which renders the tab set for the current role:
   doctor (My Schedule / My Patients / Profile), receptionist (Appointments /
-  Patients / Profile), super admin (Analytics / Appointments / Patients / Admin).
+  Patients / Profile), super admin (Appts / Patients / Admin).
+- The retired Analytics URL `/admin/reports` redirects to Admin. Its isolated
+  UI/providers/repository/query/DTO code is removed; independent legacy
+  `ReportsScreen`, admin report queries and database structures remain.
 
 Roles come from the database enum `user_role` (`super_admin`, `receptionist`,
 `doctor`) mirrored by the Dart `UserRole` enum in `features/auth/domain/`.
@@ -115,6 +118,11 @@ There is no patient login — patients are data, not users.
   Existing pill buttons and rounded cards describe current components, not a
   required layout for every future screen. [DESIGN.md](../DESIGN.md) contains
   design guidance; [the UI overhaul plan](ui-overhaul.md) tracks proposed work.
+- Shared `FilterSheetFrame`/`FilterSheetBody`, sort options and doctor-selection
+  components serve Patients, Schedule, appointments, doctor history and staff;
+  feature drafts, state and result types stay separate. `UnifiedFilterSheet`
+  remains for older patient-note and appointment components. Staff forms reuse
+  `FormPageBody`/`FormSection`; see [staff cleanup](staff-ui-cleanup.md).
 
 ## Startup Sequence
 

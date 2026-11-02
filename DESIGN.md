@@ -78,6 +78,20 @@ enough density for repeated daily work.
 
 ### Accessibility and Tokens
 
+- Document uploads explicitly opt into a slim native linear activity track with short
+  status text, preserving the current form and scroll position. Ordinary saves use
+  button-local activity. Authentication uses a labeled pending button without a
+  blocking panel; remaining blocking mutations use a compact contextual spinner.
+  Unfinished files
+  keep visible recovery actions. The track uses estimated nonnumeric fill while
+  the request is pending; only the real result completes the operation. Reduced
+  motion uses discrete fill updates. Program form removals hide immediately as
+  unsaved edits: Save commits them with program changes, Cancel discards them,
+  and failed saves retain the draft. Explicit document-list deletion remains a
+  separate confirmed action. Picker close buttons keep 44px targets and stable previews.
+  See [save feedback](docs/save-feedback.md) for scope and the session-limited
+  recovery boundary.
+
 - Use theme color schemes/extensions, AppTextStyles, AppSizes, and AppStrings.
   Add semantic tokens when a new reusable role is needed; avoid inline exceptions.
 - Keep touch targets at least 44 logical pixels, separate destructive actions,
@@ -104,6 +118,14 @@ enough density for repeated daily work.
    distinct from implemented behavior; do not call unreviewed work approved.
 
 Current decision status:
+Program detail separates the program's lifecycle from its selected treatment plan.
+The program header uses a labeled status dropdown and an explicit Edit program
+details action, wrapping naturally on narrow windows. The current treatment plan
+retains its scoped three-dot menu. New plans copy current treatments into a new
+record; edits update the selected record. Other saved plans use a named switch
+confirmation. Programs-tab rows use the shared three-dot menu for View, Edit and
+Delete according to role. See [program action clarity](docs/program-action-clarity.md).
+
 The September 13 shipping-polish directions were explicitly selected by the user
 and implemented. See [the audit and validation](docs/shipping-ui-polish.md).
 The user selected the density correction: all appointment actions are in the
@@ -113,7 +135,12 @@ identity and type together without an extra action line. Wide rows retain aligne
 columns and passive status labels. Appointment names fit between 14 and 13 logical pixels before wrapping in full; enlarged accessibility text is never reduced. Types wrap instead of clipping.
 Patient tabs use the slate scaffold with separate overview group surfaces.
 Create/edit forms use semantic sections, responsive columns and persistent actions.
-The existing appointment filter sheet now supports doctor-history and staff sorts.
+November 2 staff cleanup inherits clinical blue and Plus Jakarta Sans: flat rows,
+quiet initials, status text, compact confirmed review actions and a labeled Add.
+Staff forms use bounded `FormPageBody`/`FormSection` with persistent Save/Cancel.
+Shared filter frames, sort options and doctor selection now serve Patients,
+Schedule, appointments, doctor history and staff with separate feature state.
+Older patient-note/appointment sheets remain. See [scope and rendered validation](docs/staff-ui-cleanup.md).
 
 Appointment creation now preselects the patient's assigned doctors once on patient
 selection and preserves that selection across appointment type changes. Assessment

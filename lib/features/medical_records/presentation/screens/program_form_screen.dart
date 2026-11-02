@@ -11,6 +11,8 @@ import 'package:spine_clinic_app/features/medical_records/domain/condition_catal
 import 'package:spine_clinic_app/features/medical_records/domain/patient_program.dart';
 import 'package:spine_clinic_app/features/medical_records/domain/program_repository.dart';
 import 'package:spine_clinic_app/features/medical_records/presentation/program_controller.dart';
+import 'package:spine_clinic_app/features/medical_records/presentation/program_document_draft.dart';
+import 'package:spine_clinic_app/features/medical_records/presentation/program_mutation_state.dart';
 import 'package:spine_clinic_app/features/medical_records/presentation/widgets/program_clinical_inputs.dart';
 import 'package:spine_clinic_app/features/medical_records/presentation/widgets/program_condition_selector.dart';
 import 'package:spine_clinic_app/features/patient/presentation/patient_documents_providers.dart';
@@ -41,6 +43,13 @@ class _ProgramFormScreenState extends ConsumerState<ProgramFormScreen> {
   late List<ConditionCatalog> _selectedConditions;
   List<PlatformFile> _pendingFiles = [];
   bool _isSubmitting = false;
+  late ProviderContainer _draftContainer;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _draftContainer = ProviderScope.containerOf(context, listen: false);
+  }
 
   @override
   void initState() {
@@ -57,6 +66,7 @@ class _ProgramFormScreenState extends ConsumerState<ProgramFormScreen> {
 
   @override
   void dispose() {
+    _draftContainer.invalidate(programDocumentDraftProvider(_formKey));
     _examinationController.dispose();
     _imagingNotesController.dispose();
     _exaggeratingPositionsController.dispose();
@@ -128,6 +138,7 @@ class _ProgramFormScreenState extends ConsumerState<ProgramFormScreen> {
         relievingPositions: _relievingPositionsController.text.trim(),
         notes: _notesController.text.trim(),
         pendingAttachments: attachments,
+        removedDocumentIds: ref.read(programDocumentDraftProvider(_formKey)).removedIds.toList(),
       );
 
       if (!mounted) return;
@@ -151,15 +162,27 @@ class _ProgramFormScreenState extends ConsumerState<ProgramFormScreen> {
     }
   }
 
+  void _stageDocumentRemoval(PatientDocument document) {
+    if (ref.read(programDocumentDraftProvider(_formKey).notifier).remove(document.id)) return;
+    AppSnackbar.show(
+      context,
+      message: AppStrings.fromKey('error_permission_denied'),
+      variant: AppSnackbarVariant.error,
+    );
+  }
+
   void _close() {
     if (context.canPop()) {
       context.pop();
     } else {
       final program = widget.program;
-      context.go(program == null
-          ? AppRoutes.patientDetail.replaceAll(':id', widget.patientId)
-          : AppRoutes.patientProgramDetail.replaceAll(':id', widget.patientId)
-              .replaceAll(':programId', program.id));
+      context.go(
+        program == null
+            ? AppRoutes.patientDetail.replaceAll(':id', widget.patientId)
+            : AppRoutes.patientProgramDetail
+                  .replaceAll(':id', widget.patientId)
+                  .replaceAll(':programId', program.id),
+      );
     }
   }
 

@@ -11,16 +11,19 @@ import 'package:spine_clinic_app/features/medical_records/domain/program_status.
 import 'package:spine_clinic_app/features/medical_records/domain/treatment_plan_input.dart';
 import 'package:spine_clinic_app/features/medical_records/presentation/patient_programs_providers.dart';
 import 'package:spine_clinic_app/features/patient/presentation/patient_documents_providers.dart';
+import 'program_mutation_state.dart';
 
 part 'program_controller.g.dart';
+part 'program_save_actions.dart';
 
 /// Mutation controller managing program creation, updates, status changes, and deletion (Rule 28).
 @Riverpod(keepAlive: true)
-class ProgramController extends _$ProgramController {
+class ProgramController extends _$ProgramController with _ProgramSaveActions {
   @override
-  AsyncValue<void> build() => const AsyncValue.data(null);
+  ProgramMutationState build() => const ProgramMutationState();
 
   /// Verifies current user has senior doctor or super admin role.
+  @override
   AppException? _verifySeniorDoctorPermission() {
     final Staff? user = ref.read(currentUserProvider).value;
     if (user == null) {
@@ -40,115 +43,6 @@ class ProgramController extends _$ProgramController {
     return null;
   }
 
-  /// Saves a program, then finishes tracked attachment uploads.
-  Future<Result<PatientProgram>> createProgram({
-    required String patientId,
-    required List<String> conditionIds,
-    String? examination,
-    String? imagingNotes,
-    String? exaggeratingPositions,
-    String? relievingPositions,
-    String? notes,
-    List<ProgramAttachment>? pendingAttachments,
-    TreatmentPlanInput? treatmentPlan,
-  }) async {
-    final permError = _verifySeniorDoctorPermission();
-    if (permError != null) return Result.failure(permError);
-
-    state = const AsyncValue.loading();
-    final repo = ref.read(programRepositoryProvider);
-
-    final result = await repo.createProgram(
-      patientId: patientId,
-      conditionIds: conditionIds,
-      examination: examination,
-      imagingNotes: imagingNotes,
-      exaggeratingPositions: exaggeratingPositions,
-      relievingPositions: relievingPositions,
-      notes: notes,
-      pendingAttachments: pendingAttachments,
-      treatmentPlan: treatmentPlan,
-    );
-
-    if (!ref.mounted) return result;
-
-    result.when(
-      success: (program) {
-        state = const AsyncValue.data(null);
-        ref.read(patientProgramsProvider(patientId).notifier).addOrUpdateProgram(program);
-        if (pendingAttachments != null && pendingAttachments.isNotEmpty) {
-          ref.invalidate(patientDocumentsNotifierProvider(patientId));
-        }
-      },
-      failure: (e) {
-        state = AsyncValue.error(e, StackTrace.current);
-        if (e.code == 'program/attachments-pending') {
-          ref.invalidate(patientProgramsProvider(patientId));
-          ref.invalidate(patientDocumentsNotifierProvider(patientId));
-        }
-      },
-    );
-
-    return result;
-  }
-
-  /// Updates a program, then finishes tracked attachment uploads.
-  Future<Result<PatientProgram>> updateProgram({
-    required String programId,
-    required String patientId,
-    required List<String> conditionIds,
-    String? examination,
-    String? imagingNotes,
-    String? exaggeratingPositions,
-    String? relievingPositions,
-    String? notes,
-    ProgramStatus? status,
-    List<ProgramAttachment>? pendingAttachments,
-    TreatmentPlanInput? treatmentPlan,
-  }) async {
-    final permError = _verifySeniorDoctorPermission();
-    if (permError != null) return Result.failure(permError);
-
-    state = const AsyncValue.loading();
-    final repo = ref.read(programRepositoryProvider);
-
-    final result = await repo.updateProgram(
-      programId: programId,
-      patientId: patientId,
-      conditionIds: conditionIds,
-      examination: examination,
-      imagingNotes: imagingNotes,
-      exaggeratingPositions: exaggeratingPositions,
-      relievingPositions: relievingPositions,
-      notes: notes,
-      status: status,
-      pendingAttachments: pendingAttachments,
-      treatmentPlan: treatmentPlan,
-    );
-
-    if (!ref.mounted) return result;
-
-    result.when(
-      success: (program) {
-        state = const AsyncValue.data(null);
-        ref.read(patientProgramsProvider(patientId).notifier).addOrUpdateProgram(program);
-        ref.invalidate(programDetailProvider(programId));
-        if (pendingAttachments != null && pendingAttachments.isNotEmpty) {
-          ref.invalidate(patientDocumentsNotifierProvider(patientId));
-        }
-      },
-      failure: (e) {
-        state = AsyncValue.error(e, StackTrace.current);
-        if (e.code == 'program/attachments-pending') {
-          ref.invalidate(patientProgramsProvider(patientId));
-          ref.invalidate(patientDocumentsNotifierProvider(patientId));
-        }
-      },
-    );
-
-    return result;
-  }
-
   /// Updates program status (e.g. active, completed, archived).
   Future<Result<void>> updateStatus({
     required String programId,
@@ -158,37 +52,31 @@ class ProgramController extends _$ProgramController {
     final permError = _verifySeniorDoctorPermission();
     if (permError != null) return Result.failure(permError);
 
-    state = const AsyncValue.loading();
+    state = state.copyWith(isLoading: true, clearError: true, scope: 'program:$programId');
     final repo = ref.read(programRepositoryProvider);
 
-    final result = await repo.updateProgramStatus(
-      programId: programId,
-      status: status,
-    );
+    final result = await repo.updateProgramStatus(programId: programId, status: status);
 
     if (!ref.mounted) return result;
 
     result.when(
       success: (_) {
-        state = const AsyncValue.data(null);
+        state = state.copyWith(isLoading: false, clearError: true);
         ref.read(patientProgramsProvider(patientId).notifier).refresh();
         ref.invalidate(programDetailProvider(programId));
       },
-      failure: (e) => state = AsyncValue.error(e, StackTrace.current),
+      failure: (e) => state = state.copyWith(isLoading: false, error: e),
     );
 
     return result;
   }
 
   /// Deletes a program.
-  Future<Result<void>> deleteProgram({
-    required String programId,
-    required String patientId,
-  }) async {
+  Future<Result<void>> deleteProgram({required String programId, required String patientId}) async {
     final permError = _verifySeniorDoctorPermission();
     if (permError != null) return Result.failure(permError);
 
-    state = const AsyncValue.loading();
+    state = state.copyWith(isLoading: true, clearError: true, scope: 'program:$programId');
     final repo = ref.read(programRepositoryProvider);
 
     final result = await repo.deleteProgram(programId);
@@ -196,11 +84,11 @@ class ProgramController extends _$ProgramController {
 
     result.when(
       success: (_) {
-        state = const AsyncValue.data(null);
+        state = state.copyWith(isLoading: false, clearError: true);
         ref.read(patientProgramsProvider(patientId).notifier).removeProgram(programId);
         ref.invalidate(patientDocumentsNotifierProvider(patientId));
       },
-      failure: (e) => state = AsyncValue.error(e, StackTrace.current),
+      failure: (e) => state = state.copyWith(isLoading: false, error: e),
     );
 
     return result;

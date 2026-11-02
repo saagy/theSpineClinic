@@ -11,10 +11,9 @@ import 'package:spine_clinic_app/features/patient/domain/clinic_location.dart';
 import 'package:spine_clinic_app/features/staff/presentation/staff_management_controller.dart';
 import 'package:spine_clinic_app/features/staff/presentation/staff_providers.dart';
 import 'package:spine_clinic_app/features/staff/presentation/widgets/staff_form_fields.dart';
-import 'package:spine_clinic_app/shared/widgets/app_button.dart';
+import 'package:spine_clinic_app/shared/widgets/form_page_body.dart';
 import 'package:spine_clinic_app/shared/widgets/app_snackbar.dart';
 import 'package:spine_clinic_app/shared/widgets/confirmation_dialog.dart';
-import 'package:spine_clinic_app/shared/widgets/loading_overlay.dart';
 
 class StaffFormBody extends ConsumerStatefulWidget {
   const StaffFormBody({super.key, required this.currentUser, this.staff});
@@ -28,12 +27,14 @@ class StaffFormBody extends ConsumerStatefulWidget {
 
 class _StaffFormBodyState extends ConsumerState<StaffFormBody> {
   final _formKey = GlobalKey<FormBuilderState>();
+  bool _isSubmitting = false;
 
   @override
   Widget build(BuildContext context) {
     final isEdit = widget.staff != null;
     final isSelf = isEdit && widget.staff!.id == widget.currentUser.id;
     final formState = ref.watch(staffFormControllerProvider);
+    final isSaving = _isSubmitting || formState.isLoading;
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
@@ -43,33 +44,21 @@ class _StaffFormBodyState extends ConsumerState<StaffFormBody> {
         title: Text(isEdit ? AppStrings.editStaff : AppStrings.addStaff),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_rounded),
-          onPressed: () => context.pop(),
+          onPressed: isSaving ? null : () => context.pop(),
         ),
       ),
-      body: LoadingOverlay(
-        isLoading: formState.isLoading,
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(AppSizes.p16),
-          child: FormBuilder(
-            key: _formKey,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                StaffFormFields(
-                  enabled: !formState.isLoading,
-                  isSelf: isSelf,
-                  staff: widget.staff,
-                  formKey: _formKey,
-                ),
-                const SizedBox(height: AppSizes.p32),
-                AppButton(
-                  labelText: AppStrings.save,
-                  isLoading: formState.isLoading,
-                  onPressed: _submit,
-                  debounceMs: 1000,
-                ),
-              ],
-            ),
+      body: FormPageBody(
+        maxWidth: AppSizes.formLayoutMaxWidth,
+        isSaving: isSaving,
+        onSave: _submit,
+        onCancel: () => context.pop(),
+        child: FormBuilder(
+          key: _formKey,
+          child: StaffFormFields(
+            enabled: !isSaving,
+            isSelf: isSelf,
+            staff: widget.staff,
+            formKey: _formKey,
           ),
         ),
       ),
@@ -77,34 +66,38 @@ class _StaffFormBodyState extends ConsumerState<StaffFormBody> {
   }
 
   Future<void> _submit() async {
+    if (_isSubmitting) return;
     if (!(_formKey.currentState?.saveAndValidate() ?? false)) return;
-    final values = _formKey.currentState!.value;
-    final role = values['role'] as UserRole;
-    final branch = values['branch'] as ClinicLocation?;
-    final isEdit = widget.staff != null;
-    final isActive = isEdit
-        ? ((values['is_active'] as bool?) ?? widget.staff!.isActive)
-        : true;
-    if (await _blockedByDeactivationWarning(isActive)) return;
+    setState(() => _isSubmitting = true);
+    try {
+      final values = _formKey.currentState!.value;
+      final role = values['role'] as UserRole;
+      final branch = values['branch'] as ClinicLocation?;
+      final isEdit = widget.staff != null;
+      final isActive = isEdit ? ((values['is_active'] as bool?) ?? widget.staff!.isActive) : true;
+      if (await _blockedByDeactivationWarning(isActive)) return;
 
-    final controller = ref.read(staffFormControllerProvider.notifier);
-    final result = isEdit
-        ? await controller.updateStaff(
-            staff: _updatedStaff(values, role, branch, isActive),
-            newPassword: (values['change_password'] as bool? ?? false)
-                ? values['password'] as String
-                : null,
-          )
-        : await controller.createStaff(
-            fullName: values['full_name'] as String,
-            email: values['email'] as String,
-            role: role,
-            password: values['password'] as String,
-            canManagePayments: _canManagePayments(values, role),
-            phone: values['phone'] as String?,
-            branch: branch,
-          );
-    _handleResult(result, isEdit);
+      final controller = ref.read(staffFormControllerProvider.notifier);
+      final result = isEdit
+          ? await controller.updateStaff(
+              staff: _updatedStaff(values, role, branch, isActive),
+              newPassword: (values['change_password'] as bool? ?? false)
+                  ? values['password'] as String
+                  : null,
+            )
+          : await controller.createStaff(
+              fullName: values['full_name'] as String,
+              email: values['email'] as String,
+              role: role,
+              password: values['password'] as String,
+              canManagePayments: _canManagePayments(values, role),
+              phone: values['phone'] as String?,
+              branch: branch,
+            );
+      _handleResult(result, isEdit);
+    } finally {
+      if (mounted) setState(() => _isSubmitting = false);
+    }
   }
 
   Staff _updatedStaff(
@@ -127,18 +120,14 @@ class _StaffFormBodyState extends ConsumerState<StaffFormBody> {
 
   bool _canManagePayments(Map<String, dynamic> values, UserRole role) {
     return role == UserRole.receptionist &&
-        ((values['can_manage_payments'] as bool?) ??
-            widget.staff?.canManagePayments ??
-            false);
+        ((values['can_manage_payments'] as bool?) ?? widget.staff?.canManagePayments ?? false);
   }
 
   Future<bool> _blockedByDeactivationWarning(bool newIsActive) async {
     final staff = widget.staff;
     if (staff == null || !staff.isActive || newIsActive) return false;
     if (staff.role != UserRole.doctor) return false;
-    final countResult = await ref
-        .read(staffRepositoryProvider)
-        .countUpcomingAppointments(staff.id);
+    final countResult = await ref.read(staffRepositoryProvider).countUpcomingAppointments(staff.id);
     final count = countResult.when(success: (c) => c, failure: (_) => 0);
     if (count == 0 || !mounted) return false;
     final confirmed = await showDialog<bool>(
@@ -160,18 +149,13 @@ class _StaffFormBodyState extends ConsumerState<StaffFormBody> {
       success: (_) {
         AppSnackbar.show(
           context,
-          message: isEdit
-              ? AppStrings.staffUpdateSuccess
-              : AppStrings.staffCreateSuccess,
+          message: isEdit ? AppStrings.staffUpdateSuccess : AppStrings.staffCreateSuccess,
           variant: AppSnackbarVariant.success,
         );
         context.pop();
       },
-      failure: (error) => AppSnackbar.show(
-        context,
-        message: error.message,
-        variant: AppSnackbarVariant.error,
-      ),
+      failure: (error) =>
+          AppSnackbar.show(context, message: error.message, variant: AppSnackbarVariant.error),
     );
   }
 }

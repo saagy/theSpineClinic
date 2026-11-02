@@ -31,14 +31,14 @@ extension _NewPatientView on _NewPatientFormState {
   }
 
   String get _uploadingLabel {
-    int uploading = 0;
+    int completed = 0;
     for (int i = 0; i < _selectedFiles.length; i++) {
-      final s = ref.read(indexedAttachmentStatusProvider(i));
-      if (s == AttachmentStatus.uploading) {
-        uploading++;
+      final s = ref.watch(indexedAttachmentStatusProvider(i));
+      if (s == AttachmentStatus.done) {
+        completed++;
       }
     }
-    return AppStrings.attachmentsRemaining(uploading);
+    return AppStrings.documentsAttached(completed, _selectedFiles.length);
   }
 
   Widget _buildForm(BuildContext context) {
@@ -49,6 +49,16 @@ extension _NewPatientView on _NewPatientFormState {
       enabled: !isSaving,
       child: FormPageBody(
         isSaving: isSaving,
+        hasDocumentUploads: _selectedFiles.isNotEmpty,
+        savingLabel: _selectedFiles.isEmpty
+            ? AppStrings.savingChanges
+            : AppStrings.savingPatientAndDocuments,
+        savingDetail: _selectedFiles.isEmpty ? null : _uploadingLabel,
+        errorMessage: ref.watch(newPatientControllerProvider).error is AppException
+            ? AppStrings.fromKey(
+                (ref.watch(newPatientControllerProvider).error! as AppException).userMessageKey,
+              )
+            : null,
         onSave: _handleSave,
         onCancel: _handleCancel,
         saveLabel: AppStrings.registerPatient,
@@ -83,12 +93,6 @@ extension _NewPatientView on _NewPatientFormState {
                 ),
                 child: _buildAttachmentsList(isSaving, cs),
               ),
-              if (isSaving && _selectedFiles.isNotEmpty) ...[
-                const SizedBox(height: AppSizes.p12),
-                Text(_uploadingLabel, style: AppTextStyles.caption),
-                const SizedBox(height: AppSizes.p4),
-                LinearProgressIndicator(color: cs.primary),
-              ],
             ],
           ),
         ),

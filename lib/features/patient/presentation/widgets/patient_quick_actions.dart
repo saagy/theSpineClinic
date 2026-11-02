@@ -6,21 +6,16 @@
 /// Rule 15/16 — colours via Theme.of(context).colorScheme.
 library;
 
-import 'dart:typed_data';
-
 import 'package:file_picker/file_picker.dart';
+import '../document_upload_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:spine_clinic_app/core/constants/app_sizes.dart';
 import 'package:spine_clinic_app/core/constants/app_strings.dart';
-import 'package:spine_clinic_app/core/errors/app_exception.dart';
-import 'package:spine_clinic_app/core/errors/result.dart';
 import 'package:spine_clinic_app/core/network/app_routes.dart';
 import 'package:spine_clinic_app/features/appointment/presentation/appointment_refresh.dart';
 import 'package:spine_clinic_app/features/patient/domain/patient.dart';
-import 'package:spine_clinic_app/features/patient/domain/patient_document.dart';
-import 'package:spine_clinic_app/features/patient/presentation/patient_documents_providers.dart';
 import 'package:spine_clinic_app/features/patient/presentation/widgets/add_note_sheet.dart';
 import 'package:spine_clinic_app/features/patient/presentation/widgets/collect_payment_sheet.dart';
 import 'package:spine_clinic_app/features/patient/presentation/widgets/quick_actions_sheet.dart';
@@ -39,14 +34,10 @@ class PatientQuickActionsFab extends ConsumerStatefulWidget {
   final bool canHandlePayments;
 
   @override
-  ConsumerState<PatientQuickActionsFab> createState() =>
-      _PatientQuickActionsFabState();
+  ConsumerState<PatientQuickActionsFab> createState() => _PatientQuickActionsFabState();
 }
 
-class _PatientQuickActionsFabState
-    extends ConsumerState<PatientQuickActionsFab> {
-  bool _isUploading = false;
-
+class _PatientQuickActionsFabState extends ConsumerState<PatientQuickActionsFab> {
   Future<void> _onBookAppointment() async {
     Navigator.of(context, rootNavigator: true).pop();
     await context.push(AppRoutes.newAppointment, extra: widget.patient);
@@ -62,10 +53,8 @@ class _PatientQuickActionsFabState
       initialChildSize: 0.82,
       minChildSize: 0.5,
       maxChildSize: 0.95,
-      builder: (_, scrollController) => CollectPaymentSheet(
-        patient: widget.patient,
-        scrollController: scrollController,
-      ),
+      builder: (_, scrollController) =>
+          CollectPaymentSheet(patient: widget.patient, scrollController: scrollController),
     );
   }
 
@@ -83,64 +72,36 @@ class _PatientQuickActionsFabState
 
   Future<void> _onAddDocument() async {
     Navigator.of(context, rootNavigator: true).pop();
-
-    final FilePickerResult? result = await FilePicker.platform.pickFiles(
+    if (!ref.read(documentUploadControllerProvider(widget.patient.id)).canPick) return;
+    final result = await FilePicker.platform.pickFiles(
       type: FileType.custom,
       allowedExtensions: ['pdf', 'png', 'jpg', 'jpeg'],
-      allowMultiple: false,
+      withData: true,
     );
-    if (result == null || result.files.isEmpty) return;
-    final PlatformFile file = result.files.first;
-    if (!mounted) return;
-    final Uint8List? bytes = file.bytes;
-    if (bytes == null) {
-      AppSnackbar.show(
-        context,
-        message: AppStrings.fromKey('error_doc_file_too_large'),
-        variant: AppSnackbarVariant.error,
-      );
-      return;
-    }
-
-    setState(() => _isUploading = true);
-    try {
-      final Result<PatientDocument> uploadResult = await ref
-          .read(patientDocumentsNotifierProvider(widget.patient.id).notifier)
-          .uploadDocument(fileName: file.name, fileBytes: bytes);
-      if (!mounted) return;
-      uploadResult.when(
-        success: (_) => AppSnackbar.show(
-          context,
-          message: AppStrings.documentUploaded,
-          variant: AppSnackbarVariant.success,
-        ),
-        failure: (AppException error) => AppSnackbar.show(
-          context,
-          message: AppStrings.fromKey(error.userMessageKey),
-          variant: AppSnackbarVariant.error,
-        ),
-      );
-    } finally {
-      if (mounted) setState(() => _isUploading = false);
+    if (!mounted || result == null || result.files.isEmpty) return;
+    final uploaded = await ref
+        .read(documentUploadControllerProvider(widget.patient.id).notifier)
+        .uploadFiles(result.files);
+    if (mounted && uploaded.isSuccess) {
+      AppSnackbar.show(context, message: AppStrings.documentUploaded);
     }
   }
 
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
+    final isUploading = ref.watch(documentUploadControllerProvider(widget.patient.id)).isLoading;
     return FloatingActionButton(
       shape: const CircleBorder(),
       backgroundColor: cs.primary,
       foregroundColor: cs.onPrimary,
-      onPressed: _isUploading
+      onPressed: isUploading
           ? null
           : () => showModalBottomSheet(
               context: context,
               useRootNavigator: true,
               shape: const RoundedRectangleBorder(
-                borderRadius: BorderRadius.vertical(
-                  top: Radius.circular(AppSizes.r16),
-                ),
+                borderRadius: BorderRadius.vertical(top: Radius.circular(AppSizes.r16)),
               ),
               builder: (_) => QuickActionsSheet(
                 isDoctor: widget.isDoctor,
@@ -151,7 +112,7 @@ class _PatientQuickActionsFabState
                 onAddDocument: _onAddDocument,
               ),
             ),
-      child: _isUploading
+      child: isUploading
           ? SizedBox(
               width: AppSizes.iconDefault,
               height: AppSizes.iconDefault,

@@ -12,10 +12,14 @@ class _TreatmentPlanBuilderSheetState extends ConsumerState<TreatmentPlanBuilder
   @override
   void initState() {
     super.initState();
-    final plan = widget.existingPlan;
-    _nameController = TextEditingController(text: plan?.planName ?? AppStrings.defaultPlanName);
+    final plan = widget.existingPlan ?? widget.copyFromPlan;
+    _nameController = TextEditingController(
+      text:
+          widget.existingPlan?.planName ??
+          (plan == null ? AppStrings.defaultPlanName : AppStrings.newPlanName(plan.planName)),
+    );
     _notesController = TextEditingController(text: plan?.notes ?? '');
-    _isActive = plan?.isActive ?? true;
+    _isActive = widget.existingPlan?.isActive ?? true;
     _modalityInputs = {for (final t in ModalityType.values) t: ModalityInput(modalityType: t)};
     _selectedModalities = {};
 
@@ -27,11 +31,7 @@ class _TreatmentPlanBuilderSheetState extends ConsumerState<TreatmentPlanBuilder
           notes: pm.notes,
           regions: pm.regions
               .map(
-                (r) => RegionInput(
-                  targetRegion: r.targetRegion,
-                  laterality: r.laterality,
-                  timeMinutes: r.timeMinutes,
-                ),
+                (r) => RegionInput(targetRegion: r.targetRegion, laterality: r.laterality, timeMinutes: r.timeMinutes),
               )
               .toList(),
         );
@@ -74,18 +74,11 @@ class _TreatmentPlanBuilderSheetState extends ConsumerState<TreatmentPlanBuilder
 
     result.when(
       success: (plan) {
-        AppSnackbar.show(
-          context,
-          message: AppStrings.treatmentPlanSaved,
-          variant: AppSnackbarVariant.success,
-        );
+        AppSnackbar.show(context, message: AppStrings.treatmentPlanSaved, variant: AppSnackbarVariant.success);
         Navigator.of(context).pop(plan);
       },
-      failure: (e) => AppSnackbar.show(
-        context,
-        message: AppStrings.fromKey(e.userMessageKey),
-        variant: AppSnackbarVariant.error,
-      ),
+      failure: (e) =>
+          AppSnackbar.show(context, message: AppStrings.fromKey(e.userMessageKey), variant: AppSnackbarVariant.error),
     );
   }
 
@@ -101,11 +94,7 @@ class _TreatmentPlanBuilderSheetState extends ConsumerState<TreatmentPlanBuilder
             final target = initial == 'Paraspinal' ? 'Paraspinal (Cervical)' : initial;
             _modalityInputs[type] = current.copyWith(
               regions: [
-                RegionInput(
-                  targetRegion: target,
-                  laterality: isBilateral ? Laterality.both : null,
-                  timeMinutes: 15,
-                ),
+                RegionInput(targetRegion: target, laterality: isBilateral ? Laterality.both : null, timeMinutes: 15),
               ],
             );
           }
@@ -133,16 +122,22 @@ class _TreatmentPlanBuilderSheetState extends ConsumerState<TreatmentPlanBuilder
   Widget build(BuildContext context) => ClinicalEditorFrame(
     isSaving: _isSubmitting,
     onSave: _submit,
+    saveLabel: _isActive ? AppStrings.saveAndUsePlan : AppStrings.savePlan,
     child: Form(
       key: _formKey,
       child: ListView(
         controller: widget.scrollController,
         padding: const EdgeInsets.symmetric(horizontal: AppSizes.p16),
         children: [
+          if (widget.existingPlan != null || widget.copyFromPlan != null) ...[
+            RecordMessage(message: widget.existingPlan != null ? AppStrings.editPlanHint : AppStrings.copiedPlanHint),
+            const SizedBox(height: AppSizes.p12),
+          ],
           TreatmentPlanHeaderInputs(
             nameController: _nameController,
             notesController: _notesController,
             isActive: _isActive,
+            replacementName: widget.currentPlan?.id != widget.existingPlan?.id ? widget.currentPlan?.planName : null,
             onActiveChanged: (value) => setState(() => _isActive = value),
           ),
           const SizedBox(height: AppSizes.p16),

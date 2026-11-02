@@ -93,6 +93,7 @@ class LoginForm extends StatelessWidget {
           // Sign In Action
           AppButton(
             labelText: AppStringsAuth.signIn,
+            loadingLabel: AppStringsAuth.signingIn,
             onPressed: isLoading ? null : onSubmit,
             isLoading: isLoading,
             shape: AppButtonShape.pill,

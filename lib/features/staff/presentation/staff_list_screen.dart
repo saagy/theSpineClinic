@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:spine_clinic_app/core/constants/app_strings.dart';
+import 'package:spine_clinic_app/core/constants/app_text_styles.dart';
 import 'package:spine_clinic_app/core/errors/app_exception.dart';
 import 'package:spine_clinic_app/features/auth/domain/user_role.dart';
 import 'package:spine_clinic_app/features/auth/presentation/auth_providers.dart';
@@ -21,10 +22,8 @@ class StaffListScreen extends ConsumerWidget {
     final asyncUser = ref.watch(currentUserProvider);
     return asyncUser.when(
       loading: () => _LoadingScaffold(),
-      error: (error, _) => _ErrorScaffold(
-        error: error,
-        onRetry: () => ref.invalidate(currentUserProvider),
-      ),
+      error: (error, _) =>
+          _ErrorScaffold(error: error, onRetry: () => ref.invalidate(currentUserProvider)),
       data: (user) {
         if (user == null || user.role != UserRole.superAdmin) {
           return const _BlockedScaffold();
@@ -38,7 +37,7 @@ class StaffListScreen extends ConsumerWidget {
           child: Scaffold(
             backgroundColor: Theme.of(context).scaffoldBackgroundColor,
             appBar: AppBar(
-              backgroundColor: Theme.of(context).colorScheme.surface,
+              backgroundColor: Theme.of(context).scaffoldBackgroundColor,
               foregroundColor: Theme.of(context).colorScheme.onSurface,
               elevation: 0,
               title: const Text(AppStrings.staffManagement),
@@ -47,41 +46,24 @@ class StaffListScreen extends ConsumerWidget {
                 onPressed: () => context.pop(),
               ),
               bottom: TabBar(
+                isScrollable: true,
+                tabAlignment: TabAlignment.start,
+                labelStyle: AppTextStyles.bodyBold,
+                unselectedLabelStyle: AppTextStyles.bodyMedium,
                 indicatorColor: Theme.of(context).colorScheme.primary,
                 labelColor: Theme.of(context).colorScheme.primary,
-                unselectedLabelColor: Theme.of(
-                  context,
-                ).colorScheme.onSurfaceVariant,
+                unselectedLabelColor: Theme.of(context).colorScheme.onSurfaceVariant,
                 tabs: [
                   const Tab(text: AppStrings.staff),
                   Tab(
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const Text(AppStrings.pending),
-                        if (pendingCount > 0) ...[
-                          const SizedBox(width: 6),
-                          Badge(
-                            label: Text(
-                              '$pendingCount',
-                              style: const TextStyle(fontSize: 10),
-                            ),
-                            backgroundColor: Theme.of(context).colorScheme.error,
-                          ),
-                        ],
-                      ],
-                    ),
+                    text: pendingCount > 0
+                        ? AppStrings.sectionCount(AppStrings.pending, pendingCount)
+                        : AppStrings.pending,
                   ),
                 ],
               ),
             ),
-            body: const TabBarView(
-              children: [
-                StaffDirectoryTab(),
-                StaffApplicationsTab(),
-              ],
-            ),
+            body: const TabBarView(children: [StaffDirectoryTab(), StaffApplicationsTab()]),
           ),
         );
       },
@@ -92,11 +74,7 @@ class StaffListScreen extends ConsumerWidget {
 class _LoadingScaffold extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Scaffold(
-    body: Center(
-      child: CircularProgressIndicator(
-        color: Theme.of(context).colorScheme.primary,
-      ),
-    ),
+    body: Center(child: CircularProgressIndicator(color: Theme.of(context).colorScheme.primary)),
   );
 }
 
@@ -110,9 +88,7 @@ class _ErrorScaffold extends StatelessWidget {
     body: ErrorView(
       exception: error is AppException
           ? error as AppException
-          : const UnknownException(
-              message: AppStrings.errorDatabaseQueryFailed,
-            ),
+          : const UnknownException(message: AppStrings.errorDatabaseQueryFailed),
       onRetry: onRetry,
     ),
   );

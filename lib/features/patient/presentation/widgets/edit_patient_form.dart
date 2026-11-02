@@ -19,7 +19,6 @@ import 'package:spine_clinic_app/shared/widgets/doctor_select_field.dart';
 import 'package:spine_clinic_app/shared/widgets/app_chip.dart';
 import 'package:spine_clinic_app/shared/widgets/app_snackbar.dart';
 import 'package:spine_clinic_app/shared/widgets/confirmation_dialog.dart';
-import 'package:spine_clinic_app/shared/widgets/loading_overlay.dart';
 
 /// Form component for editing patient demographics and doctor assignments.
 part 'edit_patient_form_view.dart';

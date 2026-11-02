@@ -40,7 +40,7 @@ class TreatmentPlanController extends _$TreatmentPlanController {
         userMessageKey: 'error_auth_generic',
       );
     }
-    if (!user.isSeniorDoctor) {
+    if (!user.isActive || !user.isSeniorDoctor) {
       return const AuthException(
         code: 'auth/permission-denied',
         message: 'Only senior doctors and super admins can manage treatment plans.',

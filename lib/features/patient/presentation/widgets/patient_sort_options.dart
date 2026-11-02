@@ -2,9 +2,7 @@
 library;
 
 import 'package:flutter/material.dart';
-import 'package:flutter_lucide/flutter_lucide.dart';
-import 'package:spine_clinic_app/core/constants/app_sizes.dart';
-import 'package:spine_clinic_app/core/constants/app_text_styles.dart';
+import 'package:spine_clinic_app/shared/widgets/filter_sort_option.dart';
 import 'package:spine_clinic_app/shared/widgets/sort_options_sheet.dart';
 
 enum PatientSortOption {
@@ -91,31 +89,9 @@ class PatientFilterSortList extends StatelessWidget {
   final ValueChanged<PatientSortOption> onSortChanged;
 
   @override
-  Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-    return Column(
-      children: PatientSortOption.values.map((s) {
-        final isSelected = selectedSort == s;
-        return InkWell(
-          onTap: () => onSortChanged(s),
-          borderRadius: BorderRadius.circular(AppSizes.r6),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: AppSizes.p8, horizontal: AppSizes.p4),
-            child: Row(
-              children: [
-                Icon(isSelected ? LucideIcons.circle_dot : LucideIcons.circle, size: 16, color: isSelected ? cs.primary : cs.outlineVariant),
-                const SizedBox(width: AppSizes.p10),
-                Expanded(
-                  child: Text(
-                    s.displayLabel,
-                    style: AppTextStyles.bodyMedium.copyWith(color: cs.onSurface, fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        );
-      }).toList(),
-    );
-  }
+  Widget build(BuildContext context) => Column(children: [
+    for (final option in PatientSortOption.values)
+      FilterSortOption(label: option.displayLabel, selected: selectedSort == option,
+        onTap: () => onSortChanged(option)),
+  ]);
 }

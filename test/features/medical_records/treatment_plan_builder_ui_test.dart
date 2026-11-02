@@ -60,7 +60,7 @@ class _FakeProgRepo implements ProgramRepository {
   @override
   Future<Result<PatientProgram>> createProgram({required String patientId, required List<String> conditionIds, String? examination, String? imagingNotes, String? exaggeratingPositions, String? relievingPositions, String? notes, List<ProgramAttachment>? pendingAttachments, TreatmentPlanInput? treatmentPlan}) async => throw UnimplementedError();
   @override
-  Future<Result<PatientProgram>> updateProgram({required String programId, required String patientId, required List<String> conditionIds, String? examination, String? imagingNotes, String? exaggeratingPositions, String? relievingPositions, String? notes, ProgramStatus? status, List<ProgramAttachment>? pendingAttachments, TreatmentPlanInput? treatmentPlan}) async => throw UnimplementedError();
+  Future<Result<PatientProgram>> updateProgram({required String programId, required String patientId, required List<String> conditionIds, String? examination, String? imagingNotes, String? exaggeratingPositions, String? relievingPositions, String? notes, ProgramStatus? status, List<ProgramAttachment>? pendingAttachments, List<String> removedDocumentIds = const [], TreatmentPlanInput? treatmentPlan}) async => throw UnimplementedError();
   @override
   Future<Result<void>> updateProgramStatus({required String programId, required ProgramStatus status}) async => const Result.success(null);
   @override
@@ -110,9 +110,9 @@ void main() {
 
     expect(find.text(AppStrings.planName), findsOneWidget);
     expect(find.text(AppStrings.selectModalities), findsOneWidget);
-    expect(find.text(AppStrings.save), findsOneWidget);
+    expect(find.text(AppStrings.saveAndUsePlan), findsOneWidget);
 
-    await tester.tap(find.text(AppStrings.save));
+    await tester.tap(find.text(AppStrings.saveAndUsePlan));
     await tester.pumpAndSettle();
 
     expect(fakeRepo.lastUpserted, isNotNull);

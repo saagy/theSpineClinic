@@ -11,6 +11,11 @@ import 'package:flutter/material.dart';
 
 /// Application-wide dimension constants.
 abstract final class AppSizes {
+  static const double filterSheetMaxWidth = 600;
+  static const double filterSheetHeightFraction = 0.85;
+  static const double staffRoleColumnWidth = 160;
+  static const double staffStatusColumnWidth = 132;
+  static const double staffWideBreakpoint = 840;
   static const double agendaWideBreakpoint = 650;
   static const double bookingActionsBelowWidth = 280;
   static const double bookingEnlargedActionsBelowWidth = 400;
@@ -178,6 +183,9 @@ abstract final class AppSizes {
 
   /// Height of the horizontal imaging thumbnail strip in the program form.
   static const double mediaThumbStripHeight = 128.0;
+  static const double mediaPickerCardWidth = 104.0;
+  static const double mediaPickerCardHeight = 124.0;
+  static const int mediaPickerDecodeWidth = 208;
 
   /// Height of the pageable seven-day row.
   static const double scheduleWeekHeight = 72.0;
@@ -334,6 +342,10 @@ abstract final class AppSizes {
 
   /// Thin stroke width for compact progress indicators.
   static const double strokeWidthThin = 2.0;
+
+  /// Quiet activity track used by saves and file transfers.
+  static const double operationProgressHeight = 3.0;
+  static const double operationOverlayMaxWidth = 360.0;
 
   /// Top offset for centering empty-state placeholder views vertically.
   static const double emptyStateTopOffset = 120.0;

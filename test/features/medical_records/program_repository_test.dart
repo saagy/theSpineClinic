@@ -87,7 +87,7 @@ class _FakeProgramRepository implements ProgramRepository {
     String? relievingPositions,
     String? notes,
     ProgramStatus? status,
-    List<ProgramAttachment>? pendingAttachments,
+    List<ProgramAttachment>? pendingAttachments, List<String> removedDocumentIds = const [],
     TreatmentPlanInput? treatmentPlan,
   }) async {
     final index = programs.indexWhere((p) => p.id == programId);

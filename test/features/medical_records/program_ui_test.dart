@@ -113,7 +113,7 @@ class _FakeProgramRepo implements ProgramRepository {
     String? relievingPositions,
     String? notes,
     ProgramStatus? status,
-    List<ProgramAttachment>? pendingAttachments,
+    List<ProgramAttachment>? pendingAttachments, List<String> removedDocumentIds = const [],
     TreatmentPlanInput? treatmentPlan,
   }) async =>
       Result.success(programs.first);
@@ -211,6 +211,10 @@ void main() {
 
   testWidgets('ProgramDetailScreen displays program information accurately',
       (tester) async {
+    tester.view.physicalSize = const Size(1000, 1400);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
     final program = PatientProgram(
       id: 'prog-1',
       patientId: 'pat-1',
@@ -285,13 +289,13 @@ void main() {
     // Verify AppBar action buttons are present
     expect(find.byIcon(Icons.picture_as_pdf_outlined), findsOneWidget);
     expect(find.byIcon(Icons.edit_outlined), findsOneWidget);
-    expect(find.byTooltip(AppStrings.moreActions), findsWidgets);
-    await tester.tap(find.descendant(of: find.byType(AppBar), matching: find.byTooltip(AppStrings.moreActions)).first);
+    expect(find.byTooltip(AppStrings.programActions), findsWidgets);
+    await tester.tap(find.descendant(of: find.byType(AppBar), matching: find.byTooltip(AppStrings.programActions)).first);
     await tester.pumpAndSettle();
     expect(find.text(AppStrings.deleteProgram), findsOneWidget);
 
     // Treatment is the primary clinical decision surface and leads the detail page.
-    final treatmentTop = tester.getTopLeft(find.text(AppStrings.treatmentPlan)).dy;
+    final treatmentTop = tester.getTopLeft(find.text(AppStrings.currentTreatmentPlan)).dy;
     final findingsTop = tester.getTopLeft(find.text(AppStrings.clinicalFindingsSection)).dy;
     expect(treatmentTop, lessThan(findingsTop));
   });

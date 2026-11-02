@@ -3,10 +3,10 @@ library;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:spine_clinic_app/core/constants/app_sizes.dart';
+import 'package:spine_clinic_app/shared/widgets/filter_sheet_frame.dart';
 import 'package:spine_clinic_app/features/appointment/domain/appointment_status.dart';
 import 'package:spine_clinic_app/features/appointment/domain/appointment_type.dart';
-import 'package:spine_clinic_app/features/appointment/presentation/widgets/appointment_filter_doctor_view.dart';
+import 'package:spine_clinic_app/shared/widgets/filter_doctor_view.dart';
 import 'package:spine_clinic_app/features/appointment/presentation/widgets/appointment_filter_main_view.dart';
 import 'package:spine_clinic_app/features/appointment/presentation/widgets/appointment_sort_options.dart';
 import 'package:spine_clinic_app/features/auth/domain/staff.dart';
@@ -93,10 +93,8 @@ class AppointmentFilterSheet extends ConsumerStatefulWidget {
     bool showAppointmentFilters = true,
     VoidCallback? onResetAdditional,
   }) {
-    return showModalBottomSheet<AppointmentFilterResult>(
+    return FilterSheetFrame.show<AppointmentFilterResult>(
       context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
       builder: (ctx) => AppointmentFilterSheet(
         initialDateFrom: dateFrom,
         initialDateTo: dateTo,

@@ -8,10 +8,7 @@ import 'package:spine_clinic_app/features/medical_records/domain/treatment_plan_
 
 /// Represents a file uploaded with a tracked receipt after its program is saved.
 class ProgramAttachment {
-  const ProgramAttachment({
-    required this.fileName,
-    required this.bytes,
-  });
+  const ProgramAttachment({required this.fileName, required this.bytes});
 
   final String fileName;
   final Uint8List bytes;
@@ -50,6 +47,7 @@ abstract class ProgramRepository {
     String? notes,
     ProgramStatus? status,
     List<ProgramAttachment>? pendingAttachments,
+    List<String> removedDocumentIds = const [],
     TreatmentPlanInput? treatmentPlan,
   });
 

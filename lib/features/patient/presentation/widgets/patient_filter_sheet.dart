@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:spine_clinic_app/core/constants/app_sizes.dart';
+import 'package:spine_clinic_app/shared/widgets/filter_sheet_frame.dart';
 import 'package:spine_clinic_app/features/auth/domain/staff.dart';
 import 'package:spine_clinic_app/features/patient/domain/clinic_location.dart';
-import 'package:spine_clinic_app/features/patient/presentation/widgets/patient_filter_doctor_view.dart';
+import 'package:spine_clinic_app/shared/widgets/filter_doctor_view.dart';
 import 'package:spine_clinic_app/features/patient/presentation/widgets/patient_filter_main_view.dart';
 import 'package:spine_clinic_app/features/patient/presentation/widgets/patient_sort_options.dart';
 import 'package:spine_clinic_app/features/staff/presentation/staff_providers.dart';
@@ -44,10 +44,8 @@ class PatientFilterSheet extends ConsumerStatefulWidget {
     required PatientSortOption sort,
     required bool canFilterDoctor,
   }) {
-    return showModalBottomSheet<PatientFilterResult>(
+    return FilterSheetFrame.show<PatientFilterResult>(
       context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
       builder: (ctx) => PatientFilterSheet(
         initialClinic: clinic,
         initialDoctorId: doctorId,
@@ -76,54 +74,42 @@ class _PatientFilterSheetState extends ConsumerState<PatientFilterSheet> {
   }
 
   void _apply() {
-    Navigator.of(context).pop(
-      PatientFilterResult(clinic: _clinic, doctorId: _doctorId, sortOption: _sort),
-    );
+    Navigator.of(
+      context,
+    ).pop(PatientFilterResult(clinic: _clinic, doctorId: _doctorId, sortOption: _sort));
   }
 
   @override
   Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
     final doctors = widget.canFilterDoctor
         ? (ref.watch(allDoctorsForFilterProvider).value ?? const <Staff>[])
         : const <Staff>[];
 
-    return Container(
-      constraints: BoxConstraints(
-        maxHeight: MediaQuery.sizeOf(context).height * 0.85,
-      ),
-      decoration: BoxDecoration(
-        color: cs.surface,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(AppSizes.r16)),
-        border: Border.all(color: cs.outlineVariant, width: AppSizes.borderWidth),
-      ),
-      child: SafeArea(
-        top: false,
-        child: AnimatedSwitcher(
-          duration: const Duration(milliseconds: 200),
-          child: _page == _FilterSheetPage.doctorPicker
-              ? PatientFilterDoctorView(
-                  selectedDoctorId: _doctorId,
-                  doctors: doctors,
-                  onDoctorSelected: (id) => setState(() {
-                    _doctorId = id;
-                    _page = _FilterSheetPage.main;
-                  }),
-                  onBack: () => setState(() => _page = _FilterSheetPage.main),
-                )
-              : PatientFilterMainView(
-                  selectedClinic: _clinic,
-                  selectedDoctorId: _doctorId,
-                  selectedSort: _sort,
-                  canFilterDoctor: widget.canFilterDoctor,
-                  doctors: doctors,
-                  onClinicChanged: (c) => setState(() => _clinic = c),
-                  onOpenDoctorPicker: () => setState(() => _page = _FilterSheetPage.doctorPicker),
-                  onSortChanged: (s) => setState(() => _sort = s),
-                  onReset: _reset,
-                  onApply: _apply,
-                ),
-        ),
+    return FilterSheetFrame(
+      child: AnimatedSwitcher(
+        duration: const Duration(milliseconds: 200),
+        child: _page == _FilterSheetPage.doctorPicker
+            ? FilterDoctorView(
+                selectedDoctorId: _doctorId,
+                doctors: doctors,
+                onDoctorSelected: (id) => setState(() {
+                  _doctorId = id;
+                  _page = _FilterSheetPage.main;
+                }),
+                onBack: () => setState(() => _page = _FilterSheetPage.main),
+              )
+            : PatientFilterMainView(
+                selectedClinic: _clinic,
+                selectedDoctorId: _doctorId,
+                selectedSort: _sort,
+                canFilterDoctor: widget.canFilterDoctor,
+                doctors: doctors,
+                onClinicChanged: (c) => setState(() => _clinic = c),
+                onOpenDoctorPicker: () => setState(() => _page = _FilterSheetPage.doctorPicker),
+                onSortChanged: (s) => setState(() => _sort = s),
+                onReset: _reset,
+                onApply: _apply,
+              ),
       ),
     );
   }

@@ -150,6 +150,6 @@ abstract final class AppRoutes {
   /// Admin central hub dashboard.
   static const String adminHub = '/admin';
 
-  /// Clinic statistical reports and analytics dashboard.
+  /// Retired Analytics URL; redirects to Admin for saved links.
   static const String reports = '/admin/reports';
 }

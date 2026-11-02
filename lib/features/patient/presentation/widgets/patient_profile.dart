@@ -162,6 +162,7 @@ class _PatientProfileState extends ConsumerState<PatientProfile>
       ),
       body: LoadingOverlay(
         isLoading: isDeleting,
+        message: AppStrings.deletingPatient,
         child: NestedScrollView(
           controller: _scrollController,
           headerSliverBuilder: (_, __) => [

@@ -7,8 +7,10 @@ import 'package:spine_clinic_app/core/network/pending_mutation.dart';
 import 'package:spine_clinic_app/core/network/supabase_service.dart';
 import 'package:spine_clinic_app/features/medical_records/domain/patient_program.dart';
 import 'package:spine_clinic_app/features/medical_records/domain/program_repository.dart';
+import 'package:spine_clinic_app/features/medical_records/data/program_storage_helper.dart';
 import 'package:spine_clinic_app/features/patient/data/patient_document_cache.dart';
 import 'package:spine_clinic_app/features/patient/data/patient_document_upload.dart';
+import 'package:spine_clinic_app/features/patient/data/patient_document_storage.dart';
 
 /// Keeps one identity until the program and every attachment are confirmed.
 class ProgramSave {
@@ -30,8 +32,7 @@ class ProgramSave {
     bool saved = false;
     try {
       for (final attachment in attachments) {
-        if (attachment.bytes.isEmpty ||
-            attachment.bytes.length > 10 * 1024 * 1024) {
+        if (attachment.bytes.isEmpty || attachment.bytes.length > 10 * 1024 * 1024) {
           throw const StorageException(
             code: 'storage/file-too-large',
             message: 'File must be 1 byte to 10 MB.',
@@ -69,10 +70,8 @@ class ProgramSave {
         actor: actor,
         scope: scope,
         payload: payload,
-        resolveChanged: (id) => service.rpc<bool>(
-          'resolve_clinic_mutation',
-          params: {'p_request_id': id},
-        ),
+        resolveChanged: (id) =>
+            service.rpc<bool>('resolve_clinic_mutation', params: {'p_request_id': id}),
       );
       final Map<String, dynamic> outcome;
       try {
@@ -88,19 +87,25 @@ class ProgramSave {
         throw AppException.fromSupabaseException(
           PostgrestException(
             code: outcome['code'] as String?,
-            message:
-                outcome['message'] as String? ?? 'Program save unconfirmed',
+            message: outcome['message'] as String? ?? 'Program save unconfirmed',
           ),
         );
       }
+      final removedIds = fields['p_removed_document_ids'] as List<String>? ?? const [];
+      final confirmedIds = (outcome['removed_document_ids'] as List<dynamic>? ?? const [])
+          .whereType<String>()
+          .toSet();
+      if (!confirmedIds.containsAll(removedIds)) throw unresolvedMutation;
       saved = true;
-      final program = PatientProgram.fromJson(
-        outcome['program'] as Map<String, dynamic>,
-      );
-      final upload = PatientDocumentUpload(
-        service,
-        PatientDocumentCache(maxEntries: 0),
-      );
+      final removedPaths = (outcome['removed_document_paths'] as List<dynamic>? ?? const [])
+          .whereType<String>()
+          .map(patientDocumentStoragePath)
+          .whereType<String>()
+          .toSet()
+          .toList();
+      await ProgramStorageHelper.cleanupPaths(service: service, paths: removedPaths);
+      final program = PatientProgram.fromJson(outcome['program'] as Map<String, dynamic>);
+      final upload = PatientDocumentUpload(service, PatientDocumentCache(maxEntries: 0));
       for (int i = 0; i < attachments.length; i++) {
         final file = attachments[i];
         final result = await upload.upload(

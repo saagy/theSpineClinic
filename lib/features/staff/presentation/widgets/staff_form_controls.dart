@@ -12,14 +12,12 @@ InputDecoration staffInputDecoration(
 }) {
   final ColorScheme cs = Theme.of(context).colorScheme;
   final OutlineInputBorder border = OutlineInputBorder(
-    borderRadius: const BorderRadius.all(Radius.circular(AppSizes.r6)),
+    borderRadius: const BorderRadius.all(Radius.circular(AppSizes.r8)),
     borderSide: BorderSide(color: cs.outline, width: AppSizes.borderWidth),
   );
   return InputDecoration(
     labelText: label,
-    labelStyle: AppTextStyles.captionMedium.copyWith(
-      color: cs.onSurfaceVariant,
-    ),
+    labelStyle: AppTextStyles.captionMedium.copyWith(color: cs.onSurfaceVariant),
     floatingLabelBehavior: FloatingLabelBehavior.always,
     isDense: true,
     filled: true,
@@ -30,19 +28,13 @@ InputDecoration staffInputDecoration(
     enabledBorder: border,
     disabledBorder: border,
     focusedBorder: border.copyWith(
-      borderSide: BorderSide(
-        color: cs.primary,
-        width: AppSizes.borderWidthFocused,
-      ),
+      borderSide: BorderSide(color: cs.primary, width: AppSizes.borderWidthFocused),
     ),
     errorBorder: border.copyWith(
       borderSide: BorderSide(color: cs.error, width: AppSizes.borderWidth),
     ),
     focusedErrorBorder: border.copyWith(
-      borderSide: BorderSide(
-        color: cs.error,
-        width: AppSizes.borderWidthFocused,
-      ),
+      borderSide: BorderSide(color: cs.error, width: AppSizes.borderWidthFocused),
     ),
     errorStyle: AppTextStyles.caption.copyWith(color: cs.error),
     suffixIcon: suffix,
@@ -75,16 +67,12 @@ class StaffTextField extends StatelessWidget {
   Widget build(BuildContext context) {
     return FormBuilderTextField(
       name: name,
+      style: AppTextStyles.body.copyWith(color: Theme.of(context).colorScheme.onSurface),
       enabled: enabled,
       initialValue: initialValue,
       keyboardType: keyboardType,
       textCapitalization: textCapitalization,
-      decoration: staffInputDecoration(
-        context,
-        label,
-        enabled: enabled,
-        hint: hint,
-      ),
+      decoration: staffInputDecoration(context, label, enabled: enabled, hint: hint),
       validator: validator,
     );
   }

@@ -87,6 +87,7 @@ class _AppointmentActionsSheetState
 
     return LoadingOverlay(
       isLoading: _isLoading,
+      message: AppStrings.updatingAppointment,
       child: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(AppSizes.p16),

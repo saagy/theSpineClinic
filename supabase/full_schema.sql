@@ -1,4 +1,4 @@
--- Canonical schema snapshot through the 2026-09-09 patient deletion migration.
+-- Canonical schema snapshot through the 2026-11-01 staged program document removal migration.
 -- Verified in isolated PostgreSQL tests; live deployment must be checked separately.
 -- Run this script to recreate the database schema from scratch.
 
@@ -2723,7 +2723,7 @@ GRANT EXECUTE ON FUNCTION public.begin_document_upload(uuid,uuid,text,uuid,text,
 
 -- 2026-09-29: durable program save results.
 -- Program writes commit with a durable result before tracked file uploads begin.
-CREATE FUNCTION public.save_program_mutation(p_request_id uuid, p_payload jsonb)
+CREATE OR REPLACE FUNCTION public.save_program_mutation(p_request_id uuid, p_payload jsonb)
 RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path=public,pg_temp AS $$
 DECLARE previous public.mutation_receipts; outcome jsonb; saved jsonb;
   actor uuid := (SELECT staff_id FROM public.get_auth_staff_profile());
@@ -2732,6 +2732,7 @@ DECLARE previous public.mutation_receipts; outcome jsonb; saved jsonb;
   v_kind text := CASE WHEN v_program_id IS NULL THEN 'program_create' ELSE 'program_update' END;
   request_hash text := encode(sha256(convert_to(p_payload::text,'UTF8')),'hex');
   error_code text; error_message text;
+  removed_ids uuid[]; removed_paths text[] := '{}'; document public.patient_documents;
 BEGIN
   IF NOT EXISTS(SELECT 1 FROM public.staff WHERE id=actor AND is_active AND
     (role='super_admin' OR (role='doctor' AND is_senior))) THEN
@@ -2749,6 +2750,11 @@ BEGIN
     RETURN previous.outcome;
   END IF;
   BEGIN
+    removed_ids := ARRAY(SELECT DISTINCT value::uuid FROM
+      jsonb_array_elements_text(coalesce(p_payload->'p_removed_document_ids','[]'::jsonb)));
+    IF v_program_id IS NULL AND cardinality(removed_ids)>0 THEN
+      RAISE EXCEPTION 'Document removals require an existing program' USING ERRCODE='22000';
+    END IF;
     IF v_program_id IS NULL THEN
       saved := public.create_patient_program(v_patient_id,
         ARRAY(SELECT value::uuid FROM jsonb_array_elements_text(p_payload->'p_condition_ids')),
@@ -2757,8 +2763,9 @@ BEGIN
         p_payload->>'p_notes',NULL,p_payload->'p_treatment_plan');
       v_program_id := (saved->>'id')::uuid;
     ELSE
-      IF NOT EXISTS(SELECT 1 FROM public.patient_programs p
-        WHERE p.id=v_program_id AND p.patient_id=v_patient_id) THEN
+      PERFORM 1 FROM public.patient_programs p
+        WHERE p.id=v_program_id AND p.patient_id=v_patient_id FOR UPDATE;
+      IF NOT FOUND THEN
         RAISE EXCEPTION 'Program not found for patient' USING ERRCODE='P0001';
       END IF;
       saved := public.update_patient_program(v_program_id,
@@ -2768,6 +2775,15 @@ BEGIN
         p_payload->>'p_notes',(p_payload->>'p_status')::public.program_status,
         NULL,p_payload->'p_treatment_plan');
     END IF;
+    FOR document IN SELECT * FROM public.patient_documents
+      WHERE id=ANY(removed_ids) FOR UPDATE LOOP
+      IF document.patient_id<>v_patient_id OR document.program_id IS DISTINCT FROM v_program_id THEN
+        RAISE EXCEPTION 'Document does not belong to this program' USING ERRCODE='42501';
+      END IF;
+      removed_paths := removed_paths || array_remove(ARRAY[document.file_url,document.thumbnail_url],NULL);
+    END LOOP;
+    DELETE FROM public.patient_documents
+      WHERE id=ANY(removed_ids) AND patient_id=v_patient_id AND program_id=v_program_id;
     -- Return the complete display model in the same transaction. A later read
     -- failure must never turn a confirmed save into a failed/duplicated write.
     saved := saved || jsonb_build_object(
@@ -2781,7 +2797,8 @@ BEGIN
             FROM public.modality_regions mr WHERE mr.plan_modality_id=pm.id),'[]'::jsonb)))
           FROM public.plan_modalities pm WHERE pm.treatment_plan_id=tp.id),'[]'::jsonb)))
         FROM public.treatment_plans tp WHERE tp.program_id=v_program_id),'[]'::jsonb));
-    outcome := jsonb_build_object('ok',true,'program',saved);
+    outcome := jsonb_build_object('ok',true,'program',saved,
+      'removed_document_ids',to_jsonb(removed_ids),'removed_document_paths',to_jsonb(removed_paths));
   EXCEPTION WHEN OTHERS THEN
     GET STACKED DIAGNOSTICS error_code=RETURNED_SQLSTATE, error_message=MESSAGE_TEXT;
     outcome := jsonb_build_object('ok',false,'code',error_code,'message',error_message);

@@ -34,10 +34,7 @@ int _resolveActiveIndex(String role, String location) {
           location.startsWith('/patient/')) {
         return 1;
       }
-      if (location == AppRoutes.reports) {
-        return 2;
-      }
-      return 3;
+      return 2;
     case 'receptionist':
     default:
       if (location == AppRoutes.receptionistProfile) return 2;
@@ -76,8 +73,6 @@ void _onTabSelected(BuildContext context, String role, int index) {
         case 1:
           context.go(AppRoutes.patientList);
         case 2:
-          context.go(AppRoutes.reports);
-        case 3:
           context.go(AppRoutes.adminHub);
       }
     case 'receptionist':

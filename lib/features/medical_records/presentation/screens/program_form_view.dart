@@ -4,6 +4,12 @@ extension _ProgramFormView on _ProgramFormScreenState {
   Widget _buildForm(BuildContext context) {
     final isEdit = widget.program != null;
     final programId = widget.program?.id;
+    final removedIds = ref.watch(programDocumentDraftProvider(_formKey)).removedIds;
+    final mutation = ref.watch(programControllerProvider);
+    final error = mutation.scope == ProgramMutationState.saveScope(widget.patientId, programId)
+        ? mutation.error
+        : null;
+    final mustReview = error?.userMessageKey == 'program_attachments_rejected';
     final List<PatientDocument> existingDocs = programId != null
         ? ref
                   .watch(
@@ -22,9 +28,23 @@ extension _ProgramFormView on _ProgramFormScreenState {
         key: _formKey,
         child: FormPageBody(
           isSaving: _isSubmitting,
-          onSave: _submit,
+          hasDocumentUploads: _pendingFiles.isNotEmpty,
+          savingLabel: _pendingFiles.isEmpty
+              ? AppStrings.savingChanges
+              : AppStrings.savingProgramAndDocuments,
+          savingDetail: _pendingFiles.isEmpty ? null : AppStrings.keepPageOpen,
+          errorMessage: error == null ? null : AppStrings.fromKey(error.userMessageKey),
+          onSave: mustReview
+              ? () => context.go(AppRoutes.patientDetail.replaceAll(':id', widget.patientId))
+              : _submit,
           onCancel: _close,
-          saveLabel: isEdit ? AppStrings.saveChanges : AppStrings.saveAndPrescribePlan,
+          saveLabel: mustReview
+              ? AppStrings.patientRecord
+              : error != null
+              ? AppStrings.retrySave
+              : isEdit
+              ? AppStrings.saveChanges
+              : AppStrings.saveAndPrescribePlan,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
@@ -40,11 +60,11 @@ extension _ProgramFormView on _ProgramFormScreenState {
                 relievingPositionsController: _relievingPositionsController,
                 notesController: _notesController,
                 pendingFiles: _pendingFiles,
-                existingDocuments: existingDocs,
+                existingDocuments: existingDocs
+                    .where((doc) => !removedIds.contains(doc.id))
+                    .toList(),
                 onPendingFilesChanged: (files) => _mutate(() => _pendingFiles = files),
-                onDeleteExistingDocument: (doc) => ref
-                    .read(patientDocumentsNotifierProvider(widget.patientId).notifier)
-                    .deleteDocument(doc),
+                onDeleteExistingDocument: _stageDocumentRemoval,
               ),
             ],
           ),

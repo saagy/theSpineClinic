@@ -16,6 +16,7 @@ class AppButton extends StatefulWidget {
     required this.labelText,
     required this.onPressed,
     this.isLoading = false,
+    this.loadingLabel,
     this.variant = AppButtonVariant.primary,
     this.fullWidth = true,
     this.debounceMs = 0,
@@ -26,6 +27,7 @@ class AppButton extends StatefulWidget {
   final String labelText;
   final FutureOr<void> Function()? onPressed;
   final bool isLoading;
+  final String? loadingLabel;
   final AppButtonVariant variant;
   final bool fullWidth;
   final int debounceMs;
@@ -89,12 +91,12 @@ class _AppButtonState extends State<AppButton>
   Widget build(BuildContext context) {
     final bool isDisabled =
         widget.onPressed == null || widget.isLoading || _coolingDown;
+    final bool showSpinner = widget.isLoading || _coolingDown;
     final AppButtonColors colors = AppButtonColors.resolve(
       context,
       widget.variant,
-      isDisabled,
+      isDisabled && !showSpinner,
     );
-    final bool showSpinner = widget.isLoading || _coolingDown;
     final Widget button = Container(
       height: AppSizes.buttonHeight,
       padding: const EdgeInsets.symmetric(horizontal: AppSizes.p16),
@@ -105,49 +107,56 @@ class _AppButtonState extends State<AppButton>
         boxShadow: colors.shadows,
       ),
       child: Center(
-        child: showSpinner
-            ? SizedBox(
-                height: AppSizes.iconSmall,
-                width: AppSizes.iconSmall,
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            if (showSpinner) ...[
+              SizedBox.square(
+                dimension: AppSizes.iconSmall,
                 child: CircularProgressIndicator(
-                  strokeWidth: 2,
+                  strokeWidth: AppSizes.strokeWidthThin,
                   valueColor: AlwaysStoppedAnimation<Color>(colors.foreground),
                 ),
-              )
-            : Row(
-                mainAxisSize: MainAxisSize.min,
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  if (widget.icon != null) ...[
-                    Icon(
-                      widget.icon,
-                      color: colors.foreground,
-                      size: AppSizes.iconSmall,
-                    ),
-                    const SizedBox(width: AppSizes.p8),
-                  ],
-                  Text(
-                    widget.labelText,
-                    style: AppTextStyles.button.copyWith(
-                      color: colors.foreground,
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                ],
               ),
+              const SizedBox(width: AppSizes.p8),
+            ] else if (widget.icon != null) ...[
+              Icon(
+                widget.icon,
+                color: colors.foreground,
+                size: AppSizes.iconSmall,
+              ),
+              const SizedBox(width: AppSizes.p8),
+            ],
+            Flexible(
+              child: Text(
+                widget.isLoading
+                    ? widget.loadingLabel ?? widget.labelText
+                    : widget.labelText,
+                style: AppTextStyles.button.copyWith(color: colors.foreground),
+                textAlign: TextAlign.center,
+              ),
+            ),
+          ],
+        ),
       ),
     );
 
-    return ScaleTransition(
-      scale: _animationController,
-      child: GestureDetector(
-        onTapDown: (_) => _press(true),
-        onTapUp: (_) => _press(false),
-        onTapCancel: () => _press(false),
-        onTap: isDisabled ? null : _handleTap,
-        child: widget.fullWidth
-            ? SizedBox(width: double.infinity, child: button)
-            : button,
+    return Semantics(
+      button: true,
+      enabled: !isDisabled,
+      liveRegion: widget.isLoading,
+      child: ScaleTransition(
+        scale: _animationController,
+        child: GestureDetector(
+          onTapDown: (_) => _press(true),
+          onTapUp: (_) => _press(false),
+          onTapCancel: () => _press(false),
+          onTap: isDisabled ? null : _handleTap,
+          child: widget.fullWidth
+              ? SizedBox(width: double.infinity, child: button)
+              : button,
+        ),
       ),
     );
   }

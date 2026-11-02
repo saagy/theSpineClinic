@@ -145,6 +145,7 @@ class _RegisterStepCredentialsState extends State<RegisterStepCredentials> {
                 flex: 2,
                 child: AppButton(
                   labelText: AppStrings.submit,
+                  loadingLabel: AppStringsAuth.submittingRegistration,
                   onPressed: widget.isLoading ? null : widget.onSubmit,
                   isLoading: widget.isLoading,
                   shape: AppButtonShape.pill,

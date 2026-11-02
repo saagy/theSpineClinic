@@ -1,41 +1,25 @@
-/// Custom loading overlay widget matching the Spine Clinic styling tokens.
-///
-/// Wraps a screen or content widget to display a full-screen, touch-blocking
-/// modal loading indicator when asynchronous operations are in progress.
-/// Includes an escape hatch if the loading state persists.
-///
-/// All colours are resolved from [Theme.of(context).colorScheme] for
-/// automatic dark-mode compatibility.
-///
-/// Rule 1 — keep files under 200 lines.
-/// Rule 16 — zero hardcoded colours, all via theme.
-library;
-
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:spine_clinic_app/core/constants/clinic_colors.dart';
 import 'package:go_router/go_router.dart';
+import 'package:spine_clinic_app/core/constants/app_sizes.dart';
+import 'package:spine_clinic_app/core/constants/app_strings.dart';
+import 'package:spine_clinic_app/core/constants/app_text_styles.dart';
 import 'package:spine_clinic_app/core/network/app_routes.dart';
+import 'operation_feedback.dart';
 
-/// A full-screen blocking overlay spinner styled with Spine Clinic design tokens.
+/// Lightweight feedback for operations that still require blocking interaction.
 class LoadingOverlay extends StatefulWidget {
-  /// Creates a [LoadingOverlay].
   const LoadingOverlay({
     super.key,
     required this.isLoading,
     required this.child,
+    this.message = AppStrings.working,
     this.escapeHatchDuration = const Duration(seconds: 15),
   });
-
-  /// Whether the loading overlay spinner is visible.
   final bool isLoading;
-
-  /// The widget content rendered beneath the overlay.
   final Widget child;
-
-  /// The duration to wait before showing the escape hatch/cancel button.
+  final String message;
   final Duration escapeHatchDuration;
-
   @override
   State<LoadingOverlay> createState() => _LoadingOverlayState();
 }
@@ -47,144 +31,112 @@ class _LoadingOverlayState extends State<LoadingOverlay> {
   @override
   void initState() {
     super.initState();
-    if (widget.isLoading) {
-      _startTimer();
-    }
+    if (widget.isLoading) _startTimer();
   }
 
   @override
   void didUpdateWidget(covariant LoadingOverlay oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (widget.isLoading != oldWidget.isLoading) {
-      if (widget.isLoading) {
-        _startTimer();
-      } else {
-        _stopTimer();
-      }
-    }
+    if (widget.isLoading == oldWidget.isLoading) return;
+    _escapeTimer?.cancel();
+    _showEscapeHatch = false;
+    if (widget.isLoading) _startTimer();
+  }
+
+  void _startTimer() {
+    _escapeTimer?.cancel();
+    _escapeTimer = Timer(widget.escapeHatchDuration, () {
+      if (mounted) setState(() => _showEscapeHatch = true);
+    });
   }
 
   @override
   void dispose() {
-    _stopTimer();
-    super.dispose();
-  }
-
-  void _startTimer() {
-    _stopTimer();
-    _escapeTimer = Timer(widget.escapeHatchDuration, () {
-      if (mounted) {
-        setState(() => _showEscapeHatch = true);
-      }
-    });
-  }
-
-  void _stopTimer() {
     _escapeTimer?.cancel();
-    _escapeTimer = null;
-    _showEscapeHatch = false;
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    final ColorScheme cs = Theme.of(context).colorScheme;
-
+    final colors = Theme.of(context).colorScheme;
+    final canLeave =
+        ModalRoute.of(context)?.popDisposition != RoutePopDisposition.doNotPop;
     return Stack(
       children: [
-        widget.child,
+        ExcludeFocus(excluding: widget.isLoading, child: widget.child),
         if (widget.isLoading) ...[
-          AbsorbPointer(
-            absorbing: true,
-            child: Container(color: cs.scrim.withAlpha(77)),
+          Positioned.fill(
+            child: ModalBarrier(
+              dismissible: false,
+              color: colors.scrim.withAlpha(77),
+            ),
           ),
-          Center(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                CircularProgressIndicator(
-                  valueColor: AlwaysStoppedAnimation<Color>(cs.primary),
+          Positioned.fill(
+            child: Center(
+              child: Padding(
+                padding: const EdgeInsets.all(AppSizes.p20),
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(
+                    maxWidth: AppSizes.operationOverlayMaxWidth,
+                  ),
+                  child: Material(
+                    color: colors.surface,
+                    shape: RoundedRectangleBorder(
+                      side: BorderSide(color: colors.outlineVariant),
+                      borderRadius: BorderRadius.circular(AppSizes.r8),
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.all(AppSizes.p20),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const SizedBox.square(
+                            dimension: AppSizes.iconSmall,
+                            child: CircularProgressIndicator(
+                              strokeWidth: AppSizes.strokeWidthThin,
+                            ),
+                          ),
+                          const SizedBox(width: AppSizes.p12),
+                          Flexible(
+                            child: OperationFeedback(
+                              message: _showEscapeHatch
+                                  ? AppStrings.takingLonger
+                                  : widget.message,
+                              detail: _showEscapeHatch
+                                  ? AppStrings.requestStillPending
+                                  : null,
+                              action: _showEscapeHatch && canLeave
+                                  ? TextButton(
+                                      onPressed: () {
+                                        if (context.canPop()) {
+                                          context.pop();
+                                        } else {
+                                          context.go(AppRoutes.home);
+                                        }
+                                      },
+                                      style: TextButton.styleFrom(
+                                        minimumSize: const Size.square(
+                                          AppSizes.tappableMin,
+                                        ),
+                                      ),
+                                      child: const Text(
+                                        AppStrings.goBack,
+                                        style: AppTextStyles.bodyMedium,
+                                      ),
+                                    )
+                                  : null,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
                 ),
-                if (_showEscapeHatch) ...[
-                  const SizedBox(height: 20),
-                  _EscapeHatch(colorScheme: cs, onEscape: _onEscape),
-                ],
-              ],
+              ),
             ),
           ),
         ],
       ],
-    );
-  }
-
-  void _onEscape() {
-    if (context.canPop()) {
-      context.pop();
-    } else {
-      context.go(AppRoutes.home);
-    }
-  }
-}
-
-class _EscapeHatch extends StatelessWidget {
-  const _EscapeHatch({required this.colorScheme, required this.onEscape});
-
-  final ColorScheme colorScheme;
-  final VoidCallback onEscape;
-
-  @override
-  Widget build(BuildContext context) {
-    final ColorScheme cs = colorScheme;
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-      margin: const EdgeInsets.symmetric(horizontal: 32),
-      decoration: BoxDecoration(
-        color: cs.surface,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: ClinicColors.of(context).overlayScrim.withAlpha(25),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(
-            'Taking longer than usual...',
-            style: TextStyle(
-              fontSize: 15,
-              fontWeight: FontWeight.bold,
-              color: cs.onSurface,
-            ),
-          ),
-          const SizedBox(height: 6),
-          Text(
-            'Check your connection or cancel the request.',
-            style: TextStyle(fontSize: 13, color: cs.onSurfaceVariant),
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 16),
-          TextButton.icon(
-            style: TextButton.styleFrom(
-              backgroundColor: cs.error.withAlpha(25),
-              foregroundColor: cs.error,
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(30),
-              ),
-            ),
-            icon: const Icon(Icons.close_rounded, size: 18),
-            label: const Text(
-              'Cancel & Go Back',
-              style: TextStyle(fontWeight: FontWeight.bold),
-            ),
-            onPressed: onEscape,
-          ),
-        ],
-      ),
     );
   }
 }

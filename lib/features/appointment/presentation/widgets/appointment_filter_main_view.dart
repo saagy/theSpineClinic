@@ -2,20 +2,17 @@
 library;
 
 import 'package:flutter/material.dart';
-import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:spine_clinic_app/core/constants/app_sizes.dart';
 import 'package:spine_clinic_app/core/constants/app_strings.dart';
-import 'package:spine_clinic_app/core/constants/app_text_styles.dart';
+import 'package:spine_clinic_app/shared/widgets/filter_sheet_frame.dart';
 import 'package:spine_clinic_app/features/appointment/domain/appointment_status.dart';
 import 'package:spine_clinic_app/features/appointment/domain/appointment_type.dart';
 import 'package:spine_clinic_app/features/appointment/presentation/widgets/appointment_filter_chips_section.dart';
 import 'package:spine_clinic_app/features/appointment/presentation/widgets/appointment_filter_date_section.dart';
-import 'package:spine_clinic_app/features/appointment/presentation/widgets/appointment_filter_doctor_tile.dart';
+import 'package:spine_clinic_app/shared/widgets/filter_doctor_field.dart';
 import 'package:spine_clinic_app/features/appointment/presentation/widgets/appointment_sort_options.dart';
 import 'package:spine_clinic_app/features/auth/domain/staff.dart';
 import 'package:spine_clinic_app/features/patient/domain/clinic_location.dart';
-
-part 'appointment_filter_chrome.dart';
 
 /// Main view displaying all appointment filter sections and sort radio rows.
 class AppointmentFilterMainView extends StatelessWidget {
@@ -72,66 +69,50 @@ class AppointmentFilterMainView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.stretch,
+    return FilterSheetBody(
+      onReset: onReset,
+      onApply: onApply,
       children: [
-        _buildHeader(context, cs),
-        Flexible(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(horizontal: AppSizes.p20),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                if (showDateFilter) ...[
-                  _buildSectionTitle(cs, AppStrings.dateRange),
-                  AppointmentFilterDateSection(
-                    dateFrom: selectedDateFrom,
-                    dateTo: selectedDateTo,
-                    onDateRangeChanged: onDateRangeChanged,
-                  ),
-                ],
-                if (canFilterDoctor) ...[
-                  const SizedBox(height: AppSizes.p20),
-                  _buildSectionTitle(cs, AppStrings.assignedDoctors),
-                  AppointmentFilterDoctorTile(
-                    selectedDoctorId: selectedDoctorId,
-                    doctors: doctors,
-                    onTap: onOpenDoctorPicker,
-                  ),
-                ],
-                if (showAppointmentFilters) ...[
-                  const SizedBox(height: AppSizes.p20),
-                  if (appointmentFiltersBuilder != null)
-                    appointmentFiltersBuilder!(context)
-                  else
-                    AppointmentFilterChipsSection(
-                      showStatus: showStatusFilter,
-                      selectedClinic: selectedClinic,
-                      selectedStatus: selectedStatus,
-                      selectedType: selectedType,
-                      canFilterClinic: canFilterClinic,
-                      onClinicChanged: onClinicChanged,
-                      onStatusChanged: onStatusChanged,
-                      onTypeChanged: onTypeChanged,
-                    ),
-                ],
-                const SizedBox(height: AppSizes.p20),
-                _buildSectionTitle(cs, AppStrings.sortOrder),
-                if (sortOptionsBuilder != null)
-                  sortOptionsBuilder!(context)
-                else
-                  AppointmentFilterSortList(
-                    selectedSort: selectedSort,
-                    onSortChanged: onSortChanged,
-                  ),
-                const SizedBox(height: AppSizes.p20),
-              ],
-            ),
+        if (showDateFilter) ...[
+          FilterSectionTitle(AppStrings.dateRange),
+          AppointmentFilterDateSection(
+            dateFrom: selectedDateFrom,
+            dateTo: selectedDateTo,
+            onDateRangeChanged: onDateRangeChanged,
           ),
-        ),
-        _buildFooter(cs),
+        ],
+        if (canFilterDoctor) ...[
+          const SizedBox(height: AppSizes.p20),
+          FilterSectionTitle(AppStrings.assignedDoctors),
+          FilterDoctorField(
+            selectedDoctorId: selectedDoctorId,
+            doctors: doctors,
+            onTap: onOpenDoctorPicker,
+          ),
+        ],
+        if (showAppointmentFilters) ...[
+          const SizedBox(height: AppSizes.p20),
+          if (appointmentFiltersBuilder != null)
+            appointmentFiltersBuilder!(context)
+          else
+            AppointmentFilterChipsSection(
+              showStatus: showStatusFilter,
+              selectedClinic: selectedClinic,
+              selectedStatus: selectedStatus,
+              selectedType: selectedType,
+              canFilterClinic: canFilterClinic,
+              onClinicChanged: onClinicChanged,
+              onStatusChanged: onStatusChanged,
+              onTypeChanged: onTypeChanged,
+            ),
+        ],
+        const SizedBox(height: AppSizes.p20),
+        FilterSectionTitle(AppStrings.sortOrder),
+        if (sortOptionsBuilder != null)
+          sortOptionsBuilder!(context)
+        else
+          AppointmentFilterSortList(selectedSort: selectedSort, onSortChanged: onSortChanged),
+        const SizedBox(height: AppSizes.p20),
       ],
     );
   }

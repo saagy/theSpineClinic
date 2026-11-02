@@ -140,6 +140,7 @@ class _AppointmentDetailScreenState
       ),
       body: LoadingOverlay(
         isLoading: isMutating,
+        message: AppStrings.updatingAppointment,
         child: detailAsync.when(
           loading: () => const AppointmentDetailSkeleton(),
           error: (Object error, StackTrace stack) => ErrorView(

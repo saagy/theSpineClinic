@@ -15,7 +15,7 @@ final programControllerProvider = ProgramControllerProvider._();
 
 /// Mutation controller managing program creation, updates, status changes, and deletion (Rule 28).
 final class ProgramControllerProvider
-    extends $NotifierProvider<ProgramController, AsyncValue<void>> {
+    extends $NotifierProvider<ProgramController, ProgramMutationState> {
   /// Mutation controller managing program creation, updates, status changes, and deletion (Rule 28).
   ProgramControllerProvider._()
     : super(
@@ -36,29 +36,29 @@ final class ProgramControllerProvider
   ProgramController create() => ProgramController();
 
   /// {@macro riverpod.override_with_value}
-  Override overrideWithValue(AsyncValue<void> value) {
+  Override overrideWithValue(ProgramMutationState value) {
     return $ProviderOverride(
       origin: this,
-      providerOverride: $SyncValueProvider<AsyncValue<void>>(value),
+      providerOverride: $SyncValueProvider<ProgramMutationState>(value),
     );
   }
 }
 
-String _$programControllerHash() => r'11e3dc37e27f130469b8ae7169048162f78d5eba';
+String _$programControllerHash() => r'ce857379d1ede4e7ccfc139ade1c792ed48acbed';
 
 /// Mutation controller managing program creation, updates, status changes, and deletion (Rule 28).
 
-abstract class _$ProgramController extends $Notifier<AsyncValue<void>> {
-  AsyncValue<void> build();
+abstract class _$ProgramController extends $Notifier<ProgramMutationState> {
+  ProgramMutationState build();
   @$mustCallSuper
   @override
   void runBuild() {
-    final ref = this.ref as $Ref<AsyncValue<void>, AsyncValue<void>>;
+    final ref = this.ref as $Ref<ProgramMutationState, ProgramMutationState>;
     final element =
         ref.element
             as $ClassProviderElement<
-              AnyNotifier<AsyncValue<void>, AsyncValue<void>>,
-              AsyncValue<void>,
+              AnyNotifier<ProgramMutationState, ProgramMutationState>,
+              ProgramMutationState,
               Object?,
               Object?
             >;

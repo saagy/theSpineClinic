@@ -46,6 +46,7 @@ class _NewPatientFormState extends ConsumerState<NewPatientForm> {
       type: FileType.custom,
       allowedExtensions: const ['pdf', 'png', 'jpg', 'jpeg'],
       allowMultiple: true,
+      withData: true,
     );
     if (result == null) return;
 

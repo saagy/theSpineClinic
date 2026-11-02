@@ -3,6 +3,7 @@ library;
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:spine_clinic_app/core/constants/app_sizes.dart';
+import 'package:spine_clinic_app/core/constants/app_strings.dart';
 import 'package:spine_clinic_app/core/constants/app_text_styles.dart';
 import 'package:spine_clinic_app/core/utils/file_display_helper.dart';
 
@@ -29,8 +30,8 @@ class ProgramPickerCard extends StatelessWidget {
     final extBadge = FileDisplayHelper.getExtensionBadge(fileName);
 
     return Container(
-      width: 104,
-      height: 124,
+      width: AppSizes.mediaPickerCardWidth,
+      height: AppSizes.mediaPickerCardHeight,
       decoration: BoxDecoration(
         color: cs.surface,
         borderRadius: BorderRadius.circular(AppSizes.r12),
@@ -51,41 +52,36 @@ class ProgramPickerCard extends StatelessWidget {
                       child: Icon(
                         Icons.picture_as_pdf_rounded,
                         color: cs.error,
-                        size: 28,
+                        size: AppSizes.iconLarge,
                       ),
                     ),
                   )
                 else if (imageBytes != null)
-                  Image.memory(imageBytes!, fit: BoxFit.cover)
+                  Image.memory(
+                    imageBytes!,
+                    fit: BoxFit.cover,
+                    cacheWidth: AppSizes.mediaPickerDecodeWidth,
+                    gaplessPlayback: true,
+                  )
                 else if (previewWidget != null)
                   previewWidget!
                 else
                   ColoredBox(
                     color: cs.surfaceContainerHighest,
-                    child: Icon(
-                      Icons.image_outlined,
-                      color: cs.primary,
-                      size: 28,
-                    ),
+                    child: Icon(Icons.image_outlined, color: cs.primary, size: AppSizes.iconLarge),
                   ),
                 Positioned(
                   top: AppSizes.p4,
                   right: AppSizes.p4,
-                  child: Material(
-                    color: cs.surface.withAlpha(220),
-                    shape: const CircleBorder(),
-                    child: InkWell(
-                      customBorder: const CircleBorder(),
-                      onTap: onDelete,
-                      child: Padding(
-                        padding: const EdgeInsets.all(AppSizes.p2),
-                        child: Icon(
-                          Icons.close_rounded,
-                          size: 14,
-                          color: cs.error,
-                        ),
-                      ),
+                  child: IconButton(
+                    tooltip: AppStrings.removeAttachment,
+                    onPressed: onDelete,
+                    style: IconButton.styleFrom(
+                      minimumSize: const Size.square(AppSizes.tappableMin),
+                      backgroundColor: cs.surface.withAlpha(220),
+                      foregroundColor: cs.error,
                     ),
+                    icon: const Icon(Icons.close_rounded, size: AppSizes.iconSmall),
                   ),
                 ),
                 Positioned(
@@ -105,7 +101,7 @@ class ProgramPickerCard extends StatelessWidget {
                     child: Text(
                       extBadge,
                       style: AppTextStyles.captionBold.copyWith(
-                        fontSize: 8,
+                        fontSize: AppSizes.fontSizeXs,
                         color: isPdf ? cs.onError : cs.onSurfaceVariant,
                       ),
                     ),
@@ -115,18 +111,12 @@ class ProgramPickerCard extends StatelessWidget {
             ),
           ),
           Padding(
-            padding: const EdgeInsets.symmetric(
-              horizontal: AppSizes.p6,
-              vertical: AppSizes.p4,
-            ),
+            padding: const EdgeInsets.symmetric(horizontal: AppSizes.p6, vertical: AppSizes.p4),
             child: Text(
               cleanName,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: AppTextStyles.captionMedium.copyWith(
-                fontSize: 11,
-                color: cs.onSurface,
-              ),
+              style: AppTextStyles.captionMedium.copyWith(color: cs.onSurface),
             ),
           ),
         ],

@@ -5,21 +5,15 @@ import 'package:spine_clinic_app/shared/widgets/nav_tabs.dart';
 void main() {
   test('Clinic Admin navigation excludes doctor identity tabs', () {
     final tabs = NavTabs.forRole('super_admin');
+    expect(tabs.map((tab) => tab.label), isNot(contains(AppStrings.navAnalytics)));
 
     expect(tabs.map((tab) => tab.label), [
       AppStrings.navAppts,
       AppStrings.patients,
-      AppStrings.navAnalytics,
       AppStrings.navAdmin,
     ]);
-    expect(
-      tabs.map((tab) => tab.label),
-      isNot(contains(AppStrings.navMySchedule)),
-    );
-    expect(
-      tabs.map((tab) => tab.label),
-      isNot(contains(AppStrings.navMyPatients)),
-    );
+    expect(tabs.map((tab) => tab.label), isNot(contains(AppStrings.navMySchedule)));
+    expect(tabs.map((tab) => tab.label), isNot(contains(AppStrings.navMyPatients)));
   });
 
   test('doctor navigation keeps schedule and assigned patients', () {

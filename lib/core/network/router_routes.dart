@@ -204,7 +204,7 @@ final List<RouteBase> _shellRoutes = [
   ),
   GoRoute(
     path: AppRoutes.reports,
-    pageBuilder: (_, __) => const NoTransitionPage(child: AnalyticsScreen()),
+    redirect: (_, __) => AppRoutes.adminHub,
   ),
   GoRoute(
     path: AppRoutes.patientDetail,

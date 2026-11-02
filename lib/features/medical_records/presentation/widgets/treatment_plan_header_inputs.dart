@@ -15,12 +15,14 @@ class TreatmentPlanHeaderInputs extends StatelessWidget {
     required this.notesController,
     required this.isActive,
     required this.onActiveChanged,
+    this.replacementName,
   });
 
   final TextEditingController nameController;
   final TextEditingController notesController;
   final bool isActive;
   final ValueChanged<bool> onActiveChanged;
+  final String? replacementName;
 
   @override
   Widget build(BuildContext context) {
@@ -37,18 +39,22 @@ class TreatmentPlanHeaderInputs extends StatelessWidget {
               hintText: AppStrings.planNameHint,
               validator: (value) => value?.trim().isNotEmpty == true ? null : AppStrings.planNameRequired,
             ),
-            SwitchListTile(
-              contentPadding: EdgeInsets.zero,
-              title: Text(
-                AppStrings.activePlanToggle,
-                style: AppTextStyles.bodyBold.copyWith(color: cs.onSurface),
+            Material(
+              type: MaterialType.transparency,
+              child: SwitchListTile(
+                contentPadding: EdgeInsets.zero,
+                title: Text(AppStrings.activePlanToggle, style: AppTextStyles.bodyBold.copyWith(color: cs.onSurface)),
+                subtitle: Text(
+                  !isActive
+                      ? AppStrings.savedPlanOnlyHint
+                      : replacementName != null
+                      ? AppStrings.replacePlanHint(replacementName!)
+                      : AppStrings.activePlanSubtitle,
+                  style: AppTextStyles.caption.copyWith(color: cs.onSurfaceVariant),
+                ),
+                value: isActive,
+                onChanged: onActiveChanged,
               ),
-              subtitle: Text(
-                AppStrings.activePlanSubtitle,
-                style: AppTextStyles.caption.copyWith(color: cs.onSurfaceVariant),
-              ),
-              value: isActive,
-              onChanged: onActiveChanged,
             ),
           ],
         ),

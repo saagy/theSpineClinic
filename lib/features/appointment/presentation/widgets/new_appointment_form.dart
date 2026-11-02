@@ -31,13 +31,13 @@ import 'package:spine_clinic_app/features/patient/presentation/patient_providers
 import 'package:spine_clinic_app/shared/widgets/doctor_select_field.dart';
 import 'package:spine_clinic_app/features/appointment/presentation/widgets/booking_form_controls.dart';
 import 'package:spine_clinic_app/shared/widgets/app_snackbar.dart';
-import 'package:spine_clinic_app/shared/widgets/loading_overlay.dart';
 
 import 'package:spine_clinic_app/features/appointment/presentation/receptionist_appointments_providers.dart';
 import 'package:spine_clinic_app/features/appointment/presentation/doctor_schedule_providers.dart';
 import 'package:spine_clinic_app/features/appointment/presentation/all_appointments_providers.dart';
 import 'package:spine_clinic_app/features/appointment/presentation/booking_workboard_provider.dart';
-import 'package:spine_clinic_app/features/patient/presentation/patient_appointments_notifier.dart' as patient_tab;
+import 'package:spine_clinic_app/features/patient/presentation/patient_appointments_notifier.dart'
+    as patient_tab;
 
 part 'new_appointment_form_actions.dart';
 part 'new_appointment_validation.dart';

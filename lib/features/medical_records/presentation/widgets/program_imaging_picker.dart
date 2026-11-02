@@ -93,6 +93,7 @@ class ProgramImagingPicker extends StatelessWidget {
               children: [
                 ...existingDocuments.map(
                   (doc) => Padding(
+                    key: ValueKey(doc.id),
                     padding: const EdgeInsets.only(right: AppSizes.p8),
                     child: ProgramPickerCard(
                       fileName: doc.fileName,
@@ -103,6 +104,7 @@ class ProgramImagingPicker extends StatelessWidget {
                 ),
                 ...pendingFiles.asMap().entries.map(
                   (entry) => Padding(
+                    key: ObjectKey(entry.value),
                     padding: const EdgeInsets.only(right: AppSizes.p8),
                     child: ProgramPickerCard(
                       fileName: entry.value.name,

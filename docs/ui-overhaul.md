@@ -2,6 +2,16 @@
 
 ## Status
 
+November 2 staff cleanup implements flat directory/application rows, global sorting,
+compact confirmed review actions, bounded forms with persistent Save/Cancel, and
+shared filter presentation. The isolated Analytics implementation/navigation is
+removed; its old URL redirects to Admin. Independent legacy reports remain.
+See [staff audit, implementation and validation limits](staff-ui-cleanup.md).
+
+The November program-action clarification separates program status from the
+current treatment plan and scopes menu labels explicitly. Programs-tab rows now
+use the shared action menu. See [audit and validation](program-action-clarity.md).
+
 September 13 shipping polish implements the user's selected open-workspace and
 section-based form directions. The subsequent density correction restores compact
 appointment rows with passive status indicators and all actions in the menu. Doctor history, patient
@@ -22,6 +32,17 @@ Schedules (Receptionist & Doctor) redesign implemented in alignment with the mod
 
 ## Screen Order
 
+October 31 adds [save/upload feedback](save-feedback.md): lightweight persistent
+form activity, a unified patient upload queue with visible recovery, and corrected
+pending-request language. Follow-up feedback adds estimated bar movement under
+reduced motion and immediate document removal feedback. The November 1 correction
+stages removals in the program form until Save changes, with Cancel preserving
+the saved documents. Program edits and document-row removals share one transaction;
+storage cleanup remains best effort after commit.
+The subsequent feedback correction reserves estimated bars for queued uploads.
+Authentication, staff/payment forms and ordinary save footers use button activity;
+remaining blocking mutations use compact spinners with contextual labels.
+
 This is the initial order based on workflow coverage and shared patterns, not
 measured usage analytics. Adjust it if staff observation reveals a stronger need.
 Navigation and shared tokens are designed with the first screen, not as a long
@@ -34,7 +55,7 @@ standalone design-system project.
 | 3 | Patient details + appointment details | Connect the main screens into usable end-to-end workflows | Identity, overview, history, balances, clinical/document sections, permitted actions, return context |
 | 4 | Patient and appointment create/edit flows | Complete the common actions reached from the main screens | Field grouping, patient/doctor selection, validation, submission, cancellation, success feedback |
 | 5 | Clinical programs + treatment-plan editor | Complex form structure needs more than a cosmetic refresh | Program overview, treatment selection/configuration, exercise/region labels, notes, review/save |
-| 6 | Payments + admin analytics/reports | Apply the established system to financial tasks and comparisons | Payment entry, balances, report filters, dates, branch context, readable data |
+| 6 | Payments + remaining legacy reports | Apply the established system to financial tasks and comparisons | Payment entry, balances, report filters, dates, branch context, readable data |
 | 7 | Staff, profiles, authentication, remaining surfaces | Finish consistency after the main workflow patterns are proven | Staff tasks, account actions, login/registration, document viewers and residual states |
 
 Patient balances and payment summaries are included in phase 3; deeper payment
@@ -53,8 +74,9 @@ Keep each phase to reviewable slices rather than rewriting all screens at once.
   `lib/features/appointment/presentation/appointment_detail_screen.dart`.
 - Clinical: `lib/features/medical_records/presentation/screens/program_detail_screen.dart`,
   `lib/features/medical_records/presentation/widgets/treatment_plan_builder_sheet.dart`.
-- Admin: `lib/features/admin/presentation/analytics_screen.dart`, `reports_screen.dart`,
-  `admin_hub_screen.dart`; payment entry under `features/payments/presentation/`.
+- Admin: `lib/features/admin/presentation/admin_hub_screen.dart`; independent
+  legacy `reports_screen.dart` remains in source. The retired `/admin/reports`
+  route redirects to Admin. Payment entry is under `features/payments/presentation/`.
 
 These identify existing surfaces, not a requirement to preserve their widget trees.
 

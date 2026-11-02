@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_lucide/flutter_lucide.dart';
+import 'package:spine_clinic_app/features/medical_records/presentation/widgets/program_record_menu.dart';
 import 'package:go_router/go_router.dart';
 import 'package:spine_clinic_app/core/constants/app_sizes.dart';
 import 'package:spine_clinic_app/core/constants/app_strings.dart';
@@ -116,7 +116,7 @@ class WorkspaceProgramRow extends StatelessWidget {
                     ],
                   ),
                 ),
-                Icon(LucideIcons.chevron_right, size: 18, color: cs.onSurfaceVariant),
+                ProgramRecordMenu(program: program),
               ],
             ),
           ),

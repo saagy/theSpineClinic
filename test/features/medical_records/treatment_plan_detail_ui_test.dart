@@ -56,7 +56,7 @@ class _FakeProgRepo implements ProgramRepository {
   @override
   Future<Result<PatientProgram>> createProgram({required String patientId, required List<String> conditionIds, String? examination, String? imagingNotes, String? exaggeratingPositions, String? relievingPositions, String? notes, List<ProgramAttachment>? pendingAttachments, TreatmentPlanInput? treatmentPlan}) async => throw UnimplementedError();
   @override
-  Future<Result<PatientProgram>> updateProgram({required String programId, required String patientId, required List<String> conditionIds, String? examination, String? imagingNotes, String? exaggeratingPositions, String? relievingPositions, String? notes, ProgramStatus? status, List<ProgramAttachment>? pendingAttachments, TreatmentPlanInput? treatmentPlan}) async => throw UnimplementedError();
+  Future<Result<PatientProgram>> updateProgram({required String programId, required String patientId, required List<String> conditionIds, String? examination, String? imagingNotes, String? exaggeratingPositions, String? relievingPositions, String? notes, ProgramStatus? status, List<ProgramAttachment>? pendingAttachments, List<String> removedDocumentIds = const [], TreatmentPlanInput? treatmentPlan}) async => throw UnimplementedError();
   @override
   Future<Result<void>> updateProgramStatus({required String programId, required ProgramStatus status}) async => const Result.success(null);
   @override
@@ -170,12 +170,15 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Phase 1 - Acute'), findsOneWidget);
-    expect(find.text(AppStrings.activate), findsOneWidget);
+    expect(find.text(AppStrings.useThisPlan), findsOneWidget);
 
     // Tap Activate
-    await tester.tap(find.text(AppStrings.activate));
+    await tester.tap(find.text(AppStrings.useThisPlan));
     await tester.pumpAndSettle();
 
+    expect(fakeRepo.activatedPlanId, isNull);
+    await tester.tap(find.widgetWithText(FilledButton, AppStrings.useThisPlan));
+    await tester.pumpAndSettle();
     expect(fakeRepo.activatedPlanId, 'tp1');
   });
 
@@ -197,6 +200,6 @@ void main() {
     expect(find.text(AppStrings.noActiveTreatmentPlan), findsOneWidget);
     // History section is auto-expanded and shows the plan with Activate button
     expect(find.text('Phase 1 - Acute'), findsOneWidget);
-    expect(find.text(AppStrings.activate), findsOneWidget);
+    expect(find.text(AppStrings.useThisPlan), findsOneWidget);
   });
 }

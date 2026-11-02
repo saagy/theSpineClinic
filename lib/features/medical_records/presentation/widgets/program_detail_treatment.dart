@@ -5,13 +5,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:spine_clinic_app/core/constants/app_sizes.dart';
 import 'package:spine_clinic_app/core/constants/app_strings.dart';
 import 'package:spine_clinic_app/core/constants/app_text_styles.dart';
-import 'package:spine_clinic_app/core/utils/formatters.dart';
 import 'package:spine_clinic_app/features/auth/presentation/auth_providers.dart';
-import 'package:spine_clinic_app/features/medical_records/domain/modality_target_region.dart';
 import 'package:spine_clinic_app/features/medical_records/domain/patient_program.dart';
 import 'package:spine_clinic_app/features/medical_records/domain/treatment_plan.dart';
 import 'package:spine_clinic_app/features/medical_records/presentation/treatment_plan_controller.dart';
-import 'package:spine_clinic_app/features/medical_records/presentation/widgets/treatment_modality_tile.dart';
+import 'treatment_plan_summary.dart';
 import 'package:spine_clinic_app/features/medical_records/presentation/widgets/treatment_plan_builder_sheet.dart';
 import 'package:spine_clinic_app/features/medical_records/presentation/widgets/treatment_plan_history_tile.dart';
 import 'package:spine_clinic_app/shared/widgets/record_action_menu.dart';
@@ -30,13 +28,19 @@ class ProgramDetailTreatment extends ConsumerStatefulWidget {
 class _ProgramDetailTreatmentState extends ConsumerState<ProgramDetailTreatment> {
   bool? _historyExpanded;
 
-  Future<void> _openPlanBuilder({TreatmentPlan? plan}) => TreatmentPlanBuilderSheet.show(
-    context,
-    programId: widget.program.id,
-    patientId: widget.program.patientId,
-    affectedRegions: widget.program.affectedRegions,
-    existingPlan: plan,
-  );
+  Future<void> _openPlanBuilder({TreatmentPlan? plan}) async {
+    final user = ref.read(currentUserProvider).value;
+    if (user?.isActive != true || user?.isSeniorDoctor != true) return;
+    await TreatmentPlanBuilderSheet.show(
+      context,
+      programId: widget.program.id,
+      patientId: widget.program.patientId,
+      affectedRegions: widget.program.affectedRegions,
+      existingPlan: plan,
+      copyFromPlan: plan == null ? widget.program.activePlan : null,
+      currentPlan: widget.program.activePlan,
+    );
+  }
 
   Future<void> _deletePlan(String planId) async {
     final user = ref.read(currentUserProvider).value;
@@ -56,8 +60,10 @@ class _ProgramDetailTreatmentState extends ConsumerState<ProgramDetailTreatment>
         .deletePlan(planId: planId, programId: widget.program.id, patientId: widget.program.patientId);
     if (!mounted) return;
     res.when(
-      success: (_) => AppSnackbar.show(context, message: AppStrings.treatmentPlanDeleted, variant: AppSnackbarVariant.success),
-      failure: (e) => AppSnackbar.show(context, message: AppStrings.fromKey(e.userMessageKey), variant: AppSnackbarVariant.error),
+      success: (_) =>
+          AppSnackbar.show(context, message: AppStrings.treatmentPlanDeleted, variant: AppSnackbarVariant.success),
+      failure: (e) =>
+          AppSnackbar.show(context, message: AppStrings.fromKey(e.userMessageKey), variant: AppSnackbarVariant.error),
     );
   }
 
@@ -84,23 +90,19 @@ class _ProgramDetailTreatmentState extends ConsumerState<ProgramDetailTreatment>
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(AppStrings.treatmentPlan, style: AppTextStyles.headingSmall.copyWith(color: cs.onSurface)),
-              if (activePlan == null && isSenior)
-                FilledButton.icon(
-                  onPressed: () => _openPlanBuilder(),
-                  style: FilledButton.styleFrom(
-                    minimumSize: const Size(AppSizes.tappableMin, AppSizes.buttonHeightSmall),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppSizes.r8)),
-                  ),
-                  icon: const Icon(Icons.add, size: AppSizes.iconSmall),
-                  label: const Text(AppStrings.newTreatmentPlan, style: AppTextStyles.captionBold),
-                )
-              else if (activePlan != null && isSenior)
+              Expanded(
+                child: Text(
+                  AppStrings.currentTreatmentPlan,
+                  style: AppTextStyles.headingSmall.copyWith(color: cs.onSurface),
+                ),
+              ),
+              if (activePlan != null && isSenior)
                 RecordActionMenu<String>(
+                  tooltip: AppStrings.planActions,
                   actions: const [
-                    RecordMenuAction('new_version', AppStrings.newPlanVersion, Icons.add),
-                    RecordMenuAction('edit', AppStrings.edit, Icons.edit_outlined),
-                    RecordMenuAction('delete', AppStrings.delete, Icons.delete_outline, destructive: true),
+                    RecordMenuAction('new_version', AppStrings.createTreatmentPlan, Icons.add),
+                    RecordMenuAction('edit', AppStrings.editThisPlan, Icons.edit_outlined),
+                    RecordMenuAction('delete', AppStrings.deleteThisPlan, Icons.delete_outline, destructive: true),
                   ],
                   onSelected: (action) {
                     if (action == 'new_version') _openPlanBuilder();
@@ -112,49 +114,28 @@ class _ProgramDetailTreatmentState extends ConsumerState<ProgramDetailTreatment>
           ),
           const SizedBox(height: AppSizes.p14),
           if (activePlan == null)
-            Text(inactivePlans.isEmpty ? AppStrings.noTreatmentPlans : AppStrings.noActiveTreatmentPlan, style: AppTextStyles.body)
+            Text(
+              inactivePlans.isEmpty ? AppStrings.noTreatmentPlans : AppStrings.noActiveTreatmentPlan,
+              style: AppTextStyles.body,
+            )
           else
-            _buildActivePlan(cs, activePlan),
+            TreatmentPlanSummary(plan: activePlan),
+          if (activePlan == null && isSenior) ...[
+            const SizedBox(height: AppSizes.p12),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: TextButton.icon(
+                onPressed: () => _openPlanBuilder(),
+                style: TextButton.styleFrom(minimumSize: const Size(AppSizes.tappableMin, AppSizes.tappableMin)),
+                icon: const Icon(Icons.add, size: AppSizes.iconSmall),
+                label: const Text(AppStrings.newTreatmentPlan, style: AppTextStyles.bodyMedium),
+              ),
+            ),
+          ],
           if (inactivePlans.isNotEmpty)
             _buildHistorySection(cs, inactivePlans, isSenior, isAutoExpanded: activePlan == null),
         ],
       ),
-    );
-  }
-
-  Widget _buildActivePlan(ColorScheme cs, TreatmentPlan plan) {
-    final totalMin = plan.modalities.fold<int>(
-      0,
-      (sum, m) => sum + m.regions.where((r) => ModalityTargetRegion.hasDuration(m.modalityType, r.targetRegion)).fold<int>(0, (rSum, r) => rSum + r.timeMinutes),
-    );
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Wrap(
-          crossAxisAlignment: WrapCrossAlignment.center,
-          spacing: AppSizes.p8,
-          runSpacing: AppSizes.p4,
-          children: [
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: AppSizes.p8, vertical: AppSizes.p2),
-              decoration: BoxDecoration(color: cs.primaryContainer, borderRadius: BorderRadius.circular(AppSizes.r6)),
-              child: Text(plan.planName, style: AppTextStyles.captionBold.copyWith(color: cs.onPrimaryContainer)),
-            ),
-            Text(
-              '${AppStrings.createdOn(Formatters.formatDateMedium(plan.createdAt))} · ${AppStrings.modalitiesCount(plan.modalities.length)}${totalMin > 0 ? ' · ${AppStrings.totalDurationFormat(totalMin)}' : ''}',
-              style: AppTextStyles.caption.copyWith(color: cs.onSurfaceVariant),
-            ),
-          ],
-        ),
-        if (plan.notes != null && plan.notes!.trim().isNotEmpty) ...[
-          const SizedBox(height: AppSizes.p8),
-          Text(plan.notes!.trim(), style: AppTextStyles.bodySecondary.copyWith(color: cs.onSurfaceVariant)),
-        ],
-        const SizedBox(height: AppSizes.p12),
-        for (int i = 0; i < plan.modalities.length; i++)
-          TreatmentModalityTile(modality: plan.modalities[i], showDivider: i < plan.modalities.length - 1),
-      ],
     );
   }
 
@@ -167,13 +148,23 @@ class _ProgramDetailTreatmentState extends ConsumerState<ProgramDetailTreatment>
         InkWell(
           onTap: () => setState(() => _historyExpanded = !expanded),
           borderRadius: BorderRadius.circular(AppSizes.r8),
-          child: Padding(
+          child: Container(
+            constraints: const BoxConstraints(minHeight: AppSizes.tappableMin),
             padding: const EdgeInsets.symmetric(vertical: AppSizes.p8),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text('${AppStrings.previousPlans} (${plans.length})', style: AppTextStyles.captionBold.copyWith(color: cs.onSurfaceVariant)),
-                Icon(expanded ? Icons.expand_less : Icons.expand_more, size: 18, color: cs.onSurfaceVariant),
+                Expanded(
+                  child: Text(
+                    '${AppStrings.previousPlans} (${plans.length})',
+                    style: AppTextStyles.bodyBold.copyWith(color: cs.onSurfaceVariant),
+                  ),
+                ),
+                Icon(
+                  expanded ? Icons.expand_less : Icons.expand_more,
+                  size: AppSizes.iconSmall,
+                  color: cs.onSurfaceVariant,
+                ),
               ],
             ),
           ),
@@ -186,6 +177,7 @@ class _ProgramDetailTreatmentState extends ConsumerState<ProgramDetailTreatment>
               programId: widget.program.id,
               patientId: widget.program.patientId,
               isSeniorDoctor: isSenior,
+              currentPlanName: widget.program.activePlan?.planName,
               onEdit: () => _openPlanBuilder(plan: p),
               onDelete: () => _deletePlan(p.id),
             ),

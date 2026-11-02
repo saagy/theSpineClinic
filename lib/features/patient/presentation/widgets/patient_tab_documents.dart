@@ -4,16 +4,14 @@
 /// Rule 15/16 — colours via Theme.of(context).colorScheme.
 library;
 
-import 'dart:typed_data';
-
-import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
+import 'workspace_upload_button.dart';
+import 'document_upload_feedback.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:spine_clinic_app/core/constants/app_sizes.dart';
 import 'package:spine_clinic_app/core/constants/app_strings.dart';
 import 'package:spine_clinic_app/core/errors/app_exception.dart';
-import 'package:spine_clinic_app/core/errors/result.dart';
 import 'package:spine_clinic_app/features/medical_records/presentation/screens/program_gallery_viewer_screen.dart';
 import 'package:spine_clinic_app/features/patient/domain/patient.dart';
 import 'package:spine_clinic_app/features/patient/domain/patient_document.dart';
@@ -22,8 +20,6 @@ import 'package:spine_clinic_app/features/patient/presentation/patient_documents
 import 'package:spine_clinic_app/features/patient/presentation/widgets/patient_document_item.dart';
 import 'package:spine_clinic_app/features/patient/presentation/widgets/patient_documents_skeleton.dart';
 import 'package:spine_clinic_app/features/patient/presentation/widgets/program_document_folder_tile.dart';
-import 'package:spine_clinic_app/shared/widgets/app_button.dart';
-import 'package:spine_clinic_app/shared/widgets/app_snackbar.dart';
 import 'package:spine_clinic_app/shared/widgets/empty_state.dart';
 import 'package:spine_clinic_app/shared/widgets/error_view.dart';
 
@@ -32,54 +28,10 @@ class PatientTabDocuments extends ConsumerStatefulWidget {
   final Patient patient;
 
   @override
-  ConsumerState<PatientTabDocuments> createState() =>
-      _PatientTabDocumentsState();
+  ConsumerState<PatientTabDocuments> createState() => _PatientTabDocumentsState();
 }
 
 class _PatientTabDocumentsState extends ConsumerState<PatientTabDocuments> {
-  bool _isUploadingLocal = false;
-
-  Future<void> _pickAndUpload() async {
-    final FilePickerResult? result = await FilePicker.platform.pickFiles(
-      type: FileType.custom,
-      allowedExtensions: ['pdf', 'png', 'jpg', 'jpeg'],
-      allowMultiple: false,
-    );
-    if (result == null || result.files.isEmpty) return;
-    final PlatformFile file = result.files.first;
-    if (!mounted) return;
-    final Uint8List? bytes = file.bytes;
-    if (bytes == null) {
-      AppSnackbar.show(
-        context,
-        message: AppStrings.fromKey('error_doc_file_too_large'),
-        variant: AppSnackbarVariant.error,
-      );
-      return;
-    }
-    setState(() => _isUploadingLocal = true);
-    try {
-      final Result<PatientDocument> uploadResult = await ref
-          .read(patientDocumentsNotifierProvider(widget.patient.id).notifier)
-          .uploadDocument(fileName: file.name, fileBytes: bytes);
-      if (!mounted) return;
-      uploadResult.when(
-        success: (_) => AppSnackbar.show(
-          context,
-          message: AppStrings.documentUploaded,
-          variant: AppSnackbarVariant.success,
-        ),
-        failure: (AppException error) => AppSnackbar.show(
-          context,
-          message: AppStrings.fromKey(error.userMessageKey),
-          variant: AppSnackbarVariant.error,
-        ),
-      );
-    } finally {
-      if (mounted) setState(() => _isUploadingLocal = false);
-    }
-  }
-
   void _openFolder(BuildContext context, ProgramDocumentGroup group) {
     ProgramGalleryViewerScreen.open(
       context,
@@ -93,23 +45,20 @@ class _PatientTabDocumentsState extends ConsumerState<PatientTabDocuments> {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
-    final groupsAsync = ref.watch(
-      patientDocumentGroupsProvider(widget.patient.id),
-    );
+    final groupsAsync = ref.watch(patientDocumentGroupsProvider(widget.patient.id));
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        if (_isUploadingLocal) LinearProgressIndicator(color: cs.primary),
         Padding(
           padding: const EdgeInsets.all(AppSizes.p16),
-          child: AppButton(
-            labelText: AppStrings.addDocument,
-            onPressed: _isUploadingLocal ? null : _pickAndUpload,
-            isLoading: _isUploadingLocal,
-            icon: Icons.add,
-            shape: AppButtonShape.pill,
-            debounceMs: 1000,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              WorkspaceUploadButton(patientId: widget.patient.id),
+              const SizedBox(height: AppSizes.p12),
+              DocumentUploadFeedback(patientId: widget.patient.id),
+            ],
           ),
         ),
         const SizedBox(height: AppSizes.p4),
@@ -117,9 +66,7 @@ class _PatientTabDocumentsState extends ConsumerState<PatientTabDocuments> {
           child: RefreshIndicator(
             color: cs.primary,
             onRefresh: () async {
-              ref.invalidate(
-                patientDocumentsNotifierProvider(widget.patient.id),
-              );
+              ref.invalidate(patientDocumentsNotifierProvider(widget.patient.id));
               ref.invalidate(patientDocumentGroupsProvider(widget.patient.id));
             },
             child: groupsAsync.when(
@@ -128,12 +75,8 @@ class _PatientTabDocumentsState extends ConsumerState<PatientTabDocuments> {
                 physics: const AlwaysScrollableScrollPhysics(),
                 children: [
                   ErrorView(
-                    exception: err is AppException
-                        ? err
-                        : AppException.fromSupabaseException(err),
-                    onRetry: () => ref.invalidate(
-                      patientDocumentGroupsProvider(widget.patient.id),
-                    ),
+                    exception: err is AppException ? err : AppException.fromSupabaseException(err),
+                    onRetry: () => ref.invalidate(patientDocumentGroupsProvider(widget.patient.id)),
                   ),
                 ],
               ),
@@ -150,10 +93,7 @@ class _PatientTabDocumentsState extends ConsumerState<PatientTabDocuments> {
                     ],
                   );
                 }
-                return _DocumentsGrid(
-                  groups: groups,
-                  onOpenFolder: _openFolder,
-                );
+                return _DocumentsGrid(groups: groups, onOpenFolder: _openFolder);
               },
             ),
           ),
@@ -172,9 +112,7 @@ class _DocumentsGrid extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final double screenWidth = MediaQuery.of(context).size.width;
-    final int crossAxisCount = screenWidth < 600
-        ? 2
-        : (screenWidth / 300).floor().clamp(2, 6);
+    final int crossAxisCount = screenWidth < 600 ? 2 : (screenWidth / 300).floor().clamp(2, 6);
 
     final items = <_GridItem>[
       ...groups.folders.map((g) => _GridItem.folder(g)),
@@ -183,12 +121,7 @@ class _DocumentsGrid extends StatelessWidget {
 
     return GridView.builder(
       physics: const AlwaysScrollableScrollPhysics(),
-      padding: const EdgeInsets.fromLTRB(
-        AppSizes.p16,
-        0,
-        AppSizes.p16,
-        AppSizes.p16,
-      ),
+      padding: const EdgeInsets.fromLTRB(AppSizes.p16, 0, AppSizes.p16, AppSizes.p16),
       gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: crossAxisCount,
         crossAxisSpacing: AppSizes.p12,
@@ -207,10 +140,7 @@ class _DocumentsGrid extends StatelessWidget {
           doc: (d) => PatientDocumentItem(
             key: ValueKey('doc-${d.id}'),
             document: d,
-          ).animate().fadeIn(
-            duration: 250.ms,
-            delay: (index * 30).ms,
-          ),
+          ).animate().fadeIn(duration: 250.ms, delay: (index * 30).ms),
         );
       },
     );
@@ -218,13 +148,9 @@ class _DocumentsGrid extends StatelessWidget {
 }
 
 class _GridItem {
-  const _GridItem.folder(ProgramDocumentGroup g)
-      : folderValue = g,
-        docValue = null;
+  const _GridItem.folder(ProgramDocumentGroup g) : folderValue = g, docValue = null;
 
-  const _GridItem.doc(PatientDocument d)
-      : docValue = d,
-        folderValue = null;
+  const _GridItem.doc(PatientDocument d) : docValue = d, folderValue = null;
 
   final ProgramDocumentGroup? folderValue;
   final PatientDocument? docValue;

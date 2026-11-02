@@ -1,42 +1,39 @@
 import 'package:flutter/material.dart';
+import 'package:spine_clinic_app/core/constants/app_sizes.dart';
 import 'package:spine_clinic_app/core/constants/app_strings.dart';
-import 'package:spine_clinic_app/shared/widgets/app_button.dart';
-import 'package:spine_clinic_app/shared/widgets/responsive_button_row.dart';
+import 'package:spine_clinic_app/core/constants/app_text_styles.dart';
 
-/// Renders a touch-friendly Approve/Reject row for pending staff applications.
 class ApplicationActionButtons extends StatelessWidget {
-  /// Creates an [ApplicationActionButtons] instance.
   const ApplicationActionButtons({
     super.key,
     required this.onApprove,
     required this.onReject,
     this.isLoading = false,
   });
-
-  /// Action triggered when the user taps Approve.
   final VoidCallback onApprove;
-
-  /// Action triggered when the user taps Reject.
   final VoidCallback onReject;
-
-  /// Whether the actions are currently processing in the background.
   final bool isLoading;
-
   @override
-  Widget build(BuildContext context) {
-    return ResponsiveButtonRow(
-      children: [
-        AppButton(
-          labelText: AppStrings.reject,
-          onPressed: isLoading ? null : onReject,
-          variant: AppButtonVariant.danger,
+  Widget build(BuildContext context) => Wrap(
+    spacing: AppSizes.p8,
+    runSpacing: AppSizes.p8,
+    children: [
+      TextButton(
+        style: TextButton.styleFrom(
+          foregroundColor: Theme.of(context).colorScheme.error,
+          minimumSize: const Size(AppSizes.tappableMin, AppSizes.tappableMin),
         ),
-        AppButton(
-          labelText: AppStrings.approve,
-          onPressed: isLoading ? null : onApprove,
-          variant: AppButtonVariant.success,
+        onPressed: isLoading ? null : onReject,
+        child: Text(AppStrings.reject, style: AppTextStyles.bodyBold),
+      ),
+      OutlinedButton(
+        style: OutlinedButton.styleFrom(
+          minimumSize: const Size(AppSizes.tappableMin, AppSizes.tappableMin),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppSizes.r8)),
         ),
-      ],
-    );
-  }
+        onPressed: isLoading ? null : onApprove,
+        child: Text(AppStrings.approve, style: AppTextStyles.bodyBold),
+      ),
+    ],
+  );
 }

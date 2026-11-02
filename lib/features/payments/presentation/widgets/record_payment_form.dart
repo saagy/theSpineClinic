@@ -12,7 +12,6 @@ import 'package:spine_clinic_app/features/payments/presentation/widgets/record_p
 import 'package:spine_clinic_app/shared/widgets/app_button.dart';
 import 'package:spine_clinic_app/shared/widgets/app_snackbar.dart';
 import 'package:spine_clinic_app/shared/widgets/error_view.dart';
-import 'package:spine_clinic_app/shared/widgets/loading_overlay.dart';
 
 class RecordPaymentForm extends ConsumerStatefulWidget {
   const RecordPaymentForm({super.key, required this.patientId});
@@ -108,8 +107,8 @@ class _RecordPaymentFormState extends ConsumerState<RecordPaymentForm> {
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: _appBar(context),
-      body: LoadingOverlay(
-        isLoading: controllerState.isLoading,
+      body: ExcludeFocus(
+        excluding: controllerState.isLoading,
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(AppSizes.p16),
           child: FormBuilder(
@@ -126,6 +125,7 @@ class _RecordPaymentFormState extends ConsumerState<RecordPaymentForm> {
                 const SizedBox(height: AppSizes.p32),
                 AppButton(
                   labelText: AppStrings.save,
+                  loadingLabel: AppStrings.savingClinicalRecord,
                   isLoading: controllerState.isLoading,
                   onPressed: () => _submit(patient),
                   debounceMs: 1000,

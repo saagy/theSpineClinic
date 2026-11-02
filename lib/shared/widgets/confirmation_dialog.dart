@@ -1,7 +1,7 @@
 /// Custom confirmation dialog widget matching the Spine Clinic styling tokens.
 ///
 /// A reusable dialog overlay invoked during destructive or critical operations,
-/// returning a boolean result via Navigator.pop. Touch-only design.
+/// returning a boolean result via Navigator.pop.
 ///
 /// Rule 1 — keep files under 200 lines.
 library;
@@ -10,7 +10,6 @@ import 'package:flutter/material.dart';
 import 'package:spine_clinic_app/core/constants/app_sizes.dart';
 import 'package:spine_clinic_app/core/constants/app_strings.dart';
 import 'package:spine_clinic_app/core/constants/app_text_styles.dart';
-import 'package:spine_clinic_app/shared/widgets/app_button.dart';
 
 /// A modal dialog wrapper for critical confirmation checks styled with design tokens.
 class ConfirmationDialog extends StatelessWidget {
@@ -47,51 +46,37 @@ class ConfirmationDialog extends StatelessWidget {
       backgroundColor: cs.surface,
       surfaceTintColor: cs.surface.withAlpha(0),
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.all(
-          Radius.circular(AppSizes.r16),
-        ), // Modern card radius
+        borderRadius: BorderRadius.all(Radius.circular(AppSizes.r16)), // Modern card radius
       ),
       insetPadding: const EdgeInsets.symmetric(
         horizontal: AppSizes.p24, // Symmetrical screen edge margins
       ),
-      contentPadding: const EdgeInsets.all(
-        AppSizes.p24,
-      ), // Uniform content padding
-      title: Text(
-        title,
-        style: AppTextStyles.headingSmall.copyWith(color: cs.onSurface),
-      ),
-      content: Text(
-        message,
-        style: AppTextStyles.body.copyWith(color: cs.onSurfaceVariant),
-      ),
-      actionsPadding: const EdgeInsets.only(
-        right: AppSizes.p24,
-        bottom: AppSizes.p24,
-        left: AppSizes.p24,
-      ),
+      contentPadding: const EdgeInsets.all(AppSizes.p24), // Uniform content padding
+      title: Text(title, style: AppTextStyles.headingSmall.copyWith(color: cs.onSurface)),
+      content: Text(message, style: AppTextStyles.body.copyWith(color: cs.onSurfaceVariant)),
+      actionsPadding: const EdgeInsets.only(right: AppSizes.p24, bottom: AppSizes.p24, left: AppSizes.p24),
       actions: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.end,
+        Wrap(
+          alignment: WrapAlignment.end,
+          spacing: AppSizes.p12,
+          runSpacing: AppSizes.p8,
           children: [
             // Cancel button (always secondary style)
-            AppButton(
-              labelText: cancelLabel,
+            TextButton(
               onPressed: () => Navigator.of(context).pop(false),
-              variant: AppButtonVariant.secondary,
-              fullWidth: false,
+              style: TextButton.styleFrom(minimumSize: const Size(AppSizes.tappableMin, AppSizes.tappableMin)),
+              child: Text(cancelLabel, style: AppTextStyles.button),
             ),
-            const SizedBox(
-              width: AppSizes.p12,
-            ), // 12px compact action separation
             // Confirm button (primary or danger based on parameter)
-            AppButton(
-              labelText: confirmLabel,
+            FilledButton(
               onPressed: () => Navigator.of(context).pop(true),
-              variant: isDestructive
-                  ? AppButtonVariant.danger
-                  : AppButtonVariant.primary,
-              fullWidth: false,
+              style: FilledButton.styleFrom(
+                minimumSize: const Size(AppSizes.tappableMin, AppSizes.tappableMin),
+                backgroundColor: isDestructive ? cs.error : null,
+                foregroundColor: isDestructive ? cs.onError : null,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppSizes.r8)),
+              ),
+              child: Text(confirmLabel, style: AppTextStyles.button),
             ),
           ],
         ),

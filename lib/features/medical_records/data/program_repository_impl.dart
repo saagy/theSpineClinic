@@ -13,8 +13,7 @@ import 'package:spine_clinic_app/features/patient/data/patient_document_storage.
 
 /// Supabase-backed implementation of [ProgramRepository].
 class ProgramRepositoryImpl implements ProgramRepository {
-  ProgramRepositoryImpl({required SupabaseService supabaseService})
-    : _service = supabaseService;
+  ProgramRepositoryImpl({required SupabaseService supabaseService}) : _service = supabaseService;
 
   final SupabaseService _service;
   static const String _tableName = 'patient_programs';
@@ -36,9 +35,7 @@ class ProgramRepositoryImpl implements ProgramRepository {
   ''';
 
   @override
-  Future<Result<List<PatientProgram>>> getProgramsForPatient(
-    String patientId,
-  ) async {
+  Future<Result<List<PatientProgram>>> getProgramsForPatient(String patientId) async {
     try {
       final data = await _service.guardQuery(
         () => _service
@@ -55,9 +52,7 @@ class ProgramRepositoryImpl implements ProgramRepository {
       return Result.success(list);
     } on Exception catch (error) {
       return Result.failure(
-        error is AppException
-            ? error
-            : AppException.fromSupabaseException(error),
+        error is AppException ? error : AppException.fromSupabaseException(error),
       );
     }
   }
@@ -66,20 +61,14 @@ class ProgramRepositoryImpl implements ProgramRepository {
   Future<Result<PatientProgram?>> getProgramById(String programId) async {
     try {
       final data = await _service.guardQuery(
-        () => _service
-            .from(_tableName)
-            .select(_selectQuery)
-            .eq('id', programId)
-            .maybeSingle(),
+        () => _service.from(_tableName).select(_selectQuery).eq('id', programId).maybeSingle(),
       );
 
       if (data == null) return const Result.success(null);
       return Result.success(PatientProgram.fromJson(data));
     } on Exception catch (error) {
       return Result.failure(
-        error is AppException
-            ? error
-            : AppException.fromSupabaseException(error),
+        error is AppException ? error : AppException.fromSupabaseException(error),
       );
     }
   }
@@ -119,10 +108,13 @@ class ProgramRepositoryImpl implements ProgramRepository {
     String? notes,
     ProgramStatus? status,
     List<ProgramAttachment>? pendingAttachments,
+    List<String> removedDocumentIds = const [],
     TreatmentPlanInput? treatmentPlan,
   }) => ProgramSave(_service).save({
     'p_patient_id': patientId,
     'p_program_id': programId,
+    if (removedDocumentIds.isNotEmpty)
+      'p_removed_document_ids': (removedDocumentIds.toSet().toList()..sort()),
     'p_condition_ids': conditionIds,
     'p_examination': examination,
     'p_imaging_notes': imagingNotes,
@@ -143,18 +135,13 @@ class ProgramRepositoryImpl implements ProgramRepository {
       await _service.guardQuery(
         () => _service
             .from(_tableName)
-            .update({
-              'status': status.name,
-              'updated_at': DateTime.now().toUtc().toIso8601String(),
-            })
+            .update({'status': status.name, 'updated_at': DateTime.now().toUtc().toIso8601String()})
             .eq('id', programId),
       );
       return const Result.success(null);
     } on Exception catch (error) {
       return Result.failure(
-        error is AppException
-            ? error
-            : AppException.fromSupabaseException(error),
+        error is AppException ? error : AppException.fromSupabaseException(error),
       );
     }
   }
@@ -173,30 +160,21 @@ class ProgramRepositoryImpl implements ProgramRepository {
 
       final paths = docRows
           .map(
-            (r) => patientDocumentStoragePath(
-              (r as Map<String, dynamic>)['file_url'] as String?,
-            ),
+            (r) => patientDocumentStoragePath((r as Map<String, dynamic>)['file_url'] as String?),
           )
           .whereType<String>()
           .toList();
 
-      await _service.guardQuery(
-        () => _service.from(_tableName).delete().eq('id', programId),
-      );
+      await _service.guardQuery(() => _service.from(_tableName).delete().eq('id', programId));
 
       if (paths.isNotEmpty) {
-        await ProgramStorageHelper.cleanupPaths(
-          service: _service,
-          paths: paths,
-        );
+        await ProgramStorageHelper.cleanupPaths(service: _service, paths: paths);
       }
 
       return const Result.success(null);
     } on Exception catch (error) {
       return Result.failure(
-        error is AppException
-            ? error
-            : AppException.fromSupabaseException(error),
+        error is AppException ? error : AppException.fromSupabaseException(error),
       );
     }
   }

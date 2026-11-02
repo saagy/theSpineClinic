@@ -8,6 +8,7 @@
 /// Rule 5 & 6 — read currentUserProvider role/id for write actions.
 library;
 
+import 'dart:async';
 import 'dart:typed_data';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
@@ -21,6 +22,7 @@ import 'package:spine_clinic_app/features/patient/domain/patient_document.dart';
 import 'package:spine_clinic_app/features/patient/domain/patient_documents_repository.dart';
 
 part 'patient_documents_providers.g.dart';
+part 'patient_document_deletion.dart';
 
 /// Provides a singleton [PatientDocumentsRepository] instance.
 @Riverpod(keepAlive: true)
@@ -32,14 +34,16 @@ PatientDocumentsRepository patientDocumentsRepository(Ref ref) {
 
 /// Family AsyncNotifier managing the document list state for a patient.
 @Riverpod(keepAlive: true)
-class PatientDocumentsNotifierNotifier extends _$PatientDocumentsNotifierNotifier {
+class PatientDocumentsNotifierNotifier extends _$PatientDocumentsNotifierNotifier
+    with _PatientDocumentDeletion {
   @override
   FutureOr<List<PatientDocument>> build(String patientId) async {
+    final userId = ref.watch(currentUserProvider).value?.id;
     final PatientDocumentsRepository repo = ref.watch(patientDocumentsRepositoryProvider);
     final Result<List<PatientDocument>> result = await repo.fetchDocuments(patientId);
 
     return result.when(
-      success: (List<PatientDocument> data) => data,
+      success: (List<PatientDocument> data) => _visibleDocuments(data, userId),
       failure: (AppException exception) => throw exception,
     );
   }
@@ -129,49 +133,6 @@ class PatientDocumentsNotifierNotifier extends _$PatientDocumentsNotifierNotifie
       },
       failure: (_) {},
     );
-    return result;
-  }
-
-  /// Deletes a document and refreshes the list.
-  ///
-  /// Same decoupled-state pattern as [uploadDocument]: deletion is a
-  /// write action whose outcome belongs to the caller, never to the
-  /// family's list state.
-  ///
-  /// Authorization is enforced at the DB layer via the
-  /// `patient_documents` DELETE RLS policy (any active staff member
-  /// with read access to the patient row can delete its documents).
-  /// The notifier only verifies a session exists.
-  Future<Result<void>> deleteDocument(PatientDocument doc) async {
-    // Rule 6: Check logged-in user session. Per-role authorization
-    // is enforced by RLS at delete time.
-    final Staff? currentUser = ref.read(currentUserProvider).value;
-    if (currentUser == null) {
-      return const Result.failure(
-        AuthException(
-          code: 'auth/unauthorized',
-          message: 'Must be logged in to delete documents.',
-          userMessageKey: 'error_auth_generic',
-        ),
-      );
-    }
-
-    final PatientDocumentsRepository repo = ref.read(patientDocumentsRepositoryProvider);
-    final Result<void> result = await repo.deleteDocument(documentId: doc.id);
-    if (!ref.mounted) return result;
-
-    result.when(
-      success: (_) {
-        state.whenData((current) {
-          state = AsyncData(current.where((d) => d.id != doc.id).toList());
-        });
-        ref.invalidateSelf();
-      },
-      failure: (AppException exception) {
-        /* no state mutation */
-      },
-    );
-
     return result;
   }
 }

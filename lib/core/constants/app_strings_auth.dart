@@ -11,6 +11,8 @@ abstract final class AppStringsAuth {
   static const String welcomeBack = 'Welcome Back!';
   static const String signInToContinue = 'Sign in to continue';
   static const String signIn = 'Sign In';
+  static const String signingIn = 'Signing in…';
+  static const String submittingRegistration = 'Submitting…';
   static const String signOut = 'Sign Out';
   static const String password = 'Password';
   static const String confirmPassword = 'Confirm Password';

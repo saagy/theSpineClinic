@@ -43,47 +43,44 @@ extension _EditPatientView on _EditPatientFormState {
             onPressed: isSaving ? null : _handleCancel,
           ),
         ),
-        body: LoadingOverlay(
-          isLoading: isSaving,
-          child: Form(
-            key: _formKey,
-            child: FormPageBody(
-              isSaving: isSaving,
-              onSave: _submit,
-              onCancel: _handleCancel,
-              child: FormColumns(
-                first: FormSection(
-                  title: AppStrings.patientDetails,
-                  child: PatientDemographicFields(
-                    nameCtrl: _nameCtrl,
-                    phoneCtrl: _phoneCtrl,
-                    selectedClinic: _selectedClinic,
-                    onClinicChanged: (val) => _mutate(() => _selectedClinic = val),
-                    enabled: !isSaving,
-                  ),
+        body: Form(
+          key: _formKey,
+          child: FormPageBody(
+            isSaving: isSaving,
+            onSave: _submit,
+            onCancel: _handleCancel,
+            child: FormColumns(
+              first: FormSection(
+                title: AppStrings.patientDetails,
+                child: PatientDemographicFields(
+                  nameCtrl: _nameCtrl,
+                  phoneCtrl: _phoneCtrl,
+                  selectedClinic: _selectedClinic,
+                  onClinicChanged: (val) => _mutate(() => _selectedClinic = val),
+                  enabled: !isSaving,
                 ),
-                second: FormSection(
-                  title: AppStrings.assignedDoctors,
-                  child: isRegularDoctor
-                      ? Wrap(
-                          spacing: AppSizes.p8,
-                          runSpacing: AppSizes.p8,
-                          children: _selectedDoctors
-                              .map((doc) => AppChip(label: doc.fullName))
-                              .toList(),
-                        )
-                      : DoctorSelectField(
-                          initialValue: _selectedDoctors,
-                          onSavedDoctors: (doctors) => _mutate(() {
-                            _selectedDoctors.clear();
-                            _selectedDoctors.addAll(doctors);
-                          }),
-                          onChanged: (doctors) => _mutate(() {
-                            _selectedDoctors.clear();
-                            _selectedDoctors.addAll(doctors);
-                          }),
-                        ),
-                ),
+              ),
+              second: FormSection(
+                title: AppStrings.assignedDoctors,
+                child: isRegularDoctor
+                    ? Wrap(
+                        spacing: AppSizes.p8,
+                        runSpacing: AppSizes.p8,
+                        children: _selectedDoctors
+                            .map((doc) => AppChip(label: doc.fullName))
+                            .toList(),
+                      )
+                    : DoctorSelectField(
+                        initialValue: _selectedDoctors,
+                        onSavedDoctors: (doctors) => _mutate(() {
+                          _selectedDoctors.clear();
+                          _selectedDoctors.addAll(doctors);
+                        }),
+                        onChanged: (doctors) => _mutate(() {
+                          _selectedDoctors.clear();
+                          _selectedDoctors.addAll(doctors);
+                        }),
+                      ),
               ),
             ),
           ),

@@ -4,6 +4,58 @@ library;
 
 /// Application-wide string constants.
 abstract final class AppStrings {
+  static String staffAppliedOn(String date) => 'Applied $date';
+  static const String noMatchingStaff = 'No staff match your search or filters.';
+  static const String programActions = 'Program actions';
+  static const String planActions = 'Treatment plan actions';
+  static const String editProgramDetails = 'Edit program details';
+  static const String changeProgramStatus = 'Change program status';
+  static const String completeProgram = 'Mark program completed';
+  static const String archiveProgram = 'Archive program';
+  static const String reactivateProgram = 'Reactivate program';
+  static const String currentTreatmentPlan = 'Current treatment plan';
+  static const String createTreatmentPlan = 'Create new treatment plan';
+  static const String editThisPlan = 'Edit this plan';
+  static const String deleteThisPlan = 'Delete this plan';
+  static const String useThisPlan = 'Use this plan';
+  static const String savePlan = 'Save plan';
+  static const String saveAndUsePlan = 'Save and use plan';
+  static const String savedPlanOnlyHint =
+      'This plan will be saved under Other saved plans. It will not be the current treatment plan.';
+  static const String copiedPlanHint =
+      'Start from the current treatments. Saving creates a separate plan and keeps the original.';
+  static const String editPlanHint =
+      'Changes update this saved plan. Create a new plan to keep the original treatments.';
+  static String programStatusLabel(String status) => 'Program status: $status';
+  static String programStatusUpdated(String status) => 'Program status changed to $status.';
+  static String newPlanName(String name) => '$name — new plan';
+  static String usePlanConfirmation(String name, String? currentName) =>
+      'Use “$name” as the current treatment plan?'
+      '${currentName == null ? '' : ' “$currentName” will remain under Other saved plans.'}'
+      ' Program status stays unchanged.';
+  static String replacePlanHint(String name) =>
+      'Replaces “$name” as the current plan. The previous plan stays saved; program status stays unchanged.';
+  static const String savingChanges = 'Saving changes…';
+  static const String savingProgramAndDocuments = 'Saving program and documents…';
+  static const String savingPatientAndDocuments = 'Saving patient and documents…';
+  static const String uploadingDocuments = 'Uploading documents…';
+  static const String keepPageOpen = 'Please keep this page open until this finishes.';
+  static const String retrySave = 'Retry save';
+  static const String retryUploads = 'Retry unfinished uploads';
+  static const String removeFailedFile = 'Remove failed file';
+  static const String selectFileAgain = 'Select the original file again.';
+  static const String uploadNeedsAttention = 'Some documents need attention';
+  static const String uploadUnconfirmed = 'Upload not confirmed';
+  static const String takingLonger = 'Taking longer than usual';
+  static const String requestStillPending =
+      'The result is still pending. Leaving this screen does not cancel the request.';
+  static const String goBack = 'Go back';
+  static const String working = 'Working…';
+  static const String updatingAppointment = 'Updating appointment…';
+  static const String updatingPayments = 'Updating payments…';
+  static const String deletingPatient = 'Deleting patient…';
+  static String documentsAttached(int completed, int total) =>
+      '$completed of $total ${total == 1 ? 'document' : 'documents'} attached';
   static const String errorDocLinkIncomplete =
       'This document has an incomplete file link. Upload the original file again to view it.';
   static const String profileSavedPasswordUnconfirmed =
@@ -83,7 +135,7 @@ abstract final class AppStrings {
   static const String noConditionsRecorded =
       'No conditions recorded in this history.';
   static const String noActivePrograms = 'No active programs.';
-  static const String noActivePlan = 'No active treatment plan';
+  static const String noActivePlan = 'No current treatment plan';
   static const String registered = 'Registered';
   static const String viewAll = 'View all';
   static const String loadingPatientSection = 'Loading patient information';
@@ -176,6 +228,7 @@ abstract final class AppStrings {
     'error_database_query_failed': errorDatabaseQueryFailed,
     'error_network_generic': errorNetworkGeneric,
     'profile_saved_password_unconfirmed': profileSavedPasswordUnconfirmed,
+    'select_file_again': selectFileAgain,
     'program_attachments_pending': programAttachmentsPending,
     'program_attachments_rejected': programAttachmentsRejected,
     'error_doc_link_incomplete': errorDocLinkIncomplete,
@@ -262,6 +315,7 @@ abstract final class AppStrings {
   static const String documentNameTooLong =
       'Document names cannot exceed 255 characters.';
   static const String deleteDocumentTitle = 'Delete Document';
+  static const String removeAttachment = 'Remove attachment';
   static const String confirmDeleteDocument =
       'Are you sure you want to permanently delete this document?';
   static const String doctorPatientEditDenied =
@@ -1229,7 +1283,7 @@ abstract final class AppStrings {
   static const String durationMinutes = 'Duration (minutes)';
   static const String planSaved = 'Treatment plan saved.';
   static const String noTreatmentPlans = 'No treatment plans in this program.';
-  static const String noActiveTreatmentPlan = 'No active treatment plan.';
+  static const String noActiveTreatmentPlan = 'No current treatment plan. Choose a saved plan or create one.';
   static const String exportProgramPdf = 'Export Program PDF';
   static const String selectModalities = 'Select Modalities';
   static const String configureRegions = 'Configure Target Regions';
@@ -1248,15 +1302,15 @@ abstract final class AppStrings {
   static const String modalityNotes = 'Modality Notes';
   static const String modalityNotesHint =
       'Intensity, parameters, or specific technique notes...';
-  static const String activePlanToggle = 'Set as Active Plan';
+  static const String activePlanToggle = 'Use as current plan after saving';
   static const String activePlanSubtitle =
-      'Active plan will be executed during patient visits';
+      'Selects the treatment plan for this program. Program status stays unchanged.';
   static const String noModalitiesSelected =
       'No modalities selected. Tap a modality chip above to configure.';
-  static const String previousPlans = 'Previous Plan Versions';
+  static const String previousPlans = 'Other saved plans';
   static const String planHistory = 'Plan History';
   static const String setAsActive = 'Set as Active';
-  static const String planActivated = 'Plan activated successfully.';
+  static const String planActivated = 'Current treatment plan updated.';
   static const String newPlanVersion = 'New Plan Version';
   static const String activate = 'Activate';
   static const String inactive = 'Inactive';
