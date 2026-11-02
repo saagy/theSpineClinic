@@ -91,7 +91,7 @@ class FormPageBody extends StatelessWidget {
                         builder: (context, constraints) => Row(
                           children: [
                             if (constraints.maxWidth >=
-                                AppSizes.desktopBreakpoint)
+                                AppSizes.formActionRowBreakpoint)
                               const Spacer(),
                             TextButton(
                               onPressed: isSaving ? null : onCancel,
@@ -107,7 +107,7 @@ class FormPageBody extends StatelessWidget {
                             ),
                             const SizedBox(width: AppSizes.p16),
                             if (constraints.maxWidth >=
-                                AppSizes.desktopBreakpoint)
+                                AppSizes.formActionRowBreakpoint)
                               SizedBox(
                                 width: AppSizes.formActionWidth,
                                 child: _saveButton(),

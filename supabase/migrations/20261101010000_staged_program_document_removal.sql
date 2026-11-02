@@ -1,7 +1,7 @@
 -- Staged document removals commit with program edits; storage is cleaned afterward.
 CREATE OR REPLACE FUNCTION public.save_program_mutation(p_request_id uuid, p_payload jsonb)
 RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path=public,pg_temp AS $$
-DECLARE previous public.mutation_receipts; outcome jsonb; saved jsonb;
+DECLARE previous public.mutation_receipts; result_json jsonb; saved jsonb;
   actor uuid := (SELECT staff_id FROM public.get_auth_staff_profile());
   v_patient_id uuid := (p_payload->>'p_patient_id')::uuid;
   v_program_id uuid := (p_payload->>'p_program_id')::uuid;
@@ -23,7 +23,12 @@ BEGIN
     IF previous.actor_id<>actor OR previous.kind<>v_kind OR previous.payload_hash<>request_hash THEN
       RAISE EXCEPTION 'Request identity mismatch' USING ERRCODE='22000';
     END IF;
-    RETURN previous.outcome;
+    IF previous.outcome->>'ok' IS DISTINCT FROM 'true'
+      OR previous.outcome ? 'removed_document_ids'
+      OR coalesce(p_payload->'p_removed_document_ids','[]'::jsonb)='[]'::jsonb THEN
+      RETURN previous.outcome;
+    END IF;
+    -- Older servers ignored removals; finish only that missing step on retry.
   END IF;
   BEGIN
     removed_ids := ARRAY(SELECT DISTINCT value::uuid FROM
@@ -39,17 +44,19 @@ BEGIN
         p_payload->>'p_notes',NULL,p_payload->'p_treatment_plan');
       v_program_id := (saved->>'id')::uuid;
     ELSE
-      PERFORM 1 FROM public.patient_programs p
+      SELECT to_jsonb(p) INTO saved FROM public.patient_programs p
         WHERE p.id=v_program_id AND p.patient_id=v_patient_id FOR UPDATE;
       IF NOT FOUND THEN
         RAISE EXCEPTION 'Program not found for patient' USING ERRCODE='P0001';
       END IF;
-      saved := public.update_patient_program(v_program_id,
-        ARRAY(SELECT value::uuid FROM jsonb_array_elements_text(p_payload->'p_condition_ids')),
-        p_payload->>'p_examination',p_payload->>'p_imaging_notes',
-        p_payload->>'p_exaggerating_positions',p_payload->>'p_relieving_positions',
-        p_payload->>'p_notes',(p_payload->>'p_status')::public.program_status,
-        NULL,p_payload->'p_treatment_plan');
+      IF previous.request_id IS NULL THEN
+        saved := public.update_patient_program(v_program_id,
+          ARRAY(SELECT value::uuid FROM jsonb_array_elements_text(p_payload->'p_condition_ids')),
+          p_payload->>'p_examination',p_payload->>'p_imaging_notes',
+          p_payload->>'p_exaggerating_positions',p_payload->>'p_relieving_positions',
+          p_payload->>'p_notes',(p_payload->>'p_status')::public.program_status,
+          NULL,p_payload->'p_treatment_plan');
+      END IF;
     END IF;
     FOR document IN SELECT * FROM public.patient_documents
       WHERE id=ANY(removed_ids) FOR UPDATE LOOP
@@ -73,15 +80,20 @@ BEGIN
             FROM public.modality_regions mr WHERE mr.plan_modality_id=pm.id),'[]'::jsonb)))
           FROM public.plan_modalities pm WHERE pm.treatment_plan_id=tp.id),'[]'::jsonb)))
         FROM public.treatment_plans tp WHERE tp.program_id=v_program_id),'[]'::jsonb));
-    outcome := jsonb_build_object('ok',true,'program',saved,
+    result_json := jsonb_build_object('ok',true,'program',saved,
       'removed_document_ids',to_jsonb(removed_ids),'removed_document_paths',to_jsonb(removed_paths));
   EXCEPTION WHEN OTHERS THEN
     GET STACKED DIAGNOSTICS error_code=RETURNED_SQLSTATE, error_message=MESSAGE_TEXT;
-    outcome := jsonb_build_object('ok',false,'code',error_code,'message',error_message);
+    result_json := jsonb_build_object('ok',false,'code',error_code,'message',error_message);
   END;
-  INSERT INTO public.mutation_receipts(request_id,actor_id,kind,payload_hash,outcome)
-    VALUES(p_request_id,actor,v_kind,request_hash,outcome);
-  RETURN outcome;
+  IF previous.request_id IS NULL THEN
+    INSERT INTO public.mutation_receipts(request_id,actor_id,kind,payload_hash,outcome)
+      VALUES(p_request_id,actor,v_kind,request_hash,result_json);
+  ELSIF result_json->>'ok'='true' THEN
+    UPDATE public.mutation_receipts r SET outcome=result_json
+      WHERE r.request_id=p_request_id;
+  END IF;
+  RETURN result_json;
 END;
 $$;
 REVOKE ALL ON FUNCTION public.save_program_mutation(uuid,jsonb) FROM PUBLIC,anon;

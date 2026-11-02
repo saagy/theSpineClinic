@@ -39,6 +39,47 @@ void main() {
       });
     }
   }
+  for (final width in [320.0, 1280.0]) {
+    for (final dark in [false, true]) {
+      testWidgets('program list menus at $width dark=$dark', (tester) async {
+        tester.view.physicalSize = Size(width, 900);
+        tester.view.devicePixelRatio = 1;
+        addTearDown(tester.view.resetPhysicalSize);
+        addTearDown(tester.view.resetDevicePixelRatio);
+        final programs = ProgramUxRepository();
+        final key = GlobalKey();
+        await tester.pumpWidget(
+          programUxApp(programs, ProgramUxPlanRepository(programs), list: true, dark: dark, captureKey: key),
+        );
+        await tester.pumpAndSettle();
+        final suffix = '$width-${dark ? 'dark' : 'light'}';
+        await tester.tap(find.byTooltip(AppStrings.programActions));
+        await tester.pumpAndSettle();
+        expect(tester.takeException(), isNull);
+        await capturePolish(tester, key, 'program-list-menu-$suffix');
+        await tester.tap(find.text(AppStrings.changeStatus));
+        await tester.pumpAndSettle();
+        expect(tester.takeException(), isNull);
+        await capturePolish(tester, key, 'program-list-status-$suffix');
+      });
+    }
+  }
+  for (final role in ['doctor', 'reception']) {
+    testWidgets('read-only $role program list', (tester) async {
+      tester.view.physicalSize = const Size(390, 900);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+      final programs = ProgramUxRepository();
+      final key = GlobalKey();
+      await tester.pumpWidget(
+        programUxApp(programs, ProgramUxPlanRepository(programs), list: true, role: role, captureKey: key),
+      );
+      await tester.pumpAndSettle();
+      expect(tester.takeException(), isNull);
+      await capturePolish(tester, key, 'program-read-only-$role');
+    });
+  }
   for (final list in [false, true]) {
     testWidgets('enlarged text fits phone ${list ? 'list' : 'detail'}', (tester) async {
       tester.view.physicalSize = const Size(360, 900);
@@ -63,6 +104,12 @@ void main() {
       await tester.pumpAndSettle();
       expect(tester.takeException(), isNull);
       await capturePolish(tester, key, 'program-enlarged-menu-${list ? 'list' : 'detail'}');
+      if (list) {
+        await tester.tap(find.text(AppStrings.changeStatus));
+        await tester.pumpAndSettle();
+        expect(tester.takeException(), isNull);
+        await capturePolish(tester, key, 'program-enlarged-list-status');
+      }
     });
   }
 }

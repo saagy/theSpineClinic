@@ -12,6 +12,8 @@ library;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+import 'package:spine_clinic_app/core/network/app_routes.dart';
 
 import 'package:spine_clinic_app/core/constants/app_sizes.dart';
 import 'package:spine_clinic_app/core/constants/app_strings.dart';
@@ -21,7 +23,6 @@ import 'package:spine_clinic_app/core/utils/theme_mode_controller.dart';
 import 'package:spine_clinic_app/features/admin/presentation/branch_providers.dart';
 import 'package:spine_clinic_app/features/auth/presentation/auth_actions.dart';
 import 'package:spine_clinic_app/features/auth/presentation/auth_providers.dart';
-import 'package:spine_clinic_app/features/auth/presentation/edit_profile_sheet.dart';
 import 'package:spine_clinic_app/features/patient/domain/clinic_location.dart';
 import 'package:spine_clinic_app/shared/widgets/error_view.dart';
 import 'package:spine_clinic_app/shared/widgets/profile_menu_row.dart';
@@ -79,7 +80,7 @@ class ReceptionistProfileScreen extends ConsumerWidget {
                   StaffProfileHeader(
                     user: user,
                     roleLabel: AppStrings.receptionistRoleLabel,
-                    onEditProfile: () => EditProfileSheet.show(context, user),
+                    onEditProfile: () => context.push(AppRoutes.editProfile),
                   ),
                   const SizedBox(height: AppSizes.p16),
                   ProfileMenuRow(

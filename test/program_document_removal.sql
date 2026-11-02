@@ -80,12 +80,16 @@ BEGIN
   outcome := public.save_program_mutation('70000000-0000-0000-0000-000000000005',payload-'p_program_id');
   PERFORM pg_temp.check_removal(outcome->>'ok'='false','Creation cannot remove existing documents');
 
+  PERFORM set_config('request.jwt.claim.sub','',true);
   UPDATE public.staff SET is_senior=false WHERE id='20000000-0000-0000-0000-000000000001';
+  PERFORM set_config('request.jwt.claim.sub','10000000-0000-0000-0000-000000000001',true);
   BEGIN
     PERFORM public.save_program_mutation('70000000-0000-0000-0000-000000000006',payload);
     RAISE EXCEPTION 'Junior doctor must be denied';
   EXCEPTION WHEN insufficient_privilege THEN NULL; END;
+  PERFORM set_config('request.jwt.claim.sub','',true);
   UPDATE public.staff SET is_senior=true,is_active=false WHERE id='20000000-0000-0000-0000-000000000001';
+  PERFORM set_config('request.jwt.claim.sub','10000000-0000-0000-0000-000000000001',true);
   BEGIN
     PERFORM public.save_program_mutation('70000000-0000-0000-0000-000000000007',payload);
     RAISE EXCEPTION 'Inactive staff must be denied';

@@ -69,7 +69,7 @@ final staffFormControllerProvider = StaffFormControllerProvider._();
 
 /// Controller managing staff account registration and modifications.
 final class StaffFormControllerProvider
-    extends $NotifierProvider<StaffFormController, AsyncValue<void>> {
+    extends $NotifierProvider<StaffFormController, StaffFormState> {
   /// Controller managing staff account registration and modifications.
   StaffFormControllerProvider._()
     : super(
@@ -90,30 +90,30 @@ final class StaffFormControllerProvider
   StaffFormController create() => StaffFormController();
 
   /// {@macro riverpod.override_with_value}
-  Override overrideWithValue(AsyncValue<void> value) {
+  Override overrideWithValue(StaffFormState value) {
     return $ProviderOverride(
       origin: this,
-      providerOverride: $SyncValueProvider<AsyncValue<void>>(value),
+      providerOverride: $SyncValueProvider<StaffFormState>(value),
     );
   }
 }
 
 String _$staffFormControllerHash() =>
-    r'4b0df61d1c8347e81e5ed7aaae4dfdc73067892e';
+    r'abe439b8016a4f7ed1d0a870f635dafeb5cee6aa';
 
 /// Controller managing staff account registration and modifications.
 
-abstract class _$StaffFormController extends $Notifier<AsyncValue<void>> {
-  AsyncValue<void> build();
+abstract class _$StaffFormController extends $Notifier<StaffFormState> {
+  StaffFormState build();
   @$mustCallSuper
   @override
   void runBuild() {
-    final ref = this.ref as $Ref<AsyncValue<void>, AsyncValue<void>>;
+    final ref = this.ref as $Ref<StaffFormState, StaffFormState>;
     final element =
         ref.element
             as $ClassProviderElement<
-              AnyNotifier<AsyncValue<void>, AsyncValue<void>>,
-              AsyncValue<void>,
+              AnyNotifier<StaffFormState, StaffFormState>,
+              StaffFormState,
               Object?,
               Object?
             >;

@@ -28,6 +28,8 @@ abstract final class AppSizes {
   static const double formControlPairBreakpoint = 360;
   static const double formActionWidth = 240;
   static const double formPairBreakpoint = 480;
+  static const double formPairMaxTextScale = 1.3;
+  static const double formActionRowBreakpoint = 600;
 
   static const double recordFactWidth = 240;
   static const double clinicalContentMaxWidth = 1040;

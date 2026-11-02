@@ -7,7 +7,7 @@ import '../../features/auth/domain/user_role.dart';
 String? authRedirect(AsyncValue<Staff?> asyncUser, Uri uri) {
   final String location = uri.path;
 
-  if (asyncUser.isLoading) {
+  if (asyncUser.isLoading && !asyncUser.hasValue) {
     if (location == AppRoutes.login || location == AppRoutes.register) {
       return null;
     }

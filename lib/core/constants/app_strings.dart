@@ -10,6 +10,7 @@ abstract final class AppStrings {
   static const String planActions = 'Treatment plan actions';
   static const String editProgramDetails = 'Edit program details';
   static const String changeProgramStatus = 'Change program status';
+  static const String changeStatus = 'Change status';
   static const String completeProgram = 'Mark program completed';
   static const String archiveProgram = 'Archive program';
   static const String reactivateProgram = 'Reactivate program';
@@ -665,6 +666,26 @@ abstract final class AppStrings {
       'Are you sure you want to restore this appointment to scheduled?';
 
   // Staff Management Strings
+  static const String clinicAccess = 'Clinic access';
+  static const String staffEditHelp = 'Manage contact details, clinic access and account security.';
+  static const String staffCreateHelp = 'Create an account and choose this staff member’s clinic access.';
+  static const String staffOwnRoleHelp = 'Your own administrator role cannot be changed here.';
+  static const String staffOwnAccessHelp = 'Your own account must stay active.';
+  static const String staffPaymentsHelp = 'Record payments, collect balances and manage payment entries.';
+  static const String staffWillActivate = 'Will be active';
+  static const String staffWillDeactivate = 'Will be deactivated';
+  static const String staffActivateDraft = 'Save changes to allow this staff member to sign in.';
+  static const String staffDeactivateDraft = 'Save changes to stop sign-in access. Existing appointments stay scheduled.';
+  static const String activateOnSave = 'Activate on save';
+  static const String deactivateOnSave = 'Deactivate on save';
+  static const String undoAccessChange = 'Undo access change';
+  static const String staffPasswordHelp = 'Set a new password for this staff member.';
+  static const String staffPasswordDraftHelp = 'The new password will be applied when you save changes.';
+  static const String cancelPasswordChange = 'Cancel password change';
+  static const String staffPasswordMinimum = 'Use at least 8 characters.';
+  static String staffAccessStatus(String status) => 'Account access: $status';
+  static String deactivateStaffTitle(String name) =>
+      name.trim().isEmpty ? 'Deactivate this account?' : 'Deactivate ${name.trim()}?';
   static const String staffManagement = 'Staff Management';
   static const String addStaff = 'Add Staff';
   static const String editStaff = 'Edit Staff';
@@ -831,6 +852,22 @@ abstract final class AppStrings {
   static const String doctorRoleLabel = 'Doctor';
 
   // Profile / Edit
+  static const String signIn = 'Sign in';
+  static const String personalDetails = 'Personal details';
+  static const String accountSecurity = 'Security';
+  static const String profilePhoneLabel = 'Phone (optional)';
+  static const String profileDetailsHelp =
+      'Keep your name and contact details up to date.';
+  static const String profileEmailHelp =
+      'You use this email address to sign in.';
+  static const String profileSecurityHelp =
+      'Choose a new password for your account.';
+  static const String profilePasswordHelp =
+      'Use at least 8 characters. Your new password takes effect when you save.';
+  static const String updatePassword = 'Update password';
+  static const String passwordUpdatedSuccess = 'Password updated successfully.';
+  static const String showPassword = 'Show password';
+  static const String hidePassword = 'Hide password';
   static const String editProfile = 'Edit Profile';
   static const String changePasswordOptional = 'Change Password (optional)';
   static const String newPasswordHint = 'New Password';

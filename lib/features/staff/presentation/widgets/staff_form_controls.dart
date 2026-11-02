@@ -1,45 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_form_builder/flutter_form_builder.dart';
-import 'package:spine_clinic_app/core/constants/app_sizes.dart';
 import 'package:spine_clinic_app/core/constants/app_text_styles.dart';
-
-InputDecoration staffInputDecoration(
-  BuildContext context,
-  String label, {
-  required bool enabled,
-  String? hint,
-  Widget? suffix,
-}) {
-  final ColorScheme cs = Theme.of(context).colorScheme;
-  final OutlineInputBorder border = OutlineInputBorder(
-    borderRadius: const BorderRadius.all(Radius.circular(AppSizes.r8)),
-    borderSide: BorderSide(color: cs.outline, width: AppSizes.borderWidth),
-  );
-  return InputDecoration(
-    labelText: label,
-    labelStyle: AppTextStyles.captionMedium.copyWith(color: cs.onSurfaceVariant),
-    floatingLabelBehavior: FloatingLabelBehavior.always,
-    isDense: true,
-    filled: true,
-    fillColor: enabled ? cs.surface : cs.surfaceContainerHighest,
-    hintText: hint,
-    hintStyle: AppTextStyles.bodySecondary.copyWith(color: cs.onSurfaceVariant),
-    contentPadding: AppSizes.paddingCell,
-    enabledBorder: border,
-    disabledBorder: border,
-    focusedBorder: border.copyWith(
-      borderSide: BorderSide(color: cs.primary, width: AppSizes.borderWidthFocused),
-    ),
-    errorBorder: border.copyWith(
-      borderSide: BorderSide(color: cs.error, width: AppSizes.borderWidth),
-    ),
-    focusedErrorBorder: border.copyWith(
-      borderSide: BorderSide(color: cs.error, width: AppSizes.borderWidthFocused),
-    ),
-    errorStyle: AppTextStyles.caption.copyWith(color: cs.error),
-    suffixIcon: suffix,
-  );
-}
+import 'package:spine_clinic_app/shared/widgets/app_input_decoration.dart';
+import 'package:spine_clinic_app/shared/widgets/labeled_form_field.dart';
 
 class StaffTextField extends StatelessWidget {
   const StaffTextField({
@@ -52,8 +15,10 @@ class StaffTextField extends StatelessWidget {
     this.keyboardType,
     this.textCapitalization = TextCapitalization.none,
     this.validator,
+    this.autofillHints,
+    this.textInputAction = TextInputAction.next,
+    this.onSubmitted,
   });
-
   final String name;
   final String label;
   final bool enabled;
@@ -62,18 +27,29 @@ class StaffTextField extends StatelessWidget {
   final TextInputType? keyboardType;
   final TextCapitalization textCapitalization;
   final String? Function(String?)? validator;
-
+  final Iterable<String>? autofillHints;
+  final TextInputAction textInputAction;
+  final ValueChanged<String?>? onSubmitted;
   @override
-  Widget build(BuildContext context) {
-    return FormBuilderTextField(
+  Widget build(BuildContext context) => LabeledFormField(
+    label: label,
+    enabled: enabled,
+    child: FormBuilderTextField(
       name: name,
-      style: AppTextStyles.body.copyWith(color: Theme.of(context).colorScheme.onSurface),
+      autovalidateMode: AutovalidateMode.onUserInteraction,
       enabled: enabled,
       initialValue: initialValue,
+      style: AppTextStyles.body.copyWith(
+        color: Theme.of(context).colorScheme.onSurface,
+      ),
       keyboardType: keyboardType,
       textCapitalization: textCapitalization,
-      decoration: staffInputDecoration(context, label, enabled: enabled, hint: hint),
-      validator: validator,
-    );
-  }
+      autofillHints: autofillHints,
+      textInputAction: textInputAction,
+      onSubmitted: onSubmitted,
+      decoration: appInputDecoration(context, enabled: enabled, hintText: hint),
+      validator: (String? value) => validator?.call(value?.trim()),
+      valueTransformer: (String? value) => value?.trim(),
+    ),
+  );
 }

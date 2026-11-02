@@ -123,8 +123,9 @@ The program header uses a labeled status dropdown and an explicit Edit program
 details action, wrapping naturally on narrow windows. The current treatment plan
 retains its scoped three-dot menu. New plans copy current treatments into a new
 record; edits update the selected record. Other saved plans use a named switch
-confirmation. Programs-tab rows use the shared three-dot menu for View, Edit and
-Delete according to role. See [program action clarity](docs/program-action-clarity.md).
+confirmation. Permitted Programs-tab users get Change status, Edit and Delete;
+read-only users get a navigation chevron. Both status entry points use the shared
+icon-led record menu. See [program action clarity](docs/program-action-clarity.md).
 
 The September 13 shipping-polish directions were explicitly selected by the user
 and implemented. See [the audit and validation](docs/shipping-ui-polish.md).
@@ -137,7 +138,8 @@ Patient tabs use the slate scaffold with separate overview group surfaces.
 Create/edit forms use semantic sections, responsive columns and persistent actions.
 November 2 staff cleanup inherits clinical blue and Plus Jakarta Sans: flat rows,
 quiet initials, status text, compact confirmed review actions and a labeled Add.
-Staff forms use bounded `FormPageBody`/`FormSection` with persistent Save/Cancel.
+Staff forms extend bounded sections with external labels, persistent Save/Cancel and explicit account/password tasks. See [staff editor decisions](docs/staff-editor-flow.md).
+Profile editing extends this form system with separate password navigation, preserved contact drafts, guarded actions and contact fields that stack for enlarged text. See [adopted flow and validation](docs/profile-edit-flow.md).
 Shared filter frames, sort options and doctor selection now serve Patients,
 Schedule, appointments, doctor history and staff with separate feature state.
 Older patient-note/appointment sheets remain. See [scope and rendered validation](docs/staff-ui-cleanup.md).

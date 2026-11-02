@@ -78,7 +78,7 @@ class _ProgramDetailScreenState extends ConsumerState<ProgramDetailScreen> {
     if (program != null) _checkAutoOpen(program);
 
     return Scaffold(
-      backgroundColor: Theme.of(context).colorScheme.surface,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
         leading: const AppBackButton(),
         title: const Text(AppStrings.programDetails),

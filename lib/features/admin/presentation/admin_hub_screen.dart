@@ -24,7 +24,6 @@ import 'package:spine_clinic_app/features/auth/domain/staff.dart';
 import 'package:spine_clinic_app/features/auth/domain/user_role.dart';
 import 'package:spine_clinic_app/features/auth/presentation/auth_actions.dart';
 import 'package:spine_clinic_app/features/auth/presentation/auth_providers.dart';
-import 'package:spine_clinic_app/features/auth/presentation/edit_profile_sheet.dart';
 import 'package:spine_clinic_app/shared/widgets/error_view.dart';
 import 'package:spine_clinic_app/shared/widgets/profile_menu_row.dart';
 import 'package:spine_clinic_app/shared/widgets/staff_profile_header.dart';
@@ -97,7 +96,7 @@ class _AdminHubBody extends ConsumerWidget {
                   StaffProfileHeader(
                     user: user,
                     roleLabel: AppStrings.adminRoleLabel,
-                    onEditProfile: () => EditProfileSheet.show(context, user),
+                    onEditProfile: () => context.push(AppRoutes.editProfile),
                   ),
                   const SizedBox(height: AppSizes.p16),
                   ProfileMenuRow(

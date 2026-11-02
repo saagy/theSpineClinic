@@ -33,6 +33,7 @@ abstract class StaffRepository {
     required UserRole role,
     required String password,
     required bool canManagePayments,
+    bool isSenior = false,
     String? phone,
     ClinicLocation? branch,
   });
@@ -41,8 +42,7 @@ abstract class StaffRepository {
 }
 
 class StaffRepositoryImpl implements StaffRepository {
-  StaffRepositoryImpl({required SupabaseService supabaseService})
-    : _service = supabaseService;
+  StaffRepositoryImpl({required SupabaseService supabaseService}) : _service = supabaseService;
   final SupabaseService _service;
 
   @override
@@ -85,16 +85,12 @@ class StaffRepositoryImpl implements StaffRepository {
       if (query != null && query.trim().isNotEmpty) {
         for (final token in query.trim().split(RegExp(r'\s+'))) {
           if (token.isNotEmpty) {
-            builder = builder.or(
-              'full_name.ilike.%$token%,phone_number.ilike.%$token%',
-            );
+            builder = builder.or('full_name.ilike.%$token%,phone_number.ilike.%$token%');
           }
         }
       }
       final rows = await _service.guardQuery(
-        () => builder
-            .order(orderBy, ascending: ascending)
-            .range(offset, offset + limit - 1),
+        () => builder.order(orderBy, ascending: ascending).range(offset, offset + limit - 1),
       );
       return Result.success(rows.map(Patient.fromJson).toList());
     } on AppException catch (e) {
@@ -122,9 +118,7 @@ class StaffRepositoryImpl implements StaffRepository {
         if (query != null && query.trim().isNotEmpty) {
           for (final token in query.trim().split(RegExp(r'\s+'))) {
             if (token.isNotEmpty) {
-              builder = builder.or(
-                'full_name.ilike.%$token%,phone_number.ilike.%$token%',
-              );
+              builder = builder.or('full_name.ilike.%$token%,phone_number.ilike.%$token%');
             }
           }
         }
@@ -160,6 +154,7 @@ class StaffRepositoryImpl implements StaffRepository {
     required UserRole role,
     required String password,
     required bool canManagePayments,
+    bool isSenior = false,
     String? phone,
     ClinicLocation? branch,
   }) async {
@@ -170,16 +165,14 @@ class StaffRepositoryImpl implements StaffRepository {
       role: role,
       password: password,
       canManagePayments: canManagePayments,
+      isSenior: role == UserRole.doctor && isSenior,
       phone: phone,
       branch: branch,
     );
   }
 
   @override
-  Future<Result<void>> updateStaff({
-    required Staff staff,
-    String? newPassword,
-  }) async {
+  Future<Result<void>> updateStaff({required Staff staff, String? newPassword}) async {
     return updateStaffAccount(_service, staff: staff, newPassword: newPassword);
   }
 

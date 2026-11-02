@@ -62,3 +62,36 @@ and all database structures. Redirect its old URL to Admin.
 
 Screenshots stay outside the repository at
 `C:/Users/Elite-Store/.codex/visualizations/2026/11/02/01a19c8e-f2e9-74b0-bca1-ebb0982f1ce1/staff`.
+
+## Senior doctor management follow-up
+
+Audit: Add/Edit Staff omitted senior status, profile writes dropped it, and the
+directory labeled every doctor identically. The Doctor access section now offers
+a Senior Doctor permission checkbox with the existing capability explanation.
+Admins can create, promote and demote doctors; changing to a non-doctor role
+clears senior status.
+Directory rows identify Senior Doctor, and doctor-picker caches refresh on saves.
+Creation and profile/password updates use atomic admin-only RPCs added by migration
+`20261102010000_staff_seniority_management.sql`; deployed November 2, 2026.
+
+Follow-up verification: 11 targeted Flutter tests passed, including senior payloads,
+form controls, existing senior permissions and save recovery. Mobile/desktop form
+renders passed. SQL creation, promotion/demotion, role changes, unauthorized calls
+and password rollback passed against both the schema snapshot and migration chain
+in disposable PostgreSQL. Flutter analysis is clean. The live migration is applied.
+
+Deployment: applied only the senior-management migration to linked project
+`ujketpugttdqpcixrnga` using an isolated directory populated from remote history.
+Post-deployment dry run reports up to date. Both new RPCs reject anonymous
+requests with HTTP 401 / SQLSTATE 42501. No tables, columns or existing account
+records were changed. This deployment covered the database functions; Firebase
+Hosting was not republished.
+
+## Staff editor follow-up
+
+The [staff editor follow-up](staff-editor-flow.md) replaces staged account switches
+and password checkboxes with explicit tasks, aligns fields with the profile editor,
+and retains the senior/payment permissions and existing atomic RPCs. Its finish
+review, 30 rendered captures and final checks are recorded separately from the
+workspace and senior-management validation above. This follow-up has no database
+or deployment change.

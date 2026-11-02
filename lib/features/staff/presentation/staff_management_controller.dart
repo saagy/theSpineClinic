@@ -9,6 +9,8 @@ import 'package:spine_clinic_app/features/patient/domain/clinic_location.dart';
 import 'package:spine_clinic_app/features/staff/presentation/staff_providers.dart';
 import 'package:spine_clinic_app/features/staff/presentation/widgets/staff_account_status.dart';
 
+import 'staff_form_state.dart';
+
 part 'staff_management_controller.g.dart';
 
 /// Notifier providing the reactive list of all clinic staff members (including doctors).
@@ -45,82 +47,132 @@ class StaffList extends _$StaffList {
 @Riverpod(keepAlive: true)
 class StaffFormController extends _$StaffFormController {
   @override
-  AsyncValue<void> build() => const AsyncValue.data(null);
+  StaffFormState build() => const StaffFormState();
 
-  /// Creates a new staff user and profile.
+  void clearError() {
+    if (!state.isLoading) state = state.copyWith(clearError: true);
+  }
+
+  void reportFailure(AppException error) =>
+      state = state.copyWith(isLoading: false, error: error);
+
   Future<Result<void>> createStaff({
     required String fullName,
     required String email,
     required UserRole role,
     required String password,
     required bool canManagePayments,
+    bool isSenior = false,
     String? phone,
     ClinicLocation? branch,
-  }) async {
-    final blocked = _adminGuard();
-    if (blocked != null) return blocked;
+  }) => _save(
+    () => ref
+        .read(staffRepositoryProvider)
+        .createStaff(
+          fullName: fullName,
+          email: email,
+          role: role,
+          password: password,
+          canManagePayments: canManagePayments,
+          isSenior: role == UserRole.doctor && isSenior,
+          phone: phone,
+          branch: branch,
+        ),
+  );
 
-    state = const AsyncValue.loading();
-    final repo = ref.read(staffRepositoryProvider);
-    final result = await repo.createStaff(
-      fullName: fullName,
-      email: email,
-      role: role,
-      password: password,
-      canManagePayments: canManagePayments,
-      phone: phone,
-      branch: branch,
-    );
-    if (!ref.mounted) return result;
-
-    state = result.when(
-      success: (_) {
-        ref.invalidate(staffListProvider);
-        return const AsyncValue.data(null);
-      },
-      failure: (error) => AsyncValue.error(error, StackTrace.current),
-    );
-    return result;
-  }
-
-  /// Updates an existing staff profile, and optionally their authentication password.
   Future<Result<void>> updateStaff({
     required Staff staff,
     String? newPassword,
-  }) async {
-    final blocked = _adminGuard();
-    if (blocked != null) return blocked;
-
-    state = const AsyncValue.loading();
-    final repo = ref.read(staffRepositoryProvider);
-    final result = await repo.updateStaff(
-      staff: staff,
-      newPassword: newPassword,
+  }) {
+    final Staff? actor = ref.read(currentUserProvider).value;
+    if (actor?.id == staff.id &&
+        (staff.role != actor?.role || !staff.isActive)) {
+      const AppException error = AuthException(
+        code: 'security/self-access',
+        message: AppStrings.staffOwnRoleHelp,
+        userMessageKey: 'error_database_permission_denied',
+      );
+      reportFailure(error);
+      return Future.value(const Result.failure(error));
+    }
+    return _save(
+      () => ref
+          .read(staffRepositoryProvider)
+          .updateStaff(staff: staff, newPassword: newPassword),
+      updated: staff,
     );
+  }
+
+  Future<Result<int>> deactivationAppointments(Staff staff) async {
+    final AppException? blocked = _permissionError();
+    if (blocked != null) {
+      reportFailure(blocked);
+      return Result.failure(blocked);
+    }
+    if (staff.role != UserRole.doctor) return const Result.success(0);
+    final Result<int> result = await ref
+        .read(staffRepositoryProvider)
+        .countUpcomingAppointments(staff.id);
     if (!ref.mounted) return result;
-
-    state = result.when(
-      success: (_) {
-        ref.invalidate(staffListProvider);
-        final currentUser = ref.read(currentUserProvider).value;
-        if (currentUser != null && currentUser.id == staff.id) {
-          ref.invalidate(currentUserProvider);
-        }
-        return const AsyncValue.data(null);
-      },
-      failure: (error) => AsyncValue.error(error, StackTrace.current),
-    );
+    if (result case Failure<int>(:final exception)) {
+      reportFailure(exception);
+    }
     return result;
   }
 
-  Result<void>? _adminGuard() {
-    final currentUser = ref.read(currentUserProvider).value;
-    if (currentUser?.role == UserRole.superAdmin) return null;
-    return const Result.failure(
-      AuthException(
-        code: 'security/permission-denied',
-        message: AppStrings.staffAdminPermissionDenied,
-      ),
+  Future<Result<void>> _save(
+    Future<Result<void>> Function() operation, {
+    Staff? updated,
+  }) async {
+    final AppException? blocked = _permissionError();
+    if (blocked != null) {
+      reportFailure(blocked);
+      return Result.failure(blocked);
+    }
+    if (state.isLoading) {
+      return const Result.failure(
+        UnknownException(message: AppStrings.savingChanges),
+      );
+    }
+    state = state.copyWith(isLoading: true, clearError: true);
+    Result<void> result;
+    try {
+      result = await operation();
+    } catch (error, stackTrace) {
+      result = Result.failure(
+        AppException.fromSupabaseException(error, stackTrace: stackTrace),
+      );
+    }
+    if (!ref.mounted) return result;
+    if (result case Failure<void>(:final exception)) {
+      reportFailure(exception);
+    } else {
+      state = state.copyWith(isLoading: false);
+      ref.invalidate(staffListProvider);
+      ref.invalidate(activeDoctorsProvider);
+      ref.invalidate(allDoctorsForFilterProvider);
+      if (updated != null) {
+        ref.invalidate(staffProfileProvider(updated.id));
+        if (ref.read(currentUserProvider).value?.id == updated.id) {
+          ref.invalidate(currentUserProvider);
+        }
+      }
+    }
+    return result;
+  }
+
+  AppException? _permissionError() {
+    final session = ref.read(currentUserProvider);
+    final Staff? actor = session.value;
+    if (!session.hasError &&
+        actor?.role == UserRole.superAdmin &&
+        actor?.isActive == true) {
+      return null;
+    }
+    return const AuthException(
+      code: 'security/permission-denied',
+      message: AppStrings.staffAdminPermissionDenied,
+      userMessageKey: 'error_database_permission_denied',
     );
   }
 }

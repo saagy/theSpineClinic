@@ -25,18 +25,30 @@ void main() {
         addTearDown(tester.view.resetPhysicalSize);
         addTearDown(tester.view.resetDevicePixelRatio);
         final key = GlobalKey();
-        await tester.pumpWidget(RepaintBoundary(key: key, child: ProviderScope(
-          overrides: [
-            currentUserProvider.overrideWith(StaffWorkspaceUser.new),
-            staffListProvider.overrideWith(StaffWorkspaceRoster.new),
-            pendingStaffApplicationsProvider.overrideWith(StaffWorkspacePending.new),
-          ],
-          child: MaterialApp(debugShowCheckedModeBanner: false,
-            theme: dark ? AppTheme.dark(clinicalBluePaletteDark) : AppTheme.light(clinicalBluePaletteLight),
-            home: AppShell(currentTabIndex: 2, onTabSelected: (_) {}, userRole: 'super_admin',
-              child: const StaffListScreen()),
+        await tester.pumpWidget(
+          RepaintBoundary(
+            key: key,
+            child: ProviderScope(
+              overrides: [
+                currentUserProvider.overrideWith(StaffWorkspaceUser.new),
+                staffListProvider.overrideWith(StaffWorkspaceRoster.new),
+                pendingStaffApplicationsProvider.overrideWith(StaffWorkspacePending.new),
+              ],
+              child: MaterialApp(
+                debugShowCheckedModeBanner: false,
+                theme: dark
+                    ? AppTheme.dark(clinicalBluePaletteDark)
+                    : AppTheme.light(clinicalBluePaletteLight),
+                home: AppShell(
+                  currentTabIndex: 2,
+                  onTabSelected: (_) {},
+                  userRole: 'super_admin',
+                  child: const StaffListScreen(),
+                ),
+              ),
+            ),
           ),
-        )));
+        );
         await tester.pumpAndSettle();
         expect(tester.takeException(), isNull);
         expect(find.text(AppStrings.navAnalytics), findsNothing);
@@ -48,7 +60,10 @@ void main() {
         await capturePolish(tester, key, 'pending-${size.width}-$dark');
         await tester.tap(find.text(AppStrings.approve).first);
         await tester.pumpAndSettle();
-        expect(find.text(AppStrings.approveStaffMessage(pendingStaff.first.fullName)), findsOneWidget);
+        expect(
+          find.text(AppStrings.approveStaffMessage(pendingStaff.first.fullName)),
+          findsOneWidget,
+        );
         await tester.tap(find.text(AppStrings.cancel));
         await tester.pumpAndSettle();
         expect(find.text(AppStrings.approve).first, findsOneWidget);
@@ -62,14 +77,21 @@ void main() {
       addTearDown(tester.view.resetPhysicalSize);
       addTearDown(tester.view.resetDevicePixelRatio);
       final key = GlobalKey();
-      await tester.pumpWidget(RepaintBoundary(key: key, child: ProviderScope(
-        child: MaterialApp(debugShowCheckedModeBanner: false,
-          theme: AppTheme.light(clinicalBluePaletteLight),
-          home: StaffFormBody(currentUser: staffAdmin)),
-      )));
+      await tester.pumpWidget(
+        RepaintBoundary(
+          key: key,
+          child: ProviderScope(
+            child: MaterialApp(
+              debugShowCheckedModeBanner: false,
+              theme: AppTheme.light(clinicalBluePaletteLight),
+              home: StaffFormBody(currentUser: staffAdmin),
+            ),
+          ),
+        ),
+      );
       await tester.pumpAndSettle();
       await capturePolish(tester, key, 'staff-form-$width');
-      await tester.tap(find.text(AppStrings.save));
+      await tester.tap(find.widgetWithText(FilledButton, AppStrings.addStaff));
       await tester.pumpAndSettle();
       expect(find.text(AppStrings.fullNameRequired), findsOneWidget);
       expect(find.text(AppStrings.roleRequired), findsOneWidget);
@@ -82,7 +104,17 @@ void main() {
       await tester.tap(find.text(AppStrings.receptionist).last);
       await tester.pumpAndSettle();
       expect(find.text(AppStrings.canManagePayments), findsOneWidget);
-      expect(tester.getBottomRight(find.text(AppStrings.save)).dy, lessThan(1000));
+      tester
+          .state<FormBuilderState>(find.byType(FormBuilder))
+          .fields['role']!
+          .didChange(UserRole.doctor);
+      await tester.pumpAndSettle();
+      await tester.ensureVisible(find.text(AppStrings.seniorDoctor));
+      await tester.tap(find.text(AppStrings.seniorDoctor));
+      await tester.pumpAndSettle();
+      await capturePolish(tester, key, 'staff-senior-$width');
+      expect(tester.takeException(), isNull);
+      expect(tester.getBottomRight(find.widgetWithText(FilledButton, AppStrings.addStaff)).dy, lessThan(1000));
     });
   }
 }

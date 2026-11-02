@@ -5,157 +5,139 @@ import 'package:go_router/go_router.dart';
 import 'package:spine_clinic_app/core/constants/app_sizes.dart';
 import 'package:spine_clinic_app/core/constants/app_strings.dart';
 import 'package:spine_clinic_app/core/errors/result.dart';
+import 'package:spine_clinic_app/core/network/app_routes.dart';
 import 'package:spine_clinic_app/features/auth/domain/staff.dart';
 import 'package:spine_clinic_app/features/auth/domain/user_role.dart';
 import 'package:spine_clinic_app/features/patient/domain/clinic_location.dart';
 import 'package:spine_clinic_app/features/staff/presentation/staff_management_controller.dart';
-import 'package:spine_clinic_app/features/staff/presentation/staff_providers.dart';
-import 'package:spine_clinic_app/features/staff/presentation/widgets/staff_form_fields.dart';
 import 'package:spine_clinic_app/shared/widgets/form_page_body.dart';
 import 'package:spine_clinic_app/shared/widgets/app_snackbar.dart';
 import 'package:spine_clinic_app/shared/widgets/confirmation_dialog.dart';
+import 'staff_form_fields.dart';
+
+part 'staff_form_submission.dart';
 
 class StaffFormBody extends ConsumerStatefulWidget {
   const StaffFormBody({super.key, required this.currentUser, this.staff});
-
   final Staff currentUser;
   final Staff? staff;
-
   @override
   ConsumerState<StaffFormBody> createState() => _StaffFormBodyState();
 }
 
 class _StaffFormBodyState extends ConsumerState<StaffFormBody> {
-  final _formKey = GlobalKey<FormBuilderState>();
+  final GlobalKey<FormBuilderState> _formKey = GlobalKey<FormBuilderState>();
+  final ValueNotifier<bool> _dirty = ValueNotifier(false);
   bool _isSubmitting = false;
+  bool _confirmingDiscard = false;
+  bool _isReviewing = false;
+  void _setReviewing(bool value) => setState(() => _isReviewing = value);
+  void _setSubmitting(bool value) => setState(() => _isSubmitting = value);
+  bool get _isSaving =>
+      _isSubmitting || ref.read(staffFormControllerProvider).isLoading;
 
   @override
-  Widget build(BuildContext context) {
-    final isEdit = widget.staff != null;
-    final isSelf = isEdit && widget.staff!.id == widget.currentUser.id;
-    final formState = ref.watch(staffFormControllerProvider);
-    final isSaving = _isSubmitting || formState.isLoading;
-    return Scaffold(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      appBar: AppBar(
-        backgroundColor: Theme.of(context).colorScheme.surface,
-        foregroundColor: Theme.of(context).colorScheme.onSurface,
-        elevation: 0,
-        title: Text(isEdit ? AppStrings.editStaff : AppStrings.addStaff),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_rounded),
-          onPressed: isSaving ? null : () => context.pop(),
-        ),
-      ),
-      body: FormPageBody(
-        maxWidth: AppSizes.formLayoutMaxWidth,
-        isSaving: isSaving,
-        onSave: _submit,
-        onCancel: () => context.pop(),
-        child: FormBuilder(
-          key: _formKey,
-          child: StaffFormFields(
-            enabled: !isSaving,
-            isSelf: isSelf,
-            staff: widget.staff,
-            formKey: _formKey,
-          ),
-        ),
-      ),
-    );
+  void initState() {
+    super.initState();
+    Future.microtask(() {
+      if (mounted) ref.read(staffFormControllerProvider.notifier).clearError();
+    });
   }
 
-  Future<void> _submit() async {
-    if (_isSubmitting) return;
-    if (!(_formKey.currentState?.saveAndValidate() ?? false)) return;
-    setState(() => _isSubmitting = true);
-    try {
-      final values = _formKey.currentState!.value;
-      final role = values['role'] as UserRole;
-      final branch = values['branch'] as ClinicLocation?;
-      final isEdit = widget.staff != null;
-      final isActive = isEdit ? ((values['is_active'] as bool?) ?? widget.staff!.isActive) : true;
-      if (await _blockedByDeactivationWarning(isActive)) return;
+  @override
+  void dispose() {
+    _dirty.dispose();
+    super.dispose();
+  }
 
-      final controller = ref.read(staffFormControllerProvider.notifier);
-      final result = isEdit
-          ? await controller.updateStaff(
-              staff: _updatedStaff(values, role, branch, isActive),
-              newPassword: (values['change_password'] as bool? ?? false)
-                  ? values['password'] as String
-                  : null,
-            )
-          : await controller.createStaff(
-              fullName: values['full_name'] as String,
-              email: values['email'] as String,
-              role: role,
-              password: values['password'] as String,
-              canManagePayments: _canManagePayments(values, role),
-              phone: values['phone'] as String?,
-              branch: branch,
-            );
-      _handleResult(result, isEdit);
-    } finally {
-      if (mounted) setState(() => _isSubmitting = false);
+  void _leave() {
+    if (context.canPop()) {
+      context.pop();
+    } else {
+      context.go(AppRoutes.staffList);
     }
   }
 
-  Staff _updatedStaff(
-    Map<String, dynamic> values,
-    UserRole role,
-    ClinicLocation? branch,
-    bool isActive,
-  ) {
-    return widget.staff!.copyWith(
-      fullName: values['full_name'] as String,
-      email: values['email'] as String,
-      phone: values['phone'] as String?,
-      role: role,
-      isActive: isActive,
-      canManagePayments: _canManagePayments(values, role),
-      branch: role == UserRole.receptionist ? branch : null,
-      deactivatedAt: isActive ? null : widget.staff!.deactivatedAt,
-    );
-  }
-
-  bool _canManagePayments(Map<String, dynamic> values, UserRole role) {
-    return role == UserRole.receptionist &&
-        ((values['can_manage_payments'] as bool?) ?? widget.staff?.canManagePayments ?? false);
-  }
-
-  Future<bool> _blockedByDeactivationWarning(bool newIsActive) async {
-    final staff = widget.staff;
-    if (staff == null || !staff.isActive || newIsActive) return false;
-    if (staff.role != UserRole.doctor) return false;
-    final countResult = await ref.read(staffRepositoryProvider).countUpcomingAppointments(staff.id);
-    final count = countResult.when(success: (c) => c, failure: (_) => 0);
-    if (count == 0 || !mounted) return false;
-    final confirmed = await showDialog<bool>(
+  Future<void> _cancel() async {
+    if (_isSaving || _confirmingDiscard) return;
+    if (!_dirty.value) return _leave();
+    _confirmingDiscard = true;
+    final bool? discard = await showDialog<bool>(
       context: context,
-      builder: (_) => ConfirmationDialog(
-        title: AppStrings.deactivateAccount,
-        message: AppStrings.deactivateStaffWarning(count),
-        confirmLabel: AppStrings.deactivateAccount,
-        cancelLabel: AppStrings.keepActive,
-        isDestructive: true,
+      builder: (_) => const ConfirmationDialog(
+        title: AppStrings.discardChanges,
+        message: AppStrings.discardChangesMessage,
+        confirmLabel: AppStrings.discard,
+        cancelLabel: AppStrings.keepEditing,
       ),
     );
-    return confirmed != true;
+    _confirmingDiscard = false;
+    if (mounted && discard == true) _leave();
   }
 
-  void _handleResult(Result<void> result, bool isEdit) {
-    if (!mounted) return;
-    result.when(
-      success: (_) {
-        AppSnackbar.show(
-          context,
-          message: isEdit ? AppStrings.staffUpdateSuccess : AppStrings.staffCreateSuccess,
-          variant: AppSnackbarVariant.success,
-        );
-        context.pop();
-      },
-      failure: (error) =>
-          AppSnackbar.show(context, message: error.message, variant: AppSnackbarVariant.error),
+  void _onChanged() {
+    _updateDirty();
+    // Role changes register their dependent fields during the next build.
+    WidgetsBinding.instance.addPostFrameCallback((_) => _updateDirty());
+  }
+
+  void _updateDirty() {
+    final FormBuilderState? form = _formKey.currentState;
+    if (mounted && form != null) {
+      _dirty.value = form.fields.values.any(
+        (field) => field.value != field.initialValue,
+      );
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final bool isEdit = widget.staff != null;
+    final bool isSelf = isEdit && widget.staff!.id == widget.currentUser.id;
+    final formState = ref.watch(staffFormControllerProvider);
+    final bool saving = _isSubmitting || formState.isLoading;
+    return ValueListenableBuilder<bool>(
+      valueListenable: _dirty,
+      builder: (BuildContext context, bool dirty, Widget? child) => PopScope(
+        canPop: !saving && !dirty,
+        onPopInvokedWithResult: (bool didPop, Object? result) {
+          if (!didPop) _cancel();
+        },
+        child: Scaffold(
+          appBar: AppBar(
+            title: Text(isEdit ? AppStrings.editStaff : AppStrings.addStaff),
+            leading: IconButton(
+              icon: const BackButtonIcon(),
+              tooltip: AppStrings.backTooltip,
+              onPressed: saving ? null : _cancel,
+            ),
+          ),
+          body: FormPageBody(
+            maxWidth: AppSizes.formLayoutMaxWidth,
+            isSaving: saving && !_isReviewing,
+            saveLabel: isEdit ? AppStrings.saveChanges : AppStrings.addStaff,
+            errorMessage: formState.error == null
+                ? null
+                : AppStrings.fromKey(formState.error!.userMessageKey),
+            onSave: !saving && (!isEdit || dirty) ? _submit : null,
+            onCancel: saving ? null : _cancel,
+            child: AutofillGroup(
+              onDisposeAction: AutofillContextAction.cancel,
+              child: FormBuilder(
+                key: _formKey,
+                onChanged: _onChanged,
+                child: StaffFormFields(
+                  enabled: !saving,
+                  isSelf: isSelf,
+                  staff: widget.staff,
+                  formKey: _formKey,
+                  onSubmit: _submit,
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
     );
   }
 }

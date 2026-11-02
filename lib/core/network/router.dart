@@ -22,6 +22,7 @@ import 'package:spine_clinic_app/features/auth/domain/user_role.dart';
 import 'package:spine_clinic_app/features/auth/presentation/auth_providers.dart';
 import 'package:spine_clinic_app/features/auth/presentation/doctor_history_screen.dart';
 import 'package:spine_clinic_app/features/auth/presentation/doctor_profile_screen.dart';
+import 'package:spine_clinic_app/features/auth/presentation/edit_profile_screen.dart';
 import 'package:spine_clinic_app/features/auth/presentation/login_screen.dart';
 import 'package:spine_clinic_app/features/auth/presentation/receptionist_profile_screen.dart';
 import 'package:spine_clinic_app/features/auth/presentation/register_screen.dart';

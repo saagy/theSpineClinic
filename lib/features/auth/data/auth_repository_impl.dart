@@ -174,8 +174,10 @@ class AuthRepositoryImpl implements AuthRepository {
   }
 
   @override
-  Future<Result<void>> updateStaffProfile({
-    required Staff staff,
-    String? newPassword,
-  }) => _saveProfile(staff, newPassword);
+  Future<Result<void>> updateStaffProfile({required Staff staff}) =>
+      _saveProfile(staff);
+
+  @override
+  Future<Result<void>> changeOwnPassword(String password) =>
+      _changeOwnPassword(password);
 }

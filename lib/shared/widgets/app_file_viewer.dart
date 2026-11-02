@@ -65,9 +65,8 @@ class AppFileViewerScaffold extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final ColorScheme colors = Theme.of(context).colorScheme;
     return Scaffold(
-      backgroundColor: colors.surface,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: SafeArea(
         top: false,
         left: false,

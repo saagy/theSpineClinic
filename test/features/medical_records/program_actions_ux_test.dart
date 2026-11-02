@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:spine_clinic_app/core/constants/app_strings.dart';
 import 'package:spine_clinic_app/features/medical_records/domain/program_status.dart';
+import 'package:spine_clinic_app/features/patient/presentation/widgets/workspace_program_row.dart';
 import 'package:spine_clinic_app/shared/widgets/confirmation_dialog.dart';
 import '../../fixtures/program_ux_harness.dart';
 
@@ -14,8 +15,12 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.byTooltip(AppStrings.changeProgramStatus));
     await tester.pumpAndSettle();
-    expect(find.byType(CheckedPopupMenuItem<ProgramStatus>), findsNWidgets(3));
-    await tester.tap(find.widgetWithText(CheckedPopupMenuItem<ProgramStatus>, AppStrings.completeProgram));
+    expect(find.byType(PopupMenuItem<ProgramStatus>), findsNWidgets(3));
+    final current = tester.widget<PopupMenuItem<ProgramStatus>>(
+      find.widgetWithText(PopupMenuItem<ProgramStatus>, AppStrings.programStatusLabel('Active')),
+    );
+    expect(current.enabled, isFalse);
+    await tester.tap(find.widgetWithText(PopupMenuItem<ProgramStatus>, AppStrings.completeProgram));
     await tester.pumpAndSettle();
     expect(programs.program!.status, ProgramStatus.completed);
     expect(programs.program!.activePlan!.id, uxCurrentPlan.id);
@@ -80,7 +85,7 @@ void main() {
     expect(programs.program!.activePlan!.id, uxPreviousPlan.id);
   });
 
-  testWidgets('Programs tab menu opens details without changing data', (tester) async {
+  testWidgets('Programs tab menu changes status and refreshes the row using the keyboard', (tester) async {
     final programs = ProgramUxRepository();
     await tester.pumpWidget(programUxApp(programs, ProgramUxPlanRepository(programs), list: true));
     await tester.pumpAndSettle();
@@ -88,25 +93,54 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text(AppStrings.editProgramDetails), findsOneWidget);
     expect(find.text(AppStrings.deleteProgram), findsOneWidget);
-    await tester.tap(find.text(AppStrings.viewDetails));
+    expect(find.text(AppStrings.viewDetails), findsNothing);
+    Focus.of(tester.element(find.text(AppStrings.changeStatus))).requestFocus();
+    await tester.pump();
+    await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+    await tester.pumpAndSettle();
+    expect(programs.statusWrites, 0);
+    expect(find.byType(PopupMenuItem<ProgramStatus>), findsNWidgets(3));
+    Focus.of(tester.element(find.text(AppStrings.completeProgram))).requestFocus();
+    await tester.pump();
+    await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+    await tester.pumpAndSettle();
+    expect(programs.statusWrites, 1);
+    expect(programs.program!.status, ProgramStatus.completed);
+    expect(programs.program!.activePlan!.id, uxCurrentPlan.id);
+    expect(find.text(AppStrings.programStatusUpdated(AppStrings.programCompleted)), findsOneWidget);
+    expect(find.text(AppStrings.noActivePrograms), findsOneWidget);
+    await tester.tap(find.text(AppStrings.archivedProgramsCount(1)));
+    await tester.pumpAndSettle();
+    expect(find.text(AppStrings.programCompleted), findsOneWidget);
+    expect(find.text(AppStrings.currentTreatmentPlan), findsNothing);
+  });
+
+  testWidgets('tapping a Programs tab row opens details without changing data', (tester) async {
+    final programs = ProgramUxRepository();
+    await tester.pumpWidget(programUxApp(programs, ProgramUxPlanRepository(programs), list: true));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byType(WorkspaceProgramRow));
     await tester.pumpAndSettle();
     expect(find.text(AppStrings.currentTreatmentPlan), findsOneWidget);
     expect(programs.statusWrites, 0);
   });
 
-  testWidgets('junior doctors get view-only program menu and no treatment mutation controls', (tester) async {
-    final programs = ProgramUxRepository();
-    await tester.pumpWidget(programUxApp(programs, ProgramUxPlanRepository(programs), list: true, role: 'doctor'));
-    await tester.pumpAndSettle();
-    await tester.tap(find.byTooltip(AppStrings.programActions));
-    await tester.pumpAndSettle();
-    expect(find.text(AppStrings.editProgramDetails), findsNothing);
-    expect(find.text(AppStrings.deleteProgram), findsNothing);
-    await tester.tap(find.text(AppStrings.viewDetails));
-    await tester.pumpAndSettle();
-    expect(find.byTooltip(AppStrings.changeProgramStatus), findsNothing);
-    expect(find.byTooltip(AppStrings.planActions), findsNothing);
-  });
+  for (final role in ['doctor', 'reception']) {
+    testWidgets('$role gets a navigation chevron and no program mutation controls', (tester) async {
+      final programs = ProgramUxRepository();
+      await tester.pumpWidget(programUxApp(programs, ProgramUxPlanRepository(programs), list: true, role: role));
+      await tester.pumpAndSettle();
+      expect(find.byTooltip(AppStrings.programActions), findsNothing);
+      expect(find.byIcon(Icons.chevron_right), findsOneWidget);
+      expect(find.text(AppStrings.editProgramDetails), findsNothing);
+      expect(find.text(AppStrings.deleteProgram), findsNothing);
+      await tester.tap(find.byTooltip(AppStrings.viewDetails));
+      await tester.pumpAndSettle();
+      expect(find.byTooltip(AppStrings.changeProgramStatus), findsNothing);
+      expect(find.byTooltip(AppStrings.planActions), findsNothing);
+      expect(programs.statusWrites, 0);
+    });
+  }
 
   testWidgets('saving an unselected copy keeps the current plan', (tester) async {
     final programs = ProgramUxRepository();

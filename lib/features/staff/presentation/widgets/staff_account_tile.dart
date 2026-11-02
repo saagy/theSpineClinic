@@ -27,7 +27,7 @@ class StaffAccountTile extends StatelessWidget {
     final colors = Theme.of(context).colorScheme;
     final role = switch (staff.role) {
       UserRole.superAdmin => AppStrings.superAdmin,
-      UserRole.doctor => AppStrings.doctor,
+      UserRole.doctor => staff.isSenior ? AppStrings.seniorDoctor : AppStrings.doctor,
       UserRole.receptionist => AppStrings.receptionist,
     };
     return Material(

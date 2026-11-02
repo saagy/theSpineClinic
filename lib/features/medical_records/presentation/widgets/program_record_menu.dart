@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:spine_clinic_app/core/constants/app_sizes.dart';
 import 'package:spine_clinic_app/core/constants/app_strings.dart';
 import 'package:spine_clinic_app/core/network/app_routes.dart';
 import 'package:spine_clinic_app/features/auth/presentation/auth_providers.dart';
 import 'package:spine_clinic_app/features/medical_records/domain/patient_program.dart';
 import 'package:spine_clinic_app/features/medical_records/presentation/program_controller.dart';
+import 'package:spine_clinic_app/features/medical_records/presentation/widgets/program_status_control.dart';
 import 'package:spine_clinic_app/shared/widgets/app_snackbar.dart';
 import 'package:spine_clinic_app/shared/widgets/confirmation_dialog.dart';
 import 'package:spine_clinic_app/shared/widgets/record_action_menu.dart';
@@ -26,6 +28,10 @@ class ProgramRecordMenu extends ConsumerWidget {
     }
     final user = ref.read(currentUserProvider).value;
     if (user?.isActive != true || user?.isSeniorDoctor != true) return;
+    if (action == 'status') {
+      await ProgramStatusControl.show(context, ref, program);
+      return;
+    }
     if (action == 'edit') {
       context.push(
         AppRoutes.editPatientProgram.replaceAll(':id', program.patientId).replaceAll(':programId', program.id),
@@ -64,15 +70,26 @@ class ProgramRecordMenu extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final user = ref.watch(currentUserProvider).value;
     final canEdit = user?.isActive == true && user?.isSeniorDoctor == true;
-    if (inDetail && !canEdit) return const SizedBox.shrink();
+    if (!canEdit) {
+      if (inDetail) return const SizedBox.shrink();
+      return IconButton(
+        tooltip: AppStrings.viewDetails,
+        constraints: const BoxConstraints(minWidth: AppSizes.tappableMin, minHeight: AppSizes.tappableMin),
+        icon: Icon(
+          Icons.chevron_right,
+          size: AppSizes.iconDefault,
+          color: Theme.of(context).colorScheme.onSurfaceVariant,
+        ),
+        onPressed: () => _select(context, ref, 'view'),
+      );
+    }
     return RecordActionMenu<String>(
       tooltip: AppStrings.programActions,
       enabled: !ref.watch(programControllerProvider).isLoading,
       actions: [
-        if (!inDetail) const RecordMenuAction('view', AppStrings.viewDetails, Icons.open_in_new),
-        if (canEdit && !inDetail) const RecordMenuAction('edit', AppStrings.editProgramDetails, Icons.edit_outlined),
-        if (canEdit)
-          const RecordMenuAction('delete', AppStrings.deleteProgram, Icons.delete_outline, destructive: true),
+        if (!inDetail) const RecordMenuAction('status', AppStrings.changeStatus, Icons.swap_horiz),
+        if (!inDetail) const RecordMenuAction('edit', AppStrings.editProgramDetails, Icons.edit_outlined),
+        const RecordMenuAction('delete', AppStrings.deleteProgram, Icons.delete_outline, destructive: true),
       ],
       onSelected: (action) => _select(context, ref, action),
     );

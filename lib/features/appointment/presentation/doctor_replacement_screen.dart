@@ -146,13 +146,12 @@ class _DoctorReplacementScreenState
 
   @override
   Widget build(BuildContext context) {
-    final ColorScheme colors = Theme.of(context).colorScheme;
     final String title = _absentDoctor != null
         ? AppStrings.replaceDoctorTitle(_absentDoctor!.fullName)
         : AppStrings.replaceDoctor;
 
     return Scaffold(
-      backgroundColor: colors.surface,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(leading: const AppBackButton(), title: Text(title)),
       body: SafeArea(
         child: _loading

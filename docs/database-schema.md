@@ -27,14 +27,18 @@ management-access check; write policies retain their existing guards. Both new
 functions use fixed search paths and authenticated-only execute grants.
 `idx_patients_full_name_order` indexes `patients(full_name)` for directory ordering.
 
-November 1 prepared migration `20261101010000_staged_program_document_removal.sql`
+Migration `20261101010000_staged_program_document_removal.sql` (deployed November 2)
 extends the same `save_program_mutation(uuid,jsonb)` signature. Optional payload
 `p_removed_document_ids` commits document-row deletions with program edits after
 checking patient/program ownership. The receipt includes `removed_document_ids`
 and `removed_document_paths` (original and thumbnail URLs) for best-effort storage
 cleanup after commit. Missing rows are harmless; cross-program IDs reject and
-roll back the save. Existing payloads and receipts remain compatible. Apply this
-migration before the updated program editor client; it is not deployed by this task.
+roll back the save. Existing payloads and receipts remain compatible. A retry of
+an older successful receipt that ignored removal IDs finishes only the missing
+deletions, preserving current program fields, conditions and treatment plans.
+It stores the acknowledged result under the same request ID; rejected recovery
+keeps the original receipt. The linked database now has this function and its
+authenticated-only execution grants; see [recovery and validation](save-feedback.md#november-2-deployment-repair).
 
 Patient deletion safeguard (migration `20260909010000`): `delete_empty_patient(p_patient_id uuid)`
 checks an active receptionist, senior doctor or administrator, locks the patient
@@ -308,6 +312,8 @@ appointments             <- patient_notes.appointment_id (optional)
 | Function | Purpose |
 | --- | --- |
 | `register_doctor_application(...)` | Creates `auth.users` row and inactive `staff` application profile (`anon` accessible). |
+| `create_staff_account(...)` | Creates staff with doctor-only senior status atomically; active super admin only. |
+| `update_staff_account(uuid,jsonb,text)` | Saves profile/seniority and optional password in one transaction; active super admin only. |
 | `create_staff_user(...)` | Creates `auth.users` row plus linked active `staff` profile (super admin only). |
 | `update_user_password(...)` | Resets a staff user's password (super admin only). |
 | `delete_doctor_user(...)` | Deletes a doctor auth user to reject applications (super admin only). |

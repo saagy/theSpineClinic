@@ -13,21 +13,22 @@ Future<Result<void>> createStaffAccount(
   required UserRole role,
   required String password,
   required bool canManagePayments,
+  bool isSenior = false,
   String? phone,
   ClinicLocation? branch,
 }) async {
   try {
     await service.guardQuery(
       () => service.rpc(
-        'create_staff_user',
+        'create_staff_account',
         params: {
           'new_email': email,
           'new_password': password,
           'new_full_name': fullName,
           'new_role': role.dbValue,
           'new_phone': phone,
-          'new_can_manage_payments':
-              role == UserRole.receptionist && canManagePayments,
+          'new_is_senior': role == UserRole.doctor && isSenior,
+          'new_can_manage_payments': role == UserRole.receptionist && canManagePayments,
           'new_branch': role == UserRole.receptionist ? branch?.dbValue : null,
         },
       ),
@@ -48,18 +49,14 @@ Future<Result<void>> updateStaffAccount(
   try {
     if (staff.userId == service.currentUserId && !staff.isActive) {
       return const Result.failure(
-        AuthException(
-          code: 'auth/self-deactivation',
-          message: AppStrings.selfDeactivationError,
-        ),
+        AuthException(code: 'auth/self-deactivation', message: AppStrings.selfDeactivationError),
       );
     }
-    if (newPassword != null && newPassword.isNotEmpty) {
-      final failure = await _updatePassword(service, staff, newPassword);
-      if (failure != null) return failure;
-    }
     await service.guardQuery(
-      () => service.from('staff').update(_row(staff)).eq('id', staff.id),
+      () => service.rpc(
+        'update_staff_account',
+        params: {'target_staff_id': staff.id, 'profile': _row(staff), 'new_password': newPassword},
+      ),
     );
     return const Result.success(null);
   } on AppException catch (e) {
@@ -75,33 +72,10 @@ Map<String, Object?> _row(Staff staff) => {
   'phone': staff.phone,
   'role': staff.role.dbValue,
   'is_active': staff.isActive,
-  'can_manage_payments':
-      staff.role == UserRole.receptionist && staff.canManagePayments,
+  'is_senior': staff.role == UserRole.doctor && staff.isSenior,
+  'can_manage_payments': staff.role == UserRole.receptionist && staff.canManagePayments,
   'branch': staff.role == UserRole.receptionist ? staff.branch?.dbValue : null,
   'deactivated_at': staff.isActive
       ? null
-      : staff.deactivatedAt?.toUtc().toIso8601String() ??
-            DateTime.now().toUtc().toIso8601String(),
+      : staff.deactivatedAt?.toUtc().toIso8601String() ?? DateTime.now().toUtc().toIso8601String(),
 };
-
-Future<Result<void>?> _updatePassword(
-  SupabaseService service,
-  Staff staff,
-  String password,
-) async {
-  if (staff.userId == null) {
-    return const Result.failure(
-      AuthException(
-        code: 'auth/no-user-id',
-        message: AppStrings.staffPasswordMissingUserId,
-      ),
-    );
-  }
-  await service.guardQuery(
-    () => service.rpc(
-      'update_user_password',
-      params: {'target_user_id': staff.userId, 'new_password': password},
-    ),
-  );
-  return null;
-}

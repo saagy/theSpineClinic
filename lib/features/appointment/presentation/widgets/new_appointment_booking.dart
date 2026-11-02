@@ -58,7 +58,7 @@ extension _NewAppointmentBooking on _NewAppointmentFormState {
     ref.invalidate(receptionistAppointmentsProvider);
     ref.invalidate(doctorScheduleProvider);
     ref.invalidate(allAppointmentsProvider);
-    ref.invalidate(bookingWorkboardProvider);
+    unawaited(ref.read(bookingWorkboardProvider.notifier).refresh());
     ref.invalidate(patient_tab.patientAppointmentsProvider(_patientId!));
     ref.invalidate(todayAppointmentsProvider);
     ref.invalidate(patientAppointmentsProvider(_patientId!));

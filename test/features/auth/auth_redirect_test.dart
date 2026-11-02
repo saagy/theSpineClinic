@@ -1,9 +1,12 @@
+import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:spine_clinic_app/core/network/app_routes.dart';
 import 'package:spine_clinic_app/core/network/auth_redirect.dart';
 import 'package:spine_clinic_app/features/auth/domain/staff.dart';
 import 'package:spine_clinic_app/features/auth/domain/user_role.dart';
+import 'package:spine_clinic_app/features/auth/presentation/auth_providers.dart';
+import '../../fixtures/profile_editor_harness.dart';
 
 void main() {
   final Staff receptionist = Staff(
@@ -14,6 +17,33 @@ void main() {
     createdAt: DateTime.utc(2026),
   );
   final AsyncValue<Staff?> signedIn = AsyncData(receptionist);
+
+  test(
+    'profile refresh retains the current route while the session reloads',
+    () async {
+      final repo = ProfileEditorRepository();
+      final container = ProviderContainer(
+        overrides: [authRepositoryProvider.overrideWithValue(repo)],
+      );
+      addTearDown(container.dispose);
+      await container.read(currentUserProvider.future);
+      repo.pendingLoad = Completer<Staff?>();
+      container.invalidate(currentUserProvider);
+      final AsyncValue<Staff?> refreshing = container.read(currentUserProvider);
+      expect(refreshing.isLoading, isTrue);
+      expect(refreshing.hasValue, isTrue);
+      expect(
+        authRedirect(refreshing, Uri.parse(AppRoutes.editProfile)),
+        isNull,
+      );
+      expect(
+        authRedirect(refreshing, Uri.parse(AppRoutes.profilePassword)),
+        isNull,
+      );
+      repo.pendingLoad!.complete(repo.user);
+      await container.read(currentUserProvider.future);
+    },
+  );
 
   test('restores patient deep link after session loading, including query', () {
     final Uri patient = Uri.parse('/patient/qa?tab=notes');

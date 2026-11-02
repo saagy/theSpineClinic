@@ -35,7 +35,7 @@ class ProgramGalleryViewerRouteScreen extends ConsumerWidget {
 
     return asyncDocs.when(
       loading: () => Scaffold(
-        backgroundColor: cs.surface,
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         appBar: AppBar(
           backgroundColor: cs.surface,
           leading: IconButton(
@@ -50,7 +50,7 @@ class ProgramGalleryViewerRouteScreen extends ConsumerWidget {
         ),
       ),
       error: (e, _) => Scaffold(
-        backgroundColor: cs.surface,
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         appBar: AppBar(
           backgroundColor: cs.surface,
           leading: IconButton(
@@ -75,7 +75,7 @@ class ProgramGalleryViewerRouteScreen extends ConsumerWidget {
       data: (List<PatientDocument> docs) {
         if (docs.isEmpty) {
           return Scaffold(
-            backgroundColor: cs.surface,
+            backgroundColor: Theme.of(context).scaffoldBackgroundColor,
             appBar: AppBar(
               backgroundColor: cs.surface,
               leading: IconButton(

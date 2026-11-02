@@ -8,14 +8,52 @@ import 'package:spine_clinic_app/features/medical_records/domain/patient_program
 import 'package:spine_clinic_app/features/medical_records/domain/program_status.dart';
 import 'package:spine_clinic_app/features/medical_records/presentation/program_controller.dart';
 import 'package:spine_clinic_app/shared/widgets/app_snackbar.dart';
+import 'package:spine_clinic_app/shared/widgets/record_action_menu.dart';
 
 class ProgramStatusControl extends ConsumerWidget {
   const ProgramStatusControl({super.key, required this.program});
   final PatientProgram program;
 
-  Future<void> _change(BuildContext context, WidgetRef ref, ProgramStatus status) async {
+  static Future<void> show(BuildContext context, WidgetRef ref, PatientProgram program) async {
     final user = ref.read(currentUserProvider).value;
-    if (user?.isActive != true || user?.isSeniorDoctor != true || status == program.status) return;
+    if (user?.isActive != true || user?.isSeniorDoctor != true || ref.read(programControllerProvider).isLoading) {
+      return;
+    }
+    final status = await RecordActionMenu.show<ProgramStatus>(context, actions: _actions(program));
+    if (status == null || !context.mounted) return;
+    await _change(context, ref, program, status);
+  }
+
+  static List<RecordMenuAction<ProgramStatus>> _actions(PatientProgram program) => [
+    for (final status in ProgramStatus.values)
+      RecordMenuAction(
+        status,
+        status == program.status
+            ? AppStrings.programStatusLabel(status.displayLabel)
+            : switch (status) {
+                ProgramStatus.active => AppStrings.reactivateProgram,
+                ProgramStatus.completed => AppStrings.completeProgram,
+                ProgramStatus.archived => AppStrings.archiveProgram,
+              },
+        status == program.status
+            ? Icons.check
+            : switch (status) {
+                ProgramStatus.active => Icons.play_circle_outline,
+                ProgramStatus.completed => Icons.task_alt,
+                ProgramStatus.archived => Icons.archive_outlined,
+              },
+        enabled: status != program.status,
+      ),
+  ];
+
+  static Future<void> _change(BuildContext context, WidgetRef ref, PatientProgram program, ProgramStatus status) async {
+    final user = ref.read(currentUserProvider).value;
+    if (user?.isActive != true ||
+        user?.isSeniorDoctor != true ||
+        status == program.status ||
+        ref.read(programControllerProvider).isLoading) {
+      return;
+    }
     final result = await ref
         .read(programControllerProvider.notifier)
         .updateStatus(programId: program.id, patientId: program.patientId, status: status);
@@ -43,29 +81,11 @@ class ProgramStatusControl extends ConsumerWidget {
     }
     final busy = ref.watch(programControllerProvider).isLoading;
     final cs = Theme.of(context).colorScheme;
-    return PopupMenuButton<ProgramStatus>(
+    return RecordActionMenu<ProgramStatus>(
       tooltip: AppStrings.changeProgramStatus,
       enabled: !busy,
-      onSelected: (status) => _change(context, ref, status),
-      itemBuilder: (_) => [
-        for (final status in ProgramStatus.values)
-          CheckedPopupMenuItem(
-            value: status,
-            checked: status == program.status,
-            enabled: status != program.status,
-            height: AppSizes.tappableMin,
-            child: Text(
-              status == program.status
-                  ? label
-                  : switch (status) {
-                      ProgramStatus.active => AppStrings.reactivateProgram,
-                      ProgramStatus.completed => AppStrings.completeProgram,
-                      ProgramStatus.archived => AppStrings.archiveProgram,
-                    },
-              style: AppTextStyles.bodyMedium,
-            ),
-          ),
-      ],
+      onSelected: (status) => _change(context, ref, program, status),
+      actions: _actions(program),
       child: Container(
         constraints: const BoxConstraints(minHeight: AppSizes.tappableMin),
         padding: const EdgeInsets.symmetric(horizontal: AppSizes.p12, vertical: AppSizes.p8),

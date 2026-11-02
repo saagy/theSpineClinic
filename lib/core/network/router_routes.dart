@@ -2,6 +2,18 @@ part of 'router.dart';
 
 List<RouteBase> _buildRoutes(Ref ref) => [
   GoRoute(
+    path: AppRoutes.editProfile,
+    pageBuilder: (_, state) => appPage(
+      key: state.pageKey, child: const EditProfileScreen(),
+    ),
+    routes: [GoRoute(
+      path: 'password',
+      pageBuilder: (_, state) => appPage(
+        key: state.pageKey, child: const EditProfileScreen(passwordOnly: true),
+      ),
+    )],
+  ),
+  GoRoute(
     path: AppRoutes.splash,
     pageBuilder: (_, state) => fadePage(key: state.pageKey, child: const SplashScreen()),
   ),

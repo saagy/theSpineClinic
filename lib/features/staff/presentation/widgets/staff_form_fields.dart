@@ -5,179 +5,121 @@ import 'package:spine_clinic_app/core/constants/app_sizes.dart';
 import 'package:spine_clinic_app/core/constants/app_strings.dart';
 import 'package:spine_clinic_app/core/constants/app_text_styles.dart';
 import 'package:spine_clinic_app/features/auth/domain/staff.dart';
-import 'package:spine_clinic_app/features/auth/domain/user_role.dart';
-import 'package:spine_clinic_app/features/patient/domain/clinic_location.dart';
-import 'package:spine_clinic_app/features/staff/presentation/widgets/staff_form_controls.dart';
-import 'package:spine_clinic_app/features/staff/presentation/widgets/staff_password_fields.dart';
+import 'package:spine_clinic_app/shared/widgets/form_field_pair.dart';
 import 'package:spine_clinic_app/shared/widgets/form_section.dart';
+import 'staff_access_fields.dart';
+import 'staff_account_fields.dart';
+import 'staff_form_controls.dart';
+import 'staff_password_fields.dart';
 
-class StaffFormFields extends StatefulWidget {
+class StaffFormFields extends StatelessWidget {
   const StaffFormFields({
     super.key,
     required this.enabled,
     required this.isSelf,
     required this.formKey,
     this.staff,
+    this.onSubmit,
   });
-
   final bool enabled;
   final bool isSelf;
   final GlobalKey<FormBuilderState> formKey;
   final Staff? staff;
-
+  final VoidCallback? onSubmit;
   @override
-  State<StaffFormFields> createState() => _StaffFormFieldsState();
-}
-
-class _StaffFormFieldsState extends State<StaffFormFields> {
-  bool _changePassword = false;
-  UserRole? _selectedRole;
-
-  @override
-  void initState() {
-    super.initState();
-    _selectedRole = widget.staff?.role;
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final bool isEdit = widget.staff != null;
-    final bool showPasswords = !isEdit || _changePassword;
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        _section(AppStrings.identity, _identityFields),
-        const SizedBox(height: AppSizes.p24),
-        _section(AppStrings.access, _accessFields),
-        const SizedBox(height: AppSizes.p24),
-        _section(AppStrings.account, [
-          if (isEdit) ..._accountFields,
-          if (showPasswords) ...[
-            if (isEdit) const SizedBox(height: AppSizes.p8),
-            StaffPasswordFields(enabled: widget.enabled, formKey: widget.formKey),
-          ],
-        ]),
-      ],
-    );
-  }
-
-  List<Widget> get _identityFields => [
-    StaffTextField(
-      name: 'full_name',
-      label: AppStrings.fullName,
-      hint: AppStrings.fullNameHint,
-      enabled: widget.enabled,
-      initialValue: widget.staff?.fullName,
-      textCapitalization: TextCapitalization.words,
-      validator: FormBuilderValidators.compose([
-        FormBuilderValidators.required(errorText: AppStrings.fullNameRequired),
-        FormBuilderValidators.minLength(3, errorText: AppStrings.fullNameMinLength),
-      ]),
-    ),
-    const SizedBox(height: AppSizes.p16),
-    StaffTextField(
-      name: 'email',
-      label: AppStrings.email,
-      hint: AppStrings.emailHint,
-      enabled: widget.enabled,
-      initialValue: widget.staff?.email,
-      keyboardType: TextInputType.emailAddress,
-      validator: FormBuilderValidators.compose([
-        FormBuilderValidators.required(errorText: AppStrings.emailRequired),
-        FormBuilderValidators.email(errorText: AppStrings.emailInvalid),
-      ]),
-    ),
-    const SizedBox(height: AppSizes.p16),
-    StaffTextField(
-      name: 'phone',
-      label: AppStrings.phone,
-      hint: AppStrings.phoneOptionalHint,
-      enabled: widget.enabled,
-      initialValue: widget.staff?.phone,
-      keyboardType: TextInputType.phone,
-    ),
-  ];
-
-  List<Widget> get _accessFields => [
-    FormBuilderDropdown<UserRole>(
-      name: 'role',
-      isExpanded: true,
-      borderRadius: BorderRadius.circular(AppSizes.r8),
-      dropdownColor: Theme.of(context).colorScheme.surface,
-      style: AppTextStyles.body.copyWith(color: Theme.of(context).colorScheme.onSurface),
-      menuMaxHeight: AppSizes.overlayDropdownMaxHeight,
-      enabled: widget.enabled && !widget.isSelf,
-      initialValue: widget.staff?.role,
-      decoration: staffInputDecoration(
-        context,
-        AppStrings.role,
-        enabled: widget.enabled,
-        hint: AppStrings.roleHint,
-      ),
-      validator: FormBuilderValidators.required(errorText: AppStrings.roleRequired),
-      onChanged: (role) => setState(() => _selectedRole = role),
-      items: const [
-        DropdownMenuItem(value: UserRole.superAdmin, child: Text(AppStrings.superAdmin)),
-        DropdownMenuItem(value: UserRole.receptionist, child: Text(AppStrings.receptionist)),
-        DropdownMenuItem(value: UserRole.doctor, child: Text(AppStrings.doctor)),
-      ],
-    ),
-    if (_selectedRole == UserRole.receptionist) ...[
-      const SizedBox(height: AppSizes.p16),
-      FormBuilderDropdown<ClinicLocation>(
-        name: 'branch',
-        isExpanded: true,
-        borderRadius: BorderRadius.circular(AppSizes.r8),
-        dropdownColor: Theme.of(context).colorScheme.surface,
-        style: AppTextStyles.body.copyWith(color: Theme.of(context).colorScheme.onSurface),
-        menuMaxHeight: AppSizes.overlayDropdownMaxHeight,
-        enabled: widget.enabled,
-        initialValue: widget.staff?.branch,
-        decoration: staffInputDecoration(
-          context,
-          AppStrings.branch,
-          enabled: widget.enabled,
-          hint: AppStrings.selectBranch,
+  Widget build(BuildContext context) => Column(
+    crossAxisAlignment: CrossAxisAlignment.stretch,
+    children: [
+      Padding(
+        padding: const EdgeInsets.symmetric(vertical: AppSizes.p8),
+        child: Text(
+          staff == null ? AppStrings.staffCreateHelp : AppStrings.staffEditHelp,
+          style: AppTextStyles.bodySecondary.copyWith(
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
+          ),
         ),
-        items: ClinicLocation.values
-            .map((branch) => DropdownMenuItem(value: branch, child: Text(branch.displayLabel)))
-            .toList(),
       ),
-      const SizedBox(height: AppSizes.p8),
-      FormBuilderSwitch(
-        name: 'can_manage_payments',
-        initialValue: widget.staff?.canManagePayments ?? false,
-        title: Text(AppStrings.canManagePayments, style: AppTextStyles.body),
-        enabled: widget.enabled,
-        decoration: const InputDecoration(border: InputBorder.none),
+      const SizedBox(height: AppSizes.p16),
+      FormSection(
+        title: AppStrings.personalDetails,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            StaffTextField(
+              name: 'full_name',
+              label: AppStrings.fullName,
+              enabled: enabled,
+              initialValue: staff?.fullName,
+              textCapitalization: TextCapitalization.words,
+              autofillHints: const [AutofillHints.name],
+              validator: FormBuilderValidators.compose([
+                FormBuilderValidators.required(
+                  errorText: AppStrings.fullNameRequired,
+                ),
+                FormBuilderValidators.minLength(
+                  3,
+                  errorText: AppStrings.fullNameMinLength,
+                ),
+              ]),
+            ),
+            const SizedBox(height: AppSizes.p20),
+            FormFieldPair(
+              first: StaffTextField(
+                name: 'email',
+                label: AppStrings.email,
+                enabled: enabled,
+                initialValue: staff?.email,
+                keyboardType: TextInputType.emailAddress,
+                autofillHints: const [AutofillHints.email],
+                validator: FormBuilderValidators.compose([
+                  FormBuilderValidators.required(
+                    errorText: AppStrings.emailRequired,
+                  ),
+                  FormBuilderValidators.email(
+                    errorText: AppStrings.emailInvalid,
+                  ),
+                ]),
+              ),
+              second: StaffTextField(
+                name: 'phone',
+                label: AppStrings.profilePhoneLabel,
+                enabled: enabled,
+                initialValue: staff?.phone,
+                keyboardType: TextInputType.phone,
+                autofillHints: const [AutofillHints.telephoneNumber],
+                textInputAction: TextInputAction.done,
+                onSubmitted: (_) => onSubmit?.call(),
+              ),
+            ),
+          ],
+        ),
+      ),
+      const SizedBox(height: AppSizes.p24),
+      FormSection(
+        title: AppStrings.clinicAccess,
+        child: StaffAccessFields(
+          enabled: enabled,
+          isSelf: isSelf,
+          staff: staff,
+        ),
+      ),
+      const SizedBox(height: AppSizes.p24),
+      FormSection(
+        title: AppStrings.accountSecurity,
+        child: staff == null
+            ? StaffPasswordFields(
+                enabled: enabled,
+                formKey: formKey,
+                onSubmit: onSubmit,
+              )
+            : StaffAccountFields(
+                enabled: enabled,
+                isSelf: isSelf,
+                staff: staff!,
+                formKey: formKey,
+                onSubmit: onSubmit,
+              ),
       ),
     ],
-  ];
-
-  List<Widget> get _accountFields => [
-    FormBuilderSwitch(
-      name: 'is_active',
-      initialValue: widget.staff?.isActive ?? true,
-      title: Text(AppStrings.accountEnabled, style: AppTextStyles.body),
-      enabled: widget.enabled && !widget.isSelf,
-      decoration: const InputDecoration(border: InputBorder.none),
-    ),
-    const SizedBox(height: AppSizes.p8),
-    FormBuilderCheckbox(
-      name: 'change_password',
-      initialValue: false,
-      title: Text(AppStrings.changePassword, style: AppTextStyles.body),
-      enabled: widget.enabled,
-      decoration: const InputDecoration(border: InputBorder.none),
-      onChanged: (value) => setState(() => _changePassword = value ?? false),
-    ),
-  ];
-
-  Widget _section(String title, List<Widget> children) {
-    return FormSection(
-      title: title,
-      child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: children),
-    );
-  }
+  );
 }

@@ -8,9 +8,17 @@ shared filter presentation. The isolated Analytics implementation/navigation is
 removed; its old URL redirects to Admin. Independent legacy reports remain.
 See [staff audit, implementation and validation limits](staff-ui-cleanup.md).
 
+November 2 profile editing replaces the sheet with a bounded page and separate
+password step; finish review: ship. See [flow and validation limits](profile-edit-flow.md).
+
+November 2 staff editing extends that form system with explicit staged account and
+password tasks, responsive fields and guarded saves; finish review: ship.
+See [staff editor decisions and validation limits](staff-editor-flow.md).
+
 The November program-action clarification separates program status from the
-current treatment plan and scopes menu labels explicitly. Programs-tab rows now
-use the shared action menu. See [audit and validation](program-action-clarity.md).
+current treatment plan and scopes menu labels explicitly. Programs-tab rows use
+shared status/edit/delete actions or a read-only navigation chevron. Status choices
+share the record-menu styling. See [audit and validation](program-action-clarity.md).
 
 September 13 shipping polish implements the user's selected open-workspace and
 section-based form directions. The subsequent density correction restores compact
@@ -177,8 +185,10 @@ them into the shared system across all remaining screens.
   skeletons until every page of the selected week resolves; an empty agenda appears
   only after success. Failed pages do not publish partial weeks.
 - Successful bookings invalidate receptionist/doctor schedules, All appointments,
-  the booking workboard, and the patient appointment tab. Schedule invalidation
-  reloads the selected date even when the signed-in user has not changed.
+  and the patient appointment tab. The booking workboard refreshes in place,
+  preserving its selected date, doctor filter, and pane when the form closes.
+  Schedule invalidation reloads the selected date even when the signed-in user
+  has not changed.
 - Booking patient selection restricts receptionist queries (including subsequent
   pages) to the active branch; changing branch resets pagination. The shared
   search input retains its 300 ms debounce.

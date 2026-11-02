@@ -132,6 +132,12 @@ abstract final class AppRoutes {
   /// Patient list shell route for receptionist and admin roles.
   static const String patientList = '/patients';
 
+  /// Self-service profile editing for every authenticated staff role.
+  static const String editProfile = '/profile/edit';
+
+  /// Separate password step under the account editor.
+  static const String profilePassword = '/profile/edit/password';
+
   /// Receptionist profile/settings shell route.
   static const String receptionistProfile = '/receptionist/profile';
 

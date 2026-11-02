@@ -10,6 +10,7 @@ library;
 
 import 'package:flutter/material.dart';
 import 'package:spine_clinic_app/core/constants/app_sizes.dart';
+import 'package:spine_clinic_app/core/constants/app_strings.dart';
 
 /// Eye-icon toggle that signals whether a password field should be obscured.
 class PasswordVisibilityToggle extends StatelessWidget {
@@ -28,16 +29,17 @@ class PasswordVisibilityToggle extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onToggle,
-      borderRadius: BorderRadius.circular(AppSizes.iconDefault),
-      child: Padding(
-        padding: const EdgeInsets.all(AppSizes.p4),
-        child: Icon(
-          isObscured ? Icons.visibility_off_outlined : Icons.visibility_outlined,
-          size: AppSizes.iconDefault,
-          color: Theme.of(context).colorScheme.onSurfaceVariant,
-        ),
+    return IconButton(
+      onPressed: onToggle,
+      tooltip: isObscured ? AppStrings.showPassword : AppStrings.hidePassword,
+      constraints: const BoxConstraints(
+        minWidth: AppSizes.tappableMin,
+        minHeight: AppSizes.tappableMin,
+      ),
+      icon: Icon(
+        isObscured ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+        size: AppSizes.iconDefault,
+        color: Theme.of(context).colorScheme.onSurfaceVariant,
       ),
     );
   }

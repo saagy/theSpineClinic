@@ -121,7 +121,7 @@ class _ProgramGalleryViewerScreenState
       child: Focus(
         autofocus: true,
         child: Scaffold(
-          backgroundColor: cs.surface,
+          backgroundColor: Theme.of(context).scaffoldBackgroundColor,
           appBar: AppBar(
             backgroundColor: cs.surface,
             elevation: 0,

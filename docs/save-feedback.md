@@ -84,8 +84,13 @@ recoverable through their existing protocol.
 
 Apply `20261101010000_staged_program_document_removal.sql` before releasing the
 updated client. The client requires explicit removal acknowledgement; an older
-backend cannot silently report success for ignored removals. This task prepares
-the migration and canonical schema; it does not apply them to the linked project.
+backend cannot silently report success for ignored removals. The migration and
+canonical schema include recovery for successful receipts from older servers:
+retrying the same payload finishes only its pending removals, without replaying
+program fields, conditions or treatment-plan writes. It returns the current
+complete program and persists removal acknowledgement under the same request ID.
+Ownership and active senior/admin permissions are checked again. Rejected
+recovery deletes nothing and retains the original successful save receipt.
 
 Retained bytes survive navigation within the current application session. This
 does not create durable background uploads: closing/reloading the browser still
@@ -137,3 +142,27 @@ November 1 context-specific feedback correction:
 - Shared feedback tests verify ordinary saves have no bar, uploads explicitly opt
   in, and slow blocking requests retain their navigation explanation.
 - No deployment or live authentication/backend calls were performed.
+
+## November 2 deployment repair
+
+The updated editor was reaching the September 29 RPC: program edits saved, but
+removal IDs were ignored. Its durable success receipt then replayed without the
+acknowledgement the editor requires, trapping same-payload retries. Uploads used
+their separate working protocol. The previously unapplied November 1 migration
+was extended to recover those incomplete receipts before its first deployment.
+
+Applied only `20261101010000_staged_program_document_removal.sql` to linked
+project `ujketpugttdqpcixrnga`, using fetched remote migration history in an
+isolated directory and an inspected `--include-all --dry-run`. Historical
+migrations and the already-deployed staff change were not replayed. Read-only
+verification confirmed the deployed function body, security-definer/search-path
+configuration, authenticated-only grants and migration history. A final dry run
+reported the remote database up to date. The editor can retry immediately.
+
+Validation: zero `flutter analyze --no-pub` issues; all 18 targeted Flutter tests
+passed. All 12 SQL suites passed through both canonical-schema and migration
+setup paths. Removal and legacy-receipt suites now run in the default backend
+checks. Recovery tests cover role/scope rejection, atomic removal, identical
+replay, original/thumbnail cleanup receipts, and preservation of newer clinical
+fields, conditions and treatment plans. Verification did not mutate patient
+records; authenticated deletion on a physical device was not exercised.

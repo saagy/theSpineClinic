@@ -57,13 +57,10 @@ abstract class AuthRepository {
   /// Resolves the staff profile for a given staff ID.
   Future<Result<Staff>> getStaffProfile(String staffId);
 
-  /// Updates the staff profile fields (name, email) and optionally the password.
-  ///
-  /// [staff] carries the updated name/email values.
-  /// [newPassword] is only applied when non-null and non-empty.
-  Future<Result<void>> updateStaffProfile({
-    required Staff staff,
-    String? newPassword,
-  });
-}
+  /// Updates contact fields and branch; email synchronization is transactional
+  /// in the database. Password changes are a separate account action.
+  Future<Result<void>> updateStaffProfile({required Staff staff});
 
+  /// Changes the authenticated account password without updating profile fields.
+  Future<Result<void>> changeOwnPassword(String password);
+}

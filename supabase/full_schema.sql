@@ -2725,7 +2725,7 @@ GRANT EXECUTE ON FUNCTION public.begin_document_upload(uuid,uuid,text,uuid,text,
 -- Program writes commit with a durable result before tracked file uploads begin.
 CREATE OR REPLACE FUNCTION public.save_program_mutation(p_request_id uuid, p_payload jsonb)
 RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path=public,pg_temp AS $$
-DECLARE previous public.mutation_receipts; outcome jsonb; saved jsonb;
+DECLARE previous public.mutation_receipts; result_json jsonb; saved jsonb;
   actor uuid := (SELECT staff_id FROM public.get_auth_staff_profile());
   v_patient_id uuid := (p_payload->>'p_patient_id')::uuid;
   v_program_id uuid := (p_payload->>'p_program_id')::uuid;
@@ -2747,7 +2747,12 @@ BEGIN
     IF previous.actor_id<>actor OR previous.kind<>v_kind OR previous.payload_hash<>request_hash THEN
       RAISE EXCEPTION 'Request identity mismatch' USING ERRCODE='22000';
     END IF;
-    RETURN previous.outcome;
+    IF previous.outcome->>'ok' IS DISTINCT FROM 'true'
+      OR previous.outcome ? 'removed_document_ids'
+      OR coalesce(p_payload->'p_removed_document_ids','[]'::jsonb)='[]'::jsonb THEN
+      RETURN previous.outcome;
+    END IF;
+    -- Older servers ignored removals; finish only that missing step on retry.
   END IF;
   BEGIN
     removed_ids := ARRAY(SELECT DISTINCT value::uuid FROM
@@ -2763,17 +2768,19 @@ BEGIN
         p_payload->>'p_notes',NULL,p_payload->'p_treatment_plan');
       v_program_id := (saved->>'id')::uuid;
     ELSE
-      PERFORM 1 FROM public.patient_programs p
+      SELECT to_jsonb(p) INTO saved FROM public.patient_programs p
         WHERE p.id=v_program_id AND p.patient_id=v_patient_id FOR UPDATE;
       IF NOT FOUND THEN
         RAISE EXCEPTION 'Program not found for patient' USING ERRCODE='P0001';
       END IF;
-      saved := public.update_patient_program(v_program_id,
-        ARRAY(SELECT value::uuid FROM jsonb_array_elements_text(p_payload->'p_condition_ids')),
-        p_payload->>'p_examination',p_payload->>'p_imaging_notes',
-        p_payload->>'p_exaggerating_positions',p_payload->>'p_relieving_positions',
-        p_payload->>'p_notes',(p_payload->>'p_status')::public.program_status,
-        NULL,p_payload->'p_treatment_plan');
+      IF previous.request_id IS NULL THEN
+        saved := public.update_patient_program(v_program_id,
+          ARRAY(SELECT value::uuid FROM jsonb_array_elements_text(p_payload->'p_condition_ids')),
+          p_payload->>'p_examination',p_payload->>'p_imaging_notes',
+          p_payload->>'p_exaggerating_positions',p_payload->>'p_relieving_positions',
+          p_payload->>'p_notes',(p_payload->>'p_status')::public.program_status,
+          NULL,p_payload->'p_treatment_plan');
+      END IF;
     END IF;
     FOR document IN SELECT * FROM public.patient_documents
       WHERE id=ANY(removed_ids) FOR UPDATE LOOP
@@ -2797,15 +2804,20 @@ BEGIN
             FROM public.modality_regions mr WHERE mr.plan_modality_id=pm.id),'[]'::jsonb)))
           FROM public.plan_modalities pm WHERE pm.treatment_plan_id=tp.id),'[]'::jsonb)))
         FROM public.treatment_plans tp WHERE tp.program_id=v_program_id),'[]'::jsonb));
-    outcome := jsonb_build_object('ok',true,'program',saved,
+    result_json := jsonb_build_object('ok',true,'program',saved,
       'removed_document_ids',to_jsonb(removed_ids),'removed_document_paths',to_jsonb(removed_paths));
   EXCEPTION WHEN OTHERS THEN
     GET STACKED DIAGNOSTICS error_code=RETURNED_SQLSTATE, error_message=MESSAGE_TEXT;
-    outcome := jsonb_build_object('ok',false,'code',error_code,'message',error_message);
+    result_json := jsonb_build_object('ok',false,'code',error_code,'message',error_message);
   END;
-  INSERT INTO public.mutation_receipts(request_id,actor_id,kind,payload_hash,outcome)
-    VALUES(p_request_id,actor,v_kind,request_hash,outcome);
-  RETURN outcome;
+  IF previous.request_id IS NULL THEN
+    INSERT INTO public.mutation_receipts(request_id,actor_id,kind,payload_hash,outcome)
+      VALUES(p_request_id,actor,v_kind,request_hash,result_json);
+  ELSIF result_json->>'ok'='true' THEN
+    UPDATE public.mutation_receipts r SET outcome=result_json
+      WHERE r.request_id=p_request_id;
+  END IF;
+  RETURN result_json;
 END;
 $$;
 REVOKE ALL ON FUNCTION public.save_program_mutation(uuid,jsonb) FROM PUBLIC,anon;
@@ -2840,3 +2852,82 @@ ALTER POLICY "Staff can view accessible patients" ON public.patients USING (
 
 -- The default patient directory is ordered by name and fetched one page at a time.
 CREATE INDEX IF NOT EXISTS idx_patients_full_name_order ON public.patients(full_name);
+
+-- Keep the original RPC available for older clients; senior creation is atomic.
+CREATE OR REPLACE FUNCTION public.create_staff_account(
+  new_email text, new_password text, new_full_name text,
+  new_role public.user_role, new_phone text DEFAULT NULL,
+  new_can_manage_payments boolean DEFAULT false,
+  new_branch public.clinic_location DEFAULT NULL,
+  new_is_senior boolean DEFAULT false
+) RETURNS uuid
+LANGUAGE plpgsql SECURITY DEFINER
+SET search_path = public, extensions, pg_temp
+AS $$
+DECLARE
+  created_user_id uuid;
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM public.staff WHERE user_id = auth.uid()
+      AND role = 'super_admin' AND is_active) THEN
+    RAISE EXCEPTION 'Only active super admins can create staff users.';
+  END IF;
+  IF new_is_senior AND new_role <> 'doctor' THEN
+    RAISE EXCEPTION 'Senior status requires the doctor role.';
+  END IF;
+  created_user_id := public.create_staff_user(new_email, new_password,
+    new_full_name, new_role, new_phone, new_can_manage_payments, new_branch);
+  UPDATE public.staff SET is_senior = COALESCE(new_is_senior, false)
+    WHERE user_id = created_user_id;
+  RETURN created_user_id;
+END;
+$$;
+
+-- Commit profile, senior status and optional password together or roll back all.
+CREATE OR REPLACE FUNCTION public.update_staff_account(
+  target_staff_id uuid, profile jsonb, new_password text DEFAULT NULL
+) RETURNS void
+LANGUAGE plpgsql SECURITY DEFINER
+SET search_path = public, extensions, pg_temp
+AS $$
+DECLARE
+  target_user_id uuid;
+  selected_role public.user_role := (profile->>'role')::public.user_role;
+  selected_senior boolean := COALESCE((profile->>'is_senior')::boolean, false);
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM public.staff WHERE user_id = auth.uid()
+      AND role = 'super_admin' AND is_active) THEN
+    RAISE EXCEPTION 'Only active super admins can manage staff users.';
+  END IF;
+  SELECT user_id INTO target_user_id FROM public.staff
+    WHERE id = target_staff_id FOR UPDATE;
+  IF NOT FOUND THEN RAISE EXCEPTION 'Staff account not found.'; END IF;
+  IF selected_senior AND selected_role <> 'doctor' THEN
+    RAISE EXCEPTION 'Senior status requires the doctor role.';
+  END IF;
+  IF target_user_id = auth.uid() AND
+      (selected_role <> 'super_admin' OR (profile->>'is_active')::boolean IS NOT TRUE) THEN
+    RAISE EXCEPTION 'You cannot change your own role or active status.';
+  END IF;
+  IF NULLIF(new_password, '') IS NOT NULL THEN
+    IF target_user_id IS NULL THEN RAISE EXCEPTION 'Staff account has no user.'; END IF;
+    PERFORM public.update_user_password(target_user_id, new_password);
+  END IF;
+  UPDATE public.staff SET
+    full_name = profile->>'full_name', email = profile->>'email',
+    phone = profile->>'phone', role = selected_role,
+    is_active = (profile->>'is_active')::boolean,
+    is_senior = selected_senior,
+    can_manage_payments = selected_role = 'receptionist'
+      AND COALESCE((profile->>'can_manage_payments')::boolean, false),
+    branch = CASE WHEN selected_role = 'receptionist'
+      THEN (profile->>'branch')::public.clinic_location ELSE NULL END,
+    deactivated_at = CASE WHEN (profile->>'is_active')::boolean THEN NULL
+      ELSE COALESCE((profile->>'deactivated_at')::timestamptz, now()) END
+  WHERE id = target_staff_id;
+END;
+$$;
+
+REVOKE ALL ON FUNCTION public.create_staff_account(text,text,text,public.user_role,text,boolean,public.clinic_location,boolean) FROM PUBLIC, anon;
+REVOKE ALL ON FUNCTION public.update_staff_account(uuid,jsonb,text) FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.create_staff_account(text,text,text,public.user_role,text,boolean,public.clinic_location,boolean) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.update_staff_account(uuid,jsonb,text) TO authenticated;

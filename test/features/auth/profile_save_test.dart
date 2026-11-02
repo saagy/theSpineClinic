@@ -34,33 +34,41 @@ class _ProfileService extends TestSupabaseService {
 }
 
 void main() {
+  for (final bool rejectPassword in [true, false]) {
+    test(
+      'standalone password failure=$rejectPassword makes no profile write',
+      () async {
+        final service = _ProfileService(
+          rejectProfile: true,
+          rejectPassword: rejectPassword,
+        );
+        addTearDown(service.client.dispose);
+        final result = await AuthRepositoryImpl(
+          supabaseService: service,
+        ).changeOwnPassword('standalone-password');
+        expect(service.passwordWrites, 1);
+        expect(result.isSuccess, !rejectPassword);
+        if (rejectPassword) {
+          expect(result.exceptionOrNull, isA<NetworkException>());
+        }
+      },
+    );
+  }
   for (final rejectProfile in [true, false]) {
-    for (final rejectPassword in [true, false]) {
-      test(
-        'profile failure=$rejectProfile password failure=$rejectPassword',
-        () async {
-          final service = _ProfileService(
-            rejectProfile: rejectProfile,
-            rejectPassword: rejectPassword,
-          );
-          addTearDown(service.client.dispose);
-          final result = await AuthRepositoryImpl(supabaseService: service)
-              .updateStaffProfile(
-                staff: workspaceStaff(
-                  'senior',
-                ).copyWith(userId: service.currentUserId),
-                newPassword: 'test-password',
-              );
-          expect(service.passwordWrites, rejectProfile ? 0 : 1);
-          expect(result.isSuccess, !rejectProfile && !rejectPassword);
-          if (!rejectProfile && rejectPassword) {
-            expect(
-              result.exceptionOrNull!.userMessageKey,
-              'profile_saved_password_unconfirmed',
-            );
-          }
-        },
+    test('profile failure=$rejectProfile never changes password', () async {
+      final service = _ProfileService(
+        rejectProfile: rejectProfile,
+        rejectPassword: true,
       );
-    }
+      addTearDown(service.client.dispose);
+      final result = await AuthRepositoryImpl(supabaseService: service)
+          .updateStaffProfile(
+            staff: workspaceStaff(
+              'senior',
+            ).copyWith(userId: service.currentUserId),
+          );
+      expect(service.passwordWrites, 0);
+      expect(result.isSuccess, !rejectProfile);
+    });
   }
 }
