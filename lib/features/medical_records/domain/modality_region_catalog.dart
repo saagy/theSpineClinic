@@ -137,6 +137,7 @@ class ModalityRegionCatalog {
       case ModalityType.massBuilt:
         return musclePainAndMassBuiltRegions;
       case ModalityType.tecar:
+      case ModalityType.highPowerLaser:
         return tecarRegions;
       case ModalityType.release:
         return releaseRegions;
@@ -167,7 +168,7 @@ class ModalityRegionCatalog {
   }
 
   static bool hasDuration(ModalityType type, String regionName) => switch (type) {
-        ModalityType.musclePain || ModalityType.massBuilt || ModalityType.tecar => true,
+        ModalityType.musclePain || ModalityType.massBuilt || ModalityType.tecar || ModalityType.highPowerLaser => true,
         ModalityType.exercise => regionName.trim().toLowerCase() == 'balance',
         _ => false,
       };

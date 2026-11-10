@@ -49,6 +49,7 @@ CREATE TYPE public.modality_type AS ENUM (
   'muscle_pain',
   'mass_built',
   'tecar',
+  'high_power_laser',
   'tecar_focal',
   'neurodynamic_non_wb',
   'neurodynamic_wb',
@@ -1894,6 +1895,16 @@ INSERT INTO public.condition_catalog (region, condition_name, display_order) VAL
   ('shoulder', 'Fracture', 14),
   ('shoulder', 'Muscle strain', 15),
   ('shoulder', 'Post-operation Rehabilitation', 16),
+
+  -- Elbow (8)
+  ('elbow', 'Tennis elbow', 1),
+  ('elbow', 'Golfer''s elbow', 2),
+  ('elbow', 'Elbow stiffness', 3),
+  ('elbow', 'Elbow muscle strain', 4),
+  ('elbow', 'Elbow ligament sprain', 5),
+  ('elbow', 'Elbow dislocation', 6),
+  ('elbow', 'Triceps tendinopathy', 7),
+  ('elbow', 'Triceps tear', 8),
 
   -- Hand (8)
   ('hand', 'De Quervain''s', 1),

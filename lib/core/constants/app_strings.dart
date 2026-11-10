@@ -1276,6 +1276,7 @@ abstract final class AppStrings {
   static const String modalityMusclePain = 'Muscle Pain';
   static const String modalityMassBuilt = 'Mass Built';
   static const String modalityTecar = 'TECAR';
+  static const String modalityHighPowerLaser = 'High Power LASER';
   static const String modalityTecarFocal = 'TECAR Focal Technique';
   static const String modalityNeurodynamicNonWb = 'Neurodynamic (Non-WB)';
   static const String modalityNeurodynamicWb = 'Neurodynamic (WB)';
