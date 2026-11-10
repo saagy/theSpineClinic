@@ -5,8 +5,10 @@
 The user identified ambiguity in program/treatment-plan actions and requested
 desktop/mobile support plus a Programs-subtab three-dot menu in place of the
 navigation chevron. The user explicitly retained the treatment-plan menu. The
-November 2 follow-up reserves overflow for permitted mutations and uses the
-existing record-menu treatment for program status.
+November 2 follow-up uses the existing record-menu treatment for program status.
+The November 3 [editing-access update](program-edit-access.md) keeps Edit visible
+in the fixed app bar, adds section shortcuts, and includes Export PDF in the
+program menu for read-only users as well as permitted editors.
 
 - Identical overflow menus represented program deletion, program status and plan actions.
 - Active meant both program lifecycle and the selected plan.
@@ -26,7 +28,7 @@ existing record-menu treatment for program status.
 - Program status has a named dropdown beside the program context. It uses shared
   `RecordActionMenu` styling, a disabled checked current value, and icon-led
   Complete/Archive/Reactivate actions. Read-only users see a labeled status. The
-  control and Edit program details wrap on small windows.
+  control remains with the program context; Edit lives in the fixed app bar.
 - Current treatment plan names the selected plan and retains its three-dot menu:
   Create new treatment plan, Edit this plan, Delete this plan.
 - Creating from the current plan copies its modalities, regions, durations and

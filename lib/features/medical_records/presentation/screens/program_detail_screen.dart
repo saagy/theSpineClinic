@@ -2,17 +2,22 @@ library;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:spine_clinic_app/core/constants/app_sizes.dart';
 import 'package:spine_clinic_app/core/constants/app_strings.dart';
+import 'package:spine_clinic_app/core/constants/app_text_styles.dart';
+import 'package:spine_clinic_app/core/network/app_routes.dart';
 import 'package:spine_clinic_app/core/errors/app_exception.dart';
 import 'package:spine_clinic_app/features/auth/presentation/auth_providers.dart';
 import 'package:spine_clinic_app/features/medical_records/domain/patient_program.dart';
 import 'package:spine_clinic_app/features/medical_records/presentation/medical_history_providers.dart';
 import 'package:spine_clinic_app/features/medical_records/presentation/patient_programs_providers.dart';
 import 'package:spine_clinic_app/features/medical_records/presentation/program_controller.dart';
+import 'package:spine_clinic_app/features/medical_records/presentation/program_edit_section.dart';
 import 'package:spine_clinic_app/features/medical_records/presentation/services/program_pdf_service.dart';
 import 'package:spine_clinic_app/features/medical_records/presentation/treatment_plan_controller.dart';
 import 'package:spine_clinic_app/features/medical_records/presentation/widgets/program_detail_conditions.dart';
+import 'package:spine_clinic_app/features/medical_records/presentation/widgets/program_detail_documents.dart';
 import 'package:spine_clinic_app/features/medical_records/presentation/widgets/program_detail_findings.dart';
 import 'package:spine_clinic_app/features/medical_records/presentation/widgets/program_detail_header.dart';
 import 'package:spine_clinic_app/features/medical_records/presentation/widgets/program_detail_treatment.dart';
@@ -23,10 +28,12 @@ import 'package:spine_clinic_app/shared/widgets/app_snackbar.dart';
 import 'package:spine_clinic_app/shared/widgets/empty_state.dart';
 import 'package:spine_clinic_app/shared/widgets/error_view.dart';
 import 'package:spine_clinic_app/shared/widgets/record_section.dart';
+import 'package:spine_clinic_app/shared/widgets/record_surface.dart';
 import 'package:spine_clinic_app/features/medical_records/presentation/widgets/program_record_menu.dart';
 import 'package:spine_clinic_app/shared/widgets/skeleton_loader.dart';
 
 part 'program_detail_actions.dart';
+part 'program_detail_layout.dart';
 
 /// Screen displaying comprehensive details of a single rehabilitation program.
 class ProgramDetailScreen extends ConsumerStatefulWidget {
@@ -46,6 +53,7 @@ class ProgramDetailScreen extends ConsumerStatefulWidget {
   @override
   ConsumerState<ProgramDetailScreen> createState() => _ProgramDetailScreenState();
 }
+
 class _ProgramDetailScreenState extends ConsumerState<ProgramDetailScreen> {
   bool _planBuilderOpened = false;
 
@@ -55,7 +63,8 @@ class _ProgramDetailScreenState extends ConsumerState<ProgramDetailScreen> {
     if (widget.autoOpenPlanBuilder && !_planBuilderOpened) {
       _planBuilderOpened = true;
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted && ref.read(currentUserProvider).value?.isActive == true &&
+        if (mounted &&
+            ref.read(currentUserProvider).value?.isActive == true &&
             ref.read(currentUserProvider).value?.isSeniorDoctor == true) {
           TreatmentPlanBuilderSheet.show(
             context,
@@ -81,7 +90,12 @@ class _ProgramDetailScreenState extends ConsumerState<ProgramDetailScreen> {
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
         leading: const AppBackButton(),
-        title: const Text(AppStrings.programDetails),
+        title: Text(
+          MediaQuery.sizeOf(context).width < AppSizes.formPairBreakpoint
+              ? AppStrings.program
+              : AppStrings.programDetails,
+        ),
+        toolbarHeight: MediaQuery.textScalerOf(context).scale(AppSizes.appBarHeight),
         actions: _buildAppBarActions(program, isDeleting: isBusy),
       ),
       bottomNavigationBar: isBusy
@@ -120,32 +134,4 @@ class _ProgramDetailScreenState extends ConsumerState<ProgramDetailScreen> {
       ),
     );
   }
-
-  Widget _buildLayout(PatientProgram program) => Center(
-    child: ConstrainedBox(
-      constraints: const BoxConstraints(maxWidth: AppSizes.clinicalContentMaxWidth),
-      child: RefreshIndicator(
-        onRefresh: () async {
-          ref.invalidate(programDetailProvider(widget.programId));
-          await ref.read(programDetailProvider(widget.programId).future);
-        },
-        child: ListView(
-          padding: const EdgeInsets.all(AppSizes.p16),
-          physics: const AlwaysScrollableScrollPhysics(),
-          children: [
-            if (ref.watch(programDetailProvider(widget.programId)).hasError)
-              RecordMessage(
-                message: AppStrings.patientSectionError,
-                action: AppStrings.retry,
-                onAction: () => ref.invalidate(programDetailProvider(widget.programId)),
-              ),
-            ProgramDetailHeader(program: program),
-            ProgramDetailTreatment(program: program),
-            ProgramDetailConditions(program: program),
-            ProgramDetailFindings(program: program),
-          ],
-        ),
-      ),
-    ),
-  );
 }

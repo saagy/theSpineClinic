@@ -19,12 +19,14 @@ class AppShell extends StatelessWidget {
     required this.currentTabIndex,
     required this.onTabSelected,
     required this.userRole,
+    this.showBilling = false,
     this.isGlobalLoading = false,
   });
   final Widget child;
   final int currentTabIndex;
   final ValueSetter<int> onTabSelected;
   final String userRole;
+  final bool showBilling;
   final bool isGlobalLoading;
 
   static const double _wideBreakpoint = 600;
@@ -52,6 +54,7 @@ class AppShell extends StatelessWidget {
             currentIndex: currentTabIndex,
             onTabSelected: onTabSelected,
             userRole: userRole,
+            showBilling: showBilling,
           ),
           Expanded(child: _buildContent()),
         ],
@@ -66,6 +69,7 @@ class AppShell extends StatelessWidget {
         currentIndex: currentTabIndex,
         onTabSelected: onTabSelected,
         userRole: userRole,
+        showBilling: showBilling,
       ),
     );
   }

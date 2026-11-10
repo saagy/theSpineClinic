@@ -167,7 +167,6 @@ class _RecordPaymentFormState extends ConsumerState<RecordPaymentForm> {
   AppBar _appBar(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     return AppBar(
-      backgroundColor: cs.surface,
       foregroundColor: cs.onSurface,
       elevation: 0,
       title: const Text(AppStrings.recordPayment),

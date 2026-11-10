@@ -86,7 +86,6 @@ class _PatientSearchScreenState extends ConsumerState<PatientSearchScreen> {
           AppStrings.patients,
           style: AppTextStyles.headingSmall,
         ),
-        backgroundColor: Theme.of(context).colorScheme.surface,
         foregroundColor: Theme.of(context).colorScheme.onSurface,
         elevation: 0,
       ),
@@ -186,6 +185,7 @@ class _PatientSearchScreenState extends ConsumerState<PatientSearchScreen> {
                         child: PatientListTile(
                           name: patient.fullName,
                           phone: patient.phoneNumber,
+                          fileNumber: patient.fileNumber,
                           branchLabel: patient.clinic.displayLabel,
                           trailing: PatientBalanceChip(
                             sessionBalance: patient.sessionBalance,

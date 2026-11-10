@@ -8,7 +8,8 @@ extension _NewPatientActions on _NewPatientFormState {
     final bool hasName = (values['full_name'] as String?)?.isNotEmpty == true;
     final bool hasPhone = (values['phone_number'] as String?)?.isNotEmpty == true;
     final bool hasDoctors = (values['assigned_doctors'] as List?)?.isNotEmpty == true;
-    return hasName || hasPhone || hasDoctors || _selectedFiles.isNotEmpty;
+    return hasName || hasPhone || hasDoctors || _selectedFiles.isNotEmpty ||
+        _details != _NewPatientFormState._initialDetails;
   }
 
   Future<void> _handleCancel() async {
@@ -48,6 +49,7 @@ extension _NewPatientActions on _NewPatientFormState {
           clinic: clinic,
           assignedDoctorIds: assignedDoctorIds,
           attachments: _selectedFiles,
+          personalDetails: _details,
         );
 
     if (!mounted) return;

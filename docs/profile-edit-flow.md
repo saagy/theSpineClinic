@@ -60,7 +60,20 @@ and back navigation. Initial load, retryable error, missing-session and populate
 states are explicit. Validation and save failures keep entered values; background
 session refresh preserves the editor route.
 
+Successful contact saves explicitly navigate to the role's profile destination
+(`/doctor/profile`, `/receptionist/profile`, or the administrator hub), where
+`currentUserProvider` reloads the saved details. They must not just pop the editor:
+the router's session-refresh listener can restore that popped route and recreate
+its form with cached, unedited values even though the database write succeeded.
+Password saves still pop back to the preserved contact draft. Regression tests
+exercise the real app router for every role with immediate and delayed reloads,
+check the updated profile details, and reopen the editor to verify saved values.
+
 ## Validation and limits
+
+Save-navigation regression: the real-router test reproduced the reopened editor
+before the fix. All 31 targeted profile, password, controller, repository and
+auth-redirect tests pass with the explicit profile destination.
 
 November 2, 2026 finish review: **ship**. The independent reviewer opened all
 16 production-widget captures and found no material fixes.

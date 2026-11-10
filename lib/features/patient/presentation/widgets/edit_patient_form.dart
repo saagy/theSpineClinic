@@ -15,6 +15,7 @@ import 'package:spine_clinic_app/features/patient/domain/clinic_location.dart';
 import 'package:spine_clinic_app/features/patient/domain/patient.dart';
 import 'package:spine_clinic_app/features/patient/presentation/edit_patient_controller.dart';
 import 'package:spine_clinic_app/features/patient/presentation/widgets/patient_demographic_fields.dart';
+import 'package:spine_clinic_app/features/patient/presentation/widgets/patient_personal_fields.dart';
 import 'package:spine_clinic_app/shared/widgets/doctor_select_field.dart';
 import 'package:spine_clinic_app/shared/widgets/app_chip.dart';
 import 'package:spine_clinic_app/shared/widgets/app_snackbar.dart';
@@ -38,6 +39,7 @@ class _EditPatientFormState extends ConsumerState<EditPatientForm> {
   bool _allowPop = false;
   late final TextEditingController _nameCtrl, _phoneCtrl;
   ClinicLocation? _selectedClinic;
+  late PatientPersonalDetails _details;
   final List<Staff> _selectedDoctors = [];
   late final List<String> _initialDoctorIds;
 
@@ -47,6 +49,7 @@ class _EditPatientFormState extends ConsumerState<EditPatientForm> {
     _nameCtrl = TextEditingController(text: widget.patient.fullName);
     _phoneCtrl = TextEditingController(text: widget.patient.phoneNumber);
     _selectedClinic = widget.patient.clinic;
+    _details = widget.patient.personalDetails;
     _selectedDoctors.addAll(widget.assignedDoctors);
     _nameCtrl.addListener(_onInputChanged);
     _phoneCtrl.addListener(_onInputChanged);
@@ -67,6 +70,7 @@ class _EditPatientFormState extends ConsumerState<EditPatientForm> {
     return _nameCtrl.text.trim() != patient.fullName ||
         _phoneCtrl.text.trim() != patient.phoneNumber ||
         _selectedClinic != patient.clinic ||
+        _details != patient.personalDetails ||
         currentIds.length != initialSet.length ||
         !currentIds.every(initialSet.contains);
   }
@@ -107,6 +111,7 @@ class _EditPatientFormState extends ConsumerState<EditPatientForm> {
       fullName: _nameCtrl.text.trim(),
       phoneNumber: _phoneCtrl.text.trim(),
       clinic: _selectedClinic!,
+      personalDetails: _details,
     );
 
     await ref

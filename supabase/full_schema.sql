@@ -1,4 +1,4 @@
--- Canonical schema snapshot through the 2026-11-01 staged program document removal migration.
+-- Canonical schema snapshot through the 2026-11-10 self-pay billing pilot migrations.
 -- Verified in isolated PostgreSQL tests; live deployment must be checked separately.
 -- Run this script to recreate the database schema from scratch.
 
@@ -2931,3 +2931,657 @@ REVOKE ALL ON FUNCTION public.create_staff_account(text,text,text,public.user_ro
 REVOKE ALL ON FUNCTION public.update_staff_account(uuid,jsonb,text) FROM PUBLIC, anon;
 GRANT EXECUTE ON FUNCTION public.create_staff_account(text,text,text,public.user_role,text,boolean,public.clinic_location,boolean) TO authenticated;
 GRANT EXECUTE ON FUNCTION public.update_staff_account(uuid,jsonb,text) TO authenticated;
+
+-- Billing pilot migrations
+-- 20261110010000_billing_tables.sql
+ALTER TABLE public.patients ADD COLUMN file_number bigint GENERATED ALWAYS AS IDENTITY;
+ALTER TABLE public.patients ADD CONSTRAINT patients_file_number_key UNIQUE (file_number);
+
+CREATE FUNCTION public.guard_patient_file_number() RETURNS trigger
+LANGUAGE plpgsql SET search_path = '' AS $$
+BEGIN
+  IF NEW.file_number IS DISTINCT FROM OLD.file_number THEN
+    RAISE EXCEPTION 'Patient file number is permanent' USING ERRCODE = '23514';
+  END IF;
+  RETURN NEW;
+END;
+$$;
+CREATE TRIGGER guard_patient_file_number BEFORE UPDATE OF file_number ON public.patients
+FOR EACH ROW EXECUTE FUNCTION public.guard_patient_file_number();
+REVOKE ALL ON FUNCTION public.guard_patient_file_number() FROM PUBLIC, anon, authenticated;
+
+CREATE TABLE public.billing_items (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  name text NOT NULL CHECK (length(btrim(name)) BETWEEN 1 AND 160),
+  kind text NOT NULL DEFAULT 'service' CHECK (kind IN ('service', 'package')),
+  price_minor bigint NOT NULL CHECK (price_minor BETWEEN 1 AND 10000000000),
+  active boolean NOT NULL DEFAULT true,
+  covered_service_id uuid REFERENCES public.billing_items(id),
+  session_count integer,
+  validity_days integer CHECK (validity_days > 0),
+  insurance_eligible boolean NOT NULL DEFAULT false,
+  version integer NOT NULL DEFAULT 1,
+  CHECK ((kind = 'service' AND covered_service_id IS NULL AND session_count IS NULL AND validity_days IS NULL)
+      OR (kind = 'package' AND covered_service_id IS NOT NULL AND covered_service_id <> id
+          AND session_count IS NOT NULL AND session_count > 0))
+);
+
+CREATE TABLE public.billing_number_series (
+  branch public.clinic_location NOT NULL,
+  kind text NOT NULL CHECK (kind IN ('invoice', 'receipt', 'return', 'refund')),
+  last_number bigint NOT NULL CHECK (last_number > 0),
+  PRIMARY KEY (branch, kind)
+);
+
+CREATE TABLE public.billing_invoices (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  patient_id uuid NOT NULL REFERENCES public.patients(id) ON DELETE RESTRICT,
+  file_number bigint NOT NULL,
+  patient_name text NOT NULL,
+  branch public.clinic_location NOT NULL,
+  doctor_id uuid NOT NULL REFERENCES public.staff(id),
+  doctor_name text NOT NULL,
+  consultant_id uuid REFERENCES public.staff(id),
+  consultant_name text,
+  service_date date NOT NULL,
+  discount_bps integer NOT NULL CHECK (discount_bps BETWEEN 0 AND 10000),
+  total_minor bigint NOT NULL CHECK (total_minor BETWEEN 0 AND 1000000000000),
+  currency text NOT NULL DEFAULT 'EGP' CHECK (currency = 'EGP'),
+  version integer NOT NULL DEFAULT 1,
+  number bigint,
+  created_at timestamptz NOT NULL DEFAULT clock_timestamp(),
+  created_by uuid NOT NULL REFERENCES public.staff(id),
+  issued_at timestamptz,
+  issued_by uuid REFERENCES public.staff(id),
+  UNIQUE (branch, number),
+  CHECK ((number IS NULL AND issued_at IS NULL AND issued_by IS NULL)
+      OR (number > 0 AND issued_at IS NOT NULL AND issued_by IS NOT NULL))
+);
+CREATE INDEX billing_invoices_patient ON public.billing_invoices(patient_id);
+CREATE INDEX billing_invoices_register ON public.billing_invoices(created_at DESC, id DESC);
+
+CREATE TABLE public.billing_invoice_lines (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  invoice_id uuid NOT NULL REFERENCES public.billing_invoices(id) ON DELETE CASCADE,
+  item_id uuid NOT NULL REFERENCES public.billing_items(id),
+  item_name text NOT NULL,
+  position integer NOT NULL CHECK (position > 0),
+  quantity integer NOT NULL CHECK (quantity BETWEEN 1 AND 1000),
+  price_minor bigint NOT NULL CHECK (price_minor > 0),
+  net_minor bigint NOT NULL CHECK (net_minor BETWEEN 0 AND price_minor * quantity),
+  UNIQUE (invoice_id, position),
+  UNIQUE (invoice_id, item_id)
+);
+
+CREATE TABLE public.billing_movements (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  invoice_id uuid NOT NULL REFERENCES public.billing_invoices(id),
+  branch public.clinic_location NOT NULL,
+  kind text NOT NULL CHECK (kind IN ('receipt', 'return', 'refund')),
+  number bigint NOT NULL CHECK (number > 0),
+  amount_minor bigint NOT NULL CHECK (amount_minor >= 0),
+  method text CHECK (method IN ('cash', 'visa')),
+  reason text CHECK (length(btrim(reason)) BETWEEN 1 AND 500),
+  recorded_at timestamptz NOT NULL DEFAULT clock_timestamp(),
+  recorded_by uuid NOT NULL REFERENCES public.staff(id),
+  actor_name text NOT NULL,
+  debt_reduced_minor bigint NOT NULL DEFAULT 0 CHECK (debt_reduced_minor BETWEEN 0 AND amount_minor),
+  CHECK ((kind = 'return' AND reason IS NOT NULL AND method IS NULL)
+    OR (kind <> 'return' AND amount_minor > 0 AND method IS NOT NULL AND debt_reduced_minor = 0
+        AND (kind = 'receipt' OR reason IS NOT NULL))),
+  UNIQUE (branch, kind, number)
+);
+CREATE INDEX billing_movements_invoice ON public.billing_movements(invoice_id, recorded_at, id);
+
+CREATE TABLE public.billing_allocations (
+  movement_id uuid NOT NULL REFERENCES public.billing_movements(id),
+  line_id uuid NOT NULL REFERENCES public.billing_invoice_lines(id),
+  amount_minor bigint NOT NULL CHECK (amount_minor >= 0),
+  quantity integer CHECK (quantity > 0),
+  PRIMARY KEY (movement_id, line_id)
+);
+CREATE INDEX billing_allocations_line ON public.billing_allocations(line_id);
+
+CREATE FUNCTION public.billing_can(p_capability text) RETURNS boolean
+LANGUAGE sql STABLE SECURITY DEFINER SET search_path = '' AS $$
+  SELECT CASE p_capability
+    WHEN 'transact' THEN public.current_staff_can_manage_payments()
+    WHEN 'catalog' THEN EXISTS (
+      SELECT 1 FROM public.staff WHERE user_id = auth.uid() AND is_active AND role = 'super_admin'
+    )
+    ELSE false END;
+$$;
+REVOKE ALL ON FUNCTION public.billing_can(text) FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.billing_can(text) TO authenticated;
+
+DO $$
+DECLARE table_name text;
+BEGIN
+  FOREACH table_name IN ARRAY ARRAY['billing_items', 'billing_number_series', 'billing_invoices',
+    'billing_invoice_lines', 'billing_movements', 'billing_allocations'] LOOP
+    EXECUTE format('ALTER TABLE public.%I ENABLE ROW LEVEL SECURITY', table_name);
+    EXECUTE format('GRANT SELECT, INSERT, UPDATE, DELETE ON public.%I TO authenticated', table_name);
+    IF table_name <> 'billing_number_series' THEN
+      EXECUTE format('CREATE POLICY billing_read ON public.%I FOR SELECT TO authenticated USING ((SELECT public.billing_can(''transact'')))', table_name);
+    END IF;
+  END LOOP;
+END;
+$$;
+-- Client writes have no RLS policy. Checked functions are the only write path.
+
+-- 20261110020000_billing_invoice_commands.sql
+CREATE FUNCTION public.billing_next_number(p_branch public.clinic_location, p_kind text)
+RETURNS bigint LANGUAGE sql SET search_path = '' AS $$
+  INSERT INTO public.billing_number_series AS series(branch, kind, last_number)
+  VALUES (p_branch, p_kind, 1)
+  ON CONFLICT (branch, kind) DO UPDATE SET last_number = series.last_number + 1
+  RETURNING last_number;
+$$;
+
+CREATE FUNCTION public.billing_save_item(p_data jsonb)
+RETURNS uuid LANGUAGE plpgsql SET search_path = '' AS $$
+DECLARE item_id uuid := (p_data->>'id')::uuid; saved_id uuid;
+BEGIN
+  IF NOT public.billing_can('catalog') THEN
+    RAISE EXCEPTION 'Permission denied' USING ERRCODE = '42501';
+  END IF;
+  IF item_id IS NULL THEN
+    INSERT INTO public.billing_items(name, price_minor, active)
+    VALUES (btrim(p_data->>'name'), (p_data->>'price_minor')::bigint, (p_data->>'active')::boolean)
+    RETURNING id INTO saved_id;
+  ELSE
+    UPDATE public.billing_items SET name = btrim(p_data->>'name'),
+      price_minor = (p_data->>'price_minor')::bigint, active = (p_data->>'active')::boolean,
+      version = version + 1
+    WHERE id = item_id AND kind = 'service' AND version = (p_data->>'version')::integer
+    RETURNING id INTO saved_id;
+    IF NOT FOUND THEN RAISE EXCEPTION 'stale' USING ERRCODE = 'P0001'; END IF;
+  END IF;
+  RETURN saved_id;
+END;
+$$;
+
+CREATE FUNCTION public.billing_save_draft(p_data jsonb, p_actor uuid)
+RETURNS uuid LANGUAGE plpgsql SET search_path = '' AS $$
+DECLARE
+  inv_id uuid := (p_data->>'id')::uuid;
+  person public.patients;
+  doctor public.staff;
+  consultant public.staff;
+  consultant_id uuid := (p_data->>'consultant_id')::uuid;
+  discount integer := (p_data->>'discount_bps')::integer;
+  line_count integer;
+  gross bigint;
+  net bigint;
+BEGIN
+  SELECT * INTO STRICT person FROM public.patients WHERE id = (p_data->>'patient_id')::uuid;
+  SELECT * INTO STRICT doctor FROM public.staff
+    WHERE id = (p_data->>'doctor_id')::uuid AND role = 'doctor' AND is_active;
+  IF consultant_id IS NOT NULL THEN
+    SELECT * INTO STRICT consultant FROM public.staff
+      WHERE id = consultant_id AND role = 'doctor' AND is_active;
+  END IF;
+  IF discount IS NULL OR discount NOT BETWEEN 0 AND 10000
+    OR p_data->'lines' IS NULL OR jsonb_array_length(p_data->'lines') NOT BETWEEN 1 AND 100 THEN
+    RAISE EXCEPTION 'invalid_invoice' USING ERRCODE = '22023';
+  END IF;
+  -- Prevent price changes during the quote comparison and snapshot.
+  PERFORM item.id FROM public.billing_items item
+    JOIN jsonb_to_recordset(p_data->'lines') AS input(item_id uuid) ON item.id = input.item_id
+    ORDER BY item.id FOR SHARE OF item;
+  SELECT count(*), sum(item.price_minor * input.quantity) INTO line_count, gross
+  FROM jsonb_to_recordset(p_data->'lines') AS input(item_id uuid, quantity integer, price_minor bigint, item_name text)
+    JOIN public.billing_items item ON item.id = input.item_id
+  WHERE item.active AND item.kind = 'service' AND item.price_minor = input.price_minor AND item.name = input.item_name
+    AND input.quantity BETWEEN 1 AND 1000;
+  IF line_count <> jsonb_array_length(p_data->'lines') THEN
+    RAISE EXCEPTION 'catalog_changed' USING ERRCODE = 'P0001';
+  END IF;
+  IF gross > 1000000000000 THEN RAISE EXCEPTION 'invalid_invoice' USING ERRCODE = '22023'; END IF;
+  net := round(gross::numeric * (10000 - discount) / 10000);
+  IF inv_id IS NULL THEN
+    INSERT INTO public.billing_invoices(patient_id, file_number, patient_name, branch, doctor_id,
+      doctor_name, consultant_id, consultant_name, service_date, discount_bps, total_minor, created_by)
+    VALUES (person.id, person.file_number, person.full_name, (p_data->>'branch')::public.clinic_location,
+      doctor.id, doctor.full_name, consultant.id, consultant.full_name,
+      (p_data->>'service_date')::date, discount, net, p_actor)
+    RETURNING id INTO inv_id;
+  ELSE
+    UPDATE public.billing_invoices SET patient_id = person.id, file_number = person.file_number,
+      patient_name = person.full_name, branch = (p_data->>'branch')::public.clinic_location,
+      doctor_id = doctor.id, doctor_name = doctor.full_name, consultant_id = consultant.id,
+      consultant_name = consultant.full_name, service_date = (p_data->>'service_date')::date,
+      discount_bps = discount, total_minor = net, version = version + 1
+    WHERE id = inv_id AND number IS NULL AND version = (p_data->>'version')::integer;
+    IF NOT FOUND THEN RAISE EXCEPTION 'stale' USING ERRCODE = 'P0001'; END IF;
+    DELETE FROM public.billing_invoice_lines WHERE invoice_id = inv_id;
+  END IF;
+  WITH priced AS (
+    SELECT item.id, item.name, item.price_minor, (input.value->>'quantity')::integer AS qty, input.ordinality AS pos
+    FROM jsonb_array_elements(p_data->'lines') WITH ORDINALITY AS input
+    JOIN public.billing_items item ON item.id = (input.value->>'item_id')::uuid
+  ), allocated AS (
+    SELECT *, sum(qty * price_minor) OVER (ORDER BY pos) AS cumulative FROM priced
+  )
+  INSERT INTO public.billing_invoice_lines(invoice_id, item_id, item_name, position, quantity, price_minor, net_minor)
+  SELECT inv_id, id, name, pos, qty, price_minor,
+    div(net::numeric * cumulative, gross) - div(net::numeric * (cumulative - qty * price_minor), gross)
+  FROM allocated;
+  RETURN inv_id;
+END;
+$$;
+
+CREATE FUNCTION public.billing_issue(p_invoice public.billing_invoices, p_actor uuid)
+RETURNS void LANGUAGE plpgsql SET search_path = '' AS $$
+BEGIN
+  IF p_invoice.number IS NOT NULL THEN RAISE EXCEPTION 'stale' USING ERRCODE = 'P0001'; END IF;
+  PERFORM item.id FROM public.billing_items item JOIN public.billing_invoice_lines line ON line.item_id = item.id
+    WHERE line.invoice_id = p_invoice.id ORDER BY item.id FOR SHARE OF item;
+  IF EXISTS (
+    SELECT 1 FROM public.billing_invoice_lines line JOIN public.billing_items item ON item.id = line.item_id
+    WHERE line.invoice_id = p_invoice.id AND (NOT item.active OR item.price_minor <> line.price_minor
+      OR item.name <> line.item_name OR item.kind <> 'service')
+  ) THEN RAISE EXCEPTION 'catalog_changed' USING ERRCODE = 'P0001'; END IF;
+  UPDATE public.billing_invoices SET
+    number = public.billing_next_number(p_invoice.branch, 'invoice'),
+    issued_at = clock_timestamp(), issued_by = p_actor, version = version + 1,
+    patient_name = (SELECT full_name FROM public.patients WHERE id = p_invoice.patient_id),
+    doctor_name = (SELECT full_name FROM public.staff WHERE id = p_invoice.doctor_id),
+    consultant_name = (SELECT full_name FROM public.staff WHERE id = p_invoice.consultant_id)
+  WHERE id = p_invoice.id;
+END;
+$$;
+
+REVOKE ALL ON FUNCTION public.billing_next_number(public.clinic_location,text),
+  public.billing_save_item(jsonb), public.billing_save_draft(jsonb,uuid),
+  public.billing_issue(public.billing_invoices,uuid) FROM PUBLIC, anon, authenticated;
+
+-- 20261110030000_billing_movement_commands.sql
+CREATE FUNCTION public.billing_record_movement(p_invoice public.billing_invoices, p_kind text, p_data jsonb, p_actor uuid)
+RETURNS uuid LANGUAGE plpgsql SET search_path = '' AS $$
+DECLARE
+  paid bigint; credited bigint; refunded bigint; debt bigint;
+  amount bigint := (p_data->>'amount_minor')::bigint;
+  method text := p_data->>'method';
+  reason text := nullif(btrim(p_data->>'reason'), '');
+  doc_id uuid;
+  expected_lines integer;
+  valid_lines integer;
+  portions jsonb;
+BEGIN
+  IF p_invoice.number IS NULL THEN RAISE EXCEPTION 'invalid_invoice' USING ERRCODE = '22023'; END IF;
+  SELECT coalesce(sum(amount_minor) FILTER (WHERE kind = 'receipt'), 0),
+    coalesce(sum(amount_minor) FILTER (WHERE kind = 'return'), 0),
+    coalesce(sum(amount_minor) FILTER (WHERE kind = 'refund'), 0)
+  INTO paid, credited, refunded FROM public.billing_movements WHERE invoice_id = p_invoice.id;
+  debt := greatest(p_invoice.total_minor - credited - paid + refunded, 0);
+  IF p_kind = 'receipt' AND (amount IS NULL OR amount <= 0 OR amount > debt) THEN
+    RAISE EXCEPTION 'receipt_limit' USING ERRCODE = 'P0001';
+  ELSIF p_kind = 'refund' AND (amount IS NULL OR amount <= 0
+    OR amount > paid - refunded - (p_invoice.total_minor - credited)) THEN
+    RAISE EXCEPTION 'refund_limit' USING ERRCODE = 'P0001';
+  ELSIF p_kind = 'return' THEN
+    method := NULL;
+    expected_lines := jsonb_array_length(p_data->'lines');
+    WITH requested AS (
+      SELECT line_id, sum(quantity)::integer AS quantity
+      FROM jsonb_to_recordset(p_data->'lines') AS input(line_id uuid, quantity integer)
+      GROUP BY line_id
+    ), returned AS (
+      SELECT a.line_id, sum(a.quantity)::integer AS quantity
+      FROM public.billing_allocations a JOIN public.billing_movements m ON m.id = a.movement_id
+      WHERE m.invoice_id = p_invoice.id AND m.kind = 'return' GROUP BY a.line_id
+    ), eligible AS (
+      SELECT line.id, input.quantity,
+        div(line.net_minor::numeric * (coalesce(r.quantity, 0) + input.quantity), line.quantity)
+        - div(line.net_minor::numeric * coalesce(r.quantity, 0), line.quantity) AS portion
+      FROM requested input JOIN public.billing_invoice_lines line ON line.id = input.line_id
+      LEFT JOIN returned r ON r.line_id = line.id
+      WHERE line.invoice_id = p_invoice.id AND input.quantity > 0
+        AND coalesce(r.quantity, 0) + input.quantity <= line.quantity
+    )
+    SELECT count(*), coalesce(sum(portion), 0),
+      jsonb_agg(jsonb_build_object('line_id', id, 'quantity', quantity, 'amount_minor', portion))
+    INTO valid_lines, amount, portions FROM eligible;
+    IF expected_lines IS NULL OR expected_lines = 0 OR valid_lines <> expected_lines THEN
+      RAISE EXCEPTION 'return_limit' USING ERRCODE = 'P0001';
+    END IF;
+  END IF;
+  INSERT INTO public.billing_movements(invoice_id, branch, kind, number, amount_minor, method,
+    reason, recorded_by, actor_name, debt_reduced_minor)
+  VALUES (p_invoice.id, p_invoice.branch, p_kind, public.billing_next_number(p_invoice.branch, p_kind),
+    amount, method, reason, p_actor, (SELECT full_name FROM public.staff WHERE id = p_actor),
+    CASE WHEN p_kind = 'return' THEN least(debt, amount) ELSE 0 END)
+  RETURNING id INTO doc_id;
+  IF p_kind = 'return' THEN
+    INSERT INTO public.billing_allocations(movement_id, line_id, amount_minor, quantity)
+    SELECT doc_id, line_id, amount_minor, quantity
+    FROM jsonb_to_recordset(portions) AS part(line_id uuid, amount_minor bigint, quantity integer);
+  ELSIF p_kind = 'receipt' THEN
+    WITH capacity AS (
+      SELECT line.id, line.position, greatest(line.net_minor - coalesce(sum(a.amount_minor), 0), 0) AS open
+      FROM public.billing_invoice_lines line
+      LEFT JOIN public.billing_allocations a ON a.line_id = line.id
+      WHERE line.invoice_id = p_invoice.id GROUP BY line.id
+    ), weight AS (
+      SELECT *, sum(open) OVER (ORDER BY position) AS cumulative, sum(open) OVER () AS total
+      FROM capacity WHERE open > 0
+    )
+    INSERT INTO public.billing_allocations(movement_id, line_id, amount_minor)
+    SELECT doc_id, id, div(amount::numeric * cumulative, total)
+      - div(amount::numeric * (cumulative - open), total) FROM weight;
+  END IF;
+  UPDATE public.billing_invoices SET version = version + 1 WHERE id = p_invoice.id;
+  RETURN doc_id;
+END;
+$$;
+
+REVOKE ALL ON FUNCTION public.billing_record_movement(public.billing_invoices,text,jsonb,uuid)
+  FROM PUBLIC, anon, authenticated;
+
+-- 20261110040000_billing_transactions.sql
+CREATE FUNCTION public.execute_billing_mutation(p_request_id uuid, p_kind text, p_payload jsonb)
+RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path = '' AS $$
+DECLARE
+  actor uuid := (SELECT id FROM public.staff WHERE user_id = auth.uid() AND is_active);
+  previous public.mutation_receipts;
+  invoice public.billing_invoices;
+  invoice_id uuid := (p_payload->>'id')::uuid;
+  document_id uuid;
+  kind_key text := 'billing:' || p_kind;
+  request_hash text := encode(sha256(convert_to(p_payload::text, 'UTF8')), 'hex');
+  outcome jsonb;
+  error_key text;
+BEGIN
+  IF actor IS NULL OR NOT public.billing_can(CASE WHEN p_kind = 'item' THEN 'catalog' ELSE 'transact' END) THEN
+    RAISE EXCEPTION 'Permission denied' USING ERRCODE = '42501';
+  END IF;
+  IF p_request_id IS NULL OR p_payload IS NULL OR p_kind IS NULL
+    OR p_kind NOT IN ('item', 'draft', 'issue', 'receipt', 'return', 'refund') THEN
+    RAISE EXCEPTION 'Invalid billing request' USING ERRCODE = '22023';
+  END IF;
+  PERFORM pg_advisory_xact_lock(hashtextextended(p_request_id::text, 0));
+  SELECT * INTO previous FROM public.mutation_receipts WHERE request_id = p_request_id;
+  IF FOUND THEN
+    IF previous.actor_id <> actor OR previous.kind <> kind_key OR previous.payload_hash <> request_hash THEN
+      RAISE EXCEPTION 'Request identity mismatch' USING ERRCODE = '22023';
+    END IF;
+    RETURN previous.outcome;
+  END IF;
+  BEGIN
+    IF p_kind <> 'item' AND (invoice_id IS NOT NULL OR p_kind <> 'draft') THEN
+      SELECT * INTO invoice FROM public.billing_invoices WHERE id = invoice_id FOR UPDATE;
+      IF NOT FOUND OR invoice.version IS DISTINCT FROM (p_payload->>'version')::integer THEN
+        RAISE EXCEPTION 'stale' USING ERRCODE = 'P0001';
+      END IF;
+    END IF;
+    CASE p_kind
+      WHEN 'item' THEN document_id := public.billing_save_item(p_payload);
+      WHEN 'draft' THEN invoice_id := public.billing_save_draft(p_payload, actor);
+      WHEN 'issue' THEN PERFORM public.billing_issue(invoice, actor);
+      ELSE document_id := public.billing_record_movement(invoice, p_kind, p_payload, actor);
+    END CASE;
+    outcome := jsonb_build_object('ok', true, 'invoice_id', invoice_id, 'document_id', document_id);
+  EXCEPTION
+    WHEN raise_exception THEN
+      GET STACKED DIAGNOSTICS error_key = MESSAGE_TEXT;
+      outcome := jsonb_build_object('ok', false, 'error', error_key);
+    WHEN data_exception OR integrity_constraint_violation OR no_data_found THEN
+      outcome := '{"ok":false,"error":"invalid_invoice"}';
+  END;
+  INSERT INTO public.mutation_receipts(request_id, actor_id, kind, payload_hash, outcome)
+    VALUES (p_request_id, actor, kind_key, request_hash, outcome);
+  RETURN outcome;
+END;
+$$;
+
+-- Tombstone an unresolved request under the same lock. A late original
+-- request can no longer commit once a replacement has been allowed.
+CREATE FUNCTION public.resolve_billing_mutation(p_request_id uuid, p_kind text)
+RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path = '' AS $$
+DECLARE
+  actor uuid := (SELECT id FROM public.staff WHERE user_id = auth.uid() AND is_active);
+  previous public.mutation_receipts;
+  kind_key text := 'billing:' || p_kind;
+  cancelled constant jsonb := '{"ok":false,"error":"cancelled"}';
+BEGIN
+  IF actor IS NULL OR NOT public.billing_can(CASE WHEN p_kind = 'item' THEN 'catalog' ELSE 'transact' END) THEN
+    RAISE EXCEPTION 'Permission denied' USING ERRCODE = '42501';
+  END IF;
+  IF p_request_id IS NULL OR p_kind IS NULL OR p_kind NOT IN ('item','draft','issue','receipt','return','refund') THEN
+    RAISE EXCEPTION 'Invalid billing request' USING ERRCODE = '22023';
+  END IF;
+  PERFORM pg_advisory_xact_lock(hashtextextended(p_request_id::text, 0));
+  SELECT * INTO previous FROM public.mutation_receipts WHERE request_id = p_request_id;
+  IF FOUND THEN
+    IF previous.actor_id <> actor OR previous.kind <> kind_key THEN
+      RAISE EXCEPTION 'Permission denied' USING ERRCODE = '42501';
+    END IF;
+    RETURN previous.outcome;
+  END IF;
+  INSERT INTO public.mutation_receipts(request_id, actor_id, kind, payload_hash, outcome)
+    VALUES (p_request_id, actor, kind_key, '', cancelled);
+  RETURN cancelled;
+END;
+$$;
+
+REVOKE ALL ON FUNCTION public.execute_billing_mutation(uuid,text,jsonb),
+  public.resolve_billing_mutation(uuid,text) FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.execute_billing_mutation(uuid,text,jsonb),
+  public.resolve_billing_mutation(uuid,text) TO authenticated;
+
+-- 20261110050000_billing_reads.sql
+CREATE VIEW public.billing_register WITH (security_invoker = true) AS
+SELECT i.*, coalesce(m.collected, 0)::bigint AS collected_minor,
+  coalesce(m.credited, 0)::bigint AS credited_minor,
+  coalesce(m.refunded, 0)::bigint AS refunded_minor,
+  greatest(i.total_minor - coalesce(m.credited, 0) - coalesce(m.collected, 0)
+    + coalesce(m.refunded, 0), 0)::bigint AS outstanding_minor,
+  greatest(coalesce(m.collected, 0) - coalesce(m.refunded, 0) - i.total_minor
+    + coalesce(m.credited, 0), 0)::bigint AS refundable_minor
+FROM public.billing_invoices i LEFT JOIN LATERAL (
+  SELECT sum(amount_minor) FILTER (WHERE kind = 'receipt') AS collected,
+    sum(amount_minor) FILTER (WHERE kind = 'return') AS credited,
+    sum(amount_minor) FILTER (WHERE kind = 'refund') AS refunded
+  FROM public.billing_movements WHERE invoice_id = i.id
+) m ON true;
+GRANT SELECT ON public.billing_register TO authenticated;
+
+CREATE FUNCTION public.billing_lookup(p_kind text, p_query text)
+RETURNS TABLE(id uuid, name text, file_number bigint, branch public.clinic_location)
+LANGUAGE sql STABLE SECURITY INVOKER SET search_path = '' AS $$
+  SELECT p.id, p.full_name AS name, p.file_number, p.clinic FROM public.patients p
+    WHERE public.billing_can('transact') AND p_kind = 'patient'
+    AND (strpos(lower(p.full_name), lower(btrim(p_query))) > 0
+      OR strpos(p.phone_number, btrim(p_query)) > 0
+      OR p.file_number = CASE WHEN ltrim(btrim(p_query), '#') ~ '^[0-9]{1,18}$' THEN ltrim(btrim(p_query), '#')::bigint END)
+  UNION ALL
+  SELECT s.id, s.full_name, NULL::bigint, NULL::public.clinic_location FROM public.staff s
+    WHERE public.billing_can('transact') AND p_kind = 'doctor' AND s.role = 'doctor' AND s.is_active
+    AND (btrim(p_query) = '' OR strpos(lower(s.full_name), lower(btrim(p_query))) > 0)
+  ORDER BY name, id LIMIT 40;
+$$;
+
+CREATE FUNCTION public.billing_invoice_detail(p_id uuid)
+RETURNS jsonb LANGUAGE sql STABLE SECURITY INVOKER SET search_path = '' AS $$
+  SELECT to_jsonb(i) || jsonb_build_object(
+    'lines', coalesce((SELECT jsonb_agg(to_jsonb(l) ORDER BY l.position)
+      FROM public.billing_invoice_lines l WHERE l.invoice_id = i.id), '[]'::jsonb),
+    'movements', coalesce((SELECT jsonb_agg(to_jsonb(m) || jsonb_build_object(
+      'allocations', coalesce((SELECT jsonb_agg(to_jsonb(a) ORDER BY l.position)
+        FROM public.billing_allocations a JOIN public.billing_invoice_lines l ON l.id = a.line_id
+        WHERE a.movement_id = m.id), '[]'::jsonb)) ORDER BY m.recorded_at, m.id)
+      FROM public.billing_movements m WHERE m.invoice_id = i.id), '[]'::jsonb))
+  FROM public.billing_register i WHERE i.id = p_id;
+$$;
+
+CREATE FUNCTION public.billing_list(p_query text, p_branch public.clinic_location, p_state text,
+  p_from date, p_to date, p_offset integer, p_limit integer, p_collections boolean DEFAULT false)
+RETURNS SETOF jsonb LANGUAGE sql STABLE SECURITY INVOKER SET search_path = '' AS $$
+  WITH matched AS (
+    SELECT i.* FROM public.billing_register i
+    WHERE (p_branch IS NULL OR i.branch = p_branch)
+    AND (btrim(p_query) = '' OR strpos(lower(i.patient_name), lower(btrim(p_query))) > 0
+      OR strpos(lower(i.doctor_name), lower(btrim(p_query))) > 0
+      OR i.file_number::text = ltrim(btrim(p_query), '#') OR i.number::text = ltrim(btrim(p_query), '#'))
+    AND (p_state IS NULL OR (p_state = 'draft' AND i.number IS NULL)
+      OR (p_state = 'outstanding' AND i.number IS NOT NULL AND i.outstanding_minor > 0)
+      OR (p_state = 'settled' AND i.number IS NOT NULL AND i.outstanding_minor = 0))
+    AND (p_collections OR ((p_from IS NULL OR i.service_date >= p_from)
+      AND (p_to IS NULL OR i.service_date <= p_to)))
+  ), rows AS (
+    SELECT to_jsonb(i) AS row, i.created_at AS moment, i.id FROM matched i WHERE NOT p_collections
+    UNION ALL
+    SELECT to_jsonb(m) || jsonb_build_object('patient_name', i.patient_name, 'file_number', i.file_number,
+      'invoice_number', i.number, 'doctor_name', i.doctor_name), m.recorded_at, m.id
+    FROM matched i JOIN public.billing_movements m ON m.invoice_id = i.id
+    WHERE p_collections AND m.kind IN ('receipt','refund')
+      AND (p_from IS NULL OR m.recorded_at >= (p_from::timestamp AT TIME ZONE public.clinic_timezone()))
+      AND (p_to IS NULL OR m.recorded_at < ((p_to + 1)::timestamp AT TIME ZONE public.clinic_timezone()))
+  )
+  SELECT row FROM rows ORDER BY moment DESC, id DESC OFFSET greatest(p_offset, 0)
+  LIMIT least(greatest(p_limit, 1), 10001);
+$$;
+
+REVOKE ALL ON FUNCTION public.billing_lookup(text,text), public.billing_invoice_detail(uuid),
+  public.billing_list(text,public.clinic_location,text,date,date,integer,integer,boolean) FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.billing_lookup(text,text), public.billing_invoice_detail(uuid),
+  public.billing_list(text,public.clinic_location,text,date,date,integer,integer,boolean) TO authenticated;
+
+-- 20261110060000_billing_export.sql
+CREATE FUNCTION public.billing_export(p_query text, p_branch public.clinic_location, p_state text,
+  p_from date, p_to date, p_collections boolean)
+RETURNS jsonb LANGUAGE sql STABLE SECURITY INVOKER SET search_path = '' AS $$
+  SELECT coalesce(jsonb_agg(row), '[]'::jsonb)
+  FROM public.billing_list(p_query, p_branch, p_state, p_from, p_to, 0, 10001, p_collections) AS row;
+$$;
+REVOKE ALL ON FUNCTION public.billing_export(text,public.clinic_location,text,date,date,boolean)
+  FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.billing_export(text,public.clinic_location,text,date,date,boolean)
+  TO authenticated;
+
+-- 20261110070000_billing_patient_delete_guard.sql
+CREATE OR REPLACE FUNCTION public.patient_has_records(p_patient_id uuid)
+RETURNS boolean LANGUAGE sql STABLE SECURITY DEFINER SET search_path = '' AS $$
+  SELECT EXISTS (SELECT 1 FROM public.patients WHERE id = p_patient_id
+    AND (session_balance <> 0 OR traction_balance <> 0))
+    OR EXISTS (SELECT 1 FROM public.appointments WHERE patient_id = p_patient_id)
+    OR EXISTS (SELECT 1 FROM public.payment_records WHERE patient_id = p_patient_id)
+    OR EXISTS (SELECT 1 FROM public.patient_programs WHERE patient_id = p_patient_id)
+    OR EXISTS (SELECT 1 FROM public.patient_medical_history WHERE patient_id = p_patient_id)
+    OR EXISTS (SELECT 1 FROM public.patient_notes WHERE patient_id = p_patient_id)
+    OR EXISTS (SELECT 1 FROM public.patient_documents WHERE patient_id = p_patient_id)
+    OR EXISTS (SELECT 1 FROM public.billing_invoices WHERE patient_id = p_patient_id);
+$$;
+
+-- Expose only the deletion decision, never financial data.
+CREATE FUNCTION public.billing_patient_has_invoices(p_patient_id uuid)
+RETURNS boolean LANGUAGE sql STABLE SECURITY DEFINER SET search_path = '' AS $$
+  SELECT public.can_current_staff_access_patient(p_patient_id) AND
+    EXISTS (SELECT 1 FROM public.billing_invoices WHERE patient_id = p_patient_id);
+$$;
+REVOKE ALL ON FUNCTION public.billing_patient_has_invoices(uuid) FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.billing_patient_has_invoices(uuid) TO authenticated;
+
+-- 20261110080000_patient_details_and_billing_directory.sql
+ALTER TABLE public.patients ADD COLUMN personal_details jsonb NOT NULL DEFAULT '{}'::jsonb;
+ALTER TABLE public.patients ALTER COLUMN personal_details SET DEFAULT '{"nationality":"Egyptian"}'::jsonb;
+
+CREATE FUNCTION public.normalize_patient_personal_details(p_details jsonb)
+RETURNS jsonb LANGUAGE plpgsql SET search_path = '' AS $$
+DECLARE
+  details record;
+BEGIN
+  SELECT * INTO details FROM jsonb_to_record(coalesce(p_details, '{}'::jsonb)) AS profile(
+    address text, date_of_birth date, nationality text, gender text, secondary_phone text,
+    insurance_company text, insurance_member_number text, insurance_expiry date, referral_source text
+  );
+  IF details.date_of_birth > current_date
+    OR (details.gender IS NOT NULL AND details.gender NOT IN ('female', 'male')) THEN
+    RAISE EXCEPTION 'Invalid patient details' USING ERRCODE = '22023';
+  END IF;
+  RETURN jsonb_strip_nulls(jsonb_build_object(
+    'address', nullif(btrim(details.address), ''),
+    'date_of_birth', details.date_of_birth,
+    'nationality', nullif(btrim(details.nationality), ''),
+    'gender', details.gender,
+    'secondary_phone', nullif(btrim(details.secondary_phone), ''),
+    'insurance_company', nullif(btrim(details.insurance_company), ''),
+    'insurance_member_number', nullif(btrim(details.insurance_member_number), ''),
+    'insurance_expiry', details.insurance_expiry,
+    'referral_source', nullif(btrim(details.referral_source), '')
+  ));
+END;
+$$;
+
+CREATE FUNCTION public.create_patient_profile(p_name text, p_phone text, p_clinic public.clinic_location,
+  p_created_by uuid, p_doctor_ids uuid[], p_personal_details jsonb)
+RETURNS public.patients LANGUAGE plpgsql SECURITY DEFINER SET search_path = '' AS $$
+DECLARE patient public.patients;
+BEGIN
+  patient := public.create_patient_with_doctors(p_name, p_phone, p_clinic, p_created_by, p_doctor_ids);
+  UPDATE public.patients SET personal_details = public.normalize_patient_personal_details(p_personal_details)
+    WHERE id = patient.id RETURNING * INTO patient;
+  RETURN patient;
+END;
+$$;
+
+CREATE FUNCTION public.update_patient_profile(p_patient_id uuid, p_name text, p_phone text,
+  p_clinic public.clinic_location, p_doctor_ids uuid[], p_personal_details jsonb)
+RETURNS void LANGUAGE plpgsql SECURITY DEFINER SET search_path = '' AS $$
+BEGIN
+  PERFORM public.update_patient_details(p_patient_id, p_name, p_phone, p_clinic, p_doctor_ids);
+  UPDATE public.patients SET personal_details = public.normalize_patient_personal_details(p_personal_details)
+    WHERE id = p_patient_id;
+END;
+$$;
+
+CREATE FUNCTION public.billing_lookup_page(p_kind text, p_query text, p_offset integer, p_limit integer)
+RETURNS TABLE(id uuid, name text, file_number bigint, branch public.clinic_location, is_senior boolean)
+LANGUAGE sql STABLE SECURITY INVOKER SET search_path = '' AS $$
+  WITH query AS (
+    SELECT lower(btrim(coalesce(p_query, ''))) AS term,
+      regexp_replace(coalesce(p_query, ''), '[^0-9]', '', 'g') AS digits
+  )
+  SELECT p.id, p.full_name AS name, p.file_number, p.clinic, false
+    FROM public.patients p CROSS JOIN query q
+    WHERE public.billing_can('transact') AND p_kind = 'patient'
+      AND (q.term = '' OR strpos(lower(p.full_name), q.term) > 0
+        OR (q.term ~ '^[+0-9() .-]+$' AND q.digits <> '' AND (
+          strpos(regexp_replace(p.phone_number, '[^0-9]', '', 'g'), q.digits) > 0
+          OR strpos(regexp_replace(coalesce(p.personal_details->>'secondary_phone',''), '[^0-9]', '', 'g'), q.digits) > 0))
+        OR p.file_number = CASE WHEN q.term ~ '^(id[[:space:]]+|#)?[0-9]{1,18}$' THEN q.digits::bigint END)
+  UNION ALL
+  SELECT s.id, s.full_name, NULL::bigint, NULL::public.clinic_location, s.is_senior
+    FROM public.staff s CROSS JOIN query q
+    WHERE public.billing_can('transact') AND s.role = 'doctor' AND s.is_active
+      AND (p_kind = 'doctor' OR (p_kind = 'senior' AND s.is_senior))
+      AND (q.term = '' OR strpos(lower(s.full_name), q.term) > 0)
+  ORDER BY name, id OFFSET greatest(p_offset, 0) LIMIT least(greatest(p_limit, 1), 51);
+$$;
+
+-- Existing issued documents retain their snapshots. Draft and issue writes
+-- must use an active senior doctor when the optional assignment is present.
+CREATE FUNCTION public.validate_billing_senior() RETURNS trigger
+LANGUAGE plpgsql SET search_path = '' AS $$
+BEGIN
+  IF NEW.consultant_id IS NOT NULL AND NOT EXISTS (
+    SELECT 1 FROM public.staff WHERE id = NEW.consultant_id
+      AND role = 'doctor' AND is_active AND is_senior
+  ) THEN
+    RAISE EXCEPTION 'inactive_senior' USING ERRCODE = 'P0001';
+  END IF;
+  RETURN NEW;
+END;
+$$;
+CREATE TRIGGER validate_billing_senior BEFORE INSERT OR UPDATE OF consultant_id, issued_at
+  ON public.billing_invoices FOR EACH ROW EXECUTE FUNCTION public.validate_billing_senior();
+
+REVOKE ALL ON FUNCTION public.normalize_patient_personal_details(jsonb),
+  public.validate_billing_senior() FROM PUBLIC, anon, authenticated;
+REVOKE ALL ON FUNCTION public.create_patient_profile(text,text,public.clinic_location,uuid,uuid[],jsonb),
+  public.update_patient_profile(uuid,text,text,public.clinic_location,uuid[],jsonb),
+  public.billing_lookup_page(text,text,integer,integer) FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.create_patient_profile(text,text,public.clinic_location,uuid,uuid[],jsonb),
+  public.update_patient_profile(uuid,text,text,public.clinic_location,uuid[],jsonb),
+  public.billing_lookup_page(text,text,integer,integer) TO authenticated;

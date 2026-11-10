@@ -78,8 +78,8 @@ class _ProfileEditorFormState extends ConsumerState<ProfileEditorForm> {
     super.dispose();
   }
 
-  void _leave() {
-    if (context.canPop()) {
+  void _leave({bool toProfile = false}) {
+    if (!toProfile && context.canPop()) {
       context.pop();
     } else {
       context.go(switch (widget.staff.role) {
@@ -131,7 +131,8 @@ class _ProfileEditorFormState extends ConsumerState<ProfileEditorForm> {
           : AppStrings.profileUpdatedSuccess,
       variant: AppSnackbarVariant.success,
     );
-    _leave();
+    // A session refresh can restore a popped editor; commit the destination.
+    _leave(toProfile: !widget.passwordOnly);
   }
 
   @override

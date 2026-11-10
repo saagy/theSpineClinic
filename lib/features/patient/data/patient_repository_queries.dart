@@ -8,6 +8,7 @@ import 'package:supabase_flutter/supabase_flutter.dart'
 import 'package:spine_clinic_app/core/errors/app_exception.dart';
 import 'package:spine_clinic_app/core/errors/result.dart';
 import 'package:spine_clinic_app/core/network/supabase_service.dart';
+import 'package:spine_clinic_app/core/utils/patient_helpers.dart';
 import 'package:spine_clinic_app/features/patient/domain/clinic_location.dart';
 import 'package:spine_clinic_app/features/patient/domain/patient.dart';
 import 'package:spine_clinic_app/features/patient/domain/patient_filters.dart';
@@ -61,12 +62,26 @@ class PatientRepositoryQueries {
     if (filters.clinic != null) {
       query = query.eq('clinic', filters.clinic!.dbValue);
     }
-    final search = filters.search?.trim();
-    if (search != null && search.isNotEmpty) {
-      final tokens = search.split(RegExp(r'\s+')).where((t) => t.isNotEmpty);
-      for (final token in tokens) {
-        query = query.or('full_name.ilike.%$token%,phone_number.ilike.%$token%');
-      }
+    return withSearch(query, filters.search ?? '');
+  }
+
+  static PostgrestFilterBuilder<List<Map<String, dynamic>>> withSearch(
+    PostgrestFilterBuilder<List<Map<String, dynamic>>> query,
+    String search,
+  ) {
+    final trimmed = search.trim();
+    if (trimmed.isEmpty) return query;
+    final id = parsePatientIdQuery(trimmed);
+    if (id != null && !RegExp(r'^[0-9]+$').hasMatch(trimmed)) {
+      return query.eq('file_number', id);
+    }
+    if (id != null) {
+      return query.or(
+        'file_number.eq.$id,full_name.ilike.%$trimmed%,phone_number.ilike.%$trimmed%',
+      );
+    }
+    for (final token in trimmed.split(RegExp(r'\s+'))) {
+      query = query.or('full_name.ilike.%$token%,phone_number.ilike.%$token%');
     }
     return query;
   }
@@ -109,9 +124,10 @@ class PatientRepositoryQueries {
           ? filters
           : PatientFilters(clinic: clinic, doctorId: doctorId, search: query);
       final int count = await _service.guardQuery(() async {
-        final res = await _buildFilteredQuery(effective, selectColumns: 'id')
-            .limit(1)
-            .count(CountOption.exact);
+        final res = await _buildFilteredQuery(
+          effective,
+          selectColumns: 'id',
+        ).limit(1).count(CountOption.exact);
         return res.count;
       });
       return Result.success(count);

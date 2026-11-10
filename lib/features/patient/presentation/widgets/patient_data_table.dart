@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:spine_clinic_app/shared/widgets/patient_id_label.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:spine_clinic_app/core/constants/app_sizes.dart';
 import 'package:spine_clinic_app/core/constants/app_strings.dart';
@@ -114,6 +115,7 @@ class PatientDataTable extends StatelessWidget {
                             overflow: TextOverflow.ellipsis,
                           ),
                           const SizedBox(height: AppSizes.p2),
+                          if (patient.fileNumber case final int number) PatientIdLabel(number),
                           Text(
                             patient.phoneNumber,
                             style: AppTextStyles.caption.copyWith(

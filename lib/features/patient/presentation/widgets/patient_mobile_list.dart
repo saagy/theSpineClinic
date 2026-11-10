@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:spine_clinic_app/shared/widgets/patient_id_label.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:spine_clinic_app/core/constants/app_sizes.dart';
 import 'package:spine_clinic_app/core/constants/app_text_styles.dart';
@@ -117,6 +118,7 @@ class PatientMobileList extends StatelessWidget {
                     ],
                   ),
                   const SizedBox(height: AppSizes.p2),
+                  if (patient.fileNumber case final int number) PatientIdLabel(number),
                   Row(
                     children: [
                       Text(

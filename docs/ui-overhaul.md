@@ -2,6 +2,12 @@
 
 ## Status
 
+The self-pay billing pilot establishes a new invoice register, service catalog,
+editor, and transaction detail. The source audit identified combined sale and
+collection, free-text prices, collapsed installments, and missing issuance
+review in the earlier payment entry. The pilot uses a separate ledger and
+renders on desktop and mobile. See [Billing pilot](billing-pilot.md).
+
 November 2 staff cleanup implements flat directory/application rows, global sorting,
 compact confirmed review actions, bounded forms with persistent Save/Cancel, and
 shared filter presentation. The isolated Analytics implementation/navigation is

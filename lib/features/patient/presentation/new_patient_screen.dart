@@ -22,7 +22,6 @@ class NewPatientScreen extends ConsumerWidget {
       return Scaffold(
         appBar: AppBar(
           title: const Text(AppStrings.registerPatient),
-          backgroundColor: Theme.of(context).colorScheme.surface,
           foregroundColor: Theme.of(context).colorScheme.onSurface,
           elevation: 0,
         ),
@@ -40,7 +39,6 @@ class NewPatientScreen extends ConsumerWidget {
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
         title: const Text(AppStrings.registerPatient),
-        backgroundColor: Theme.of(context).colorScheme.surface,
         foregroundColor: Theme.of(context).colorScheme.onSurface,
         elevation: 0,
       ),

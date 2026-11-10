@@ -14,14 +14,16 @@ class AppNavBar extends StatelessWidget {
     required this.currentIndex,
     required this.onTabSelected,
     required this.userRole,
+    this.showBilling = false,
   });
   final int currentIndex;
   final ValueSetter<int> onTabSelected;
   final String userRole;
+  final bool showBilling;
 
   @override
   Widget build(BuildContext context) {
-    final tabs = NavTabs.forRole(userRole);
+    final tabs = NavTabs.forRole(userRole, showBilling: showBilling);
     final numTabs = tabs.length;
     if (numTabs == 0) return const SizedBox.shrink();
 

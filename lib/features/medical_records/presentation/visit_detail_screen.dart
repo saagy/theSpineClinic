@@ -32,14 +32,11 @@ class VisitDetailScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final stateAsync = ref.watch(visitDetailControllerProvider(appointmentId));
-    final ColorScheme cs = Theme.of(context).colorScheme;
 
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
         title: Text(AppStrings.visitDetails, style: AppTextStyles.headingSmall),
-        backgroundColor: cs.surface,
-        surfaceTintColor: cs.surface.withAlpha(0),
         leading: const AppBackButton(),
         actions: [
           stateAsync.maybeWhen(

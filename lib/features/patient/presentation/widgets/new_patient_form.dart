@@ -17,6 +17,7 @@ import 'package:spine_clinic_app/features/patient/domain/clinic_location.dart';
 import 'package:spine_clinic_app/features/patient/domain/patient.dart';
 import 'package:spine_clinic_app/features/patient/presentation/new_patient_controller.dart';
 import 'package:spine_clinic_app/features/patient/presentation/widgets/patient_form_fields.dart';
+import 'package:spine_clinic_app/features/patient/presentation/widgets/patient_personal_fields.dart';
 import 'package:spine_clinic_app/shared/widgets/doctor_select_field.dart';
 import 'package:spine_clinic_app/shared/widgets/app_snackbar.dart';
 import 'package:spine_clinic_app/shared/widgets/confirmation_dialog.dart';
@@ -38,6 +39,9 @@ class NewPatientForm extends ConsumerStatefulWidget {
 }
 
 class _NewPatientFormState extends ConsumerState<NewPatientForm> {
+  static const _initialDetails = PatientPersonalDetails(nationality: AppStrings.egyptianNationality);
+  PatientPersonalDetails _details = _initialDetails;
+  void _updateDetails(PatientPersonalDetails details) => setState(() => _details = details);
   final GlobalKey<FormBuilderState> _formKey = GlobalKey<FormBuilderState>();
   final List<PlatformFile> _selectedFiles = [];
 

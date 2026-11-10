@@ -4,20 +4,9 @@ extension _ProgramFormView on _ProgramFormScreenState {
   Widget _buildForm(BuildContext context) {
     final isEdit = widget.program != null;
     final programId = widget.program?.id;
-    final removedIds = ref.watch(programDocumentDraftProvider(_formKey)).removedIds;
     final mutation = ref.watch(programControllerProvider);
-    final error = mutation.scope == ProgramMutationState.saveScope(widget.patientId, programId)
-        ? mutation.error
-        : null;
+    final error = mutation.scope == ProgramMutationState.saveScope(widget.patientId, programId) ? mutation.error : null;
     final mustReview = error?.userMessageKey == 'program_attachments_rejected';
-    final List<PatientDocument> existingDocs = programId != null
-        ? ref
-                  .watch(
-                    programDocumentsProvider(patientId: widget.patientId, programId: programId),
-                  )
-                  .value ??
-              []
-        : const [];
 
     return Scaffold(
       appBar: AppBar(
@@ -29,14 +18,10 @@ extension _ProgramFormView on _ProgramFormScreenState {
         child: FormPageBody(
           isSaving: _isSubmitting,
           hasDocumentUploads: _pendingFiles.isNotEmpty,
-          savingLabel: _pendingFiles.isEmpty
-              ? AppStrings.savingChanges
-              : AppStrings.savingProgramAndDocuments,
+          savingLabel: _pendingFiles.isEmpty ? AppStrings.savingChanges : AppStrings.savingProgramAndDocuments,
           savingDetail: _pendingFiles.isEmpty ? null : AppStrings.keepPageOpen,
           errorMessage: error == null ? null : AppStrings.fromKey(error.userMessageKey),
-          onSave: mustReview
-              ? () => context.go(AppRoutes.patientDetail.replaceAll(':id', widget.patientId))
-              : _submit,
+          onSave: mustReview ? () => context.go(AppRoutes.patientDetail.replaceAll(':id', widget.patientId)) : _submit,
           onCancel: _close,
           saveLabel: mustReview
               ? AppStrings.patientRecord
@@ -49,25 +34,48 @@ extension _ProgramFormView on _ProgramFormScreenState {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               ProgramConditionSelector(
+                key: _conditionsKey,
                 selectedConditions: _selectedConditions,
                 onConditionsChanged: (items) => _mutate(() => _selectedConditions = items),
               ),
               const SizedBox(height: AppSizes.p16),
               ProgramClinicalInputs(
+                findingsKey: _findingsKey,
                 examinationController: _examinationController,
                 imagingNotesController: _imagingNotesController,
                 exaggeratingPositionsController: _exaggeratingPositionsController,
                 relievingPositionsController: _relievingPositionsController,
                 notesController: _notesController,
-                pendingFiles: _pendingFiles,
-                existingDocuments: existingDocs
-                    .where((doc) => !removedIds.contains(doc.id))
-                    .toList(),
-                onPendingFilesChanged: (files) => _mutate(() => _pendingFiles = files),
-                onDeleteExistingDocument: _stageDocumentRemoval,
               ),
+              const SizedBox(height: AppSizes.p20),
+              _buildDocuments(),
             ],
           ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDocuments() {
+    final programId = widget.program?.id;
+    final removedIds = ref.watch(programDocumentDraftProvider(_formKey)).removedIds;
+    final provider = programId == null
+        ? null
+        : programDocumentsProvider(patientId: widget.patientId, programId: programId);
+    return FormSection(
+      key: _documentsKey,
+      title: AppStrings.tabDocuments,
+      child: RecordAsync<List<PatientDocument>>(
+        value: provider == null ? const AsyncData([]) : ref.watch(provider),
+        onRetry: () {
+          ref.invalidate(patientDocumentsNotifierProvider(widget.patientId));
+          if (provider != null) ref.invalidate(provider);
+        },
+        data: (documents) => ProgramImagingPicker(
+          pendingFiles: _pendingFiles,
+          existingDocuments: documents.where((doc) => !removedIds.contains(doc.id)).toList(),
+          onPendingFilesChanged: (files) => _mutate(() => _pendingFiles = files),
+          onDeleteExistingDocument: _stageDocumentRemoval,
         ),
       ),
     );

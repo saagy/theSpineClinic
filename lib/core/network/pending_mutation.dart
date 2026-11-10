@@ -24,6 +24,18 @@ class PendingMutation {
     );
   }
 
+  static Future<PendingMutation?> find(String actor, String scope) async {
+    final preferences = await SharedPreferences.getInstance();
+    await preferences.reload();
+    final key = 'pending-mutation:${digest([actor, scope])}';
+    final stored = preferences.getString(key);
+    if (stored == null) return null;
+    final data = jsonDecode(stored) as Map<String, dynamic>;
+    return PendingMutation(
+      preferences, key, data['id'] as String, data['fingerprint'] as String,
+    );
+  }
+
   static Future<PendingMutation> open({
     required String actor,
     required String scope,

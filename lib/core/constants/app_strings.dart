@@ -2,8 +2,28 @@
 /// Rule 7 — no hardcoded strings anywhere outside this file.
 library;
 
+import 'billing_strings.dart';
+
 /// Application-wide string constants.
 abstract final class AppStrings {
+  static const String patientIdNumber = 'ID number';
+  static String patientIdLabel(int number) => 'ID $number';
+  static const String patientOptionalDetails = 'Optional';
+  static const String patientAddress = 'Address';
+  static const String patientBirthDate = 'Date of birth';
+  static const String patientNationality = 'Nationality';
+  static const String egyptianNationality = 'Egyptian';
+  static const String patientGender = 'Gender';
+  static const String patientFemale = 'Female';
+  static const String patientMale = 'Male';
+  static const String patientNotSpecified = 'Not specified';
+  static const String patientSecondaryPhone = 'Second phone number';
+  static const String patientInsurance = 'Insurance details';
+  static const String patientInsuranceCompany = 'Insurance company';
+  static const String patientInsuranceNumber = 'Insurance member number';
+  static const String patientInsuranceExpiry = 'Card expiration date';
+  static const String patientReferralSource = 'How they heard about us / referral source';
+  static const billing = BillingStrings();
   static String staffAppliedOn(String date) => 'Applied $date';
   static const String noMatchingStaff = 'No staff match your search or filters.';
   static const String programActions = 'Program actions';
@@ -212,7 +232,7 @@ abstract final class AppStrings {
 
   static String fromKey(String key) => _keyMap[key] ?? errorUnknown;
 
-  static const Map<String, String> _keyMap = {
+  static final Map<String, String> _keyMap = {
     'error_auth_generic': errorAuthGeneric,
     'error_auth_invalid_credentials': errorAuthInvalidCredentials,
     'error_auth_email_not_confirmed': errorAuthEmailNotConfirmed,
@@ -235,6 +255,16 @@ abstract final class AppStrings {
     'error_doc_link_incomplete': errorDocLinkIncomplete,
     'error_doc_unsupported_type': errorDocUnsupportedType,
     'mutation_unconfirmed': mutationUnconfirmed,
+    'billing_cancelled': billing.cancelled,
+    'billing_stale': billing.stale,
+    'billing_catalog_changed': billing.catalogChanged,
+    'billing_invalid_invoice': billing.invalid,
+    'billing_inactive_senior': billing.inactiveSenior,
+    'billing_receipt_limit': billing.receiptLimit,
+    'billing_refund_limit': billing.refundLimit,
+    'billing_return_limit': billing.returnLimit,
+    'billing_busy': billing.busy,
+    'billing_export_limit': billing.exportLimit,
     'payment_changed': paymentChanged,
     'mutation_previous_completed': mutationPreviousCompleted,
     'error_unknown': errorUnknown,
@@ -252,7 +282,7 @@ abstract final class AppStrings {
   static const String fullName = 'Full Name';
   static const String phone = 'Phone';
   static const String searchPatients = 'Search patients\u2026';
-  static const String searchPatientsPrompt = 'Search by name or phone number';
+  static const String searchPatientsPrompt = 'Search by name, phone or ID number';
   static const String all = 'All';
 
   // Navigation / Sections
@@ -370,7 +400,7 @@ abstract final class AppStrings {
   static const String inactiveLabel = '(Inactive)';
   static const String status = 'Status';
   static const String selectPatient = 'Select Patient';
-  static const String searchPatientHint = 'Search by name or phone…';
+  static const String searchPatientHint = 'Search by name, phone or ID number…';
   static const String errorLoadingPatients = 'Error loading patients';
   static const String noPatientsFound = 'No patients found';
 

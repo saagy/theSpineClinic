@@ -1,11 +1,8 @@
 library;
 
-import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:spine_clinic_app/core/constants/app_sizes.dart';
 import 'package:spine_clinic_app/core/constants/app_strings.dart';
-import 'package:spine_clinic_app/features/medical_records/presentation/widgets/program_imaging_picker.dart';
-import 'package:spine_clinic_app/features/patient/domain/patient_document.dart';
 import 'package:spine_clinic_app/shared/widgets/app_text_field.dart';
 import 'package:spine_clinic_app/shared/widgets/form_section.dart';
 import 'package:spine_clinic_app/shared/widgets/form_columns.dart';
@@ -19,10 +16,7 @@ class ProgramClinicalInputs extends StatelessWidget {
     required this.exaggeratingPositionsController,
     required this.relievingPositionsController,
     required this.notesController,
-    required this.pendingFiles,
-    required this.existingDocuments,
-    required this.onPendingFilesChanged,
-    this.onDeleteExistingDocument,
+    this.findingsKey,
   });
 
   final TextEditingController examinationController;
@@ -30,15 +24,13 @@ class ProgramClinicalInputs extends StatelessWidget {
   final TextEditingController exaggeratingPositionsController;
   final TextEditingController relievingPositionsController;
   final TextEditingController notesController;
-  final List<PlatformFile> pendingFiles;
-  final List<PatientDocument> existingDocuments;
-  final ValueChanged<List<PlatformFile>> onPendingFilesChanged;
-  final ValueChanged<PatientDocument>? onDeleteExistingDocument;
+  final Key? findingsKey;
 
   @override
   Widget build(BuildContext context) {
     return FormColumns(
       first: FormSection(
+        key: findingsKey,
         title: AppStrings.clinicalFindingsSection,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -55,13 +47,6 @@ class ProgramClinicalInputs extends StatelessWidget {
               labelText: AppStrings.imagingNotes,
               hintText: AppStrings.imagingNotesHint,
               maxLines: 3,
-            ),
-            const SizedBox(height: AppSizes.p12),
-            ProgramImagingPicker(
-              pendingFiles: pendingFiles,
-              existingDocuments: existingDocuments,
-              onPendingFilesChanged: onPendingFilesChanged,
-              onDeleteExistingDocument: onDeleteExistingDocument,
             ),
           ],
         ),

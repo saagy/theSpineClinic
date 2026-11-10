@@ -6,6 +6,7 @@ import 'package:spine_clinic_app/core/utils/formatters.dart';
 import 'package:spine_clinic_app/features/patient/domain/patient.dart';
 import 'package:spine_clinic_app/features/patient/presentation/widgets/patient_monogram_badge.dart';
 import 'package:spine_clinic_app/features/patient/presentation/widgets/patient_phone_options_sheet.dart';
+import 'package:spine_clinic_app/shared/widgets/patient_id_label.dart';
 
 class WorkspaceHeader extends StatelessWidget {
   const WorkspaceHeader({super.key, required this.patient, required this.isDoctor});
@@ -34,8 +35,6 @@ class WorkspaceHeader extends StatelessWidget {
                 Text(
                   patient.fullName,
                   style: AppTextStyles.cardTitle.copyWith(color: cs.onSurface),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
                 ),
                 const SizedBox(height: AppSizes.p4),
                 Wrap(
@@ -43,6 +42,7 @@ class WorkspaceHeader extends StatelessWidget {
                   runSpacing: AppSizes.p4,
                   crossAxisAlignment: WrapCrossAlignment.center,
                   children: [
+                    if (patient.fileNumber case final int number) PatientIdLabel(number),
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: AppSizes.p6, vertical: AppSizes.p2),
                       decoration: BoxDecoration(

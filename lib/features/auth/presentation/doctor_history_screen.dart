@@ -81,7 +81,6 @@ class _DoctorHistoryScreenState extends ConsumerState<DoctorHistoryScreen> {
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: Theme.of(context).colorScheme.surface,
         foregroundColor: Theme.of(context).colorScheme.onSurface,
         elevation: 0,
         leading: const AppBackButton(),

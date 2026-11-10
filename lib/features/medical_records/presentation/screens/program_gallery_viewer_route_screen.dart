@@ -37,7 +37,6 @@ class ProgramGalleryViewerRouteScreen extends ConsumerWidget {
       loading: () => Scaffold(
         backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         appBar: AppBar(
-          backgroundColor: cs.surface,
           leading: IconButton(
             icon: Icon(Icons.close_rounded, color: cs.onSurface),
             tooltip: AppStrings.close,
@@ -52,7 +51,6 @@ class ProgramGalleryViewerRouteScreen extends ConsumerWidget {
       error: (e, _) => Scaffold(
         backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         appBar: AppBar(
-          backgroundColor: cs.surface,
           leading: IconButton(
             icon: Icon(Icons.close_rounded, color: cs.onSurface),
             tooltip: AppStrings.close,
@@ -77,7 +75,6 @@ class ProgramGalleryViewerRouteScreen extends ConsumerWidget {
           return Scaffold(
             backgroundColor: Theme.of(context).scaffoldBackgroundColor,
             appBar: AppBar(
-              backgroundColor: cs.surface,
               leading: IconButton(
                 icon: Icon(Icons.close_rounded, color: cs.onSurface),
                 tooltip: AppStrings.close,

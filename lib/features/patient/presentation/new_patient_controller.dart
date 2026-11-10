@@ -1,5 +1,6 @@
 import 'package:file_picker/file_picker.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:spine_clinic_app/core/constants/app_strings.dart';
 
 import 'package:spine_clinic_app/core/errors/result.dart';
 import 'package:spine_clinic_app/core/errors/app_exception.dart';
@@ -52,6 +53,7 @@ class NewPatientController extends _$NewPatientController {
     required ClinicLocation clinic,
     required List<String> assignedDoctorIds,
     required List<PlatformFile> attachments,
+    PatientPersonalDetails personalDetails = const PatientPersonalDetails(nationality: AppStrings.egyptianNationality),
   }) async {
     if (state.isLoading) {
       return const Result.failure(
@@ -82,6 +84,7 @@ class NewPatientController extends _$NewPatientController {
       fullName: fullName,
       phoneNumber: phoneNumber,
       clinic: clinic,
+      personalDetails: personalDetails,
       sessionBalance: 0,
       tractionBalance: 0,
       createdBy: currentUser.id,

@@ -4,6 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:spine_clinic_app/core/constants/app_strings.dart';
 import 'package:spine_clinic_app/core/errors/app_exception.dart';
 import 'package:spine_clinic_app/core/errors/result.dart';
+import 'package:spine_clinic_app/core/network/app_routes.dart';
 import 'package:spine_clinic_app/features/auth/presentation/edit_profile_screen.dart';
 import 'package:spine_clinic_app/shared/widgets/form_page_skeleton.dart';
 import '../../fixtures/profile_editor_harness.dart';
@@ -47,7 +48,10 @@ void main() {
     expect(repo.profileWrites, 1);
     expect(repo.passwordWrites, 0);
     expect(repo.savedProfile!.fullName, 'Dr. Nadia Hassan');
-    expect(router.routeInformationProvider.value.uri.path, '/fixture-profile');
+    expect(
+      router.routeInformationProvider.value.uri.path,
+      AppRoutes.doctorProfile,
+    );
     expect(find.text('Dr. Nadia Hassan'), findsOneWidget);
   });
 
@@ -69,7 +73,7 @@ void main() {
       await tester.pumpAndSettle();
       expect(
         router.routeInformationProvider.value.uri.path,
-        '/fixture-profile',
+        AppRoutes.doctorProfile,
       );
       expect(repo.profileWrites, 0);
     },
@@ -125,7 +129,10 @@ void main() {
     expect(repo.profileWrites, 1);
     repo.pendingWrite!.complete(const Result.success(null));
     await tester.pumpAndSettle();
-    expect(router.routeInformationProvider.value.uri.path, '/fixture-profile');
+    expect(
+      router.routeInformationProvider.value.uri.path,
+      AppRoutes.doctorProfile,
+    );
   });
 
   testWidgets(

@@ -62,6 +62,34 @@ the existing `create_patient_with_doctors` grants to its current five-argument s
 
 ## 2. Tables
 
+### Self-pay billing pilot
+
+- `patients.file_number` is a unique, immutable database identity across branches
+  labeled **ID number** in the app.
+- `patients.personal_details` stores optional demographics, contact, referral,
+  and insurance membership fields. The profile RPCs normalize these values
+  inside the existing patient creation or edit transaction. Existing profiles
+  start with blank details. New profiles default to Egyptian nationality.
+- `billing_lookup_page` uses the caller's access and stable name/ID ordering.
+  Drafts and issuance validate that the optional examining doctor is an
+  active senior. Issued snapshots preserve their original attribution.
+- `billing_items` holds service prices in EGP minor units and package definition
+  fields. Only active services can appear in a self-pay draft.
+- `billing_invoices` and `billing_invoice_lines` hold editable drafts and
+  immutable issued content, including patient, clinician, branch, and price
+  snapshots. A version controls conflicting edits and transactions.
+- `billing_movements` holds separately numbered receipts, return invoices, and
+  refunds. `billing_allocations` assigns receipts and returns to original lines.
+  A return offsets outstanding debt before creating a refundable amount.
+- `billing_number_series` allocates numbers per branch and document type.
+  The security-invoker `billing_register` derives balances from movements.
+- Checked `execute_billing_mutation` and `resolve_billing_mutation` RPCs use
+  existing durable request receipts. Client access is read-only through RLS.
+  Payment-enabled staff can transact and export. Catalog edits require admin.
+  Both drafts and issued invoices protect a patient from deletion.
+
+See [Billing pilot](billing-pilot.md) for operation and staging setup.
+
 ### `staff`
 Auth-linked staff profiles. One row per Supabase Auth user (`auth.users`).
 - `id` (`uuid`, PK, default `gen_random_uuid()`)

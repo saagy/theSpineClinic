@@ -14,11 +14,16 @@ import 'package:spine_clinic_app/shared/widgets/record_action_menu.dart';
 
 /// Program-level actions, shared by the patient list and program detail.
 class ProgramRecordMenu extends ConsumerWidget {
-  const ProgramRecordMenu({super.key, required this.program, this.inDetail = false});
+  const ProgramRecordMenu({super.key, required this.program, this.inDetail = false, this.onExport});
   final PatientProgram program;
   final bool inDetail;
+  final VoidCallback? onExport;
 
   Future<void> _select(BuildContext context, WidgetRef ref, String action) async {
+    if (action == 'export') {
+      onExport?.call();
+      return;
+    }
     if (action == 'view') {
       context.push(
         AppRoutes.patientProgramDetail.replaceAll(':id', program.patientId).replaceAll(':programId', program.id),
@@ -39,6 +44,7 @@ class ProgramRecordMenu extends ConsumerWidget {
       );
       return;
     }
+    if (action != 'delete') return;
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (_) => const ConfirmationDialog(
@@ -70,8 +76,7 @@ class ProgramRecordMenu extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final user = ref.watch(currentUserProvider).value;
     final canEdit = user?.isActive == true && user?.isSeniorDoctor == true;
-    if (!canEdit) {
-      if (inDetail) return const SizedBox.shrink();
+    if (!canEdit && !inDetail) {
       return IconButton(
         tooltip: AppStrings.viewDetails,
         constraints: const BoxConstraints(minWidth: AppSizes.tappableMin, minHeight: AppSizes.tappableMin),
@@ -83,13 +88,22 @@ class ProgramRecordMenu extends ConsumerWidget {
         onPressed: () => _select(context, ref, 'view'),
       );
     }
+    if (!canEdit && onExport == null) return const SizedBox.shrink();
     return RecordActionMenu<String>(
       tooltip: AppStrings.programActions,
       enabled: !ref.watch(programControllerProvider).isLoading,
       actions: [
         if (!inDetail) const RecordMenuAction('status', AppStrings.changeStatus, Icons.swap_horiz),
-        if (!inDetail) const RecordMenuAction('edit', AppStrings.editProgramDetails, Icons.edit_outlined),
-        const RecordMenuAction('delete', AppStrings.deleteProgram, Icons.delete_outline, destructive: true),
+        if (canEdit) const RecordMenuAction('edit', AppStrings.editProgramDetails, Icons.edit_outlined),
+        if (onExport != null) const RecordMenuAction('export', AppStrings.exportPdf, Icons.picture_as_pdf_outlined),
+        if (canEdit)
+          const RecordMenuAction(
+            'delete',
+            AppStrings.deleteProgram,
+            Icons.delete_outline,
+            destructive: true,
+            dividerBefore: true,
+          ),
       ],
       onSelected: (action) => _select(context, ref, action),
     );

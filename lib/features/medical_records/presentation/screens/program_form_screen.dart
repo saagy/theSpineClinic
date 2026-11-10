@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:spine_clinic_app/core/constants/app_sizes.dart';
 import 'package:spine_clinic_app/core/constants/app_strings.dart';
+import 'package:spine_clinic_app/core/errors/app_exception.dart';
 import 'package:spine_clinic_app/core/network/app_routes.dart';
 import 'package:spine_clinic_app/features/medical_records/domain/condition_catalog.dart';
 import 'package:spine_clinic_app/features/medical_records/domain/patient_program.dart';
@@ -13,21 +14,32 @@ import 'package:spine_clinic_app/features/medical_records/domain/program_reposit
 import 'package:spine_clinic_app/features/medical_records/presentation/program_controller.dart';
 import 'package:spine_clinic_app/features/medical_records/presentation/program_document_draft.dart';
 import 'package:spine_clinic_app/features/medical_records/presentation/program_mutation_state.dart';
+import 'package:spine_clinic_app/features/medical_records/presentation/program_edit_section.dart';
+import 'package:spine_clinic_app/features/medical_records/presentation/widgets/program_imaging_picker.dart';
 import 'package:spine_clinic_app/features/medical_records/presentation/widgets/program_clinical_inputs.dart';
 import 'package:spine_clinic_app/features/medical_records/presentation/widgets/program_condition_selector.dart';
 import 'package:spine_clinic_app/features/patient/presentation/patient_documents_providers.dart';
 import 'package:spine_clinic_app/features/patient/domain/patient_document.dart';
 import 'package:spine_clinic_app/shared/widgets/app_back_button.dart';
 import 'package:spine_clinic_app/shared/widgets/form_page_body.dart';
+import 'package:spine_clinic_app/shared/widgets/form_section.dart';
+import 'package:spine_clinic_app/shared/widgets/record_section.dart';
 import 'package:spine_clinic_app/shared/widgets/app_snackbar.dart';
 
 part 'program_form_view.dart';
+part 'program_form_actions.dart';
 
 /// Screen for creating a new program (with auto-transition to plan builder) or editing clinical findings.
 class ProgramFormScreen extends ConsumerStatefulWidget {
-  const ProgramFormScreen({super.key, required this.patientId, this.program});
+  const ProgramFormScreen({
+    super.key,
+    required this.patientId,
+    this.program,
+    this.initialSection = ProgramEditSection.conditions,
+  });
   final String patientId;
   final PatientProgram? program;
+  final ProgramEditSection initialSection;
 
   @override
   ConsumerState<ProgramFormScreen> createState() => _ProgramFormScreenState();
@@ -35,6 +47,9 @@ class ProgramFormScreen extends ConsumerStatefulWidget {
 
 class _ProgramFormScreenState extends ConsumerState<ProgramFormScreen> {
   final _formKey = GlobalKey<FormState>();
+  final _conditionsKey = GlobalKey();
+  final _findingsKey = GlobalKey();
+  final _documentsKey = GlobalKey();
   late final TextEditingController _examinationController;
   late final TextEditingController _imagingNotesController;
   late final TextEditingController _exaggeratingPositionsController;
@@ -60,8 +75,19 @@ class _ProgramFormScreenState extends ConsumerState<ProgramFormScreen> {
     _exaggeratingPositionsController = TextEditingController(text: p?.exaggeratingPositions ?? '');
     _relievingPositionsController = TextEditingController(text: p?.relievingPositions ?? '');
     _notesController = TextEditingController(text: p?.notes ?? '');
-    _selectedConditions =
-        p?.conditions.where((c) => c.condition != null).map((c) => c.condition!).toList() ?? [];
+    _selectedConditions = p?.conditions.where((c) => c.condition != null).map((c) => c.condition!).toList() ?? [];
+    if (p != null && widget.initialSection != ProgramEditSection.conditions) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        final target = switch (widget.initialSection) {
+          ProgramEditSection.conditions => _conditionsKey,
+          ProgramEditSection.findings => _findingsKey,
+          ProgramEditSection.documents => _documentsKey,
+        };
+        final targetContext = target.currentContext;
+        if (targetContext != null) Scrollable.ensureVisible(targetContext);
+      });
+    }
   }
 
   @override
@@ -73,117 +99,6 @@ class _ProgramFormScreenState extends ConsumerState<ProgramFormScreen> {
     _relievingPositionsController.dispose();
     _notesController.dispose();
     super.dispose();
-  }
-
-  Future<void> _submit() async {
-    if (_isSubmitting || !(_formKey.currentState?.validate() ?? false)) return;
-    if (_selectedConditions.isEmpty) {
-      AppSnackbar.show(
-        context,
-        message: AppStrings.selectConditionRequired,
-        variant: AppSnackbarVariant.info,
-      );
-      return;
-    }
-
-    setState(() => _isSubmitting = true);
-    final notifier = ref.read(programControllerProvider.notifier);
-    final conditionIds = _selectedConditions.map((c) => c.id).toList();
-    final attachments = _pendingFiles
-        .where((f) => f.bytes != null)
-        .map((f) => ProgramAttachment(fileName: f.name, bytes: f.bytes!))
-        .toList();
-
-    if (widget.program == null) {
-      final result = await notifier.createProgram(
-        patientId: widget.patientId,
-        conditionIds: conditionIds,
-        examination: _examinationController.text.trim(),
-        imagingNotes: _imagingNotesController.text.trim(),
-        exaggeratingPositions: _exaggeratingPositionsController.text.trim(),
-        relievingPositions: _relievingPositionsController.text.trim(),
-        notes: _notesController.text.trim(),
-        pendingAttachments: attachments,
-      );
-
-      if (!mounted) return;
-      setState(() => _isSubmitting = false);
-
-      result.when(
-        success: (program) {
-          AppSnackbar.show(
-            context,
-            message: AppStrings.programSaved,
-            variant: AppSnackbarVariant.success,
-          );
-          final targetUrl = AppRoutes.patientProgramDetail
-              .replaceAll(':id', widget.patientId)
-              .replaceAll(':programId', program.id);
-          context.pushReplacement('$targetUrl?openPlan=true', extra: program);
-        },
-        failure: (e) => AppSnackbar.show(
-          context,
-          message: AppStrings.fromKey(e.userMessageKey),
-          variant: AppSnackbarVariant.error,
-        ),
-      );
-    } else {
-      final result = await notifier.updateProgram(
-        programId: widget.program!.id,
-        patientId: widget.patientId,
-        conditionIds: conditionIds,
-        examination: _examinationController.text.trim(),
-        imagingNotes: _imagingNotesController.text.trim(),
-        exaggeratingPositions: _exaggeratingPositionsController.text.trim(),
-        relievingPositions: _relievingPositionsController.text.trim(),
-        notes: _notesController.text.trim(),
-        pendingAttachments: attachments,
-        removedDocumentIds: ref.read(programDocumentDraftProvider(_formKey)).removedIds.toList(),
-      );
-
-      if (!mounted) return;
-      setState(() => _isSubmitting = false);
-
-      result.when(
-        success: (_) {
-          AppSnackbar.show(
-            context,
-            message: AppStrings.programSaved,
-            variant: AppSnackbarVariant.success,
-          );
-          _close();
-        },
-        failure: (e) => AppSnackbar.show(
-          context,
-          message: AppStrings.fromKey(e.userMessageKey),
-          variant: AppSnackbarVariant.error,
-        ),
-      );
-    }
-  }
-
-  void _stageDocumentRemoval(PatientDocument document) {
-    if (ref.read(programDocumentDraftProvider(_formKey).notifier).remove(document.id)) return;
-    AppSnackbar.show(
-      context,
-      message: AppStrings.fromKey('error_permission_denied'),
-      variant: AppSnackbarVariant.error,
-    );
-  }
-
-  void _close() {
-    if (context.canPop()) {
-      context.pop();
-    } else {
-      final program = widget.program;
-      context.go(
-        program == null
-            ? AppRoutes.patientDetail.replaceAll(':id', widget.patientId)
-            : AppRoutes.patientProgramDetail
-                  .replaceAll(':id', widget.patientId)
-                  .replaceAll(':programId', program.id),
-      );
-    }
   }
 
   void _mutate(VoidCallback change) => setState(change);

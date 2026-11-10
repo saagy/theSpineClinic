@@ -7,6 +7,7 @@ import 'package:spine_clinic_app/features/auth/presentation/auth_providers.dart'
 import 'package:spine_clinic_app/features/appointment/domain/appointment.dart';
 import 'package:spine_clinic_app/features/appointment/domain/appointment_type.dart';
 import 'package:spine_clinic_app/features/appointment/presentation/appointment_providers.dart' as cache;
+import 'package:spine_clinic_app/features/patient/domain/patient.dart';
 import 'package:spine_clinic_app/features/patient/presentation/patient_providers.dart';
 import 'package:spine_clinic_app/features/patient/presentation/patient_detail_screen.dart';
 import 'package:spine_clinic_app/features/patient/presentation/patient_documents_providers.dart';
@@ -30,6 +31,7 @@ class WorkspaceHarness extends StatefulWidget {
     this.paymentError = false,
     this.longName = false,
     this.scale = 1,
+    this.profile,
   });
   final String role;
   final bool dark;
@@ -37,6 +39,7 @@ class WorkspaceHarness extends StatefulWidget {
   final bool paymentError;
   final bool longName;
   final double scale;
+  final PatientPersonalDetails? profile;
   @override
   State<WorkspaceHarness> createState() => _HarnessState();
 }
@@ -88,6 +91,8 @@ class _HarnessState extends State<WorkspaceHarness> {
                 ? 'Nour Ahmed Mohamed Abdelrahman Hassan Mahmoud'
                 : workspacePatient.fullName,
             nextVisitDate: widget.empty ? null : workspacePatient.nextVisitDate,
+            fileNumber: widget.profile == null ? null : 107,
+            personalDetails: widget.profile ?? const PatientPersonalDetails(),
           ),
         ),
         patientIsEmptyProvider(id).overrideWith((ref) async => false),

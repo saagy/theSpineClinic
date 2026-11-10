@@ -1,6 +1,6 @@
 part of 'router.dart';
 
-List<RouteBase> _buildRoutes(Ref ref) => [
+List<RouteBase> _buildRoutes() => [
   GoRoute(
     path: AppRoutes.editProfile,
     pageBuilder: (_, state) => appPage(
@@ -88,6 +88,7 @@ List<RouteBase> _buildRoutes(Ref ref) => [
       child: ProgramEditScreen(
         patientId: state.pathParameters['id'] ?? '',
         programId: state.pathParameters['programId'] ?? '',
+        initialSection: ProgramEditSection.fromQuery(state.uri.queryParameters['section']),
       ),
     ),
   ),
@@ -155,28 +156,39 @@ List<RouteBase> _buildRoutes(Ref ref) => [
   ),
 
   ShellRoute(
-    pageBuilder: (BuildContext context, GoRouterState state, Widget child) {
-      final user = ref.read(currentUserProvider).value;
-      final String role =
-          (user?.role == UserRole.doctor && user?.isSenior == true)
-              ? 'senior_doctor'
-              : (user?.role.dbValue ?? UserRole.receptionist.dbValue);
-      return NoTransitionPage(
-        child: _SessionGuard(
-          child: AppShell(
-            userRole: role,
-            currentTabIndex: _resolveActiveIndex(role, state.uri.path),
-            onTabSelected: (int index) => _onTabSelected(context, role, index),
-            child: child,
-          ),
+    pageBuilder: (_, state, child) => NoTransitionPage(
+      child: _SessionGuard(
+        child: Consumer(
+          builder: (context, ref, _) {
+            final user = ref.watch(currentUserProvider).value;
+            final String role =
+                (user?.role == UserRole.doctor && user?.isSenior == true)
+                    ? 'senior_doctor'
+                    : (user?.role.dbValue ?? UserRole.receptionist.dbValue);
+            final bool showBilling = user?.role == UserRole.receptionist &&
+                BillingAccess.canTransact(user);
+            final tabs = NavTabs.forRole(role, showBilling: showBilling);
+            return AppShell(
+              userRole: role,
+              showBilling: showBilling,
+              currentTabIndex: _resolveActiveIndex(role, state.uri.path, tabs),
+              onTabSelected: (index) => context.go(tabs[index].path),
+              child: child,
+            );
+          },
         ),
-      );
-    },
+      ),
+    ),
     routes: _shellRoutes,
   ),
 ];
 
 final List<RouteBase> _shellRoutes = [
+  GoRoute(
+    path: AppRoutes.billing,
+    pageBuilder: (_, state) =>
+        NoTransitionPage(key: state.pageKey, child: const BillingRegisterScreen()),
+  ),
   GoRoute(
     path: AppRoutes.home,
     pageBuilder: (_, __) =>

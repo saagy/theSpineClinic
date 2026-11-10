@@ -17,6 +17,7 @@ import 'package:spine_clinic_app/features/patient/presentation/patient_next_visi
 import 'package:spine_clinic_app/features/patient/presentation/patient_providers.dart';
 import 'package:spine_clinic_app/features/patient/presentation/widgets/patient_info_assigned_doctors_section.dart';
 import 'package:spine_clinic_app/features/patient/presentation/widgets/patient_info_contact_section.dart';
+import 'package:spine_clinic_app/features/patient/presentation/widgets/patient_personal_summary.dart';
 import 'package:spine_clinic_app/features/patient/presentation/widgets/patient_info_package_balance_section.dart';
 import 'package:spine_clinic_app/features/patient/presentation/widgets/patient_info_stats_strip.dart';
 import 'package:spine_clinic_app/features/patient/presentation/widgets/patient_next_visit_options_sheet.dart';
@@ -97,6 +98,8 @@ class PatientTabInfo extends ConsumerWidget {
             const _FullWidthHairline(),
             const SizedBox(height: AppSizes.p24),
             PatientInfoContactSection(patient: patient),
+            if (patient.personalDetails != const PatientPersonalDetails())
+              PatientPersonalSummary(details: patient.personalDetails),
             const SizedBox(height: AppSizes.p24),
             const _HairlineDivider(),
             const SizedBox(height: AppSizes.p24),

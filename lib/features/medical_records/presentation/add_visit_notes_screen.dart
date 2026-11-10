@@ -35,8 +35,6 @@ class AddVisitNotesScreen extends ConsumerWidget {
           AppStrings.addVisitNotes,
           style: AppTextStyles.headingSmall,
         ),
-        backgroundColor: Theme.of(context).colorScheme.surface,
-        surfaceTintColor: Theme.of(context).colorScheme.surface.withAlpha(0),
         leading: const AppBackButton(),
       ),
       body: stateAsync.when(

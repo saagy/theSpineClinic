@@ -287,12 +287,13 @@ void main() {
     expect(find.text('1 Condition'), findsOneWidget);
 
     // Verify AppBar action buttons are present
-    expect(find.byIcon(Icons.picture_as_pdf_outlined), findsOneWidget);
+    expect(find.byIcon(Icons.picture_as_pdf_outlined), findsNothing);
     expect(find.byIcon(Icons.edit_outlined), findsOneWidget);
     expect(find.byTooltip(AppStrings.programActions), findsWidgets);
     await tester.tap(find.descendant(of: find.byType(AppBar), matching: find.byTooltip(AppStrings.programActions)).first);
     await tester.pumpAndSettle();
     expect(find.text(AppStrings.deleteProgram), findsOneWidget);
+    expect(find.text(AppStrings.exportPdf), findsOneWidget);
 
     // Treatment is the primary clinical decision surface and leads the detail page.
     final treatmentTop = tester.getTopLeft(find.text(AppStrings.currentTreatmentPlan)).dy;

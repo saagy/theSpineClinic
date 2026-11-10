@@ -7,6 +7,7 @@ import 'package:spine_clinic_app/features/patient/presentation/widgets/workspace
 import 'package:spine_clinic_app/features/patient/presentation/widgets/workspace_info.dart';
 import 'package:spine_clinic_app/features/patient/presentation/widgets/workspace_medical_history.dart';
 import 'package:spine_clinic_app/features/patient/presentation/widgets/workspace_programs.dart';
+import 'package:spine_clinic_app/features/patient/presentation/widgets/patient_personal_summary.dart';
 
 /// Streamlined clinical overview tab.
 class WorkspaceOverview extends StatelessWidget {
@@ -38,6 +39,12 @@ class WorkspaceOverview extends StatelessWidget {
       padding: const EdgeInsets.only(bottom: AppSizes.p16),
       child: RecordSurface(child: WorkspaceFollowUp(patient: patient)),
     );
+    final profile = patient.personalDetails == const PatientPersonalDetails()
+        ? null
+        : Padding(
+            padding: const EdgeInsets.only(top: AppSizes.p16),
+            child: RecordSurface(child: PatientPersonalSummary(details: patient.personalDetails)),
+          );
 
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -49,11 +56,14 @@ class WorkspaceOverview extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             if (!isDoctor) WorkspaceDue(patientId: patient.id, onOpen: onPayments),
+            if (!isDoctor && profile != null)
+              Padding(padding: const EdgeInsets.only(bottom: AppSizes.p16), child: profile),
             followUp,
             programs,
             if (isMobile) ...[RecordSurface(child: balances), const SizedBox(height: AppSizes.p16)],
             history,
             if (isMobile) ...[const SizedBox(height: AppSizes.p16), RecordSurface(child: info)],
+            if (isDoctor && profile != null) profile,
           ],
         );
       },

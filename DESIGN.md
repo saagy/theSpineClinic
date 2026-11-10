@@ -32,6 +32,19 @@ and data integrity. Reusing an existing widget is a choice based on suitability.
 
 ## Product Experience
 
+Billing pilot uses aligned financial registers at wide widths and patient-led
+rows on compact or enlarged-text layouts. The invoice editor keeps amounts in
+a separate summary on wide windows and below the service lines on phones.
+Patient identity, invoice total, outstanding debt, and refundable amounts
+have distinct labels. Transaction history keeps receipts, returns, and refunds
+separate, with printing on the corresponding document. See
+[Billing pilot](docs/billing-pilot.md) for the desk workflow.
+
+Patient rows put the permanent ID on a quiet line below the name. Optional
+demographics, referral, and insurance membership live in patient details.
+The billing directory uses the shared search field and bottom sheet, with
+explicit page controls and patient ID and branch beneath the name.
+
 Staff use the app at a reception desk and on phones during clinic work. The
 interface should make finding a record, recognizing its state, and taking the
 next permitted action quick and unambiguous. Use a calm visual treatment with
@@ -52,6 +65,13 @@ enough density for repeated daily work.
   can sit closer together than separate sections. Readability outranks decoration.
 
 ### Responsive Structure and Interaction
+
+- Screen app bars match the page canvas in light and dark mode, including
+  while scrolling. Use the shared record menu for popup actions and compact
+  selections. The selected option has a checkmark.
+- Billing is a primary destination for receptionists with payment access on
+  both the bottom navigation bar and the side rail. Admins open Billing from
+  the Admin hub.
 
 - Design mobile and desktop views together. Adapt to the available window space,
   including narrow desktop windows, and support intermediate widths.
@@ -119,9 +139,13 @@ enough density for repeated daily work.
 
 Current decision status:
 Program detail separates the program's lifecycle from its selected treatment plan.
-The program header uses a labeled status dropdown and an explicit Edit program
-details action, wrapping naturally on narrow windows. The current treatment plan
-retains its scoped three-dot menu. New plans copy current treatments into a new
+The program header uses a labeled status dropdown. Program editing stays in the
+fixed app bar, with contextual Edit actions beside conditions and clinical
+findings, plus a separate Documents section. These shortcuts open the existing
+editor at the corresponding section and preserve the program's scroll position
+on return. The program overflow also exposes Edit and Export PDF above separated
+deletion. See [program editing access](docs/program-edit-access.md).
+The current treatment plan retains its scoped three-dot menu. New plans copy current treatments into a new
 record; edits update the selected record. Other saved plans use a named switch
 confirmation. Permitted Programs-tab users get Change status, Edit and Delete;
 read-only users get a navigation chevron. Both status entry points use the shared

@@ -14,6 +14,7 @@ import 'package:spine_clinic_app/features/patient/presentation/patient_providers
 import 'package:spine_clinic_app/features/patient/presentation/widgets/patient_monogram_badge.dart';
 import 'package:spine_clinic_app/features/patient/presentation/widgets/patient_phone_options_sheet.dart';
 import 'package:spine_clinic_app/features/patient/presentation/widgets/patient_summary_balance_cards.dart';
+import 'package:spine_clinic_app/shared/widgets/patient_id_label.dart';
 
 /// Modern 2026 SaaS Summary Rail anchored on the left of the patient workspace.
 class PatientSummarySidebar extends ConsumerWidget {
@@ -64,9 +65,8 @@ class PatientSummarySidebar extends ConsumerWidget {
               Text(
                 patient.fullName,
                 style: AppTextStyles.headingMedium.copyWith(color: cs.onSurface),
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
               ),
+              if (patient.fileNumber case final int number) PatientIdLabel(number),
               const SizedBox(height: AppSizes.p4),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: AppSizes.p8, vertical: AppSizes.p2),

@@ -7,6 +7,7 @@ library;
 
 /// Static route path constants used by [GoRouter].
 abstract final class AppRoutes {
+  static const String billing = '/billing';
   /// Authentication entry point for all roles.
   static const String login = '/login';
 

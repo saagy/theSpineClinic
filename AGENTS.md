@@ -22,6 +22,15 @@
     reference the theme exclusively. Keep it that way; never re-introduce
     `AppColors` references inside widgets.*
 17. **Purposeful Component Reuse:** Inspect shared/widgets/ before building visual elements. Reuse components that fit the redesigned workflow; replace unsuitable legacy components instead of retaining them for consistency alone. Build reusable visual patterns in shared/widgets/ and keep feature composition in its presentation layer. Avoid one-off inline styling and speculative abstractions.
+
+    **Styled menus and headers:** Use the shared `RecordActionMenu` for popup
+    actions and `RecordMenuSelect` for compact choices, including filters and
+    form selections. Use the existing shared picker pattern for searchable
+    lists. Feature screens must not create raw `PopupMenuButton`,
+    `DropdownButton`, `DropdownButtonFormField`, or `showMenu` controls.
+    Extend the shared components for new variants. Screen app bars inherit
+    the app theme so the header matches the page background in light and dark mode.
+
 18. **Audit Before Restyle:** Treat each screen as a blank canvas. Explicitly list every UX problem found before writing implementation code. Preserve legacy widgets or layouts only when they make UX sense.
 
 19. **No Legacy Preservation:** Remove components without a clear UX purpose and redesign that section from scratch instead of restyling them.

@@ -77,10 +77,11 @@ abstract final class AppTheme {
       ),
       textTheme: AppThemeComponents.textTheme(palette),
       appBarTheme: AppBarTheme(
-        backgroundColor: palette.surface,
+        backgroundColor: palette.background,
         foregroundColor: palette.textPrimary,
         elevation: 0,
-        scrolledUnderElevation: 1,
+        scrolledUnderElevation: 0,
+        surfaceTintColor: Colors.transparent,
         centerTitle: false,
         titleTextStyle: AppTextStyles.headingSmall.copyWith(
           color: palette.textPrimary,

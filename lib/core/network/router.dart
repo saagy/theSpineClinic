@@ -32,6 +32,7 @@ import 'package:spine_clinic_app/features/medical_records/presentation/add_visit
 import 'package:spine_clinic_app/features/medical_records/presentation/screens/program_detail_screen.dart';
 import 'package:spine_clinic_app/features/medical_records/presentation/screens/program_form_screen.dart';
 import 'package:spine_clinic_app/features/medical_records/presentation/screens/program_edit_screen.dart';
+import 'package:spine_clinic_app/features/medical_records/presentation/program_edit_section.dart';
 import 'package:spine_clinic_app/features/medical_records/presentation/screens/program_gallery_viewer_route_screen.dart';
 import 'package:spine_clinic_app/features/medical_records/presentation/visit_detail_screen.dart';
 import 'package:spine_clinic_app/features/patient/domain/patient.dart';
@@ -43,9 +44,12 @@ import 'package:spine_clinic_app/features/patient/presentation/patient_detail_sc
 import 'package:spine_clinic_app/features/patient/presentation/patient_list_screen.dart';
 import 'package:spine_clinic_app/features/patient/presentation/patient_search_screen.dart';
 import 'package:spine_clinic_app/features/payments/presentation/record_payment_screen.dart';
+import 'package:spine_clinic_app/features/payments/presentation/billing_register_screen.dart';
+import 'package:spine_clinic_app/features/payments/domain/billing_access.dart';
 import 'package:spine_clinic_app/features/staff/presentation/staff_form_screen.dart';
 import 'package:spine_clinic_app/features/staff/presentation/staff_list_screen.dart';
 import 'package:spine_clinic_app/shared/widgets/app_shell.dart';
+import 'package:spine_clinic_app/shared/widgets/nav_tabs.dart';
 
 part 'router.g.dart';
 part 'router_guards.dart';
@@ -82,7 +86,7 @@ GoRouter router(Ref ref) {
     observers: [SentryNavigatorObserver()],
     redirect: (BuildContext context, GoRouterState state) =>
         authRedirect(ref.read(currentUserProvider), state.uri),
-    routes: _buildRoutes(ref),
+    routes: _buildRoutes(),
   );
   ref.onDispose(() {
     refreshNotifier.dispose();

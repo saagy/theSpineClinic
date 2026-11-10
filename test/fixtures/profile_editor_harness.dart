@@ -74,10 +74,10 @@ Future<GoRouter> pumpProfileEditor(
   bool passwordOnly = false,
 }) async {
   final GoRouter router = GoRouter(
-    initialLocation: '/fixture-profile',
+    initialLocation: AppRoutes.doctorProfile,
     routes: [
       GoRoute(
-        path: '/fixture-profile',
+        path: AppRoutes.doctorProfile,
         builder: (_, _) => Scaffold(
           body: Consumer(
             builder: (BuildContext context, WidgetRef ref, Widget? _) => Text(

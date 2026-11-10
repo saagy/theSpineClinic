@@ -11,6 +11,9 @@ import 'package:flutter/material.dart';
 
 /// Application-wide dimension constants.
 abstract final class AppSizes {
+  static const double billingTableBreakpoint = 900;
+  static const double billingPickerHeight = 560;
+  static const double billingQuantityWidth = 92;
   static const double filterSheetMaxWidth = 600;
   static const double filterSheetHeightFraction = 0.85;
   static const double staffRoleColumnWidth = 160;

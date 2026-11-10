@@ -3,6 +3,7 @@ import 'package:spine_clinic_app/core/errors/app_exception.dart';
 import 'package:spine_clinic_app/core/errors/result.dart';
 import 'package:spine_clinic_app/core/network/supabase_service.dart';
 import 'package:spine_clinic_app/core/utils/patient_helpers.dart';
+import 'package:spine_clinic_app/features/payments/domain/billing_access.dart';
 import 'package:spine_clinic_app/features/patient/data/patient_repository_queries.dart';
 import 'package:spine_clinic_app/features/patient/domain/clinic_location.dart';
 import 'package:spine_clinic_app/features/patient/domain/patient.dart';
@@ -31,12 +32,9 @@ class PatientRepositoryImpl implements PatientRepository {
     try {
       final String trimmed = query.trim();
       if (trimmed.isEmpty) return const Result.success([]);
-      final List<String> tokens = trimmed.split(RegExp(r'\s+'));
       final List<Map<String, dynamic>> rows = await _service.guardQuery(() {
         final base = _service.from(_table).select('*');
-        final filtered = tokens
-            .where((t) => t.isNotEmpty)
-            .fold(base, (q, token) => q.or('full_name.ilike.%$token%,phone_number.ilike.%$token%'));
+        final filtered = PatientRepositoryQueries.withSearch(base, trimmed);
         final withClinic = clinic != null ? filtered.eq('clinic', clinic.dbValue) : filtered;
         return withClinic.order('full_name').limit(_searchLimit);
       });
@@ -95,13 +93,14 @@ class PatientRepositoryImpl implements PatientRepository {
     try {
       final Map<String, dynamic> row = await _service.guardQuery(
         () => _service.rpc(
-          'create_patient_with_doctors',
+          'create_patient_profile',
           params: {
             'p_name': patient.fullName,
             'p_phone': patient.phoneNumber,
             'p_clinic': patient.clinic.dbValue,
             'p_created_by': patient.createdBy,
             'p_doctor_ids': assignedDoctorIds,
+            'p_personal_details': patient.personalDetails.toJson(),
           },
         ),
       );
@@ -118,13 +117,14 @@ class PatientRepositoryImpl implements PatientRepository {
     try {
       await _service.guardQuery(
         () => _service.rpc(
-          'update_patient_details',
+          'update_patient_profile',
           params: {
             'p_patient_id': patient.id,
             'p_name': patient.fullName,
             'p_phone': patient.phoneNumber,
             'p_clinic': patient.clinic.dbValue,
             'p_doctor_ids': doctorIds,
+            'p_personal_details': patient.personalDetails.toJson(),
           },
         ),
       );
@@ -281,7 +281,13 @@ class PatientRepositoryImpl implements PatientRepository {
         ])
           _service.from(table).select('id').eq('patient_id', patientId).limit(1),
       ]);
-      return Result.success(checks.every((rows) => rows.isEmpty));
+      if (checks.any((rows) => rows.isNotEmpty)) return const Result.success(false);
+      if (BillingAccess.enabled && await _service.rpc<bool>(
+        'billing_patient_has_invoices', params: {'p_patient_id': patientId},
+      )) {
+        return const Result.success(false);
+      }
+      return const Result.success(true);
     } on AppException catch (e) {
       return Result.failure(e);
     } catch (e) {

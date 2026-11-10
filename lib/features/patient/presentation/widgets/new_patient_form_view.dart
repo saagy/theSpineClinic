@@ -5,7 +5,9 @@ extension _NewPatientView on _NewPatientFormState {
     if (_selectedFiles.isEmpty) {
       return Text(
         AppStrings.noDocumentsSelected,
-        style: AppTextStyles.bodySecondary.copyWith(color: ClinicColors.of(context).textMuted),
+        style: AppTextStyles.bodySecondary.copyWith(
+          color: ClinicColors.of(context).textMuted,
+        ),
       );
     }
 
@@ -16,7 +18,9 @@ extension _NewPatientView on _NewPatientFormState {
       separatorBuilder: (_, __) => const SizedBox(height: AppSizes.p4),
       itemBuilder: (context, index) {
         final PlatformFile file = _selectedFiles[index];
-        final AttachmentStatus status = ref.watch(indexedAttachmentStatusProvider(index));
+        final AttachmentStatus status = ref.watch(
+          indexedAttachmentStatusProvider(index),
+        );
         final String ext = p.extension(file.name).toLowerCase();
         final bool isImage = const ['.png', '.jpg', '.jpeg'].contains(ext);
         return _AttachmentRow(
@@ -54,23 +58,25 @@ extension _NewPatientView on _NewPatientFormState {
             ? AppStrings.savingChanges
             : AppStrings.savingPatientAndDocuments,
         savingDetail: _selectedFiles.isEmpty ? null : _uploadingLabel,
-        errorMessage: ref.watch(newPatientControllerProvider).error is AppException
+        errorMessage:
+            ref.watch(newPatientControllerProvider).error is AppException
             ? AppStrings.fromKey(
-                (ref.watch(newPatientControllerProvider).error! as AppException).userMessageKey,
+                (ref.watch(newPatientControllerProvider).error! as AppException)
+                    .userMessageKey,
               )
             : null,
         onSave: _handleSave,
         onCancel: _handleCancel,
         saveLabel: AppStrings.registerPatient,
-        child: FormColumns(
-          first: FormSection(
-            title: AppStrings.patientDetails,
-            child: PatientFormFields(enabled: !isSaving),
-          ),
-          second: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              FormSection(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            FormColumns(
+              first: FormSection(
+                title: AppStrings.patientDetails,
+                child: PatientFormFields(enabled: !isSaving),
+              ),
+              second: FormSection(
                 title: AppStrings.assignedDoctors,
                 child: FormBuilderField<List<Staff>>(
                   name: 'assigned_doctors',
@@ -83,18 +89,27 @@ extension _NewPatientView on _NewPatientFormState {
                   ),
                 ),
               ),
-              const SizedBox(height: AppSizes.p20),
-              FormSection(
-                title: AppStrings.attachments,
-                action: TextButton.icon(
-                  onPressed: isSaving ? null : _pickFiles,
-                  icon: const Icon(Icons.attach_file_rounded, size: AppSizes.iconSmall),
-                  label: const Text(AppStrings.add),
+            ),
+            const SizedBox(height: AppSizes.p20),
+            PatientPersonalFields(
+              value: _details,
+              onChanged: _updateDetails,
+              enabled: !isSaving,
+            ),
+            const SizedBox(height: AppSizes.p20),
+            FormSection(
+              title: AppStrings.attachments,
+              action: TextButton.icon(
+                onPressed: isSaving ? null : _pickFiles,
+                icon: const Icon(
+                  Icons.attach_file_rounded,
+                  size: AppSizes.iconSmall,
                 ),
-                child: _buildAttachmentsList(isSaving, cs),
+                label: const Text(AppStrings.add),
               ),
-            ],
-          ),
+              child: _buildAttachmentsList(isSaving, cs),
+            ),
+          ],
         ),
       ),
     );

@@ -12,6 +12,7 @@ import 'package:spine_clinic_app/core/constants/app_strings.dart';
 import 'package:spine_clinic_app/core/constants/app_text_styles.dart';
 import 'package:spine_clinic_app/core/constants/clinic_colors.dart';
 import 'package:spine_clinic_app/shared/widgets/app_avatar.dart';
+import 'package:spine_clinic_app/shared/widgets/patient_id_label.dart';
 import 'package:spine_clinic_app/shared/widgets/pressable_scale.dart';
 
 /// A standardized patient card list tile with person avatar, name, right-aligned branch,
@@ -24,6 +25,7 @@ class PatientListTile extends StatelessWidget {
     required this.phone,
     required this.branchLabel,
     this.lastVisitDate,
+    this.fileNumber,
     this.trailing,
     this.onTap,
     this.avatarSize,
@@ -41,6 +43,7 @@ class PatientListTile extends StatelessWidget {
 
   /// The patient's optional last visit/appointment date.
   final DateTime? lastVisitDate;
+  final int? fileNumber;
 
   /// Optional additional trailing widget (displayed on the far right).
   final Widget? trailing;
@@ -116,6 +119,7 @@ class PatientListTile extends StatelessWidget {
                           ],
                         ),
                         const SizedBox(height: AppSizes.p4),
+                        if (fileNumber case final int number) PatientIdLabel(number),
                         Row(
                           children: [
                             Icon(

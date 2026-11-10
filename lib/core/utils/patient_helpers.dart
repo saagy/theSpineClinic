@@ -8,6 +8,16 @@ library;
 
 import 'package:spine_clinic_app/features/patient/domain/patient.dart';
 
+final RegExp _patientIdPattern = RegExp(
+  r'^(?:id\s+|#)?([0-9]{1,18})$',
+  caseSensitive: false,
+);
+
+int? parsePatientIdQuery(String query) {
+  final match = _patientIdPattern.firstMatch(query.trim());
+  return match == null ? null : int.tryParse(match[1]!);
+}
+
 /// Returns the latest [scheduled_at] among [appointmentRows] whose
 /// [status] is `checked_in`, or `null` if none qualify.
 ///

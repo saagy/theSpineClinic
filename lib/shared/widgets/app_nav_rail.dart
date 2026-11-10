@@ -19,11 +19,13 @@ class AppNavRail extends StatefulWidget {
     required this.currentIndex,
     required this.onTabSelected,
     required this.userRole,
+    this.showBilling = false,
   });
 
   final int currentIndex;
   final ValueSetter<int> onTabSelected;
   final String userRole;
+  final bool showBilling;
 
   @override
   State<AppNavRail> createState() => _AppNavRailState();
@@ -37,7 +39,7 @@ class _AppNavRailState extends State<AppNavRail> {
 
   @override
   Widget build(BuildContext context) {
-    final tabs = NavTabs.forRole(widget.userRole);
+    final tabs = NavTabs.forRole(widget.userRole, showBilling: widget.showBilling);
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     final Color transparent = colorScheme.surface.withAlpha(0);
@@ -95,7 +97,6 @@ class _AppNavRailState extends State<AppNavRail> {
                 padding: EdgeInsets.zero,
                 itemCount: tabs.length,
                 itemExtent: _itemHeight,
-                physics: const NeverScrollableScrollPhysics(),
                 itemBuilder: (context, index) {
                   return NavRailTile(
                     tab: tabs[index],

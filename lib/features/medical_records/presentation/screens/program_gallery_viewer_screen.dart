@@ -123,7 +123,6 @@ class _ProgramGalleryViewerScreenState
         child: Scaffold(
           backgroundColor: Theme.of(context).scaffoldBackgroundColor,
           appBar: AppBar(
-            backgroundColor: cs.surface,
             elevation: 0,
             leading: IconButton(
               icon: Icon(Icons.close_rounded, color: cs.onSurface),

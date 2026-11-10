@@ -13,6 +13,7 @@ import 'package:spine_clinic_app/features/patient/domain/patient.dart';
 import 'package:spine_clinic_app/features/patient/presentation/widgets/patient_balance_chip.dart';
 import 'package:spine_clinic_app/features/patient/presentation/widgets/patient_phone_options_sheet.dart';
 import 'package:spine_clinic_app/shared/widgets/app_avatar.dart';
+import 'package:spine_clinic_app/shared/widgets/patient_id_label.dart';
 
 class PatientProfileHeader extends StatelessWidget {
   const PatientProfileHeader({
@@ -44,6 +45,8 @@ class PatientProfileHeader extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(patient.fullName, style: AppTextStyles.headingMedium),
+                if (patient.fileNumber case final int number)
+                  PatientIdLabel(number),
                 const SizedBox(height: AppSizes.p4),
                 InkWell(
                   onTap: () => PatientPhoneOptionsSheet.show(
