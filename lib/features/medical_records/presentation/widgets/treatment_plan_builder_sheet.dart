@@ -12,7 +12,7 @@ import 'package:spine_clinic_app/features/medical_records/domain/modality_target
 import 'package:spine_clinic_app/features/medical_records/domain/modality_type.dart';
 import 'package:spine_clinic_app/features/medical_records/domain/treatment_plan.dart';
 import 'package:spine_clinic_app/features/medical_records/presentation/treatment_plan_controller.dart';
-import 'package:spine_clinic_app/features/medical_records/presentation/widgets/modality_chip_selector.dart';
+import 'package:spine_clinic_app/features/medical_records/presentation/widgets/modality_chips_sliver.dart';
 import 'package:spine_clinic_app/features/medical_records/presentation/widgets/modality_config_card.dart';
 import 'package:spine_clinic_app/features/medical_records/presentation/widgets/treatment_plan_header_inputs.dart';
 import 'package:spine_clinic_app/shared/widgets/app_bottom_sheet.dart';

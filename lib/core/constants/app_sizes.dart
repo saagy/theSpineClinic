@@ -33,6 +33,7 @@ abstract final class AppSizes {
 
   static const double recordFactWidth = 240;
   static const double clinicalContentMaxWidth = 1040;
+  static const double pinnedModalityChipsMinWindowHeight = 480;
   static const double appointmentDateColumnWidth = 112;
   static const double patientHeaderAvatarSize = 48;
   static const double patientWorkspaceMaxWidth = 1240;

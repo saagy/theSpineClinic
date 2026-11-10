@@ -18,11 +18,20 @@ abstract class TreatmentPlan with _$TreatmentPlan {
     String? notes,
     @JsonKey(name: 'created_at') required DateTime createdAt,
     @JsonKey(name: 'updated_at') required DateTime updatedAt,
-    @JsonKey(name: 'plan_modalities')
+    @JsonKey(name: 'plan_modalities', readValue: _modalitiesInChosenOrder)
     @Default([])
     List<PlanModality> modalities,
   }) = _TreatmentPlan;
 
   factory TreatmentPlan.fromJson(Map<String, dynamic> json) =>
       _$TreatmentPlanFromJson(json);
+}
+
+/// Queries and save RPCs return modality rows unordered, so the order the
+/// doctor chose is restored once here for every read path.
+Object? _modalitiesInChosenOrder(Map<dynamic, dynamic> json, String key) {
+  final rows = json[key] as List<dynamic>?;
+  if (rows == null) return null;
+  num orderOf(dynamic row) => (row as Map<String, dynamic>)['sort_order'] as num? ?? 0;
+  return [...rows]..sort((a, b) => orderOf(a).compareTo(orderOf(b)));
 }

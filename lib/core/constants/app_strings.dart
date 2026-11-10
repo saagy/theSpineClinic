@@ -1368,8 +1368,6 @@ abstract final class AppStrings {
   static const String clinicalFindingsSection = 'Clinical Findings';
   static const String positionsSection = 'Positions & Notes';
   static const String treatmentPlanSection = 'Treatment Plan';
-  static const String treatmentPlanSectionSubtitle =
-      'Prescribe modalities, target regions, and session parameters';
   static const String noConditionsSelected =
       'Select at least one injury to define the affected regions.';
   static const String programNotFound = 'Program not found.';

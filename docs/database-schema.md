@@ -149,6 +149,7 @@ Equipment/modalities attached to a treatment plan (1:N with treatment plans).
 - `treatment_plan_id` (`uuid`, FK → `treatment_plans(id)` ON DELETE CASCADE, NOT NULL)
 - `modality_type` (`modality_type`, NOT NULL)
 - `notes` (`text`, nullable)
+- `sort_order` (`bigint`, identity, NOT NULL): records the order the doctor selected modalities. Saves replace a plan's rows in that order; `TreatmentPlan.fromJson` sorts by it on every read path.
 
 ### `modality_regions`
 Target regions and duration for modality configurations (1:N with plan modalities).

@@ -17,7 +17,7 @@ _TreatmentPlan _$TreatmentPlanFromJson(Map<String, dynamic> json) =>
       createdAt: DateTime.parse(json['created_at'] as String),
       updatedAt: DateTime.parse(json['updated_at'] as String),
       modalities:
-          (json['plan_modalities'] as List<dynamic>?)
+          (_modalitiesInChosenOrder(json, 'plan_modalities') as List<dynamic>?)
               ?.map((e) => PlanModality.fromJson(e as Map<String, dynamic>))
               .toList() ??
           const [],

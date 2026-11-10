@@ -8,6 +8,8 @@ class _TreatmentPlanBuilderSheetState extends ConsumerState<TreatmentPlanBuilder
   late final Set<ModalityType> _selectedModalities;
   bool _isSubmitting = false;
   final _formKey = GlobalKey<FormState>();
+  final _cardKeys = <ModalityType, GlobalKey>{};
+  final _chipsKey = GlobalKey();
 
   @override
   void initState() {
@@ -103,6 +105,15 @@ class _TreatmentPlanBuilderSheetState extends ConsumerState<TreatmentPlanBuilder
         _selectedModalities.remove(type);
       }
     });
+    if (isSelected) _revealCard(type);
+  }
+
+  void _revealCard(ModalityType type) {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final card = _cardKeys[type]?.currentContext;
+      final chips = _chipsKey.currentContext;
+      if (mounted && card != null && chips != null) revealModalityCard(card, chips);
+    });
   }
 
   String? _resolveSmartRegion(ModalityType type) {
@@ -125,41 +136,62 @@ class _TreatmentPlanBuilderSheetState extends ConsumerState<TreatmentPlanBuilder
     saveLabel: _isActive ? AppStrings.saveAndUsePlan : AppStrings.savePlan,
     child: Form(
       key: _formKey,
-      child: ListView(
+      child: CustomScrollView(
         controller: widget.scrollController,
-        padding: const EdgeInsets.symmetric(horizontal: AppSizes.p16),
-        children: [
-          if (widget.existingPlan != null || widget.copyFromPlan != null) ...[
-            RecordMessage(message: widget.existingPlan != null ? AppStrings.editPlanHint : AppStrings.copiedPlanHint),
-            const SizedBox(height: AppSizes.p12),
-          ],
-          TreatmentPlanHeaderInputs(
-            nameController: _nameController,
-            notesController: _notesController,
-            isActive: _isActive,
-            replacementName: widget.currentPlan?.id != widget.existingPlan?.id ? widget.currentPlan?.planName : null,
-            onActiveChanged: (value) => setState(() => _isActive = value),
+        slivers: [
+          SliverPadding(
+            padding: const EdgeInsets.symmetric(horizontal: AppSizes.p16),
+            sliver: SliverToBoxAdapter(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  if (widget.existingPlan != null || widget.copyFromPlan != null) ...[
+                    RecordMessage(
+                      message: widget.existingPlan != null ? AppStrings.editPlanHint : AppStrings.copiedPlanHint,
+                    ),
+                    const SizedBox(height: AppSizes.p12),
+                  ],
+                  TreatmentPlanHeaderInputs(
+                    nameController: _nameController,
+                    notesController: _notesController,
+                    isActive: _isActive,
+                    replacementName: widget.currentPlan?.id != widget.existingPlan?.id
+                        ? widget.currentPlan?.planName
+                        : null,
+                    onActiveChanged: (value) => setState(() => _isActive = value),
+                  ),
+                  const SizedBox(height: AppSizes.p16),
+                  Text(AppStrings.selectModalities, style: AppTextStyles.bodyBold),
+                ],
+              ),
+            ),
           ),
-          const SizedBox(height: AppSizes.p16),
-          Text(AppStrings.selectModalities, style: AppTextStyles.bodyBold),
-          const SizedBox(height: AppSizes.p8),
-          ModalityChipSelector(
+          ModalityChipsSliver(
+            chipsKey: _chipsKey,
             selectedModalities: _selectedModalities,
             onToggle: (type) => _handleToggle(type, !_selectedModalities.contains(type)),
           ),
-          const SizedBox(height: AppSizes.p12),
-          if (_selectedModalities.isEmpty) const RecordMessage(message: AppStrings.noModalitiesSelected),
-          for (final type in ModalityType.values.where(_selectedModalities.contains))
-            ModalityConfigCard(
-              key: ValueKey(type),
-              modalityType: type,
-              isSelected: true,
-              modalityInput: _modalityInputs[type]!,
-              onToggle: (selected) => _handleToggle(type, selected),
-              onRemove: () => _handleToggle(type, false),
-              onModalityChanged: (input) => setState(() => _modalityInputs[type] = input),
+          SliverPadding(
+            padding: const EdgeInsets.fromLTRB(AppSizes.p16, AppSizes.p4, AppSizes.p16, AppSizes.p16),
+            sliver: SliverToBoxAdapter(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  if (_selectedModalities.isEmpty) const RecordMessage(message: AppStrings.noModalitiesSelected),
+                  for (final type in _selectedModalities)
+                    ModalityConfigCard(
+                      key: _cardKeys.putIfAbsent(type, GlobalKey.new),
+                      modalityType: type,
+                      isSelected: true,
+                      modalityInput: _modalityInputs[type]!,
+                      onToggle: (selected) => _handleToggle(type, selected),
+                      onRemove: () => _handleToggle(type, false),
+                      onModalityChanged: (input) => setState(() => _modalityInputs[type] = input),
+                    ),
+                ],
+              ),
             ),
-          const SizedBox(height: AppSizes.p16),
+          ),
         ],
       ),
     ),
