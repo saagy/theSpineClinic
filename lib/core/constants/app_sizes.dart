@@ -395,6 +395,19 @@ abstract final class AppSizes {
   static const double invoiceFormWideBreakpoint = 900.0;
   static const double invoiceSummaryPanelWidth = 320.0;
 
+  /// Window width from which an invoice opens as a side panel.
+  static const double invoicePanelBreakpoint = 1000.0;
+  static const double invoicePanelWidth = 560.0;
+
+  /// Reading width of the invoice detail when it fills the window.
+  static const double invoiceDetailMaxWidth = 720.0;
+
+  /// Width of the payment, void and receipt-correction dialogs.
+  static const double invoiceDialogWidth = 440.0;
+
+  /// Timeline marker column in the invoice activity list.
+  static const double invoiceTimelineMarker = 28.0;
+
   /// Width of the quantity stepper's value.
   static const double quantityValueWidth = 36.0;
 }

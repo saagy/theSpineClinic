@@ -3,6 +3,7 @@
 library;
 
 import 'billing_strings.dart';
+import 'invoice_detail_strings.dart';
 import 'invoice_strings.dart';
 
 /// Application-wide string constants.
@@ -26,6 +27,7 @@ abstract final class AppStrings {
   static const String patientReferralSource = 'How they heard about us / referral source';
   static const billing = BillingStrings();
   static const invoices = InvoiceStrings();
+  static const invoiceDetail = InvoiceDetailStrings();
   static String staffAppliedOn(String date) => 'Applied $date';
   static const String noMatchingStaff = 'No staff match your search or filters.';
   static const String programActions = 'Program actions';
@@ -268,6 +270,7 @@ abstract final class AppStrings {
     'billing_busy': billing.busy,
     'billing_export_limit': billing.exportLimit,
     ...invoices.errorKeys,
+    ...invoiceDetail.errorKeys,
     'payment_changed': paymentChanged,
     'mutation_previous_completed': mutationPreviousCompleted,
     'error_unknown': errorUnknown,

@@ -2,6 +2,7 @@ import 'package:flutter/widgets.dart';
 import '../../../../core/utils/money.dart';
 import '../../../patient/domain/clinic_location.dart';
 import '../../domain/invoice_draft.dart';
+import '../../domain/service_catalog_item.dart';
 import 'invoice_line_editor.dart';
 
 /// Everything the new-invoice form holds. Invalid typed amounts read as null
@@ -20,6 +21,16 @@ class InvoiceFormInput {
   int _nextKey = 0;
 
   int nextKey() => _nextKey++;
+
+  /// Applies a reloaded catalog (for example after a rejected price): each
+  /// line takes the current price and archived services are dropped.
+  void syncCatalog(List<ServiceCatalogItem> services) {
+    final byId = {for (final service in services) service.id: service};
+    lines.removeWhere((line) => !byId.containsKey(line.service.id));
+    for (final line in lines) {
+      line.service = byId[line.service.id]!;
+    }
+  }
 
   /// Basis points for a percentage (`12.5` → 1250), piasters for an amount.
   int? get discountValue => discountKind == DiscountKind.none ? 0 : Money.parseMinor(discount.text);

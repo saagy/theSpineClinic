@@ -1,4 +1,6 @@
 import '../../../core/errors/result.dart';
+import 'invoice_action.dart';
+import 'invoice_detail.dart';
 import 'invoice_draft.dart';
 import 'invoice_summary.dart';
 import 'service_catalog_item.dart';
@@ -17,4 +19,11 @@ abstract interface class InvoiceRepository {
 
   /// Issues an invoice (and any immediate receipts) and returns its ID.
   Future<Result<String>> createInvoice(InvoiceDraft draft);
+
+  /// The complete invoice with its lines, receipts and refunds.
+  Future<Result<InvoiceDetail>> invoiceDetail(String invoiceId);
+
+  /// Runs a payment, refund, void or correction and returns the ID of the
+  /// invoice to show afterwards (the replacement after a correction).
+  Future<Result<String>> runAction(InvoiceAction action);
 }

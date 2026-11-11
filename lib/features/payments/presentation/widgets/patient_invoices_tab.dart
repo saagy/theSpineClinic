@@ -67,7 +67,16 @@ class PatientInvoicesTab extends ConsumerWidget {
                                 thickness: AppSizes.borderWidth,
                                 color: Theme.of(context).colorScheme.outlineVariant,
                               ),
-                            InvoiceListRow(invoice: invoice),
+                            InkWell(
+                              onTap: () => context.push(
+                                AppRoutes.invoiceDetailLocation(patient.id, invoice.id),
+                              ),
+                              child: Semantics(
+                                button: true,
+                                hint: AppStrings.invoiceDetail.openInvoice,
+                                child: InvoiceListRow(invoice: invoice),
+                              ),
+                            ),
                           ],
                         ],
                       )),

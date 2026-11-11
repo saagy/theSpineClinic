@@ -65,11 +65,7 @@ class _NewInvoiceFormState extends ConsumerState<NewInvoiceForm> {
   void didUpdateWidget(NewInvoiceForm old) {
     super.didUpdateWidget(old);
     if (identical(old.services, widget.services)) return;
-    final byId = {for (final service in widget.services) service.id: service};
-    _input.lines.removeWhere((line) => !byId.containsKey(line.service.id));
-    for (final line in _input.lines) {
-      line.service = byId[line.service.id]!;
-    }
+    _input.syncCatalog(widget.services);
   }
 
   @override

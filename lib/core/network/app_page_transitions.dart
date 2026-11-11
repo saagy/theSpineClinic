@@ -112,3 +112,28 @@ Page<T> fadePage<T>({
     },
   );
 }
+
+/// A page that keeps the previous page visible behind a scrim, for detail
+/// views that present as a side panel on wide windows. The child decides
+/// whether to fill the window or dock to its edge. Tapping the scrim closes it.
+Page<T> overlayPage<T>({required Widget child, required Color scrim, LocalKey? key}) =>
+    CustomTransitionPage<T>(
+      key: key,
+      opaque: false,
+      barrierDismissible: true,
+      barrierColor: scrim,
+      transitionDuration: const Duration(milliseconds: 180),
+      reverseTransitionDuration: const Duration(milliseconds: 140),
+      child: child,
+      transitionsBuilder: (context, animation, _, child) {
+        if (MediaQuery.disableAnimationsOf(context)) return child;
+        final curved = CurvedAnimation(parent: animation, curve: Curves.easeOutCubic);
+        return FadeTransition(
+          opacity: curved,
+          child: SlideTransition(
+            position: Tween<Offset>(begin: const Offset(0.03, 0), end: Offset.zero).animate(curved),
+            child: child,
+          ),
+        );
+      },
+    );

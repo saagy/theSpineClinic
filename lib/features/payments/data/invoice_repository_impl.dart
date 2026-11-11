@@ -1,6 +1,8 @@
 import '../../../core/errors/app_exception.dart';
 import '../../../core/errors/result.dart';
 import '../../../core/network/supabase_service.dart';
+import '../domain/invoice_action.dart';
+import '../domain/invoice_detail.dart';
 import '../domain/invoice_draft.dart';
 import '../domain/invoice_repository.dart';
 import '../domain/invoice_summary.dart';
@@ -67,6 +69,28 @@ class InvoiceRepositoryImpl implements InvoiceRepository {
     );
     return commit.invoiceId ??
         (throw const UnknownException(message: 'Invoice ID missing'));
+  });
+
+  @override
+  Future<Result<InvoiceDetail>> invoiceDetail(String invoiceId) => _guard(() async {
+    final Map<String, dynamic>? document = await _service.rpc<Map<String, dynamic>?>(
+      'invoice_detail',
+      params: {'p_id': invoiceId},
+    );
+    if (document == null) throw const NotFoundException(message: 'Invoice not found');
+    return InvoiceDetail.fromJson(document);
+  });
+
+  @override
+  Future<Result<String>> runAction(InvoiceAction action) => _guard(() async {
+    // One pending request per invoice and document, so a retry after a
+    // timeout re-sends the same request instead of recording it twice.
+    final InvoiceCommit commit = await _commands.execute(
+      action.kind.dbValue,
+      '${action.invoice.id}:${action.subject}',
+      action.toPayload(),
+    );
+    return commit.invoiceId ?? action.invoice.id;
   });
 
   Future<Result<T>> _guard<T>(Future<T> Function() operation) async {

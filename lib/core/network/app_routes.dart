@@ -22,6 +22,24 @@ abstract final class AppRoutes {
   static String newInvoiceLocation(String patientId) =>
       newInvoice.replaceFirst(':id', Uri.encodeComponent(patientId));
 
+  /// One invoice: a side panel on wide windows, a full screen on narrow ones.
+  static const String invoiceDetail = '/patient/:id/invoices/:invoiceId';
+
+  /// Refund form for an invoice (full screen).
+  static const String invoiceRefund = '/patient/:id/invoices/:invoiceId/refund';
+
+  /// Correction form that replaces an invoice (full screen).
+  static const String invoiceCorrect = '/patient/:id/invoices/:invoiceId/correct';
+
+  static String invoiceDetailLocation(String patientId, String invoiceId) =>
+      '/patient/${Uri.encodeComponent(patientId)}/invoices/${Uri.encodeComponent(invoiceId)}';
+
+  static String invoiceRefundLocation(String patientId, String invoiceId) =>
+      '${invoiceDetailLocation(patientId, invoiceId)}/refund';
+
+  static String invoiceCorrectLocation(String patientId, String invoiceId) =>
+      '${invoiceDetailLocation(patientId, invoiceId)}/correct';
+
   /// Location of the service editor; pass null to add a service.
   static String serviceFormLocation(String? serviceId) =>
       '$serviceCatalog/${Uri.encodeComponent(serviceId ?? 'new')}';

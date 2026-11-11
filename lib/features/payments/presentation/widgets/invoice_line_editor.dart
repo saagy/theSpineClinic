@@ -80,7 +80,7 @@ class InvoiceLineEditor extends StatelessWidget {
           const SizedBox(height: AppSizes.p8),
           Row(
             children: [
-              _Stepper(
+              QuantityStepper(
                 value: line.quantity,
                 onChanged: enabled ? (value) => onChanged(() => line.quantity = value) : null,
               ),
@@ -111,10 +111,24 @@ class InvoiceLineEditor extends StatelessWidget {
 }
 
 /// Compact quantity control with 44px targets.
-class _Stepper extends StatelessWidget {
-  const _Stepper({required this.value, required this.onChanged});
+class QuantityStepper extends StatelessWidget {
+  const QuantityStepper({
+    super.key,
+    required this.value,
+    required this.onChanged,
+    this.min = 1,
+    this.max = 100,
+    this.label,
+    this.decreaseTooltip,
+    this.increaseTooltip,
+  });
   final int value;
   final ValueChanged<int>? onChanged;
+  final int min;
+  final int max;
+  final String? label;
+  final String? decreaseTooltip;
+  final String? increaseTooltip;
 
   @override
   Widget build(BuildContext context) {
@@ -129,24 +143,24 @@ class _Stepper extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           IconButton(
-            tooltip: _t.decrease,
+            tooltip: decreaseTooltip ?? _t.decrease,
             constraints: box,
             icon: const Icon(Icons.remove, size: AppSizes.iconSmall),
-            onPressed: onChanged == null || value <= 1 ? null : () => onChanged!(value - 1),
+            onPressed: onChanged == null || value <= min ? null : () => onChanged!(value - 1),
           ),
           SizedBox(
             width: AppSizes.quantityValueWidth,
             child: Semantics(
-              label: _t.quantity,
+              label: label ?? _t.quantity,
               value: '$value',
               child: Text('$value', textAlign: TextAlign.center, style: AppTextStyles.number),
             ),
           ),
           IconButton(
-            tooltip: _t.increase,
+            tooltip: increaseTooltip ?? _t.increase,
             constraints: box,
             icon: const Icon(Icons.add, size: AppSizes.iconSmall),
-            onPressed: onChanged == null || value >= 100 ? null : () => onChanged!(value + 1),
+            onPressed: onChanged == null || value >= max ? null : () => onChanged!(value + 1),
           ),
         ],
       ),

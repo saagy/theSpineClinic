@@ -9,6 +9,9 @@ import 'package:spine_clinic_app/core/network/app_routes.dart';
 import 'package:spine_clinic_app/features/auth/domain/staff.dart';
 import 'package:spine_clinic_app/features/auth/domain/user_role.dart';
 import 'package:spine_clinic_app/features/auth/presentation/auth_providers.dart';
+import 'package:spine_clinic_app/core/errors/app_exception.dart';
+import 'package:spine_clinic_app/features/payments/domain/invoice_action.dart';
+import 'package:spine_clinic_app/features/payments/domain/invoice_detail.dart';
 import 'package:spine_clinic_app/features/payments/domain/invoice_draft.dart';
 import 'package:spine_clinic_app/features/payments/domain/invoice_repository.dart';
 import 'package:spine_clinic_app/features/payments/domain/invoice_summary.dart';
@@ -42,7 +45,7 @@ final catalogFixture = [
 
 class FakeInvoiceRepository implements InvoiceRepository {
   FakeInvoiceRepository({List<ServiceCatalogItem>? items, this.saveResult, this.createResult,
-      List<InvoiceSummary>? invoices})
+      List<InvoiceSummary>? invoices, this.details = const {}, this.actionResult})
       : items = items ?? catalogFixture,
         invoices = invoices ?? sampleInvoices;
   final List<ServiceCatalogItem> items;
@@ -51,6 +54,25 @@ class FakeInvoiceRepository implements InvoiceRepository {
   final Result<String>? createResult;
   final List<ServiceDraft> saved = [];
   final List<InvoiceDraft> created = [];
+
+  /// Invoice documents by ID; tests replace entries to simulate a refresh.
+  Map<String, InvoiceDetail> details;
+  final Result<String>? actionResult;
+  final List<InvoiceAction> actions = [];
+
+  @override
+  Future<Result<InvoiceDetail>> invoiceDetail(String invoiceId) async {
+    final InvoiceDetail? detail = details[invoiceId];
+    return detail == null
+        ? const Result.failure(NotFoundException(message: 'Invoice not found'))
+        : Result.success(detail);
+  }
+
+  @override
+  Future<Result<String>> runAction(InvoiceAction action) async {
+    actions.add(action);
+    return actionResult ?? Result.success(action.invoice.id);
+  }
 
   @override
   Future<Result<List<InvoiceSummary>>> patientInvoices(String patientId) async =>

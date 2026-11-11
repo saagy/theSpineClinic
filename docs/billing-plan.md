@@ -11,8 +11,31 @@ Billing tab's Services action and the Admin hub, for payment receptionists and
 super admins. **Slice 3 (Payments tab and new invoice) is built**: the patient
 workspace's Payments tab and overview due banner read the new invoices, and
 `/patient/:id/invoices/new` issues an invoice with optional cash and Visa
-payment for any receptionist (discounts for payment staff only). Invoice rows
-are not yet tappable; slice 4 adds the detail view. Slices 4-8 are not started.
+payment for any receptionist (discounts for payment staff only). **Slice 4
+(invoice detail and money actions) is built** on November 11, 2026: invoice
+rows open `/patient/:id/invoices/:invoiceId`, a side panel from 1000 px and a
+full screen below it. Any receptionist can record a payment and print; payment
+staff can also void and correct receipts, void refunds, void the invoice,
+refund (`.../refund`) and correct the invoice (`.../correct`). Invoices,
+receipts and refunds print as A4 PDFs with a placeholder clinic-details line.
+Slices 5-8 are not started.
+
+Slice 4 behavior worth knowing:
+
+- Every command sends the invoice version it was prepared from. A form or
+  dialog opened before another change stays rejected (`stale`) until reopened.
+- The refund form caps sessions to cancel at the patient's unused balance and
+  shows the payback the database will derive; it asks for the payback method
+  only when money is actually handed back.
+- A correction is pre-filled from the original, but lines take **current
+  catalog prices** (the database only issues at catalog prices) and services
+  that are no longer sold are left out and named in a warning. The corrected
+  total must cover money already received.
+- A later active refund locks earlier receipts and refunds; their Correct and
+  Void menu items stay listed, disabled, with "Void the later refund first".
+- Client behavior is tested with repository fakes; the commands themselves are
+  covered by the slice 1 SQL tests. No write has been exercised from the app
+  against the linked project yet; slice 8 does that with seed data.
 
 This plan replaces the legacy `payment_records` system and the
 [self-pay billing pilot](billing-pilot.md) workflow. The pilot's numbering

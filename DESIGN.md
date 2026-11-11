@@ -67,6 +67,24 @@ or a "No doctor credit" note), discount for payment staff, and payment now
 with a one-tap full cash payment. A live summary sits beside the form from
 900 px and below it on narrower windows.
 
+Invoice detail opens from a Payments row as a docked 560 px side panel from
+1000 px (the patient page stays visible behind a scrim; scrim tap, Close or
+Escape dismisses it) and as a full screen on narrower windows, with enlarged
+text, or when opened from a link. It leads with patient, ID, date, branch and
+status, then one bordered strip of Invoice value, Paid and Due (due in the
+warning color), then Record payment (filled) and Refund (outlined) only when
+each is possible. Services show quantity, unit price and doctors, with the
+value arithmetic (subtotal, discount, refunded) only when something reduced
+it. Activity lists creation, receipts, refunds and voids oldest first with a
+ringed marker icon; voided documents stay visible, muted, with a struck
+amount, who voided them and why. Row and app-bar actions use the shared record
+menu; actions the invoice's state rules out stay listed, disabled, with the
+step that unlocks them. Payment, receipt correction and void are bounded
+dialogs with an inline error and a progress confirm button; every void asks
+for a reason. Refund and correction are bounded form pages with the live
+summary beside the form from 900 px and below it on phones. The panel owns its
+snackbars so confirmations do not repeat on the dimmed page behind it.
+
 Patient rows put the permanent ID on a quiet line below the name. Optional
 demographics, referral, and insurance membership live in patient details.
 The billing directory uses the shared search field and bottom sheet, with

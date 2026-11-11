@@ -38,6 +38,37 @@ List<RouteBase> _buildRoutes() => [
     ),
   ),
   GoRoute(
+    path: AppRoutes.invoiceDetail,
+    pageBuilder: (context, state) => overlayPage(
+      key: state.pageKey,
+      scrim: ClinicColors.of(context).overlayScrim,
+      child: InvoiceDetailScreen(
+        patientId: state.pathParameters['id'] ?? '',
+        invoiceId: state.pathParameters['invoiceId'] ?? '',
+      ),
+    ),
+  ),
+  GoRoute(
+    path: AppRoutes.invoiceRefund,
+    pageBuilder: (_, state) => appPage(
+      key: state.pageKey,
+      child: RefundScreen(
+        patientId: state.pathParameters['id'] ?? '',
+        invoiceId: state.pathParameters['invoiceId'] ?? '',
+      ),
+    ),
+  ),
+  GoRoute(
+    path: AppRoutes.invoiceCorrect,
+    pageBuilder: (_, state) => appPage(
+      key: state.pageKey,
+      child: CorrectInvoiceScreen(
+        patientId: state.pathParameters['id'] ?? '',
+        invoiceId: state.pathParameters['invoiceId'] ?? '',
+      ),
+    ),
+  ),
+  GoRoute(
     path: AppRoutes.editPatient,
     pageBuilder: (_, state) => appPage(
       key: state.pageKey,

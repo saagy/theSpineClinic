@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:sentry_flutter/sentry_flutter.dart';
+import 'package:spine_clinic_app/core/constants/clinic_colors.dart';
 import 'package:spine_clinic_app/core/network/app_page_transitions.dart';
 import 'package:spine_clinic_app/core/network/app_routes.dart';
 import 'package:spine_clinic_app/core/network/auth_redirect.dart';
@@ -45,7 +46,10 @@ import 'package:spine_clinic_app/features/patient/presentation/patient_list_scre
 import 'package:spine_clinic_app/features/patient/presentation/patient_search_screen.dart';
 import 'package:spine_clinic_app/features/payments/presentation/record_payment_screen.dart';
 import 'package:spine_clinic_app/features/payments/presentation/billing_register_screen.dart';
+import 'package:spine_clinic_app/features/payments/presentation/correct_invoice_screen.dart';
+import 'package:spine_clinic_app/features/payments/presentation/invoice_detail_screen.dart';
 import 'package:spine_clinic_app/features/payments/presentation/new_invoice_screen.dart';
+import 'package:spine_clinic_app/features/payments/presentation/refund_screen.dart';
 import 'package:spine_clinic_app/features/payments/presentation/service_catalog_screen.dart';
 import 'package:spine_clinic_app/features/payments/presentation/service_form_screen.dart';
 import 'package:spine_clinic_app/features/payments/domain/billing_access.dart';

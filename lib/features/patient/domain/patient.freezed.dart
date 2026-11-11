@@ -87,7 +87,7 @@ as DateTime?,
 @override
 @pragma('vm:prefer-inline')
 $PatientPersonalDetailsCopyWith<$Res> get personalDetails {
-
+  
   return $PatientPersonalDetailsCopyWith<$Res>(_self.personalDetails, (value) {
     return _then(_self.copyWith(personalDetails: value));
   });
@@ -318,7 +318,7 @@ as DateTime?,
 @override
 @pragma('vm:prefer-inline')
 $PatientPersonalDetailsCopyWith<$Res> get personalDetails {
-
+  
   return $PatientPersonalDetailsCopyWith<$Res>(_self.personalDetails, (value) {
     return _then(_self.copyWith(personalDetails: value));
   });

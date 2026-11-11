@@ -11,15 +11,20 @@ const _t = AppStrings.invoices;
 
 /// Live totals for review before the invoice is created.
 class InvoiceSummaryPanel extends StatelessWidget {
-  const InvoiceSummaryPanel({super.key, required this.draft});
+  const InvoiceSummaryPanel({super.key, required this.draft, this.alreadyPaidMinor});
   final InvoiceDraft draft;
+
+  /// Set when correcting an invoice: money already received moves to the
+  /// corrected invoice, so it replaces the "paid now" line.
+  final int? alreadyPaidMinor;
 
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
     final int pt = draft.sessionsOf(ServiceType.ptSession);
     final int traction = draft.sessionsOf(ServiceType.tractionSession);
-    final int due = draft.dueAfterMinor;
+    final int? moved = alreadyPaidMinor;
+    final int due = moved == null ? draft.dueAfterMinor : draft.totalMinor - moved;
     return Semantics(
       container: true,
       label: _t.summary,
@@ -40,7 +45,10 @@ class InvoiceSummaryPanel extends StatelessWidget {
               if (draft.discountMinor > 0) _Line(_t.discount, '− ${Money.format(draft.discountMinor)}'),
               const Divider(height: AppSizes.p24),
               _Line(_t.total, Money.format(draft.totalMinor), strong: true),
-              if (draft.paidNowMinor > 0) _Line(_t.paidNow, Money.format(draft.paidNowMinor)),
+              if (moved != null)
+                _Line(AppStrings.invoiceDetail.alreadyPaid, Money.format(moved))
+              else if (draft.paidNowMinor > 0)
+                _Line(_t.paidNow, Money.format(draft.paidNowMinor)),
               _Line(
                 _t.dueAfter,
                 Money.format(due < 0 ? 0 : due),
@@ -50,7 +58,7 @@ class InvoiceSummaryPanel extends StatelessWidget {
               if (pt > 0 || traction > 0) ...[
                 const Divider(height: AppSizes.p24),
                 Text(
-                  _t.sessionsAdded,
+                  moved == null ? _t.sessionsAdded : AppStrings.invoiceDetail.sessionsOnInvoice,
                   style: AppTextStyles.caption.copyWith(color: colors.onSurfaceVariant),
                 ),
                 const SizedBox(height: AppSizes.p4),
