@@ -405,6 +405,25 @@ abstract final class AppSizes {
   /// Width of the payment, void and receipt-correction dialogs.
   static const double invoiceDialogWidth = 440.0;
 
+  // ──────────────── Billing reports ────────────────
+
+  /// Reading width of the report tables on very wide windows.
+  static const double reportContentMaxWidth = 1280.0;
+  static const double reportTimeColumnWidth = 176.0;
+  static const double reportDateColumnWidth = 112.0;
+  static const double reportCodeColumnWidth = 96.0;
+  static const double reportDocumentColumnWidth = 168.0;
+  static const double reportMethodColumnWidth = 96.0;
+  static const double reportCountColumnWidth = 72.0;
+  static const double reportAmountColumnWidth = 124.0;
+
+  /// Narrowest useful width of a flexible text column in a report table.
+  static const double reportTextColumnMinWidth = 132.0;
+  static const double reportFigureMinWidth = 150.0;
+
+  /// Rows per page in a report table.
+  static const int reportPageSize = 50;
+
   /// Timeline marker column in the invoice activity list.
   static const double invoiceTimelineMarker = 28.0;
 

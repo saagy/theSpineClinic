@@ -13,6 +13,8 @@ import 'package:spine_clinic_app/features/payments/presentation/service_catalog_
 import 'package:spine_clinic_app/features/payments/presentation/service_catalog_screen.dart';
 import 'package:spine_clinic_app/shared/widgets/app_nav_bar.dart';
 import 'package:spine_clinic_app/shared/widgets/app_nav_rail.dart';
+import 'package:spine_clinic_app/features/payments/presentation/billing_report_providers.dart';
+import '../../fixtures/billing_report_fixture.dart';
 import '../../fixtures/profile_editor_harness.dart';
 import '../../fixtures/service_catalog_fixture.dart';
 
@@ -32,6 +34,7 @@ void main() {
           authRepositoryProvider.overrideWithValue(auth),
           sharedPreferencesProvider.overrideWithValue(preferences),
           invoiceRepositoryProvider.overrideWithValue(FakeInvoiceRepository()),
+          billingReportRepositoryProvider.overrideWithValue(FakeBillingReportRepository()),
         ],
       );
       addTearDown(container.dispose);

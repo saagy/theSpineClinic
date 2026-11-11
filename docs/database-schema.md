@@ -132,6 +132,24 @@ Rules enforced in the database:
   `services` summary and `doctors`. `invoice_detail(id)` returns the
   complete document. `invoice_patient_summary(patient_id)` returns due,
   collected and invoice counts. Invoices also protect a patient from deletion.
+- `invoice_report(kind, from, to, branch, doctor)` (migration
+  `20261111144013`) is the only report entry point. It requires
+  `invoice_can('manage')`, accepts at most 366 clinic days and returns JSON
+  with `totals` and `rows` (capped at 5000; totals always cover every row).
+  Kinds: `money` (active receipts and refund paybacks by `received_at` /
+  `recorded_at` and their own branch, plus `staff` totals and `voids` listed
+  by `voided_at`), `revenue` (one row per collected line allocation; the
+  doctor filter keeps lines credited to that doctor), `doctor` (requires a
+  doctor; that doctor's share of each allocation), `doctors` (share per
+  doctor, with a NULL-doctor row for lines without doctor credit),
+  `outstanding` (due per patient as of now, by invoice branch; dates are
+  ignored) and `services` (lines on non-voided invoices dated in the range:
+  units, current value and money collected on them to date, with the lines).
+  An allocation is split equally among the line's doctors with cumulative
+  floors, so shares always add up to the money collected. A refund that pays
+  nothing back only moves money between lines; those rows have a NULL
+  method and are reported as "Reallocated". The private builders
+  (`invoice_report_*`) are not executable by clients.
 
 ### `staff`
 Auth-linked staff profiles. One row per Supabase Auth user (`auth.users`).

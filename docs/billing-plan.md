@@ -31,7 +31,38 @@ removes insurance keys from `patients.personal_details`. It passes the SQL
 suites locally and was **applied to the linked project by hand** (SQL editor)
 on November 11, 2026, then verified object by object. Its version
 `20261111120000` was then recorded in the project's migration history, so a
-later `supabase db push` treats it as applied. Slices 6-8 are not started.
+later `supabase db push` treats it as applied. **Slice 6 (reports) is built
+in the app** on November 11, 2026: the Billing screen shows the six reports
+below with a shared period, branch and doctor, CSV export and A4 landscape
+printing, and super admins open it from the Admin hub. Migration
+`20261111144013_invoice_reports.sql` adds the `invoice_report` RPC; it passes
+the SQL suites locally and was **applied to the linked project** on November
+11, 2026 through the Supabase tooling (file renamed to the recorded version;
+grants checked: only `invoice_report` is executable by signed-in users).
+Slices 7-8 are not started.
+
+Slice 6 behavior worth knowing:
+
+- Money is dated by when it changed hands (receipt received time, refund
+  recording time) and belongs to the branch of that receipt or refund.
+  Voided documents are left out of every total and listed in the Daily
+  money void log on the day they were voided.
+- Revenue and both doctor reports are built from the stored line
+  allocations. A line's collected money is split equally among its doctors
+  to the piaster, so the Doctors summary (including its "No doctor credit"
+  row) always adds up to the money collected.
+- A refund that pays nothing back can still move collected money between
+  lines of the invoice. Those rows have no cash or Visa method and appear
+  as "Reallocated"; the column is shown only when such money exists.
+- Services counts invoices **dated** in the period (by the invoice's branch)
+  and shows what has been collected on them to date; Outstanding ignores
+  the period and is always as of now.
+- Reports cover at most 366 days and list at most 5,000 detail rows; totals
+  always include every row and the screen says when rows are capped.
+- CSV export contains the report's detail rows with every column
+  (including invoice, branch and document columns hidden on screen); print
+  contains the totals and the tables as shown.
+- A failed report shows its error with Retry instead of retrying silently.
 
 Slice 5 behavior worth knowing:
 
@@ -57,7 +88,7 @@ Slice 4 behavior worth knowing:
 - A later active refund locks earlier receipts and refunds; their Correct and
   Void menu items stay listed, disabled, with "Void the later refund first".
 - Client behavior is tested with repository fakes; the commands themselves are
-  covered by the slice 1 SQL tests. No write has been exercised from the app
+  covered by the slice 1 SQL tests (reports: `test/invoice_reports.sql`). No write has been exercised from the app
   against the linked project yet; slice 8 does that with seed data.
 
 This plan replaces the legacy `payment_records` system and the

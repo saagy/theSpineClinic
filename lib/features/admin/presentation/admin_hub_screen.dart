@@ -102,6 +102,13 @@ class _AdminHubBody extends ConsumerWidget {
                   const SizedBox(height: AppSizes.p16),
                   if (InvoiceAccess.canManage(user))
                     ProfileMenuRow(
+                      title: AppStrings.billingReports.title,
+                      subtitle: AppStrings.billingReports.subtitle,
+                      leadingIcon: Icons.bar_chart_rounded,
+                      onTap: () => context.push(AppRoutes.billing),
+                    ),
+                  if (InvoiceAccess.canManage(user))
+                    ProfileMenuRow(
                       title: AppStrings.invoices.services,
                       subtitle: AppStrings.invoices.servicesSubtitle,
                       leadingIcon: Icons.medical_services_outlined,

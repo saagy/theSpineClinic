@@ -2,6 +2,7 @@
 /// Rule 7 — no hardcoded strings anywhere outside this file.
 library;
 
+import 'billing_report_strings.dart';
 import 'invoice_detail_strings.dart';
 import 'invoice_strings.dart';
 
@@ -22,6 +23,7 @@ abstract final class AppStrings {
   static const String patientReferralSource = 'How they heard about us / referral source';
   static const invoices = InvoiceStrings();
   static const invoiceDetail = InvoiceDetailStrings();
+  static const billingReports = BillingReportStrings();
   static String staffAppliedOn(String date) => 'Applied $date';
   static const String noMatchingStaff = 'No staff match your search or filters.';
   static const String programActions = 'Program actions';

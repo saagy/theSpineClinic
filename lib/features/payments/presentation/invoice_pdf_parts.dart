@@ -72,15 +72,22 @@ pw.Widget pdfFacts(List<(String, String)> facts) => pw.Padding(
   ),
 );
 
-/// A ruled table. The first column takes the spare width; the last column,
-/// and any column of numbers before it, aligns right.
-pw.Widget pdfTable(List<String> headers, List<List<String>> rows) {
+/// A ruled table. By default the first column takes the spare width and the
+/// last column aligns right; reports name their [wide] and [numeric] columns.
+pw.Widget pdfTable(
+  List<String> headers,
+  List<List<String>> rows, {
+  Set<int>? numeric,
+  Set<int>? wide,
+}) {
   final int last = headers.length - 1;
+  final Set<int> right = numeric ?? {last};
+  final Set<int> roomy = wide ?? {0};
   pw.Widget cell(String text, int column, {bool head = false}) => pw.Padding(
     padding: const pw.EdgeInsets.symmetric(vertical: AppSizes.p6, horizontal: AppSizes.p4),
     child: pw.Text(
       head ? text.toUpperCase() : text,
-      textAlign: column == last ? pw.TextAlign.right : pw.TextAlign.left,
+      textAlign: right.contains(column) ? pw.TextAlign.right : pw.TextAlign.left,
       style: head ? _style(_small, _muted) : _style(_text),
     ),
   );
@@ -89,8 +96,8 @@ pw.Widget pdfTable(List<String> headers, List<List<String>> rows) {
     padding: const pw.EdgeInsets.only(bottom: AppSizes.p16),
     child: pw.Table(
       columnWidths: {
-        0: const pw.FlexColumnWidth(3),
-        for (int column = 1; column <= last; column++) column: const pw.FlexColumnWidth(1.4),
+        for (int column = 0; column <= last; column++)
+          column: pw.FlexColumnWidth(roomy.contains(column) ? 3 : 1.4),
       },
       children: [
         pw.TableRow(
@@ -133,6 +140,12 @@ pw.Widget pdfTotals(List<(String, String, bool)> rows) => pw.Padding(
       ),
     ),
   ),
+);
+
+/// A section title above a table.
+pw.Widget pdfHeading(String text) => pw.Padding(
+  padding: const pw.EdgeInsets.only(bottom: AppSizes.p8),
+  child: pw.Text(text, style: _style(AppSizes.p12)),
 );
 
 pw.Widget pdfNote(String text) => pw.Padding(

@@ -77,6 +77,25 @@ for a reason. Refund and correction are bounded form pages with the live
 summary beside the form from 900 px and below it on phones. The panel owns its
 snackbars so confirmations do not repeat on the dimmed page behind it.
 
+Billing reports (billing plan slice 6) share one page: six scrollable text
+tabs in the patient-workspace style (Daily money, Revenue, Doctor revenue,
+Doctors summary, Outstanding, Services), then a toolbar with the shared
+record-menu selects for period (Today, Yesterday, Last 7 days, This month,
+Last month, Custom range) and branch, a doctor control that opens the shared
+doctor picker where a report uses one, and Refresh, Export CSV and Print
+(one overflow menu below 768 px). A caption states the days covered and
+what the report counts. Totals sit in one bordered strip; each table is one
+bordered surface with hairline rows, column labels above it, right-aligned
+tabular amounts, an optional bold total row and 50 rows per page through
+the shared table pagination. A table uses columns only when its own columns
+fit; otherwise each row stacks the patient or name, a muted line of details
+and labeled figures, with the key amount opposite the name (below it with
+enlarged text). Rows that open an invoice or patient end in a chevron;
+Services rows expand in place to their invoices. Paybacks read as negative
+amounts, outstanding amounts use the warning color, and voided documents
+are listed separately in muted amounts. Choosing a doctor, loading, failure
+with Retry, an empty period and capped rows each have an explicit state.
+
 Patient rows put the permanent ID on a quiet line below the name. Optional
 demographics and referral live in patient details, in one section whose
 fields share two columns on wide windows.
@@ -108,9 +127,9 @@ enough density for repeated daily work.
   while scrolling. Use the shared record menu for popup actions and compact
   selections. The selected option has a checkmark.
 - Billing is a primary destination for receptionists with payment access on
-  both the bottom navigation bar and the side rail. It lists Services and
-  prices now and gains the reports in billing plan slice 6. Admins open
-  Services and prices from the Admin hub.
+  both the bottom navigation bar and the side rail. It shows the billing
+  reports, with Services and prices as a labeled app-bar action. Admins open
+  Billing reports and Services and prices from the Admin hub.
 - Session balances are shown read-only; there is no manual balance editor.
 
 - Design mobile and desktop views together. Adapt to the available window space,

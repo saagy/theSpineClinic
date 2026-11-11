@@ -25,6 +25,13 @@ and PDF rendering), `invoice_detail_test.dart` (payment, void, lock messages,
 refund, correction and failure paths through real routing) and
 `test/previews/invoice_detail_render_test.dart`. Removing the pilot and legacy
 payment code (slice 5) retired their tests; the full suite is 588 tests.
+The billing reports slice (11 November 2026) adds
+`test/features/payments/billing_reports_test.dart` (periods, request
+parameters, report parsing, CSV safety, PDF rendering, filters, the doctor
+requirement, row navigation, expansion, paging, capped rows, empty, failure
+and denied states) and `test/previews/billing_reports_render_test.dart`; the
+full suite is 604 tests. The CSV save dialog, the print dialog and the custom
+date-range picker are not exercised by tests.
 The return-refresh follow-up adds 12 tests covering the 60-second boundary,
 no polling, concurrent returns, failed refresh retention/cooldown, local status
 races, independent week ages, branch changes, browser lifecycle events and
@@ -89,6 +96,8 @@ then runs these ten scripts:
   discounts, receipts, the three refund examples, line allocations, retries)
 - invoice_fixture.sql + invoice_corrections.sql (voids, corrections, the
   refund barrier, booked-session protection, request resolution)
+- invoice_fixture.sql + invoice_reports.sql (report access, money totals and
+  void log, revenue, exact doctor shares, outstanding balances, services)
 
 `invoice_fixture.sql` opens a transaction that the following invoice test
 rolls back, so always pass the pair together when running a subset.

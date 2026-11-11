@@ -95,8 +95,9 @@ Routing is declarative GoRouter (`core/network/`):
   Patients / Profile), super admin (Appts / Patients / Admin).
 - The retired Analytics URL `/admin/reports` redirects to Admin. Its isolated
   UI/providers/repository/query/DTO code is removed, and so are the legacy
-  `ReportsScreen` and admin report queries (billing plan slice 5). Billing
-  reports return in slice 6.
+  `ReportsScreen` and admin report queries (billing plan slice 5). The six
+  billing reports live on the Billing screen (`/billing`), read through
+  `BillingReportRepository` and the `invoice_report` RPC.
 
 Roles come from the database enum `user_role` (`super_admin`, `receptionist`,
 `doctor`) mirrored by the Dart `UserRole` enum in `features/auth/domain/`.
