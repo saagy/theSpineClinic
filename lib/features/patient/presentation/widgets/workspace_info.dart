@@ -7,11 +7,8 @@ import 'package:spine_clinic_app/core/constants/app_strings.dart';
 import 'package:spine_clinic_app/core/constants/app_text_styles.dart';
 
 import 'package:spine_clinic_app/core/utils/formatters.dart';
-import 'package:spine_clinic_app/features/auth/domain/user_role.dart';
-import 'package:spine_clinic_app/features/auth/presentation/auth_providers.dart';
 import 'package:spine_clinic_app/features/patient/domain/patient.dart';
 import 'package:spine_clinic_app/features/patient/presentation/patient_providers.dart';
-import 'package:spine_clinic_app/features/patient/presentation/widgets/package_balance_edit_dialog.dart';
 import 'package:spine_clinic_app/features/patient/presentation/widgets/patient_monogram_badge.dart';
 import 'package:spine_clinic_app/shared/widgets/record_section.dart';
 
@@ -103,23 +100,14 @@ class WorkspaceInfo extends ConsumerWidget {
   }
 }
 
-class WorkspaceBalances extends ConsumerWidget {
+/// Session balances are read-only: invoices, refunds and visits change them.
+class WorkspaceBalances extends StatelessWidget {
   const WorkspaceBalances({super.key, required this.patient});
   final Patient patient;
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final user = ref.watch(currentUserProvider).value;
+  Widget build(BuildContext context) {
     return RecordSection(
       title: AppStrings.availableSessions,
-      action: user != null && user.role != UserRole.doctor ? AppStrings.edit : null,
-      onAction: () {
-        final user = ref.read(currentUserProvider).value;
-        if (user == null || user.role == UserRole.doctor) return;
-        showDialog<void>(
-          context: context,
-          builder: (_) => PackageBalanceEditDialog(patient: patient),
-        );
-      },
       child: RecordFactGrid(
         children: [
           _balance(context, AppStrings.sessionBalance, patient.sessionBalance),

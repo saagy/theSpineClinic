@@ -68,33 +68,20 @@ the existing `create_patient_with_doctors` grants to its current five-argument s
 
 ## 2. Tables
 
-### Self-pay billing pilot
+### Patient identity and details
 
 - `patients.file_number` is a unique, immutable database identity across branches
   labeled **ID number** in the app.
-- `patients.personal_details` stores optional demographics, contact, referral,
-  and insurance membership fields. The profile RPCs normalize these values
-  inside the existing patient creation or edit transaction. Existing profiles
-  start with blank details. New profiles default to Egyptian nationality.
-- `billing_lookup_page` uses the caller's access and stable name/ID ordering.
-  Drafts and issuance validate that the optional examining doctor is an
-  active senior. Issued snapshots preserve their original attribution.
-- `billing_items` holds service prices in EGP minor units and package definition
-  fields. Only active services can appear in a self-pay draft.
-- `billing_invoices` and `billing_invoice_lines` hold editable drafts and
-  immutable issued content, including patient, clinician, branch, and price
-  snapshots. A version controls conflicting edits and transactions.
-- `billing_movements` holds separately numbered receipts, return invoices, and
-  refunds. `billing_allocations` assigns receipts and returns to original lines.
-  A return offsets outstanding debt before creating a refundable amount.
-- `billing_number_series` allocates numbers per branch and document type.
-  The security-invoker `billing_register` derives balances from movements.
-- Checked `execute_billing_mutation` and `resolve_billing_mutation` RPCs use
-  existing durable request receipts. Client access is read-only through RLS.
-  Payment-enabled staff can transact and export. Catalog edits require admin.
-  Both drafts and issued invoices protect a patient from deletion.
+- `patients.personal_details` stores optional demographics, contact and referral
+  fields. The profile RPCs normalize these values inside the existing patient
+  creation or edit transaction. New profiles default to Egyptian nationality.
+  Insurance keys were removed by migration `20261111120000`.
 
-See [Billing pilot](billing-pilot.md) for operation and staging setup.
+The self-pay billing pilot (`billing_*` tables, `billing_register`,
+`execute_billing_mutation`) and the legacy `payment_records` ledger with its
+package triggers and `collect_payment_due` were removed by migration
+`20261111120000_remove_legacy_billing.sql`. Invoices v2 below is the only
+billing schema.
 
 ### Invoices v2
 
@@ -289,18 +276,6 @@ Clinical progress notes.
 - `created_at` (`timestamptz`, NOT NULL, default `now()`)
 - `updated_at` (`timestamptz`, NOT NULL, default `now()`)
 
-### `payment_records`
-Financial ledger entries and package top-ups.
-- `id` (`uuid`, PK, default `gen_random_uuid()`)
-- `patient_id` (`uuid`, FK → `patients(id)` ON DELETE CASCADE, NOT NULL)
-- `amount` (`numeric`, NOT NULL)
-- `total_price` (`numeric`, nullable)
-- `reason` (`text`, NOT NULL)
-- `session_balance_added` (`integer`, NOT NULL, default `0`)
-- `traction_balance_added` (`integer`, NOT NULL, default `0`)
-- `recorded_by` (`uuid`, FK → `staff(id)` ON DELETE SET NULL, nullable)
-- `recorded_at` (`timestamptz`, NOT NULL, default `now()`)
-
 ## 3. Relationships
 
 ```text
@@ -309,7 +284,6 @@ staff                    -> patients.created_by
 staff                    -> appointments.created_by
 staff                    -> patient_documents.uploaded_by
 staff                    -> patient_notes.created_by
-staff                    -> payment_records.recorded_by
 staff                    -> patient_medical_history.updated_by
 staff                    -> patient_programs.created_by
 staff                    -> treatment_plans.created_by
@@ -317,7 +291,6 @@ patients                 <- patient_doctors.patient_id   (M:N to doctors)
 patients                 <- appointments.patient_id
 patients                 <- patient_notes.patient_id
 patients                 <- patient_documents.patient_id
-patients                 <- payment_records.patient_id
 patients                 <- patient_medical_history.patient_id (1:1)
 patients                 <- patient_programs.patient_id (1:N)
 patient_programs         <- program_conditions.program_id (1:N)
@@ -353,8 +326,6 @@ appointments             <- patient_notes.appointment_id (optional)
 | `idx_patient_notes_patient` | `patient_notes` | Notes listing per patient. |
 | `idx_patient_notes_appointment_id` | `patient_notes` | Clinical notes linked to appointments. |
 | `idx_patient_notes_created_by` | `patient_notes` | Note author audit lookup. |
-| `idx_payment_records_patient_id` | `payment_records` | Patient payment history retrieval. |
-| `idx_payment_records_recorded_by` | `payment_records` | Payment recorder audit lookup. |
 | `idx_condition_catalog_region` | `condition_catalog` | Sorted condition catalog retrieval by region. |
 | `idx_patient_programs_patient` | `patient_programs` | Program lookups per patient. |
 | `idx_patient_programs_created_by` | `patient_programs` | Program author audit lookup. |
@@ -382,7 +353,6 @@ appointments             <- patient_notes.appointment_id (optional)
 | `create_patient_with_doctors(...)` | Registers a patient and inserts assignments atomically. |
 | `update_patient_doctors(...)` | Replaces long-term assignments. |
 | `update_appointment_doctors(...)` | Synchronizes appointment doctor assignments. |
-| `collect_payment_due(...)` | Atomically adds collected due to payment record amount. |
 | `book_recurring_appointments(...)` | Books slots with package balance locking. |
 | `bulk_replace_appointment_doctor(...)` | Swaps an absent doctor off a day's appointments. |
 | `get_due_patients(...)` | Branch-scoped due-patient queue. |
@@ -407,8 +377,6 @@ appointments             <- patient_notes.appointment_id (optional)
 | Trigger | Fires on | Effect |
 | --- | --- | --- |
 | `trigger_appointment_package_deduction` | `AFTER INSERT/UPDATE/DELETE` on `appointments` | Reconciles old/new charged state, including type/package changes and deletion. |
-| `trigger_payment_insert_package_sync` | `AFTER INSERT` on `payment_records` | Adds purchased credits to patient balance. |
-| `trigger_payment_delete_package_sync` | `AFTER DELETE` on `payment_records` | Reverses credits of deleted payment. |
 | `tr_check_patient_has_doctors` | `AFTER DELETE OR UPDATE` on `patient_doctors` (deferred) | Rejects change if patient would have zero doctors. |
 | `tr_enforce_patient_doctor_role` | `BEFORE INSERT/UPDATE` on `patient_doctors.doctor_id` | Guarantees doctor role on assignment. |
 | `tr_enforce_appointment_doctor_roles` | `BEFORE INSERT/UPDATE` on `appointment_doctors.doctor_id` | Guarantees doctor role on appointment. |
@@ -434,7 +402,6 @@ appointments             <- patient_notes.appointment_id (optional)
 | `appointment_doctors` | Staff with appointment patient access | Management only. |
 | `patient_documents` | Staff with patient access | Staff with patient access (file_name rename only) |
 | `patient_notes` | Staff with patient access | Staff with patient access |
-| `payment_records` | Staff with patient access | Only `current_staff_can_manage_payments()` callers |
 | `mutation_receipts`, `document_uploads` | No direct client reads | Checked SECURITY DEFINER RPCs only |
 | `storage.objects` (`patient-documents`) | Staff with patient access | Super admin + receptionist + doctors |
 
@@ -449,12 +416,10 @@ Deployment is unverified; see [review results](pre-delivery-review-results.md).
 | can_current_staff_edit_appointment(id) | Management, permanent assignment, or covering doctor within the clinic-local edit window. |
 | update_patient_details(...) | Demographics and optional doctor assignments in one transaction; preserves balances. |
 | update_appointment_details(...) | Schedule/type/package and optional doctor assignments in one transaction. |
-| guard_patient_balance_write() | Rejects direct balance changes by doctors; permits nested balance triggers. |
+| guard_patient_balance_write() | Rejects direct balance changes by doctors; permits nested balance triggers and the invoice commands. |
 | guard_appointment_edit() | Protects identity and enforces schedule/delete permission. |
-| trigger_payment_update_package_sync | Reconciles old/new purchased credit deltas after payment updates. |
 
-collect_payment_due locks the payment and rejects nonpositive, nonfinite and
-excess collection. book_recurring_appointments respects cash/package selection,
+book_recurring_appointments respects cash/package selection,
 counts only matching future package reservations and validates the expected
 recall date. Assessment appointments do not consume package credits.
 

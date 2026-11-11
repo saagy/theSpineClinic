@@ -1,8 +1,9 @@
 # Self-pay billing pilot
 
-> **Superseded by plan:** the [billing redesign plan](billing-plan.md) replaces
-> this pilot workflow and legacy payments. This page describes the deployed
-> pilot until that work ships.
+> **Retired.** The [billing redesign plan](billing-plan.md) replaced this pilot.
+> Its screens were removed from the app on November 11, 2026 and migration
+> `20261111120000_remove_legacy_billing.sql` drops its tables and commands.
+> This page is kept as a record of the pilot only; nothing below is current.
 
 Run `flutter run -d web-server --web-hostname=127.0.0.1 --web-port=8765`
 and open the URL Flutter prints. A receptionist with payment access opens

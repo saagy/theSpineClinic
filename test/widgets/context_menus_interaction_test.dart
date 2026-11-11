@@ -9,8 +9,6 @@ import 'package:spine_clinic_app/features/medical_records/domain/patient_note.da
 import 'package:spine_clinic_app/features/patient/domain/patient_document.dart';
 import 'package:spine_clinic_app/features/patient/presentation/widgets/patient_document_item.dart';
 import 'package:spine_clinic_app/features/patient/presentation/widgets/patient_note_item.dart';
-import 'package:spine_clinic_app/features/patient/presentation/widgets/payment_row.dart';
-import 'package:spine_clinic_app/features/payments/domain/payment_record.dart';
 import 'package:spine_clinic_app/shared/widgets/confirmation_dialog.dart';
 
 class _StaticCurrentUser extends CurrentUser {
@@ -32,16 +30,6 @@ void main() {
     createdAt: DateTime(2026, 1, 1),
   );
 
-  final testPayment = PaymentRecord(
-    id: 'payment-1',
-    patientId: 'patient-1',
-    amount: 500,
-    sessionBalanceAdded: 5,
-    tractionBalanceAdded: 0,
-    reason: '5 Session Package',
-    recordedAt: DateTime(2026, 1, 1, 10, 0),
-    recordedBy: 'staff-1',
-  );
 
   final testNote = PatientNote(
     id: 'note-1',
@@ -77,34 +65,6 @@ void main() {
       ),
     );
   }
-
-  group('PaymentRow Context Menu Interactions', () {
-    testWidgets('Long press opens context menu with Edit and Delete without direct delete dialog', (
-      tester,
-    ) async {
-      await tester.pumpWidget(
-        createHost(
-          child: PaymentRow(
-            payment: testPayment,
-            isAdmin: true,
-            patientId: 'patient-1',
-          ),
-        ),
-      );
-      await tester.pumpAndSettle();
-
-      // Long press on the payment card
-      await tester.longPress(find.text('5 Session Package'));
-      await tester.pumpAndSettle();
-
-      // Ensure direct delete confirmation dialog is NOT shown
-      expect(find.byType(ConfirmationDialog), findsNothing);
-
-      // Ensure the touch-anchored context menu is visible with options
-      expect(find.text(AppStrings.edit), findsWidgets);
-      expect(find.text(AppStrings.delete), findsWidgets);
-    });
-  });
 
   group('PatientNoteItem Context Menu Interactions', () {
     testWidgets('Shows 3-dot menu and long press opens menu with Edit and Delete', (

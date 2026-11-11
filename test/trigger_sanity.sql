@@ -145,43 +145,6 @@ BEGIN
       v_session_balance;
   END IF;
 
-  INSERT INTO public.payment_records (
-    patient_id,
-    amount,
-    reason,
-    session_balance_added,
-    traction_balance_added
-  )
-  VALUES (
-    v_patient_id,
-    1000,
-    'Package test payment',
-    8,
-    4
-  )
-  RETURNING id INTO v_payment_id;
-
-  SELECT session_balance, traction_balance
-  INTO v_session_balance, v_traction_balance
-  FROM public.patients
-  WHERE id = v_patient_id;
-
-  IF v_session_balance != 17 OR v_traction_balance != 9 THEN
-    RAISE EXCEPTION 'Payment credit failed: session %, traction %',
-      v_session_balance, v_traction_balance;
-  END IF;
-
-  DELETE FROM public.payment_records WHERE id = v_payment_id;
-
-  SELECT session_balance, traction_balance
-  INTO v_session_balance, v_traction_balance
-  FROM public.patients
-  WHERE id = v_patient_id;
-
-  IF v_session_balance != 9 OR v_traction_balance != 5 THEN
-    RAISE EXCEPTION 'Payment delete reversal failed: session %, traction %',
-      v_session_balance, v_traction_balance;
-  END IF;
 END;
 $$;
 

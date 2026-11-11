@@ -55,13 +55,6 @@ abstract class PatientRepository {
     List<String>? doctorIds,
   });
 
-  /// Writes only explicitly selected balance fields, preserving demographics.
-  Future<Result<void>> updatePackageBalances(
-    String patientId, {
-    int? sessionBalance,
-    int? tractionBalance,
-  });
-
   /// Syncs the patient-doctor assignments by diffing old vs new IDs.
   ///
   /// Deletes removed doctors and inserts newly assigned doctors

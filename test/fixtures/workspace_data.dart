@@ -9,7 +9,6 @@ import 'package:spine_clinic_app/features/medical_records/domain/patient_medical
 import 'package:spine_clinic_app/features/medical_records/domain/patient_program.dart';
 import 'package:spine_clinic_app/features/medical_records/domain/program_condition.dart';
 import 'package:spine_clinic_app/features/medical_records/domain/treatment_plan.dart';
-import 'package:spine_clinic_app/features/payments/domain/payment_record.dart';
 
 final workspacePatient = Patient(
   id: 'patient-fixture',
@@ -71,25 +70,6 @@ final workspacePrograms = [
         ),
       ],
     ),
-];
-final workspacePayments = [
-  PaymentRecord(
-    id: 'payment-1',
-    patientId: workspacePatient.id,
-    amount: 1200,
-    totalPrice: 1800,
-    reason: 'Normal PT package',
-    sessionBalanceAdded: 6,
-    recordedAt: DateTime(2026, 9, 1),
-  ),
-  PaymentRecord(
-    id: 'payment-2',
-    patientId: workspacePatient.id,
-    amount: 600,
-    reason: 'Spinal traction',
-    tractionBalanceAdded: 3,
-    recordedAt: DateTime(2026, 8, 25),
-  ),
 ];
 final workspaceDocuments = [
   PatientDocument(

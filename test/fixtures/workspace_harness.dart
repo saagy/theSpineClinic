@@ -16,7 +16,6 @@ import 'package:spine_clinic_app/features/medical_records/presentation/patient_p
 import 'package:spine_clinic_app/features/medical_records/presentation/medical_history_providers.dart';
 import 'package:spine_clinic_app/features/medical_records/presentation/patient_notes_list_notifier.dart';
 import 'package:spine_clinic_app/features/payments/presentation/invoice_providers.dart';
-import 'package:spine_clinic_app/features/payments/presentation/record_payment_controller.dart';
 import 'invoice_fixture.dart';
 import 'workspace_data.dart';
 import 'workspace_document_repository.dart';
@@ -99,10 +98,6 @@ class _HarnessState extends State<WorkspaceHarness> {
         ),
         patientIsEmptyProvider(id).overrideWith((ref) async => false),
         patientAssignedDoctorsProvider(id).overrideWith((ref) async => [workspaceStaff('doctor')]),
-        patientPaymentsProvider(id).overrideWith((ref) async {
-          if (widget.paymentError) throw StateError('Fixture failure');
-          return widget.empty ? [] : workspacePayments;
-        }),
         patientInvoicesProvider(id).overrideWith((ref) async {
           if (widget.paymentError) throw StateError('Fixture failure');
           return widget.empty ? [] : sampleInvoices;

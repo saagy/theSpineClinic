@@ -2,16 +2,17 @@
 
 ## Status
 
-The self-pay billing pilot establishes a new invoice register, service catalog,
-editor, and transaction detail. The source audit identified combined sale and
-collection, free-text prices, collapsed installments, and missing issuance
-review in the earlier payment entry. The pilot uses a separate ledger and
-renders on desktop and mobile. See [Billing pilot](billing-pilot.md).
+The [billing redesign](billing-plan.md) replaced both the earlier payment entry
+(combined sale and collection, free-text prices, collapsed installments) and
+the self-pay pilot that first separated them. Invoices, receipts, refunds and
+the service catalog now live on the patient Payments tab and the Billing tab;
+the pilot and legacy payment screens were removed on November 11, 2026.
 
 November 2 staff cleanup implements flat directory/application rows, global sorting,
 compact confirmed review actions, bounded forms with persistent Save/Cancel, and
 shared filter presentation. The isolated Analytics implementation/navigation is
-removed; its old URL redirects to Admin. Independent legacy reports remain.
+removed; its old URL redirects to Admin. The legacy reports screen was removed
+with billing plan slice 5.
 See [staff audit, implementation and validation limits](staff-ui-cleanup.md).
 
 November 2 profile editing replaces the sheet with a bounded page and separate
@@ -88,9 +89,9 @@ Keep each phase to reviewable slices rather than rewriting all screens at once.
   `lib/features/appointment/presentation/appointment_detail_screen.dart`.
 - Clinical: `lib/features/medical_records/presentation/screens/program_detail_screen.dart`,
   `lib/features/medical_records/presentation/widgets/treatment_plan_builder_sheet.dart`.
-- Admin: `lib/features/admin/presentation/admin_hub_screen.dart`; independent
-  legacy `reports_screen.dart` remains in source. The retired `/admin/reports`
-  route redirects to Admin. Payment entry is under `features/payments/presentation/`.
+- Admin: `lib/features/admin/presentation/admin_hub_screen.dart`. The retired
+  `/admin/reports` route redirects to Admin. Invoices and the Billing tab are
+  under `features/payments/presentation/`.
 
 These identify existing surfaces, not a requirement to preserve their widget trees.
 

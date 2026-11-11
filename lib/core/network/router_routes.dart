@@ -131,13 +131,6 @@ List<RouteBase> _buildRoutes() => [
     ),
   ),
   GoRoute(
-    path: AppRoutes.recordPayment,
-    pageBuilder: (_, state) => appPage(
-      key: state.pageKey,
-      child: RecordPaymentScreen(patientId: state.pathParameters['id'] ?? ''),
-    ),
-  ),
-  GoRoute(
     path: AppRoutes.newPatient,
     pageBuilder: (_, state) =>
         appPage(key: state.pageKey, child: const NewPatientScreen()),
@@ -219,7 +212,7 @@ List<RouteBase> _buildRoutes() => [
                     ? 'senior_doctor'
                     : (user?.role.dbValue ?? UserRole.receptionist.dbValue);
             final bool showBilling = user?.role == UserRole.receptionist &&
-                BillingAccess.canTransact(user);
+                InvoiceAccess.canManage(user);
             final tabs = NavTabs.forRole(role, showBilling: showBilling);
             return AppShell(
               userRole: role,
@@ -240,7 +233,7 @@ final List<RouteBase> _shellRoutes = [
   GoRoute(
     path: AppRoutes.billing,
     pageBuilder: (_, state) =>
-        NoTransitionPage(key: state.pageKey, child: const BillingRegisterScreen()),
+        NoTransitionPage(key: state.pageKey, child: const BillingScreen()),
   ),
   GoRoute(
     path: AppRoutes.home,

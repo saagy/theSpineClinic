@@ -9,13 +9,11 @@ import 'package:spine_clinic_app/features/patient/presentation/patient_appointme
 import 'package:spine_clinic_app/features/patient/presentation/patient_documents_providers.dart';
 import 'package:spine_clinic_app/features/patient/presentation/patient_providers.dart';
 import 'package:spine_clinic_app/features/payments/presentation/invoice_providers.dart';
-import 'package:spine_clinic_app/features/payments/presentation/record_payment_controller.dart';
 
 Future<void> refreshPatientWorkspace(WidgetRef ref, String patientId) async {
   ref.invalidate(patientDetailProvider(patientId));
   ref.invalidate(patientAssignedDoctorsProvider(patientId));
   ref.invalidate(patientIsEmptyProvider(patientId));
-  ref.invalidate(patientPaymentsProvider(patientId));
   ref.invalidate(patientInvoicesProvider(patientId));
   ref.invalidate(patientMedicalHistoryProvider(patientId));
   ref.invalidate(patientProgramsProvider(patientId));

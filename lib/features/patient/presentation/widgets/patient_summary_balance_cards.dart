@@ -3,13 +3,11 @@ import 'package:spine_clinic_app/core/constants/app_sizes.dart';
 import 'package:spine_clinic_app/core/constants/app_strings.dart';
 import 'package:spine_clinic_app/core/constants/app_text_styles.dart';
 import 'package:spine_clinic_app/features/patient/domain/patient.dart';
-import 'package:spine_clinic_app/features/patient/presentation/widgets/package_balance_edit_dialog.dart';
 
 class PatientSummaryBalanceCards extends StatelessWidget {
-  const PatientSummaryBalanceCards({super.key, required this.patient, required this.canEdit});
+  const PatientSummaryBalanceCards({super.key, required this.patient});
 
   final Patient patient;
-  final bool canEdit;
 
   @override
   Widget build(BuildContext context) {
@@ -35,18 +33,6 @@ class PatientSummaryBalanceCards extends StatelessWidget {
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
-              if (canEdit)
-                InkWell(
-                  onTap: () => showDialog<void>(
-                    context: context,
-                    builder: (_) => PackageBalanceEditDialog(patient: patient),
-                  ),
-                  borderRadius: BorderRadius.circular(AppSizes.r4),
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: AppSizes.p4, vertical: AppSizes.p2),
-                    child: Text(AppStrings.edit, style: AppTextStyles.captionBold.copyWith(color: cs.primary)),
-                  ),
-                ),
             ],
           ),
           const SizedBox(height: AppSizes.p12),

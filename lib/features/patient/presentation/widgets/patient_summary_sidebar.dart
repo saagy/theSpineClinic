@@ -7,8 +7,6 @@ import 'package:spine_clinic_app/core/constants/app_strings.dart';
 import 'package:spine_clinic_app/core/constants/app_text_styles.dart';
 import 'package:spine_clinic_app/core/network/app_routes.dart';
 import 'package:spine_clinic_app/core/utils/formatters.dart';
-import 'package:spine_clinic_app/features/auth/domain/user_role.dart';
-import 'package:spine_clinic_app/features/auth/presentation/auth_providers.dart';
 import 'package:spine_clinic_app/features/patient/domain/patient.dart';
 import 'package:spine_clinic_app/features/patient/presentation/patient_providers.dart';
 import 'package:spine_clinic_app/features/patient/presentation/widgets/patient_monogram_badge.dart';
@@ -26,8 +24,6 @@ class PatientSummarySidebar extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final cs = Theme.of(context).colorScheme;
-    final user = ref.watch(currentUserProvider).value;
-    final canEditBalance = user != null && user.role != UserRole.doctor;
 
     return Container(
       width: 320,
@@ -42,7 +38,7 @@ class PatientSummarySidebar extends ConsumerWidget {
           const SizedBox(height: AppSizes.p20),
           _buildQuickActions(context, cs),
           const SizedBox(height: AppSizes.p24),
-          PatientSummaryBalanceCards(patient: patient, canEdit: canEditBalance),
+          PatientSummaryBalanceCards(patient: patient),
           const SizedBox(height: AppSizes.p24),
           _buildAttendingDoctors(context, ref, cs),
           const SizedBox(height: AppSizes.p24),

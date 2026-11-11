@@ -20,8 +20,6 @@ import 'package:spine_clinic_app/features/patient/presentation/patient_detail_sc
 import 'package:spine_clinic_app/features/patient/presentation/patient_documents_providers.dart';
 import 'package:spine_clinic_app/features/patient/presentation/patient_providers.dart';
 import 'package:spine_clinic_app/features/patient/presentation/widgets/workspace_header.dart';
-import 'package:spine_clinic_app/features/payments/domain/payment_record.dart';
-import 'package:spine_clinic_app/features/payments/presentation/record_payment_controller.dart';
 
 void main() {
   final doctorA = Staff(
@@ -179,7 +177,6 @@ void main() {
             patientAssignedDoctorsProvider('patient-1').overrideWith((ref) async => [doctorA]),
             patientIsEmptyProvider('patient-1').overrideWith((ref) async => false),
             patientAppointmentsProvider('patient-1').overrideWith(() => _MockPatientAppointments()),
-            patientPaymentsProvider('patient-1').overrideWith((ref) async => <PaymentRecord>[]),
             patientNotesListProvider('patient-1').overrideWith(() => _MockPatientNotesList()),
             patientDocumentsRepositoryProvider.overrideWithValue(_MockDocumentsRepository()),
           ],

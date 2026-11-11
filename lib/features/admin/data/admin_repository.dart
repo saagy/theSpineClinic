@@ -2,13 +2,8 @@ import 'package:spine_clinic_app/core/constants/app_strings.dart';
 import 'package:spine_clinic_app/core/errors/app_exception.dart';
 import 'package:spine_clinic_app/core/errors/result.dart';
 import 'package:spine_clinic_app/core/network/supabase_service.dart';
-import 'package:spine_clinic_app/features/admin/data/admin_report_models.dart';
-import 'package:spine_clinic_app/features/admin/data/admin_report_queries.dart';
 import 'package:spine_clinic_app/features/auth/domain/staff.dart';
 import 'package:spine_clinic_app/features/auth/domain/user_role.dart';
-import 'package:spine_clinic_app/features/patient/domain/clinic_location.dart';
-
-export 'package:spine_clinic_app/features/admin/data/admin_report_models.dart';
 
 abstract class AdminRepository {
   Future<Result<List<Staff>>> getPendingDoctorApplications();
@@ -17,12 +12,6 @@ abstract class AdminRepository {
   Future<Result<void>> rejectDoctor({
     required String id,
     required String userId,
-  });
-
-  Future<Result<ReportData>> getReportData({
-    required ClinicLocation? clinic,
-    required DateTime startDate,
-    required DateTime endDate,
   });
 }
 
@@ -113,17 +102,4 @@ class AdminRepositoryImpl implements AdminRepository {
     }
   }
 
-  @override
-  Future<Result<ReportData>> getReportData({
-    required ClinicLocation? clinic,
-    required DateTime startDate,
-    required DateTime endDate,
-  }) {
-    return fetchReportData(
-      _service,
-      clinic: clinic,
-      startDate: startDate,
-      endDate: endDate,
-    );
-  }
 }

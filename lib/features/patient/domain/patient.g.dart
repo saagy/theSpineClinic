@@ -55,11 +55,6 @@ _PatientPersonalDetails _$PatientPersonalDetailsFromJson(
   nationality: json['nationality'] as String?,
   gender: $enumDecodeNullable(_$PatientGenderEnumMap, json['gender']),
   secondaryPhone: json['secondary_phone'] as String?,
-  insuranceCompany: json['insurance_company'] as String?,
-  insuranceMemberNumber: json['insurance_member_number'] as String?,
-  insuranceExpiry: json['insurance_expiry'] == null
-      ? null
-      : DateTime.parse(json['insurance_expiry'] as String),
   referralSource: json['referral_source'] as String?,
 );
 
@@ -71,9 +66,6 @@ Map<String, dynamic> _$PatientPersonalDetailsToJson(
   'nationality': instance.nationality,
   'gender': _$PatientGenderEnumMap[instance.gender],
   'secondary_phone': instance.secondaryPhone,
-  'insurance_company': instance.insuranceCompany,
-  'insurance_member_number': instance.insuranceMemberNumber,
-  'insurance_expiry': _dateOnly(instance.insuranceExpiry),
   'referral_source': instance.referralSource,
 };
 

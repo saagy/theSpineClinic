@@ -3,7 +3,6 @@ import 'package:spine_clinic_app/core/errors/app_exception.dart';
 import 'package:spine_clinic_app/core/errors/result.dart';
 import 'package:spine_clinic_app/core/network/supabase_service.dart';
 import 'package:spine_clinic_app/core/utils/patient_helpers.dart';
-import 'package:spine_clinic_app/features/payments/domain/billing_access.dart';
 import 'package:spine_clinic_app/features/patient/data/patient_repository_queries.dart';
 import 'package:spine_clinic_app/features/patient/domain/clinic_location.dart';
 import 'package:spine_clinic_app/features/patient/domain/patient.dart';
@@ -137,33 +136,6 @@ class PatientRepositoryImpl implements PatientRepository {
   }
 
   @override
-  Future<Result<void>> updatePackageBalances(
-    String patientId, {
-    int? sessionBalance,
-    int? tractionBalance,
-  }) async {
-    if (sessionBalance == null && tractionBalance == null) {
-      return const Result.success(null);
-    }
-    try {
-      await _service.guardQuery(
-        () => _service
-            .from(_table)
-            .update({
-              if (sessionBalance != null) 'session_balance': sessionBalance,
-              if (tractionBalance != null) 'traction_balance': tractionBalance,
-            })
-            .eq('id', patientId)
-            .select('id')
-            .single(),
-      );
-      return const Result.success(null);
-    } catch (e) {
-      return Result.failure(AppException.fromSupabaseException(e));
-    }
-  }
-
-  @override
   Future<Result<void>> updatePatientDoctors(String patientId, List<String> currentDoctorIds) async {
     try {
       await _service.guardQuery(
@@ -273,7 +245,6 @@ class PatientRepositoryImpl implements PatientRepository {
       final checks = await Future.wait([
         for (final table in [
           'appointments',
-          'payment_records',
           'patient_notes',
           'patient_documents',
           'patient_programs',
@@ -282,7 +253,7 @@ class PatientRepositoryImpl implements PatientRepository {
           _service.from(table).select('id').eq('patient_id', patientId).limit(1),
       ]);
       if (checks.any((rows) => rows.isNotEmpty)) return const Result.success(false);
-      if (BillingAccess.enabled && await _service.rpc<bool>(
+      if (await _service.rpc<bool>(
         'billing_patient_has_invoices', params: {'p_patient_id': patientId},
       )) {
         return const Result.success(false);

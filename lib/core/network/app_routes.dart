@@ -116,9 +116,6 @@ abstract final class AppRoutes {
   static const String editPatientProgram =
       '/patient/:id/programs/:programId/edit';
 
-  /// Record payment screen (protected, full-screen without shell).
-  static const String recordPayment = '/patient/:id/pay';
-
   /// New patient registration screen (protected, full-screen without shell).
   static const String newPatient = '/new-patient';
 

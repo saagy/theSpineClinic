@@ -32,14 +32,6 @@ and data integrity. Reusing an existing widget is a choice based on suitability.
 
 ## Product Experience
 
-Billing pilot uses aligned financial registers at wide widths and patient-led
-rows on compact or enlarged-text layouts. The invoice editor keeps amounts in
-a separate summary on wide windows and below the service lines on phones.
-Patient identity, invoice total, outstanding debt, and refundable amounts
-have distinct labels. Transaction history keeps receipts, returns, and refunds
-separate, with printing on the corresponding document. See
-[Billing pilot](docs/billing-pilot.md) for the desk workflow.
-
 The redesigned service catalog (see [billing plan](docs/billing-plan.md)) groups
 services under quiet type headings (Physical therapy, Spinal traction,
 Assessments, Other services), each group in one bordered surface with hairline
@@ -86,7 +78,8 @@ summary beside the form from 900 px and below it on phones. The panel owns its
 snackbars so confirmations do not repeat on the dimmed page behind it.
 
 Patient rows put the permanent ID on a quiet line below the name. Optional
-demographics, referral, and insurance membership live in patient details.
+demographics and referral live in patient details, in one section whose
+fields share two columns on wide windows.
 The billing directory uses the shared search field and bottom sheet, with
 explicit page controls and patient ID and branch beneath the name.
 
@@ -115,8 +108,10 @@ enough density for repeated daily work.
   while scrolling. Use the shared record menu for popup actions and compact
   selections. The selected option has a checkmark.
 - Billing is a primary destination for receptionists with payment access on
-  both the bottom navigation bar and the side rail. Admins open Billing from
-  the Admin hub.
+  both the bottom navigation bar and the side rail. It lists Services and
+  prices now and gains the reports in billing plan slice 6. Admins open
+  Services and prices from the Admin hub.
+- Session balances are shown read-only; there is no manual balance editor.
 
 - Design mobile and desktop views together. Adapt to the available window space,
   including narrow desktop windows, and support intermediate widths.

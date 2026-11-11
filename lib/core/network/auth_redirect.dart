@@ -2,7 +2,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'app_routes.dart';
 import '../../features/auth/domain/staff.dart';
 import '../../features/auth/domain/user_role.dart';
-import '../../features/payments/domain/billing_access.dart';
 import '../../features/payments/domain/invoice_access.dart';
 
 /// Resolves authentication without losing a protected browser deep link.
@@ -50,7 +49,7 @@ String? authRedirect(AsyncValue<Staff?> asyncUser, Uri uri) {
     return _homeRouteForRole(user.role);
   }
 
-  if (location == AppRoutes.billing && !BillingAccess.canTransact(user)) {
+  if (location == AppRoutes.billing && !InvoiceAccess.canManage(user)) {
     return _homeRouteForRole(user.role);
   }
 

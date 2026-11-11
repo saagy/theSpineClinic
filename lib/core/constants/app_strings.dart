@@ -2,7 +2,6 @@
 /// Rule 7 — no hardcoded strings anywhere outside this file.
 library;
 
-import 'billing_strings.dart';
 import 'invoice_detail_strings.dart';
 import 'invoice_strings.dart';
 
@@ -20,12 +19,7 @@ abstract final class AppStrings {
   static const String patientMale = 'Male';
   static const String patientNotSpecified = 'Not specified';
   static const String patientSecondaryPhone = 'Second phone number';
-  static const String patientInsurance = 'Insurance details';
-  static const String patientInsuranceCompany = 'Insurance company';
-  static const String patientInsuranceNumber = 'Insurance member number';
-  static const String patientInsuranceExpiry = 'Card expiration date';
   static const String patientReferralSource = 'How they heard about us / referral source';
-  static const billing = BillingStrings();
   static const invoices = InvoiceStrings();
   static const invoiceDetail = InvoiceDetailStrings();
   static String staffAppliedOn(String date) => 'Applied $date';
@@ -259,16 +253,6 @@ abstract final class AppStrings {
     'error_doc_link_incomplete': errorDocLinkIncomplete,
     'error_doc_unsupported_type': errorDocUnsupportedType,
     'mutation_unconfirmed': mutationUnconfirmed,
-    'billing_cancelled': billing.cancelled,
-    'billing_stale': billing.stale,
-    'billing_catalog_changed': billing.catalogChanged,
-    'billing_invalid_invoice': billing.invalid,
-    'billing_inactive_senior': billing.inactiveSenior,
-    'billing_receipt_limit': billing.receiptLimit,
-    'billing_refund_limit': billing.refundLimit,
-    'billing_return_limit': billing.returnLimit,
-    'billing_busy': billing.busy,
-    'billing_export_limit': billing.exportLimit,
     ...invoices.errorKeys,
     ...invoiceDetail.errorKeys,
     'payment_changed': paymentChanged,

@@ -329,7 +329,7 @@ $PatientPersonalDetailsCopyWith<$Res> get personalDetails {
 /// @nodoc
 mixin _$PatientPersonalDetails {
 
- String? get address;@JsonKey(name: 'date_of_birth', toJson: _dateOnly) DateTime? get dateOfBirth; String? get nationality; PatientGender? get gender;@JsonKey(name: 'secondary_phone') String? get secondaryPhone;@JsonKey(name: 'insurance_company') String? get insuranceCompany;@JsonKey(name: 'insurance_member_number') String? get insuranceMemberNumber;@JsonKey(name: 'insurance_expiry', toJson: _dateOnly) DateTime? get insuranceExpiry;@JsonKey(name: 'referral_source') String? get referralSource;
+ String? get address;@JsonKey(name: 'date_of_birth', toJson: _dateOnly) DateTime? get dateOfBirth; String? get nationality; PatientGender? get gender;@JsonKey(name: 'secondary_phone') String? get secondaryPhone;@JsonKey(name: 'referral_source') String? get referralSource;
 /// Create a copy of PatientPersonalDetails
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -342,16 +342,16 @@ $PatientPersonalDetailsCopyWith<PatientPersonalDetails> get copyWith => _$Patien
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is PatientPersonalDetails&&(identical(other.address, address) || other.address == address)&&(identical(other.dateOfBirth, dateOfBirth) || other.dateOfBirth == dateOfBirth)&&(identical(other.nationality, nationality) || other.nationality == nationality)&&(identical(other.gender, gender) || other.gender == gender)&&(identical(other.secondaryPhone, secondaryPhone) || other.secondaryPhone == secondaryPhone)&&(identical(other.insuranceCompany, insuranceCompany) || other.insuranceCompany == insuranceCompany)&&(identical(other.insuranceMemberNumber, insuranceMemberNumber) || other.insuranceMemberNumber == insuranceMemberNumber)&&(identical(other.insuranceExpiry, insuranceExpiry) || other.insuranceExpiry == insuranceExpiry)&&(identical(other.referralSource, referralSource) || other.referralSource == referralSource));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is PatientPersonalDetails&&(identical(other.address, address) || other.address == address)&&(identical(other.dateOfBirth, dateOfBirth) || other.dateOfBirth == dateOfBirth)&&(identical(other.nationality, nationality) || other.nationality == nationality)&&(identical(other.gender, gender) || other.gender == gender)&&(identical(other.secondaryPhone, secondaryPhone) || other.secondaryPhone == secondaryPhone)&&(identical(other.referralSource, referralSource) || other.referralSource == referralSource));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,address,dateOfBirth,nationality,gender,secondaryPhone,insuranceCompany,insuranceMemberNumber,insuranceExpiry,referralSource);
+int get hashCode => Object.hash(runtimeType,address,dateOfBirth,nationality,gender,secondaryPhone,referralSource);
 
 @override
 String toString() {
-  return 'PatientPersonalDetails(address: $address, dateOfBirth: $dateOfBirth, nationality: $nationality, gender: $gender, secondaryPhone: $secondaryPhone, insuranceCompany: $insuranceCompany, insuranceMemberNumber: $insuranceMemberNumber, insuranceExpiry: $insuranceExpiry, referralSource: $referralSource)';
+  return 'PatientPersonalDetails(address: $address, dateOfBirth: $dateOfBirth, nationality: $nationality, gender: $gender, secondaryPhone: $secondaryPhone, referralSource: $referralSource)';
 }
 
 
@@ -362,7 +362,7 @@ abstract mixin class $PatientPersonalDetailsCopyWith<$Res>  {
   factory $PatientPersonalDetailsCopyWith(PatientPersonalDetails value, $Res Function(PatientPersonalDetails) _then) = _$PatientPersonalDetailsCopyWithImpl;
 @useResult
 $Res call({
- String? address,@JsonKey(name: 'date_of_birth', toJson: _dateOnly) DateTime? dateOfBirth, String? nationality, PatientGender? gender,@JsonKey(name: 'secondary_phone') String? secondaryPhone,@JsonKey(name: 'insurance_company') String? insuranceCompany,@JsonKey(name: 'insurance_member_number') String? insuranceMemberNumber,@JsonKey(name: 'insurance_expiry', toJson: _dateOnly) DateTime? insuranceExpiry,@JsonKey(name: 'referral_source') String? referralSource
+ String? address,@JsonKey(name: 'date_of_birth', toJson: _dateOnly) DateTime? dateOfBirth, String? nationality, PatientGender? gender,@JsonKey(name: 'secondary_phone') String? secondaryPhone,@JsonKey(name: 'referral_source') String? referralSource
 });
 
 
@@ -379,17 +379,14 @@ class _$PatientPersonalDetailsCopyWithImpl<$Res>
 
 /// Create a copy of PatientPersonalDetails
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? address = freezed,Object? dateOfBirth = freezed,Object? nationality = freezed,Object? gender = freezed,Object? secondaryPhone = freezed,Object? insuranceCompany = freezed,Object? insuranceMemberNumber = freezed,Object? insuranceExpiry = freezed,Object? referralSource = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? address = freezed,Object? dateOfBirth = freezed,Object? nationality = freezed,Object? gender = freezed,Object? secondaryPhone = freezed,Object? referralSource = freezed,}) {
   return _then(_self.copyWith(
 address: freezed == address ? _self.address : address // ignore: cast_nullable_to_non_nullable
 as String?,dateOfBirth: freezed == dateOfBirth ? _self.dateOfBirth : dateOfBirth // ignore: cast_nullable_to_non_nullable
 as DateTime?,nationality: freezed == nationality ? _self.nationality : nationality // ignore: cast_nullable_to_non_nullable
 as String?,gender: freezed == gender ? _self.gender : gender // ignore: cast_nullable_to_non_nullable
 as PatientGender?,secondaryPhone: freezed == secondaryPhone ? _self.secondaryPhone : secondaryPhone // ignore: cast_nullable_to_non_nullable
-as String?,insuranceCompany: freezed == insuranceCompany ? _self.insuranceCompany : insuranceCompany // ignore: cast_nullable_to_non_nullable
-as String?,insuranceMemberNumber: freezed == insuranceMemberNumber ? _self.insuranceMemberNumber : insuranceMemberNumber // ignore: cast_nullable_to_non_nullable
-as String?,insuranceExpiry: freezed == insuranceExpiry ? _self.insuranceExpiry : insuranceExpiry // ignore: cast_nullable_to_non_nullable
-as DateTime?,referralSource: freezed == referralSource ? _self.referralSource : referralSource // ignore: cast_nullable_to_non_nullable
+as String?,referralSource: freezed == referralSource ? _self.referralSource : referralSource // ignore: cast_nullable_to_non_nullable
 as String?,
   ));
 }
@@ -475,10 +472,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String? address, @JsonKey(name: 'date_of_birth', toJson: _dateOnly)  DateTime? dateOfBirth,  String? nationality,  PatientGender? gender, @JsonKey(name: 'secondary_phone')  String? secondaryPhone, @JsonKey(name: 'insurance_company')  String? insuranceCompany, @JsonKey(name: 'insurance_member_number')  String? insuranceMemberNumber, @JsonKey(name: 'insurance_expiry', toJson: _dateOnly)  DateTime? insuranceExpiry, @JsonKey(name: 'referral_source')  String? referralSource)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String? address, @JsonKey(name: 'date_of_birth', toJson: _dateOnly)  DateTime? dateOfBirth,  String? nationality,  PatientGender? gender, @JsonKey(name: 'secondary_phone')  String? secondaryPhone, @JsonKey(name: 'referral_source')  String? referralSource)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _PatientPersonalDetails() when $default != null:
-return $default(_that.address,_that.dateOfBirth,_that.nationality,_that.gender,_that.secondaryPhone,_that.insuranceCompany,_that.insuranceMemberNumber,_that.insuranceExpiry,_that.referralSource);case _:
+return $default(_that.address,_that.dateOfBirth,_that.nationality,_that.gender,_that.secondaryPhone,_that.referralSource);case _:
   return orElse();
 
 }
@@ -496,10 +493,10 @@ return $default(_that.address,_that.dateOfBirth,_that.nationality,_that.gender,_
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String? address, @JsonKey(name: 'date_of_birth', toJson: _dateOnly)  DateTime? dateOfBirth,  String? nationality,  PatientGender? gender, @JsonKey(name: 'secondary_phone')  String? secondaryPhone, @JsonKey(name: 'insurance_company')  String? insuranceCompany, @JsonKey(name: 'insurance_member_number')  String? insuranceMemberNumber, @JsonKey(name: 'insurance_expiry', toJson: _dateOnly)  DateTime? insuranceExpiry, @JsonKey(name: 'referral_source')  String? referralSource)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String? address, @JsonKey(name: 'date_of_birth', toJson: _dateOnly)  DateTime? dateOfBirth,  String? nationality,  PatientGender? gender, @JsonKey(name: 'secondary_phone')  String? secondaryPhone, @JsonKey(name: 'referral_source')  String? referralSource)  $default,) {final _that = this;
 switch (_that) {
 case _PatientPersonalDetails():
-return $default(_that.address,_that.dateOfBirth,_that.nationality,_that.gender,_that.secondaryPhone,_that.insuranceCompany,_that.insuranceMemberNumber,_that.insuranceExpiry,_that.referralSource);case _:
+return $default(_that.address,_that.dateOfBirth,_that.nationality,_that.gender,_that.secondaryPhone,_that.referralSource);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -516,10 +513,10 @@ return $default(_that.address,_that.dateOfBirth,_that.nationality,_that.gender,_
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String? address, @JsonKey(name: 'date_of_birth', toJson: _dateOnly)  DateTime? dateOfBirth,  String? nationality,  PatientGender? gender, @JsonKey(name: 'secondary_phone')  String? secondaryPhone, @JsonKey(name: 'insurance_company')  String? insuranceCompany, @JsonKey(name: 'insurance_member_number')  String? insuranceMemberNumber, @JsonKey(name: 'insurance_expiry', toJson: _dateOnly)  DateTime? insuranceExpiry, @JsonKey(name: 'referral_source')  String? referralSource)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String? address, @JsonKey(name: 'date_of_birth', toJson: _dateOnly)  DateTime? dateOfBirth,  String? nationality,  PatientGender? gender, @JsonKey(name: 'secondary_phone')  String? secondaryPhone, @JsonKey(name: 'referral_source')  String? referralSource)?  $default,) {final _that = this;
 switch (_that) {
 case _PatientPersonalDetails() when $default != null:
-return $default(_that.address,_that.dateOfBirth,_that.nationality,_that.gender,_that.secondaryPhone,_that.insuranceCompany,_that.insuranceMemberNumber,_that.insuranceExpiry,_that.referralSource);case _:
+return $default(_that.address,_that.dateOfBirth,_that.nationality,_that.gender,_that.secondaryPhone,_that.referralSource);case _:
   return null;
 
 }
@@ -531,7 +528,7 @@ return $default(_that.address,_that.dateOfBirth,_that.nationality,_that.gender,_
 @JsonSerializable()
 
 class _PatientPersonalDetails implements PatientPersonalDetails {
-  const _PatientPersonalDetails({this.address, @JsonKey(name: 'date_of_birth', toJson: _dateOnly) this.dateOfBirth, this.nationality, this.gender, @JsonKey(name: 'secondary_phone') this.secondaryPhone, @JsonKey(name: 'insurance_company') this.insuranceCompany, @JsonKey(name: 'insurance_member_number') this.insuranceMemberNumber, @JsonKey(name: 'insurance_expiry', toJson: _dateOnly) this.insuranceExpiry, @JsonKey(name: 'referral_source') this.referralSource});
+  const _PatientPersonalDetails({this.address, @JsonKey(name: 'date_of_birth', toJson: _dateOnly) this.dateOfBirth, this.nationality, this.gender, @JsonKey(name: 'secondary_phone') this.secondaryPhone, @JsonKey(name: 'referral_source') this.referralSource});
   factory _PatientPersonalDetails.fromJson(Map<String, dynamic> json) => _$PatientPersonalDetailsFromJson(json);
 
 @override final  String? address;
@@ -539,9 +536,6 @@ class _PatientPersonalDetails implements PatientPersonalDetails {
 @override final  String? nationality;
 @override final  PatientGender? gender;
 @override@JsonKey(name: 'secondary_phone') final  String? secondaryPhone;
-@override@JsonKey(name: 'insurance_company') final  String? insuranceCompany;
-@override@JsonKey(name: 'insurance_member_number') final  String? insuranceMemberNumber;
-@override@JsonKey(name: 'insurance_expiry', toJson: _dateOnly) final  DateTime? insuranceExpiry;
 @override@JsonKey(name: 'referral_source') final  String? referralSource;
 
 /// Create a copy of PatientPersonalDetails
@@ -557,16 +551,16 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _PatientPersonalDetails&&(identical(other.address, address) || other.address == address)&&(identical(other.dateOfBirth, dateOfBirth) || other.dateOfBirth == dateOfBirth)&&(identical(other.nationality, nationality) || other.nationality == nationality)&&(identical(other.gender, gender) || other.gender == gender)&&(identical(other.secondaryPhone, secondaryPhone) || other.secondaryPhone == secondaryPhone)&&(identical(other.insuranceCompany, insuranceCompany) || other.insuranceCompany == insuranceCompany)&&(identical(other.insuranceMemberNumber, insuranceMemberNumber) || other.insuranceMemberNumber == insuranceMemberNumber)&&(identical(other.insuranceExpiry, insuranceExpiry) || other.insuranceExpiry == insuranceExpiry)&&(identical(other.referralSource, referralSource) || other.referralSource == referralSource));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _PatientPersonalDetails&&(identical(other.address, address) || other.address == address)&&(identical(other.dateOfBirth, dateOfBirth) || other.dateOfBirth == dateOfBirth)&&(identical(other.nationality, nationality) || other.nationality == nationality)&&(identical(other.gender, gender) || other.gender == gender)&&(identical(other.secondaryPhone, secondaryPhone) || other.secondaryPhone == secondaryPhone)&&(identical(other.referralSource, referralSource) || other.referralSource == referralSource));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,address,dateOfBirth,nationality,gender,secondaryPhone,insuranceCompany,insuranceMemberNumber,insuranceExpiry,referralSource);
+int get hashCode => Object.hash(runtimeType,address,dateOfBirth,nationality,gender,secondaryPhone,referralSource);
 
 @override
 String toString() {
-  return 'PatientPersonalDetails(address: $address, dateOfBirth: $dateOfBirth, nationality: $nationality, gender: $gender, secondaryPhone: $secondaryPhone, insuranceCompany: $insuranceCompany, insuranceMemberNumber: $insuranceMemberNumber, insuranceExpiry: $insuranceExpiry, referralSource: $referralSource)';
+  return 'PatientPersonalDetails(address: $address, dateOfBirth: $dateOfBirth, nationality: $nationality, gender: $gender, secondaryPhone: $secondaryPhone, referralSource: $referralSource)';
 }
 
 
@@ -577,7 +571,7 @@ abstract mixin class _$PatientPersonalDetailsCopyWith<$Res> implements $PatientP
   factory _$PatientPersonalDetailsCopyWith(_PatientPersonalDetails value, $Res Function(_PatientPersonalDetails) _then) = __$PatientPersonalDetailsCopyWithImpl;
 @override @useResult
 $Res call({
- String? address,@JsonKey(name: 'date_of_birth', toJson: _dateOnly) DateTime? dateOfBirth, String? nationality, PatientGender? gender,@JsonKey(name: 'secondary_phone') String? secondaryPhone,@JsonKey(name: 'insurance_company') String? insuranceCompany,@JsonKey(name: 'insurance_member_number') String? insuranceMemberNumber,@JsonKey(name: 'insurance_expiry', toJson: _dateOnly) DateTime? insuranceExpiry,@JsonKey(name: 'referral_source') String? referralSource
+ String? address,@JsonKey(name: 'date_of_birth', toJson: _dateOnly) DateTime? dateOfBirth, String? nationality, PatientGender? gender,@JsonKey(name: 'secondary_phone') String? secondaryPhone,@JsonKey(name: 'referral_source') String? referralSource
 });
 
 
@@ -594,17 +588,14 @@ class __$PatientPersonalDetailsCopyWithImpl<$Res>
 
 /// Create a copy of PatientPersonalDetails
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? address = freezed,Object? dateOfBirth = freezed,Object? nationality = freezed,Object? gender = freezed,Object? secondaryPhone = freezed,Object? insuranceCompany = freezed,Object? insuranceMemberNumber = freezed,Object? insuranceExpiry = freezed,Object? referralSource = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? address = freezed,Object? dateOfBirth = freezed,Object? nationality = freezed,Object? gender = freezed,Object? secondaryPhone = freezed,Object? referralSource = freezed,}) {
   return _then(_PatientPersonalDetails(
 address: freezed == address ? _self.address : address // ignore: cast_nullable_to_non_nullable
 as String?,dateOfBirth: freezed == dateOfBirth ? _self.dateOfBirth : dateOfBirth // ignore: cast_nullable_to_non_nullable
 as DateTime?,nationality: freezed == nationality ? _self.nationality : nationality // ignore: cast_nullable_to_non_nullable
 as String?,gender: freezed == gender ? _self.gender : gender // ignore: cast_nullable_to_non_nullable
 as PatientGender?,secondaryPhone: freezed == secondaryPhone ? _self.secondaryPhone : secondaryPhone // ignore: cast_nullable_to_non_nullable
-as String?,insuranceCompany: freezed == insuranceCompany ? _self.insuranceCompany : insuranceCompany // ignore: cast_nullable_to_non_nullable
-as String?,insuranceMemberNumber: freezed == insuranceMemberNumber ? _self.insuranceMemberNumber : insuranceMemberNumber // ignore: cast_nullable_to_non_nullable
-as String?,insuranceExpiry: freezed == insuranceExpiry ? _self.insuranceExpiry : insuranceExpiry // ignore: cast_nullable_to_non_nullable
-as DateTime?,referralSource: freezed == referralSource ? _self.referralSource : referralSource // ignore: cast_nullable_to_non_nullable
+as String?,referralSource: freezed == referralSource ? _self.referralSource : referralSource // ignore: cast_nullable_to_non_nullable
 as String?,
   ));
 }

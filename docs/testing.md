@@ -23,7 +23,8 @@ The invoice detail slice (11 November 2026) adds
 rules, refund arithmetic from the billing plan, command payloads, route guards
 and PDF rendering), `invoice_detail_test.dart` (payment, void, lock messages,
 refund, correction and failure paths through real routing) and
-`test/previews/invoice_detail_render_test.dart`; the full suite is 617 tests.
+`test/previews/invoice_detail_render_test.dart`. Removing the pilot and legacy
+payment code (slice 5) retired their tests; the full suite is 588 tests.
 The return-refresh follow-up adds 12 tests covering the 60-second boundary,
 no polling, concurrent returns, failed refresh retention/cooldown, local status
 races, independent week ages, branch changes, browser lifecycle events and

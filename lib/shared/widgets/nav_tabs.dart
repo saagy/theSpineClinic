@@ -77,7 +77,7 @@ abstract final class NavTabs {
           if (role == 'receptionist' && showBilling)
             NavTab(
               icon: LucideIcons.receipt,
-              label: AppStrings.billing.title,
+              label: AppStrings.invoices.billing,
               path: AppRoutes.billing,
             ),
           const NavTab(

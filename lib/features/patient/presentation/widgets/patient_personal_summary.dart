@@ -26,20 +26,7 @@ class PatientPersonalSummary extends StatelessWidget {
       AppStrings.patientSecondaryPhone: profile.secondaryPhone,
       AppStrings.patientReferralSource: profile.referralSource,
     };
-    final insurance = <String, String?>{
-      AppStrings.patientInsuranceCompany: profile.insuranceCompany,
-      AppStrings.patientInsuranceNumber: profile.insuranceMemberNumber,
-      AppStrings.patientInsuranceExpiry: profile.insuranceExpiry == null
-          ? null
-          : Formatters.formatDateMedium(profile.insuranceExpiry!),
-    };
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        _section(AppStrings.personalDetails, personal),
-        _section(AppStrings.patientInsurance, insurance),
-      ],
-    );
+    return _section(AppStrings.personalDetails, personal);
   }
 
   Widget _section(String title, Map<String, String?> fields) {

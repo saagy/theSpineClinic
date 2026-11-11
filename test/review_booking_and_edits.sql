@@ -50,14 +50,6 @@ BEGIN
   IF EXISTS(SELECT 1 FROM public.appointments WHERE id=a AND type='reassessment') THEN
     RAISE EXCEPTION 'Appointment update did not roll back';
   END IF;
-  INSERT INTO public.payment_records(patient_id,amount,total_price,reason)
-    VALUES(p,50,100,'Review due') RETURNING id INTO pay;
-  PERFORM public.collect_payment_due(pay,50);
-  BEGIN
-    PERFORM public.collect_payment_due(pay,1);
-    RAISE EXCEPTION 'Overcollection accepted';
-  EXCEPTION WHEN data_exception THEN NULL;
-  END;
   -- Ordinary assigned doctor may edit schedule while preserving the care team.
   INSERT INTO auth.users(id,email) VALUES(gen_random_uuid(),d::text||'-login@example.test') RETURNING id INTO u;
   UPDATE public.staff SET user_id=u WHERE id=d;

@@ -17,10 +17,6 @@ DELETE FROM public.invoice_refunds; DELETE FROM public.invoice_receipts;
 DELETE FROM public.invoice_line_doctors; DELETE FROM public.invoice_lines;
 UPDATE public.invoices SET replaces_invoice_id = NULL; DELETE FROM public.invoices;
 DELETE FROM public.invoice_number_series; DELETE FROM public.service_catalog;
-DELETE FROM public.billing_allocations; DELETE FROM public.billing_movements;
-DELETE FROM public.billing_invoice_lines; DELETE FROM public.billing_invoices;
-DELETE FROM public.billing_number_series; DELETE FROM public.billing_items;
-DELETE FROM public.payment_records; -- its delete trigger adjusts balances; reset below
 DELETE FROM public.mutation_receipts WHERE kind LIKE 'invoice:%' OR kind LIKE 'billing:%'
   OR kind IN ('payment', 'collect_due', 'payment_edit');
 UPDATE public.patients SET session_balance = 0, traction_balance = 0;

@@ -1,38 +1,21 @@
 BEGIN;
 DO $$
 DECLARE u uuid:=gen_random_uuid(); admin uuid:=gen_random_uuid(); d uuid:=gen_random_uuid();
-  p uuid:=gen_random_uuid(); req uuid:=gen_random_uuid(); pay uuid; payload jsonb; first_result jsonb;
-  result_json jsonb; n integer; amount numeric; upload_id uuid:=gen_random_uuid(); missing uuid:=gen_random_uuid();
+  p uuid:=gen_random_uuid(); req uuid:=gen_random_uuid(); payload jsonb; first_result jsonb;
+  result_json jsonb; n integer; upload_id uuid:=gen_random_uuid(); missing uuid:=gen_random_uuid();
 BEGIN
   INSERT INTO auth.users(id,email) VALUES(u,u::text||'@example.test');
   INSERT INTO public.staff(id,user_id,full_name,email,role)
     VALUES(admin,u,'Test admin',u::text||'@example.test','super_admin');
   INSERT INTO public.staff(id,full_name,email,role) VALUES(d,'Test doctor',d::text||'@example.test','doctor');
-  INSERT INTO public.patients(id,full_name,phone_number,clinic) VALUES(p,'Test patient','000','tagamoa');
+  INSERT INTO public.patients(id,full_name,phone_number,clinic,session_balance)
+    VALUES(p,'Test patient','000','tagamoa',5);
   PERFORM set_config('request.jwt.claim.sub',u::text,true);
-  payload := jsonb_build_object('patient_id',p,'amount',100,'reason','Test',
-    'total_price',500,'session_balance_added',5,'traction_balance_added',0);
-  first_result := public.execute_clinic_mutation(req,'payment',payload);
-  IF first_result->>'ok'<>'true' THEN RAISE EXCEPTION 'Payment failed: %',first_result; END IF;
-  pay := (first_result->>'id')::uuid;
-  IF public.execute_clinic_mutation(req,'payment',payload)<>first_result THEN RAISE EXCEPTION 'Retry changed result'; END IF;
-  SELECT count(*) INTO n FROM public.payment_records WHERE patient_id=p;
-  IF n<>1 THEN RAISE EXCEPTION 'Duplicate payment'; END IF;
-  SELECT session_balance INTO n FROM public.patients WHERE id=p;
-  IF n<>5 THEN RAISE EXCEPTION 'Duplicate credits'; END IF;
+  -- Legacy payment kinds were removed with payment_records; only bookings remain.
   BEGIN
-    PERFORM public.execute_clinic_mutation(req,'payment',payload||'{"amount":150}');
-    RAISE EXCEPTION 'Changed payload accepted';
+    PERFORM public.execute_clinic_mutation(req,'payment','{}');
+    RAISE EXCEPTION 'Removed payment command accepted';
   EXCEPTION WHEN data_exception THEN NULL; END;
-  req := gen_random_uuid();
-  payload := jsonb_build_object('p_payment_id',pay,'p_additional_amount',50,'p_expected_amount',100);
-  PERFORM public.execute_clinic_mutation(req,'collect_due',payload);
-  PERFORM public.execute_clinic_mutation(req,'collect_due',payload);
-  SELECT payment_records.amount INTO amount FROM public.payment_records WHERE id=pay;
-  IF amount<>150 THEN RAISE EXCEPTION 'Collection repeated: %',amount; END IF;
-  result_json := public.execute_clinic_mutation(gen_random_uuid(),'collect_due',payload);
-  IF result_json->>'ok'<>'false' THEN RAISE EXCEPTION 'Stale second operator collection accepted'; END IF;
-  req := gen_random_uuid();
   payload := jsonb_build_object('p_patient_id',p,'p_type','normal_pt_session','p_use_package',true,
     'p_slots',jsonb_build_array(now()+interval '1 day',now()+interval '2 days'),'p_doctor_ids',jsonb_build_array(d));
   first_result := public.execute_clinic_mutation(req,'booking',payload);
@@ -50,12 +33,6 @@ BEGIN
     PERFORM public.execute_clinic_mutation(req,'booking',payload);
     RAISE EXCEPTION 'Late cancelled request wrote data';
   EXCEPTION WHEN data_exception THEN NULL; END;
-  req := gen_random_uuid();
-  first_result := public.execute_clinic_mutation(req,'payment',jsonb_build_object(
-    'patient_id',p,'amount',-1,'reason','Invalid','session_balance_added',10,'traction_balance_added',0));
-  IF first_result->>'ok'<>'false' THEN RAISE EXCEPTION 'Invalid write accepted'; END IF;
-  SELECT session_balance INTO n FROM public.patients WHERE id=p;
-  IF n<>5 THEN RAISE EXCEPTION 'Failed write left credits'; END IF;
 
   first_result := public.begin_document_upload(upload_id,p,'scan.png',NULL,repeat('a',64),100);
   IF public.begin_document_upload(upload_id,p,'scan.png',NULL,repeat('a',64),100)<>first_result THEN

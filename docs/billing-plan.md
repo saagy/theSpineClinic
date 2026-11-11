@@ -18,7 +18,30 @@ full screen below it. Any receptionist can record a payment and print; payment
 staff can also void and correct receipts, void refunds, void the invoice,
 refund (`.../refund`) and correct the invoice (`.../correct`). Invoices,
 receipts and refunds print as A4 PDFs with a placeholder clinic-details line.
-Slices 5-8 are not started.
+**Slice 5 (legacy removal) is built in the app** on November 11, 2026: the
+self-pay pilot screens, the legacy payment entry, ledger and collect-due
+sheets, the manual package balance dialog, the old admin Reports screen and
+the patient insurance fields are removed. The Billing tab (payment
+receptionists) now opens a short Billing screen that links to Services and
+prices; slice 6 adds the reports there. Super admins reach Services from the
+Admin hub. Migration `20261111120000_remove_legacy_billing.sql` drops the
+pilot tables and commands, `payment_records` with its triggers and
+`collect_payment_due`, narrows `execute_clinic_mutation` to bookings, and
+removes insurance keys from `patients.personal_details`. It passes the SQL
+suites locally and was **applied to the linked project by hand** (SQL editor)
+on November 11, 2026, then verified object by object. Its version
+`20261111120000` was then recorded in the project's migration history, so a
+later `supabase db push` treats it as applied. Slices 6-8 are not started.
+
+Slice 5 behavior worth knowing:
+
+- Session balances are read-only in the app. They change only through
+  invoices, refunds, voids and package visits. The database guard
+  `guard_patient_balance_write` still lets a receptionist or super admin
+  change a balance with a direct API call; tightening it is a separate change
+  because invoice commands write balances under the caller's identity.
+- `billing_patient_has_invoices` keeps its name (the empty-patient preflight
+  calls it) and now checks invoices only.
 
 Slice 4 behavior worth knowing:
 

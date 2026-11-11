@@ -26,7 +26,6 @@ import 'package:spine_clinic_app/features/auth/presentation/auth_actions.dart';
 import 'package:spine_clinic_app/features/auth/presentation/auth_providers.dart';
 import 'package:spine_clinic_app/shared/widgets/error_view.dart';
 import 'package:spine_clinic_app/shared/widgets/profile_menu_row.dart';
-import 'package:spine_clinic_app/features/payments/domain/billing_access.dart';
 import 'package:spine_clinic_app/features/payments/domain/invoice_access.dart';
 import 'package:spine_clinic_app/shared/widgets/staff_profile_header.dart';
 
@@ -101,13 +100,6 @@ class _AdminHubBody extends ConsumerWidget {
                     onEditProfile: () => context.push(AppRoutes.editProfile),
                   ),
                   const SizedBox(height: AppSizes.p16),
-                  if (BillingAccess.canTransact(user))
-                    ProfileMenuRow(
-                      title: AppStrings.billing.title,
-                      subtitle: AppStrings.billing.subtitle,
-                      leadingIcon: Icons.receipt_long_outlined,
-                      onTap: () => context.push(AppRoutes.billing),
-                    ),
                   if (InvoiceAccess.canManage(user))
                     ProfileMenuRow(
                       title: AppStrings.invoices.services,

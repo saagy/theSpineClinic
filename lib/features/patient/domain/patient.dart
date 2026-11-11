@@ -47,10 +47,6 @@ abstract class PatientPersonalDetails with _$PatientPersonalDetails {
     String? nationality,
     PatientGender? gender,
     @JsonKey(name: 'secondary_phone') String? secondaryPhone,
-    @JsonKey(name: 'insurance_company') String? insuranceCompany,
-    @JsonKey(name: 'insurance_member_number') String? insuranceMemberNumber,
-    @JsonKey(name: 'insurance_expiry', toJson: _dateOnly)
-    DateTime? insuranceExpiry,
     @JsonKey(name: 'referral_source') String? referralSource,
   }) = _PatientPersonalDetails;
 

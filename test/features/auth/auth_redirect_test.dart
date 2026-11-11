@@ -6,7 +6,6 @@ import 'package:spine_clinic_app/core/network/auth_redirect.dart';
 import 'package:spine_clinic_app/features/auth/domain/staff.dart';
 import 'package:spine_clinic_app/features/auth/domain/user_role.dart';
 import 'package:spine_clinic_app/features/auth/presentation/auth_providers.dart';
-import 'package:spine_clinic_app/features/payments/domain/billing_access.dart';
 import '../../fixtures/profile_editor_harness.dart';
 
 void main() {
@@ -24,7 +23,7 @@ void main() {
     expect(authRedirect(signedIn, location), AppRoutes.allAppointments);
     final cashier = receptionist.copyWith(canManagePayments: true);
     expect(authRedirect(AsyncData(cashier), location), isNull);
-  }, skip: !BillingAccess.enabled);
+  });
 
   test('new invoices are for receptionists, not doctors', () {
     final location = Uri.parse(AppRoutes.newInvoiceLocation('patient-1'));

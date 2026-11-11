@@ -23,9 +23,9 @@ lib/
     ├── patient/              # Search/list, patient dossier (tabs), documents, due collection
     ├── appointment/          # Schedule, booking workboard, appointments detail, doctor replacement
     ├── medical_records/      # Visit details, visit notes, patient notes
-    ├── payments/             # Record payment (amount / package / reason)
+    ├── payments/             # Invoices, receipts, refunds, service catalog, Billing tab
     ├── staff/                # Staff directory, applications, staff form
-    └── admin/                # Admin hub, legacy reports, branch switching
+    └── admin/                # Admin hub, staff applications, branch switching
 ```
 
 Each feature folder is layered `data/` (repository implementations, DTOs) →
@@ -94,8 +94,9 @@ Routing is declarative GoRouter (`core/network/`):
   doctor (My Schedule / My Patients / Profile), receptionist (Appointments /
   Patients / Profile), super admin (Appts / Patients / Admin).
 - The retired Analytics URL `/admin/reports` redirects to Admin. Its isolated
-  UI/providers/repository/query/DTO code is removed; independent legacy
-  `ReportsScreen`, admin report queries and database structures remain.
+  UI/providers/repository/query/DTO code is removed, and so are the legacy
+  `ReportsScreen` and admin report queries (billing plan slice 5). Billing
+  reports return in slice 6.
 
 Roles come from the database enum `user_role` (`super_admin`, `receptionist`,
 `doctor`) mirrored by the Dart `UserRole` enum in `features/auth/domain/`.

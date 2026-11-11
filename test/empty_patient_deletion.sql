@@ -10,12 +10,11 @@ SELECT set_config('request.jwt.claim.sub', '90000000-0000-0000-0000-000000000001
 DO $$
 DECLARE p uuid; category text; author uuid := '91000000-0000-0000-0000-000000000001';
 BEGIN
-  FOREACH category IN ARRAY ARRAY['appointment','payment','program','history','note','document','balance'] LOOP
+  FOREACH category IN ARRAY ARRAY['appointment','program','history','note','document','balance'] LOOP
     p := gen_random_uuid();
     INSERT INTO public.patients(id, full_name, phone_number, clinic) VALUES (p, 'Nonempty fixture', '000', 'tagamoa');
     CASE category
       WHEN 'appointment' THEN INSERT INTO public.appointments(patient_id,type,use_package) VALUES(p,'initial_assessment',false);
-      WHEN 'payment' THEN INSERT INTO public.payment_records(patient_id,amount,reason,recorded_by) VALUES(p,10,'Fixture',author);
       WHEN 'program' THEN INSERT INTO public.patient_programs(patient_id,created_by) VALUES(p,author);
       WHEN 'history' THEN INSERT INTO public.patient_medical_history(patient_id) VALUES(p);
       WHEN 'note' THEN INSERT INTO public.patient_notes(patient_id,created_by,note_text) VALUES(p,author,'Fixture');

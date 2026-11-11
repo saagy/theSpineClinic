@@ -23,15 +23,13 @@ void main() {
             address: 'Demo address, New Cairo',
             nationality: 'Egyptian',
             secondaryPhone: '00000000003',
-            insuranceCompany: 'Demo Insurance',
             referralSource: 'Referred by a doctor',
           ),
         ),
       ));
       await tester.pumpAndSettle();
       expect(find.text(AppStrings.patientIdLabel(107)), findsOneWidget);
-      expect(find.text('Demo Insurance'), findsOneWidget);
-      expect(find.text(AppStrings.patientInsuranceNumber), findsNothing);
+      expect(find.text('Referred by a doctor'), findsOneWidget);
       await capturePolish(tester, key, 'patient-personal-details-$width');
       expect(tester.takeException(), isNull);
     });

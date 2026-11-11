@@ -2,6 +2,8 @@
 final class InvoiceStrings {
   const InvoiceStrings();
 
+  final String billing = 'Billing';
+
   // Service catalog
   final String services = 'Services and prices';
   final String servicesSubtitle = 'Services and packages available on invoices';

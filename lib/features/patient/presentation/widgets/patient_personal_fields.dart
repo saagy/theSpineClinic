@@ -21,11 +21,11 @@ class PatientPersonalFields extends StatelessWidget {
   final bool enabled;
 
   @override
-  Widget build(BuildContext context) => FormColumns(
-    first: FormSection(
-      title: AppStrings.personalDetails,
-      description: AppStrings.patientOptionalDetails,
-      child: _fields([
+  Widget build(BuildContext context) => FormSection(
+    title: AppStrings.personalDetails,
+    description: AppStrings.patientOptionalDetails,
+    child: FormColumns(
+      first: _fields([
         _text(
           AppStrings.patientSecondaryPhone,
           value.secondaryPhone,
@@ -44,6 +44,8 @@ class PatientPersonalFields extends StatelessWidget {
           (date) => onChanged(value.copyWith(dateOfBirth: date)),
           lastDate: DateTime.now(),
         ),
+      ]),
+      second: _fields([
         _text(
           AppStrings.patientNationality,
           value.nationality,
@@ -78,29 +80,6 @@ class PatientPersonalFields extends StatelessWidget {
           AppStrings.patientReferralSource,
           value.referralSource,
           (text) => onChanged(value.copyWith(referralSource: text)),
-        ),
-      ]),
-    ),
-    second: FormSection(
-      title: AppStrings.patientInsurance,
-      description: AppStrings.patientOptionalDetails,
-      child: _fields([
-        _text(
-          AppStrings.patientInsuranceCompany,
-          value.insuranceCompany,
-          (text) => onChanged(value.copyWith(insuranceCompany: text)),
-        ),
-        _text(
-          AppStrings.patientInsuranceNumber,
-          value.insuranceMemberNumber,
-          (text) => onChanged(value.copyWith(insuranceMemberNumber: text)),
-        ),
-        _date(
-          context,
-          AppStrings.patientInsuranceExpiry,
-          value.insuranceExpiry,
-          (date) => onChanged(value.copyWith(insuranceExpiry: date)),
-          lastDate: DateTime(2150),
         ),
       ]),
     ),
