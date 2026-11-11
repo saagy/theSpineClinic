@@ -8,6 +8,23 @@ library;
 /// Static route path constants used by [GoRouter].
 abstract final class AppRoutes {
   static const String billing = '/billing';
+
+  /// Service catalog for payment receptionists and admins (full screen).
+  static const String serviceCatalog = '/billing/services';
+
+  /// Add (`new`) or edit a catalog service.
+  static const String serviceForm = '/billing/services/:id';
+
+  /// New invoice for a patient (full screen).
+  static const String newInvoice = '/patient/:id/invoices/new';
+
+  /// Location of the new-invoice form for [patientId].
+  static String newInvoiceLocation(String patientId) =>
+      newInvoice.replaceFirst(':id', Uri.encodeComponent(patientId));
+
+  /// Location of the service editor; pass null to add a service.
+  static String serviceFormLocation(String? serviceId) =>
+      '$serviceCatalog/${Uri.encodeComponent(serviceId ?? 'new')}';
   /// Authentication entry point for all roles.
   static const String login = '/login';
 

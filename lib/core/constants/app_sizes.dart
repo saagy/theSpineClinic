@@ -369,4 +369,32 @@ abstract final class AppSizes {
 
   /// Maximum list height inside the target-region selector.
   static const double targetRegionPickerListHeight = 360.0;
+
+  // ──────────────── Service catalog ────────────────
+
+  /// Width at which catalog rows switch from stacked text to aligned columns.
+  static const double serviceCatalogWideBreakpoint = 720.0;
+
+  /// Aligned catalog column widths on wide windows.
+  static const double serviceSoldAsColumnWidth = 210.0;
+  static const double serviceCreditColumnWidth = 120.0;
+  static const double servicePriceColumnWidth = 120.0;
+
+  // ──────────────── Invoices ────────────────
+
+  /// Width at which a patient's invoice rows use aligned columns.
+  static const double invoiceListWideBreakpoint = 680.0;
+
+  /// Width at which the patient money summary shows four figures in a row.
+  static const double invoiceTotalsWideBreakpoint = 560.0;
+  static const double invoiceNumberColumnWidth = 116.0;
+  static const double invoiceAmountColumnWidth = 104.0;
+  static const double invoiceStatusColumnWidth = 112.0;
+
+  /// The new-invoice form places its summary beside the form from here.
+  static const double invoiceFormWideBreakpoint = 900.0;
+  static const double invoiceSummaryPanelWidth = 320.0;
+
+  /// Width of the quantity stepper's value.
+  static const double quantityValueWidth = 36.0;
 }

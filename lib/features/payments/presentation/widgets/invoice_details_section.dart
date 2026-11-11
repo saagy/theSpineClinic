@@ -1,0 +1,105 @@
+import 'package:flutter/material.dart';
+import '../../../../core/constants/app_sizes.dart';
+import '../../../../core/constants/app_strings.dart';
+import '../../../../core/constants/app_text_styles.dart';
+import '../../../../core/utils/formatters.dart';
+import '../../../../shared/widgets/app_input_decoration.dart';
+import '../../../../shared/widgets/form_field_pair.dart';
+import '../../../../shared/widgets/form_section.dart';
+import '../../../../shared/widgets/labeled_form_field.dart';
+import '../../../../shared/widgets/record_action_menu.dart';
+import '../../../../shared/widgets/record_menu_select.dart';
+import '../../../patient/domain/clinic_location.dart';
+import '../../../patient/domain/patient.dart';
+import 'invoice_form_input.dart';
+import 'service_form_controls.dart';
+
+const _t = AppStrings.invoices;
+
+/// Who the invoice is for, where and when it was issued, and an optional note.
+class InvoiceDetailsSection extends StatelessWidget {
+  const InvoiceDetailsSection({
+    super.key,
+    required this.patient,
+    required this.input,
+    required this.enabled,
+    required this.onChanged,
+  });
+  final Patient patient;
+  final InvoiceFormInput input;
+  final bool enabled;
+  final ValueChanged<VoidCallback> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+    return FormSection(
+      title: _t.invoiceDetails,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text(patient.fullName, style: AppTextStyles.bodyBold),
+          if (patient.fileNumber != null)
+            Text(
+              AppStrings.patientIdLabel(patient.fileNumber!),
+              style: AppTextStyles.caption.copyWith(color: colors.onSurfaceVariant),
+            ),
+          const SizedBox(height: AppSizes.p20),
+          FormFieldPair(
+            first: LabeledFormField(
+              label: _t.branch,
+              enabled: enabled,
+              child: RecordMenuSelect<ClinicLocation>(
+                label: _t.branch,
+                value: input.branch,
+                isField: true,
+                decoration: appInputDecoration(context, enabled: enabled),
+                options: [
+                  for (final branch in ClinicLocation.values)
+                    RecordMenuAction(branch, branch.displayLabel, Icons.location_on_outlined),
+                ],
+                onChanged: enabled ? (branch) => onChanged(() => input.branch = branch) : null,
+              ),
+            ),
+            second: LabeledFormField(
+              label: _t.invoiceDate,
+              enabled: enabled,
+              child: InkWell(
+                onTap: enabled ? () => _pickDate(context) : null,
+                borderRadius: BorderRadius.circular(AppSizes.r6),
+                child: InputDecorator(
+                  decoration: appInputDecoration(
+                    context,
+                    enabled: enabled,
+                    suffixIcon: const Icon(Icons.calendar_today_outlined, size: AppSizes.iconSmall),
+                  ),
+                  child: Text(Formatters.formatDateMedium(input.date), style: AppTextStyles.body),
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: AppSizes.p20),
+          ServiceTextInput(
+            label: _t.note,
+            hint: _t.noteHint,
+            controller: input.note,
+            enabled: enabled,
+            maxLength: 500,
+            validator: (_) => null,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _pickDate(BuildContext context) async {
+    final DateTime today = DateUtils.dateOnly(DateTime.now());
+    final DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: input.date,
+      firstDate: DateTime(2020),
+      lastDate: today,
+    );
+    if (picked != null) onChanged(() => input.date = picked);
+  }
+}

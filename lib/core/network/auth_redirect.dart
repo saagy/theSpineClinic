@@ -3,6 +3,7 @@ import 'app_routes.dart';
 import '../../features/auth/domain/staff.dart';
 import '../../features/auth/domain/user_role.dart';
 import '../../features/payments/domain/billing_access.dart';
+import '../../features/payments/domain/invoice_access.dart';
 
 /// Resolves authentication without losing a protected browser deep link.
 String? authRedirect(AsyncValue<Staff?> asyncUser, Uri uri) {
@@ -50,6 +51,16 @@ String? authRedirect(AsyncValue<Staff?> asyncUser, Uri uri) {
   }
 
   if (location == AppRoutes.billing && !BillingAccess.canTransact(user)) {
+    return _homeRouteForRole(user.role);
+  }
+
+  if (RegExp(r'^/patient/[^/]+/invoices(/|$)').hasMatch(location) &&
+      !InvoiceAccess.canIssue(user)) {
+    return _homeRouteForRole(user.role);
+  }
+
+  if (location.startsWith(AppRoutes.serviceCatalog) &&
+      !InvoiceAccess.canManage(user)) {
     return _homeRouteForRole(user.role);
   }
 

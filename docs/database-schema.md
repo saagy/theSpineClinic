@@ -96,6 +96,56 @@ the existing `create_patient_with_doctors` grants to its current five-argument s
 
 See [Billing pilot](billing-pilot.md) for operation and staging setup.
 
+### Invoices v2
+
+Migrations `20261110202337`-`20261110202732` (applied to the linked project
+on November 10, 2026) add the redesigned billing schema beside the pilot (see
+[billing plan](billing-plan.md)). Amounts are EGP
+minor units. Rows are never deleted; voided rows keep `voided_at`,
+`voided_by`, `voided_by_name` and a required `void_reason`.
+
+| Table | Purpose |
+| --- | --- |
+| `service_catalog` | Name (unique ignoring case and outer spaces), `service_type` (`pt_session`, `traction_session`, `initial_assessment`, `reassessment`, `other`), `sessions_per_unit` (above 1 only for PT and traction), price, `attributes_doctors`, `active`, `version`. |
+| `invoice_number_series` | Last number per branch and kind (`invoice`, `receipt`, `refund`). |
+| `invoices` | Branch and number, patient name and file-number snapshots, `invoice_date` (today or earlier), subtotal, `discount_kind` (`none`, `percent` in basis points, `amount`), discount, total, optional note, `replaces_invoice_id` for corrections, creator snapshot, `version`. |
+| `invoice_lines` | Service snapshot (name, type, sessions per unit), quantity, unit price, gross, the line's share of the invoice discount, net, and `sessions_granted`. |
+| `invoice_line_doctors` | Zero or more doctors per line, with name snapshots. |
+| `invoice_receipts` | Branch and number, amount, `cash` or `visa`, `received_at` (kept by corrections), `recorded_at`, recorder snapshot, `replaces_receipt_id`. |
+| `invoice_refunds` | Branch and number, agreed `value_minor`, derived `payback_minor` and `payback_method`, required reason, recorder snapshot. |
+| `invoice_refund_lines` | Cancelled sessions and value per refunded line. |
+| `invoice_allocations` | Signed collected-money shares per line for each receipt or refund; the basis for collected-money doctor earnings. |
+
+Rules enforced in the database:
+
+- `execute_invoice_command(request_id, kind, payload)` is the only write path.
+  It is idempotent per request ID through `mutation_receipts` (kind
+  `invoice:<kind>`), checks `version` for existing invoices, and returns
+  `{ok, invoice_id, document_id}` or `{ok:false, error}`.
+  `resolve_invoice_command(request_id, kind)` tombstones an unanswered request.
+- `invoice_can('issue')` (active receptionists and super admins) covers reads,
+  `invoice_create` and `receipt_create`. `invoice_can('manage')` (payment
+  receptionists and super admins) also covers discounts, `service_save`,
+  `invoice_void`, `invoice_correct`, `receipt_void`, `receipt_correct`,
+  `refund_create` and `refund_void`. Doctors read nothing.
+- Creating an invoice adds its PT and traction sessions to the patient's
+  balance. Refunds and invoice voids remove only sessions that remain unused
+  and are not committed to future package bookings (`sessions_in_use`).
+  Voiding a refund restores its sessions.
+- Receipts never exceed the amount due. Refund payback is
+  `max(0, net collected - (value - refund value))`. The client sends the
+  payback it displayed, and a mismatch returns `stale`.
+- Receipts are allocated across lines in proportion to each line's
+  uncollected value. A refund removes paid-back money from lines collected
+  above their new value and moves the remainder to lines with room. A later
+  active refund blocks voiding earlier money documents (`refund_after`).
+- `invoice_register` (security invoker) adds `refunded_minor`, `value_minor`,
+  `received_minor`, `paid_back_minor`, `net_collected_minor`, `due_minor`,
+  `status` (`paid`, `partially_paid`, `unpaid`, `refunded`, `voided`), a
+  `services` summary and `doctors`. `invoice_detail(id)` returns the
+  complete document. `invoice_patient_summary(patient_id)` returns due,
+  collected and invoice counts. Invoices also protect a patient from deletion.
+
 ### `staff`
 Auth-linked staff profiles. One row per Supabase Auth user (`auth.users`).
 - `id` (`uuid`, PK, default `gen_random_uuid()`)

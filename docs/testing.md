@@ -78,12 +78,27 @@ then runs these ten scripts:
 - production_retry_integrity.sql
 - program_save_integrity.sql
 - read_access_equivalence.sql
+- invoice_fixture.sql + invoice_workflow.sql (catalog, issuing permissions,
+  discounts, receipts, the three refund examples, line allocations, retries)
+- invoice_fixture.sql + invoice_corrections.sql (voids, corrections, the
+  refund barrier, booked-session protection, request resolution)
+
+`invoice_fixture.sql` opens a transaction that the following invoice test
+rolls back, so always pass the pair together when running a subset.
+
+Check the destructive invoice demo seed only in the ephemeral database:
+
+```sh
+node test/review_database.mjs <pglite> test/invoice_seed_setup.sql \
+  supabase/seed_invoice_demo.sql supabase/seed_invoice_demo_events.sql test/invoice_seed_check.sql
+```
 
 Bootstrap definitions imitate Supabase roles, auth.uid() and storage tables.
 Hosted services and multi-connection concurrency require separate staging checks.
 Never run fixture scripts against production, even if they include rollback.
 
-The default runner covers all ten scripts above on either setup path.
+The default runner covers all scripts above except the seed check, on either
+setup path.
 Pass explicit SQL filenames after the package path (or after `--migrations`)
 to run a focused subset.
 

@@ -27,6 +27,7 @@ import 'package:spine_clinic_app/features/auth/presentation/auth_providers.dart'
 import 'package:spine_clinic_app/shared/widgets/error_view.dart';
 import 'package:spine_clinic_app/shared/widgets/profile_menu_row.dart';
 import 'package:spine_clinic_app/features/payments/domain/billing_access.dart';
+import 'package:spine_clinic_app/features/payments/domain/invoice_access.dart';
 import 'package:spine_clinic_app/shared/widgets/staff_profile_header.dart';
 
 /// Clinic Admin hub rendered as the "Admin" tab sub-page.
@@ -106,6 +107,13 @@ class _AdminHubBody extends ConsumerWidget {
                       subtitle: AppStrings.billing.subtitle,
                       leadingIcon: Icons.receipt_long_outlined,
                       onTap: () => context.push(AppRoutes.billing),
+                    ),
+                  if (InvoiceAccess.canManage(user))
+                    ProfileMenuRow(
+                      title: AppStrings.invoices.services,
+                      subtitle: AppStrings.invoices.servicesSubtitle,
+                      leadingIcon: Icons.medical_services_outlined,
+                      onTap: () => context.push(AppRoutes.serviceCatalog),
                     ),
                   ProfileMenuRow(
                     title: AppStrings.staffManagement,

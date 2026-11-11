@@ -50,22 +50,17 @@ void main() {
   }
 
   for (final role in ['reception', 'reception-payments']) {
-    testWidgets('$role prioritizes details and gates payment actions', (tester) async {
+    testWidgets('$role prioritizes details and can issue invoices', (tester) async {
       await mount(tester, WorkspaceHarness(role: role), const Size(1280, 1000));
       expect(find.byType(PatientSummarySidebar), findsOneWidget);
       await tester.tap(find.text(AppStrings.payments));
       await tester.pumpAndSettle();
-      expect(find.text('600 EGP'), findsWidgets);
-      expect(
-        find.text(AppStrings.recordPayment),
-        role == 'reception-payments' ? findsOneWidget : findsNothing,
-      );
-      expect(
-        find.text(AppStrings.collectDue),
-        role == 'reception-payments' ? findsOneWidget : findsNothing,
-      );
-      expect(find.text(AppStrings.totalOutstanding), findsWidgets);
-      expect(find.text(AppStrings.totalPaid), findsWidgets);
+      // Every receptionist issues invoices; refunds and voids come later.
+      expect(find.text(AppStrings.invoices.newInvoice), findsOneWidget);
+      expect(find.text(AppStrings.invoices.amountDue), findsOneWidget);
+      expect(find.text('TG-00042'), findsOneWidget);
+      expect(find.text('2,000 EGP'), findsWidgets);
+      expect(find.text(AppStrings.recordPayment), findsNothing);
       expect(tester.takeException(), isNull);
     });
   }

@@ -40,6 +40,33 @@ have distinct labels. Transaction history keeps receipts, returns, and refunds
 separate, with printing on the corresponding document. See
 [Billing pilot](docs/billing-pilot.md) for the desk workflow.
 
+The redesigned service catalog (see [billing plan](docs/billing-plan.md)) groups
+services under quiet type headings (Physical therapy, Spinal traction,
+Assessments, Other services), each group in one bordered surface with hairline
+row separators. From 720 logical pixels rows use aligned Service, Sold as,
+Doctor credit and right-aligned tabular Price columns; narrower rows stack the
+package and per-session text under the name, and enlarged text also moves the
+price below and stacks search above the Active/Archived/All choice. The editor
+reuses the bounded form page with external labels, persistent Save/Cancel,
+discard confirmation and a pinned record version, so a conflicting save stays
+rejected until the user reopens the service. `RecordMenuSelect` accepts an
+optional field decoration for forms with external labels.
+
+The patient Payments tab (workspace tab and overview due banner) shows a
+bordered money summary (Amount due in the warning color, Paid, PT and traction
+sessions left; four across from 560 px, two per row on phones, one per row with
+enlarged text) above one bordered list of invoices. From 680 px rows align
+Invoice (branch-prefixed number such as `TG-00042` over the date), Services
+with doctors, right-aligned tabular Total/Paid/Due, and Status; narrower rows
+stack number, date and status, services, then a Total · Paid line with the due
+amount. Status always pairs an icon with text; voided invoices are muted with
+a struck-through number. The new-invoice form uses the bounded form page:
+details, service lines (quantity stepper, line total, the shared doctor
+selector pre-filled from the previous line or the patient's assigned doctors,
+or a "No doctor credit" note), discount for payment staff, and payment now
+with a one-tap full cash payment. A live summary sits beside the form from
+900 px and below it on narrower windows.
+
 Patient rows put the permanent ID on a quiet line below the name. Optional
 demographics, referral, and insurance membership live in patient details.
 The billing directory uses the shared search field and bottom sheet, with

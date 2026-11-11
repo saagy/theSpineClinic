@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+import '../../../core/constants/app_strings.dart';
+import '../../../core/network/app_routes.dart';
+import '../domain/invoice_access.dart';
 import '../../../core/constants/app_sizes.dart';
 import '../../../core/constants/app_text_styles.dart';
 import '../../auth/presentation/auth_providers.dart';
-import '../domain/billing_access.dart';
 import '../domain/billing_invoice.dart';
 import '../domain/billing_repository.dart';
-import 'billing_catalog_screen.dart';
 import 'billing_detail_screen.dart';
 import 'billing_editor_screen.dart';
 import 'billing_providers.dart';
@@ -42,16 +44,20 @@ class _BillingRegisterScreenState extends ConsumerState<BillingRegisterScreen> {
           appBar: AppBar(
             title: Text(billingText.title, style: AppTextStyles.headingSmall),
             actions: [
-              if (BillingAccess.canManageCatalog(user))
-                IconButton(
-                  tooltip: billingText.catalog,
-                  icon: const Icon(Icons.inventory_2_outlined),
-                  onPressed: () =>
-                      Navigator.of(context, rootNavigator: true).push(
-                        MaterialPageRoute<void>(
-                          builder: (_) => const BillingCatalogScreen(),
-                        ),
-                      ),
+              if (InvoiceAccess.canManage(user))
+                TextButton.icon(
+                  onPressed: () => context.push(AppRoutes.serviceCatalog),
+                  icon: const Icon(
+                    Icons.medical_services_outlined,
+                    size: AppSizes.iconSmall,
+                  ),
+                  label: Text(
+                    AppStrings.invoices.servicesShort,
+                    style: AppTextStyles.bodyBold,
+                  ),
+                  style: TextButton.styleFrom(
+                    minimumSize: const Size.square(AppSizes.tappableMin),
+                  ),
                 ),
               IconButton(
                 tooltip: billingText.checkSave,

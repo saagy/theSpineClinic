@@ -26,6 +26,24 @@ void main() {
     expect(authRedirect(AsyncData(cashier), location), isNull);
   }, skip: !BillingAccess.enabled);
 
+  test('new invoices are for receptionists, not doctors', () {
+    final location = Uri.parse(AppRoutes.newInvoiceLocation('patient-1'));
+    expect(authRedirect(signedIn, location), isNull);
+    final doctor = receptionist.copyWith(role: UserRole.doctor);
+    expect(authRedirect(AsyncData(doctor), location), isNotNull);
+  });
+
+  test('the service catalog requires the payment permission', () {
+    for (final path in [AppRoutes.serviceCatalog, AppRoutes.serviceFormLocation(null)]) {
+      final location = Uri.parse(path);
+      expect(authRedirect(signedIn, location), AppRoutes.allAppointments);
+      final cashier = receptionist.copyWith(canManagePayments: true);
+      expect(authRedirect(AsyncData(cashier), location), isNull);
+      final doctor = receptionist.copyWith(role: UserRole.doctor);
+      expect(authRedirect(AsyncData(doctor), location), isNotNull);
+    }
+  });
+
   test(
     'profile refresh retains the current route while the session reloads',
     () async {

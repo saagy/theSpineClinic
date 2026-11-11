@@ -31,6 +31,13 @@ List<RouteBase> _buildRoutes() => [
         appPage(key: state.pageKey, child: const PatientSearchScreen()),
   ),
   GoRoute(
+    path: AppRoutes.newInvoice,
+    pageBuilder: (_, state) => appPage(
+      key: state.pageKey,
+      child: NewInvoiceScreen(patientId: state.pathParameters['id'] ?? ''),
+    ),
+  ),
+  GoRoute(
     path: AppRoutes.editPatient,
     pageBuilder: (_, state) => appPage(
       key: state.pageKey,
@@ -153,6 +160,21 @@ List<RouteBase> _buildRoutes() => [
       key: state.pageKey,
       child: StaffFormScreen(staff: _extractStaff(state.extra)),
     ),
+  ),
+  GoRoute(
+    path: AppRoutes.serviceCatalog,
+    pageBuilder: (_, state) =>
+        appPage(key: state.pageKey, child: const ServiceCatalogScreen()),
+  ),
+  GoRoute(
+    path: AppRoutes.serviceForm,
+    pageBuilder: (_, state) {
+      final String id = state.pathParameters['id'] ?? 'new';
+      return appPage(
+        key: state.pageKey,
+        child: ServiceFormScreen(serviceId: id == 'new' ? null : id),
+      );
+    },
   ),
 
   ShellRoute(

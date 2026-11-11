@@ -7,9 +7,9 @@ import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:spine_clinic_app/core/constants/app_sizes.dart';
 import 'package:spine_clinic_app/core/constants/app_strings.dart';
 import 'package:spine_clinic_app/core/constants/app_text_styles.dart';
-import 'package:spine_clinic_app/core/utils/formatters.dart';
-import 'package:spine_clinic_app/features/payments/domain/patient_payment_summary.dart';
-import 'package:spine_clinic_app/features/payments/presentation/record_payment_controller.dart';
+import 'package:spine_clinic_app/core/utils/money.dart';
+import 'package:spine_clinic_app/features/payments/domain/invoice_summary.dart';
+import 'package:spine_clinic_app/features/payments/presentation/invoice_providers.dart';
 import 'package:spine_clinic_app/shared/widgets/record_section.dart';
 
 class WorkspaceDue extends ConsumerWidget {
@@ -20,13 +20,13 @@ class WorkspaceDue extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     if (ref.watch(currentUserProvider).value?.role == UserRole.doctor) return const SizedBox.shrink();
     final attention = Theme.of(context).extension<ClinicColors>()!;
-    final provider = patientPaymentsProvider(patientId);
+    final provider = patientInvoicesProvider(patientId);
     return RecordAsync(
       value: ref.watch(provider),
       onRetry: () => ref.invalidate(provider),
-      data: (records) {
-        final summary = PatientPaymentSummary(records);
-        if (summary.totalDue <= 0) return const SizedBox.shrink();
+      data: (invoices) {
+        final int due = PatientInvoiceTotals.of(invoices).dueMinor;
+        if (due <= 0) return const SizedBox.shrink();
         return Padding(
           padding: const EdgeInsets.only(bottom: AppSizes.p24),
           child: Material(
@@ -51,7 +51,7 @@ class WorkspaceDue extends ConsumerWidget {
                           Text(AppStrings.totalOutstanding, style: AppTextStyles.caption),
                           const SizedBox(height: AppSizes.p4),
                           Text(
-                            Formatters.formatCurrency(summary.totalDue),
+                            Money.format(due),
                             style: AppTextStyles.numberLarge.copyWith(color: attention.warning),
                           ),
                         ],

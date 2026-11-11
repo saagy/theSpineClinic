@@ -1,6 +1,7 @@
 -- Canonical schema snapshot through the 2026-11-10 self-pay billing pilot migrations.
 -- Verified in isolated PostgreSQL tests; live deployment must be checked separately.
 -- Run this script to recreate the database schema from scratch.
+-- Schedule seeding helpers are development-only and omitted from this snapshot.
 
 CREATE SCHEMA IF NOT EXISTS extensions;
 CREATE EXTENSION IF NOT EXISTS pgcrypto WITH SCHEMA extensions;
@@ -3585,3 +3586,894 @@ REVOKE ALL ON FUNCTION public.create_patient_profile(text,text,public.clinic_loc
 GRANT EXECUTE ON FUNCTION public.create_patient_profile(text,text,public.clinic_location,uuid,uuid[],jsonb),
   public.update_patient_profile(uuid,text,text,public.clinic_location,uuid[],jsonb),
   public.billing_lookup_page(text,text,integer,integer) TO authenticated;
+
+-- ---- 20261110202337_invoice_tables.sql ----
+-- Invoices v2: service catalog, invoices, receipts, refunds and collected-money
+-- allocations. See docs/billing-plan.md. Amounts are EGP minor units (piasters).
+-- Documents are never deleted; mistakes are voided and stay visible.
+
+CREATE TABLE public.service_catalog (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  name text NOT NULL CHECK (length(btrim(name)) BETWEEN 1 AND 120),
+  service_type text NOT NULL CHECK (service_type IN
+    ('pt_session', 'traction_session', 'initial_assessment', 'reassessment', 'other')),
+  sessions_per_unit integer NOT NULL DEFAULT 1 CHECK (sessions_per_unit BETWEEN 1 AND 100),
+  price_minor bigint NOT NULL CHECK (price_minor BETWEEN 1 AND 100000000000),
+  attributes_doctors boolean NOT NULL DEFAULT true,
+  active boolean NOT NULL DEFAULT true,
+  version integer NOT NULL DEFAULT 1,
+  created_at timestamptz NOT NULL DEFAULT clock_timestamp(),
+  updated_at timestamptz NOT NULL DEFAULT clock_timestamp(),
+  updated_by uuid REFERENCES public.staff(id),
+  -- Packages exist only for session types that consume patient balances.
+  CHECK (sessions_per_unit = 1 OR service_type IN ('pt_session', 'traction_session'))
+);
+CREATE UNIQUE INDEX service_catalog_name_key ON public.service_catalog (lower(btrim(name)));
+
+CREATE TABLE public.invoice_number_series (
+  branch public.clinic_location NOT NULL,
+  kind text NOT NULL CHECK (kind IN ('invoice', 'receipt', 'refund')),
+  last_number bigint NOT NULL CHECK (last_number > 0),
+  PRIMARY KEY (branch, kind)
+);
+
+CREATE TABLE public.invoices (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  branch public.clinic_location NOT NULL,
+  number bigint NOT NULL CHECK (number > 0),
+  patient_id uuid NOT NULL REFERENCES public.patients(id) ON DELETE RESTRICT,
+  patient_name text NOT NULL,
+  file_number bigint NOT NULL,
+  invoice_date date NOT NULL CHECK (invoice_date >= DATE '2020-01-01'),
+  subtotal_minor bigint NOT NULL CHECK (subtotal_minor BETWEEN 0 AND 1000000000000),
+  discount_kind text NOT NULL DEFAULT 'none' CHECK (discount_kind IN ('none', 'percent', 'amount')),
+  discount_value bigint NOT NULL DEFAULT 0,
+  discount_minor bigint NOT NULL DEFAULT 0,
+  total_minor bigint NOT NULL,
+  note text CHECK (length(btrim(note)) BETWEEN 1 AND 500),
+  currency text NOT NULL DEFAULT 'EGP' CHECK (currency = 'EGP'),
+  replaces_invoice_id uuid UNIQUE REFERENCES public.invoices(id),
+  created_at timestamptz NOT NULL DEFAULT clock_timestamp(),
+  created_by uuid NOT NULL REFERENCES public.staff(id),
+  created_by_name text NOT NULL,
+  voided_at timestamptz,
+  voided_by uuid REFERENCES public.staff(id),
+  voided_by_name text,
+  void_reason text,
+  version integer NOT NULL DEFAULT 1,
+  UNIQUE (branch, number),
+  CHECK (discount_minor BETWEEN 0 AND subtotal_minor AND total_minor = subtotal_minor - discount_minor),
+  CHECK ((discount_kind = 'none' AND discount_value = 0 AND discount_minor = 0)
+    OR (discount_kind = 'percent' AND discount_value BETWEEN 1 AND 10000)
+    OR (discount_kind = 'amount' AND discount_value = discount_minor AND discount_value > 0)),
+  CHECK ((voided_at IS NULL AND voided_by IS NULL AND voided_by_name IS NULL AND void_reason IS NULL)
+    OR (voided_at IS NOT NULL AND voided_by IS NOT NULL AND voided_by_name IS NOT NULL
+      AND length(btrim(void_reason)) BETWEEN 1 AND 500))
+);
+CREATE INDEX invoices_patient ON public.invoices (patient_id, invoice_date DESC, created_at DESC);
+CREATE INDEX invoices_date ON public.invoices (invoice_date, branch);
+
+CREATE TABLE public.invoice_lines (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  invoice_id uuid NOT NULL REFERENCES public.invoices(id),
+  position integer NOT NULL CHECK (position BETWEEN 1 AND 50),
+  service_id uuid NOT NULL REFERENCES public.service_catalog(id),
+  service_name text NOT NULL,
+  service_type text NOT NULL,
+  sessions_per_unit integer NOT NULL CHECK (sessions_per_unit > 0),
+  quantity integer NOT NULL CHECK (quantity BETWEEN 1 AND 100),
+  unit_price_minor bigint NOT NULL CHECK (unit_price_minor > 0),
+  gross_minor bigint NOT NULL,
+  discount_minor bigint NOT NULL CHECK (discount_minor >= 0),
+  net_minor bigint NOT NULL,
+  sessions_granted integer NOT NULL,
+  UNIQUE (invoice_id, position),
+  CHECK (gross_minor = unit_price_minor * quantity),
+  CHECK (discount_minor <= gross_minor AND net_minor = gross_minor - discount_minor),
+  CHECK (sessions_granted = CASE WHEN service_type IN ('pt_session', 'traction_session')
+    THEN quantity * sessions_per_unit ELSE 0 END)
+);
+CREATE INDEX invoice_lines_service ON public.invoice_lines (service_id);
+
+CREATE TABLE public.invoice_line_doctors (
+  line_id uuid NOT NULL REFERENCES public.invoice_lines(id),
+  doctor_id uuid NOT NULL REFERENCES public.staff(id),
+  doctor_name text NOT NULL,
+  PRIMARY KEY (line_id, doctor_id)
+);
+CREATE INDEX invoice_line_doctors_doctor ON public.invoice_line_doctors (doctor_id);
+
+CREATE TABLE public.invoice_receipts (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  invoice_id uuid NOT NULL REFERENCES public.invoices(id),
+  branch public.clinic_location NOT NULL,
+  number bigint NOT NULL CHECK (number > 0),
+  amount_minor bigint NOT NULL CHECK (amount_minor > 0),
+  method text NOT NULL CHECK (method IN ('cash', 'visa')),
+  -- received_at is when money changed hands; a correction keeps the original.
+  received_at timestamptz NOT NULL,
+  recorded_at timestamptz NOT NULL DEFAULT clock_timestamp(),
+  recorded_by uuid NOT NULL REFERENCES public.staff(id),
+  recorded_by_name text NOT NULL,
+  replaces_receipt_id uuid UNIQUE REFERENCES public.invoice_receipts(id),
+  voided_at timestamptz,
+  voided_by uuid REFERENCES public.staff(id),
+  voided_by_name text,
+  void_reason text,
+  UNIQUE (branch, number),
+  CHECK ((voided_at IS NULL AND voided_by IS NULL AND voided_by_name IS NULL AND void_reason IS NULL)
+    OR (voided_at IS NOT NULL AND voided_by IS NOT NULL AND voided_by_name IS NOT NULL
+      AND length(btrim(void_reason)) BETWEEN 1 AND 500))
+);
+CREATE INDEX invoice_receipts_invoice ON public.invoice_receipts (invoice_id, recorded_at);
+CREATE INDEX invoice_receipts_received ON public.invoice_receipts (received_at, branch);
+
+CREATE TABLE public.invoice_refunds (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  invoice_id uuid NOT NULL REFERENCES public.invoices(id),
+  branch public.clinic_location NOT NULL,
+  number bigint NOT NULL CHECK (number > 0),
+  value_minor bigint NOT NULL CHECK (value_minor >= 0),
+  payback_minor bigint NOT NULL CHECK (payback_minor BETWEEN 0 AND value_minor),
+  payback_method text CHECK (payback_method IN ('cash', 'visa')),
+  reason text NOT NULL CHECK (length(btrim(reason)) BETWEEN 1 AND 500),
+  recorded_at timestamptz NOT NULL DEFAULT clock_timestamp(),
+  recorded_by uuid NOT NULL REFERENCES public.staff(id),
+  recorded_by_name text NOT NULL,
+  voided_at timestamptz,
+  voided_by uuid REFERENCES public.staff(id),
+  voided_by_name text,
+  void_reason text,
+  UNIQUE (branch, number),
+  CHECK ((payback_minor = 0) = (payback_method IS NULL)),
+  CHECK ((voided_at IS NULL AND voided_by IS NULL AND voided_by_name IS NULL AND void_reason IS NULL)
+    OR (voided_at IS NOT NULL AND voided_by IS NOT NULL AND voided_by_name IS NOT NULL
+      AND length(btrim(void_reason)) BETWEEN 1 AND 500))
+);
+CREATE INDEX invoice_refunds_invoice ON public.invoice_refunds (invoice_id, recorded_at);
+CREATE INDEX invoice_refunds_recorded ON public.invoice_refunds (recorded_at, branch);
+
+CREATE TABLE public.invoice_refund_lines (
+  refund_id uuid NOT NULL REFERENCES public.invoice_refunds(id),
+  line_id uuid NOT NULL REFERENCES public.invoice_lines(id),
+  sessions_cancelled integer NOT NULL CHECK (sessions_cancelled >= 0),
+  value_minor bigint NOT NULL CHECK (value_minor >= 0),
+  PRIMARY KEY (refund_id, line_id),
+  CHECK (sessions_cancelled > 0 OR value_minor > 0)
+);
+CREATE INDEX invoice_refund_lines_line ON public.invoice_refund_lines (line_id);
+
+-- Signed shares of collected money per invoice line. Receipts add money;
+-- refunds remove paid-back money and move freed money between lines.
+CREATE TABLE public.invoice_allocations (
+  id bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  line_id uuid NOT NULL REFERENCES public.invoice_lines(id),
+  receipt_id uuid REFERENCES public.invoice_receipts(id),
+  refund_id uuid REFERENCES public.invoice_refunds(id),
+  amount_minor bigint NOT NULL CHECK (amount_minor <> 0),
+  CHECK ((receipt_id IS NULL) <> (refund_id IS NULL)),
+  CHECK (receipt_id IS NULL OR amount_minor > 0)
+);
+CREATE INDEX invoice_allocations_line ON public.invoice_allocations (line_id);
+CREATE INDEX invoice_allocations_receipt ON public.invoice_allocations (receipt_id);
+CREATE INDEX invoice_allocations_refund ON public.invoice_allocations (refund_id);
+
+-- issue: any active receptionist or super admin may view, invoice and collect.
+-- manage: payment receptionists and super admins may discount, void, correct,
+-- refund, edit the service catalog and read reports.
+CREATE FUNCTION public.invoice_can(p_capability text) RETURNS boolean
+LANGUAGE sql STABLE SECURITY DEFINER SET search_path = '' AS $$
+  SELECT CASE p_capability
+    WHEN 'issue' THEN EXISTS (SELECT 1 FROM public.staff WHERE user_id = auth.uid()
+      AND is_active AND role IN ('super_admin', 'receptionist'))
+    WHEN 'manage' THEN public.current_staff_can_manage_payments()
+    ELSE false END;
+$$;
+REVOKE ALL ON FUNCTION public.invoice_can(text) FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.invoice_can(text) TO authenticated;
+
+DO $$
+DECLARE table_name text;
+BEGIN
+  FOREACH table_name IN ARRAY ARRAY['service_catalog', 'invoice_number_series', 'invoices',
+    'invoice_lines', 'invoice_line_doctors', 'invoice_receipts', 'invoice_refunds',
+    'invoice_refund_lines', 'invoice_allocations'] LOOP
+    EXECUTE format('ALTER TABLE public.%I ENABLE ROW LEVEL SECURITY', table_name);
+    EXECUTE format('GRANT SELECT, INSERT, UPDATE, DELETE ON public.%I TO authenticated', table_name);
+    IF table_name <> 'invoice_number_series' THEN
+      EXECUTE format('CREATE POLICY invoice_read ON public.%I FOR SELECT TO authenticated '
+        'USING ((SELECT public.invoice_can(''issue'')))', table_name);
+    END IF;
+  END LOOP;
+END;
+$$;
+-- No client write policies: execute_invoice_command is the only write path.
+
+-- ---- 20261110202521_invoice_helpers.sql ----
+-- Private helpers for the invoice commands. None are callable by clients.
+
+CREATE FUNCTION public.invoice_next_number(p_branch public.clinic_location, p_kind text)
+RETURNS bigint LANGUAGE sql SET search_path = '' AS $$
+  INSERT INTO public.invoice_number_series AS series(branch, kind, last_number)
+  VALUES (p_branch, p_kind, 1)
+  ON CONFLICT (branch, kind) DO UPDATE SET last_number = series.last_number + 1
+  RETURNING last_number;
+$$;
+
+-- Per-line figures from active documents only.
+-- value = net - active refund value; collected = active allocations.
+CREATE FUNCTION public.invoice_line_figures(p_invoice_id uuid)
+RETURNS TABLE(line_id uuid, line_position integer, service_type text, value_minor bigint,
+  collected_minor bigint, sessions_left integer)
+LANGUAGE sql STABLE SET search_path = '' AS $$
+  SELECT l.id, l.position, l.service_type,
+    l.net_minor - coalesce(r.value, 0),
+    coalesce(a.amount, 0),
+    l.sessions_granted - coalesce(r.sessions, 0)
+  FROM public.invoice_lines l
+  LEFT JOIN LATERAL (
+    SELECT sum(rl.value_minor)::bigint AS value, sum(rl.sessions_cancelled)::integer AS sessions
+    FROM public.invoice_refund_lines rl JOIN public.invoice_refunds rf ON rf.id = rl.refund_id
+    WHERE rl.line_id = l.id AND rf.voided_at IS NULL
+  ) r ON true
+  LEFT JOIN LATERAL (
+    SELECT sum(al.amount_minor)::bigint AS amount FROM public.invoice_allocations al
+    LEFT JOIN public.invoice_receipts rc ON rc.id = al.receipt_id
+    LEFT JOIN public.invoice_refunds rf ON rf.id = al.refund_id
+    WHERE al.line_id = l.id AND coalesce(rc.voided_at, rf.voided_at) IS NULL
+  ) a ON true
+  WHERE l.invoice_id = p_invoice_id;
+$$;
+
+-- Invoice-level figures. Invariant: 0 <= net_collected <= value.
+CREATE FUNCTION public.invoice_figures(p_invoice_id uuid,
+  OUT total_minor bigint, OUT refunded_minor bigint, OUT value_minor bigint,
+  OUT received_minor bigint, OUT paid_back_minor bigint, OUT net_collected_minor bigint,
+  OUT due_minor bigint)
+LANGUAGE sql STABLE SET search_path = '' AS $$
+  SELECT i.total_minor, coalesce(rf.value, 0), i.total_minor - coalesce(rf.value, 0),
+    coalesce(rc.amount, 0), coalesce(rf.payback, 0),
+    coalesce(rc.amount, 0) - coalesce(rf.payback, 0),
+    i.total_minor - coalesce(rf.value, 0) - coalesce(rc.amount, 0) + coalesce(rf.payback, 0)
+  FROM public.invoices i
+  LEFT JOIN LATERAL (SELECT sum(amount_minor)::bigint AS amount FROM public.invoice_receipts
+    WHERE invoice_id = i.id AND voided_at IS NULL) rc ON true
+  LEFT JOIN LATERAL (SELECT sum(value_minor)::bigint AS value, sum(payback_minor)::bigint AS payback
+    FROM public.invoice_refunds WHERE invoice_id = i.id AND voided_at IS NULL) rf ON true
+  WHERE i.id = p_invoice_id;
+$$;
+
+-- Applies session balance deltas. Removals must leave enough sessions for
+-- future package bookings, mirroring the booking availability rule.
+CREATE FUNCTION public.invoice_adjust_sessions(p_patient_id uuid, p_pt integer, p_traction integer)
+RETURNS void LANGUAGE plpgsql SET search_path = '' AS $$
+DECLARE person public.patients; booked_pt integer; booked_tr integer;
+BEGIN
+  IF coalesce(p_pt, 0) = 0 AND coalesce(p_traction, 0) = 0 THEN RETURN; END IF;
+  SELECT * INTO STRICT person FROM public.patients WHERE id = p_patient_id FOR UPDATE;
+  SELECT count(*) FILTER (WHERE type = 'normal_pt_session'),
+    count(*) FILTER (WHERE type = 'spinal_traction_session')
+  INTO booked_pt, booked_tr FROM public.appointments
+  WHERE patient_id = p_patient_id AND use_package AND status = 'scheduled' AND scheduled_at > now();
+  -- Additions always succeed; only removals are checked.
+  IF (p_pt < 0 AND person.session_balance + p_pt < greatest(booked_pt, 0))
+    OR (p_traction < 0 AND person.traction_balance + p_traction < greatest(booked_tr, 0)) THEN
+    RAISE EXCEPTION 'sessions_in_use' USING ERRCODE = 'P0001';
+  END IF;
+  UPDATE public.patients SET session_balance = session_balance + p_pt,
+    traction_balance = traction_balance + p_traction WHERE id = p_patient_id;
+END;
+$$;
+
+-- Session deltas granted by an invoice's remaining (not refunded) sessions.
+CREATE FUNCTION public.invoice_remaining_sessions(p_invoice_id uuid, OUT pt integer, OUT traction integer)
+LANGUAGE sql STABLE SET search_path = '' AS $$
+  SELECT coalesce(sum(sessions_left) FILTER (WHERE service_type = 'pt_session'), 0)::integer,
+    coalesce(sum(sessions_left) FILTER (WHERE service_type = 'traction_session'), 0)::integer
+  FROM public.invoice_line_figures(p_invoice_id);
+$$;
+
+-- Splits a receipt across lines in proportion to each line's uncollected value.
+-- Cumulative integer division keeps the parts exact and deterministic.
+CREATE FUNCTION public.invoice_allocate_receipt(p_invoice_id uuid, p_receipt_id uuid, p_amount bigint)
+RETURNS void LANGUAGE plpgsql SET search_path = '' AS $$
+BEGIN
+  WITH open AS (
+    SELECT line_id, line_position, value_minor - collected_minor AS room
+    FROM public.invoice_line_figures(p_invoice_id) WHERE value_minor > collected_minor
+  ), weighted AS (
+    SELECT *, sum(room) OVER (ORDER BY line_position) AS cumulative, sum(room) OVER () AS total FROM open
+  ), parts AS (
+    SELECT line_id, div(p_amount::numeric * cumulative, total)
+      - div(p_amount::numeric * (cumulative - room), total) AS amount FROM weighted
+  )
+  INSERT INTO public.invoice_allocations(line_id, receipt_id, amount_minor)
+  SELECT line_id, p_receipt_id, amount FROM parts WHERE amount > 0;
+END;
+$$;
+
+-- After refund lines are written: lines collected above their new value give
+-- up the excess; paid-back money leaves; what remains moves to lines that
+-- still have room, in proportion to that room.
+CREATE FUNCTION public.invoice_reallocate_refund(p_invoice_id uuid, p_refund_id uuid, p_payback bigint)
+RETURNS void LANGUAGE plpgsql SET search_path = '' AS $$
+BEGIN
+  WITH figures AS (
+    SELECT line_id, line_position, collected_minor AS held,
+      least(collected_minor, value_minor) AS kept, value_minor - least(collected_minor, value_minor) AS room
+    FROM public.invoice_line_figures(p_invoice_id)
+  ), freed AS (
+    SELECT sum(held - kept) - p_payback AS amount FROM figures
+  ), weighted AS (
+    SELECT f.*, sum(room) OVER (ORDER BY line_position) AS cumulative, sum(room) OVER () AS total,
+      freed.amount AS spare FROM figures f CROSS JOIN freed
+  ), targets AS (
+    SELECT line_id, kept + CASE WHEN total = 0 THEN 0 ELSE
+      div(spare::numeric * cumulative, total) - div(spare::numeric * (cumulative - room), total) END
+      - held AS delta FROM weighted
+  )
+  INSERT INTO public.invoice_allocations(line_id, refund_id, amount_minor)
+  SELECT line_id, p_refund_id, delta FROM targets WHERE delta <> 0;
+END;
+$$;
+
+CREATE FUNCTION public.invoice_actor_name(p_actor uuid) RETURNS text
+LANGUAGE sql STABLE SET search_path = '' AS $$
+  SELECT full_name FROM public.staff WHERE id = p_actor;
+$$;
+
+REVOKE ALL ON FUNCTION public.invoice_next_number(public.clinic_location, text),
+  public.invoice_line_figures(uuid), public.invoice_figures(uuid),
+  public.invoice_adjust_sessions(uuid, integer, integer), public.invoice_remaining_sessions(uuid),
+  public.invoice_allocate_receipt(uuid, uuid, bigint),
+  public.invoice_reallocate_refund(uuid, uuid, bigint), public.invoice_actor_name(uuid)
+  FROM PUBLIC, anon, authenticated;
+
+-- Invoices protect a patient from deletion, like the other financial records.
+CREATE OR REPLACE FUNCTION public.patient_has_records(p_patient_id uuid)
+RETURNS boolean LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public AS $$
+  SELECT EXISTS (SELECT 1 FROM public.patients WHERE id = p_patient_id
+    AND (session_balance <> 0 OR traction_balance <> 0))
+    OR EXISTS (SELECT 1 FROM public.appointments WHERE patient_id = p_patient_id)
+    OR EXISTS (SELECT 1 FROM public.payment_records WHERE patient_id = p_patient_id)
+    OR EXISTS (SELECT 1 FROM public.patient_programs WHERE patient_id = p_patient_id)
+    OR EXISTS (SELECT 1 FROM public.patient_medical_history WHERE patient_id = p_patient_id)
+    OR EXISTS (SELECT 1 FROM public.patient_notes WHERE patient_id = p_patient_id)
+    OR EXISTS (SELECT 1 FROM public.patient_documents WHERE patient_id = p_patient_id)
+    OR EXISTS (SELECT 1 FROM public.billing_invoices WHERE patient_id = p_patient_id)
+    OR EXISTS (SELECT 1 FROM public.invoices WHERE patient_id = p_patient_id);
+$$;
+REVOKE ALL ON FUNCTION public.patient_has_records(uuid) FROM PUBLIC, anon, authenticated;
+
+CREATE OR REPLACE FUNCTION public.billing_patient_has_invoices(p_patient_id uuid)
+RETURNS boolean LANGUAGE sql STABLE SECURITY DEFINER SET search_path = '' AS $$
+  SELECT public.can_current_staff_access_patient(p_patient_id) AND (
+    EXISTS (SELECT 1 FROM public.billing_invoices WHERE patient_id = p_patient_id)
+    OR EXISTS (SELECT 1 FROM public.invoices WHERE patient_id = p_patient_id));
+$$;
+REVOKE ALL ON FUNCTION public.billing_patient_has_invoices(uuid) FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.billing_patient_has_invoices(uuid) TO authenticated;
+
+-- ---- 20261110202638_invoice_commands.sql ----
+-- Service catalog and invoice commands. Called only by execute_invoice_command.
+
+CREATE FUNCTION public.invoice_save_service(p_data jsonb, p_actor uuid)
+RETURNS uuid LANGUAGE plpgsql SET search_path = '' AS $$
+DECLARE service_id uuid := (p_data->>'id')::uuid; saved uuid;
+BEGIN
+  IF service_id IS NULL THEN
+    INSERT INTO public.service_catalog(name, service_type, sessions_per_unit, price_minor,
+      attributes_doctors, active, updated_by)
+    VALUES (btrim(p_data->>'name'), p_data->>'service_type', (p_data->>'sessions_per_unit')::integer,
+      (p_data->>'price_minor')::bigint, (p_data->>'attributes_doctors')::boolean,
+      (p_data->>'active')::boolean, p_actor)
+    RETURNING id INTO saved;
+  ELSE
+    UPDATE public.service_catalog SET name = btrim(p_data->>'name'),
+      service_type = p_data->>'service_type', sessions_per_unit = (p_data->>'sessions_per_unit')::integer,
+      price_minor = (p_data->>'price_minor')::bigint,
+      attributes_doctors = (p_data->>'attributes_doctors')::boolean,
+      active = (p_data->>'active')::boolean, version = version + 1,
+      updated_at = clock_timestamp(), updated_by = p_actor
+    WHERE id = service_id AND version = (p_data->>'version')::integer
+    RETURNING id INTO saved;
+    IF NOT FOUND THEN RAISE EXCEPTION 'stale' USING ERRCODE = 'P0001'; END IF;
+  END IF;
+  RETURN saved;
+END;
+$$;
+
+-- Creates an invoice, its lines and doctors, and grants its sessions.
+-- p_manage allows discounts. p_replaces links a correction to its original.
+CREATE FUNCTION public.invoice_create(p_data jsonb, p_actor uuid, p_manage boolean, p_replaces uuid)
+RETURNS uuid LANGUAGE plpgsql SET search_path = '' AS $$
+DECLARE
+  person public.patients;
+  branch public.clinic_location := (p_data->>'branch')::public.clinic_location;
+  bill_date date := (p_data->>'invoice_date')::date;
+  lines jsonb := p_data->'lines';
+  kind text := coalesce(p_data#>>'{discount,kind}', 'none');
+  amount bigint := coalesce((p_data#>>'{discount,value}')::bigint, 0);
+  matched integer; subtotal bigint; discount bigint; inv_id uuid; grant_pt integer; grant_tr integer;
+BEGIN
+  SELECT * INTO STRICT person FROM public.patients WHERE id = (p_data->>'patient_id')::uuid;
+  IF branch IS NULL OR bill_date IS NULL OR bill_date > (now() AT TIME ZONE public.clinic_timezone())::date
+    OR jsonb_typeof(lines) <> 'array' OR jsonb_array_length(lines) NOT BETWEEN 1 AND 50 THEN
+    RAISE EXCEPTION 'invalid_invoice' USING ERRCODE = 'P0001';
+  END IF;
+  IF kind <> 'none' AND NOT p_manage THEN
+    RAISE EXCEPTION 'discount_not_allowed' USING ERRCODE = 'P0001';
+  END IF;
+  -- Hold catalog rows while the quoted prices are compared and snapshotted.
+  PERFORM s.id FROM public.service_catalog s
+    WHERE s.id IN (SELECT (l->>'service_id')::uuid FROM jsonb_array_elements(lines) l)
+    ORDER BY s.id FOR SHARE;
+  SELECT count(*), sum(s.price_minor * (l->>'quantity')::integer) INTO matched, subtotal
+  FROM jsonb_array_elements(lines) l JOIN public.service_catalog s ON s.id = (l->>'service_id')::uuid
+  WHERE s.active AND s.price_minor = (l->>'unit_price_minor')::bigint
+    AND (l->>'quantity')::integer BETWEEN 1 AND 100;
+  IF matched <> jsonb_array_length(lines) THEN
+    RAISE EXCEPTION 'catalog_changed' USING ERRCODE = 'P0001';
+  END IF;
+  -- Doctors: distinct per line, active doctors, only on services that attribute doctors.
+  IF EXISTS (
+    SELECT 1 FROM jsonb_array_elements(lines) WITH ORDINALITY AS l(value, pos)
+    CROSS JOIN LATERAL jsonb_array_elements_text(coalesce(l.value->'doctor_ids', '[]')) AS d(doctor_id)
+    LEFT JOIN public.service_catalog s ON s.id = (l.value->>'service_id')::uuid
+    LEFT JOIN public.staff st ON st.id = d.doctor_id::uuid AND st.role = 'doctor' AND st.is_active
+    GROUP BY l.pos, d.doctor_id
+    HAVING count(*) > 1 OR bool_or(st.id IS NULL) OR bool_or(NOT s.attributes_doctors)
+  ) THEN RAISE EXCEPTION 'invalid_doctors' USING ERRCODE = 'P0001'; END IF;
+  discount := CASE kind
+    WHEN 'none' THEN 0
+    WHEN 'percent' THEN round(subtotal::numeric * amount / 10000)::bigint
+    WHEN 'amount' THEN amount END;
+  IF discount IS NULL OR (kind = 'percent' AND amount NOT BETWEEN 1 AND 10000)
+    OR (kind = 'amount' AND amount NOT BETWEEN 1 AND subtotal) OR (kind = 'none' AND amount <> 0) THEN
+    RAISE EXCEPTION 'invalid_discount' USING ERRCODE = 'P0001';
+  END IF;
+  INSERT INTO public.invoices(branch, number, patient_id, patient_name, file_number, invoice_date,
+    subtotal_minor, discount_kind, discount_value, discount_minor, total_minor, note,
+    replaces_invoice_id, created_by, created_by_name)
+  VALUES (branch, public.invoice_next_number(branch, 'invoice'), person.id, person.full_name,
+    person.file_number, bill_date, subtotal, kind, amount, discount, subtotal - discount,
+    nullif(btrim(p_data->>'note'), ''), p_replaces, p_actor, public.invoice_actor_name(p_actor))
+  RETURNING id INTO inv_id;
+  WITH input AS (
+    SELECT l.value, l.pos::integer AS pos, s.*, (l.value->>'quantity')::integer AS qty
+    FROM jsonb_array_elements(lines) WITH ORDINALITY AS l(value, pos)
+    JOIN public.service_catalog s ON s.id = (l.value->>'service_id')::uuid
+  ), weighted AS (
+    SELECT *, price_minor * qty AS gross, sum(price_minor * qty) OVER (ORDER BY pos) AS cumulative
+    FROM input
+  ), inserted AS (
+    INSERT INTO public.invoice_lines(invoice_id, position, service_id, service_name, service_type,
+      sessions_per_unit, quantity, unit_price_minor, gross_minor, discount_minor, net_minor,
+      sessions_granted)
+    SELECT inv_id, pos, id, name, service_type, sessions_per_unit, qty, price_minor, gross, part,
+      gross - part, CASE WHEN service_type IN ('pt_session', 'traction_session')
+        THEN qty * sessions_per_unit ELSE 0 END
+    FROM (SELECT *, CASE WHEN subtotal = 0 THEN 0 ELSE div(discount::numeric * cumulative, subtotal)
+      - div(discount::numeric * (cumulative - gross), subtotal) END AS part FROM weighted) parts
+    RETURNING id, position
+  )
+  INSERT INTO public.invoice_line_doctors(line_id, doctor_id, doctor_name)
+  SELECT ins.id, st.id, st.full_name FROM inserted ins
+  JOIN input ON input.pos = ins.position
+  CROSS JOIN LATERAL jsonb_array_elements_text(coalesce(input.value->'doctor_ids', '[]')) AS d(doctor_id)
+  JOIN public.staff st ON st.id = d.doctor_id::uuid;
+  SELECT pt, traction INTO grant_pt, grant_tr FROM public.invoice_remaining_sessions(inv_id);
+  PERFORM public.invoice_adjust_sessions(person.id, grant_pt, grant_tr);
+  RETURN inv_id;
+END;
+$$;
+
+-- An invoice can be voided only without active money documents, and only
+-- while its remaining sessions are still unused and unbooked.
+CREATE FUNCTION public.invoice_void(p_invoice public.invoices, p_reason text, p_actor uuid)
+RETURNS void LANGUAGE plpgsql SET search_path = '' AS $$
+DECLARE left_pt integer; left_tr integer;
+BEGIN
+  IF p_invoice.voided_at IS NOT NULL THEN RAISE EXCEPTION 'already_voided' USING ERRCODE = 'P0001'; END IF;
+  IF EXISTS (SELECT 1 FROM public.invoice_receipts WHERE invoice_id = p_invoice.id AND voided_at IS NULL)
+    OR EXISTS (SELECT 1 FROM public.invoice_refunds WHERE invoice_id = p_invoice.id AND voided_at IS NULL) THEN
+    RAISE EXCEPTION 'has_payments' USING ERRCODE = 'P0001';
+  END IF;
+  SELECT pt, traction INTO left_pt, left_tr FROM public.invoice_remaining_sessions(p_invoice.id);
+  PERFORM public.invoice_adjust_sessions(p_invoice.patient_id, -left_pt, -left_tr);
+  UPDATE public.invoices SET voided_at = clock_timestamp(), voided_by = p_actor,
+    voided_by_name = public.invoice_actor_name(p_actor), void_reason = btrim(p_reason),
+    version = version + 1
+  WHERE id = p_invoice.id;
+END;
+$$;
+
+REVOKE ALL ON FUNCTION public.invoice_save_service(jsonb, uuid),
+  public.invoice_create(jsonb, uuid, boolean, uuid),
+  public.invoice_void(public.invoices, text, uuid) FROM PUBLIC, anon, authenticated;
+
+-- ---- 20261110202643_invoice_money_commands.sql ----
+-- Receipt and refund commands. Called only by execute_invoice_command.
+-- A later active refund is a barrier: earlier money documents cannot be
+-- voided until that refund is voided, so allocations always stay consistent.
+
+CREATE FUNCTION public.invoice_record_receipt(p_invoice public.invoices, p_amount bigint, p_method text,
+  p_branch public.clinic_location, p_received_at timestamptz, p_replaces uuid, p_actor uuid)
+RETURNS uuid LANGUAGE plpgsql SET search_path = '' AS $$
+DECLARE due bigint; receipt_id uuid;
+BEGIN
+  IF p_invoice.voided_at IS NOT NULL THEN RAISE EXCEPTION 'invoice_voided' USING ERRCODE = 'P0001'; END IF;
+  SELECT due_minor INTO due FROM public.invoice_figures(p_invoice.id);
+  IF p_amount IS NULL OR p_amount <= 0 OR p_amount > due THEN
+    RAISE EXCEPTION 'receipt_limit' USING ERRCODE = 'P0001';
+  END IF;
+  INSERT INTO public.invoice_receipts(invoice_id, branch, number, amount_minor, method, received_at,
+    recorded_by, recorded_by_name, replaces_receipt_id)
+  VALUES (p_invoice.id, p_branch, public.invoice_next_number(p_branch, 'receipt'), p_amount, p_method,
+    coalesce(p_received_at, clock_timestamp()), p_actor, public.invoice_actor_name(p_actor), p_replaces)
+  RETURNING id INTO receipt_id;
+  PERFORM public.invoice_allocate_receipt(p_invoice.id, receipt_id, p_amount);
+  RETURN receipt_id;
+END;
+$$;
+
+CREATE FUNCTION public.invoice_void_receipt(p_invoice public.invoices, p_receipt_id uuid,
+  p_reason text, p_actor uuid)
+RETURNS public.invoice_receipts LANGUAGE plpgsql SET search_path = '' AS $$
+DECLARE receipt public.invoice_receipts;
+BEGIN
+  SELECT * INTO receipt FROM public.invoice_receipts
+    WHERE id = p_receipt_id AND invoice_id = p_invoice.id FOR UPDATE;
+  IF NOT FOUND THEN RAISE EXCEPTION 'invalid_request' USING ERRCODE = 'P0001'; END IF;
+  IF receipt.voided_at IS NOT NULL THEN RAISE EXCEPTION 'already_voided' USING ERRCODE = 'P0001'; END IF;
+  IF EXISTS (SELECT 1 FROM public.invoice_refunds WHERE invoice_id = p_invoice.id
+    AND voided_at IS NULL AND recorded_at > receipt.recorded_at) THEN
+    RAISE EXCEPTION 'refund_after' USING ERRCODE = 'P0001';
+  END IF;
+  UPDATE public.invoice_receipts SET voided_at = clock_timestamp(), voided_by = p_actor,
+    voided_by_name = public.invoice_actor_name(p_actor), void_reason = btrim(p_reason)
+  WHERE id = receipt.id RETURNING * INTO receipt;
+  RETURN receipt;
+END;
+$$;
+
+-- Payload: lines [{line_id, sessions, value_minor}], payback_minor (the amount
+-- the screen showed), payback_method, branch, reason. The value is agreed
+-- manually; the payback is derived so an invoice is never overpaid.
+CREATE FUNCTION public.invoice_record_refund(p_invoice public.invoices, p_data jsonb, p_actor uuid)
+RETURNS uuid LANGUAGE plpgsql SET search_path = '' AS $$
+DECLARE
+  lines jsonb := p_data->'lines';
+  figures record; valid integer; refund_value bigint; payback bigint; refund_id uuid;
+  cancel_pt integer; cancel_tr integer;
+  method text := nullif(p_data->>'payback_method', '');
+  branch public.clinic_location := (p_data->>'branch')::public.clinic_location;
+BEGIN
+  IF p_invoice.voided_at IS NOT NULL THEN RAISE EXCEPTION 'invoice_voided' USING ERRCODE = 'P0001'; END IF;
+  IF jsonb_typeof(lines) <> 'array' OR jsonb_array_length(lines) NOT BETWEEN 1 AND 50 OR branch IS NULL THEN
+    RAISE EXCEPTION 'invalid_request' USING ERRCODE = 'P0001';
+  END IF;
+  SELECT count(DISTINCT f.line_id),
+    coalesce(sum((l->>'value_minor')::bigint), 0),
+    coalesce(sum((l->>'sessions')::integer) FILTER (WHERE f.service_type = 'pt_session'), 0),
+    coalesce(sum((l->>'sessions')::integer) FILTER (WHERE f.service_type = 'traction_session'), 0)
+  INTO valid, refund_value, cancel_pt, cancel_tr
+  FROM jsonb_array_elements(lines) l
+  JOIN public.invoice_line_figures(p_invoice.id) f ON f.line_id = (l->>'line_id')::uuid
+  WHERE (l->>'value_minor')::bigint BETWEEN 0 AND f.value_minor
+    AND (l->>'sessions')::integer BETWEEN 0 AND f.sessions_left
+    AND ((l->>'value_minor')::bigint > 0 OR (l->>'sessions')::integer > 0);
+  IF valid <> jsonb_array_length(lines) THEN RAISE EXCEPTION 'refund_limit' USING ERRCODE = 'P0001'; END IF;
+  SELECT * INTO figures FROM public.invoice_figures(p_invoice.id);
+  payback := greatest(figures.net_collected_minor - (figures.value_minor - refund_value), 0);
+  IF payback IS DISTINCT FROM (p_data->>'payback_minor')::bigint THEN
+    RAISE EXCEPTION 'stale' USING ERRCODE = 'P0001';
+  END IF;
+  IF (payback > 0) <> (method IS NOT NULL) THEN
+    RAISE EXCEPTION 'invalid_request' USING ERRCODE = 'P0001';
+  END IF;
+  INSERT INTO public.invoice_refunds(invoice_id, branch, number, value_minor, payback_minor,
+    payback_method, reason, recorded_by, recorded_by_name)
+  VALUES (p_invoice.id, branch, public.invoice_next_number(branch, 'refund'), refund_value, payback,
+    method, btrim(p_data->>'reason'), p_actor, public.invoice_actor_name(p_actor))
+  RETURNING id INTO refund_id;
+  INSERT INTO public.invoice_refund_lines(refund_id, line_id, sessions_cancelled, value_minor)
+  SELECT refund_id, (l->>'line_id')::uuid, (l->>'sessions')::integer, (l->>'value_minor')::bigint
+  FROM jsonb_array_elements(lines) l;
+  PERFORM public.invoice_reallocate_refund(p_invoice.id, refund_id, payback);
+  PERFORM public.invoice_adjust_sessions(p_invoice.patient_id, -cancel_pt, -cancel_tr);
+  RETURN refund_id;
+END;
+$$;
+
+-- Voiding a refund restores its value, its paid-back money and its sessions.
+CREATE FUNCTION public.invoice_void_refund(p_invoice public.invoices, p_refund_id uuid,
+  p_reason text, p_actor uuid)
+RETURNS void LANGUAGE plpgsql SET search_path = '' AS $$
+DECLARE refund public.invoice_refunds; restore_pt integer; restore_tr integer;
+BEGIN
+  SELECT * INTO refund FROM public.invoice_refunds
+    WHERE id = p_refund_id AND invoice_id = p_invoice.id FOR UPDATE;
+  IF NOT FOUND THEN RAISE EXCEPTION 'invalid_request' USING ERRCODE = 'P0001'; END IF;
+  IF refund.voided_at IS NOT NULL THEN RAISE EXCEPTION 'already_voided' USING ERRCODE = 'P0001'; END IF;
+  IF EXISTS (SELECT 1 FROM public.invoice_refunds WHERE invoice_id = p_invoice.id
+    AND voided_at IS NULL AND recorded_at > refund.recorded_at) THEN
+    RAISE EXCEPTION 'refund_after' USING ERRCODE = 'P0001';
+  END IF;
+  SELECT coalesce(sum(rl.sessions_cancelled) FILTER (WHERE l.service_type = 'pt_session'), 0),
+    coalesce(sum(rl.sessions_cancelled) FILTER (WHERE l.service_type = 'traction_session'), 0)
+  INTO restore_pt, restore_tr
+  FROM public.invoice_refund_lines rl JOIN public.invoice_lines l ON l.id = rl.line_id
+  WHERE rl.refund_id = refund.id;
+  UPDATE public.invoice_refunds SET voided_at = clock_timestamp(), voided_by = p_actor,
+    voided_by_name = public.invoice_actor_name(p_actor), void_reason = btrim(p_reason)
+  WHERE id = refund.id;
+  PERFORM public.invoice_adjust_sessions(p_invoice.patient_id, restore_pt, restore_tr);
+END;
+$$;
+
+REVOKE ALL ON FUNCTION
+  public.invoice_record_receipt(public.invoices, bigint, text, public.clinic_location, timestamptz, uuid, uuid),
+  public.invoice_void_receipt(public.invoices, uuid, text, uuid),
+  public.invoice_record_refund(public.invoices, jsonb, uuid),
+  public.invoice_void_refund(public.invoices, uuid, text, uuid) FROM PUBLIC, anon, authenticated;
+
+-- ---- 20261110202654_invoice_corrections.sql ----
+-- Corrections void a document and create a linked replacement in one
+-- transaction. Money keeps its original received_at so daily cash totals stay
+-- on the day the money was taken.
+
+CREATE FUNCTION public.invoice_correct_receipt(p_invoice public.invoices, p_data jsonb, p_actor uuid)
+RETURNS uuid LANGUAGE plpgsql SET search_path = '' AS $$
+DECLARE original public.invoice_receipts;
+BEGIN
+  original := public.invoice_void_receipt(p_invoice, (p_data->>'receipt_id')::uuid,
+    p_data->>'reason', p_actor);
+  RETURN public.invoice_record_receipt(p_invoice, (p_data->>'amount_minor')::bigint,
+    p_data->>'method', (p_data->>'branch')::public.clinic_location, original.received_at,
+    original.id, p_actor);
+END;
+$$;
+
+-- Payload: reason and invoice (a complete invoice_create payload). Active
+-- receipts move to the replacement; the new total must cover them. Invoices
+-- with active refunds must have those refunds voided first.
+CREATE FUNCTION public.invoice_correct(p_invoice public.invoices, p_data jsonb, p_actor uuid)
+RETURNS uuid LANGUAGE plpgsql SET search_path = '' AS $$
+DECLARE
+  replacement_id uuid; replacement public.invoices; moved public.invoice_receipts; paid bigint;
+BEGIN
+  IF p_invoice.voided_at IS NOT NULL THEN RAISE EXCEPTION 'already_voided' USING ERRCODE = 'P0001'; END IF;
+  IF EXISTS (SELECT 1 FROM public.invoice_refunds WHERE invoice_id = p_invoice.id AND voided_at IS NULL) THEN
+    RAISE EXCEPTION 'has_refunds' USING ERRCODE = 'P0001';
+  END IF;
+  -- Grant the replacement's sessions before removing the original's, so a
+  -- price or doctor fix never fails because some sessions are already used.
+  replacement_id := public.invoice_create(p_data->'invoice', p_actor, true, p_invoice.id);
+  SELECT * INTO STRICT replacement FROM public.invoices WHERE id = replacement_id;
+  SELECT coalesce(sum(amount_minor), 0) INTO paid FROM public.invoice_receipts
+    WHERE invoice_id = p_invoice.id AND voided_at IS NULL;
+  IF paid > replacement.total_minor THEN
+    RAISE EXCEPTION 'correction_below_paid' USING ERRCODE = 'P0001';
+  END IF;
+  FOR moved IN SELECT * FROM public.invoice_receipts WHERE invoice_id = p_invoice.id
+    AND voided_at IS NULL ORDER BY recorded_at, id FOR UPDATE LOOP
+    PERFORM public.invoice_void_receipt(p_invoice, moved.id, p_data->>'reason', p_actor);
+    PERFORM public.invoice_record_receipt(replacement, moved.amount_minor, moved.method, moved.branch,
+      moved.received_at, moved.id, p_actor);
+  END LOOP;
+  PERFORM public.invoice_void(p_invoice, p_data->>'reason', p_actor);
+  RETURN replacement_id;
+END;
+$$;
+
+REVOKE ALL ON FUNCTION public.invoice_correct_receipt(public.invoices, jsonb, uuid),
+  public.invoice_correct(public.invoices, jsonb, uuid) FROM PUBLIC, anon, authenticated;
+
+-- ---- 20261110202719_invoice_dispatch.sql ----
+-- The only client write path for invoices. Every command is idempotent per
+-- request ID through mutation_receipts, checks the caller's capability and,
+-- for an existing invoice, its version.
+
+CREATE FUNCTION public.invoice_command_capability(p_kind text) RETURNS text
+LANGUAGE sql IMMUTABLE SET search_path = '' AS $$
+  SELECT CASE
+    WHEN p_kind IN ('invoice_create', 'receipt_create') THEN 'issue'
+    WHEN p_kind IN ('service_save', 'invoice_void', 'invoice_correct', 'receipt_void',
+      'receipt_correct', 'refund_create', 'refund_void') THEN 'manage'
+  END;
+$$;
+REVOKE ALL ON FUNCTION public.invoice_command_capability(text) FROM PUBLIC, anon, authenticated;
+
+CREATE FUNCTION public.execute_invoice_command(p_request_id uuid, p_kind text, p_payload jsonb)
+RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path = '' AS $$
+DECLARE
+  actor uuid := (SELECT id FROM public.staff WHERE user_id = auth.uid() AND is_active);
+  capability text := public.invoice_command_capability(p_kind);
+  previous public.mutation_receipts;
+  invoice public.invoices;
+  invoice_id uuid := (p_payload->>'id')::uuid;
+  document_id uuid;
+  kind_key text := 'invoice:' || p_kind;
+  request_hash text := encode(sha256(convert_to(p_payload::text, 'UTF8')), 'hex');
+  reason text := nullif(btrim(p_payload->>'reason'), '');
+  payment jsonb;
+  outcome jsonb;
+  error_key text;
+BEGIN
+  IF p_request_id IS NULL OR p_payload IS NULL OR capability IS NULL THEN
+    RAISE EXCEPTION 'Invalid invoice request' USING ERRCODE = '22023';
+  END IF;
+  IF actor IS NULL OR NOT public.invoice_can(capability) THEN
+    RAISE EXCEPTION 'Permission denied' USING ERRCODE = '42501';
+  END IF;
+  PERFORM pg_advisory_xact_lock(hashtextextended(p_request_id::text, 0));
+  SELECT * INTO previous FROM public.mutation_receipts WHERE request_id = p_request_id;
+  IF FOUND THEN
+    IF previous.actor_id <> actor OR previous.kind <> kind_key OR previous.payload_hash <> request_hash THEN
+      RAISE EXCEPTION 'Request identity mismatch' USING ERRCODE = '22023';
+    END IF;
+    RETURN previous.outcome;
+  END IF;
+  BEGIN
+    IF p_kind NOT IN ('service_save', 'invoice_create') THEN
+      SELECT * INTO invoice FROM public.invoices WHERE id = invoice_id FOR UPDATE;
+      IF NOT FOUND OR invoice.version IS DISTINCT FROM (p_payload->>'version')::integer THEN
+        RAISE EXCEPTION 'stale' USING ERRCODE = 'P0001';
+      END IF;
+    END IF;
+    IF p_kind IN ('invoice_void', 'invoice_correct', 'receipt_void', 'receipt_correct',
+      'refund_create', 'refund_void') AND (reason IS NULL OR length(reason) > 500) THEN
+      RAISE EXCEPTION 'reason_required' USING ERRCODE = 'P0001';
+    END IF;
+    CASE p_kind
+      WHEN 'service_save' THEN document_id := public.invoice_save_service(p_payload, actor);
+      WHEN 'invoice_create' THEN
+        IF jsonb_array_length(coalesce(p_payload->'payments', '[]')) > 2 OR EXISTS (
+          SELECT 1 FROM jsonb_array_elements(coalesce(p_payload->'payments', '[]')) p
+          GROUP BY p->>'method' HAVING count(*) > 1) THEN
+          RAISE EXCEPTION 'invalid_request' USING ERRCODE = 'P0001';
+        END IF;
+        invoice_id := public.invoice_create(p_payload, actor, public.invoice_can('manage'), NULL);
+        FOR payment IN SELECT value FROM jsonb_array_elements(coalesce(p_payload->'payments', '[]')) LOOP
+          SELECT * INTO invoice FROM public.invoices WHERE id = invoice_id;
+          PERFORM public.invoice_record_receipt(invoice, (payment->>'amount_minor')::bigint,
+            payment->>'method', invoice.branch, NULL, NULL, actor);
+        END LOOP;
+      WHEN 'receipt_create' THEN
+        document_id := public.invoice_record_receipt(invoice, (p_payload->>'amount_minor')::bigint,
+          p_payload->>'method', (p_payload->>'branch')::public.clinic_location, NULL, NULL, actor);
+      WHEN 'receipt_correct' THEN document_id := public.invoice_correct_receipt(invoice, p_payload, actor);
+      WHEN 'receipt_void' THEN
+        PERFORM public.invoice_void_receipt(invoice, (p_payload->>'receipt_id')::uuid, reason, actor);
+      WHEN 'refund_create' THEN document_id := public.invoice_record_refund(invoice, p_payload, actor);
+      WHEN 'refund_void' THEN
+        PERFORM public.invoice_void_refund(invoice, (p_payload->>'refund_id')::uuid, reason, actor);
+      WHEN 'invoice_void' THEN PERFORM public.invoice_void(invoice, reason, actor);
+      WHEN 'invoice_correct' THEN
+        document_id := public.invoice_correct(invoice, p_payload, actor);
+        invoice_id := document_id;
+    END CASE;
+    IF p_kind IN ('receipt_create', 'receipt_correct', 'receipt_void', 'refund_create', 'refund_void') THEN
+      UPDATE public.invoices SET version = version + 1 WHERE id = invoice.id;
+    END IF;
+    outcome := jsonb_build_object('ok', true, 'invoice_id', invoice_id, 'document_id', document_id);
+  EXCEPTION
+    WHEN raise_exception THEN
+      GET STACKED DIAGNOSTICS error_key = MESSAGE_TEXT;
+      outcome := jsonb_build_object('ok', false, 'error', error_key);
+    WHEN unique_violation THEN
+      outcome := '{"ok":false,"error":"duplicate"}';
+    WHEN data_exception OR integrity_constraint_violation OR no_data_found OR invalid_text_representation THEN
+      outcome := '{"ok":false,"error":"invalid_request"}';
+  END;
+  INSERT INTO public.mutation_receipts(request_id, actor_id, kind, payload_hash, outcome)
+    VALUES (p_request_id, actor, kind_key, request_hash, outcome);
+  RETURN outcome;
+END;
+$$;
+
+-- Tombstones an unresolved request under the same lock, so a late original
+-- request can no longer commit once the screen allows a replacement.
+CREATE FUNCTION public.resolve_invoice_command(p_request_id uuid, p_kind text)
+RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path = '' AS $$
+DECLARE
+  actor uuid := (SELECT id FROM public.staff WHERE user_id = auth.uid() AND is_active);
+  capability text := public.invoice_command_capability(p_kind);
+  previous public.mutation_receipts;
+  kind_key text := 'invoice:' || p_kind;
+  cancelled constant jsonb := '{"ok":false,"error":"cancelled"}';
+BEGIN
+  IF p_request_id IS NULL OR capability IS NULL THEN
+    RAISE EXCEPTION 'Invalid invoice request' USING ERRCODE = '22023';
+  END IF;
+  IF actor IS NULL OR NOT public.invoice_can(capability) THEN
+    RAISE EXCEPTION 'Permission denied' USING ERRCODE = '42501';
+  END IF;
+  PERFORM pg_advisory_xact_lock(hashtextextended(p_request_id::text, 0));
+  SELECT * INTO previous FROM public.mutation_receipts WHERE request_id = p_request_id;
+  IF FOUND THEN
+    IF previous.actor_id <> actor OR previous.kind <> kind_key THEN
+      RAISE EXCEPTION 'Permission denied' USING ERRCODE = '42501';
+    END IF;
+    RETURN previous.outcome;
+  END IF;
+  INSERT INTO public.mutation_receipts(request_id, actor_id, kind, payload_hash, outcome)
+    VALUES (p_request_id, actor, kind_key, '', cancelled);
+  RETURN cancelled;
+END;
+$$;
+
+REVOKE ALL ON FUNCTION public.execute_invoice_command(uuid, text, jsonb),
+  public.resolve_invoice_command(uuid, text) FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.execute_invoice_command(uuid, text, jsonb),
+  public.resolve_invoice_command(uuid, text) TO authenticated;
+
+-- ---- 20261110202732_invoice_reads.sql ----
+-- Read side for the Payments tab. Security-invoker objects run under the
+-- caller's RLS, so only staff with the issue capability see any rows.
+
+GRANT EXECUTE ON FUNCTION public.invoice_line_figures(uuid), public.invoice_figures(uuid),
+  public.invoice_remaining_sessions(uuid) TO authenticated;
+
+CREATE VIEW public.invoice_register WITH (security_invoker = true) AS
+SELECT i.*, f.refunded_minor, f.value_minor, f.received_minor, f.paid_back_minor,
+  f.net_collected_minor, CASE WHEN i.voided_at IS NULL THEN f.due_minor ELSE 0 END AS due_minor,
+  CASE
+    WHEN i.voided_at IS NOT NULL THEN 'voided'
+    WHEN f.due_minor = 0 AND f.refunded_minor > 0 THEN 'refunded'
+    WHEN f.due_minor = 0 THEN 'paid'
+    WHEN f.net_collected_minor > 0 THEN 'partially_paid'
+    ELSE 'unpaid'
+  END AS status,
+  s.services, s.doctors
+FROM public.invoices i
+CROSS JOIN LATERAL public.invoice_figures(i.id) f
+LEFT JOIN LATERAL (
+  SELECT string_agg(CASE WHEN l.quantity > 1 THEN l.quantity || ' × ' ELSE '' END || l.service_name,
+      ', ' ORDER BY l.position) AS services,
+    (SELECT coalesce(jsonb_agg(DISTINCT d.doctor_name), '[]'::jsonb)
+      FROM public.invoice_line_doctors d JOIN public.invoice_lines dl ON dl.id = d.line_id
+      WHERE dl.invoice_id = i.id) AS doctors
+  FROM public.invoice_lines l WHERE l.invoice_id = i.id
+) s ON true;
+GRANT SELECT ON public.invoice_register TO authenticated;
+
+-- Complete invoice document: figures, lines with doctors and remaining
+-- amounts, receipts and refunds (each with its refund lines), oldest first.
+CREATE FUNCTION public.invoice_detail(p_id uuid)
+RETURNS jsonb LANGUAGE sql STABLE SECURITY INVOKER SET search_path = '' AS $$
+  SELECT to_jsonb(r) || jsonb_build_object(
+    'lines', coalesce((SELECT jsonb_agg(to_jsonb(l) || jsonb_build_object(
+        'value_minor', f.value_minor, 'collected_minor', f.collected_minor,
+        'sessions_left', f.sessions_left,
+        'doctors', coalesce((SELECT jsonb_agg(jsonb_build_object('id', d.doctor_id, 'name', d.doctor_name)
+          ORDER BY d.doctor_name) FROM public.invoice_line_doctors d WHERE d.line_id = l.id), '[]'::jsonb))
+      ORDER BY l.position)
+      FROM public.invoice_lines l JOIN public.invoice_line_figures(r.id) f ON f.line_id = l.id
+      WHERE l.invoice_id = r.id), '[]'::jsonb),
+    'receipts', coalesce((SELECT jsonb_agg(to_jsonb(rc) ORDER BY rc.recorded_at, rc.id)
+      FROM public.invoice_receipts rc WHERE rc.invoice_id = r.id), '[]'::jsonb),
+    'refunds', coalesce((SELECT jsonb_agg(to_jsonb(rf) || jsonb_build_object('lines',
+        (SELECT jsonb_agg(to_jsonb(rl) ORDER BY rl.line_id) FROM public.invoice_refund_lines rl
+          WHERE rl.refund_id = rf.id)) ORDER BY rf.recorded_at, rf.id)
+      FROM public.invoice_refunds rf WHERE rf.invoice_id = r.id), '[]'::jsonb),
+    'replaced_by', (SELECT jsonb_build_object('id', n.id, 'number', n.number, 'branch', n.branch)
+      FROM public.invoices n WHERE n.replaces_invoice_id = r.id),
+    'replaces', (SELECT jsonb_build_object('id', o.id, 'number', o.number, 'branch', o.branch)
+      FROM public.invoices o WHERE o.id = r.replaces_invoice_id))
+  FROM public.invoice_register r WHERE r.id = p_id;
+$$;
+
+-- Totals for a patient's Payments tab header. Voided invoices are excluded.
+CREATE FUNCTION public.invoice_patient_summary(p_patient_id uuid,
+  OUT due_minor bigint, OUT net_collected_minor bigint, OUT invoice_count integer,
+  OUT open_count integer)
+LANGUAGE sql STABLE SECURITY INVOKER SET search_path = '' AS $$
+  SELECT coalesce(sum(due_minor), 0)::bigint, coalesce(sum(net_collected_minor), 0)::bigint,
+    count(*)::integer, (count(*) FILTER (WHERE due_minor > 0))::integer
+  FROM public.invoice_register WHERE patient_id = p_patient_id AND voided_at IS NULL;
+$$;
+
+REVOKE ALL ON FUNCTION public.invoice_detail(uuid), public.invoice_patient_summary(uuid) FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.invoice_detail(uuid), public.invoice_patient_summary(uuid) TO authenticated;

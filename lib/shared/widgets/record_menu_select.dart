@@ -12,6 +12,7 @@ class RecordMenuSelect<T> extends StatelessWidget {
     required this.options,
     required this.onChanged,
     this.isField = false,
+    this.decoration,
   });
 
   final String label;
@@ -19,6 +20,10 @@ class RecordMenuSelect<T> extends StatelessWidget {
   final List<RecordMenuAction<T>> options;
   final ValueChanged<T>? onChanged;
   final bool isField;
+
+  /// Field chrome when [isField] is true. Forms with external labels pass
+  /// their shared input decoration; otherwise the label floats inside.
+  final InputDecoration? decoration;
 
   @override
   Widget build(BuildContext context) {
@@ -65,7 +70,9 @@ class RecordMenuSelect<T> extends StatelessWidget {
         constraints: const BoxConstraints(minHeight: AppSizes.tappableMin),
         child: isField
             ? InputDecorator(
-                decoration: InputDecoration(labelText: label, enabled: enabled),
+                decoration:
+                    decoration ??
+                    InputDecoration(labelText: label, enabled: enabled),
                 isEmpty: selection == null,
                 child: selection == null
                     ? Align(

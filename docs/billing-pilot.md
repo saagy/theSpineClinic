@@ -1,5 +1,9 @@
 # Self-pay billing pilot
 
+> **Superseded by plan:** the [billing redesign plan](billing-plan.md) replaces
+> this pilot workflow and legacy payments. This page describes the deployed
+> pilot until that work ships.
+
 Run `flutter run -d web-server --web-hostname=127.0.0.1 --web-port=8765`
 and open the URL Flutter prints. A receptionist with payment access opens
 **Billing** between **Patients** and **Profile**. Admins open it from

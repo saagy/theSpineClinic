@@ -13,7 +13,7 @@ import 'package:spine_clinic_app/features/patient/presentation/widgets/workspace
 import 'package:spine_clinic_app/features/patient/presentation/widgets/workspace_header.dart';
 import 'package:spine_clinic_app/features/patient/presentation/widgets/workspace_notes.dart';
 import 'package:spine_clinic_app/features/patient/presentation/widgets/workspace_overview.dart';
-import 'package:spine_clinic_app/features/patient/presentation/widgets/workspace_payments.dart';
+import 'package:spine_clinic_app/features/payments/presentation/widgets/patient_invoices_tab.dart';
 import 'package:spine_clinic_app/features/patient/presentation/widgets/workspace_programs.dart';
 import 'package:spine_clinic_app/features/patient/presentation/workspace_refresh.dart';
 
@@ -51,7 +51,7 @@ class PatientWorkspaceBody extends ConsumerWidget {
       2 => WorkspaceAppointments(patientId: patient.id),
       3 => WorkspaceNotes(patientId: patient.id),
       4 => WorkspaceDocuments(patientId: patient.id),
-      _ => WorkspacePayments(patientId: patient.id),
+      _ => PatientInvoicesTab(patient: patient),
     };
 
     return LayoutBuilder(
