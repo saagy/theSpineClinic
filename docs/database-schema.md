@@ -9,6 +9,12 @@ that file and this document together. For the narrative architecture see
 All times are stored as `timestamptz`; clinic-local calendar logic goes through
 `clinic_timezone()` (currently `Africa/Cairo`).
 
+The schedule seed helpers are omitted from the schema snapshot. Migration
+`20261110203200_restrict_schedule_seed_functions.sql` revokes `EXECUTE` from
+`PUBLIC`, `anon`, `authenticated`, and `service_role` on every installed overload.
+The [standalone seed script](../supabase/seed_realistic_data.sql) is for disposable
+development databases and applies the same restrictions when it installs the helpers.
+
 September 27 deployed additions: `mutation_receipts` and `document_uploads`, with
 four checked RPCs for durable financial/booking retries and document finalization.
 See [production hardening](production-hardening.md#schema-additions) for every

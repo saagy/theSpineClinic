@@ -7,7 +7,10 @@
 --      - 4 Treating Doctors (z@clinic.com, doctor.khaled@clinic.com, etc.): Normal PT
 --        and Spinal Traction sessions.
 -- 2. `public.seed_clinic_schedule_range(start_date, end_date, branch, clear_existing)`
+-- Install as a database owner on disposable development databases only.
 -- ==============================================================================
+
+BEGIN;
 
 CREATE OR REPLACE FUNCTION public.seed_clinic_day_schedule(
   p_date date DEFAULT CURRENT_DATE,
@@ -196,3 +199,9 @@ BEGIN
   );
 END;
 $$;
+
+REVOKE EXECUTE ON FUNCTION public.seed_clinic_day_schedule(date, public.clinic_location, boolean),
+  public.seed_clinic_schedule_range(date, date, public.clinic_location, boolean)
+  FROM PUBLIC, anon, authenticated, service_role;
+
+COMMIT;
