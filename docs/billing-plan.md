@@ -45,8 +45,11 @@ date of birth, hire date, working days and working hours, and the staff
 directory shows each person's working days and hours. Migration
 `20261111170000_staff_reference_details.sql` adds the admin-only
 `staff_details` table and extends the staff account RPCs; it passes the SQL
-suites locally and is **not yet applied to the linked project**. Slice 8 is
-not started.
+suites locally and was **applied to the linked project by hand** (SQL editor)
+on November 12, 2026, with its version recorded in the migration history,
+then verified: the table has row-level security with its one admin read
+policy, the detail writer is not callable by clients, and both staff account
+functions save details. Slice 8 is not started.
 
 Slice 6 behavior worth knowing:
 

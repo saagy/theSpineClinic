@@ -168,7 +168,7 @@ Auth-linked staff profiles. One row per Supabase Auth user (`auth.users`).
 
 ### `staff_details`
 Reference details for one staff member (billing plan slice 7, migration
-`20261111170000`). Kept apart from `staff` because every active staff member
+`20261111170000`, applied to the linked project on November 12, 2026). Kept apart from `staff` because every active staff member
 can read the staff directory; only active super admins can read these rows
 (`staff_details_admin_read`). There are no client write policies.
 - `staff_id` (`uuid`, PK/FK → `staff(id)` ON DELETE CASCADE)
