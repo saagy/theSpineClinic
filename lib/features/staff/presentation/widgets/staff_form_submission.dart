@@ -22,12 +22,15 @@ extension _StaffFormSubmission on _StaffFormBodyState {
           : true;
       if (await _blockedByDeactivationWarning(active) || !mounted) return;
       final controller = ref.read(staffFormControllerProvider.notifier);
+      final StaffDetails details = staffDetailsFromForm(values);
       final Result<void> result = isEdit
           ? await controller.updateStaff(
               staff: _updatedStaff(values, role, branch, active),
               newPassword: values['change_password'] == true
                   ? values['password'] as String
                   : null,
+              // Unchanged details are not sent, so the save leaves them alone.
+              details: details == widget.details ? null : details,
             )
           : await controller.createStaff(
               fullName: values['full_name'] as String,
@@ -40,6 +43,7 @@ extension _StaffFormSubmission on _StaffFormBodyState {
                   (values['is_senior'] as bool? ?? false),
               phone: _phone(values),
               branch: branch,
+              details: details.isEmpty ? null : details,
             );
       if (!mounted) return;
       result.when(

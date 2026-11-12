@@ -12,6 +12,7 @@ import 'package:spine_clinic_app/features/auth/domain/user_role.dart';
 import 'package:spine_clinic_app/features/auth/presentation/auth_providers.dart';
 import 'package:spine_clinic_app/features/patient/domain/clinic_location.dart';
 import 'package:spine_clinic_app/features/staff/data/staff_repository.dart';
+import 'package:spine_clinic_app/features/staff/domain/staff_details.dart';
 import 'package:spine_clinic_app/features/staff/presentation/staff_form_screen.dart';
 import 'package:spine_clinic_app/features/staff/presentation/staff_providers.dart';
 import 'staff_workspace.dart';
@@ -24,14 +25,32 @@ class StaffEditorRepository implements StaffRepository {
   int countCalls = 0;
   Staff? submitted;
   String? password;
+
+  /// Details sent with the last save (null when left unchanged).
+  StaffDetails? submittedDetails;
+  StaffDetails details = StaffDetails.empty;
+  Result<StaffDetails>? detailsResult;
+  int detailsReads = 0;
+
+  @override
+  Future<Result<StaffDetails>> getStaffDetails(String staffId) async {
+    detailsReads++;
+    return detailsResult ?? Result.success(details);
+  }
+
+  @override
+  Future<Result<Map<String, StaffDetails>>> getStaffSchedules() async =>
+      Result.success({staffRoster[1].id: details});
   @override
   Future<Result<void>> updateStaff({
     required Staff staff,
     String? newPassword,
+    StaffDetails? details,
   }) async {
     writes++;
     submitted = staff;
     password = newPassword;
+    submittedDetails = details;
     return pending == null ? outcome : await pending!.future;
   }
 
@@ -45,9 +64,11 @@ class StaffEditorRepository implements StaffRepository {
     bool isSenior = false,
     String? phone,
     ClinicLocation? branch,
+    StaffDetails? details,
   }) async {
     writes++;
     this.password = password;
+    submittedDetails = details;
     submitted = staffAdmin.copyWith(
       id: 'new',
       fullName: fullName,

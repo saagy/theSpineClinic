@@ -3,9 +3,12 @@ import 'package:spine_clinic_app/core/constants/app_sizes.dart';
 
 /// Related fields share a row only when width and text scale permit it.
 class FormFieldPair extends StatelessWidget {
-  const FormFieldPair({super.key, required this.first, this.second});
+  const FormFieldPair({super.key, required this.first, this.second, this.halfWidth = false});
   final Widget first;
   final Widget? second;
+
+  /// Keeps a lone [first] at half the width when the pair would share a row.
+  final bool halfWidth;
   @override
   Widget build(BuildContext context) => LayoutBuilder(
     builder: (BuildContext context, BoxConstraints box) {
@@ -22,6 +25,10 @@ class FormFieldPair extends StatelessWidget {
             : CrossAxisAlignment.stretch,
         children: [
           Flexible(flex: wide ? 1 : 0, fit: FlexFit.tight, child: first),
+          if (second == null && halfWidth && wide) ...[
+            const SizedBox(width: AppSizes.p20),
+            const Spacer(),
+          ],
           if (second != null) ...[
             SizedBox(
               width: wide ? AppSizes.p20 : null,

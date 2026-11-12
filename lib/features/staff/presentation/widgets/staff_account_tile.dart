@@ -16,7 +16,11 @@ class StaffAccountTile extends StatelessWidget {
     this.onTap,
     this.showCreatedDate = false,
     this.action,
+    this.schedule,
   });
+
+  /// Working days and hours, shown to administrators.
+  final String? schedule;
   final Staff staff;
   final VoidCallback? onTap;
   final bool showCreatedDate;
@@ -56,6 +60,11 @@ class StaffAccountTile extends StatelessWidget {
                   if (staff.phone?.trim().isNotEmpty ?? false)
                     Text(
                       Formatters.formatPhone(staff.phone!),
+                      style: AppTextStyles.caption.copyWith(color: colors.onSurfaceVariant),
+                    ),
+                  if (schedule != null)
+                    Text(
+                      schedule!,
                       style: AppTextStyles.caption.copyWith(color: colors.onSurfaceVariant),
                     ),
                   if (!wide) ...[

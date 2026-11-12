@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_form_builder/flutter_form_builder.dart';
 import 'package:spine_clinic_app/core/constants/app_text_styles.dart';
 import 'package:spine_clinic_app/shared/widgets/app_input_decoration.dart';
@@ -18,7 +19,9 @@ class StaffTextField extends StatelessWidget {
     this.autofillHints,
     this.textInputAction = TextInputAction.next,
     this.onSubmitted,
+    this.inputFormatters,
   });
+  final List<TextInputFormatter>? inputFormatters;
   final String name;
   final String label;
   final bool enabled;
@@ -43,6 +46,7 @@ class StaffTextField extends StatelessWidget {
         color: Theme.of(context).colorScheme.onSurface,
       ),
       keyboardType: keyboardType,
+      inputFormatters: inputFormatters,
       textCapitalization: textCapitalization,
       autofillHints: autofillHints,
       textInputAction: textInputAction,

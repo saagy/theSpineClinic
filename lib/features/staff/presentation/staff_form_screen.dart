@@ -7,6 +7,8 @@ import 'package:spine_clinic_app/core/network/app_routes.dart';
 import 'package:spine_clinic_app/features/auth/domain/staff.dart';
 import 'package:spine_clinic_app/features/auth/domain/user_role.dart';
 import 'package:spine_clinic_app/features/auth/presentation/auth_providers.dart';
+import 'package:spine_clinic_app/features/staff/domain/staff_details.dart';
+import 'package:spine_clinic_app/features/staff/presentation/staff_details_providers.dart';
 import 'package:spine_clinic_app/features/staff/presentation/widgets/staff_form_body.dart';
 import 'package:spine_clinic_app/shared/widgets/empty_state.dart';
 import 'package:spine_clinic_app/shared/widgets/error_view.dart';
@@ -52,7 +54,25 @@ class StaffFormScreen extends ConsumerWidget {
             ),
           );
         }
-        return StaffFormBody(staff: staff, currentUser: currentUser);
+        final Staff? existing = staff;
+        if (existing == null) {
+          return StaffFormBody(currentUser: currentUser, details: StaffDetails.empty);
+        }
+        // The form opens only with the saved details, so a save never
+        // replaces them with blanks.
+        return ref.watch(staffDetailsProvider(existing.id)).when(
+          loading: () => _frame(const FormPageSkeleton()),
+          error: (Object error, StackTrace _) => _frame(
+            ErrorView(
+              exception: error is AppException
+                  ? error
+                  : UnknownException(message: AppStrings.staffDetails.loadFailed),
+              onRetry: () => ref.invalidate(staffDetailsProvider(existing.id)),
+            ),
+          ),
+          data: (StaffDetails details) =>
+              StaffFormBody(staff: existing, currentUser: currentUser, details: details),
+        );
       },
     );
   }

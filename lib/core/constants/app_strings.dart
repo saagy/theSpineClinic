@@ -5,6 +5,7 @@ library;
 import 'billing_report_strings.dart';
 import 'invoice_detail_strings.dart';
 import 'invoice_strings.dart';
+import 'staff_details_strings.dart';
 
 /// Application-wide string constants.
 abstract final class AppStrings {
@@ -24,6 +25,7 @@ abstract final class AppStrings {
   static const invoices = InvoiceStrings();
   static const invoiceDetail = InvoiceDetailStrings();
   static const billingReports = BillingReportStrings();
+  static const staffDetails = StaffDetailsStrings();
   static String staffAppliedOn(String date) => 'Applied $date';
   static const String noMatchingStaff = 'No staff match your search or filters.';
   static const String programActions = 'Program actions';
@@ -257,6 +259,7 @@ abstract final class AppStrings {
     'mutation_unconfirmed': mutationUnconfirmed,
     ...invoices.errorKeys,
     ...invoiceDetail.errorKeys,
+    ...staffDetails.errorKeys,
     'payment_changed': paymentChanged,
     'mutation_previous_completed': mutationPreviousCompleted,
     'error_unknown': errorUnknown,

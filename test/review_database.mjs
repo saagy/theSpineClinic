@@ -35,6 +35,7 @@ try {
     'test/review_financial_integrity.sql', 'test/review_booking_and_edits.sql',
     'test/empty_patient_deletion.sql', 'test/production_retry_integrity.sql',
     'test/program_save_integrity.sql', 'test/program_document_removal.sql',
+    'test/staff_seniority_management.sql', 'test/staff_reference_details.sql',
     'test/program_document_legacy_receipts.sql', 'test/read_access_equivalence.sql',
     'test/invoice_fixture.sql', 'test/invoice_workflow.sql',
     'test/invoice_fixture.sql', 'test/invoice_corrections.sql',

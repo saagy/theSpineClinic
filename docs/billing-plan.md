@@ -39,7 +39,14 @@ printing, and super admins open it from the Admin hub. Migration
 the SQL suites locally and was **applied to the linked project** on November
 11, 2026 through the Supabase tooling (file renamed to the recorded version;
 grants checked: only `invoice_report` is executable by signed-in users).
-Slices 7-8 are not started.
+**Slice 7 (staff reference fields) is built in the app** on November 12,
+2026: the staff editor's Employment details section records national ID,
+date of birth, hire date, working days and working hours, and the staff
+directory shows each person's working days and hours. Migration
+`20261111170000_staff_reference_details.sql` adds the admin-only
+`staff_details` table and extends the staff account RPCs; it passes the SQL
+suites locally and is **not yet applied to the linked project**. Slice 8 is
+not started.
 
 Slice 6 behavior worth knowing:
 

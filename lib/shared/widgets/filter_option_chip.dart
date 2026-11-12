@@ -25,9 +25,13 @@ class FilterOptionChip extends StatelessWidget {
             width: AppSizes.borderWidth,
           ),
         ),
-        child: Text(
-          label,
-          style: AppTextStyles.captionBold.copyWith(color: isSelected ? cs.onPrimaryContainer : cs.onSurface),
+        // Centers the label in the 44 px target without widening the chip.
+        child: Align(
+          widthFactor: 1,
+          child: Text(
+            label,
+            style: AppTextStyles.captionBold.copyWith(color: isSelected ? cs.onPrimaryContainer : cs.onSurface),
+          ),
         ),
       ),
     );

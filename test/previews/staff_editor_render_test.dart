@@ -5,6 +5,7 @@ import 'package:spine_clinic_app/core/constants/app_strings.dart';
 import 'package:spine_clinic_app/core/errors/app_exception.dart';
 import 'package:spine_clinic_app/core/errors/result.dart';
 import 'package:spine_clinic_app/features/auth/domain/staff.dart';
+import 'package:spine_clinic_app/features/staff/domain/staff_details.dart';
 import '../fixtures/staff_editor_harness.dart';
 import '../fixtures/staff_workspace.dart';
 import 'ui_polish_capture.dart';
@@ -42,6 +43,33 @@ void main() {
         await capturePolish(tester, key, 'staff-$variant-$width');
       });
     }
+  }
+  for (final (String name, double width, bool dark, double scale) in const [
+    ('phone', 390.0, false, 1.0),
+    ('desktop', 1440.0, false, 1.0),
+    ('dark-large-text', 360.0, true, 1.6),
+  ]) {
+    testWidgets('staff employment details $name', (tester) async {
+      tester.view.physicalSize = Size(width, 1400);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+      final GlobalKey key = GlobalKey();
+      final repo = StaffEditorRepository()
+        ..details = StaffDetails(
+          nationalId: '29001011234567',
+          birthDate: DateTime(1990, 1, 1),
+          hireDate: DateTime(2024, 3, 1),
+          workingDays: const [6, 7, 1, 2, 3, 4],
+          workStartMinutes: 9 * 60,
+          workEndMinutes: 17 * 60,
+        );
+      await pumpStaffEditor(tester, repo, staff: staffRoster[1], captureKey: key, dark: dark, scale: scale);
+      await tester.ensureVisible(find.text(AppStrings.staffDetails.workingDays));
+      await tester.pumpAndSettle();
+      expect(tester.takeException(), isNull);
+      await capturePolish(tester, key, 'staff-details-$name');
+    });
   }
   testWidgets('deactivation check failure and named confirmation', (
     tester,

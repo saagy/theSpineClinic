@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_form_builder/flutter_form_builder.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -9,18 +10,23 @@ import 'package:spine_clinic_app/core/network/app_routes.dart';
 import 'package:spine_clinic_app/features/auth/domain/staff.dart';
 import 'package:spine_clinic_app/features/auth/domain/user_role.dart';
 import 'package:spine_clinic_app/features/patient/domain/clinic_location.dart';
+import 'package:spine_clinic_app/features/staff/domain/staff_details.dart';
 import 'package:spine_clinic_app/features/staff/presentation/staff_management_controller.dart';
 import 'package:spine_clinic_app/shared/widgets/form_page_body.dart';
 import 'package:spine_clinic_app/shared/widgets/app_snackbar.dart';
 import 'package:spine_clinic_app/shared/widgets/confirmation_dialog.dart';
+import 'staff_details_fields.dart';
 import 'staff_form_fields.dart';
 
 part 'staff_form_submission.dart';
 
 class StaffFormBody extends ConsumerStatefulWidget {
-  const StaffFormBody({super.key, required this.currentUser, this.staff});
+  const StaffFormBody({super.key, required this.currentUser, required this.details, this.staff});
   final Staff currentUser;
   final Staff? staff;
+
+  /// Saved reference details; empty for a new staff member.
+  final StaffDetails details;
   @override
   ConsumerState<StaffFormBody> createState() => _StaffFormBodyState();
 }
@@ -84,9 +90,10 @@ class _StaffFormBodyState extends ConsumerState<StaffFormBody> {
   void _updateDirty() {
     final FormBuilderState? form = _formKey.currentState;
     if (mounted && form != null) {
-      _dirty.value = form.fields.values.any(
-        (field) => field.value != field.initialValue,
-      );
+      _dirty.value = form.fields.values.any((field) {
+        final Object? value = field.value, initial = field.initialValue;
+        return value is List && initial is List ? !listEquals(value, initial) : value != initial;
+      });
     }
   }
 
@@ -130,6 +137,7 @@ class _StaffFormBodyState extends ConsumerState<StaffFormBody> {
                   enabled: !saving,
                   isSelf: isSelf,
                   staff: widget.staff,
+                  details: widget.details,
                   formKey: _formKey,
                   onSubmit: _submit,
                 ),

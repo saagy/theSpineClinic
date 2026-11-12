@@ -7,6 +7,8 @@ import 'package:spine_clinic_app/features/auth/domain/staff.dart';
 import 'package:spine_clinic_app/features/auth/domain/user_role.dart';
 import 'package:spine_clinic_app/features/patient/domain/clinic_location.dart';
 import 'package:spine_clinic_app/features/patient/domain/patient.dart';
+import 'package:spine_clinic_app/features/staff/domain/staff_details.dart';
+import 'package:spine_clinic_app/features/staff/data/staff_details_queries.dart';
 import 'package:spine_clinic_app/features/staff/data/staff_repository_queries.dart';
 import 'package:spine_clinic_app/features/staff/data/staff_write_queries.dart';
 
@@ -36,9 +38,18 @@ abstract class StaffRepository {
     bool isSenior = false,
     String? phone,
     ClinicLocation? branch,
+    StaffDetails? details,
   });
-  Future<Result<void>> updateStaff({required Staff staff, String? newPassword});
+
+  /// Saves the profile and, when [details] is given, the reference details.
+  Future<Result<void>> updateStaff({required Staff staff, String? newPassword, StaffDetails? details});
   Future<Result<int>> countUpcomingAppointments(String staffId);
+
+  /// Reference details (super admins only); empty when none were saved.
+  Future<Result<StaffDetails>> getStaffDetails(String staffId);
+
+  /// Working days and hours by staff ID (super admins only).
+  Future<Result<Map<String, StaffDetails>>> getStaffSchedules();
 }
 
 class StaffRepositoryImpl implements StaffRepository {
@@ -157,6 +168,7 @@ class StaffRepositoryImpl implements StaffRepository {
     bool isSenior = false,
     String? phone,
     ClinicLocation? branch,
+    StaffDetails? details,
   }) async {
     return createStaffAccount(
       _service,
@@ -168,13 +180,19 @@ class StaffRepositoryImpl implements StaffRepository {
       isSenior: role == UserRole.doctor && isSenior,
       phone: phone,
       branch: branch,
+      details: details,
     );
   }
 
   @override
-  Future<Result<void>> updateStaff({required Staff staff, String? newPassword}) async {
-    return updateStaffAccount(_service, staff: staff, newPassword: newPassword);
-  }
+  Future<Result<void>> updateStaff({required Staff staff, String? newPassword, StaffDetails? details}) =>
+      updateStaffAccount(_service, staff: staff, newPassword: newPassword, details: details);
+
+  @override
+  Future<Result<StaffDetails>> getStaffDetails(String staffId) => fetchStaffDetails(_service, staffId);
+
+  @override
+  Future<Result<Map<String, StaffDetails>>> getStaffSchedules() => fetchStaffSchedules(_service);
 
   /// Counts upcoming appointments where [staffId] is an active assignee.
   ///

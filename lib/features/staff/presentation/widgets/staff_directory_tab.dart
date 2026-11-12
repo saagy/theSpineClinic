@@ -1,4 +1,5 @@
 import 'package:spine_clinic_app/shared/widgets/search_filter_toolbar.dart';
+import 'package:spine_clinic_app/features/staff/presentation/staff_details_providers.dart';
 import 'package:spine_clinic_app/features/staff/presentation/staff_directory_filters_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -134,6 +135,7 @@ class _StaffDirectoryTabState extends ConsumerState<StaffDirectoryTab> {
 
     return RefreshIndicator(
       onRefresh: () async {
+        ref.invalidate(staffSchedulesProvider);
         await ref.read(staffListProvider.notifier).refreshStaff();
       },
       color: Theme.of(context).colorScheme.primary,

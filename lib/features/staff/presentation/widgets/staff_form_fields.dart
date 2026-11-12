@@ -7,7 +7,9 @@ import 'package:spine_clinic_app/core/constants/app_text_styles.dart';
 import 'package:spine_clinic_app/features/auth/domain/staff.dart';
 import 'package:spine_clinic_app/shared/widgets/form_field_pair.dart';
 import 'package:spine_clinic_app/shared/widgets/form_section.dart';
+import 'package:spine_clinic_app/features/staff/domain/staff_details.dart';
 import 'staff_access_fields.dart';
+import 'staff_details_fields.dart';
 import 'staff_account_fields.dart';
 import 'staff_form_controls.dart';
 import 'staff_password_fields.dart';
@@ -18,9 +20,11 @@ class StaffFormFields extends StatelessWidget {
     required this.enabled,
     required this.isSelf,
     required this.formKey,
+    required this.details,
     this.staff,
     this.onSubmit,
   });
+  final StaffDetails details;
   final bool enabled;
   final bool isSelf;
   final GlobalKey<FormBuilderState> formKey;
@@ -93,6 +97,12 @@ class StaffFormFields extends StatelessWidget {
             ),
           ],
         ),
+      ),
+      const SizedBox(height: AppSizes.p24),
+      FormSection(
+        title: AppStrings.staffDetails.section,
+        description: AppStrings.staffDetails.sectionHelp,
+        child: StaffDetailsFields(enabled: enabled, details: details, formKey: formKey),
       ),
       const SizedBox(height: AppSizes.p24),
       FormSection(

@@ -76,6 +76,28 @@ errors retain entered values. Corrected fields revalidate on interaction, and
 changing a password revalidates a previously edited or invalid confirmation.
 No database/schema or deployment change is part of this editor follow-up.
 
+## Employment details (billing plan slice 7)
+
+Between Personal details and Clinic access, an Employment details section
+holds the national ID (digits only, 14 required when entered), date of birth,
+hire date, working days and working hours, with a note that they are for the
+record only and never limit bookings. Dates and times use the shared
+`FormDateField` / `FormTimeField` (`shared/widgets/form_picker_field.dart`):
+a field with the same chrome and height as the text inputs that opens the
+native picker and offers Clear. Working days are seven toggles in clinic-week
+order, Saturday first, using the shared `FilterOptionChip` (labels are now
+centered in its 44 px target). Hire date keeps half the width beside nothing
+on wide windows (`FormFieldPair.halfWidth`). Cross-field rules (end after
+start, both times or neither, hire after birth) re-check when the related
+field changes.
+
+The editor opens an existing staff member only after their saved details
+load; a failed load shows Retry instead of an empty section, so a save never
+blanks them. Unchanged details are not sent; changed details save in the
+same transaction as the profile and password. Only super admins can read the
+details. The staff directory shows working days and hours under the contact
+lines, such as `Sat–Thu · 9:00 AM – 5:00 PM`.
+
 ## Validation and limits
 
 November 2, 2026 finish review: **ship**. The first review found stale corrected-field

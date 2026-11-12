@@ -405,6 +405,9 @@ abstract final class AppSizes {
   /// Width of the payment, void and receipt-correction dialogs.
   static const double invoiceDialogWidth = 440.0;
 
+  /// One weekday toggle in the staff working-days field.
+  static const double staffWeekdayWidth = 56.0;
+
   // ──────────────── Billing reports ────────────────
 
   /// Reading width of the report tables on very wide windows.

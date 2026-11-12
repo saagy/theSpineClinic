@@ -32,6 +32,13 @@ requirement, row navigation, expansion, paging, capped rows, empty, failure
 and denied states) and `test/previews/billing_reports_render_test.dart`; the
 full suite is 604 tests. The CSV save dialog, the print dialog and the custom
 date-range picker are not exercised by tests.
+The staff reference details slice (12 November 2026) adds
+`test/features/auth/staff_details_test.dart` (database shape, directory
+schedule text, loading saved details, unchanged details not resent, changed
+details saved, validation, failed load with Retry, creation) and
+employment-details captures in `test/previews/staff_editor_render_test.dart`;
+the full suite is 616 tests. The native date and time pickers are not
+exercised by tests.
 The return-refresh follow-up adds 12 tests covering the 60-second boundary,
 no polling, concurrent returns, failed refresh retention/cooldown, local status
 races, independent week ages, branch changes, browser lifecycle events and
@@ -96,6 +103,9 @@ then runs these ten scripts:
   discounts, receipts, the three refund examples, line allocations, retries)
 - invoice_fixture.sql + invoice_corrections.sql (voids, corrections, the
   refund barrier, booked-session protection, request resolution)
+- staff_seniority_management.sql and staff_reference_details.sql (admin-only
+  detail reads, atomic saves with the profile, validation, unique national
+  IDs, unchanged behavior for callers that send no details)
 - invoice_fixture.sql + invoice_reports.sql (report access, money totals and
   void log, revenue, exact doctor shares, outstanding balances, services)
 

@@ -5,6 +5,7 @@ import 'package:spine_clinic_app/core/network/supabase_service.dart';
 import 'package:spine_clinic_app/features/auth/domain/staff.dart';
 import 'package:spine_clinic_app/features/auth/domain/user_role.dart';
 import 'package:spine_clinic_app/features/patient/domain/clinic_location.dart';
+import 'package:spine_clinic_app/features/staff/domain/staff_details.dart';
 
 Future<Result<void>> createStaffAccount(
   SupabaseService service, {
@@ -16,6 +17,7 @@ Future<Result<void>> createStaffAccount(
   bool isSenior = false,
   String? phone,
   ClinicLocation? branch,
+  StaffDetails? details,
 }) async {
   try {
     await service.guardQuery(
@@ -30,6 +32,7 @@ Future<Result<void>> createStaffAccount(
           'new_is_senior': role == UserRole.doctor && isSenior,
           'new_can_manage_payments': role == UserRole.receptionist && canManagePayments,
           'new_branch': role == UserRole.receptionist ? branch?.dbValue : null,
+          'new_details': details?.toJson(),
         },
       ),
     );
@@ -45,6 +48,7 @@ Future<Result<void>> updateStaffAccount(
   SupabaseService service, {
   required Staff staff,
   String? newPassword,
+  StaffDetails? details,
 }) async {
   try {
     if (staff.userId == service.currentUserId && !staff.isActive) {
@@ -55,7 +59,12 @@ Future<Result<void>> updateStaffAccount(
     await service.guardQuery(
       () => service.rpc(
         'update_staff_account',
-        params: {'target_staff_id': staff.id, 'profile': _row(staff), 'new_password': newPassword},
+        params: {
+          'target_staff_id': staff.id,
+          // Without a details key the database leaves them unchanged.
+          'profile': {..._row(staff), 'details': ?details?.toJson()},
+          'new_password': newPassword,
+        },
       ),
     );
     return const Result.success(null);

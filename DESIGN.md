@@ -221,7 +221,7 @@ Patient tabs use the slate scaffold with separate overview group surfaces.
 Create/edit forms use semantic sections, responsive columns and persistent actions.
 November 2 staff cleanup inherits clinical blue and Plus Jakarta Sans: flat rows,
 quiet initials, status text, compact confirmed review actions and a labeled Add.
-Staff forms extend bounded sections with external labels, persistent Save/Cancel and explicit account/password tasks. See [staff editor decisions](docs/staff-editor-flow.md).
+Staff forms extend bounded sections with external labels, persistent Save/Cancel and explicit account/password tasks. Employment details add shared date/time picker fields that match text-input height and Saturday-first weekday toggles; the directory shows working days and hours as a muted line. See [staff editor decisions](docs/staff-editor-flow.md).
 Profile editing extends this form system with separate password navigation, preserved contact drafts, guarded actions and contact fields that stack for enlarged text. See [adopted flow and validation](docs/profile-edit-flow.md).
 Shared filter frames, sort options and doctor selection now serve Patients,
 Schedule, appointments, doctor history and staff with separate feature state.

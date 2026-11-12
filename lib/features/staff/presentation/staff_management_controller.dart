@@ -6,6 +6,8 @@ import 'package:spine_clinic_app/features/auth/domain/staff.dart';
 import 'package:spine_clinic_app/features/auth/domain/user_role.dart';
 import 'package:spine_clinic_app/features/auth/presentation/auth_providers.dart';
 import 'package:spine_clinic_app/features/patient/domain/clinic_location.dart';
+import 'package:spine_clinic_app/features/staff/domain/staff_details.dart';
+import 'package:spine_clinic_app/features/staff/presentation/staff_details_providers.dart';
 import 'package:spine_clinic_app/features/staff/presentation/staff_providers.dart';
 import 'package:spine_clinic_app/features/staff/presentation/widgets/staff_account_status.dart';
 
@@ -65,6 +67,7 @@ class StaffFormController extends _$StaffFormController {
     bool isSenior = false,
     String? phone,
     ClinicLocation? branch,
+    StaffDetails? details,
   }) => _save(
     () => ref
         .read(staffRepositoryProvider)
@@ -77,12 +80,14 @@ class StaffFormController extends _$StaffFormController {
           isSenior: role == UserRole.doctor && isSenior,
           phone: phone,
           branch: branch,
+          details: details,
         ),
   );
 
   Future<Result<void>> updateStaff({
     required Staff staff,
     String? newPassword,
+    StaffDetails? details,
   }) {
     final Staff? actor = ref.read(currentUserProvider).value;
     if (actor?.id == staff.id &&
@@ -98,7 +103,7 @@ class StaffFormController extends _$StaffFormController {
     return _save(
       () => ref
           .read(staffRepositoryProvider)
-          .updateStaff(staff: staff, newPassword: newPassword),
+          .updateStaff(staff: staff, newPassword: newPassword, details: details),
       updated: staff,
     );
   }
@@ -151,8 +156,10 @@ class StaffFormController extends _$StaffFormController {
       ref.invalidate(staffListProvider);
       ref.invalidate(activeDoctorsProvider);
       ref.invalidate(allDoctorsForFilterProvider);
+      ref.invalidate(staffSchedulesProvider);
       if (updated != null) {
         ref.invalidate(staffProfileProvider(updated.id));
+        ref.invalidate(staffDetailsProvider(updated.id));
         if (ref.read(currentUserProvider).value?.id == updated.id) {
           ref.invalidate(currentUserProvider);
         }

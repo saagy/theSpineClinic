@@ -183,6 +183,25 @@ class DatabaseException extends AppException {
       );
     }
 
+    // Staff reference details (national ID uniqueness and validation).
+    if (error.message.contains('staff_national_id_taken') ||
+        error.message.contains('staff_details_national_id_key')) {
+      return DatabaseException(
+        code: 'db/staff-national-id-taken',
+        message: error.message,
+        userMessageKey: 'staff_national_id_taken',
+        pgCode: pgCode,
+      );
+    }
+    if (error.message.contains('staff_details_invalid')) {
+      return DatabaseException(
+        code: 'db/staff-details-invalid',
+        message: error.message,
+        userMessageKey: 'staff_details_invalid',
+        pgCode: pgCode,
+      );
+    }
+
     // HTTP 401 Unauthorized — no active session / RLS blocked
     final int? httpStatus = int.tryParse('${error.code}');
     if (httpStatus == 401 ||

@@ -166,6 +166,27 @@ Auth-linked staff profiles. One row per Supabase Auth user (`auth.users`).
 - `branch` (`clinic_location`, nullable)
 - `deactivated_at` (`timestamptz`, nullable)
 
+### `staff_details`
+Reference details for one staff member (billing plan slice 7, migration
+`20261111170000`). Kept apart from `staff` because every active staff member
+can read the staff directory; only active super admins can read these rows
+(`staff_details_admin_read`). There are no client write policies.
+- `staff_id` (`uuid`, PK/FK → `staff(id)` ON DELETE CASCADE)
+- `national_id` (`text`, nullable, exactly 14 digits, unique when set)
+- `birth_date` (`date`, nullable, not in the future)
+- `hire_date` (`date`, nullable, after `birth_date`, at most a year ahead)
+- `working_days` (`smallint[]`, NOT NULL, default `{}`) — ISO weekdays 1–7, sorted, no duplicates
+- `work_starts_at`, `work_ends_at` (`time`, nullable) — both or neither; end after start
+- `updated_at` (`timestamptz`), `updated_by` (`uuid`, FK → `staff(id)` ON DELETE SET NULL)
+
+They are for reference only and never restrict bookings. Writes go through
+`create_staff_account(..., new_details jsonb)` and
+`update_staff_account(id, profile, password)` with a `details` key in
+`profile`; a profile without that key leaves the details unchanged. Both
+call the private `staff_save_details`, so details, profile and password
+commit together. Invalid details raise `staff_details_invalid`; a national
+ID already used by another staff member raises `staff_national_id_taken`.
+
 ### `patients`
 Patient registry plus package credit balances.
 - `id` (`uuid`, PK, default `gen_random_uuid()`)
@@ -384,8 +405,8 @@ appointments             <- patient_notes.appointment_id (optional)
 | Function | Purpose |
 | --- | --- |
 | `register_doctor_application(...)` | Creates `auth.users` row and inactive `staff` application profile (`anon` accessible). |
-| `create_staff_account(...)` | Creates staff with doctor-only senior status atomically; active super admin only. |
-| `update_staff_account(uuid,jsonb,text)` | Saves profile/seniority and optional password in one transaction; active super admin only. |
+| `create_staff_account(...)` | Creates staff with doctor-only senior status and optional reference details atomically; active super admin only. |
+| `update_staff_account(uuid,jsonb,text)` | Saves profile/seniority, optional reference details (`profile.details`) and optional password in one transaction; active super admin only. |
 | `create_staff_user(...)` | Creates `auth.users` row plus linked active `staff` profile (super admin only). |
 | `update_user_password(...)` | Resets a staff user's password (super admin only). |
 | `delete_doctor_user(...)` | Deletes a doctor auth user to reject applications (super admin only). |
