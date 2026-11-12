@@ -119,14 +119,12 @@ final class InvoiceStrings {
   final String noActiveServices =
       'No services are available. A payment receptionist can add them in Services and prices.';
   final String sectionDiscount = 'Discount';
-  final String discountNone = 'No discount';
-  final String discountPercent = 'Percentage';
-  final String discountAmount = 'Fixed amount';
-  final String discountPercentLabel = 'Discount (%)';
-  final String discountAmountLabel = 'Discount (EGP)';
+  final String discountPercentLabel = 'Percentage (%)';
+  final String discountAmountLabel = 'Amount (EGP)';
   final String discountPercentInvalid = 'Enter a percentage from 0.01 to 100';
   final String discountAmountInvalid = 'Enter an amount up to the subtotal';
-  final String freeHint = 'A 100% discount records free sessions.';
+  final String freeHint = 'Type either one and the other fills in. A 100% discount records free sessions.';
+  final String removeDiscount = 'Remove discount';
   final String sectionPayment = 'Payment now';
   final String paymentHelp =
       'Optional. Record money received with this invoice. Anything left stays due.';

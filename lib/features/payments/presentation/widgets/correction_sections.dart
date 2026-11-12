@@ -3,11 +3,9 @@ import '../../../../core/constants/app_sizes.dart';
 import '../../../../core/constants/app_strings.dart';
 import '../../../../core/constants/app_text_styles.dart';
 import '../../../../core/constants/clinic_colors.dart';
-import '../../../../core/utils/money.dart';
 import '../../../../shared/widgets/form_section.dart';
 import '../../../auth/domain/staff.dart';
 import '../../domain/invoice_detail.dart';
-import '../../domain/invoice_draft.dart';
 import '../../domain/service_catalog_item.dart';
 import 'invoice_form_input.dart';
 import 'invoice_line_editor.dart';
@@ -46,10 +44,7 @@ const _t = AppStrings.invoiceDetail;
       ],
     ));
   }
-  input.discountKind = invoice.discountKind;
-  if (invoice.discountKind != DiscountKind.none) {
-    input.discount.text = Money.editable(invoice.discountValue);
-  }
+  input.setDiscount(invoice.discountKind, invoice.discountValue);
   input.note.text = invoice.note ?? '';
   return (input: input, dropped: dropped);
 }

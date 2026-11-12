@@ -55,7 +55,9 @@ amount. Status always pairs an icon with text; voided invoices are muted with
 a struck-through number. The new-invoice form uses the bounded form page:
 details, service lines (quantity stepper, line total, the shared doctor
 selector pre-filled from the previous line or the patient's assigned doctors,
-or a "No doctor credit" note), discount for payment staff, and payment now
+or a "No doctor credit" note), discount for payment staff as linked
+percentage and amount fields (typing either fills in the other; the field
+typed last is what the invoice records), and payment now
 with a one-tap full cash payment. A live summary sits beside the form from
 900 px and below it on narrower windows.
 

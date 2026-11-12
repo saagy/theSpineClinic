@@ -12,6 +12,7 @@ import '../../../patient/domain/patient.dart';
 import '../../domain/service_catalog_item.dart';
 import '../invoice_providers.dart';
 import 'invoice_details_section.dart';
+import 'invoice_discount_section.dart';
 import 'invoice_form_input.dart';
 import 'invoice_line_editor.dart';
 import 'invoice_lines_section.dart';

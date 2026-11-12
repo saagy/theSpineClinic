@@ -5,75 +5,10 @@ import '../../../../core/constants/app_text_styles.dart';
 import '../../../../core/utils/money.dart';
 import '../../../../shared/widgets/form_field_pair.dart';
 import '../../../../shared/widgets/form_section.dart';
-import '../../domain/invoice_draft.dart';
 import 'invoice_form_input.dart';
 import 'service_form_controls.dart';
 
 const _t = AppStrings.invoices;
-
-/// Whole-invoice discount as a percentage or a fixed amount.
-class InvoiceDiscountSection extends StatelessWidget {
-  const InvoiceDiscountSection({
-    super.key,
-    required this.input,
-    required this.subtotalMinor,
-    required this.enabled,
-    required this.onChanged,
-  });
-  final InvoiceFormInput input;
-  final int subtotalMinor;
-  final bool enabled;
-  final ValueChanged<VoidCallback> onChanged;
-
-  @override
-  Widget build(BuildContext context) => FormSection(
-    title: _t.sectionDiscount,
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        SegmentedButton<DiscountKind>(
-          segments: [
-            ButtonSegment(value: DiscountKind.none, label: Text(_t.discountNone)),
-            ButtonSegment(value: DiscountKind.percent, label: Text(_t.discountPercent)),
-            ButtonSegment(value: DiscountKind.amount, label: Text(_t.discountAmount)),
-          ],
-          selected: {input.discountKind},
-          showSelectedIcon: false,
-          style: const ButtonStyle(
-            textStyle: WidgetStatePropertyAll(AppTextStyles.captionBold),
-            minimumSize: WidgetStatePropertyAll(Size(AppSizes.tappableMin, AppSizes.tappableMin)),
-          ),
-          onSelectionChanged: enabled
-              ? (kinds) => onChanged(() {
-                  input.discountKind = kinds.first;
-                  input.discount.clear();
-                })
-              : null,
-        ),
-        if (input.discountKind != DiscountKind.none) ...[
-          const SizedBox(height: AppSizes.p20),
-          ServiceTextInput(
-            key: ValueKey(input.discountKind),
-            label: input.discountKind == DiscountKind.percent ? _t.discountPercentLabel : _t.discountAmountLabel,
-            controller: input.discount,
-            enabled: enabled,
-            numeric: true,
-            decimal: true,
-            maxLength: 13,
-            validator: (_) {
-              final int? value = input.discountValue;
-              if (input.discountKind == DiscountKind.percent) {
-                return value == null || value < 1 || value > 10000 ? _t.discountPercentInvalid : null;
-              }
-              return value == null || value < 1 || value > subtotalMinor ? _t.discountAmountInvalid : null;
-            },
-          ),
-          if (input.discountKind == DiscountKind.percent) ServiceFieldNote(_t.freeHint),
-        ],
-      ],
-    ),
-  );
-}
 
 /// Money received together with the invoice, by cash, Visa or both.
 class InvoicePaymentSection extends StatelessWidget {

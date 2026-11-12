@@ -56,12 +56,15 @@ class InvoiceDraft {
 
   int get subtotalMinor => lines.fold(0, (sum, line) => sum + line.grossMinor);
 
-  /// Percent discounts round half up, matching PostgreSQL `round()`.
   int get discountMinor => switch (discountKind) {
     DiscountKind.none => 0,
-    DiscountKind.percent => ((subtotalMinor * discountValue + 5000) ~/ 10000),
+    DiscountKind.percent => percentOf(subtotalMinor, discountValue),
     DiscountKind.amount => discountValue,
   };
+
+  /// [basisPoints] of [subtotalMinor], rounded half up to match PostgreSQL
+  /// `round()`.
+  static int percentOf(int subtotalMinor, int basisPoints) => (subtotalMinor * basisPoints + 5000) ~/ 10000;
 
   int get totalMinor => subtotalMinor - discountMinor;
   int get paidNowMinor => cashMinor + visaMinor;

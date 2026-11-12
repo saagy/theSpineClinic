@@ -66,6 +66,7 @@ class ServiceTextInput extends StatelessWidget {
     this.decimal = false,
     this.maxLength,
     this.onSubmitted,
+    this.onChanged,
   });
   final String label;
   final TextEditingController controller;
@@ -76,6 +77,9 @@ class ServiceTextInput extends StatelessWidget {
   final bool decimal;
   final int? maxLength;
   final VoidCallback? onSubmitted;
+
+  /// Called for the user's own edits only, not for changes made in code.
+  final ValueChanged<String>? onChanged;
 
   @override
   Widget build(BuildContext context) => LabeledFormField(
@@ -90,6 +94,7 @@ class ServiceTextInput extends StatelessWidget {
       keyboardType: numeric ? TextInputType.numberWithOptions(decimal: decimal) : TextInputType.text,
       textInputAction: onSubmitted == null ? TextInputAction.next : TextInputAction.done,
       onFieldSubmitted: onSubmitted == null ? null : (_) => onSubmitted!(),
+      onChanged: onChanged,
       inputFormatters: [
         if (numeric)
           FilteringTextInputFormatter.allow(RegExp(decimal ? r'[0-9.,]' : r'[0-9]')),

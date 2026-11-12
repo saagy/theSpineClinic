@@ -91,9 +91,7 @@ void main() {
     final repo = FakeInvoiceRepository();
     await pumpNewInvoice(tester, repo: repo, user: cashier);
     await addService(tester, 'PT session');
-    await tester.ensureVisible(find.text(t.discountPercent));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text(t.discountPercent));
+    await tester.ensureVisible(find.text(t.discountPercentLabel));
     await tester.pumpAndSettle();
     await fill(tester, t.discountPercentLabel, '100');
     expect(find.text(Money.format(0)), findsWidgets);

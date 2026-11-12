@@ -16,10 +16,10 @@ import '../../domain/service_catalog_item.dart';
 import '../invoice_detail_providers.dart';
 import 'correction_sections.dart';
 import 'invoice_details_section.dart';
+import 'invoice_discount_section.dart';
 import 'invoice_form_input.dart';
 import 'invoice_line_editor.dart';
 import 'invoice_lines_section.dart';
-import 'invoice_money_sections.dart';
 import 'invoice_summary_panel.dart';
 import 'service_picker_sheet.dart';
 
