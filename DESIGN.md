@@ -74,7 +74,7 @@ menu; actions the invoice's state rules out stay listed, disabled, with the
 step that unlocks them. Payment, receipt correction and void are bounded
 dialogs with an inline error and a progress confirm button; every void asks
 for a reason. Refund and correction are bounded form pages with the live
-summary beside the form from 900 px and below it on phones. The panel owns its
+summary beside the form from 900 px (kept in view while the form scrolls, via `FormPageBody.aside`) and below it on phones. The panel owns its
 snackbars so confirmations do not repeat on the dimmed page behind it.
 
 Billing reports (billing plan slice 6) share one page: six scrollable text

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:spine_clinic_app/core/constants/app_sizes.dart';
 import 'package:spine_clinic_app/core/constants/app_strings.dart';
 import 'package:spine_clinic_app/core/constants/app_text_styles.dart';
+import 'form_page_scroll_area.dart';
 import 'operation_feedback.dart';
 
 /// Bounded, keyboard-aware forms with persistent actions on phone and desktop.
@@ -18,7 +19,12 @@ class FormPageBody extends StatelessWidget {
     this.errorMessage,
     this.saveLabel = AppStrings.save,
     this.maxWidth = AppSizes.clinicalContentMaxWidth,
+    this.aside,
   });
+
+  /// A live summary kept in view beside the form on wide windows and
+  /// placed after it on narrow ones.
+  final Widget? aside;
   final Widget child;
   final VoidCallback? onSave;
   final VoidCallback? onCancel;
@@ -36,21 +42,11 @@ class FormPageBody extends StatelessWidget {
     child: Column(
       children: [
         Expanded(
-          child: SingleChildScrollView(
-            keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
-            padding: const EdgeInsets.all(AppSizes.p16),
-            child: Center(
-              child: ConstrainedBox(
-                constraints: BoxConstraints(maxWidth: maxWidth),
-                child: ExcludeFocus(
-                  excluding: isSaving,
-                  child: AbsorbPointer(
-                    absorbing: isSaving,
-                    child: SizedBox(width: double.infinity, child: child),
-                  ),
-                ),
-              ),
-            ),
+          child: FormPageScrollArea(
+            maxWidth: maxWidth,
+            isSaving: isSaving,
+            aside: aside,
+            child: child,
           ),
         ),
         Container(

@@ -118,37 +118,19 @@ class CorrectionReasonSection extends StatelessWidget {
   );
 }
 
-/// Form sections with the live summary beside them on wide windows and
-/// below them on narrow ones, matching the new-invoice form.
+/// The correction form's sections, one under another.
 class CorrectionLayout extends StatelessWidget {
-  const CorrectionLayout({super.key, required this.sections, required this.summary});
+  const CorrectionLayout({super.key, required this.sections});
   final List<Widget> sections;
-  final Widget summary;
 
   @override
-  Widget build(BuildContext context) => LayoutBuilder(
-    builder: (context, box) {
-      final bool wide = box.maxWidth >= AppSizes.invoiceFormWideBreakpoint &&
-          MediaQuery.textScalerOf(context).scale(1) <= 1.3;
-      final column = Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          for (final (index, section) in sections.indexed) ...[
-            if (index > 0) const SizedBox(height: AppSizes.p24),
-            section,
-          ],
-          if (!wide) ...[const SizedBox(height: AppSizes.p24), summary],
-        ],
-      );
-      if (!wide) return column;
-      return Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Expanded(child: column),
-          const SizedBox(width: AppSizes.p24),
-          SizedBox(width: AppSizes.invoiceSummaryPanelWidth, child: summary),
-        ],
-      );
-    },
+  Widget build(BuildContext context) => Column(
+    crossAxisAlignment: CrossAxisAlignment.stretch,
+    children: [
+      for (final (index, section) in sections.indexed) ...[
+        if (index > 0) const SizedBox(height: AppSizes.p24),
+        section,
+      ],
+    ],
   );
 }

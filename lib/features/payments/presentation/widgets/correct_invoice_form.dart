@@ -195,12 +195,10 @@ class _CorrectInvoiceFormState extends ConsumerState<CorrectInvoiceForm> {
           errorMessage: problem,
           onSave: _saving ? null : _save,
           onCancel: _saving ? null : _cancel,
+          aside: InvoiceSummaryPanel(draft: draft, alreadyPaidMinor: paid),
           child: Form(
             key: _form,
-            child: CorrectionLayout(
-              sections: sections,
-              summary: InvoiceSummaryPanel(draft: draft, alreadyPaidMinor: paid),
-            ),
+            child: CorrectionLayout(sections: sections),
           ),
         ),
       ),

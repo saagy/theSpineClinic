@@ -56,6 +56,7 @@ final class InvoiceDetailStrings {
   final String noPayback = 'No money paid back';
   String reducedBy(String amount) => 'Invoice value reduced by $amount';
   String reasonLine(String reason) => 'Reason: $reason';
+  String voidReasonLine(String reason) => 'Void reason: $reason';
 
   // Payment dialog
   final String amount = 'Amount (EGP)';
@@ -75,6 +76,7 @@ final class InvoiceDetailStrings {
   // Void dialog
   final String reason = 'Reason';
   final String reasonHint = 'Shown on the record and in the void log';
+  final String refundReasonHint = 'Shown on the refund and its printed copy';
   final String reasonRequired = 'Enter a reason';
   final String voidReceiptTitle = 'Void receipt';
   final String voidRefundTitle = 'Void refund';

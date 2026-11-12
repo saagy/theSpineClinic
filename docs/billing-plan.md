@@ -49,7 +49,12 @@ suites locally and was **applied to the linked project by hand** (SQL editor)
 on November 12, 2026, with its version recorded in the migration history,
 then verified: the table has row-level security with its one admin read
 policy, the detail writer is not callable by clients, and both staff account
-functions save details. Slice 8 is not started.
+functions save details. **Slice 8 (rendered workflow review) ran** on
+November 12, 2026 against the linked project with a fictional patient: every
+invoice, payment, refund, void and correction path was exercised from the
+app on desktop and phone, the reports were checked against those writes, and
+four issues were fixed. Printing, CSV download and a live staff-details edit
+remain to be checked; see [the review results](billing-review-results.md).
 
 Slice 6 behavior worth knowing:
 
@@ -98,8 +103,8 @@ Slice 4 behavior worth knowing:
 - A later active refund locks earlier receipts and refunds; their Correct and
   Void menu items stay listed, disabled, with "Void the later refund first".
 - Client behavior is tested with repository fakes; the commands themselves are
-  covered by the slice 1 SQL tests (reports: `test/invoice_reports.sql`). No write has been exercised from the app
-  against the linked project yet; slice 8 does that with seed data.
+  covered by the slice 1 SQL tests (reports: `test/invoice_reports.sql`).
+  Slice 8 exercised the writes from the app against the linked project.
 
 This plan replaces the legacy `payment_records` system and the
 [self-pay billing pilot](billing-pilot.md) workflow. The pilot's numbering

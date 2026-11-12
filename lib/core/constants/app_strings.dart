@@ -602,7 +602,7 @@ abstract final class AppStrings {
   static const String partialPayment = 'Partial payment';
   static const String paidInFullMode = 'Fully Paid';
   static const String partialPaymentMode = 'Partial payment';
-  static const String totalOutstanding = 'Total Outstanding';
+  static const String totalOutstanding = 'Amount due';
   static const String confirmCollection = 'Confirm Collection';
   static const String saveChanges = 'Save Changes';
   static const String editPaymentHint =

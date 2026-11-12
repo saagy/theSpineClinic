@@ -88,7 +88,7 @@ class InvoiceTimeline extends StatelessWidget {
       details: [
         if (voided != null) ...[
           _t.voidedBy(voided.byName, Formatters.formatDateTime(voided.at)),
-          _t.reasonLine(voided.reason),
+          _t.voidReasonLine(voided.reason),
         ],
       ],
       amount: Money.format(receipt.amountMinor),
@@ -122,7 +122,7 @@ class InvoiceTimeline extends StatelessWidget {
         _t.reasonLine(refund.reason),
         if (voided != null) ...[
           _t.voidedBy(voided.byName, Formatters.formatDateTime(voided.at)),
-          _t.reasonLine(voided.reason),
+          _t.voidReasonLine(voided.reason),
         ],
       ],
       amount: refund.paybackMinor > 0 ? '− ${Money.format(refund.paybackMinor)}' : null,

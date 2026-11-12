@@ -162,32 +162,17 @@ class _NewInvoiceFormState extends ConsumerState<NewInvoiceForm> {
           errorMessage: state.error == null ? null : AppStrings.fromKey(state.error!.userMessageKey),
           onSave: state.saving ? null : _save,
           onCancel: state.saving ? null : _cancel,
+          aside: summary,
           child: Form(
             key: _form,
-            child: LayoutBuilder(
-              builder: (context, box) {
-                final bool wide = box.maxWidth >= AppSizes.invoiceFormWideBreakpoint &&
-                    MediaQuery.textScalerOf(context).scale(1) <= 1.3;
-                final column = Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    for (final (index, section) in sections.indexed) ...[
-                      if (index > 0) const SizedBox(height: AppSizes.p24),
-                      section,
-                    ],
-                    if (!wide) ...[const SizedBox(height: AppSizes.p24), summary],
-                  ],
-                );
-                if (!wide) return column;
-                return Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Expanded(child: column),
-                    const SizedBox(width: AppSizes.p24),
-                    SizedBox(width: AppSizes.invoiceSummaryPanelWidth, child: summary),
-                  ],
-                );
-              },
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                for (final (index, section) in sections.indexed) ...[
+                  if (index > 0) const SizedBox(height: AppSizes.p24),
+                  section,
+                ],
+              ],
             ),
           ),
         ),

@@ -181,7 +181,7 @@ class RefundDetailsSection extends StatelessWidget {
           const SizedBox(height: AppSizes.p20),
           ServiceTextInput(
             label: _t.reason,
-            hint: _t.reasonHint,
+            hint: _t.refundReasonHint,
             controller: input.reason,
             enabled: enabled,
             maxLength: 500,
