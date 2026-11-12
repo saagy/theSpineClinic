@@ -42,6 +42,16 @@ balance matches the remaining sessions.
 Desktop (1440×900, light) and phone (390×844, light and dark) were both
 reviewed; the dark theme was set from Profile and restored to light after.
 
+## Staff employment details (super admin)
+
+Signed in as the super admin. On an existing doctor's record, working days
+Saturday–Thursday, hours 9:00 AM–6:00 PM and a hire date were saved; the
+`staff_details` row matched, `updated_by` named the admin, and the directory
+showed `Sat–Thu · 9:00 AM – 6:00 PM`. Reopening loaded the saved values with
+Save disabled until a change. Clearing every field saved empty values and
+removed the directory line, leaving the record as it was before the test.
+Discarding an unsaved edit changed nothing.
+
 ## Fixed during the review
 
 - **Summary kept in view on wide forms.** The new-invoice, refund and
@@ -55,6 +65,12 @@ reviewed; the dark theme was set from Profile and restored to light after.
   says it is shown on the refund and its printed copy.
 - **Overview due banner** used title case ("Total Outstanding"); it now reads
   "Amount due", matching the Payments tab.
+- **Working hours message** appeared as soon as a start time was chosen, and
+  under both fields when one was cleared. It now shows only under the empty
+  field of the pair, and for a start time alone only when saving.
+- **Time picker AM/PM** used a pink tint generated from the seed color. The
+  theme's tertiary colors now come from the clinical palette (this also
+  turns the doctor-row badge from purple to the palette blue).
 
 ## Not verified here
 
@@ -62,11 +78,9 @@ reviewed; the dark theme was set from Profile and restored to light after.
   console error). PDF generation is covered by widget tests; printing needs a
   check in a regular browser.
 - **CSV export download** was not triggered (it saves a file to the device).
-- **Staff employment details** need a super admin sign-in and were not edited
-  live in this session.
 - Not part of billing but noticed: the patient registration form's optional
   Personal details use a different field style from the section above, and
   its clinic selector is a plain Material dropdown rather than the shared
   record menu.
 
-`flutter analyze`: no issues. `flutter test`: 616 passed.
+`flutter analyze`: no issues. `flutter test`: 617 passed.

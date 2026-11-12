@@ -37,7 +37,7 @@ The staff reference details slice (12 November 2026) adds
 schedule text, loading saved details, unchanged details not resent, changed
 details saved, validation, failed load with Retry, creation) and
 employment-details captures in `test/previews/staff_editor_render_test.dart`;
-the full suite is 616 tests. The native date and time pickers are not
+the full suite is 617 tests. The native date and time pickers are not
 exercised by tests.
 The return-refresh follow-up adds 12 tests covering the 60-second boundary,
 no polling, concurrent returns, failed refresh retention/cooldown, local status

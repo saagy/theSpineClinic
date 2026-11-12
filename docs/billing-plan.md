@@ -53,8 +53,9 @@ functions save details. **Slice 8 (rendered workflow review) ran** on
 November 12, 2026 against the linked project with a fictional patient: every
 invoice, payment, refund, void and correction path was exercised from the
 app on desktop and phone, the reports were checked against those writes, and
-four issues were fixed. Printing, CSV download and a live staff-details edit
-remain to be checked; see [the review results](billing-review-results.md).
+six issues were fixed; staff employment details were saved, reloaded and
+cleared live as the super admin. Printing and CSV download remain to be
+checked in a regular browser; see [the review results](billing-review-results.md).
 
 Slice 6 behavior worth knowing:
 

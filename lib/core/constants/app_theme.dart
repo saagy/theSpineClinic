@@ -44,6 +44,12 @@ abstract final class AppTheme {
           onSecondary: palette.onPrimary,
           secondaryContainer: palette.primaryContainer,
           onSecondaryContainer: palette.onPrimaryContainer,
+          // Pickers (time-of-day AM/PM) and doctor badges use tertiary; keep
+          // them in the clinical palette instead of the seed's generated hue.
+          tertiary: palette.primary,
+          onTertiary: palette.onPrimary,
+          tertiaryContainer: palette.primaryContainer,
+          onTertiaryContainer: palette.onPrimaryContainer,
           surface: palette.surface,
           onSurface: palette.textPrimary,
           surfaceDim: isDark ? palette.background : null,

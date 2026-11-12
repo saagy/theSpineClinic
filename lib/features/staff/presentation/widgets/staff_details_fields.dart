@@ -94,7 +94,8 @@ class StaffDetailsFields extends StatelessWidget {
             enabled: enabled,
             initialValue: details.workStartMinutes,
             onChanged: (_) => _recheck('work_ends_at'),
-            validator: (value) => (value == null) != (_value('work_ends_at') == null) ? _t.hoursBoth : null,
+            // Only the empty one of the pair explains that both are needed.
+            validator: (value) => value == null && _value('work_ends_at') != null ? _t.hoursBoth : null,
           ),
           second: FormTimeField(
             name: 'work_ends_at',
@@ -104,8 +105,8 @@ class StaffDetailsFields extends StatelessWidget {
             onChanged: (_) => _recheck('work_starts_at'),
             validator: (value) {
               final Object? start = _value('work_starts_at');
-              if ((value == null) != (start == null)) return _t.hoursBoth;
-              return value != null && start is int && value <= start ? _t.hoursOrder : null;
+              if (value == null) return start == null ? null : _t.hoursBoth;
+              return start is int && value <= start ? _t.hoursOrder : null;
             },
           ),
         ),

@@ -130,7 +130,21 @@ void main() {
     await tester.pump();
     form(tester).fields['work_ends_at']!.validate();
     await tester.pump();
-    expect(find.text(t.hoursBoth), findsWidgets);
+    expect(find.text(t.hoursBoth), findsOneWidget);
+  });
+
+  testWidgets('a start time alone is only flagged on save, under the end time', (tester) async {
+    final repo = StaffEditorRepository();
+    await pumpStaffEditor(tester, repo, staff: staffRoster[1]);
+    form(tester).fields['work_starts_at']!.didChange(9 * 60);
+    await tester.pumpAndSettle();
+    expect(find.text(t.hoursBoth), findsNothing);
+    await save(tester, AppStrings.saveChanges);
+    expect(repo.writes, 0);
+    expect(find.text(t.hoursBoth), findsOneWidget);
+    form(tester).fields['work_ends_at']!.didChange(17 * 60);
+    await tester.pumpAndSettle();
+    expect(find.text(t.hoursBoth), findsNothing);
   });
 
   testWidgets('a hire date before the birth date is rejected', (tester) async {
