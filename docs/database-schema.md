@@ -415,8 +415,8 @@ appointments             <- patient_notes.appointment_id (optional)
 | --- | --- |
 | `create_patient_with_doctors(...)` | Registers a patient and inserts assignments atomically. |
 | `update_patient_doctors(...)` | Replaces long-term assignments. |
-| `update_appointment_doctors(...)` | Synchronizes appointment doctor assignments. |
-| `book_recurring_appointments(...)` | Books slots with package balance locking. |
+| `update_appointment_doctors(...)` | Synchronizes appointment doctor assignments. Spinal traction never has a doctor; every other type needs at least one (migration `20261112113000`). |
+| `book_recurring_appointments(...)` | Books slots with package balance locking. Rejects doctors on spinal traction and requires one for other types. |
 | `bulk_replace_appointment_doctor(...)` | Swaps an absent doctor off a day's appointments. |
 | `get_due_patients(...)` | Branch-scoped due-patient queue. |
 | `create_patient_program(...)` | Atomically creates a patient rehabilitation program with conditions and attached imaging documents. |

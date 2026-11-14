@@ -43,15 +43,27 @@ extension _EditAppointmentView on _EditAppointmentFormState {
                   ),
                   const SizedBox(height: AppSizes.p16),
                 ],
-                DoctorSelectField(
-                  key: _doctorFieldKey,
-                  initialValue: widget.initialDoctors,
-                  onSavedDoctors: (_) {},
-                  onChanged: (_) {},
-                  validator: (doctors) => doctors == null || doctors.isEmpty
-                      ? AppStrings.atLeastOneDoctorRequired
-                      : null,
+                Visibility(
+                  visible: _selectedType.needsDoctor,
+                  maintainState: true,
+                  child: DoctorSelectField(
+                    key: _doctorFieldKey,
+                    initialValue: widget.initialDoctors,
+                    onSavedDoctors: (_) {},
+                    onChanged: (_) {},
+                    validator: (doctors) =>
+                        _selectedType.needsDoctor && (doctors == null || doctors.isEmpty)
+                        ? AppStrings.atLeastOneDoctorRequired
+                        : null,
+                  ),
                 ),
+                if (!_selectedType.needsDoctor)
+                  Text(
+                    AppStrings.tractionNoDoctor,
+                    style: AppTextStyles.body.copyWith(
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    ),
+                  ),
                 const SizedBox(height: AppSizes.p16),
                 if (_selectedType.affectsPackageBalance)
                   SwitchListTile(

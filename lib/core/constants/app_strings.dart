@@ -948,10 +948,9 @@ abstract final class AppStrings {
   static const String typeDoctorName = 'Type doctor name...';
   static const String noMatchingDoctorsFound = 'No matching doctors found.';
   static const String errorLoadingDoctors = 'Error loading doctors.';
-  static const String atLeastOneDoctorRequired =
-      'At least one doctor is required.';
-  static const String unableToLoadDoctors =
-      'Unable to load doctors — tap refresh icon to retry';
+  static const String tractionNoDoctor = 'Spinal traction is done without a doctor.';
+  static const String atLeastOneDoctorRequired = 'At least one doctor is required.';
+  static const String unableToLoadDoctors = 'Unable to load doctors — tap refresh icon to retry';
   static const String tapToSelectDoctors = 'Tap to select doctors';
   static const String changeDoctor = 'Change Doctor';
   static const String addDoctor = 'Add Doctor';

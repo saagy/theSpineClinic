@@ -71,8 +71,10 @@ class _EditAppointmentFormState extends ConsumerState<EditAppointmentForm> {
     });
     if (_dateErrorText != null || _timeErrorText != null) return;
 
-    final doctors = _doctorFieldKey.currentState?.value ?? [];
-    if (doctors.isEmpty) {
+    final List<Staff> doctors = _selectedType.needsDoctor
+        ? (_doctorFieldKey.currentState?.value ?? [])
+        : const <Staff>[];
+    if (_selectedType.needsDoctor && doctors.isEmpty) {
       AppSnackbar.show(
         context,
         message: AppStrings.noAssignedDoctors,

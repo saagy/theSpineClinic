@@ -45,6 +45,10 @@ enum AppointmentType {
         AppointmentType.reassessment => Icons.fact_check_outlined,
       };
 
+  /// Spinal traction is always done without a doctor; every other type
+  /// needs at least one. The booking functions enforce the same rule.
+  bool get needsDoctor => this != AppointmentType.spinalTractionSession;
+
   /// Whether this type ever deducts a patient balance on completion.
   bool get affectsPackageBalance => switch (this) {
         AppointmentType.normalPtSession => true,

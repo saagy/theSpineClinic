@@ -7,7 +7,7 @@ extension _NewAppointmentProviderSection on _NewAppointmentFormState {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          if (_isFetchingDoctors) ...[
+          if (_isFetchingDoctors && _selectedType.needsDoctor) ...[
             Padding(
               padding: const EdgeInsets.symmetric(vertical: AppSizes.p8),
               child: Row(
@@ -32,15 +32,30 @@ extension _NewAppointmentProviderSection on _NewAppointmentFormState {
             ),
             const SizedBox(height: AppSizes.p8),
           ],
-          DoctorSelectField(
-            key: _doctorFieldKey,
-            initialValue: const [],
-            enabled: _doctorFieldEnabled,
-            onSavedDoctors: (_) {},
-            onChanged: (_) {},
-            validator: (doctors) =>
-                doctors == null || doctors.isEmpty ? AppStrings.atLeastOneDoctorRequired : null,
+          // Kept in the tree while hidden so a doctor choice survives
+          // switching to traction and back.
+          Visibility(
+            visible: _selectedType.needsDoctor,
+            maintainState: true,
+            child: DoctorSelectField(
+              key: _doctorFieldKey,
+              initialValue: const [],
+              enabled: _doctorFieldEnabled,
+              onSavedDoctors: (_) {},
+              onChanged: (_) {},
+              validator: (doctors) =>
+                  _selectedType.needsDoctor && (doctors == null || doctors.isEmpty)
+                  ? AppStrings.atLeastOneDoctorRequired
+                  : null,
+            ),
           ),
+          if (!_selectedType.needsDoctor)
+            Text(
+              AppStrings.tractionNoDoctor,
+              style: AppTextStyles.body.copyWith(
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
+            ),
           if (!_selectedType.affectsPackageBalance) ...[
             const SizedBox(height: AppSizes.p8),
             const Text(

@@ -40,8 +40,10 @@ extension _NewAppointmentValidation on _NewAppointmentFormState {
       );
       return;
     }
-    final doctors = _doctorFieldKey.currentState?.value ?? [];
-    if (doctors.isEmpty) {
+    final List<Staff> doctors = _selectedType.needsDoctor
+        ? (_doctorFieldKey.currentState?.value ?? [])
+        : const <Staff>[];
+    if (_selectedType.needsDoctor && doctors.isEmpty) {
       AppSnackbar.show(
         context,
         message: AppStrings.noAssignedDoctors,
