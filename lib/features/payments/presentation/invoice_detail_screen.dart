@@ -9,6 +9,7 @@ import '../../../core/network/app_routes.dart';
 import '../../../shared/widgets/empty_state.dart';
 import '../../../shared/widgets/error_view.dart';
 import '../../../shared/widgets/record_skeleton.dart';
+import '../../../shared/widgets/refresh_on_return.dart';
 import '../../auth/domain/staff.dart';
 import '../domain/invoice_access.dart';
 import '../domain/invoice_detail.dart';
@@ -101,9 +102,19 @@ class InvoiceDetailScreen extends ConsumerWidget {
         data: (invoice) => frame(
           invoice: invoice,
           user: user,
-          RefreshIndicator(
-            onRefresh: () => ref.refresh(invoiceDetailProvider(invoiceId).future),
-            child: InvoiceDetailBody(invoice: invoice, user: user),
+          // Back from a refund or correction, or into the app again: other
+          // staff may have taken a payment meanwhile.
+          RefreshOnReturn(
+            notifyOnEntry: false,
+            onReturn: () {
+              if (!ref.read(invoiceDetailProvider(invoiceId)).isLoading) {
+                ref.invalidate(invoiceDetailProvider(invoiceId));
+              }
+            },
+            child: RefreshIndicator(
+              onRefresh: () => ref.refresh(invoiceDetailProvider(invoiceId).future),
+              child: InvoiceDetailBody(invoice: invoice, user: user),
+            ),
           ),
         ),
       ),

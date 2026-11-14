@@ -31,9 +31,10 @@ class ServiceCatalogRow extends StatelessWidget {
     );
     final archived = service.active
         ? null
-        : Text(_t.archived, style: AppTextStyles.captionBold.copyWith(
-            color: colors.onSurfaceVariant,
-          ));
+        : Text(
+            _t.archived,
+            style: AppTextStyles.captionBold.copyWith(color: colors.onSurfaceVariant),
+          );
     final price = Text(
       Money.format(service.priceMinor),
       textAlign: TextAlign.end,
@@ -95,7 +96,13 @@ class ServiceCatalogRow extends StatelessWidget {
 
   /// Narrow rows. Enlarged text moves the price below the details so the
   /// name and package text keep the full width.
-  Widget _stacked(BuildContext context, Widget name, Widget? archived, Widget price, TextStyle muted) {
+  Widget _stacked(
+    BuildContext context,
+    Widget name,
+    Widget? archived,
+    Widget price,
+    TextStyle muted,
+  ) {
     final colors = Theme.of(context).colorScheme;
     final bool large = MediaQuery.textScalerOf(context).scale(1) > 1.3;
     final details = Column(
@@ -121,11 +128,8 @@ class ServiceCatalogRow extends StatelessWidget {
     );
   }
 
-  Widget _chevron(ColorScheme colors) => Icon(
-    Icons.chevron_right,
-    size: AppSizes.iconDefault,
-    color: colors.onSurfaceVariant,
-  );
+  Widget _chevron(ColorScheme colors) =>
+      Icon(Icons.chevron_right, size: AppSizes.iconDefault, color: colors.onSurfaceVariant);
 }
 
 /// Column labels shown once above the list on wide windows.
@@ -139,14 +143,23 @@ class ServiceCatalogHeader extends StatelessWidget {
     );
     return Padding(
       padding: const EdgeInsets.fromLTRB(
-        AppSizes.p16, AppSizes.p8, AppSizes.p16 + AppSizes.p8 + AppSizes.iconDefault, AppSizes.p8,
+        AppSizes.p16,
+        AppSizes.p8,
+        AppSizes.p16 + AppSizes.p8 + AppSizes.iconDefault,
+        AppSizes.p8,
       ),
       child: Row(
         children: [
           Expanded(child: Text(_t.columnService, style: style)),
           const SizedBox(width: AppSizes.p16),
-          SizedBox(width: AppSizes.serviceSoldAsColumnWidth, child: Text(_t.columnSoldAs, style: style)),
-          SizedBox(width: AppSizes.serviceCreditColumnWidth, child: Text(_t.columnDoctors, style: style)),
+          SizedBox(
+            width: AppSizes.serviceSoldAsColumnWidth,
+            child: Text(_t.columnSoldAs, style: style),
+          ),
+          SizedBox(
+            width: AppSizes.serviceCreditColumnWidth,
+            child: Text(_t.columnDoctors, style: style),
+          ),
           SizedBox(
             width: AppSizes.servicePriceColumnWidth,
             child: Text(_t.columnPrice, style: style, textAlign: TextAlign.end),

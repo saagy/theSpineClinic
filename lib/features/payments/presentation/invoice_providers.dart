@@ -6,6 +6,7 @@ import '../../patient/presentation/patient_providers.dart';
 import '../domain/invoice_access.dart';
 import '../domain/invoice_draft.dart';
 import '../domain/invoice_summary.dart';
+import 'billing_report_providers.dart';
 import 'service_catalog_providers.dart';
 
 part 'invoice_providers.g.dart';
@@ -30,7 +31,8 @@ class InvoiceCreateState {
 }
 
 /// Issues new invoices. Kept alive so a request finishing after the form
-/// closes still refreshes the patient's invoices and session balances.
+/// closes still refreshes the patient's invoices, session balances and the
+/// Billing reports.
 @Riverpod(keepAlive: true)
 class InvoiceCreateController extends _$InvoiceCreateController {
   @override
@@ -60,6 +62,8 @@ class InvoiceCreateController extends _$InvoiceCreateController {
     // Refresh even after a rejection: prices or balances may have moved.
     ref.invalidate(patientInvoicesProvider(draft.patientId));
     ref.invalidate(serviceCatalogProvider);
+    // Every Billing report: one may be open under this form.
+    ref.invalidate(billingReportProvider);
     if (result.isSuccess) {
       ref.invalidate(patientDetailProvider(draft.patientId));
       ref.invalidate(patientIsEmptyProvider(draft.patientId));

@@ -280,7 +280,10 @@ final List<RouteBase> _shellRoutes = [
     path: AppRoutes.patientDetail,
     pageBuilder: (_, GoRouterState state) => appPage(
       key: state.pageKey,
-      child: PatientDetailScreen(patientId: state.pathParameters['id'] ?? ''),
+      child: PatientDetailScreen(
+        patientId: state.pathParameters['id'] ?? '',
+        initialTab: PatientWorkspaceTab.fromQuery(state.uri.queryParameters['tab']),
+      ),
     ),
     routes: [
       GoRoute(

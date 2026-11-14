@@ -1,8 +1,12 @@
 import 'billing_report_rows.dart';
 import 'billing_report_summary_rows.dart';
+import 'doctor_session_rows.dart';
 
 export 'billing_report_rows.dart';
 export 'billing_report_summary_rows.dart';
+export 'doctor_session_rows.dart';
+
+part 'billing_report_sessions.dart';
 
 int _int(Object? value) => (value as num?)?.toInt() ?? 0;
 
@@ -10,8 +14,8 @@ List<T> _list<T>(Object? value, T Function(Map<String, dynamic> json) parse) => 
   for (final item in value as List? ?? const []) parse(item as Map<String, dynamic>),
 ];
 
-/// One report as returned by `invoice_report`. Totals always cover every
-/// row; [rows] may be capped, in which case [isTruncated] is true.
+/// One report as returned by `invoice_report` or `doctor_session_report`.
+/// Totals always cover every row; [rows] may be capped, in which case [isTruncated] is true.
 sealed class BillingReportData {
   const BillingReportData({required this.rowCount});
 
@@ -69,8 +73,9 @@ class MoneyReport extends BillingReportData {
   bool get isEmpty => rows.isEmpty && voids.isEmpty;
 }
 
-/// Collected money per service line; for one doctor, [totalMinor] and each
-/// row's share are that doctor's part.
+/// Paid money per service line. For one doctor, [totalMinor], [cashMinor],
+/// [visaMinor] and each row's share are that doctor's part; for all doctors,
+/// [byDoctor] splits the same money between them.
 class RevenueReport extends BillingReportData {
   const RevenueReport({
     required super.rowCount,
@@ -79,19 +84,19 @@ class RevenueReport extends BillingReportData {
     required this.visaMinor,
     required this.movedMinor,
     required this.rows,
-    required this.forDoctor,
+    this.byDoctor,
   });
 
-  factory RevenueReport.fromJson(Map<String, dynamic> json, {required bool forDoctor}) {
+  factory RevenueReport.fromJson(Map<String, dynamic> json, {DoctorTotals? byDoctor}) {
     final totals = json['totals'] as Map<String, dynamic>;
     return RevenueReport(
       rowCount: _int(totals['row_count']),
-      totalMinor: _int(totals[forDoctor ? 'share_minor' : 'collected_minor']),
+      totalMinor: _int(totals['collected_minor'] ?? totals['share_minor']),
       cashMinor: _int(totals['cash_minor']),
       visaMinor: _int(totals['visa_minor']),
       movedMinor: _int(totals['moved_minor']),
       rows: _list(json['rows'], RevenueRow.fromJson),
-      forDoctor: forDoctor,
+      byDoctor: byDoctor,
     );
   }
 
@@ -102,16 +107,20 @@ class RevenueReport extends BillingReportData {
   /// Money a refund moved between lines without paying anything back.
   final int movedMinor;
   final List<RevenueRow> rows;
-  final bool forDoctor;
+
+  /// Null when the report is for one doctor.
+  final DoctorTotals? byDoctor;
+  bool get forDoctor => byDoctor == null;
 
   @override
   int get shownCount => rows.length;
 }
 
-/// Collected money credited to each doctor.
-class DoctorsReport extends BillingReportData {
-  const DoctorsReport({
-    required super.rowCount,
+/// Paid money credited to each doctor, from `invoice_report` kind
+/// `doctors`. The row without a doctor holds money on lines with no
+/// doctor, so the rows add up to everything paid.
+class DoctorTotals {
+  const DoctorTotals({
     required this.totalMinor,
     required this.cashMinor,
     required this.visaMinor,
@@ -119,16 +128,14 @@ class DoctorsReport extends BillingReportData {
     required this.rows,
   });
 
-  factory DoctorsReport.fromJson(Map<String, dynamic> json) {
+  factory DoctorTotals.fromJson(Map<String, dynamic> json) {
     final totals = json['totals'] as Map<String, dynamic>;
-    final rows = _list(json['rows'], DoctorSummaryRow.fromJson);
-    return DoctorsReport(
-      rowCount: rows.length,
+    return DoctorTotals(
       totalMinor: _int(totals['share_minor']),
       cashMinor: _int(totals['cash_minor']),
       visaMinor: _int(totals['visa_minor']),
       movedMinor: _int(totals['moved_minor']),
-      rows: rows,
+      rows: _list(json['rows'], DoctorSummaryRow.fromJson),
     );
   }
 
@@ -137,13 +144,6 @@ class DoctorsReport extends BillingReportData {
   final int visaMinor;
   final int movedMinor;
   final List<DoctorSummaryRow> rows;
-
-  /// Money on lines without doctor credit.
-  int get clinicOnlyMinor =>
-      rows.where((row) => row.doctorId == null).fold(0, (sum, row) => sum + row.shareMinor);
-
-  @override
-  int get shownCount => rows.length;
 }
 
 /// Unpaid balances per patient.

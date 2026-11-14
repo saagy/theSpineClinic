@@ -5,7 +5,9 @@ import '../../../../core/constants/app_strings.dart';
 import '../../../../core/constants/app_text_styles.dart';
 import '../../../../shared/widgets/record_action_menu.dart';
 import '../../../../shared/widgets/record_menu_select.dart';
+import '../../../auth/presentation/auth_providers.dart';
 import '../../../patient/domain/clinic_location.dart';
+import '../../domain/invoice_access.dart';
 import '../../domain/billing_report.dart';
 import '../billing_report_providers.dart';
 import 'report_actions.dart';
@@ -13,16 +15,15 @@ import 'report_labels.dart';
 
 const _t = AppStrings.billingReports;
 
-enum _ReportAction { refresh, export, print }
+enum _ReportAction { refresh, print }
 
-/// Period, branch and doctor for the selected report, with refresh, CSV
-/// export and print. The actions collapse into one menu on narrow windows.
+/// Period, branch and doctor for the selected report, with refresh and
+/// print. The actions collapse into one menu on narrow windows.
 class ReportToolbar extends ConsumerWidget {
-  const ReportToolbar({super.key, this.onRefresh, this.onExport, this.onPrint});
+  const ReportToolbar({super.key, this.onRefresh, this.onPrint});
 
   /// Null while there is nothing to act on.
   final VoidCallback? onRefresh;
-  final VoidCallback? onExport;
   final VoidCallback? onPrint;
 
   @override
@@ -53,22 +54,24 @@ class ReportToolbar extends ConsumerWidget {
                 ? pickReportRange(context, ref)
                 : controller.setPeriod(period),
           ),
-        RecordMenuSelect<ClinicLocation?>(
-          label: _t.branch,
-          value: filter.branch,
-          options: [
-            RecordMenuAction(null, _t.allBranches, Icons.apartment_outlined),
-            for (final branch in ClinicLocation.values)
-              RecordMenuAction(branch, branch.displayLabel, Icons.location_on_outlined),
-          ],
-          onChanged: controller.setBranch,
-        ),
+        if (InvoiceAccess.fixedBranch(ref.watch(currentUserProvider).value) == null)
+          RecordMenuSelect<ClinicLocation?>(
+            label: _t.branch,
+            value: filter.branch,
+            options: [
+              RecordMenuAction(null, _t.allBranches, Icons.apartment_outlined),
+              for (final branch in ClinicLocation.values)
+                RecordMenuAction(branch, branch.displayLabel, Icons.location_on_outlined),
+            ],
+            onChanged: controller.setBranch,
+          ),
         if (filter.kind.usesDoctor) _DoctorSelect(filter: filter),
       ],
     );
     return LayoutBuilder(
       builder: (context, box) {
-        final bool roomy = box.maxWidth >= AppSizes.desktopBreakpoint &&
+        final bool roomy =
+            box.maxWidth >= AppSizes.desktopBreakpoint &&
             MediaQuery.textScalerOf(context).scale(1) <= 1.3;
         return Row(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -82,24 +85,27 @@ class ReportToolbar extends ConsumerWidget {
                 icon: const Icon(Icons.refresh, size: AppSizes.iconDefault),
               ),
               const SizedBox(width: AppSizes.p4),
-              _button(_t.export, Icons.file_download_outlined, onExport),
-              const SizedBox(width: AppSizes.p8),
               _button(_t.print, Icons.print_outlined, onPrint),
             ] else
               RecordActionMenu<_ReportAction>(
                 tooltip: _t.more,
                 onSelected: (action) => switch (action) {
                   _ReportAction.refresh => onRefresh?.call(),
-                  _ReportAction.export => onExport?.call(),
                   _ReportAction.print => onPrint?.call(),
                 },
                 actions: [
-                  RecordMenuAction(_ReportAction.refresh, _t.refresh, Icons.refresh,
-                      enabled: onRefresh != null),
-                  RecordMenuAction(_ReportAction.export, _t.export, Icons.file_download_outlined,
-                      enabled: onExport != null),
-                  RecordMenuAction(_ReportAction.print, _t.print, Icons.print_outlined,
-                      enabled: onPrint != null),
+                  RecordMenuAction(
+                    _ReportAction.refresh,
+                    _t.refresh,
+                    Icons.refresh,
+                    enabled: onRefresh != null,
+                  ),
+                  RecordMenuAction(
+                    _ReportAction.print,
+                    _t.print,
+                    Icons.print_outlined,
+                    enabled: onPrint != null,
+                  ),
                 ],
               ),
           ],
@@ -119,8 +125,8 @@ class ReportToolbar extends ConsumerWidget {
   );
 }
 
-/// Opens the shared doctor picker; a chosen doctor can be cleared where the
-/// report also works for all doctors.
+/// Opens the shared doctor picker; a chosen doctor can be cleared to show
+/// all doctors again.
 class _DoctorSelect extends ConsumerWidget {
   const _DoctorSelect({required this.filter});
   final BillingReportFilter filter;
@@ -129,8 +135,7 @@ class _DoctorSelect extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final colors = Theme.of(context).colorScheme;
     final bool chosen = filter.doctorId != null;
-    final String label = filter.doctorName ??
-        (filter.kind.requiresDoctor ? _t.chooseDoctor : _t.allDoctors);
+    final String label = filter.doctorName ?? _t.allDoctors;
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -158,19 +163,22 @@ class _DoctorSelect extends ConsumerWidget {
                       ),
                     ),
                     const SizedBox(width: AppSizes.p8),
-                    Icon(Icons.expand_more, color: colors.onSurfaceVariant, size: AppSizes.iconSmall),
+                    Icon(
+                      Icons.expand_more,
+                      color: colors.onSurfaceVariant,
+                      size: AppSizes.iconSmall,
+                    ),
                   ],
                 ),
               ),
             ),
           ),
         ),
-        if (chosen && !filter.kind.requiresDoctor)
+        if (chosen)
           IconButton(
             tooltip: _t.clearDoctor,
-            onPressed: () => ref
-                .read(billingReportFilterControllerProvider.notifier)
-                .setDoctor(null, null),
+            onPressed: () =>
+                ref.read(billingReportFilterControllerProvider.notifier).setDoctor(null, null),
             icon: const Icon(Icons.close, size: AppSizes.iconSmall),
           ),
       ],

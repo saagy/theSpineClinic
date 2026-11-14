@@ -11,6 +11,7 @@ enum InvoiceActionKind {
   refundCreate('refund_create'),
   refundVoid('refund_void'),
   invoiceVoid('invoice_void'),
+  invoiceVoidAll('invoice_void_all'),
   invoiceCorrect('invoice_correct');
 
   const InvoiceActionKind(this.dbValue, {this.needsManage = true});
@@ -70,13 +71,21 @@ class InvoiceAction {
   factory InvoiceAction.voidInvoice(InvoiceDetail invoice, String reason) =>
       InvoiceAction._(InvoiceActionKind.invoiceVoid, invoice, {'reason': reason.trim()});
 
+  /// Voids a paid invoice and its receipts together, for payments entered by
+  /// mistake. The database refuses it while a refund is active.
+  factory InvoiceAction.voidInvoiceWithPayments(InvoiceDetail invoice, String reason) =>
+      InvoiceAction._(InvoiceActionKind.invoiceVoidAll, invoice, {'reason': reason.trim()});
+
   /// Voids [invoice] and issues [replacement] in its place. Active receipts
   /// move to the replacement, so its payments section is not sent.
-  factory InvoiceAction.correctInvoice(InvoiceDetail invoice, InvoiceDraft replacement, String reason) =>
-      InvoiceAction._(InvoiceActionKind.invoiceCorrect, invoice, {
-        'reason': reason.trim(),
-        'invoice': replacement.toPayload()..remove('payments'),
-      });
+  factory InvoiceAction.correctInvoice(
+    InvoiceDetail invoice,
+    InvoiceDraft replacement,
+    String reason,
+  ) => InvoiceAction._(InvoiceActionKind.invoiceCorrect, invoice, {
+    'reason': reason.trim(),
+    'invoice': replacement.toPayload()..remove('payments'),
+  });
 
   final InvoiceActionKind kind;
   final InvoiceDetail invoice;

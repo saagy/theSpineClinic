@@ -5,15 +5,13 @@ import '../../../../core/constants/app_strings.dart';
 import '../../../../core/constants/app_text_styles.dart';
 import '../../../../core/utils/formatters.dart';
 import '../../../../core/utils/money.dart';
-import '../../../../shared/widgets/app_input_decoration.dart';
 import '../../../../shared/widgets/labeled_form_field.dart';
-import '../../../../shared/widgets/record_action_menu.dart';
-import '../../../../shared/widgets/record_menu_select.dart';
 import '../../../auth/presentation/auth_providers.dart';
 import '../../../patient/domain/clinic_location.dart';
 import '../../domain/invoice_action.dart';
 import '../../domain/invoice_detail.dart';
 import 'invoice_action_dialog.dart';
+import 'invoice_branch_field.dart';
 import 'invoice_timeline.dart';
 import 'service_form_controls.dart';
 
@@ -62,7 +60,12 @@ class _InvoicePaymentDialogState extends ConsumerState<InvoicePaymentDialog> {
     if (amount == null) return null;
     final InvoiceReceipt? old = _old;
     return old == null
-        ? InvoiceAction.recordPayment(widget.invoice, amountMinor: amount, method: _method, branch: _branch)
+        ? InvoiceAction.recordPayment(
+            widget.invoice,
+            amountMinor: amount,
+            method: _method,
+            branch: _branch,
+          )
         : InvoiceAction.correctReceipt(
             widget.invoice,
             old,
@@ -119,25 +122,17 @@ class _InvoicePaymentDialogState extends ConsumerState<InvoicePaymentDialog> {
               showSelectedIcon: false,
               style: const ButtonStyle(
                 textStyle: WidgetStatePropertyAll(AppTextStyles.captionBold),
-                minimumSize: WidgetStatePropertyAll(Size(AppSizes.tappableMin, AppSizes.tappableMin)),
+                minimumSize: WidgetStatePropertyAll(
+                  Size(AppSizes.tappableMin, AppSizes.tappableMin),
+                ),
               ),
               onSelectionChanged: (methods) => setState(() => _method = methods.first),
             ),
           ),
           const SizedBox(height: AppSizes.p20),
-          LabeledFormField(
-            label: _t.branch,
-            child: RecordMenuSelect<ClinicLocation>(
-              label: _t.branch,
-              value: _branch,
-              isField: true,
-              decoration: appInputDecoration(context, enabled: true),
-              options: [
-                for (final branch in ClinicLocation.values)
-                  RecordMenuAction(branch, branch.displayLabel, Icons.location_on_outlined),
-              ],
-              onChanged: (branch) => setState(() => _branch = branch),
-            ),
+          InvoiceBranchField(
+            value: _branch,
+            onChanged: (branch) => setState(() => _branch = branch),
           ),
           if (old != null) ...[
             const SizedBox(height: AppSizes.p20),

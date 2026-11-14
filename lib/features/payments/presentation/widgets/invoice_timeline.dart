@@ -10,8 +10,7 @@ import 'invoice_timeline_row.dart';
 
 const _t = AppStrings.invoiceDetail;
 
-String paymentMethodLabel(PaymentMethod method) =>
-    method == PaymentMethod.cash ? _t.cash : _t.visa;
+String paymentMethodLabel(PaymentMethod method) => method == PaymentMethod.cash ? _t.cash : _t.visa;
 
 enum _DocAction { print, correct, voidIt }
 
@@ -156,7 +155,12 @@ class InvoiceTimeline extends StatelessWidget {
       actions: [
         RecordMenuAction(_DocAction.print, _t.print, Icons.print_outlined),
         if (editable && canCorrect)
-          RecordMenuAction(_DocAction.correct, label(_t.correct), Icons.edit_outlined, enabled: !locked),
+          RecordMenuAction(
+            _DocAction.correct,
+            label(_t.correct),
+            Icons.edit_outlined,
+            enabled: !locked,
+          ),
         if (editable)
           RecordMenuAction(
             _DocAction.voidIt,

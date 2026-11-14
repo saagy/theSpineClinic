@@ -38,6 +38,7 @@ import 'package:spine_clinic_app/features/medical_records/presentation/screens/p
 import 'package:spine_clinic_app/features/medical_records/presentation/visit_detail_screen.dart';
 import 'package:spine_clinic_app/features/patient/domain/patient.dart';
 import 'package:spine_clinic_app/features/patient/presentation/edit_patient_screen.dart';
+import 'package:spine_clinic_app/features/patient/presentation/patient_workspace_tab.dart';
 import 'package:spine_clinic_app/features/patient/presentation/my_patients_screen.dart';
 import 'package:spine_clinic_app/features/patient/presentation/patient_document_viewer_screen.dart';
 import 'package:spine_clinic_app/features/patient/presentation/new_patient_screen.dart';

@@ -1,3 +1,5 @@
+import '../../../auth/presentation/auth_providers.dart';
+import '../../domain/invoice_access.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -45,7 +47,7 @@ class NewInvoiceForm extends ConsumerStatefulWidget {
 class _NewInvoiceFormState extends ConsumerState<NewInvoiceForm> {
   final GlobalKey<FormState> _form = GlobalKey<FormState>();
   late final InvoiceFormInput _input = InvoiceFormInput(
-    branch: widget.patient.clinic,
+    branch: InvoiceAccess.fixedBranch(ref.read(currentUserProvider).value) ?? widget.patient.clinic,
     date: DateUtils.dateOnly(DateTime.now()),
   );
   bool _triedSave = false;
@@ -79,21 +81,30 @@ class _NewInvoiceFormState extends ConsumerState<NewInvoiceForm> {
     if (mounted) setState(() {});
   }
 
-  void _leave() => context.canPop() ? context.pop() : context.go(AppRoutes.patientDetail.replaceFirst(':id', widget.patient.id));
+  void _leave() => context.canPop()
+      ? context.pop()
+      : context.go(AppRoutes.patientDetail.replaceFirst(':id', widget.patient.id));
 
   Future<void> _addLine() async {
     final ServiceCatalogItem? service = await ServicePickerSheet.show(context, widget.services);
     if (service == null || !mounted) return;
     // New lines start with the last chosen doctors, else the patient's own.
     final List<Staff> previous = _input.lines.reversed
-        .firstWhere((line) => line.doctors.isNotEmpty, orElse: () => InvoiceLineInput(key: -1, service: service))
+        .firstWhere(
+          (line) => line.doctors.isNotEmpty,
+          orElse: () => InvoiceLineInput(key: -1, service: service),
+        )
         .doctors;
     final List<Staff> doctors = !service.creditsDoctors
         ? const []
         : previous.isNotEmpty
         ? previous
         : widget.assignedDoctors.where((doctor) => doctor.isActive).toList();
-    setState(() => _input.lines.add(InvoiceLineInput(key: _input.nextKey(), service: service, doctors: doctors)));
+    setState(
+      () => _input.lines.add(
+        InvoiceLineInput(key: _input.nextKey(), service: service, doctors: doctors),
+      ),
+    );
   }
 
   Future<void> _cancel() async {
@@ -117,7 +128,9 @@ class _NewInvoiceFormState extends ConsumerState<NewInvoiceForm> {
     setState(() => _triedSave = true);
     final bool valid = _form.currentState?.validate() ?? false;
     if (!valid || _input.lines.isEmpty) return;
-    final result = await ref.read(invoiceCreateControllerProvider.notifier).create(_input.draft(widget.patient.id));
+    final result = await ref
+        .read(invoiceCreateControllerProvider.notifier)
+        .create(_input.draft(widget.patient.id));
     if (!mounted || !result.isSuccess) return;
     AppSnackbar.show(context, message: _t.invoiceCreated, variant: AppSnackbarVariant.success);
     _leave();
@@ -130,7 +143,12 @@ class _NewInvoiceFormState extends ConsumerState<NewInvoiceForm> {
     final draft = _input.draft(widget.patient.id);
     void change(VoidCallback update) => setState(update);
     final sections = [
-      InvoiceDetailsSection(patient: widget.patient, input: _input, enabled: enabled, onChanged: change),
+      InvoiceDetailsSection(
+        patient: widget.patient,
+        input: _input,
+        enabled: enabled,
+        onChanged: change,
+      ),
       InvoiceLinesSection(
         input: _input,
         enabled: enabled,
@@ -139,8 +157,18 @@ class _NewInvoiceFormState extends ConsumerState<NewInvoiceForm> {
         onAdd: _addLine,
       ),
       if (widget.canDiscount)
-        InvoiceDiscountSection(input: _input, subtotalMinor: draft.subtotalMinor, enabled: enabled, onChanged: change),
-      InvoicePaymentSection(input: _input, totalMinor: draft.totalMinor, enabled: enabled, onChanged: change),
+        InvoiceDiscountSection(
+          input: _input,
+          subtotalMinor: draft.subtotalMinor,
+          enabled: enabled,
+          onChanged: change,
+        ),
+      InvoicePaymentSection(
+        input: _input,
+        totalMinor: draft.totalMinor,
+        enabled: enabled,
+        onChanged: change,
+      ),
     ];
     final summary = InvoiceSummaryPanel(draft: draft);
     return PopScope(
@@ -160,7 +188,9 @@ class _NewInvoiceFormState extends ConsumerState<NewInvoiceForm> {
         body: FormPageBody(
           isSaving: state.saving,
           saveLabel: _t.createInvoice,
-          errorMessage: state.error == null ? null : AppStrings.fromKey(state.error!.userMessageKey),
+          errorMessage: state.error == null
+              ? null
+              : AppStrings.fromKey(state.error!.userMessageKey),
           onSave: state.saving ? null : _save,
           onCancel: state.saving ? null : _cancel,
           aside: summary,

@@ -25,8 +25,11 @@ class InvoiceTotalsStrip extends StatelessWidget {
     final colors = Theme.of(context).colorScheme;
     final int? due = totals?.dueMinor;
     final figures = [
-      _Figure(_t.amountDue, due == null ? '–' : Money.format(due),
-          due != null && due > 0 ? ClinicColors.of(context).warning : null),
+      _Figure(
+        _t.amountDue,
+        due == null ? '–' : Money.format(due),
+        due != null && due > 0 ? ClinicColors.of(context).warning : null,
+      ),
       _Figure(_t.paid, totals == null ? '–' : Money.format(totals!.collectedMinor), null),
       _Figure(_t.ptSessionsLeft, '$ptSessions', null),
       _Figure(_t.tractionSessionsLeft, '$tractionSessions', null),
@@ -43,7 +46,11 @@ class InvoiceTotalsStrip extends StatelessWidget {
           builder: (context, box) {
             final bool large = MediaQuery.textScalerOf(context).scale(1) > 1.3;
             final bool wide = box.maxWidth >= AppSizes.invoiceTotalsWideBreakpoint && !large;
-            final int perRow = wide ? 4 : large ? 1 : 2;
+            final int perRow = wide
+                ? 4
+                : large
+                ? 1
+                : 2;
             return Column(
               children: [
                 for (int start = 0; start < figures.length; start += perRow) ...[
@@ -78,7 +85,9 @@ class _Figure extends StatelessWidget {
       children: [
         Text(
           label,
-          style: AppTextStyles.caption.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
+          style: AppTextStyles.caption.copyWith(
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
+          ),
         ),
         const SizedBox(height: AppSizes.p4),
         Text(

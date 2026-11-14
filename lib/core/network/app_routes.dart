@@ -64,6 +64,13 @@ abstract final class AppRoutes {
   /// Patient detail screen (protected, shell sub-page with its own AppBar).
   static const String patientDetail = '/patient/:id';
 
+  /// Location of a patient's record, opened on [tab] (a workspace tab name
+  /// such as `payments`) when given.
+  static String patientLocation(String patientId, {String? tab}) {
+    final String location = patientDetail.replaceFirst(':id', Uri.encodeComponent(patientId));
+    return tab == null ? location : '$location?tab=${Uri.encodeQueryComponent(tab)}';
+  }
+
   /// Full-screen patient document viewer nested under patient detail.
   static const String patientDocumentViewer = 'document/:documentId';
 

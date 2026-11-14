@@ -31,8 +31,7 @@ extension ServiceTypeLabels on ServiceType {
   ServiceGroup get group => switch (this) {
     ServiceType.ptSession => ServiceGroup.physicalTherapy,
     ServiceType.tractionSession => ServiceGroup.traction,
-    ServiceType.initialAssessment ||
-    ServiceType.reassessment => ServiceGroup.assessments,
+    ServiceType.initialAssessment || ServiceType.reassessment => ServiceGroup.assessments,
     ServiceType.other => ServiceGroup.other,
   };
 }
@@ -69,8 +68,7 @@ extension ServiceCatalogItemLabels on ServiceCatalogItem {
       : _t.singleService;
 
   /// Per-session price for packages, otherwise null.
-  String? get perSessionLabel =>
-      isPackage ? _t.perSession(Money.format(perSessionMinor)) : null;
+  String? get perSessionLabel => isPackage ? _t.perSession(Money.format(perSessionMinor)) : null;
 }
 
 /// Sections in display order, each sorted singles first, then by size and name.

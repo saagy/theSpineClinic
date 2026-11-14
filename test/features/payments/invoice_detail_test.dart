@@ -64,7 +64,11 @@ void main() {
     final action = repo.actions.single;
     expect(action.kind, InvoiceActionKind.receiptCreate);
     expect(action.toPayload(), {
-      'id': 'invoice-42', 'version': 3, 'amount_minor': 50000, 'method': 'visa', 'branch': 'tagamoa',
+      'id': 'invoice-42',
+      'version': 3,
+      'amount_minor': 50000,
+      'method': 'visa',
+      'branch': 'tagamoa',
     });
     expect(find.text(t.paymentRecorded), findsOneWidget);
   });
@@ -96,19 +100,51 @@ void main() {
   testWidgets('a later refund locks earlier documents and says how to unlock them', (tester) async {
     await pumpInvoiceDetail(tester, repo: repoWith(refundedDetail), user: cashier);
     await tap(tester, menus.last);
-    expect(find.textContaining(t.correctNeedsNoRefunds), findsOneWidget);
-    expect(find.textContaining(t.voidNeedsNoPayments), findsOneWidget);
+    // Edit and Cancel are both locked by the refund and say the same step.
+    expect(find.textContaining(t.voidNeedsNoRefunds), findsNWidgets(2));
     await tester.tapAt(const Offset(10, 10));
     await tester.pumpAndSettle();
     await tap(tester, menus.first); // The receipt recorded before the refund.
     expect(find.textContaining(t.lockedByRefund), findsNWidgets(2));
   });
 
+  testWidgets('a paid invoice entered by mistake is cancelled with its payments', (tester) async {
+    final repo = repoWith(partPaidDetail);
+    await pumpInvoiceDetail(tester, repo: repo, user: cashier);
+    await tap(tester, menus.last);
+    await tap(tester, find.text(t.voidInvoice));
+    expect(find.text(t.paidCancelMistake), findsOneWidget);
+    expect(find.text(t.paidCancelGivenBack), findsOneWidget);
+    await tap(tester, find.text(t.paidCancelMistake));
+    final confirm = find.widgetWithText(FilledButton, t.cancelWithPayments);
+    await fill(tester, t.reason, 'Wrong patient');
+    await tap(tester, confirm);
+    expect(repo.actions.single.kind, InvoiceActionKind.invoiceVoidAll);
+    expect(repo.actions.single.toPayload()['reason'], 'Wrong patient');
+    expect(find.text(t.invoiceVoidedDone), findsOneWidget);
+  });
+
+  testWidgets('money given back on a paid invoice leads to the refund form', (tester) async {
+    final repo = repoWith(partPaidDetail);
+    await pumpInvoiceDetail(tester, repo: repo, user: cashier);
+    await tap(tester, menus.last);
+    await tap(tester, find.text(t.voidInvoice));
+    await tap(tester, find.text(t.paidCancelGivenBack));
+    expect(repo.actions, isEmpty);
+    expect(find.text(t.refundTitle), findsWidgets);
+  });
+
   testWidgets('a rejected command stays open and explains why', (tester) async {
-    final repo = repoWith(sampleDetail(), result: const Result.failure(DatabaseException(
-      code: 'invoice/sessions_in_use', message: 'sessions_in_use',
-      userMessageKey: 'invoice_sessions_in_use',
-    )));
+    final repo = repoWith(
+      sampleDetail(),
+      result: const Result.failure(
+        DatabaseException(
+          code: 'invoice/sessions_in_use',
+          message: 'sessions_in_use',
+          userMessageKey: 'invoice_sessions_in_use',
+        ),
+      ),
+    );
     await pumpInvoiceDetail(tester, repo: repo, user: cashier);
     await tap(tester, menus.first);
     await tap(tester, find.text(t.voidInvoice));
@@ -143,19 +179,30 @@ void main() {
     await fill(tester, t.reason, 'Patient is travelling');
     await tap(tester, save);
     expect(repo.actions.single.toPayload(), {
-      'id': 'invoice-42', 'version': 3,
-      'lines': [{'line_id': 'line-1', 'sessions': 4, 'value_minor': 160000}],
-      'payback_minor': 160000, 'payback_method': 'cash', 'branch': 'tagamoa',
+      'id': 'invoice-42',
+      'version': 3,
+      'lines': [
+        {'line_id': 'line-1', 'sessions': 4, 'value_minor': 160000},
+      ],
+      'payback_minor': 160000,
+      'payback_method': 'cash',
+      'branch': 'tagamoa',
       'reason': 'Patient is travelling',
     });
     expect(find.text(t.refundRecorded), findsOneWidget);
     expect(find.text(t.title('TG-00042')), findsOneWidget);
   });
 
-  testWidgets('a correction starts from the original and must cover money received', (tester) async {
-    final replacement = InvoiceDetail.fromJson(invoiceDetailJson(
-      id: 'invoice-43', number: 43, replaces: {'id': 'invoice-42', 'number': 42, 'branch': 'tagamoa'},
-    ));
+  testWidgets('a correction starts from the original and must cover money received', (
+    tester,
+  ) async {
+    final replacement = InvoiceDetail.fromJson(
+      invoiceDetailJson(
+        id: 'invoice-43',
+        number: 43,
+        replaces: {'id': 'invoice-42', 'number': 42, 'branch': 'tagamoa'},
+      ),
+    );
     final repo = repoWith(partPaidDetail, result: const Result.success('invoice-43'));
     repo.details = {...repo.details, replacement.id: replacement};
     await pumpInvoiceDetail(tester, repo: repo, user: cashier);

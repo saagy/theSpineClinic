@@ -86,19 +86,19 @@ final class InvoiceDetailFamily extends $Family
 
 /// Runs payments, refunds, voids and corrections on an invoice. Kept alive so
 /// a request finishing after its dialog or form closes still refreshes the
-/// invoice, the patient's list and the session balances.
+/// invoice, the patient's list, the session balances and the Billing reports.
 
 @ProviderFor(InvoiceActionController)
 final invoiceActionControllerProvider = InvoiceActionControllerProvider._();
 
 /// Runs payments, refunds, voids and corrections on an invoice. Kept alive so
 /// a request finishing after its dialog or form closes still refreshes the
-/// invoice, the patient's list and the session balances.
+/// invoice, the patient's list, the session balances and the Billing reports.
 final class InvoiceActionControllerProvider
     extends $NotifierProvider<InvoiceActionController, InvoiceActionState> {
   /// Runs payments, refunds, voids and corrections on an invoice. Kept alive so
   /// a request finishing after its dialog or form closes still refreshes the
-  /// invoice, the patient's list and the session balances.
+  /// invoice, the patient's list, the session balances and the Billing reports.
   InvoiceActionControllerProvider._()
     : super(
         from: null,
@@ -127,11 +127,11 @@ final class InvoiceActionControllerProvider
 }
 
 String _$invoiceActionControllerHash() =>
-    r'4f261df028df34b98df2b42f49169eaa17d486b1';
+    r'8fbfc83b1f43e520909cf63ff20e59b432fb64a1';
 
 /// Runs payments, refunds, voids and corrections on an invoice. Kept alive so
 /// a request finishing after its dialog or form closes still refreshes the
-/// invoice, the patient's list and the session balances.
+/// invoice, the patient's list, the session balances and the Billing reports.
 
 abstract class _$InvoiceActionController extends $Notifier<InvoiceActionState> {
   InvoiceActionState build();

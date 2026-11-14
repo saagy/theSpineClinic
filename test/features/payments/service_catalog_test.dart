@@ -5,6 +5,7 @@ import 'package:spine_clinic_app/core/errors/app_exception.dart';
 import 'package:spine_clinic_app/core/errors/result.dart';
 import 'package:spine_clinic_app/core/network/app_routes.dart';
 import 'package:spine_clinic_app/core/utils/money.dart';
+import 'package:spine_clinic_app/features/payments/domain/invoice_repository.dart';
 import 'package:spine_clinic_app/features/payments/domain/service_catalog_item.dart';
 import 'package:spine_clinic_app/shared/widgets/labeled_form_field.dart';
 import '../../fixtures/service_catalog_fixture.dart';
@@ -104,14 +105,18 @@ void main() {
 
   testWidgets('edit is disabled until something changes; errors stay on the form', (tester) async {
     final repo = FakeInvoiceRepository(
-      saveResult: const Result.failure(DatabaseException(
-        code: 'invoice/duplicate', message: 'duplicate', userMessageKey: 'invoice_duplicate',
-      )),
+      saveResult: const Result.failure(
+        DatabaseException(
+          code: 'invoice/duplicate',
+          message: 'duplicate',
+          userMessageKey: 'invoice_duplicate',
+        ),
+      ),
     );
     await pumpCatalog(tester, repo: repo, location: AppRoutes.serviceFormLocation('pt6'));
     final save = find.widgetWithText(FilledButton, AppStrings.saveChanges);
     expect(tester.widget<FilledButton>(save).onPressed, isNull);
-    expect(find.text(t.availableOnInvoices), findsOneWidget);
+    expect(find.text(t.removeService), findsOneWidget);
     await fill(tester, t.price, '2500');
     expect(find.text(t.priceChangeHelp), findsOneWidget);
     await tester.tap(save);
@@ -121,9 +126,38 @@ void main() {
     expect(find.text(t.editService), findsOneWidget); // Still on the form.
   });
 
+  testWidgets('remove asks first, then reports a delete or a hide', (tester) async {
+    final repo = FakeInvoiceRepository()..removal = ServiceRemoval.hidden;
+    await pumpCatalog(tester, repo: repo, location: AppRoutes.serviceFormLocation('pt1'));
+    await tester.ensureVisible(find.text(t.removeService));
+    await tester.tap(find.text(t.removeService));
+    await tester.pumpAndSettle();
+    expect(find.text(t.removeTitle), findsOneWidget);
+    expect(repo.removed, isEmpty);
+    await tester.tap(find.text(t.removeService).last);
+    await tester.pumpAndSettle();
+    expect(repo.removed, ['pt1']);
+    expect(find.text(t.serviceRemoved), findsOneWidget);
+    expect(find.text(t.groupPt), findsOneWidget); // Back on the catalog.
+  });
+
+  testWidgets('a removed service offers Restore, which saves it as offered', (tester) async {
+    final repo = FakeInvoiceRepository();
+    await pumpCatalog(tester, repo: repo, location: AppRoutes.serviceFormLocation('pt12'));
+    expect(find.text(t.removeService), findsNothing);
+    await tester.ensureVisible(find.text(t.restoreService));
+    await tester.tap(find.text(t.restoreService));
+    await tester.pumpAndSettle();
+    expect(repo.saved.single.active, isTrue);
+    expect(find.text(t.serviceRestored), findsOneWidget);
+  });
+
   testWidgets('leaving with unsaved changes asks first', (tester) async {
-    await pumpCatalog(tester, repo: FakeInvoiceRepository(),
-        location: AppRoutes.serviceFormLocation('pt1'));
+    await pumpCatalog(
+      tester,
+      repo: FakeInvoiceRepository(),
+      location: AppRoutes.serviceFormLocation('pt1'),
+    );
     await fill(tester, t.name, 'Renamed');
     await tester.tap(find.text(AppStrings.cancel));
     await tester.pumpAndSettle();
@@ -134,8 +168,11 @@ void main() {
   });
 
   testWidgets('an unknown service shows a way back', (tester) async {
-    await pumpCatalog(tester, repo: FakeInvoiceRepository(),
-        location: AppRoutes.serviceFormLocation('gone'));
+    await pumpCatalog(
+      tester,
+      repo: FakeInvoiceRepository(),
+      location: AppRoutes.serviceFormLocation('gone'),
+    );
     expect(find.text(t.serviceNotFound), findsOneWidget);
   });
 }

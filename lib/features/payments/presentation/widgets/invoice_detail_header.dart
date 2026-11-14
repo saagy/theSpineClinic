@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/constants/app_sizes.dart';
 import '../../../../core/constants/app_strings.dart';
@@ -7,20 +8,23 @@ import '../../../../core/constants/clinic_colors.dart';
 import '../../../../core/network/app_routes.dart';
 import '../../../../core/utils/formatters.dart';
 import '../../../../core/utils/money.dart';
+import '../../../patient/presentation/patient_navigation.dart';
+import '../../../patient/presentation/patient_workspace_tab.dart';
 import '../../domain/invoice_detail.dart';
+import 'invoice_patient_identity.dart';
 import 'invoice_status_label.dart';
 
 const _t = AppStrings.invoiceDetail;
 
-/// Who the invoice is for, its state, and links to related invoices.
-class InvoiceDetailHeader extends StatelessWidget {
+/// Who the invoice is for, its state, and links to related invoices. The
+/// patient opens on their payments unless their record is right underneath.
+class InvoiceDetailHeader extends ConsumerWidget {
   const InvoiceDetailHeader({super.key, required this.invoice});
   final InvoiceDetail invoice;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final colors = Theme.of(context).colorScheme;
-    final muted = AppTextStyles.caption.copyWith(color: colors.onSurfaceVariant);
     final summary = invoice.summary;
     final VoidStamp? voided = invoice.voided;
     return Column(
@@ -30,20 +34,21 @@ class InvoiceDetailHeader extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(invoice.patientName, style: AppTextStyles.headingSmall),
-                  const SizedBox(height: AppSizes.p2),
-                  Text(
-                    [
-                      if (invoice.fileNumber != null) AppStrings.patientIdLabel(invoice.fileNumber!),
-                      Formatters.formatDateMedium(summary.invoiceDate),
-                      summary.branch.displayLabel,
-                    ].join(' · '),
-                    style: muted,
-                  ),
-                ],
+              child: InvoicePatientIdentity(
+                name: invoice.patientName,
+                details: [
+                  if (invoice.fileNumber != null) AppStrings.patientIdLabel(invoice.fileNumber!),
+                  Formatters.formatDateMedium(summary.invoiceDate),
+                  summary.branch.displayLabel,
+                ].join(' · '),
+                onOpen: patientRecordIsBelow(context, invoice.patientId)
+                    ? null
+                    : () => openPatientRecordFrom(
+                        context,
+                        ref,
+                        invoice.patientId,
+                        tab: PatientWorkspaceTab.payments,
+                      ),
               ),
             ),
             const SizedBox(width: AppSizes.p12),

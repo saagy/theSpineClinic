@@ -170,10 +170,26 @@ Rules enforced in the database:
   ignored) and `services` (lines on non-voided invoices dated in the range:
   units, current value and money collected on them to date, with the lines).
   An allocation is split equally among the line's doctors with cumulative
-  floors, so shares always add up to the money collected. A refund that pays
-  nothing back only moves money between lines; those rows have a NULL
-  method and are reported as "Reallocated". The private builders
+  floors, so shares always add up to the money collected. Each refund row is
+  split (migration `20261113175332`, applied to the linked project on
+  November 13, 2026): the money handed back keeps the payback method, and
+  money that only moved between lines has a NULL method, reported as
+  "Refund adjustment". Only lines that lost money hold payback, shared in
+  proportion to what each lost; stored allocations are unchanged. The private builders
   (`invoice_report_*`) are not executable by clients.
+- `doctor_session_report(from, to, branch, doctor)` (migration
+  `20261113100000`, applied to the linked project on November 13, 2026) is
+  the Billing tab's Doctor sessions report, for doctor pay. It reads
+  appointments, never invoices, with the same `invoice_can('manage')` check,
+  366-day limit and 5000-row cap. A session counts when its appointment is
+  `checked_in` in the clinic-day range; every active doctor on it is credited,
+  so a shared session counts once per doctor (`totals.credits`) and once in
+  `totals.sessions`. Spinal traction is never counted, even on older
+  appointments that still have a doctor. Past appointments still `scheduled`
+  are returned as `pending` and are not counted. The branch is the patient's
+  branch. Returns `totals`, `rows` (per doctor: `pt_sessions`, `assessments`,
+  `reassessments`, `total`, `shared`, `pending`), `sessions` (one row per
+  doctor credit, with `shared_with`) and `pending` (with `doctors`).
 
 ### `staff`
 Auth-linked staff profiles. One row per Supabase Auth user (`auth.users`).
@@ -416,6 +432,8 @@ appointments             <- patient_notes.appointment_id (optional)
 | `create_patient_with_doctors(...)` | Registers a patient and inserts assignments atomically. |
 | `update_patient_doctors(...)` | Replaces long-term assignments. |
 | `update_appointment_doctors(...)` | Synchronizes appointment doctor assignments. Spinal traction never has a doctor; every other type needs at least one (migration `20261112113000`). |
+| `execute_invoice_command` kind `invoice_void_all` | Cancels an invoice and all its active receipts in one transaction with one reason (`invoice_void_with_receipts`), for payments entered by mistake. Refused with `refunds_first` while a refund is active. Migration `20261113120000`, applied to the linked project on November 13, 2026. |
+| `remove_service(service_id, version)` | Removes a catalog service for payment staff: deletes it when no invoice line uses it, otherwise sets `active = false` so issued invoices keep it. Returns `{ok, outcome: deleted|hidden}` or `{ok: false, error}`. Migration `20261113090000`, applied to the linked project by hand (SQL editor) on November 13, 2026. |
 | `book_recurring_appointments(...)` | Books slots with package balance locking. Rejects doctors on spinal traction and requires one for other types. |
 | `bulk_replace_appointment_doctor(...)` | Swaps an absent doctor off a day's appointments. |
 | `get_due_patients(...)` | Branch-scoped due-patient queue. |

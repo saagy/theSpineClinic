@@ -21,10 +21,7 @@ class InvoiceRepositoryImpl implements InvoiceRepository {
   @override
   Future<Result<List<ServiceCatalogItem>>> services() => _guard(() async {
     final List<Map<String, dynamic>> rows = await _service.guardQuery(
-      () => _service
-          .from('service_catalog')
-          .select(_serviceColumns)
-          .order('name'),
+      () => _service.from('service_catalog').select(_serviceColumns).order('name'),
     );
     return rows.map(ServiceCatalogItem.fromJson).toList();
   });
@@ -36,8 +33,24 @@ class InvoiceRepositoryImpl implements InvoiceRepository {
       draft.id ?? 'new',
       draft.toPayload(),
     );
-    return commit.documentId ??
-        (throw const UnknownException(message: 'Service ID missing'));
+    return commit.documentId ?? (throw const UnknownException(message: 'Service ID missing'));
+  });
+
+  @override
+  Future<Result<ServiceRemoval>> removeService(String serviceId, int version) => _guard(() async {
+    final Map<String, dynamic> outcome = await _service.rpc<Map<String, dynamic>>(
+      'remove_service',
+      params: {'p_service_id': serviceId, 'p_version': version},
+    );
+    if (outcome['ok'] != true) {
+      final String code = outcome['error'] as String? ?? 'invalid_request';
+      throw DatabaseException(
+        code: 'invoice/$code',
+        message: code,
+        userMessageKey: 'invoice_$code',
+      );
+    }
+    return outcome['outcome'] == 'deleted' ? ServiceRemoval.deleted : ServiceRemoval.hidden;
   });
 
   static const String _registerColumns =
@@ -67,8 +80,7 @@ class InvoiceRepositoryImpl implements InvoiceRepository {
       'patient:${draft.patientId}',
       draft.toPayload(),
     );
-    return commit.invoiceId ??
-        (throw const UnknownException(message: 'Invoice ID missing'));
+    return commit.invoiceId ?? (throw const UnknownException(message: 'Invoice ID missing'));
   });
 
   @override

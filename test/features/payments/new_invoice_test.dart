@@ -14,7 +14,10 @@ const t = AppStrings.invoices;
 
 Future<void> fill(WidgetTester tester, String label, String text) async {
   await tester.enterText(
-    find.descendant(of: find.widgetWithText(LabeledFormField, label), matching: find.byType(TextField)),
+    find.descendant(
+      of: find.widgetWithText(LabeledFormField, label),
+      matching: find.byType(TextField),
+    ),
     text,
   );
   await tester.pumpAndSettle();
@@ -33,15 +36,21 @@ void main() {
   test('draft arithmetic matches the database rounding', () {
     final pt6 = catalogFixture[1];
     final draft = InvoiceDraft(
-      patientId: 'p', branch: ClinicLocation.tagamoa, invoiceDate: DateTime(2026, 11, 10),
+      patientId: 'p',
+      branch: ClinicLocation.tagamoa,
+      invoiceDate: DateTime(2026, 11, 10),
       lines: [InvoiceLineDraft(service: pt6, quantity: 2)],
-      discountKind: DiscountKind.percent, discountValue: 1250, cashMinor: 100000,
+      discountKind: DiscountKind.percent,
+      discountValue: 1250,
+      cashMinor: 100000,
     );
     expect(draft.subtotalMinor, 480000);
     expect(draft.discountMinor, 60000);
     expect(draft.dueAfterMinor, 320000);
     expect(draft.toPayload()['discount'], {'kind': 'percent', 'value': 1250});
-    expect(draft.toPayload()['payments'], [{'method': 'cash', 'amount_minor': 100000}]);
+    expect(draft.toPayload()['payments'], [
+      {'method': 'cash', 'amount_minor': 100000},
+    ]);
   });
 
   testWidgets('front desk issues an invoice with doctors and part payment', (tester) async {
@@ -76,7 +85,12 @@ void main() {
 
     final payload = repo.created.single.toPayload();
     expect(payload['lines'], [
-      {'service_id': 'pt6', 'quantity': 2, 'unit_price_minor': 240000, 'doctor_ids': ['staff-fixture']},
+      {
+        'service_id': 'pt6',
+        'quantity': 2,
+        'unit_price_minor': 240000,
+        'doctor_ids': ['staff-fixture'],
+      },
       {'service_id': 'tr6', 'quantity': 1, 'unit_price_minor': 135000, 'doctor_ids': <String>[]},
     ]);
     expect(payload['payments'], [
@@ -101,9 +115,15 @@ void main() {
   });
 
   testWidgets('a rejected invoice keeps the form and explains why', (tester) async {
-    final repo = FakeInvoiceRepository(createResult: const Result.failure(DatabaseException(
-      code: 'invoice/catalog_changed', message: 'catalog_changed', userMessageKey: 'invoice_catalog_changed',
-    )));
+    final repo = FakeInvoiceRepository(
+      createResult: const Result.failure(
+        DatabaseException(
+          code: 'invoice/catalog_changed',
+          message: 'catalog_changed',
+          userMessageKey: 'invoice_catalog_changed',
+        ),
+      ),
+    );
     await pumpNewInvoice(tester, repo: repo, user: cashier);
     await addService(tester, 'Initial assessment');
     await tester.tap(createButton);

@@ -5,6 +5,10 @@ import 'invoice_draft.dart';
 import 'invoice_summary.dart';
 import 'service_catalog_item.dart';
 
+/// What removing a service did: deleted when no invoice had used it,
+/// hidden when invoices list it and must keep showing it.
+enum ServiceRemoval { deleted, hidden }
+
 /// Data access for the redesigned invoice workflow. Every write goes through
 /// the database's `execute_invoice_command`.
 abstract interface class InvoiceRepository {
@@ -13,6 +17,9 @@ abstract interface class InvoiceRepository {
 
   /// Creates or updates a service and returns its ID.
   Future<Result<String>> saveService(ServiceDraft draft);
+
+  /// Takes a service off the catalog; see [ServiceRemoval].
+  Future<Result<ServiceRemoval>> removeService(String serviceId, int version);
 
   /// A patient's invoices, newest first, including voided ones.
   Future<Result<List<InvoiceSummary>>> patientInvoices(String patientId);

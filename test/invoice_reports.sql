@@ -141,6 +141,41 @@ BEGIN
     OR jsonb_array_length(r->'lines') IS DISTINCT FROM 5 THEN
     RAISE EXCEPTION 'Services report wrong: %', r;
   END IF;
+
+  -- 7. A refund that hands money back and moves money between services.
+  -- PT 3,000 (Dr A) + traction 1,200, 2,800 paid in cash: PT holds 2,000 and
+  -- traction 800. Refunding 2,000 of PT leaves it at 1,000, so 1,000 comes
+  -- off PT: 600 handed back in cash and 400 moved to traction.
+  inv := pg_temp.ok(cashier, 'invoice_create', pg_temp.bill(jsonb_build_array(
+    pg_temp.line(pt_six, 1, ARRAY[dr_a]), pg_temp.line(tr_six, 1)),
+    '[{"method":"cash","amount_minor":280000}]'));
+  PERFORM pg_temp.ok(cashier, 'refund_create', jsonb_build_object('id', inv, 'version', pg_temp.version(inv),
+    'branch', 'tagamoa', 'reason', 'Stopping PT', 'payback_minor', 60000, 'payback_method', 'cash',
+    'lines', jsonb_build_array(jsonb_build_object('line_id',
+      (SELECT id FROM public.invoice_lines WHERE invoice_id = inv AND service_type = 'pt_session'),
+      'sessions', 4, 'value_minor', 200000))));
+  r := public.invoice_report('revenue', today, today);
+  IF (SELECT jsonb_agg(jsonb_build_array(x->>'service_name', x->>'method', (x->>'amount_minor')::bigint)
+        ORDER BY x->>'service_name', x->>'method' NULLS LAST, (x->>'amount_minor')::bigint)
+      FROM jsonb_array_elements(r->'rows') x WHERE x->>'invoice_id' = inv::text AND x->>'kind' = 'refund')
+      IS DISTINCT FROM '[["6 PT sessions","cash",-60000],["6 PT sessions",null,-40000],
+        ["6 traction sessions",null,40000]]'::jsonb
+    OR (r->'totals'->>'cash_minor')::bigint IS DISTINCT FROM 253333 + 280000 - 60000
+    OR (r->'totals'->>'moved_minor')::bigint IS DISTINCT FROM 0 THEN
+    RAISE EXCEPTION 'Refund rows not split into payback and adjustment: %', r;
+  END IF;
+  r := public.invoice_report('doctors', today, today);
+  IF (SELECT jsonb_object_agg(coalesce(d->>'doctor_name', 'none'),
+        jsonb_build_array((d->>'share_minor')::bigint, (d->>'moved_minor')::bigint))
+      FROM jsonb_array_elements(r->'rows') d)
+      IS DISTINCT FROM '{"Dr A":[386666,-40000],"Dr B":[166667,0],"none":[240000,40000]}'::jsonb THEN
+    RAISE EXCEPTION 'Doctor totals changed by the refund split: %', r->'rows';
+  END IF;
+  -- Money in and out still sees one 600 cash refund.
+  r := public.invoice_report('money', today, today);
+  IF (r->'totals'->>'cash_out_minor')::bigint IS DISTINCT FROM 180000 + 60000 THEN
+    RAISE EXCEPTION 'Money report changed: %', r->'totals';
+  END IF;
 END;
 $$;
 ROLLBACK;

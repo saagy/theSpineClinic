@@ -142,7 +142,7 @@ final class ServiceCatalogControllerProvider
 }
 
 String _$serviceCatalogControllerHash() =>
-    r'6b6cb442254dc821c4a8996dee96ef096d4fed16';
+    r'cbfade410abacf98076447061b95002027426fd6';
 
 /// Saves catalog changes. Kept alive so a save finishing after the form
 /// closes still refreshes the catalog.

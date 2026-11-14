@@ -161,6 +161,10 @@ class InvoiceDetail {
   bool get canVoid => !isVoided && activeReceipts.isEmpty && activeRefunds.isEmpty;
   bool get canCorrect => !isVoided && activeRefunds.isEmpty;
 
+  /// A paid invoice without refunds can be cancelled together with its
+  /// payments in one step (`invoice_void_all`).
+  bool get canVoidWithPayments => !isVoided && activeRefunds.isEmpty && activeReceipts.isNotEmpty;
+
   /// A later active refund locks earlier receipts and refunds: its figures
   /// were calculated from them, so it has to be voided first.
   bool lockedByLaterRefund(DateTime recordedAt) =>

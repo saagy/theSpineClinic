@@ -74,9 +74,7 @@ class _ServiceCatalogScreenState extends ConsumerState<ServiceCatalogScreen> {
                 label: Text(_t.addService, style: AppTextStyles.bodyBold),
                 style: FilledButton.styleFrom(
                   minimumSize: const Size(AppSizes.tappableMin, AppSizes.tappableMin),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(AppSizes.r8),
-                  ),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppSizes.r8)),
                 ),
               ),
             ],
@@ -121,7 +119,9 @@ class _ServiceCatalogScreenState extends ConsumerState<ServiceCatalogScreen> {
                               ? _t.noArchived
                               : _t.noActive,
                           actionLabel: _query.isEmpty ? null : _t.clearSearch,
-                          onActionPressed: _query.isEmpty ? null : () => setState(() => _query = ''),
+                          onActionPressed: _query.isEmpty
+                              ? null
+                              : () => setState(() => _query = ''),
                         ),
                       )
                     : ServiceCatalogList(services: visible, onOpen: (service) => _open(service.id)),
@@ -154,11 +154,19 @@ class _ServiceCatalogScreenState extends ConsumerState<ServiceCatalogScreen> {
     if (MediaQuery.textScalerOf(context).scale(1) > 1.3) {
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
-        children: [search, const SizedBox(height: AppSizes.p8), show],
+        children: [
+          search,
+          const SizedBox(height: AppSizes.p8),
+          show,
+        ],
       );
     }
     return Row(
-      children: [Expanded(child: search), const SizedBox(width: AppSizes.p8), show],
+      children: [
+        Expanded(child: search),
+        const SizedBox(width: AppSizes.p8),
+        show,
+      ],
     );
   }
 

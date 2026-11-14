@@ -1,3 +1,4 @@
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../../../core/errors/app_exception.dart';
 import '../../../core/network/supabase_service.dart';
@@ -51,21 +52,27 @@ class BillingReportFilter {
 
   ReportRange range(DateTime now) => ReportRange.of(period, now, custom: custom);
 
-  /// Null while the doctor revenue report has no doctor chosen.
-  BillingReportQuery? query(DateTime now) => kind.requiresDoctor && doctorId == null
-      ? null
-      : BillingReportQuery(
-          kind: kind,
-          range: range(now),
-          branch: branch,
-          doctorId: kind.usesDoctor ? doctorId : null,
-        );
+  BillingReportQuery query(DateTime now) => BillingReportQuery(
+    kind: kind,
+    range: range(now),
+    branch: branch,
+    doctorId: kind.usesDoctor ? doctorId : null,
+  );
 }
 
-@riverpod
+/// Kept while the app is open, so coming back to Billing shows the same
+/// report and filters. A new sign-in starts over from today's money.
+@Riverpod(keepAlive: true)
 class BillingReportFilterController extends _$BillingReportFilterController {
   @override
-  BillingReportFilter build() => const BillingReportFilter();
+  BillingReportFilter build() {
+    // Only a different person or branch starts over; profile reloads keep
+    // the current choices.
+    final (_, ClinicLocation? branch) = ref.watch(
+      currentUserProvider.select((user) => (user.value?.id, InvoiceAccess.fixedBranch(user.value))),
+    );
+    return BillingReportFilter(branch: branch);
+  }
 
   void setKind(BillingReportKind kind) => state = state.copyWith(kind: kind);
 
@@ -99,8 +106,10 @@ Future<BillingReportData> billingReport(Ref ref, BillingReportQuery query) async
   );
 }
 
-/// The report laid out for the screen, CSV and print. Kept per request so
-/// table paging survives rebuilds.
+/// The report laid out for the screen and print. Kept per request so table
+/// paging survives rebuilds.
 @Riverpod(retry: _noRetry)
-Future<ReportView> billingReportView(Ref ref, BillingReportQuery query) async =>
-    buildReportView(await ref.watch(billingReportProvider(query).future));
+Future<ReportView> billingReportView(Ref ref, BillingReportQuery query) async => buildReportView(
+  await ref.watch(billingReportProvider(query).future),
+  singleDay: query.isSingleDay,
+);

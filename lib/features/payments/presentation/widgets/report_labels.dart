@@ -10,29 +10,36 @@ extension BillingReportKindLabels on BillingReportKind {
   String get label => switch (this) {
     BillingReportKind.money => _t.money,
     BillingReportKind.revenue => _t.revenue,
-    BillingReportKind.doctor => _t.doctor,
-    BillingReportKind.doctors => _t.doctors,
-    BillingReportKind.outstanding => _t.outstanding,
+    BillingReportKind.sessions => _t.sessions,
     BillingReportKind.services => _t.services,
+    BillingReportKind.outstanding => _t.outstanding,
   };
 
-  String get help => switch (this) {
+  IconData get icon => switch (this) {
+    BillingReportKind.money => Icons.payments_outlined,
+    BillingReportKind.revenue => Icons.insights_outlined,
+    BillingReportKind.sessions => Icons.event_available_outlined,
+    BillingReportKind.services => Icons.medical_services_outlined,
+    BillingReportKind.outstanding => Icons.pending_actions_outlined,
+  };
+
+  /// One short sentence on what the report shows.
+  String help({String? doctorName}) => switch (this) {
     BillingReportKind.money => _t.moneyHelp,
+    BillingReportKind.revenue when doctorName != null => _t.doctorHelp(doctorName),
     BillingReportKind.revenue => _t.revenueHelp,
-    BillingReportKind.doctor => _t.doctorHelp,
-    BillingReportKind.doctors => _t.doctorsHelp,
-    BillingReportKind.outstanding => _t.outstandingHelp,
+    BillingReportKind.sessions => _t.sessionsHelp,
     BillingReportKind.services => _t.servicesHelp,
+    BillingReportKind.outstanding => _t.outstandingHelp,
   };
 
-  /// Lowercase name used in exported file names.
+  /// Lowercase name used in printed file names.
   String get fileStem => switch (this) {
-    BillingReportKind.money => 'daily-money',
+    BillingReportKind.money => 'payments-and-refunds',
     BillingReportKind.revenue => 'revenue',
-    BillingReportKind.doctor => 'doctor-revenue',
-    BillingReportKind.doctors => 'doctors-summary',
-    BillingReportKind.outstanding => 'outstanding',
+    BillingReportKind.sessions => 'doctor-sessions',
     BillingReportKind.services => 'services',
+    BillingReportKind.outstanding => 'balances-due',
   };
 }
 
@@ -72,8 +79,14 @@ extension BillingReportFilterLabels on BillingReportFilter {
 
   String fileName(DateTime now) {
     final range = this.range(now);
+    final String stem = kind.usesDoctor && doctorName != null
+        ? '${kind.fileStem}-${doctorName!.toLowerCase().replaceAll(RegExp(r'[^a-z0-9]+'), '-')}'
+        : kind.fileStem;
     return kind.usesDates
-        ? _t.fileName(kind.fileStem, ReportRange.isoDay(range.from), ReportRange.isoDay(range.to))
-        : '${kind.fileStem}-${ReportRange.isoDay(now)}';
+        ? _t.fileName(stem, ReportRange.isoDay(range.from), ReportRange.isoDay(range.to))
+        : '$stem-${ReportRange.isoDay(now)}';
   }
+
+  /// What the selected report shows, naming the doctor where one is chosen.
+  String get help => kind.help(doctorName: kind.usesDoctor && doctorId != null ? doctorName : null);
 }

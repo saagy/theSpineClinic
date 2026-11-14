@@ -5,6 +5,9 @@ import '../../../core/constants/app_sizes.dart';
 import '../../../core/constants/app_strings.dart';
 import '../../../core/constants/app_text_styles.dart';
 import '../../../core/network/app_routes.dart';
+import '../../../shared/widgets/refresh_on_return.dart';
+import '../../auth/presentation/auth_providers.dart';
+import '../domain/invoice_access.dart';
 import 'billing_report_providers.dart';
 import 'widgets/invoice_access_gate.dart';
 import 'widgets/report_actions.dart';
@@ -15,9 +18,9 @@ import 'widgets/report_toolbar.dart';
 
 const _t = AppStrings.invoices;
 
-/// The Billing tab for payment staff and super admins: six reports that
-/// share a period, branch and doctor, with CSV export and A4 printing. The
-/// service catalog opens from the app bar.
+/// The Billing tab for payment staff and super admins: five reports that
+/// share a period, branch and doctor, with A4 printing. The service catalog
+/// opens from the app bar.
 class BillingScreen extends ConsumerWidget {
   const BillingScreen({super.key});
 
@@ -59,56 +62,77 @@ class BillingScreen extends ConsumerWidget {
     final filter = ref.watch(billingReportFilterControllerProvider);
     final DateTime now = DateTime.now();
     final query = filter.query(now);
-    final view = query == null ? null : ref.watch(billingReportViewProvider(query)).value;
-    final bool hasRows = view != null && view.sections.any((section) => section.sheet.rows.isNotEmpty);
+    final view = ref.watch(billingReportViewProvider(query)).value;
+    final bool hasRows =
+        view != null && view.sections.any((section) => section.sheet.rows.isNotEmpty);
     Future<void> refresh() async {
-      if (query == null) return;
       ref.invalidate(billingReportProvider(query));
       // The body shows a failed refresh; pull-to-refresh only needs to end.
       await ref.read(billingReportViewProvider(query).future).then((_) {}, onError: (_) {});
     }
 
+    // Back from an invoice or patient, or into the app again: reload in
+    // place, since payments, check-ins and other staff may have changed it.
+    void refreshOnReturn() {
+      if (!ref.read(billingReportProvider(query)).isLoading) {
+        ref.invalidate(billingReportProvider(query));
+      }
+    }
+
     final colors = Theme.of(context).colorScheme;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        const ReportTabs(),
-        Expanded(
-          child: RefreshIndicator(
-            onRefresh: refresh,
-            child: ListView(
-              physics: const AlwaysScrollableScrollPhysics(),
-              padding: const EdgeInsets.fromLTRB(
-                AppSizes.p16, AppSizes.p16, AppSizes.p16, AppSizes.p32,
-              ),
-              children: [
-                ReportToolbar(
-                  onRefresh: query == null ? null : refresh,
-                  onExport: view != null && view.export.rows.isNotEmpty
-                      ? () => exportReport(context, view, filter.fileName(now))
-                      : null,
-                  onPrint: hasRows ? () => printReport(context, filter, view) : null,
+    return RefreshOnReturn(
+      notifyOnEntry: false,
+      onReturn: refreshOnReturn,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          const ReportTabs(),
+          Expanded(
+            child: RefreshIndicator(
+              onRefresh: refresh,
+              child: ListView(
+                // Each report opens at its top.
+                key: ValueKey(filter.kind),
+                physics: const AlwaysScrollableScrollPhysics(),
+                padding: const EdgeInsets.fromLTRB(
+                  AppSizes.p16,
+                  AppSizes.p16,
+                  AppSizes.p16,
+                  AppSizes.p32,
                 ),
-                const SizedBox(height: AppSizes.p12),
-                Text.rich(
-                  TextSpan(
-                    children: [
-                      TextSpan(
-                        text: filter.periodLabel(now),
-                        style: AppTextStyles.captionBold.copyWith(color: colors.onSurface),
-                      ),
-                      TextSpan(text: '  ·  ${filter.kind.help}'),
-                    ],
+                children: [
+                  ReportToolbar(
+                    onRefresh: refresh,
+                    onPrint: hasRows ? () => printReport(context, filter, view) : null,
                   ),
-                  style: AppTextStyles.caption.copyWith(color: colors.onSurfaceVariant),
-                ),
-                const SizedBox(height: AppSizes.p16),
-                ReportBody(query: query, kind: filter.kind),
-              ],
+                  const SizedBox(height: AppSizes.p12),
+                  Text.rich(
+                    TextSpan(
+                      children: [
+                        TextSpan(
+                          text: filter.periodLabel(now),
+                          style: AppTextStyles.captionBold.copyWith(color: colors.onSurface),
+                        ),
+                        if (filter.branch case final branch?
+                            when InvoiceAccess.fixedBranch(ref.watch(currentUserProvider).value) !=
+                                null)
+                          TextSpan(
+                            text: '  ·  ${branch.displayLabel}',
+                            style: AppTextStyles.captionBold.copyWith(color: colors.onSurface),
+                          ),
+                        TextSpan(text: '  ·  ${filter.help}'),
+                      ],
+                    ),
+                    style: AppTextStyles.caption.copyWith(color: colors.onSurfaceVariant),
+                  ),
+                  const SizedBox(height: AppSizes.p16),
+                  ReportBody(query: query),
+                ],
+              ),
             ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }

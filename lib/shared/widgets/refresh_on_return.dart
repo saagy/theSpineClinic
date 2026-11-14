@@ -6,12 +6,17 @@ class RefreshOnReturn extends StatefulWidget {
     required this.onReturn,
     required this.child,
     this.enabled = true,
+    this.notifyOnEntry = true,
     super.key,
   });
 
   final VoidCallback onReturn;
   final Widget child;
   final bool enabled;
+
+  /// False when the screen loads its own data on entry and only returns
+  /// need a refresh.
+  final bool notifyOnEntry;
 
   @override
   State<RefreshOnReturn> createState() => _RefreshOnReturnState();
@@ -21,6 +26,7 @@ class _RefreshOnReturnState extends State<RefreshOnReturn>
     with WidgetsBindingObserver {
   bool _visible = false;
   bool _queued = false;
+  bool _entered = false;
 
   @override
   void initState() {
@@ -45,7 +51,8 @@ class _RefreshOnReturnState extends State<RefreshOnReturn>
         widget.enabled &&
         TickerMode.valuesOf(context).enabled &&
         (ModalRoute.isCurrentOf(context) ?? true);
-    if (visible && !_visible) _queueReturn();
+    if (visible && !_visible && (_entered || widget.notifyOnEntry)) _queueReturn();
+    if (visible) _entered = true;
     _visible = visible;
   }
 

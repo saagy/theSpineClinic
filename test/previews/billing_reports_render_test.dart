@@ -20,26 +20,37 @@ void main() {
   ];
   for (final (name, width, dark, scale) in sizes) {
     testWidgets('billing reports render on $name', (tester) async {
-      final repo = FakeBillingReportRepository(json: {BillingReportKind.money: moneyJson(count: 12)});
-      final key = await pumpBilling(tester, repo: repo, width: width, height: 1400, dark: dark, textScale: scale);
+      final repo = FakeBillingReportRepository(
+        json: {BillingReportKind.money: moneyJson(count: 12)},
+      );
+      final key = await pumpBilling(
+        tester,
+        repo: repo,
+        width: width,
+        height: 1400,
+        dark: dark,
+        textScale: scale,
+      );
       expect(tester.takeException(), isNull);
       await capturePolish(tester, key, 'reports-money-$name');
       for (final (file, tab) in [
         ('revenue', t.revenue),
-        ('doctor', t.doctor),
-        ('doctors', t.doctors),
-        ('outstanding', t.outstanding),
+        ('doctor', t.revenue),
+        ('sessions', t.sessions),
         ('services', t.services),
+        ('outstanding', t.outstanding),
       ]) {
-        final target = find.text(tab).first;
-        await tester.ensureVisible(target);
-        await tester.pumpAndSettle();
-        await tester.tap(target);
-        await tester.pumpAndSettle();
+        if (file != 'doctor') await openReport(tester, tab);
         if (file == 'doctor') {
           ProviderScope.containerOf(tester.element(find.byType(BillingScreen)))
               .read(billingReportFilterControllerProvider.notifier)
               .setDoctor('d1', 'Dr. Ahmed Hassan');
+          await tester.pumpAndSettle();
+        }
+        if (file == 'sessions') {
+          ProviderScope.containerOf(
+            tester.element(find.byType(BillingScreen)),
+          ).read(billingReportFilterControllerProvider.notifier).setDoctor(null, null);
           await tester.pumpAndSettle();
         }
         if (file == 'services') {

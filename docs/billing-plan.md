@@ -32,9 +32,10 @@ suites locally and was **applied to the linked project by hand** (SQL editor)
 on November 11, 2026, then verified object by object. Its version
 `20261111120000` was then recorded in the project's migration history, so a
 later `supabase db push` treats it as applied. **Slice 6 (reports) is built
-in the app** on November 11, 2026: the Billing screen shows the six reports
-below with a shared period, branch and doctor, CSV export and A4 landscape
-printing, and super admins open it from the Admin hub. Migration
+in the app** on November 11, 2026: the Billing screen shows the reports
+below with a shared period, branch and doctor (regrouped into five reports on
+November 13, 2026; see [the reports redesign](billing-reports-redesign.md)) and A4 landscape
+printing (CSV export was removed on November 12, 2026), and super admins open it from the Admin hub. Migration
 `20261111144013_invoice_reports.sql` adds the `invoice_report` RPC; it passes
 the SQL suites locally and was **applied to the linked project** on November
 11, 2026 through the Supabase tooling (file renamed to the recorded version;
@@ -54,31 +55,60 @@ November 12, 2026 against the linked project with a fictional patient: every
 invoice, payment, refund, void and correction path was exercised from the
 app on desktop and phone, the reports were checked against those writes, and
 six issues were fixed; staff employment details were saved, reloaded and
-cleared live as the super admin. Printing and CSV download remain to be
-checked in a regular browser; see [the review results](billing-review-results.md).
+cleared live as the super admin. Printing remains to be checked in a
+regular browser; see [the review results](billing-review-results.md).
 
 Slice 6 behavior worth knowing:
 
 - Money is dated by when it changed hands (receipt received time, refund
   recording time) and belongs to the branch of that receipt or refund.
-  Voided documents are left out of every total and listed in the Daily
-  money void log on the day they were voided.
-- Revenue and both doctor reports are built from the stored line
-  allocations. A line's collected money is split equally among its doctors
-  to the piaster, so the Doctors summary (including its "No doctor credit"
-  row) always adds up to the money collected.
-- A refund that pays nothing back can still move collected money between
-  lines of the invoice. Those rows have no cash or Visa method and appear
-  as "Reallocated"; the column is shown only when such money exists.
+  Voided documents are left out of every total and listed under Cancelled
+  in Payments & refunds on the day they were cancelled.
+- Revenue is built from the stored line allocations. A line's paid money is
+  split equally among its doctors to the piaster, so Revenue's By doctor
+  table (including its "No doctor" row) always adds up to the money paid.
+  With all doctors the app reads `invoice_report` kinds `revenue` and
+  `doctors` together; with one doctor, kind `doctor`.
+- A refund can move paid money between lines of the invoice as well as
+  hand money back. Each refund row is split: the money handed back keeps its
+  cash or Visa method, and money that only moved appears as "Refund
+  adjustment" (migration `20261113175332`). The figure and column are shown
+  only when such money exists.
 - Services counts invoices **dated** in the period (by the invoice's branch)
-  and shows what has been collected on them to date; Outstanding ignores
-  the period and is always as of now.
+  and shows what has been paid on them to date; Balances due ignores the period
+  and is always as of now.
 - Reports cover at most 366 days and list at most 5,000 detail rows; totals
   always include every row and the screen says when rows are capped.
-- CSV export contains the report's detail rows with every column
-  (including invoice, branch and document columns hidden on screen); print
-  contains the totals and the tables as shown.
+- Print contains the totals and the tables as shown. There is no CSV export:
+  front-desk staff print, and fixed print templates will be added later.
+- Receptionists with a branch see only their branch's reports and do not
+  get a branch filter. Their invoices, payments and refunds are recorded at
+  their own branch, shown as plain text instead of a selector. Super admins
+  and receptionists without a branch keep the selectors.
 - A failed report shows its error with Retry instead of retrying silently.
+
+Doctor sessions report (added November 13, 2026, migration
+`20261113100000_doctor_session_report.sql`, applied to the linked project):
+
+- A seventh Billing tab counts the sessions each doctor did in a period, by
+  type (PT sessions, assessments, reassessments), for working out doctor pay.
+  It is built from appointments, not from invoices or collected money.
+- Only checked-in appointments count. Cancelled ones never count. Past
+  appointments still marked as scheduled are listed under "Not checked in
+  yet" and flagged in the totals so reception can resolve them before pay is
+  worked out.
+- A session with two doctors counts once for each of them; the screen says
+  so and each session lists who it was shared with. Spinal traction is done
+  without a doctor and is never counted, including older appointments that
+  still have one attached.
+- The branch is the patient's branch, as on the schedule screens.
+- All doctors: one row per doctor that expands to their sessions. Printing
+  gives the summary, the unchecked appointments, then each doctor's sessions
+  on a page of their own, ready to hand out. One doctor: their figures and
+  session list.
+- There are no pay rates yet. When the clinic sets them, pay is the rate per
+  type times these counts; rates need their own permissions and change
+  history (see AGENTS.md technical debt).
 
 Slice 5 behavior worth knowing:
 
@@ -130,12 +160,27 @@ and every printed document remain English only.
 
 ## Concepts
 
+Staff-facing wording (November 12, 2026): the app says **Cancel** for a void
+and **Edit** for a correction, and cancelled documents print with a
+CANCELLED watermark. The database and code keep the void/correct names.
+Cancelling a paid invoice (November 13, 2026): Cancel invoice asks "Was this
+money given back to the patient?" **No, entered by mistake** cancels the
+invoice and its payments together in one step (`invoice_void_all`). **Yes**
+opens the refund form, because money that left the drawer is a refund. An
+invoice with an active refund still has to have the refund cancelled first.
+
+Services taken off the catalog show as **Removed**. The service form has one
+**Remove service** action: `remove_service` deletes a service no invoice has
+used and hides (sets inactive) one that invoices list. A removed service
+offers **Restore service**. Migration `20261113090000` was applied to the linked
+project by hand (SQL editor) on November 13, 2026.
+
 | Document | Purpose | Staff action |
 | --- | --- | --- |
 | Invoice | Services charged, quantities, line doctors, invoice discount, and invoice date. Immutable after creation. | New invoice |
 | Receipt | Money received against one invoice by cash or Visa. One invoice can have many receipts. | Record payment |
-| Void | Cancels a mistake. It stays visible with actor, time, and reason, and is excluded from every total. Numbers are never reused. | Void |
-| Correction | Voids the invoice or receipt and creates a prefilled replacement linked to the original. This is the only editing path. | Correct |
+| Void | Cancels a mistake. It stays visible with actor, time, and reason, and is excluded from every total. Numbers are never reused. | Cancel |
+| Correction | Voids the invoice or receipt and creates a prefilled replacement linked to the original. This is the only editing path. | Edit |
 | Refund | A patient-requested reduction in invoice value. Unused sessions are cancelled and money is paid back immediately when needed. | Refund |
 
 ### Refund calculation
@@ -188,7 +233,9 @@ Rules:
 - **Voids** exclude a document from totals for its original date and appear in
   the void log on the void date. A later active refund blocks voiding or
   correcting earlier receipts and refunds on that invoice; void the refund
-  first. An invoice can be voided only with no active receipts or refunds and
+  first. An invoice can be voided on its own only with no active receipts or refunds
+(`invoice_void_all` cancels it together with its receipts when there are no
+refunds) and
   while its remaining sessions are unused and unbooked.
 - **Corrections:** correcting a receipt voids it and records the replacement
   with the original received time. Correcting an invoice creates the
@@ -235,20 +282,22 @@ actions that the current user cannot perform.
 **Billing tab (reports only)**
 
 The tab shares a toolbar for date range presets, branch, and doctor. Wide
-windows show tables. Narrow windows show lists. Each report has a totals bar,
-CSV export, and A4 printing.
+windows show tables. Narrow windows show lists. Each report has a totals bar and
+A4 printing.
 
-1. **Daily money in/out:** receipts and refunds paid back by cash and Visa, net
-   expected cash and Visa, totals by receptionist, and voided documents.
-2. **Revenue:** today, this month, or a custom range. One row per collected
-   service allocation: date, patient, file number, service, price, collected
-   amount, doctors, and method.
-3. **Doctor revenue:** one doctor over a range: date, patient, file number,
-   service, price, and doctor share.
-4. **Doctors summary:** collected total, cash, and Visa for each doctor.
-5. **Outstanding balances:** patient, file number, open invoices, amount due,
-   and oldest unpaid date.
-6. **Services:** count, billed, and collected for each service, with detail rows.
+1. **Payments & refunds:** every receipt and every refund paid back, with Cash,
+   Visa and Total after paybacks (each showing received and paid back),
+   totals by receptionist, and cancelled documents.
+2. **Revenue:** what the money paid for. With all doctors: a By doctor table
+   (cash, Visa, total, and "No doctor") above every payment line: date,
+   patient and ID, service, doctors, method, price and paid. With one doctor
+   (picker or tapping their row): their lines with price, paid and their
+   share; split lines say so.
+3. **Doctor sessions:** checked-in sessions per doctor and type for doctor pay,
+   with each doctor's session list and the appointments not checked in yet.
+4. **Services:** quantity, total price, paid and balance due for each service, with
+   each invoice behind it.
+5. **Balances due:** patient and ID, due since, open invoices and balance due.
 
 Design follows [DESIGN.md](../DESIGN.md) and is reviewed in rendered desktop,
 mobile, light, and dark states before release.

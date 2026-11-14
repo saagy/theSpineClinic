@@ -6,6 +6,7 @@ import '../../patient/presentation/patient_providers.dart';
 import '../domain/invoice_access.dart';
 import '../domain/invoice_action.dart';
 import '../domain/invoice_detail.dart';
+import 'billing_report_providers.dart';
 import 'invoice_providers.dart';
 import 'service_catalog_providers.dart';
 
@@ -27,7 +28,7 @@ class InvoiceActionState {
 
 /// Runs payments, refunds, voids and corrections on an invoice. Kept alive so
 /// a request finishing after its dialog or form closes still refreshes the
-/// invoice, the patient's list and the session balances.
+/// invoice, the patient's list, the session balances and the Billing reports.
 @Riverpod(keepAlive: true)
 class InvoiceActionController extends _$InvoiceActionController {
   @override
@@ -57,6 +58,9 @@ class InvoiceActionController extends _$InvoiceActionController {
     ref.invalidate(invoiceDetailProvider(action.invoice.id));
     ref.invalidate(patientInvoicesProvider(patientId));
     ref.invalidate(patientDetailProvider(patientId));
+    // Every Billing report: the one this invoice was opened from may sit
+    // under it, still on screen beside a docked panel.
+    ref.invalidate(billingReportProvider);
     if (action.kind == InvoiceActionKind.invoiceCorrect) ref.invalidate(serviceCatalogProvider);
     if (result.isSuccess) ref.invalidate(patientIsEmptyProvider(patientId));
     return result;

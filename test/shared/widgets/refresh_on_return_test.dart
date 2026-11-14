@@ -37,6 +37,30 @@ void main() {
     },
   );
 
+  testWidgets('screens that load on entry refresh only on later returns', (
+    tester,
+  ) async {
+    var returns = 0;
+    Widget screen(bool selected) => MaterialApp(
+      home: RefreshOnReturn(
+        enabled: selected,
+        notifyOnEntry: false,
+        onReturn: () => returns++,
+        child: const SizedBox(),
+      ),
+    );
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+    await tester.pumpWidget(screen(true));
+    expect(returns, 0);
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.inactive);
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+    await tester.pump();
+    expect(returns, 1);
+    await tester.pumpWidget(screen(false));
+    await tester.pumpWidget(screen(true));
+    expect(returns, 2);
+  });
+
   testWidgets('only the selected schedule subtab refreshes on return', (
     tester,
   ) async {

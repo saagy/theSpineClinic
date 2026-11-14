@@ -12,10 +12,7 @@ List<Widget> _aligned(
   List<ReportColumn> columns,
   Widget Function(int index, ReportColumn column) cell,
 ) {
-  final visible = [
-    for (final (index, column) in columns.indexed)
-      if (!column.exportOnly) (index, column),
-  ];
+  final visible = [for (final (index, column) in columns.indexed) (index, column)];
   return [
     for (final (position, (index, column)) in visible.indexed)
       () {
@@ -76,19 +73,32 @@ class ReportTableRow extends StatelessWidget {
         ? Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              ..._aligned(
-                columns,
-                (index, column) => Text(
-                  cells[index].text,
-                  textAlign: column.numeric ? TextAlign.end : TextAlign.start,
-                  style: _style(context, column, cells[index]),
-                ),
-              ),
+              ..._aligned(columns, (index, column) => _cell(context, column, cells[index])),
               if (trailing != null) ...[const SizedBox(width: AppSizes.p8), trailing!],
             ],
           )
         : _stacked(context),
   );
+
+  /// The value with its quieter second line, if any.
+  Widget _cell(BuildContext context, ReportColumn column, ReportCell cell) {
+    final TextAlign align = column.numeric ? TextAlign.end : TextAlign.start;
+    final Widget main = Text(cell.text, textAlign: align, style: _style(context, column, cell));
+    if (cell.sub == null) return main;
+    return Column(
+      crossAxisAlignment: column.numeric ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+      children: [
+        main,
+        Text(
+          cell.sub!,
+          textAlign: align,
+          style: AppTextStyles.caption.copyWith(
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
+          ),
+        ),
+      ],
+    );
+  }
 
   Widget _stacked(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
@@ -96,19 +106,28 @@ class ReportTableRow extends StatelessWidget {
     final bool large = MediaQuery.textScalerOf(context).scale(1) > 1.3;
     final visible = [
       for (final (index, column) in columns.indexed)
-        if (!column.exportOnly && cells[index].text.isNotEmpty) (column, cells[index]),
+        if (cells[index].text.isNotEmpty) (column, cells[index]),
     ];
     (ReportColumn, ReportCell)? find(ReportCellRole role) =>
         visible.where((item) => item.$1.role == role).firstOrNull;
     final title = find(ReportCellRole.title);
     final lead = find(ReportCellRole.lead);
-    final String meta = [
+    String join(ReportCellRole role) => [
       for (final (column, cell) in visible)
-        if (column.role == ReportCellRole.meta) cell.text,
+        if (column.role == role) cell.inline,
     ].join(_separator);
+    // What the row is about (such as the service and doctor) reads first;
+    // the quieter facts follow, led by the title's second line (the
+    // patient ID) and ending with the labeled figures.
+    final String details = join(ReportCellRole.detail);
     final String figures = [
       for (final (column, cell) in visible)
-        if (column.role == ReportCellRole.figure) '${column.label} ${cell.text}',
+        if (column.role == ReportCellRole.figure) '${column.label} ${cell.inline}',
+    ].join(_separator);
+    final String meta = [
+      ?title?.$2.sub,
+      if (join(ReportCellRole.meta) case final String text when text.isNotEmpty) text,
+      if (figures.isNotEmpty) figures,
     ].join(_separator);
     // With other figures on the row, the lead amount says what it is.
     final Widget? amount = lead == null
@@ -117,7 +136,7 @@ class ReportTableRow extends StatelessWidget {
             crossAxisAlignment: large ? CrossAxisAlignment.start : CrossAxisAlignment.end,
             children: [
               Text(lead.$2.text, style: _style(context, lead.$1, lead.$2)),
-              if (figures.isNotEmpty) Text(lead.$1.label, style: muted),
+              if (figures.isNotEmpty && !strong) Text(lead.$1.label, style: muted),
             ],
           );
     return Row(
@@ -132,10 +151,14 @@ class ReportTableRow extends StatelessWidget {
                   title.$2.text,
                   style: AppTextStyles.bodyBold.copyWith(color: _color(context, title.$2.tone)),
                 ),
-              if (meta.isNotEmpty) Text(meta, style: muted),
-              if (figures.isNotEmpty)
+              if (details.isNotEmpty)
                 Text(
-                  figures,
+                  reportUnbroken(details),
+                  style: AppTextStyles.caption.copyWith(color: colors.onSurface),
+                ),
+              if (meta.isNotEmpty)
+                Text(
+                  reportUnbroken(meta),
                   style: muted.copyWith(fontFeatures: const [FontFeature.tabularFigures()]),
                 ),
               if (large && amount != null) ...[const SizedBox(height: AppSizes.p4), amount],

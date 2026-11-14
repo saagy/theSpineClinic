@@ -27,11 +27,12 @@ refund, correction and failure paths through real routing) and
 payment code (slice 5) retired their tests; the full suite is 588 tests.
 The billing reports slice (11 November 2026) adds
 `test/features/payments/billing_reports_test.dart` (periods, request
-parameters, report parsing, CSV safety, PDF rendering, filters, the doctor
+parameters, report parsing, PDF rendering, filters, the doctor
 requirement, row navigation, expansion, paging, capped rows, empty, failure
 and denied states) and `test/previews/billing_reports_render_test.dart`; the
-full suite is 604 tests. The CSV save dialog, the print dialog and the custom
-date-range picker are not exercised by tests.
+full suite is 604 tests. CSV export was removed on November 12, 2026 (the
+suite is now 624 tests). The print dialog and the shared date-range picker
+(`showAppDateRangePicker`) are not exercised by tests.
 The staff reference details slice (12 November 2026) adds
 `test/features/auth/staff_details_test.dart` (database shape, directory
 schedule text, loading saved details, unchanged details not resent, changed
@@ -39,6 +40,12 @@ details saved, validation, failed load with Retry, creation) and
 employment-details captures in `test/previews/staff_editor_render_test.dart`;
 the full suite is 617 tests. The native date and time pickers are not
 exercised by tests.
+The billing freshness follow-up (14 November 2026) adds
+`test/features/payments/billing_freshness_test.dart` (invoice commands reload
+open reports, Billing reloads on return and resume, reloaded tables keep page
+and open rows, the invoice's patient link from Billing and its absence over
+the patient page, workspace tab order by role) and an entry case in
+`refresh_on_return_test.dart`; the full suite is 649 tests.
 The return-refresh follow-up adds 12 tests covering the 60-second boundary,
 no polling, concurrent returns, failed refresh retention/cooldown, local status
 races, independent week ages, branch changes, browser lifecycle events and
@@ -87,7 +94,7 @@ node test/review_database.mjs /tmp/spine-review-tools/node_modules/@electric-sql
 
 On Windows use a directory under $env:TEMP. The harness accepts no database URL.
 It creates an ephemeral database, loads the snapshot or replays migrations,
-then runs these ten scripts:
+then runs these scripts:
 
 - trigger_sanity.sql
 - doctor_role_integrity.sql
@@ -108,6 +115,9 @@ then runs these ten scripts:
   IDs, unchanged behavior for callers that send no details)
 - invoice_fixture.sql + invoice_reports.sql (report access, money totals and
   void log, revenue, exact doctor shares, outstanding balances, services)
+- invoice_fixture.sql + doctor_session_report.sql (doctor sessions access,
+  checked-in counts per type, shared sessions, traction and cancelled
+  appointments left out, pending appointments, branch and doctor filters)
 
 `invoice_fixture.sql` opens a transaction that the following invoice test
 rolls back, so always pass the pair together when running a subset.

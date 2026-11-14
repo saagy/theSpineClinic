@@ -7,10 +7,8 @@ import '../../../../shared/widgets/app_input_decoration.dart';
 import '../../../../shared/widgets/form_field_pair.dart';
 import '../../../../shared/widgets/form_section.dart';
 import '../../../../shared/widgets/labeled_form_field.dart';
-import '../../../../shared/widgets/record_action_menu.dart';
-import '../../../../shared/widgets/record_menu_select.dart';
-import '../../../patient/domain/clinic_location.dart';
 import '../../../patient/domain/patient.dart';
+import 'invoice_branch_field.dart';
 import 'invoice_form_input.dart';
 import 'service_form_controls.dart';
 
@@ -46,20 +44,10 @@ class InvoiceDetailsSection extends StatelessWidget {
             ),
           const SizedBox(height: AppSizes.p20),
           FormFieldPair(
-            first: LabeledFormField(
-              label: _t.branch,
+            first: InvoiceBranchField(
+              value: input.branch,
               enabled: enabled,
-              child: RecordMenuSelect<ClinicLocation>(
-                label: _t.branch,
-                value: input.branch,
-                isField: true,
-                decoration: appInputDecoration(context, enabled: enabled),
-                options: [
-                  for (final branch in ClinicLocation.values)
-                    RecordMenuAction(branch, branch.displayLabel, Icons.location_on_outlined),
-                ],
-                onChanged: enabled ? (branch) => onChanged(() => input.branch = branch) : null,
-              ),
+              onChanged: (branch) => onChanged(() => input.branch = branch),
             ),
             second: LabeledFormField(
               label: _t.invoiceDate,

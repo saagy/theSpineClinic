@@ -3,14 +3,11 @@ import '../../../../core/constants/app_sizes.dart';
 import '../../../../core/constants/app_strings.dart';
 import '../../../../core/constants/app_text_styles.dart';
 import '../../../../core/utils/money.dart';
-import '../../../../shared/widgets/app_input_decoration.dart';
 import '../../../../shared/widgets/form_field_pair.dart';
 import '../../../../shared/widgets/form_section.dart';
 import '../../../../shared/widgets/labeled_form_field.dart';
-import '../../../../shared/widgets/record_action_menu.dart';
-import '../../../../shared/widgets/record_menu_select.dart';
-import '../../../patient/domain/clinic_location.dart';
 import '../../domain/invoice_detail.dart';
+import 'invoice_branch_field.dart';
 import 'invoice_line_editor.dart';
 import 'invoice_timeline.dart';
 import 'refund_form_input.dart';
@@ -74,7 +71,10 @@ class RefundLinesSection extends StatelessWidget {
           if (showMissing && !input.draft().hasLines)
             Padding(
               padding: const EdgeInsets.only(top: AppSizes.p12),
-              child: Text(_t.refundEmpty, style: AppTextStyles.caption.copyWith(color: colors.error)),
+              child: Text(
+                _t.refundEmpty,
+                style: AppTextStyles.caption.copyWith(color: colors.error),
+              ),
             ),
         ],
       ),
@@ -145,7 +145,9 @@ class RefundDetailsSection extends StatelessWidget {
                 showSelectedIcon: false,
                 style: const ButtonStyle(
                   textStyle: WidgetStatePropertyAll(AppTextStyles.captionBold),
-                  minimumSize: WidgetStatePropertyAll(Size(AppSizes.tappableMin, AppSizes.tappableMin)),
+                  minimumSize: WidgetStatePropertyAll(
+                    Size(AppSizes.tappableMin, AppSizes.tappableMin),
+                  ),
                 ),
                 onSelectionChanged: enabled
                     ? (methods) => onChanged(() => input.method = methods.firstOrNull ?? method)
@@ -161,22 +163,15 @@ class RefundDetailsSection extends StatelessWidget {
                 ),
               ),
           ] else
-            Text(_t.paybackNone, style: AppTextStyles.body.copyWith(color: colors.onSurfaceVariant)),
-          const SizedBox(height: AppSizes.p20),
-          LabeledFormField(
-            label: _t.branch,
-            enabled: enabled,
-            child: RecordMenuSelect<ClinicLocation>(
-              label: _t.branch,
-              value: input.branch,
-              isField: true,
-              decoration: appInputDecoration(context, enabled: enabled),
-              options: [
-                for (final branch in ClinicLocation.values)
-                  RecordMenuAction(branch, branch.displayLabel, Icons.location_on_outlined),
-              ],
-              onChanged: enabled ? (branch) => onChanged(() => input.branch = branch) : null,
+            Text(
+              _t.paybackNone,
+              style: AppTextStyles.body.copyWith(color: colors.onSurfaceVariant),
             ),
+          const SizedBox(height: AppSizes.p20),
+          InvoiceBranchField(
+            value: input.branch,
+            enabled: enabled,
+            onChanged: (branch) => onChanged(() => input.branch = branch),
           ),
           const SizedBox(height: AppSizes.p20),
           ServiceTextInput(

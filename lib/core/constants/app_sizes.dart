@@ -400,13 +400,24 @@ abstract final class AppSizes {
 
   /// Reading width of the report tables on very wide windows.
   static const double reportContentMaxWidth = 1280.0;
-  static const double reportTimeColumnWidth = 176.0;
+
+  /// A date, with the time on a second line where rows have one.
   static const double reportDateColumnWidth = 112.0;
+  static const double reportClockColumnWidth = 88.0;
   static const double reportCodeColumnWidth = 96.0;
-  static const double reportDocumentColumnWidth = 168.0;
+
+  /// Receipt or Refund over its number.
+  static const double reportDocumentColumnWidth = 104.0;
+  /// Cash, Visa or Refund adjustment (on two lines).
   static const double reportMethodColumnWidth = 96.0;
   static const double reportCountColumnWidth = 72.0;
-  static const double reportAmountColumnWidth = 124.0;
+  static const double reportAmountColumnWidth = 116.0;
+
+  /// Narrowest window that shows the reports as tabs; narrower windows get
+  /// one Report menu instead of tabs that scroll sideways.
+  static const double reportTabsMinWidth = 640.0;
+  static const double reportSessionCountColumnWidth = 120.0;
+  static const double reportSessionTypeColumnWidth = 136.0;
 
   /// Narrowest useful width of a flexible text column in a report table.
   static const double reportTextColumnMinWidth = 132.0;

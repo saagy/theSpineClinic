@@ -8,7 +8,7 @@ import '../../domain/invoice_action.dart';
 import '../invoice_detail_providers.dart';
 
 /// Shared frame for the small invoice commands (payment, receipt correction,
-/// void): a bounded form, an inline failure message, and a confirm button
+/// cancel): a bounded form, an inline failure message, and a confirm button
 /// that shows progress and cannot be pressed twice. Pops `true` once saved.
 class InvoiceActionDialog extends ConsumerStatefulWidget {
   const InvoiceActionDialog({
@@ -18,11 +18,15 @@ class InvoiceActionDialog extends ConsumerStatefulWidget {
     required this.buildAction,
     required this.child,
     this.help,
+    this.dismissLabel = AppStrings.cancel,
     this.destructive = false,
   });
   final String title;
   final String? help;
   final String confirmLabel;
+
+  /// Label of the button that closes the dialog without saving.
+  final String dismissLabel;
   final bool destructive;
   final Widget child;
 
@@ -72,7 +76,10 @@ class _InvoiceActionDialogState extends ConsumerState<InvoiceActionDialog> {
         titlePadding: const EdgeInsets.fromLTRB(AppSizes.p24, AppSizes.p24, AppSizes.p24, 0),
         contentPadding: const EdgeInsets.all(AppSizes.p24),
         actionsPadding: const EdgeInsets.fromLTRB(AppSizes.p24, 0, AppSizes.p24, AppSizes.p24),
-        title: Text(widget.title, style: AppTextStyles.headingSmall.copyWith(color: colors.onSurface)),
+        title: Text(
+          widget.title,
+          style: AppTextStyles.headingSmall.copyWith(color: colors.onSurface),
+        ),
         content: SizedBox(
           width: AppSizes.invoiceDialogWidth,
           child: Form(
@@ -110,7 +117,7 @@ class _InvoiceActionDialogState extends ConsumerState<InvoiceActionDialog> {
           TextButton(
             onPressed: _saving ? null : () => Navigator.of(context).pop(false),
             style: TextButton.styleFrom(minimumSize: minimum),
-            child: const Text(AppStrings.cancel, style: AppTextStyles.button),
+            child: Text(widget.dismissLabel, style: AppTextStyles.button),
           ),
           FilledButton(
             onPressed: _saving ? null : _submit,

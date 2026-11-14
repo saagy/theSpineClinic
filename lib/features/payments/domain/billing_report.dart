@@ -2,19 +2,20 @@ import '../../patient/domain/clinic_location.dart';
 import 'billing_report_data.dart';
 import '../../../core/errors/result.dart';
 
-/// The Billing tab reports. Values match the `invoice_report` kinds.
+/// The Billing tab reports, in tab order. Revenue covers one doctor too:
+/// with a doctor it reads `invoice_report` kind `doctor`, otherwise kinds
+/// `revenue` and `doctors`. [sessions] counts appointments through
+/// `doctor_session_report`.
 enum BillingReportKind {
   money,
   revenue,
-  doctor,
-  doctors,
-  outstanding,
-  services;
+  sessions,
+  services,
+  outstanding;
 
-  /// Outstanding balances are always as of now.
+  /// Unpaid balances are always as of now.
   bool get usesDates => this != outstanding;
-  bool get usesDoctor => this == revenue || this == doctor;
-  bool get requiresDoctor => this == doctor;
+  bool get usesDoctor => this == revenue || this == sessions;
 }
 
 enum ReportPeriod { today, yesterday, last7Days, thisMonth, lastMonth, custom }
@@ -70,13 +71,18 @@ class BillingReportQuery {
   final ClinicLocation? branch;
   final String? doctorId;
 
-  Map<String, Object?> toParams() => {
-    'p_kind': kind.name,
+  /// Parameters for one RPC call; [invoiceKind] names the `invoice_report`
+  /// kind, null for `doctor_session_report`.
+  Map<String, Object?> toParams({String? invoiceKind}) => {
+    'p_kind': ?invoiceKind,
     'p_from': ReportRange.isoDay(range.from),
     'p_to': ReportRange.isoDay(range.to),
     'p_branch': branch?.dbValue,
     'p_doctor': kind.usesDoctor ? doctorId : null,
   };
+
+  /// One clinic day, where rows only need their time.
+  bool get isSingleDay => range.from == range.to;
 
   @override
   bool operator ==(Object other) =>

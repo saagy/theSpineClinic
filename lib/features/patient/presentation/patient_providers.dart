@@ -21,6 +21,7 @@ import 'package:spine_clinic_app/features/patient/domain/clinic_location.dart';
 import 'package:spine_clinic_app/features/patient/domain/patient.dart';
 import 'package:spine_clinic_app/features/patient/domain/patient_repository.dart';
 import 'package:spine_clinic_app/features/patient/presentation/patient_documents_providers.dart';
+import 'package:spine_clinic_app/features/patient/presentation/patient_workspace_tab.dart';
 
 part 'patient_providers.g.dart';
 
@@ -141,5 +142,12 @@ class PatientActiveTab extends _$PatientActiveTab {
 
   void setTab(int index) {
     if (state != index) state = index;
+  }
+
+  /// Shows [tab] when this person's workspace has it.
+  void show(PatientWorkspaceTab tab) {
+    final role = ref.read(currentUserProvider).value?.role;
+    final int index = PatientWorkspaceTab.forRole(role).indexOf(tab);
+    if (index >= 0) setTab(index);
   }
 }

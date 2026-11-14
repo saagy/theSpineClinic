@@ -12,8 +12,11 @@ const _t = AppStrings.billingReports;
 /// width allows; otherwise each row stacks. Rows open their record or
 /// expand to show the rows behind them.
 class ReportTable extends StatefulWidget {
-  const ReportTable({super.key, required this.sheet, this.nested = false});
+  const ReportTable({super.key, required this.sheet, this.nested = false, this.onDoctor});
   final ReportSheet sheet;
+
+  /// Narrows the report to a doctor whose row was activated.
+  final void Function(String id, String name)? onDoctor;
 
   /// Shown inside an expanded row, without its own surface.
   final bool nested;
@@ -24,14 +27,19 @@ class ReportTable extends StatefulWidget {
 
 class _ReportTableState extends State<ReportTable> {
   int _page = 0;
-  final Set<int> _expanded = {};
 
+  /// Expanded rows by [ReportRow.identity], so they stay open when the
+  /// same report reloads with rows added or removed.
+  final Set<Object> _expanded = {};
+
+  // A different report gets a new table (see ReportBody); a reload of the
+  // same one keeps its page, clamped in build, and its open rows.
   @override
   void didUpdateWidget(covariant ReportTable oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (!identical(oldWidget.sheet, widget.sheet)) {
-      _page = 0;
-      _expanded.clear();
+      final Set<Object> rows = {for (final row in widget.sheet.rows) row.identity};
+      _expanded.retainWhere(rows.contains);
     }
   }
 
@@ -50,8 +58,8 @@ class _ReportTableState extends State<ReportTable> {
     );
     return LayoutBuilder(
       builder: (context, box) {
-        final bool wide = box.maxWidth >= sheet.minWidth &&
-            MediaQuery.textScalerOf(context).scale(1) <= 1.3;
+        final bool wide =
+            box.maxWidth >= sheet.minWidth && MediaQuery.textScalerOf(context).scale(1) <= 1.3;
         final body = Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
@@ -62,11 +70,16 @@ class _ReportTableState extends State<ReportTable> {
             for (int index = first; index < sheet.rows.length && index < first + size; index++) ...[
               if (index > first) divider,
               _row(context, index, wide),
-              if (_expanded.contains(index) && sheet.rows[index].detail != null) ...[
+              if (_expanded.contains(sheet.rows[index].identity) &&
+                  sheet.rows[index].detail != null) ...[
                 divider,
                 Material(
                   color: Theme.of(context).scaffoldBackgroundColor,
-                  child: ReportTable(sheet: sheet.rows[index].detail!, nested: true),
+                  child: ReportTable(
+                    key: ValueKey(sheet.rows[index].identity),
+                    sheet: sheet.rows[index].detail!,
+                    nested: true,
+                  ),
                 ),
               ],
             ],
@@ -118,10 +131,11 @@ class _ReportTableState extends State<ReportTable> {
   Widget _row(BuildContext context, int index, bool wide) {
     final ReportRow row = widget.sheet.rows[index];
     final colors = Theme.of(context).colorScheme;
-    final bool open = _expanded.contains(index);
+    final bool open = _expanded.contains(row.identity);
+    final doctor = widget.onDoctor == null ? null : row.doctor;
     final IconData? icon = row.detail != null
         ? (open ? Icons.expand_less : Icons.expand_more)
-        : row.location != null
+        : row.location != null || doctor != null
         ? Icons.chevron_right
         : null;
     final content = ReportTableRow(
@@ -138,10 +152,18 @@ class _ReportTableState extends State<ReportTable> {
     return Semantics(
       button: true,
       expanded: row.detail == null ? null : open,
-      hint: row.detail == null ? _t.openRecord : (open ? _t.hideDetail : _t.showDetail),
+      hint: doctor != null
+          ? _t.showDoctor
+          : row.detail == null
+          ? _t.openRecord
+          : open
+          ? widget.sheet.detailHints?.hide ?? _t.hideDetail
+          : widget.sheet.detailHints?.show ?? _t.showDetail,
       child: InkWell(
         onTap: row.detail != null
-            ? () => setState(() => open ? _expanded.remove(index) : _expanded.add(index))
+            ? () => setState(() => open ? _expanded.remove(row.identity) : _expanded.add(row.identity))
+            : doctor != null
+            ? () => widget.onDoctor!(doctor.id, doctor.name)
             : () => context.push(row.location!),
         child: ConstrainedBox(
           constraints: const BoxConstraints(minHeight: AppSizes.tappableMin),

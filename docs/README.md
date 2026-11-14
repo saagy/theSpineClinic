@@ -22,6 +22,8 @@ app (Flutter + Riverpod + Supabase). The product brief is
 | [Security Model](security-model.md) | Roles, RLS enforcement layers, staff application flow, repo safety rules. |
 | [Testing](testing.md) | Dart suite layout and SQL sanity scripts. |
 | [Billing redesign plan](billing-plan.md) | Agreed invoice, receipt, void, refund, permission, and report rules replacing the pilot and legacy payments. |
+| [How billing works](billing-explained.md) | Plain explanation of invoices, receipts, refunds, cancellations, doctor revenue and every report, with worked examples and a daily routine. |
+| [Billing reports redesign](billing-reports-redesign.md) | Why the Billing tab has five plainly named reports, the audit behind it, and the wording and layout decisions. |
 | [Billing workflow review](billing-review-results.md) | Slice 8 live review on desktop and phone: writes exercised, reports checked, fixes made, and what remains unverified. |
 | [Production Readiness (27 September 2026)](production-readiness-2026-09-27.md) | Current checks, confirmed launch risks, expected three-branch capacity and acceptance gates. |
 | [AGENTS.md](../AGENTS.md) | Engineering rules for humans and AI agents working in this repo. |

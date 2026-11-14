@@ -11,6 +11,7 @@ import '../../domain/invoice_access.dart';
 import '../../domain/invoice_action.dart';
 import '../../domain/invoice_detail.dart';
 import '../invoice_document_pdf.dart';
+import 'invoice_cancel_paid_dialog.dart';
 import 'invoice_payment_dialog.dart';
 import 'invoice_void_dialog.dart';
 
@@ -51,7 +52,11 @@ Future<void> voidInvoiceDocument(
   InvoiceRefund? refund,
 }) async {
   final (String title, String help, String done) = receipt != null
-      ? (_t.voidReceiptTitle, _t.voidReceiptHelp(Money.format(receipt.amountMinor)), _t.receiptVoided)
+      ? (
+          _t.voidReceiptTitle,
+          _t.voidReceiptHelp(Money.format(receipt.amountMinor)),
+          _t.receiptVoided,
+        )
       : refund != null
       ? (_t.voidRefundTitle, _t.voidRefundHelp, _t.refundVoided)
       : (_t.voidInvoice, _t.voidInvoiceHelp, _t.invoiceVoidedDone);
@@ -68,6 +73,29 @@ Future<void> voidInvoiceDocument(
     ),
   );
   if (context.mounted) _done(context, saved, done);
+}
+
+/// Cancels an invoice. A paid one first asks whether the money was given
+/// back: if so the refund form opens; if it was entered by mistake the
+/// invoice and its payments are cancelled together.
+Future<void> cancelInvoice(BuildContext context, InvoiceDetail invoice) async {
+  if (invoice.canVoid) return voidInvoiceDocument(context, invoice);
+  final PaidInvoiceCancel? answer = await showDialog<PaidInvoiceCancel>(
+    context: context,
+    builder: (_) => InvoiceCancelPaidDialog(receivedMinor: invoice.receivedMinor),
+  );
+  if (!context.mounted || answer == null) return;
+  if (answer == PaidInvoiceCancel.givenBack) return openInvoiceRefund(context, invoice);
+  final bool? saved = await showDialog<bool>(
+    context: context,
+    builder: (_) => InvoiceVoidDialog(
+      title: _t.voidInvoice,
+      help: _t.cancelWithPaymentsHelp(Money.format(invoice.receivedMinor)),
+      confirmLabel: _t.cancelWithPayments,
+      action: (reason) => InvoiceAction.voidInvoiceWithPayments(invoice, reason),
+    ),
+  );
+  if (context.mounted) _done(context, saved, _t.invoiceVoidedDone);
 }
 
 /// Opens the refund form; it returns `true` once a refund is recorded.
@@ -100,6 +128,8 @@ class InvoiceAppBarActions extends StatelessWidget {
   final InvoiceDetail invoice;
   final Staff user;
 
+  bool get cancellable => invoice.canVoid || invoice.canVoidWithPayments;
+
   @override
   Widget build(BuildContext context) => Row(
     mainAxisSize: MainAxisSize.min,
@@ -122,10 +152,10 @@ class InvoiceAppBarActions extends StatelessWidget {
             ),
             RecordMenuAction(
               _InvoiceMenu.voidIt,
-              invoice.canVoid ? _t.voidInvoice : '${_t.voidInvoice}\n${_t.voidNeedsNoPayments}',
+              cancellable ? _t.voidInvoice : '${_t.voidInvoice}\n${_t.voidNeedsNoRefunds}',
               Icons.block,
-              destructive: invoice.canVoid,
-              enabled: invoice.canVoid,
+              destructive: cancellable,
+              enabled: cancellable,
               dividerBefore: true,
             ),
           ],
@@ -133,7 +163,7 @@ class InvoiceAppBarActions extends StatelessWidget {
             _InvoiceMenu.correct => context.push(
               AppRoutes.invoiceCorrectLocation(invoice.patientId, invoice.id),
             ),
-            _InvoiceMenu.voidIt => voidInvoiceDocument(context, invoice),
+            _InvoiceMenu.voidIt => cancelInvoice(context, invoice),
           },
         ),
     ],

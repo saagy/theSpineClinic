@@ -65,7 +65,9 @@ Invoice detail opens from a Payments row as a docked 560 px side panel from
 1000 px (the patient page stays visible behind a scrim; scrim tap, Close or
 Escape dismisses it) and as a full screen on narrower windows, with enlarged
 text, or when opened from a link. It leads with patient, ID, date, branch and
-status, then one bordered strip of Invoice value, Paid and Due (due in the
+status; when the patient's page is not directly behind it (opened from
+Billing or a link), the name ends in a chevron and opens the patient on
+Payments, closing the invoice first so Back returns to Billing. Then one bordered strip of Invoice value, Paid and Due (due in the
 warning color), then Record payment (filled) and Refund (outlined) only when
 each is possible. Services show quantity, unit price and doctors, with the
 value arithmetic (subtotal, discount, refunded) only when something reduced
@@ -79,24 +81,38 @@ for a reason. Refund and correction are bounded form pages with the live
 summary beside the form from 900 px (kept in view while the form scrolls, via `FormPageBody.aside`) and below it on phones. The panel owns its
 snackbars so confirmations do not repeat on the dimmed page behind it.
 
-Billing reports (billing plan slice 6) share one page: six scrollable text
-tabs in the patient-workspace style (Daily money, Revenue, Doctor revenue,
-Doctors summary, Outstanding, Services), then a toolbar with the shared
+Billing reports share one page ([redesign](docs/billing-reports-redesign.md),
+November 13, 2026): five reports named for the question they answer (Payments
+& refunds, Revenue, Doctor sessions, Services, Balances due), shown as text tabs in
+the patient-workspace style from 640 px and as one full-width Report menu
+with icons below it or with enlarged text. A toolbar holds the shared
 record-menu selects for period (Today, Yesterday, Last 7 days, This month,
-Last month, Custom range) and branch, a doctor control that opens the shared
-doctor picker where a report uses one, and Refresh, Export CSV and Print
-(one overflow menu below 768 px). A caption states the days covered and
-what the report counts. Totals sit in one bordered strip; each table is one
-bordered surface with hairline rows, column labels above it, right-aligned
-tabular amounts, an optional bold total row and 50 rows per page through
-the shared table pagination. A table uses columns only when its own columns
-fit; otherwise each row stacks the patient or name, a muted line of details
-and labeled figures, with the key amount opposite the name (below it with
-enlarged text). Rows that open an invoice or patient end in a chevron;
-Services rows expand in place to their invoices. Paybacks read as negative
-amounts, outstanding amounts use the warning color, and voided documents
-are listed separately in muted amounts. Choosing a doctor, loading, failure
-with Retry, an empty period and capped rows each have an explicit state.
+Last month, Choose dates) and branch, a doctor control that opens the shared
+doctor picker (with a clear button back to All doctors) where a report uses
+one, and Refresh and Print (one overflow menu below 768 px). A caption
+states the days covered and, in one short sentence, what the report shows.
+Wording is plain, standard English for non-native speakers (Paid, Refunded,
+Total price, Balance due, Received by, Refund adjustment, No doctor). Totals sit in one
+bordered strip: side by side when they fit, two per row for an even count,
+otherwise one per line with the amount opposite the label; a total can carry
+a quiet caption (Payments & refunds: "Received … · Refunded …"). Each table is
+one bordered surface with hairline rows, column labels above it,
+right-aligned tabular amounts, an optional bold total row and 50 rows per
+page. Cells may carry a quiet second line (patient ID under the name, time
+under the date, number under Receipt or Refund) so tables fit about 900 px;
+a one-day report shows only times. Narrower tables stack each row: name and
+key amount, then what the row is about (service and doctor, or document and
+method), then the quiet facts and labeled figures; amounts never wrap away
+from their currency. Rows that open an invoice or patient end in a chevron
+(Balances due opens the patient on Payments);
+Revenue's By doctor rows narrow the report to that doctor; Services rows
+expand in place. Refunds read as negative amounts, balances due use the
+warning color, and sections that would be empty (cancelled documents, one
+receptionist) are left out. Loading, failure with Retry, an empty period
+and capped rows each have an explicit state. Reports reload in place, without
+a skeleton and keeping the table page and expanded rows, after any invoice
+change and whenever Billing becomes visible again (back from an invoice or
+patient, or the app returning to the foreground).
 
 Patient rows put the permanent ID on a quiet line below the name. Optional
 demographics and referral live in patient details, in one section whose

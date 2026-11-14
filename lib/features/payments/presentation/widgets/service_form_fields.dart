@@ -10,6 +10,7 @@ import '../../../../shared/widgets/labeled_form_field.dart';
 import '../../../../shared/widgets/record_action_menu.dart';
 import '../../../../shared/widgets/record_menu_select.dart';
 import '../../domain/service_catalog_item.dart';
+import 'service_availability_section.dart';
 import 'service_catalog_labels.dart';
 import 'service_form_controls.dart';
 
@@ -47,12 +48,16 @@ class ServiceFormFields extends StatelessWidget {
     required this.enabled,
     required this.onChanged,
     required this.onSubmit,
+    required this.onRemove,
+    required this.onRestore,
   });
   final ServiceFormInput input;
   final ServiceCatalogItem? original;
   final bool enabled;
   final ValueChanged<VoidCallback> onChanged;
   final VoidCallback onSubmit;
+  final VoidCallback onRemove;
+  final VoidCallback onRestore;
 
   @override
   Widget build(BuildContext context) {
@@ -176,14 +181,11 @@ class ServiceFormFields extends StatelessWidget {
         ),
         if (original != null) ...[
           const SizedBox(height: AppSizes.p24),
-          FormSection(
-            title: _t.sectionAvailability,
-            child: ServiceSettingSwitch(
-              title: _t.availableOnInvoices,
-              description: _t.availabilityHelp,
-              value: input.active,
-              onChanged: enabled ? (value) => onChanged(() => input.active = value) : null,
-            ),
+          ServiceAvailabilitySection(
+            active: original!.active,
+            enabled: enabled,
+            onRemove: onRemove,
+            onRestore: onRestore,
           ),
         ],
       ],

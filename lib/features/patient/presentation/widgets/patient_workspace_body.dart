@@ -2,11 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:spine_clinic_app/features/patient/presentation/widgets/workspace_tabs.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:spine_clinic_app/core/constants/app_sizes.dart';
-import 'package:spine_clinic_app/core/constants/app_strings.dart';
 import 'package:spine_clinic_app/features/auth/domain/user_role.dart';
 import 'package:spine_clinic_app/features/auth/presentation/auth_providers.dart';
 import 'package:spine_clinic_app/features/patient/domain/patient.dart';
 import 'package:spine_clinic_app/features/patient/presentation/patient_providers.dart';
+import 'package:spine_clinic_app/features/patient/presentation/patient_workspace_tab.dart';
 import 'package:spine_clinic_app/features/patient/presentation/widgets/patient_summary_sidebar.dart';
 import 'package:spine_clinic_app/features/patient/presentation/widgets/workspace_appointments.dart';
 import 'package:spine_clinic_app/features/patient/presentation/widgets/workspace_documents.dart';
@@ -25,33 +25,28 @@ class PatientWorkspaceBody extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final isDoctor = ref.watch(currentUserProvider).value?.role == UserRole.doctor;
-    final labels = [
-      AppStrings.patientOverview,
-      AppStrings.programs,
-      AppStrings.appointments,
-      AppStrings.notes,
-      AppStrings.tabDocuments,
-      if (!isDoctor) AppStrings.payments,
-    ];
+    final role = ref.watch(currentUserProvider).value?.role;
+    final isDoctor = role == UserRole.doctor;
+    final tabs = PatientWorkspaceTab.forRole(role);
+    final labels = [for (final tab in tabs) tab.label];
     final selected = ref.watch(patientActiveTabProvider(patient.id));
     final index = selected.clamp(0, labels.length - 1);
-    void select(int tab) => ref.read(patientActiveTabProvider(patient.id).notifier).setTab(tab);
-    void payments() => select(5);
+    void select(PatientWorkspaceTab tab) =>
+        ref.read(patientActiveTabProvider(patient.id).notifier).setTab(tabs.indexOf(tab));
 
-    final Widget content = switch (index) {
-      0 => WorkspaceOverview(
+    final Widget content = switch (tabs[index]) {
+      PatientWorkspaceTab.overview => WorkspaceOverview(
         patient: patient,
         isDoctor: isDoctor,
-        onPrograms: () => select(1),
-        onDocuments: () => select(4),
-        onPayments: payments,
+        onPrograms: () => select(PatientWorkspaceTab.programs),
+        onDocuments: () => select(PatientWorkspaceTab.documents),
+        onPayments: () => select(PatientWorkspaceTab.payments),
       ),
-      1 => WorkspacePrograms(patientId: patient.id),
-      2 => WorkspaceAppointments(patientId: patient.id),
-      3 => WorkspaceNotes(patientId: patient.id),
-      4 => WorkspaceDocuments(patientId: patient.id),
-      _ => PatientInvoicesTab(patient: patient),
+      PatientWorkspaceTab.programs => WorkspacePrograms(patientId: patient.id),
+      PatientWorkspaceTab.appointments => WorkspaceAppointments(patientId: patient.id),
+      PatientWorkspaceTab.notes => WorkspaceNotes(patientId: patient.id),
+      PatientWorkspaceTab.documents => WorkspaceDocuments(patientId: patient.id),
+      PatientWorkspaceTab.payments => PatientInvoicesTab(patient: patient),
     };
 
     return LayoutBuilder(

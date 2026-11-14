@@ -11,8 +11,7 @@ import '../domain/service_catalog_item.dart';
 part 'service_catalog_providers.g.dart';
 
 @Riverpod(keepAlive: true)
-InvoiceRepository invoiceRepository(Ref ref) =>
-    InvoiceRepositoryImpl(SupabaseService.instance);
+InvoiceRepository invoiceRepository(Ref ref) => InvoiceRepositoryImpl(SupabaseService.instance);
 
 /// The full catalog. Small enough to load once and filter on the device.
 @riverpod
@@ -28,10 +27,7 @@ class ServiceSaveState {
   final AppException? error;
 
   ServiceSaveState copyWith({bool? saving, AppException? Function()? error}) =>
-      ServiceSaveState(
-        saving: saving ?? this.saving,
-        error: error == null ? this.error : error(),
-      );
+      ServiceSaveState(saving: saving ?? this.saving, error: error == null ? this.error : error());
 }
 
 /// Saves catalog changes. Kept alive so a save finishing after the form
@@ -43,7 +39,14 @@ class ServiceCatalogController extends _$ServiceCatalogController {
 
   void clearError() => state = state.copyWith(error: () => null);
 
-  Future<Result<String>> save(ServiceDraft draft) async {
+  Future<Result<String>> save(ServiceDraft draft) =>
+      _run(() => ref.read(invoiceRepositoryProvider).saveService(draft));
+
+  /// Deletes a never-invoiced service, or hides one that invoices list.
+  Future<Result<ServiceRemoval>> remove(ServiceCatalogItem service) =>
+      _run(() => ref.read(invoiceRepositoryProvider).removeService(service.id, service.version));
+
+  Future<Result<T>> _run<T>(Future<Result<T>> Function() write) async {
     if (state.saving) {
       return const Failure(
         DatabaseException(
@@ -64,7 +67,7 @@ class ServiceCatalogController extends _$ServiceCatalogController {
       return const Failure(denied);
     }
     state = state.copyWith(saving: true, error: () => null);
-    final result = await ref.read(invoiceRepositoryProvider).saveService(draft);
+    final result = await write();
     if (!ref.mounted) return result;
     state = state.copyWith(saving: false, error: () => result.exceptionOrNull);
     // A conflicting or already-completed save also means the list is stale.

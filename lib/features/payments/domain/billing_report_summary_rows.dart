@@ -17,6 +17,7 @@ class RevenueRow {
     required this.serviceName,
     required this.priceMinor,
     required this.doctors,
+    required this.doctorCount,
     required this.party,
   });
 
@@ -29,6 +30,7 @@ class RevenueRow {
     serviceName: json['service_name'] as String? ?? '',
     priceMinor: _int(json['price_minor']),
     doctors: (json['doctors'] as List? ?? const []).whereType<String>().toList(),
+    doctorCount: _int(json['doctor_count']),
     party: ReportParty.fromJson(json),
   );
 
@@ -43,7 +45,12 @@ class RevenueRow {
   final int? shareMinor;
   final String serviceName;
   final int priceMinor;
+
+  /// Doctor names, on the all-doctors report.
   final List<String> doctors;
+
+  /// How many doctors share the line, on the one-doctor report.
+  final int doctorCount;
   final ReportParty party;
 }
 

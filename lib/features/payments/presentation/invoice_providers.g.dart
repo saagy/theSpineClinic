@@ -87,17 +87,20 @@ final class PatientInvoicesFamily extends $Family
 }
 
 /// Issues new invoices. Kept alive so a request finishing after the form
-/// closes still refreshes the patient's invoices and session balances.
+/// closes still refreshes the patient's invoices, session balances and the
+/// Billing reports.
 
 @ProviderFor(InvoiceCreateController)
 final invoiceCreateControllerProvider = InvoiceCreateControllerProvider._();
 
 /// Issues new invoices. Kept alive so a request finishing after the form
-/// closes still refreshes the patient's invoices and session balances.
+/// closes still refreshes the patient's invoices, session balances and the
+/// Billing reports.
 final class InvoiceCreateControllerProvider
     extends $NotifierProvider<InvoiceCreateController, InvoiceCreateState> {
   /// Issues new invoices. Kept alive so a request finishing after the form
-  /// closes still refreshes the patient's invoices and session balances.
+  /// closes still refreshes the patient's invoices, session balances and the
+  /// Billing reports.
   InvoiceCreateControllerProvider._()
     : super(
         from: null,
@@ -126,10 +129,11 @@ final class InvoiceCreateControllerProvider
 }
 
 String _$invoiceCreateControllerHash() =>
-    r'aa381a0f0634f2344d50b2dbac5476d15ea4f664';
+    r'b46f3c55616833e39501040f2814ba4e5f4ec75b';
 
 /// Issues new invoices. Kept alive so a request finishing after the form
-/// closes still refreshes the patient's invoices and session balances.
+/// closes still refreshes the patient's invoices, session balances and the
+/// Billing reports.
 
 abstract class _$InvoiceCreateController extends $Notifier<InvoiceCreateState> {
   InvoiceCreateState build();

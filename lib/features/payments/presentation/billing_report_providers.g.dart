@@ -57,20 +57,27 @@ final class BillingReportRepositoryProvider
 String _$billingReportRepositoryHash() =>
     r'555f8e7c2a583c6f12136ee62d0ff1a858c0b46c';
 
+/// Kept while the app is open, so coming back to Billing shows the same
+/// report and filters. A new sign-in starts over from today's money.
+
 @ProviderFor(BillingReportFilterController)
 final billingReportFilterControllerProvider =
     BillingReportFilterControllerProvider._();
 
+/// Kept while the app is open, so coming back to Billing shows the same
+/// report and filters. A new sign-in starts over from today's money.
 final class BillingReportFilterControllerProvider
     extends
         $NotifierProvider<BillingReportFilterController, BillingReportFilter> {
+  /// Kept while the app is open, so coming back to Billing shows the same
+  /// report and filters. A new sign-in starts over from today's money.
   BillingReportFilterControllerProvider._()
     : super(
         from: null,
         argument: null,
         retry: null,
         name: r'billingReportFilterControllerProvider',
-        isAutoDispose: true,
+        isAutoDispose: false,
         dependencies: null,
         $allTransitiveDependencies: null,
       );
@@ -92,7 +99,10 @@ final class BillingReportFilterControllerProvider
 }
 
 String _$billingReportFilterControllerHash() =>
-    r'e6dd0955211e08f415b4e4a3cf943e8f02136bfa';
+    r'd6e948a45fb41e029049c48874f2a2d812a2e639';
+
+/// Kept while the app is open, so coming back to Billing shows the same
+/// report and filters. A new sign-in starts over from today's money.
 
 abstract class _$BillingReportFilterController
     extends $Notifier<BillingReportFilter> {
@@ -203,14 +213,14 @@ final class BillingReportFamily extends $Family
   String toString() => r'billingReportProvider';
 }
 
-/// The report laid out for the screen, CSV and print. Kept per request so
-/// table paging survives rebuilds.
+/// The report laid out for the screen and print. Kept per request so table
+/// paging survives rebuilds.
 
 @ProviderFor(billingReportView)
 final billingReportViewProvider = BillingReportViewFamily._();
 
-/// The report laid out for the screen, CSV and print. Kept per request so
-/// table paging survives rebuilds.
+/// The report laid out for the screen and print. Kept per request so table
+/// paging survives rebuilds.
 
 final class BillingReportViewProvider
     extends
@@ -220,8 +230,8 @@ final class BillingReportViewProvider
           FutureOr<ReportView>
         >
     with $FutureModifier<ReportView>, $FutureProvider<ReportView> {
-  /// The report laid out for the screen, CSV and print. Kept per request so
-  /// table paging survives rebuilds.
+  /// The report laid out for the screen and print. Kept per request so table
+  /// paging survives rebuilds.
   BillingReportViewProvider._({
     required BillingReportViewFamily super.from,
     required BillingReportQuery super.argument,
@@ -265,10 +275,10 @@ final class BillingReportViewProvider
   }
 }
 
-String _$billingReportViewHash() => r'0b7519bd950dd1883cb9c290624adb32a7942a97';
+String _$billingReportViewHash() => r'6863e52e5a409154a3ce865ec7b0d745509331af';
 
-/// The report laid out for the screen, CSV and print. Kept per request so
-/// table paging survives rebuilds.
+/// The report laid out for the screen and print. Kept per request so table
+/// paging survives rebuilds.
 
 final class BillingReportViewFamily extends $Family
     with $FunctionalFamilyOverride<FutureOr<ReportView>, BillingReportQuery> {
@@ -281,8 +291,8 @@ final class BillingReportViewFamily extends $Family
         isAutoDispose: true,
       );
 
-  /// The report laid out for the screen, CSV and print. Kept per request so
-  /// table paging survives rebuilds.
+  /// The report laid out for the screen and print. Kept per request so table
+  /// paging survives rebuilds.
 
   BillingReportViewProvider call(BillingReportQuery query) =>
       BillingReportViewProvider._(argument: query, from: this);

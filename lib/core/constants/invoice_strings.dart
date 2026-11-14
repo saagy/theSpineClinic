@@ -13,9 +13,9 @@ final class InvoiceStrings {
   final String searchServices = 'Search services';
   final String show = 'Show';
   final String showActive = 'Active';
-  final String showArchived = 'Archived';
+  final String showArchived = 'Removed';
   final String showAll = 'All services';
-  final String archived = 'Archived';
+  final String archived = 'Removed';
   final String columnService = 'Service';
   final String columnSoldAs = 'Sold as';
   final String columnDoctors = 'Doctor credit';
@@ -26,11 +26,10 @@ final class InvoiceStrings {
   final String notCredited = 'Not credited';
   final String noDoctorCredit = 'No doctor credit';
   final String noServices = 'No services yet';
-  final String noServicesHelp =
-      'Add the sessions, packages and other services the clinic sells.';
+  final String noServicesHelp = 'Add the sessions, packages and other services the clinic sells.';
   final String noMatches = 'No services match';
-  final String noArchived = 'No archived services';
-  final String noActive = 'No active services. Show archived services to restore one.';
+  final String noArchived = 'No removed services';
+  final String noActive = 'No active services. Show removed services to restore one.';
   final String clearSearch = 'Clear search';
   String packageOf(int sessions) => '$sessions-session package';
   String perSession(String amount) => '$amount per session';
@@ -62,18 +61,25 @@ final class InvoiceStrings {
   final String sessionsInvalid = 'Enter between 2 and 100 sessions';
   final String price = 'Price (EGP)';
   final String priceInvalid = 'Enter a price above zero';
-  final String packageHelp =
-      'Invoicing a package adds all its sessions to the patient balance.';
-  final String priceChangeHelp =
-      'A new price applies to new invoices only.';
+  final String packageHelp = 'Invoicing a package adds all its sessions to the patient balance.';
+  final String priceChangeHelp = 'A new price applies to new invoices only.';
   final String sectionCredit = 'Doctor credit';
   final String creditDoctors = 'Credit doctors for this service';
   final String creditHelp =
       "Doctors chosen on the invoice share this service's collected revenue. Turn this off for services done without a doctor, such as spinal traction.";
   final String sectionAvailability = 'Availability';
-  final String availableOnInvoices = 'Available on new invoices';
-  final String availabilityHelp =
-      'Archived services stay on existing invoices and in reports.';
+  final String removeService = 'Remove service';
+  final String restoreService = 'Restore service';
+  final String removeHelp =
+      'Take this service off the list for new invoices. Invoices that already have it are not changed.';
+  final String removedHelp =
+      'This service is not offered on new invoices. Restore it to offer it again.';
+  final String removeTitle = 'Remove this service?';
+  String removeMessage(String name) =>
+      '$name will no longer appear when creating invoices. Invoices that already have it keep it.';
+  final String serviceDeleted = 'Service deleted';
+  final String serviceRemoved = 'Service removed. Invoices that already have it keep it.';
+  final String serviceRestored = 'Service restored';
   final String serviceNotFound = 'This service is no longer available.';
   final String serviceSaved = 'Service saved';
   final String serviceAdded = 'Service added';
@@ -97,7 +103,7 @@ final class InvoiceStrings {
   final String statusPartial = 'Partly paid';
   final String statusUnpaid = 'Unpaid';
   final String statusRefunded = 'Refunded';
-  final String statusVoided = 'Voided';
+  final String statusVoided = 'Cancelled';
   String totalPaidLine(String total, String paid) => 'Total $total · Paid $paid';
   String dueLabel(String amount) => '$amount due';
 
@@ -123,7 +129,8 @@ final class InvoiceStrings {
   final String discountAmountLabel = 'Amount (EGP)';
   final String discountPercentInvalid = 'Enter a percentage from 0.01 to 100';
   final String discountAmountInvalid = 'Enter an amount up to the subtotal';
-  final String freeHint = 'Type either one and the other fills in. A 100% discount records free sessions.';
+  final String freeHint =
+      'Type either one and the other fills in. A 100% discount records free sessions.';
   final String removeDiscount = 'Remove discount';
   final String sectionPayment = 'Payment now';
   final String paymentHelp =
@@ -153,15 +160,15 @@ final class InvoiceStrings {
   final String errorStale =
       'This record changed on another device. Reopen it to see the latest version.';
   final String errorInvalid = 'Check the details and try again.';
-  final String errorCancelled =
-      'The earlier attempt did not go through. Save again.';
+  final String errorCancelled = 'The earlier attempt did not go through. Save again.';
   final String errorBusy = 'A save is already in progress.';
   final String errorDenied = 'Your account cannot make this change.';
 
   final String errorCatalogChanged =
       'A service price or availability changed. The latest prices are loaded; review the services and try again.';
   final String errorDiscountNotAllowed = 'Only payment receptionists can give discounts.';
-  final String errorInvalidDoctors = 'A selected doctor is no longer available. Review the doctors.';
+  final String errorInvalidDoctors =
+      'A selected doctor is no longer available. Review the doctors.';
   final String errorInvalidDiscount = 'Check the discount.';
   final String errorInvalidInvoice = 'Check the invoice date and services.';
   final String errorReceiptLimit = 'A payment is more than the amount due.';

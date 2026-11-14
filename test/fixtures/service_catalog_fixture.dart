@@ -87,6 +87,15 @@ class FakeInvoiceRepository implements InvoiceRepository {
   @override
   Future<Result<List<ServiceCatalogItem>>> services() async => Result.success(items);
 
+  final List<String> removed = [];
+  ServiceRemoval removal = ServiceRemoval.deleted;
+
+  @override
+  Future<Result<ServiceRemoval>> removeService(String serviceId, int version) async {
+    removed.add(serviceId);
+    return Result.success(removal);
+  }
+
   @override
   Future<Result<String>> saveService(ServiceDraft draft) async {
     saved.add(draft);

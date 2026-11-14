@@ -8,6 +8,7 @@ import '../../../../core/utils/money.dart';
 import '../../../../shared/widgets/app_snackbar.dart';
 import '../../../../shared/widgets/confirmation_dialog.dart';
 import '../../../../shared/widgets/form_page_body.dart';
+import '../../domain/invoice_repository.dart';
 import '../../domain/service_catalog_item.dart';
 import '../service_catalog_providers.dart';
 import 'service_form_fields.dart';
@@ -85,8 +86,7 @@ class _ServiceFormBodyState extends ConsumerState<ServiceFormBody> {
       !_draftOf(_input).sameAs(_draftOf(_initial)) ||
       (_input.price.text.trim() != _initial.price.text.trim());
 
-  void _leave() =>
-      context.canPop() ? context.pop() : context.go(AppRoutes.serviceCatalog);
+  void _leave() => context.canPop() ? context.pop() : context.go(AppRoutes.serviceCatalog);
 
   Future<void> _cancel() async {
     if (ref.read(serviceCatalogControllerProvider).saving || _confirmingDiscard) return;
@@ -107,15 +107,55 @@ class _ServiceFormBodyState extends ConsumerState<ServiceFormBody> {
 
   Future<void> _save() async {
     if (!(_form.currentState?.validate() ?? false)) return;
-    final result = await ref
-        .read(serviceCatalogControllerProvider.notifier)
-        .save(_draftOf(_input));
+    final result = await ref.read(serviceCatalogControllerProvider.notifier).save(_draftOf(_input));
     if (!mounted || !result.isSuccess) return;
     AppSnackbar.show(
       context,
       message: widget.service == null ? _t.serviceAdded : _t.serviceSaved,
       variant: AppSnackbarVariant.success,
     );
+    _leave();
+  }
+
+  Future<void> _remove() async {
+    final service = widget.service!;
+    final bool? confirmed = await showDialog<bool>(
+      context: context,
+      builder: (_) => ConfirmationDialog(
+        title: _t.removeTitle,
+        message: _t.removeMessage(service.name),
+        confirmLabel: _t.removeService,
+        cancelLabel: AppStrings.keepEditing,
+        isDestructive: true,
+      ),
+    );
+    if (confirmed != true || !mounted) return;
+    final result = await ref.read(serviceCatalogControllerProvider.notifier).remove(service);
+    if (!mounted) return;
+    result.when(
+      success: (removal) {
+        AppSnackbar.show(
+          context,
+          message: removal == ServiceRemoval.deleted ? _t.serviceDeleted : _t.serviceRemoved,
+          variant: AppSnackbarVariant.success,
+        );
+        _leave();
+      },
+      failure: (_) {},
+    );
+  }
+
+  /// Offers a removed service again, keeping any edits made on the form.
+  Future<void> _restore() async {
+    if (!(_form.currentState?.validate() ?? false)) return;
+    _input.active = true;
+    final result = await ref.read(serviceCatalogControllerProvider.notifier).save(_draftOf(_input));
+    if (!mounted) return;
+    if (!result.isSuccess) {
+      _input.active = false;
+      return;
+    }
+    AppSnackbar.show(context, message: _t.serviceRestored, variant: AppSnackbarVariant.success);
     _leave();
   }
 
@@ -142,7 +182,9 @@ class _ServiceFormBodyState extends ConsumerState<ServiceFormBody> {
           maxWidth: AppSizes.formLayoutMaxWidth,
           isSaving: state.saving,
           saveLabel: isNew ? _t.addService : AppStrings.saveChanges,
-          errorMessage: state.error == null ? null : AppStrings.fromKey(state.error!.userMessageKey),
+          errorMessage: state.error == null
+              ? null
+              : AppStrings.fromKey(state.error!.userMessageKey),
           onSave: state.saving || (!isNew && !dirty) ? null : _save,
           onCancel: state.saving ? null : _cancel,
           child: Form(
@@ -153,6 +195,8 @@ class _ServiceFormBodyState extends ConsumerState<ServiceFormBody> {
               enabled: !state.saving,
               onChanged: (change) => setState(change),
               onSubmit: _save,
+              onRemove: _remove,
+              onRestore: _restore,
             ),
           ),
         ),

@@ -20,9 +20,12 @@ import 'staff_editor_harness.dart';
 import 'workspace_data.dart';
 
 const invoicePatientPage = 'Patient page';
+const invoiceBillingPage = 'Billing page';
 
-/// Opens an invoice from a stand-in patient page, with the production page
-/// builders so the side panel, refund and correction routes behave as shipped.
+/// Opens an invoice from a stand-in patient page (or Billing page when
+/// [fromBilling]), with the production page builders so the side panel,
+/// refund and correction routes behave as shipped. The patient page shows
+/// the workspace tab its link asked for.
 Future<GlobalKey> pumpInvoiceDetail(
   WidgetTester tester, {
   required FakeInvoiceRepository repo,
@@ -31,6 +34,7 @@ Future<GlobalKey> pumpInvoiceDetail(
   double width = 1280,
   bool dark = false,
   double textScale = 1,
+  bool fromBilling = false,
 }) async {
   tester.view.physicalSize = Size(width, 1000);
   tester.view.devicePixelRatio = 1;
@@ -39,19 +43,29 @@ Future<GlobalKey> pumpInvoiceDetail(
   final String id = workspacePatient.id;
   String part(GoRouterState state, String name) => state.pathParameters[name]!;
   final router = GoRouter(
-    initialLocation: '/patient/$id',
+    initialLocation: fromBilling ? AppRoutes.billing : '/patient/$id',
     routes: [
-      GoRoute(
-        path: AppRoutes.patientDetail,
-        builder: (context, _) => Scaffold(
-          body: Center(
-            child: TextButton(
-              onPressed: () => context.push(AppRoutes.invoiceDetailLocation(id, invoiceId)),
-              child: const Text(invoicePatientPage),
+      for (final (String path, String label) in [
+        (AppRoutes.billing, invoiceBillingPage),
+        (AppRoutes.patientDetail, invoicePatientPage),
+      ])
+        GoRoute(
+          path: path,
+          builder: (context, state) => Scaffold(
+            body: Center(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  TextButton(
+                    onPressed: () => context.push(AppRoutes.invoiceDetailLocation(id, invoiceId)),
+                    child: Text(label),
+                  ),
+                  if (state.uri.queryParameters['tab'] case final String tab) Text('tab: $tab'),
+                ],
+              ),
             ),
           ),
         ),
-      ),
       GoRoute(
         path: AppRoutes.invoiceDetail,
         pageBuilder: (context, state) => overlayPage(
@@ -95,7 +109,7 @@ Future<GlobalKey> pumpInvoiceDetail(
     ),
   ));
   await tester.pumpAndSettle();
-  await tester.tap(find.text(invoicePatientPage));
+  await tester.tap(find.text(fromBilling ? invoiceBillingPage : invoicePatientPage));
   await tester.pumpAndSettle();
   return key;
 }

@@ -4616,9 +4616,12 @@ WHERE personal_details ?| ARRAY['insurance_company', 'insurance_member_number', 
 -- documents are left out of every total and listed in the void log on the day
 -- they were voided. Detail rows are capped at 5000; totals are always complete.
 
--- Active collected-money movements per invoice line. A refund that pays
--- nothing back only moves money between lines, so its method is NULL.
-CREATE FUNCTION public.invoice_report_allocations(p_from date, p_to date, p_branch public.clinic_location)
+-- Active collected-money movements per invoice line. Each refund row is split
+-- into the money handed back (the payback method) and a refund adjustment
+-- (method NULL): paid money moved between lines. Only lines that lost money
+-- hold payback, shared in proportion to what each lost (20261113175332).
+CREATE FUNCTION public.invoice_report_allocations(p_from date, p_to date,
+  p_branch public.clinic_location)
 RETURNS TABLE(allocation_id bigint, line_id uuid, moved_at timestamptz, branch public.clinic_location,
   kind text, document_number bigint, method text, amount_minor bigint)
 LANGUAGE sql STABLE SET search_path = '' AS $$
@@ -4628,11 +4631,30 @@ LANGUAGE sql STABLE SET search_path = '' AS $$
     AND rc.received_at >= (p_from::timestamp AT TIME ZONE public.clinic_timezone())
     AND rc.received_at < ((p_to + 1)::timestamp AT TIME ZONE public.clinic_timezone())
   UNION ALL
-  SELECT a.id, a.line_id, rf.recorded_at, rf.branch, 'refund', rf.number, rf.payback_method, a.amount_minor
-  FROM public.invoice_refunds rf JOIN public.invoice_allocations a ON a.refund_id = rf.id
-  WHERE rf.voided_at IS NULL AND (p_branch IS NULL OR rf.branch = p_branch)
-    AND rf.recorded_at >= (p_from::timestamp AT TIME ZONE public.clinic_timezone())
-    AND rf.recorded_at < ((p_to + 1)::timestamp AT TIME ZONE public.clinic_timezone());
+  SELECT s.id, s.line_id, s.recorded_at, s.branch, 'refund', s.number, part.method, part.amount
+  FROM (
+    SELECT a.id, a.line_id, a.amount_minor, rf.recorded_at, rf.branch, rf.number,
+      rf.payback_method, rf.payback_minor,
+      sum(-a.amount_minor) FILTER (WHERE a.amount_minor < 0)
+        OVER (PARTITION BY rf.id ORDER BY a.id) AS lost_so_far,
+      sum(-a.amount_minor) FILTER (WHERE a.amount_minor < 0) OVER (PARTITION BY rf.id) AS lost
+    FROM public.invoice_refunds rf JOIN public.invoice_allocations a ON a.refund_id = rf.id
+    WHERE rf.voided_at IS NULL AND (p_branch IS NULL OR rf.branch = p_branch)
+      AND rf.recorded_at >= (p_from::timestamp AT TIME ZONE public.clinic_timezone())
+      AND rf.recorded_at < ((p_to + 1)::timestamp AT TIME ZONE public.clinic_timezone())
+  ) s
+  -- The share of the payback this row handed back, as a negative amount.
+  CROSS JOIN LATERAL (
+    SELECT CASE WHEN s.amount_minor < 0 AND s.payback_minor > 0 THEN
+      -(div(s.payback_minor::numeric * s.lost_so_far, s.lost)
+        - div(s.payback_minor::numeric * (s.lost_so_far + s.amount_minor), s.lost))::bigint
+      ELSE 0 END AS handed_back
+  ) p
+  CROSS JOIN LATERAL (VALUES
+    (s.payback_method, p.handed_back),
+    (NULL::text, s.amount_minor - p.handed_back)
+  ) AS part(method, amount)
+  WHERE part.amount <> 0;
 $$;
 
 -- Each movement split equally among the line's doctors. Cumulative floors
@@ -5535,3 +5557,277 @@ BEGIN
   END IF;
 END;
 $$;
+
+-- 20261113090000_remove_service.sql
+-- Removing a service from the catalog. A service that no invoice has used
+-- is deleted for good. One that invoices already list is hidden instead:
+-- those invoices and the reports keep its name and price, and it can be
+-- restored later. Staff see one action, Remove, either way.
+CREATE FUNCTION public.remove_service(p_service_id uuid, p_version integer)
+RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path = '' AS $$
+DECLARE
+  current_version integer;
+BEGIN
+  IF NOT public.invoice_can('manage') THEN
+    RETURN jsonb_build_object('ok', false, 'error', 'denied');
+  END IF;
+  SELECT version INTO current_version FROM public.service_catalog
+    WHERE id = p_service_id FOR UPDATE;
+  IF NOT FOUND OR current_version <> p_version THEN
+    RETURN jsonb_build_object('ok', false, 'error', 'stale');
+  END IF;
+  IF EXISTS (SELECT 1 FROM public.invoice_lines WHERE service_id = p_service_id) THEN
+    UPDATE public.service_catalog SET active = false, version = version + 1
+      WHERE id = p_service_id;
+    RETURN jsonb_build_object('ok', true, 'outcome', 'hidden');
+  END IF;
+  DELETE FROM public.service_catalog WHERE id = p_service_id;
+  RETURN jsonb_build_object('ok', true, 'outcome', 'deleted');
+END;
+$$;
+REVOKE ALL ON FUNCTION public.remove_service(uuid, integer) FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.remove_service(uuid, integer) TO authenticated;
+
+-- 20261113120000_invoice_void_with_receipts.sql
+-- Cancelling a paid invoice in one step. When the payments on an invoice
+-- were entered by mistake (no money was given back), staff cancel the
+-- invoice and all its active receipts together, with one reason, in one
+-- transaction. Money that was really given back is a refund, not this.
+-- Invoices with an active refund are refused: the refund must be dealt
+-- with first, as before.
+
+CREATE OR REPLACE FUNCTION public.invoice_command_capability(p_kind text) RETURNS text
+LANGUAGE sql IMMUTABLE SET search_path = '' AS $$
+  SELECT CASE
+    WHEN p_kind IN ('invoice_create', 'receipt_create') THEN 'issue'
+    WHEN p_kind IN ('service_save', 'invoice_void', 'invoice_void_all', 'invoice_correct',
+      'receipt_void', 'receipt_correct', 'refund_create', 'refund_void') THEN 'manage'
+  END;
+$$;
+REVOKE ALL ON FUNCTION public.invoice_command_capability(text) FROM PUBLIC, anon, authenticated;
+
+CREATE FUNCTION public.invoice_void_with_receipts(p_invoice public.invoices, p_reason text,
+  p_actor uuid) RETURNS void
+LANGUAGE plpgsql SET search_path = '' AS $$
+DECLARE
+  receipt_id uuid;
+  current public.invoices;
+BEGIN
+  IF p_invoice.voided_at IS NOT NULL THEN RAISE EXCEPTION 'already_voided' USING ERRCODE = 'P0001'; END IF;
+  IF EXISTS (SELECT 1 FROM public.invoice_refunds
+      WHERE invoice_id = p_invoice.id AND voided_at IS NULL) THEN
+    RAISE EXCEPTION 'refunds_first' USING ERRCODE = 'P0001';
+  END IF;
+  FOR receipt_id IN SELECT id FROM public.invoice_receipts
+      WHERE invoice_id = p_invoice.id AND voided_at IS NULL ORDER BY recorded_at DESC, id LOOP
+    PERFORM public.invoice_void_receipt(p_invoice, receipt_id, p_reason, p_actor);
+  END LOOP;
+  SELECT * INTO current FROM public.invoices WHERE id = p_invoice.id;
+  PERFORM public.invoice_void(current, p_reason, p_actor);
+END;
+$$;
+REVOKE ALL ON FUNCTION public.invoice_void_with_receipts(public.invoices, text, uuid)
+  FROM PUBLIC, anon, authenticated;
+
+CREATE OR REPLACE FUNCTION public.execute_invoice_command(p_request_id uuid, p_kind text, p_payload jsonb)
+RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER SET search_path = '' AS $$
+DECLARE
+  actor uuid := (SELECT id FROM public.staff WHERE user_id = auth.uid() AND is_active);
+  capability text := public.invoice_command_capability(p_kind);
+  previous public.mutation_receipts;
+  invoice public.invoices;
+  invoice_id uuid := (p_payload->>'id')::uuid;
+  document_id uuid;
+  kind_key text := 'invoice:' || p_kind;
+  request_hash text := encode(sha256(convert_to(p_payload::text, 'UTF8')), 'hex');
+  reason text := nullif(btrim(p_payload->>'reason'), '');
+  payment jsonb;
+  outcome jsonb;
+  error_key text;
+BEGIN
+  IF p_request_id IS NULL OR p_payload IS NULL OR capability IS NULL THEN
+    RAISE EXCEPTION 'Invalid invoice request' USING ERRCODE = '22023';
+  END IF;
+  IF actor IS NULL OR NOT public.invoice_can(capability) THEN
+    RAISE EXCEPTION 'Permission denied' USING ERRCODE = '42501';
+  END IF;
+  PERFORM pg_advisory_xact_lock(hashtextextended(p_request_id::text, 0));
+  SELECT * INTO previous FROM public.mutation_receipts WHERE request_id = p_request_id;
+  IF FOUND THEN
+    IF previous.actor_id <> actor OR previous.kind <> kind_key OR previous.payload_hash <> request_hash THEN
+      RAISE EXCEPTION 'Request identity mismatch' USING ERRCODE = '22023';
+    END IF;
+    RETURN previous.outcome;
+  END IF;
+  BEGIN
+    IF p_kind NOT IN ('service_save', 'invoice_create') THEN
+      SELECT * INTO invoice FROM public.invoices WHERE id = invoice_id FOR UPDATE;
+      IF NOT FOUND OR invoice.version IS DISTINCT FROM (p_payload->>'version')::integer THEN
+        RAISE EXCEPTION 'stale' USING ERRCODE = 'P0001';
+      END IF;
+    END IF;
+    IF p_kind IN ('invoice_void', 'invoice_void_all', 'invoice_correct', 'receipt_void',
+      'receipt_correct', 'refund_create', 'refund_void') AND (reason IS NULL OR length(reason) > 500) THEN
+      RAISE EXCEPTION 'reason_required' USING ERRCODE = 'P0001';
+    END IF;
+    CASE p_kind
+      WHEN 'service_save' THEN document_id := public.invoice_save_service(p_payload, actor);
+      WHEN 'invoice_create' THEN
+        IF jsonb_array_length(coalesce(p_payload->'payments', '[]')) > 2 OR EXISTS (
+          SELECT 1 FROM jsonb_array_elements(coalesce(p_payload->'payments', '[]')) p
+          GROUP BY p->>'method' HAVING count(*) > 1) THEN
+          RAISE EXCEPTION 'invalid_request' USING ERRCODE = 'P0001';
+        END IF;
+        invoice_id := public.invoice_create(p_payload, actor, public.invoice_can('manage'), NULL);
+        FOR payment IN SELECT value FROM jsonb_array_elements(coalesce(p_payload->'payments', '[]')) LOOP
+          SELECT * INTO invoice FROM public.invoices WHERE id = invoice_id;
+          PERFORM public.invoice_record_receipt(invoice, (payment->>'amount_minor')::bigint,
+            payment->>'method', invoice.branch, NULL, NULL, actor);
+        END LOOP;
+      WHEN 'receipt_create' THEN
+        document_id := public.invoice_record_receipt(invoice, (p_payload->>'amount_minor')::bigint,
+          p_payload->>'method', (p_payload->>'branch')::public.clinic_location, NULL, NULL, actor);
+      WHEN 'receipt_correct' THEN document_id := public.invoice_correct_receipt(invoice, p_payload, actor);
+      WHEN 'receipt_void' THEN
+        PERFORM public.invoice_void_receipt(invoice, (p_payload->>'receipt_id')::uuid, reason, actor);
+      WHEN 'refund_create' THEN document_id := public.invoice_record_refund(invoice, p_payload, actor);
+      WHEN 'refund_void' THEN
+        PERFORM public.invoice_void_refund(invoice, (p_payload->>'refund_id')::uuid, reason, actor);
+      WHEN 'invoice_void' THEN PERFORM public.invoice_void(invoice, reason, actor);
+      WHEN 'invoice_void_all' THEN PERFORM public.invoice_void_with_receipts(invoice, reason, actor);
+      WHEN 'invoice_correct' THEN
+        document_id := public.invoice_correct(invoice, p_payload, actor);
+        invoice_id := document_id;
+    END CASE;
+    IF p_kind IN ('receipt_create', 'receipt_correct', 'receipt_void', 'refund_create', 'refund_void') THEN
+      UPDATE public.invoices SET version = version + 1 WHERE id = invoice.id;
+    END IF;
+    outcome := jsonb_build_object('ok', true, 'invoice_id', invoice_id, 'document_id', document_id);
+  EXCEPTION
+    WHEN raise_exception THEN
+      GET STACKED DIAGNOSTICS error_key = MESSAGE_TEXT;
+      outcome := jsonb_build_object('ok', false, 'error', error_key);
+    WHEN unique_violation THEN
+      outcome := '{"ok":false,"error":"duplicate"}';
+    WHEN data_exception OR integrity_constraint_violation OR no_data_found OR invalid_text_representation THEN
+      outcome := '{"ok":false,"error":"invalid_request"}';
+  END;
+  INSERT INTO public.mutation_receipts(request_id, actor_id, kind, payload_hash, outcome)
+    VALUES (p_request_id, actor, kind_key, request_hash, outcome);
+  RETURN outcome;
+END;
+$$;
+
+-- ---- 20261113100000_doctor_session_report.sql ----
+-- Doctor sessions report: how many sessions each doctor did in a period, by
+-- appointment type, for the monthly doctor pay. It reads appointments only,
+-- never invoices.
+--
+-- * A session counts when its appointment is checked in. Cancelled
+--   appointments never count.
+-- * Appointments still scheduled at a time already past are returned as
+--   `pending`, so reception can check them in or cancel them before pay is
+--   worked out. They are not in the counts.
+-- * Every active doctor on an appointment is credited with the session, so a
+--   shared session counts once for each of its doctors. `sessions` counts
+--   each appointment once.
+-- * Spinal traction is done without a doctor and is never counted, including
+--   older traction appointments that still have a doctor attached.
+-- * The branch is the patient's branch, as on every schedule screen. Days are
+--   clinic days.
+--
+-- Same access and limits as invoice_report: payment receptionists and super
+-- admins, at most 366 days, detail rows capped at 5000, complete totals.
+
+CREATE FUNCTION public.doctor_session_report(p_from date, p_to date,
+  p_branch public.clinic_location DEFAULT NULL, p_doctor uuid DEFAULT NULL)
+RETURNS jsonb LANGUAGE plpgsql STABLE SECURITY DEFINER SET search_path = '' AS $$
+DECLARE
+  lo timestamptz;
+  hi timestamptz;
+  result jsonb;
+BEGIN
+  IF NOT public.invoice_can('manage') THEN
+    RAISE EXCEPTION 'Permission denied' USING ERRCODE = '42501';
+  END IF;
+  IF p_from IS NULL OR p_to IS NULL OR p_to < p_from OR p_to - p_from > 366 THEN
+    RAISE EXCEPTION 'Invalid report request' USING ERRCODE = '22023';
+  END IF;
+  lo := p_from::timestamp AT TIME ZONE public.clinic_timezone();
+  hi := (p_to + 1)::timestamp AT TIME ZONE public.clinic_timezone();
+
+  WITH visits AS (
+    SELECT a.id, a.type, a.status, a.scheduled_at,
+      p.id AS patient_id, p.full_name AS patient_name, p.file_number
+    FROM public.appointments a
+    JOIN public.patients p ON p.id = a.patient_id
+    WHERE a.scheduled_at >= lo AND a.scheduled_at < hi
+      AND a.type <> 'spinal_traction_session'
+      AND (a.status = 'checked_in' OR (a.status = 'scheduled' AND a.scheduled_at < now()))
+      AND (p_branch IS NULL OR p.clinic = p_branch)
+  ),
+  team AS (
+    SELECT ad.appointment_id, ad.doctor_id, s.full_name
+    FROM public.appointment_doctors ad
+    JOIN public.staff s ON s.id = ad.doctor_id
+    WHERE ad.is_active AND ad.appointment_id IN (SELECT id FROM visits)
+  ),
+  credits AS (
+    SELECT v.*, t.doctor_id, t.full_name AS doctor_name,
+      (SELECT coalesce(jsonb_agg(o.full_name ORDER BY o.full_name), '[]'::jsonb)
+        FROM team o WHERE o.appointment_id = v.id AND o.doctor_id <> t.doctor_id) AS shared_with
+    FROM visits v
+    JOIN team t ON t.appointment_id = v.id
+    WHERE p_doctor IS NULL OR t.doctor_id = p_doctor
+  ),
+  done AS (SELECT * FROM credits WHERE status = 'checked_in'),
+  waiting AS (
+    SELECT id, type, scheduled_at, patient_id, patient_name, file_number,
+      jsonb_agg(doctor_name ORDER BY doctor_name) AS doctors
+    FROM credits WHERE status = 'scheduled'
+    GROUP BY id, type, scheduled_at, patient_id, patient_name, file_number
+  ),
+  per_doctor AS (
+    SELECT doctor_id, doctor_name,
+      count(*) FILTER (WHERE status = 'checked_in' AND type = 'normal_pt_session') AS pt_sessions,
+      count(*) FILTER (WHERE status = 'checked_in' AND type = 'initial_assessment') AS assessments,
+      count(*) FILTER (WHERE status = 'checked_in' AND type = 'reassessment') AS reassessments,
+      count(*) FILTER (WHERE status = 'checked_in') AS total,
+      count(*) FILTER (WHERE status = 'checked_in' AND jsonb_array_length(shared_with) > 0) AS shared,
+      count(*) FILTER (WHERE status = 'scheduled') AS pending
+    FROM credits
+    GROUP BY doctor_id, doctor_name
+  )
+  SELECT jsonb_build_object(
+    'totals', jsonb_build_object(
+      'sessions', (SELECT count(DISTINCT id) FROM done),
+      'pt_sessions', (SELECT count(DISTINCT id) FROM done WHERE type = 'normal_pt_session'),
+      'assessments', (SELECT count(DISTINCT id) FROM done WHERE type = 'initial_assessment'),
+      'reassessments', (SELECT count(DISTINCT id) FROM done WHERE type = 'reassessment'),
+      'shared', (SELECT count(DISTINCT id) FROM done WHERE jsonb_array_length(shared_with) > 0),
+      'credits', (SELECT count(*) FROM done),
+      'pending', (SELECT count(*) FROM waiting),
+      'doctors', (SELECT count(*) FROM per_doctor WHERE total > 0)),
+    'rows', coalesce((SELECT jsonb_agg(to_jsonb(d) ORDER BY d.doctor_name, d.doctor_id)
+      FROM per_doctor d), '[]'::jsonb),
+    'sessions', coalesce((SELECT jsonb_agg(jsonb_build_object(
+        'appointment_id', s.id, 'doctor_id', s.doctor_id, 'type', s.type,
+        'scheduled_at', s.scheduled_at, 'patient_id', s.patient_id,
+        'patient_name', s.patient_name, 'file_number', s.file_number,
+        'shared_with', s.shared_with) ORDER BY s.doctor_name, s.doctor_id, s.scheduled_at, s.id)
+      FROM (SELECT * FROM done ORDER BY doctor_name, doctor_id, scheduled_at, id LIMIT 5000) s),
+      '[]'::jsonb),
+    'pending', coalesce((SELECT jsonb_agg(jsonb_build_object(
+        'appointment_id', w.id, 'type', w.type, 'scheduled_at', w.scheduled_at,
+        'patient_id', w.patient_id, 'patient_name', w.patient_name,
+        'file_number', w.file_number, 'doctors', w.doctors) ORDER BY w.scheduled_at, w.id)
+      FROM (SELECT * FROM waiting ORDER BY scheduled_at, id LIMIT 5000) w), '[]'::jsonb))
+  INTO result;
+  RETURN result;
+END;
+$$;
+
+REVOKE ALL ON FUNCTION public.doctor_session_report(date, date, public.clinic_location, uuid)
+  FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.doctor_session_report(date, date, public.clinic_location, uuid)
+  TO authenticated;

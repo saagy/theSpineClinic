@@ -11,20 +11,37 @@ class BillingReportRepositoryImpl implements BillingReportRepository {
   @override
   Future<Result<BillingReportData>> report(BillingReportQuery query) async {
     try {
-      final Map<String, dynamic> json = await _service.rpc<Map<String, dynamic>>(
-        'invoice_report',
-        params: query.toParams(),
-      );
       return Result.success(switch (query.kind) {
-        BillingReportKind.money => MoneyReport.fromJson(json),
-        BillingReportKind.revenue => RevenueReport.fromJson(json, forDoctor: false),
-        BillingReportKind.doctor => RevenueReport.fromJson(json, forDoctor: true),
-        BillingReportKind.doctors => DoctorsReport.fromJson(json),
-        BillingReportKind.outstanding => OutstandingReport.fromJson(json),
-        BillingReportKind.services => ServicesReport.fromJson(json),
+        BillingReportKind.money => MoneyReport.fromJson(await _invoice(query, 'money')),
+        BillingReportKind.revenue => await _revenue(query),
+        BillingReportKind.sessions => DoctorSessionsReport.fromJson(
+          await _service.rpc<Map<String, dynamic>>(
+            'doctor_session_report',
+            params: query.toParams(),
+          ),
+          forDoctor: query.doctorId != null,
+        ),
+        BillingReportKind.services => ServicesReport.fromJson(await _invoice(query, 'services')),
+        BillingReportKind.outstanding => OutstandingReport.fromJson(
+          await _invoice(query, 'outstanding'),
+        ),
       });
     } catch (error) {
       return Result.failure(AppException.fromSupabaseException(error));
     }
+  }
+
+  Future<Map<String, dynamic>> _invoice(BillingReportQuery query, String kind) => _service
+      .rpc<Map<String, dynamic>>('invoice_report', params: query.toParams(invoiceKind: kind));
+
+  /// One doctor's share, or every line with the split between doctors. The
+  /// two reads for all doctors run together over the same period.
+  Future<RevenueReport> _revenue(BillingReportQuery query) async {
+    if (query.doctorId != null) return RevenueReport.fromJson(await _invoice(query, 'doctor'));
+    final List<Map<String, dynamic>> both = await Future.wait([
+      _invoice(query, 'revenue'),
+      _invoice(query, 'doctors'),
+    ]);
+    return RevenueReport.fromJson(both[0], byDoctor: DoctorTotals.fromJson(both[1]));
   }
 }

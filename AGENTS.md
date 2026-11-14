@@ -116,6 +116,16 @@ onStatusChanged: () => ref.read(myProvider.notifier).refresh()
 // Widget accepts VoidCallback? onStatusChanged and forwards to card
 ```
 
+### Billing and Payments Freshness
+`InvoiceCreateController` and `InvoiceActionController` invalidate the whole
+`billingReportProvider` family along with the invoice, patient invoices and
+patient detail: a report can stay mounted under the invoice panel. Billing,
+the invoice detail and the patient Payments tab also reload on return and
+app resume via `RefreshOnReturn(notifyOnEntry: false)`. Any new invoice
+command must go through these controllers. `ReportTable` keeps its page and
+expanded rows (by `ReportRow.identity`) across reloads of the same query;
+`ReportBody` keys sections by query so a new report starts on page one.
+
 ### PostgreSQL Base Table Grants vs RLS
 In PostgreSQL/Supabase, Row Level Security (`CREATE POLICY`) only takes effect
 *after* table-level privileges are granted to the executing role. Creating a new
@@ -224,4 +234,5 @@ lib/
 - **Clinic Package Settings Product Definition**: The dormant `clinic_settings` table was removed by migration `20260713010000`; no active client references remain. Any future settings feature needs explicit package/balance semantics, change permissions, audit history and an admin UX.
 - **Direct Balance Writes**: The app no longer edits session balances by hand (billing plan slice 5), but `guard_patient_balance_write` still accepts a direct `patients.session_balance` update from a receptionist or super admin. Restricting it to the invoice commands and appointment triggers needs a marker those commands set, because they write under the caller's identity.
 - **Unreachable Legacy Widgets**: Several pre-overhaul widgets under `patient/presentation/widgets/` (`patient_tab_*`, `patient_info_*`, `patient_payments_skeleton`) and the old `receptionist_appointment_card*` family are no longer reachable from `main.dart`; some still have tests. Remove them with their tests in a dedicated cleanup.
+- **Doctor Pay Rates**: The Billing tab's Doctor sessions report counts checked-in sessions per doctor and type. Pay rates are not defined yet; adding them needs per-type (or per-doctor) amounts, who may change them, change history, and a decision on how shared sessions are paid.
 - **Staff Feature Domain Layer**: `lib/features/staff/domain/` holds only `StaffDetails`; the repository interface still lives in `data/staff_repository.dart`. Move it into `domain/` to match every other feature.

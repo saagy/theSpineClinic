@@ -24,8 +24,9 @@ class InvoiceManageGate extends ConsumerWidget {
   final bool Function(Staff? user) allow;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) =>
-      ref.watch(currentUserProvider).when(
+  Widget build(BuildContext context, WidgetRef ref) => ref
+      .watch(currentUserProvider)
+      .when(
         loading: () => frame(loading),
         error: (error, _) => frame(
           ErrorView(

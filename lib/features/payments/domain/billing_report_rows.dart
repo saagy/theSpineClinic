@@ -34,7 +34,10 @@ class ReportParty {
     patientName: json['patient_name'] as String? ?? '',
     fileNumber: _int(json['file_number']),
     invoiceId: json['invoice_id'] as String,
-    invoiceNumber: invoiceNumberLabel(_branch(json['invoice_branch']), _int(json['invoice_number'])),
+    invoiceNumber: invoiceNumberLabel(
+      _branch(json['invoice_branch']),
+      _int(json['invoice_number']),
+    ),
   );
 
   final String patientId;

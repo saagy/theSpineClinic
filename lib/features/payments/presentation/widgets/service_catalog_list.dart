@@ -29,9 +29,7 @@ class ServiceCatalogList extends StatelessWidget {
         return ListView(
           controller: controller,
           physics: const AlwaysScrollableScrollPhysics(),
-          padding: const EdgeInsets.fromLTRB(
-            AppSizes.p16, AppSizes.p4, AppSizes.p16, AppSizes.p32,
-          ),
+          padding: const EdgeInsets.fromLTRB(AppSizes.p16, AppSizes.p4, AppSizes.p16, AppSizes.p32),
           children: [
             if (wide) const ServiceCatalogHeader(),
             for (final (index, (group, items)) in groups.indexed) ...[
@@ -44,9 +42,7 @@ class ServiceCatalogList extends StatelessWidget {
                   header: true,
                   child: Text(
                     group.label,
-                    style: AppTextStyles.captionBold.copyWith(
-                      color: colors.onSurfaceVariant,
-                    ),
+                    style: AppTextStyles.captionBold.copyWith(color: colors.onSurfaceVariant),
                   ),
                 ),
               ),
@@ -66,10 +62,7 @@ class ServiceCatalogList extends StatelessWidget {
                           thickness: AppSizes.borderWidth,
                           color: colors.outlineVariant,
                         ),
-                      ServiceCatalogRow(
-                        service: service,
-                        onTap: () => onOpen(service),
-                      ),
+                      ServiceCatalogRow(service: service, onTap: () => onOpen(service)),
                     ],
                   ],
                 ),

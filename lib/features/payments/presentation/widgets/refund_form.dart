@@ -118,7 +118,12 @@ class _RefundFormState extends ConsumerState<RefundForm> {
     final bool enabled = !_saving;
     void change(VoidCallback update) => setState(update);
     final sections = [
-      RefundLinesSection(input: _input, enabled: enabled, showMissing: _triedSave, onChanged: change),
+      RefundLinesSection(
+        input: _input,
+        enabled: enabled,
+        showMissing: _triedSave,
+        onChanged: change,
+      ),
       RefundDetailsSection(
         input: _input,
         paybackMinor: draft.paybackMinor,

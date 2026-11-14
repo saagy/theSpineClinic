@@ -24,6 +24,14 @@ RefundDraft refund(InvoiceDetail invoice, int sessions, int value, {PaymentMetho
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
+  test('each branch numbers documents with its own prefix', () {
+    expect(invoiceNumberLabel(ClinicLocation.tagamoa, 7), 'TG-00007');
+    expect(invoiceNumberLabel(ClinicLocation.masrElgedida, 7), 'MG-00007');
+    expect(invoiceNumberLabel(ClinicLocation.madinaty, 7), 'MD-00007');
+    expect(ClinicLocation.fromDbValue('madinaty'), ClinicLocation.madinaty);
+    expect(ClinicLocation.fromDbValue('unknown'), isNull);
+  });
+
   test('the invoice document parses with its figures and documents', () {
     final invoice = partPaidDetail;
     expect(invoice.summary.displayNumber, 'TG-00042');

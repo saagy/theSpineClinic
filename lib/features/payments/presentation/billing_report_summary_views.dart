@@ -2,6 +2,7 @@ import '../../../core/constants/app_sizes.dart';
 import '../../../core/constants/app_strings.dart';
 import '../../../core/network/app_routes.dart';
 import '../../../core/utils/money.dart';
+import '../../patient/presentation/patient_workspace_tab.dart';
 import '../domain/billing_report_data.dart';
 import '../domain/service_catalog_item.dart';
 import 'billing_report_view.dart';
@@ -20,78 +21,52 @@ ReportColumn _count(String label) => ReportColumn(
   role: ReportCellRole.figure,
 );
 
-ReportView doctorsReportView(DoctorsReport report) {
-  final bool moved = report.movedMinor != 0 || report.rows.any((row) => row.movedMinor != 0);
-  final sheet = ReportSheet(
-    columns: [
-      ReportColumn(_t.colDoctor, role: ReportCellRole.title),
-      _amount(_t.cash),
-      _amount(_t.visa),
-      if (moved) _amount(_t.moved),
-      _amount(_t.colTotal, role: ReportCellRole.lead),
-    ],
-    rows: [
-      for (final row in report.rows)
-        ReportRow([
-          ReportCell(
-            row.doctorId == null ? _t.noDoctorCredit : row.name ?? '',
-            tone: row.doctorId == null ? ReportTone.muted : ReportTone.normal,
-          ),
-          ReportCell.money(row.cashMinor),
-          ReportCell.money(row.visaMinor),
-          if (moved) ReportCell.money(row.movedMinor),
-          ReportCell.money(row.shareMinor),
-        ]),
-    ],
-    footer: [
-      ReportCell(_t.totalRow),
-      ReportCell.money(report.cashMinor),
-      ReportCell.money(report.visaMinor),
-      if (moved) ReportCell.money(report.movedMinor),
-      ReportCell.money(report.totalMinor),
-    ],
-  );
-  return ReportView(
-    figures: [
-      ReportFigure(_t.collected, Money.format(report.totalMinor)),
-      ReportFigure(_t.toDoctors, Money.format(report.totalMinor - report.clinicOnlyMinor)),
-      ReportFigure(_t.noDoctorCredit, Money.format(report.clinicOnlyMinor)),
-    ],
-    sections: [ReportSection(title: _t.sectionDoctors, sheet: sheet)],
-    export: sheet,
-  );
-}
-
 ReportView outstandingReportView(OutstandingReport report) {
   final sheet = ReportSheet(
     columns: [
       ReportColumn(_t.colPatient, role: ReportCellRole.title),
-      ReportColumn(_t.colPatientId, width: AppSizes.reportCodeColumnWidth),
-      ReportColumn(_t.colOldest, width: AppSizes.reportDateColumnWidth),
-      ReportColumn(_t.openInvoices,
-          width: AppSizes.reportAmountColumnWidth, numeric: true, role: ReportCellRole.figure),
+      // A figure, so stacked rows say what the date means.
+      ReportColumn(
+        _t.colOldest,
+        width: AppSizes.reportDateColumnWidth,
+        role: ReportCellRole.figure,
+      ),
+      ReportColumn(
+        _t.openInvoices,
+        width: AppSizes.reportAmountColumnWidth,
+        numeric: true,
+        role: ReportCellRole.figure,
+      ),
       _amount(_t.amountDue, role: ReportCellRole.lead),
     ],
     rows: [
       for (final row in report.rows)
-        ReportRow([
-          ReportCell(row.patientName),
-          reportPatientId(row.fileNumber),
-          ReportCell.day(row.oldestDate),
-          ReportCell.count(row.openInvoices),
-          ReportCell.money(row.dueMinor, tone: ReportTone.warning),
-        ], location: AppRoutes.patientDetail.replaceFirst(':id', Uri.encodeComponent(row.patientId))),
+        ReportRow(
+          [
+            ReportCell.patient(row.patientName, row.fileNumber),
+            ReportCell.day(row.oldestDate),
+            ReportCell.count(row.openInvoices),
+            ReportCell.money(row.dueMinor, tone: ReportTone.warning),
+          ],
+          // An unpaid balance opens on the patient's invoices.
+          location: AppRoutes.patientLocation(
+            row.patientId,
+            tab: PatientWorkspaceTab.payments.name,
+          ),
+        ),
     ],
   );
   return ReportView(
     figures: [
-      ReportFigure(_t.amountDue, Money.format(report.dueMinor),
-          tone: report.dueMinor > 0 ? ReportTone.warning : ReportTone.normal),
+      ReportFigure(
+        _t.amountDue,
+        Money.format(report.dueMinor),
+        tone: report.dueMinor > 0 ? ReportTone.warning : ReportTone.normal,
+      ),
       ReportFigure(_t.patients, '${report.rowCount}'),
       ReportFigure(_t.openInvoices, '${report.openInvoices}'),
     ],
     sections: [ReportSection(title: _t.sectionPatients, sheet: sheet)],
-    export: sheet,
   );
 }
 
@@ -100,16 +75,14 @@ ReportView servicesReportView(ServicesReport report) {
     ReportColumn(_t.colDate, width: AppSizes.reportDateColumnWidth),
     ReportColumn(_t.colInvoice, width: AppSizes.reportCodeColumnWidth),
     ReportColumn(_t.colPatient, role: ReportCellRole.title),
-    ReportColumn(_t.colPatientId, width: AppSizes.reportCodeColumnWidth),
     _count(_t.colQuantity),
-    _amount(_t.billed),
-    _amount(_t.collected, role: ReportCellRole.lead),
+    _amount(_t.colPrice),
+    _amount(_t.paid, role: ReportCellRole.lead),
   ];
   List<ReportCell> sale(ServiceSaleRow line) => [
     ReportCell.day(line.invoiceDate),
     ReportCell(line.party.invoiceNumber),
-    ReportCell(line.party.patientName),
-    reportPatientId(line.party.fileNumber),
+    ReportCell.patient(line.party.patientName, line.party.fileNumber),
     ReportCell.count(line.quantity),
     ReportCell.money(line.billedMinor),
     ReportCell.money(line.collectedMinor),
@@ -117,11 +90,10 @@ ReportView servicesReportView(ServicesReport report) {
   final summary = ReportSheet(
     columns: [
       ReportColumn(_t.colService, role: ReportCellRole.title),
-      ReportColumn(_t.colType),
-      _count(_t.colUnits),
-      _count(_t.colInvoices),
-      _amount(_t.billed),
-      _amount(_t.collected, role: ReportCellRole.lead),
+      ReportColumn(_t.colType, role: ReportCellRole.detail),
+      _count(_t.unitsSold),
+      _amount(_t.totalPrice),
+      _amount(_t.paid, role: ReportCellRole.lead),
     ],
     rows: [
       for (final row in report.rows)
@@ -130,7 +102,6 @@ ReportView servicesReportView(ServicesReport report) {
             ReportCell(row.name),
             ReportCell(ServiceType.fromDb(row.serviceType).label),
             ReportCell.count(row.units),
-            ReportCell.count(row.invoiceCount),
             ReportCell.money(row.billedMinor),
             ReportCell.money(row.collectedMinor),
           ],
@@ -147,26 +118,21 @@ ReportView servicesReportView(ServicesReport report) {
       ReportCell(_t.totalRow),
       const ReportCell(''),
       ReportCell.count(report.units),
-      const ReportCell(''),
       ReportCell.money(report.billedMinor),
       ReportCell.money(report.collectedMinor),
     ],
   );
-  final names = {for (final row in report.rows) row.serviceId: row.name};
   return ReportView(
     figures: [
-      ReportFigure(_t.billed, Money.format(report.billedMinor)),
-      ReportFigure(_t.collected, Money.format(report.collectedMinor)),
-      ReportFigure(_t.uncollected, Money.format(report.billedMinor - report.collectedMinor)),
+      ReportFigure(_t.totalPrice, Money.format(report.billedMinor)),
+      ReportFigure(_t.paid, Money.format(report.collectedMinor)),
+      ReportFigure(
+        _t.notPaidYet,
+        Money.format(report.billedMinor - report.collectedMinor),
+        tone: report.billedMinor > report.collectedMinor ? ReportTone.warning : ReportTone.normal,
+      ),
       ReportFigure(_t.unitsSold, '${report.units}'),
     ],
     sections: [ReportSection(title: _t.sectionServices, sheet: summary)],
-    export: ReportSheet(
-      columns: [ReportColumn(_t.colService), ...saleColumns],
-      rows: [
-        for (final line in report.lines)
-          ReportRow([ReportCell(names[line.serviceId] ?? ''), ...sale(line)]),
-      ],
-    ),
   );
 }

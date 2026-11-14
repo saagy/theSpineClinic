@@ -4,6 +4,7 @@ import 'package:spine_clinic_app/core/constants/app_strings.dart';
 import 'package:spine_clinic_app/core/constants/app_sizes.dart';
 import 'package:spine_clinic_app/core/constants/app_text_styles.dart';
 import 'package:spine_clinic_app/features/patient/presentation/patient_providers.dart';
+import 'package:spine_clinic_app/features/patient/presentation/patient_workspace_tab.dart';
 import 'package:spine_clinic_app/features/patient/presentation/widgets/patient_workspace_body.dart';
 import 'package:spine_clinic_app/features/patient/presentation/widgets/workspace_page_skeleton.dart';
 import 'package:spine_clinic_app/features/patient/presentation/widgets/workspace_patient_menu.dart';
@@ -12,8 +13,11 @@ import 'package:spine_clinic_app/shared/widgets/record_section.dart';
 
 /// Role-aware modern 2026 patient workspace screen.
 class PatientDetailScreen extends ConsumerStatefulWidget {
-  const PatientDetailScreen({super.key, required this.patientId});
+  const PatientDetailScreen({super.key, required this.patientId, this.initialTab});
   final String patientId;
+
+  /// The tab a link asked for, such as Payments from Billing.
+  final PatientWorkspaceTab? initialTab;
 
   @override
   ConsumerState<PatientDetailScreen> createState() => _PatientDetailScreenState();
@@ -21,6 +25,19 @@ class PatientDetailScreen extends ConsumerStatefulWidget {
 
 class _PatientDetailScreenState extends ConsumerState<PatientDetailScreen> {
   bool _showPatientTitle = false;
+
+  @override
+  void initState() {
+    super.initState();
+    final PatientWorkspaceTab? tab = widget.initialTab;
+    // Providers cannot change while the first frame builds; the record is
+    // usually still loading then, so its tabs first appear on [tab].
+    if (tab != null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) ref.read(patientActiveTabProvider(widget.patientId).notifier).show(tab);
+      });
+    }
+  }
 
   void _onScroll(ScrollNotification notification) {
     if (notification.metrics.axis != Axis.vertical) return;
@@ -32,6 +49,8 @@ class _PatientDetailScreenState extends ConsumerState<PatientDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // Keeps the chosen tab while the record loads.
+    ref.listen(patientActiveTabProvider(widget.patientId), (_, _) {});
     final canAccess = ref.watch(canAccessPatientProvider(widget.patientId)).value ?? false;
     final patient = canAccess ? ref.watch(patientDetailProvider(widget.patientId)).value : null;
 

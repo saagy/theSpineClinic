@@ -533,7 +533,7 @@ final class PatientActiveTabProvider
   }
 }
 
-String _$patientActiveTabHash() => r'6db6b46c61732ebc52e559012e793a989f17bab4';
+String _$patientActiveTabHash() => r'bd709ea2ea7bb6c289df379c92c06c099683d404';
 
 /// Tracks the active sub-tab index on the patient profile screen across navigations.
 

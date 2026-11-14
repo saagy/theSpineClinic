@@ -4,7 +4,9 @@ import '../../../../core/constants/app_text_styles.dart';
 import '../../../../core/constants/clinic_colors.dart';
 import '../billing_report_view.dart';
 
-/// A report's headline totals in one bordered strip.
+/// A report's headline totals in one bordered strip: side by side when they
+/// fit, two per row for an even count, otherwise one per line with the
+/// amount opposite its label, so no total is left alone on a row.
 class ReportFigures extends StatelessWidget {
   const ReportFigures({super.key, required this.figures});
   final List<ReportFigure> figures;
@@ -24,7 +26,21 @@ class ReportFigures extends StatelessWidget {
           builder: (context, box) {
             final bool large = MediaQuery.textScalerOf(context).scale(1) > 1.3;
             final int fit = (box.maxWidth / AppSizes.reportFigureMinWidth).floor();
-            final int perRow = large ? 1 : fit >= figures.length ? figures.length : 2;
+            if (!large && fit < figures.length && figures.length.isOdd) {
+              return Column(
+                children: [
+                  for (final (index, figure) in figures.indexed) ...[
+                    if (index > 0) const SizedBox(height: AppSizes.p12),
+                    _Figure(figure, inline: true),
+                  ],
+                ],
+              );
+            }
+            final int perRow = large
+                ? 1
+                : fit >= figures.length
+                ? figures.length
+                : 2;
             return Column(
               children: [
                 for (int start = 0; start < figures.length; start += perRow) ...[
@@ -51,27 +67,68 @@ class ReportFigures extends StatelessWidget {
 }
 
 class _Figure extends StatelessWidget {
-  const _Figure(this.figure);
+  const _Figure(this.figure, {this.inline = false});
   final ReportFigure figure;
+
+  /// Label and caption on the left, amount on the right.
+  final bool inline;
 
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
+    final label = Text(
+      figure.label,
+      style: AppTextStyles.caption.copyWith(color: colors.onSurfaceVariant),
+    );
+    final value = Text(
+      figure.value,
+      style: (inline ? AppTextStyles.bodyBold : AppTextStyles.cardTitle).copyWith(
+        fontFeatures: const [FontFeature.tabularFigures()],
+        color: figure.tone == ReportTone.warning
+            ? ClinicColors.of(context).warning
+            : colors.onSurface,
+      ),
+    );
+    final Widget? caption = figure.caption == null
+        ? null
+        : Text(
+            reportUnbroken(figure.caption!),
+            style: AppTextStyles.caption.copyWith(
+              color: colors.onSurfaceVariant,
+              fontFeatures: const [FontFeature.tabularFigures()],
+            ),
+          );
+    if (inline) {
+      return MergeSemantics(
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    figure.label,
+                    style: AppTextStyles.bodyMedium.copyWith(color: colors.onSurface),
+                  ),
+                  ?caption,
+                ],
+              ),
+            ),
+            const SizedBox(width: AppSizes.p12),
+            value,
+          ],
+        ),
+      );
+    }
     return MergeSemantics(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(figure.label, style: AppTextStyles.caption.copyWith(color: colors.onSurfaceVariant)),
+          label,
           const SizedBox(height: AppSizes.p4),
-          Text(
-            figure.value,
-            style: AppTextStyles.cardTitle.copyWith(
-              fontFeatures: const [FontFeature.tabularFigures()],
-              color: figure.tone == ReportTone.warning
-                  ? ClinicColors.of(context).warning
-                  : colors.onSurface,
-            ),
-          ),
+          value,
+          if (caption != null) ...[const SizedBox(height: AppSizes.p2), caption],
         ],
       ),
     );
