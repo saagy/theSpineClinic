@@ -236,7 +236,8 @@ Rules:
   first. An invoice can be voided on its own only with no active receipts or refunds
 (`invoice_void_all` cancels it together with its receipts when there are no
 refunds) and
-  while its remaining sessions are unused and unbooked.
+  while the patient's shared session balance still holds its sessions unused
+  and unbooked (sessions are pooled per patient, not tracked per invoice).
 - **Corrections:** correcting a receipt voids it and records the replacement
   with the original received time. Correcting an invoice creates the
   replacement, moves its active receipts with their received times, and voids

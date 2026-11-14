@@ -120,8 +120,11 @@ to the patient:
   cancelled together.
 - **Yes:** that is a refund, because money left the drawer.
 
-An invoice can only be cancelled while its sessions are unused. If the
-patient has already used them, use a refund instead.
+Sessions are one shared balance per patient, not tied to a particular
+invoice. Cancelling an invoice takes all of its sessions off that balance,
+so it is only allowed while the balance still has that many sessions free
+(not used and not booked for the future). If the patient has already used
+them, use a refund instead.
 
 **Order matters.** Once a refund is recorded, the receipts and refunds
 before it on that invoice are locked. To cancel or edit one of them, first
