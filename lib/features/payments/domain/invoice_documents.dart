@@ -113,7 +113,20 @@ class RefundLine {
   final int valueMinor;
 }
 
-/// A patient-requested reduction of the invoice value.
+/// Matches `invoice_refunds.kind`. Both lower the invoice value and may hand
+/// money back; only a refund cancels sessions.
+enum ReductionKind {
+  /// Requested by the patient, usually when stopping treatment.
+  refund,
+
+  /// Given by the clinic after the invoice was issued.
+  discount;
+
+  static ReductionKind fromDb(Object? value) => value == 'discount' ? discount : refund;
+}
+
+/// A reduction of the invoice value after it was issued: a refund or a
+/// discount. Each has its own number series.
 class InvoiceRefund {
   const InvoiceRefund({
     required this.id,
@@ -124,6 +137,7 @@ class InvoiceRefund {
     required this.reason,
     required this.recordedAt,
     required this.recordedByName,
+    this.kind = ReductionKind.refund,
     this.paybackMethod,
     this.voided,
     this.lines = const [],
@@ -131,6 +145,7 @@ class InvoiceRefund {
 
   factory InvoiceRefund.fromJson(Map<String, dynamic> json) => InvoiceRefund(
     id: json['id'] as String,
+    kind: ReductionKind.fromDb(json['kind']),
     branch: _branch(json['branch']),
     number: (json['number'] as num).toInt(),
     valueMinor: (json['value_minor'] as num).toInt(),
@@ -149,6 +164,7 @@ class InvoiceRefund {
   );
 
   final String id;
+  final ReductionKind kind;
   final ClinicLocation branch;
   final int number;
 
@@ -165,6 +181,7 @@ class InvoiceRefund {
   final List<RefundLine> lines;
 
   bool get isVoided => voided != null;
+  bool get isDiscount => kind == ReductionKind.discount;
   String get displayNumber => invoiceNumberLabel(branch, number);
   int get sessionsCancelled => lines.fold(0, (sum, line) => sum + line.sessionsCancelled);
 }

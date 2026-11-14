@@ -56,7 +56,7 @@ class InvoiceLineDetail {
   final int netMinor;
   final int sessionsGranted;
 
-  /// Net minus active refunds.
+  /// Net minus active refunds and discounts given after issue.
   final int valueMinor;
   final int collectedMinor;
 
@@ -137,7 +137,7 @@ class InvoiceDetail {
   /// Oldest first, including voided receipts.
   final List<InvoiceReceipt> receipts;
 
-  /// Oldest first, including voided refunds.
+  /// Refunds and later discounts, oldest first, including voided ones.
   final List<InvoiceRefund> refunds;
   final InvoiceRef? replacedBy;
   final InvoiceRef? replaces;
@@ -157,6 +157,9 @@ class InvoiceDetail {
   bool get canRecordPayment => !isVoided && dueMinor > 0;
   bool get canRefund => !isVoided && lines.any((line) => line.isRefundable);
 
+  /// A discount needs something left to discount.
+  bool get canDiscount => !isVoided && valueMinor > 0;
+
   /// An invoice can be voided only while it holds no active money documents.
   bool get canVoid => !isVoided && activeReceipts.isEmpty && activeRefunds.isEmpty;
   bool get canCorrect => !isVoided && activeRefunds.isEmpty;
@@ -165,8 +168,9 @@ class InvoiceDetail {
   /// payments in one step (`invoice_void_all`).
   bool get canVoidWithPayments => !isVoided && activeRefunds.isEmpty && activeReceipts.isNotEmpty;
 
-  /// A later active refund locks earlier receipts and refunds: its figures
-  /// were calculated from them, so it has to be voided first.
+  /// A later active refund or discount locks earlier receipts, refunds and
+  /// discounts: its figures were calculated from them, so it has to be
+  /// voided first.
   bool lockedByLaterRefund(DateTime recordedAt) =>
       activeRefunds.any((refund) => refund.recordedAt.isAfter(recordedAt));
 

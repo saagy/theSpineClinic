@@ -30,10 +30,11 @@ String reportMethodLabel(PaymentMethod? method) => switch (method) {
   null => _t.movedShort,
 };
 
-/// Receipt or Refund, with its number beneath.
+/// Receipt, Refund or Discount, with its number beneath.
 ReportCell reportDocument(ReportDocumentKind kind, String number) => ReportCell(switch (kind) {
   ReportDocumentKind.receipt => _t.receipt,
   ReportDocumentKind.refund => _t.refund,
+  ReportDocumentKind.discount => _t.discount,
   ReportDocumentKind.invoice => _t.invoice,
 }, sub: number);
 

@@ -11,8 +11,9 @@ import 'invoice_pdf_parts.dart';
 
 const _t = AppStrings.invoiceDetail;
 const _i = AppStrings.invoices;
+const _d = AppStrings.invoiceDiscount;
 
-/// A4 documents for an invoice, a receipt or a refund. Clinic details are a
+/// A4 documents for an invoice, a receipt, a refund or a discount. Clinic details are a
 /// placeholder line until the client's document template arrives.
 abstract final class InvoiceDocumentPdf {
   /// Opens the system print dialog. Returns false if the document could not
@@ -22,7 +23,11 @@ abstract final class InvoiceDocumentPdf {
       final Uint8List bytes = await render(invoice, receipt: receipt, refund: refund);
       final String number =
           receipt?.displayNumber ?? refund?.displayNumber ?? invoice.summary.displayNumber;
-      final String kind = receipt != null ? 'receipt' : refund != null ? 'refund' : 'invoice';
+      final String kind = receipt != null
+          ? 'receipt'
+          : refund != null
+          ? refund.kind.name
+          : 'invoice';
       await Printing.layoutPdf(
         name: '$kind-$number.pdf',
         format: PdfPageFormat.a4,
@@ -67,27 +72,33 @@ abstract final class InvoiceDocumentPdf {
       ];
     } else if (refund != null) {
       final PaymentMethod? method = refund.paybackMethod;
-      header = PdfHeader(_t.docRefund, refund.displayNumber, refund.branch.displayLabel);
+      final bool discount = refund.isDiscount;
+      header = PdfHeader(
+        discount ? _d.document : _t.docRefund,
+        refund.displayNumber,
+        refund.branch.displayLabel,
+      );
       body = [
         pdfFacts([
           (_t.billedTo, patient),
           (_t.forInvoice, summary.displayNumber),
-          (_t.invoiceDate, Formatters.formatDateTime(refund.recordedAt)),
+          (_t.documentDate, Formatters.formatDateTime(refund.recordedAt)),
           (_t.recordedBy, refund.recordedByName),
         ]),
+        // A discount never cancels sessions, so its table leaves them out.
         pdfTable(
-          [_t.services, _t.columnSessions, _t.columnAmount],
+          [_t.services, if (!discount) _t.columnSessions, _t.columnAmount],
           [
             for (final line in refund.lines)
               [
                 invoice.lineById(line.lineId)?.serviceName ?? '',
-                '${line.sessionsCancelled}',
+                if (!discount) '${line.sessionsCancelled}',
                 Money.format(line.valueMinor),
               ],
           ],
         ),
         pdfTotals([
-          (_t.refundTitle, Money.format(refund.valueMinor), true),
+          (discount ? _d.columnDiscount : _t.refundTitle, Money.format(refund.valueMinor), true),
           (
             _t.payBack,
             method == null
@@ -122,6 +133,8 @@ abstract final class InvoiceDocumentPdf {
         pdfTotals([
           (_i.subtotal, Money.format(invoice.subtotalMinor), false),
           if (summary.discountMinor > 0) (_i.discount, '− ${Money.format(summary.discountMinor)}', false),
+          if (summary.laterDiscountMinor > 0)
+            (_d.laterDiscounts, '− ${Money.format(summary.laterDiscountMinor)}', false),
           if (summary.refundedMinor > 0) (_t.refunded, '− ${Money.format(summary.refundedMinor)}', false),
           (_t.invoiceValue, Money.format(summary.valueMinor), true),
           (_t.paid, Money.format(summary.collectedMinor), false),

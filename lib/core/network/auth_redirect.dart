@@ -58,7 +58,7 @@ String? authRedirect(AsyncValue<Staff?> asyncUser, Uri uri) {
     return _homeRouteForRole(user.role);
   }
 
-  if (RegExp(r'^/patient/[^/]+/invoices/[^/]+/(refund|correct)$').hasMatch(location) &&
+  if (RegExp(r'^/patient/[^/]+/invoices/[^/]+/(refund|discount|correct)$').hasMatch(location) &&
       !InvoiceAccess.canManage(user)) {
     return _homeRouteForRole(user.role);
   }

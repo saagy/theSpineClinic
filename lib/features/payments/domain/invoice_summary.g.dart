@@ -19,6 +19,7 @@ _InvoiceSummary _$InvoiceSummaryFromJson(Map<String, dynamic> json) =>
       collectedMinor: (json['net_collected_minor'] as num).toInt(),
       dueMinor: (json['due_minor'] as num).toInt(),
       refundedMinor: (json['refunded_minor'] as num).toInt(),
+      laterDiscountMinor: (json['later_discount_minor'] as num?)?.toInt() ?? 0,
       status: _statusFromJson(json['status'] as String),
       services: json['services'] as String? ?? '',
       doctors: json['doctors'] == null
@@ -42,6 +43,7 @@ Map<String, dynamic> _$InvoiceSummaryToJson(_InvoiceSummary instance) =>
       'net_collected_minor': instance.collectedMinor,
       'due_minor': instance.dueMinor,
       'refunded_minor': instance.refundedMinor,
+      'later_discount_minor': instance.laterDiscountMinor,
       'status': _statusToJson(instance.status),
       'services': instance.services,
       'doctors': instance.doctors,

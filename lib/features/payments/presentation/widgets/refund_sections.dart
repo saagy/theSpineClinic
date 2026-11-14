@@ -106,7 +106,8 @@ class RefundLinesSection extends StatelessWidget {
   }
 }
 
-/// Where the refund is recorded, how any money goes back, and why.
+/// Where a refund or discount is recorded, how any money goes back, and why.
+/// The wording defaults to a refund's.
 class RefundDetailsSection extends StatelessWidget {
   const RefundDetailsSection({
     super.key,
@@ -115,19 +116,25 @@ class RefundDetailsSection extends StatelessWidget {
     required this.enabled,
     required this.showMissing,
     required this.onChanged,
+    this.title,
+    this.paybackNone,
+    this.reasonHint,
   });
-  final RefundFormInput input;
+  final PaybackDetailsInput input;
   final int paybackMinor;
   final bool enabled;
   final bool showMissing;
   final ValueChanged<VoidCallback> onChanged;
+  final String? title;
+  final String? paybackNone;
+  final String? reasonHint;
 
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
     final PaymentMethod? method = input.method;
     return FormSection(
-      title: _t.refundDetails,
+      title: title ?? _t.refundDetails,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -164,7 +171,7 @@ class RefundDetailsSection extends StatelessWidget {
               ),
           ] else
             Text(
-              _t.paybackNone,
+              paybackNone ?? _t.paybackNone,
               style: AppTextStyles.body.copyWith(color: colors.onSurfaceVariant),
             ),
           const SizedBox(height: AppSizes.p20),
@@ -176,7 +183,7 @@ class RefundDetailsSection extends StatelessWidget {
           const SizedBox(height: AppSizes.p20),
           ServiceTextInput(
             label: _t.reason,
-            hint: _t.refundReasonHint,
+            hint: reasonHint ?? _t.refundReasonHint,
             controller: input.reason,
             enabled: enabled,
             maxLength: 500,

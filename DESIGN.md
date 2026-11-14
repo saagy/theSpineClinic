@@ -68,8 +68,8 @@ text, or when opened from a link. It leads with patient, ID, date, branch and
 status; when the patient's page is not directly behind it (opened from
 Billing or a link), the name ends in a chevron and opens the patient on
 Payments, closing the invoice first so Back returns to Billing. Then one bordered strip of Invoice value, Paid and Due (due in the
-warning color), then Record payment (filled) and Refund (outlined) only when
-each is possible. Services show quantity, unit price and doctors, with the
+warning color), then Record payment (filled), Add discount and Refund (outlined) only
+when each is possible. Services show quantity, unit price and doctors, with the
 value arithmetic (subtotal, discount, refunded) only when something reduced
 it. Activity lists creation, receipts, refunds and voids oldest first with a
 ringed marker icon; voided documents stay visible, muted, with a struck
@@ -77,7 +77,7 @@ amount, who voided them and why. Row and app-bar actions use the shared record
 menu; actions the invoice's state rules out stay listed, disabled, with the
 step that unlocks them. Payment, receipt correction and void are bounded
 dialogs with an inline error and a progress confirm button; every void asks
-for a reason. Refund and correction are bounded form pages with the live
+for a reason. Refund, discount and correction are bounded form pages with the live
 summary beside the form from 900 px (kept in view while the form scrolls, via `FormPageBody.aside`) and below it on phones. The panel owns its
 snackbars so confirmations do not repeat on the dimmed page behind it.
 
@@ -92,10 +92,10 @@ doctor picker (with a clear button back to All doctors) where a report uses
 one, and Refresh and Print (one overflow menu below 768 px). A caption
 states the days covered and, in one short sentence, what the report shows.
 Wording is plain, standard English for non-native speakers (Paid, Refunded,
-Total price, Balance due, Received by, Refund adjustment, No doctor). Totals sit in one
+Total price, Balance due, Received by, Paid back, Adjustment, No doctor). Totals sit in one
 bordered strip: side by side when they fit, two per row for an even count,
 otherwise one per line with the amount opposite the label; a total can carry
-a quiet caption (Payments & refunds: "Received … · Refunded …"). Each table is
+a quiet caption (Payments & refunds: "Received … · Paid back …"). Each table is
 one bordered surface with hairline rows, column labels above it,
 right-aligned tabular amounts, an optional bold total row and 50 rows per
 page. Cells may carry a quiet second line (patient ID under the name, time

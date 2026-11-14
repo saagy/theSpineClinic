@@ -13,7 +13,7 @@ final class BillingReportStrings {
   final String sessions = 'Doctor sessions';
   final String services = 'Services';
   final String outstanding = 'Balances due';
-  final String moneyHelp = 'Every payment received and every refund paid back.';
+  final String moneyHelp = 'Every payment received and all money paid back.';
   final String revenueHelp =
       'What the money paid for, by service and doctor. The total matches Payments & refunds.';
   String doctorHelp(String name) =>
@@ -92,14 +92,17 @@ final class BillingReportStrings {
   final String visa = 'Visa';
   final String total = 'Total';
   final String received = 'Received';
-  final String paidBack = 'Refunded';
+  /// Money handed back by refunds and discounts.
+  final String paidBack = 'Paid back';
 
   /// Two lines, so neither half wraps on its own.
-  String inOut(String received, String refunded) => 'Received $received\nRefunded $refunded';
+  String inOut(String received, String paidBack) => 'Received $received\nPaid back $paidBack';
   final String totalRevenue = 'Total revenue';
   final String doctorShare = 'Doctor\'s share';
-  final String moved = 'Refund adjustments';
-  final String movedShort = 'Refund adjustment';
+
+  /// Paid money a refund or discount moved from one service to another.
+  final String moved = 'Adjustments';
+  final String movedShort = 'Adjustment';
   final String noDoctor = 'No doctor';
   final String amountDue = 'Balance due';
   final String patients = 'Patients';
@@ -144,6 +147,7 @@ final class BillingReportStrings {
   // Values
   final String receipt = 'Receipt';
   final String refund = 'Refund';
+  final String discount = 'Discount';
   final String invoice = 'Invoice';
   final String rowsLabel = 'rows';
   final String showDetail = 'Show invoices';

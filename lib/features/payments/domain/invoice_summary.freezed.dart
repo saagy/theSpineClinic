@@ -15,7 +15,8 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$InvoiceSummary {
 
- String get id; ClinicLocation get branch; int get number;@JsonKey(name: 'patient_id') String get patientId;@JsonKey(name: 'invoice_date') DateTime get invoiceDate;@JsonKey(name: 'total_minor') int get totalMinor;@JsonKey(name: 'discount_minor') int get discountMinor;@JsonKey(name: 'value_minor') int get valueMinor;@JsonKey(name: 'net_collected_minor') int get collectedMinor;@JsonKey(name: 'due_minor') int get dueMinor;@JsonKey(name: 'refunded_minor') int get refundedMinor;@JsonKey(fromJson: _statusFromJson, toJson: _statusToJson) InvoiceStatus get status; String get services;@JsonKey(fromJson: _doctorsFromJson) List<String> get doctors;@JsonKey(name: 'created_at') DateTime get createdAt;@JsonKey(name: 'created_by_name') String get createdByName; int get version;
+ String get id; ClinicLocation get branch; int get number;@JsonKey(name: 'patient_id') String get patientId;@JsonKey(name: 'invoice_date') DateTime get invoiceDate;@JsonKey(name: 'total_minor') int get totalMinor;@JsonKey(name: 'discount_minor') int get discountMinor;@JsonKey(name: 'value_minor') int get valueMinor;@JsonKey(name: 'net_collected_minor') int get collectedMinor;@JsonKey(name: 'due_minor') int get dueMinor;/// Active refunds only; discounts given after issue are [laterDiscountMinor].
+@JsonKey(name: 'refunded_minor') int get refundedMinor;@JsonKey(name: 'later_discount_minor') int get laterDiscountMinor;@JsonKey(fromJson: _statusFromJson, toJson: _statusToJson) InvoiceStatus get status; String get services;@JsonKey(fromJson: _doctorsFromJson) List<String> get doctors;@JsonKey(name: 'created_at') DateTime get createdAt;@JsonKey(name: 'created_by_name') String get createdByName; int get version;
 /// Create a copy of InvoiceSummary
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -28,16 +29,16 @@ $InvoiceSummaryCopyWith<InvoiceSummary> get copyWith => _$InvoiceSummaryCopyWith
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is InvoiceSummary&&(identical(other.id, id) || other.id == id)&&(identical(other.branch, branch) || other.branch == branch)&&(identical(other.number, number) || other.number == number)&&(identical(other.patientId, patientId) || other.patientId == patientId)&&(identical(other.invoiceDate, invoiceDate) || other.invoiceDate == invoiceDate)&&(identical(other.totalMinor, totalMinor) || other.totalMinor == totalMinor)&&(identical(other.discountMinor, discountMinor) || other.discountMinor == discountMinor)&&(identical(other.valueMinor, valueMinor) || other.valueMinor == valueMinor)&&(identical(other.collectedMinor, collectedMinor) || other.collectedMinor == collectedMinor)&&(identical(other.dueMinor, dueMinor) || other.dueMinor == dueMinor)&&(identical(other.refundedMinor, refundedMinor) || other.refundedMinor == refundedMinor)&&(identical(other.status, status) || other.status == status)&&(identical(other.services, services) || other.services == services)&&const DeepCollectionEquality().equals(other.doctors, doctors)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.createdByName, createdByName) || other.createdByName == createdByName)&&(identical(other.version, version) || other.version == version));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is InvoiceSummary&&(identical(other.id, id) || other.id == id)&&(identical(other.branch, branch) || other.branch == branch)&&(identical(other.number, number) || other.number == number)&&(identical(other.patientId, patientId) || other.patientId == patientId)&&(identical(other.invoiceDate, invoiceDate) || other.invoiceDate == invoiceDate)&&(identical(other.totalMinor, totalMinor) || other.totalMinor == totalMinor)&&(identical(other.discountMinor, discountMinor) || other.discountMinor == discountMinor)&&(identical(other.valueMinor, valueMinor) || other.valueMinor == valueMinor)&&(identical(other.collectedMinor, collectedMinor) || other.collectedMinor == collectedMinor)&&(identical(other.dueMinor, dueMinor) || other.dueMinor == dueMinor)&&(identical(other.refundedMinor, refundedMinor) || other.refundedMinor == refundedMinor)&&(identical(other.laterDiscountMinor, laterDiscountMinor) || other.laterDiscountMinor == laterDiscountMinor)&&(identical(other.status, status) || other.status == status)&&(identical(other.services, services) || other.services == services)&&const DeepCollectionEquality().equals(other.doctors, doctors)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.createdByName, createdByName) || other.createdByName == createdByName)&&(identical(other.version, version) || other.version == version));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,branch,number,patientId,invoiceDate,totalMinor,discountMinor,valueMinor,collectedMinor,dueMinor,refundedMinor,status,services,const DeepCollectionEquality().hash(doctors),createdAt,createdByName,version);
+int get hashCode => Object.hash(runtimeType,id,branch,number,patientId,invoiceDate,totalMinor,discountMinor,valueMinor,collectedMinor,dueMinor,refundedMinor,laterDiscountMinor,status,services,const DeepCollectionEquality().hash(doctors),createdAt,createdByName,version);
 
 @override
 String toString() {
-  return 'InvoiceSummary(id: $id, branch: $branch, number: $number, patientId: $patientId, invoiceDate: $invoiceDate, totalMinor: $totalMinor, discountMinor: $discountMinor, valueMinor: $valueMinor, collectedMinor: $collectedMinor, dueMinor: $dueMinor, refundedMinor: $refundedMinor, status: $status, services: $services, doctors: $doctors, createdAt: $createdAt, createdByName: $createdByName, version: $version)';
+  return 'InvoiceSummary(id: $id, branch: $branch, number: $number, patientId: $patientId, invoiceDate: $invoiceDate, totalMinor: $totalMinor, discountMinor: $discountMinor, valueMinor: $valueMinor, collectedMinor: $collectedMinor, dueMinor: $dueMinor, refundedMinor: $refundedMinor, laterDiscountMinor: $laterDiscountMinor, status: $status, services: $services, doctors: $doctors, createdAt: $createdAt, createdByName: $createdByName, version: $version)';
 }
 
 
@@ -48,7 +49,7 @@ abstract mixin class $InvoiceSummaryCopyWith<$Res>  {
   factory $InvoiceSummaryCopyWith(InvoiceSummary value, $Res Function(InvoiceSummary) _then) = _$InvoiceSummaryCopyWithImpl;
 @useResult
 $Res call({
- String id, ClinicLocation branch, int number,@JsonKey(name: 'patient_id') String patientId,@JsonKey(name: 'invoice_date') DateTime invoiceDate,@JsonKey(name: 'total_minor') int totalMinor,@JsonKey(name: 'discount_minor') int discountMinor,@JsonKey(name: 'value_minor') int valueMinor,@JsonKey(name: 'net_collected_minor') int collectedMinor,@JsonKey(name: 'due_minor') int dueMinor,@JsonKey(name: 'refunded_minor') int refundedMinor,@JsonKey(fromJson: _statusFromJson, toJson: _statusToJson) InvoiceStatus status, String services,@JsonKey(fromJson: _doctorsFromJson) List<String> doctors,@JsonKey(name: 'created_at') DateTime createdAt,@JsonKey(name: 'created_by_name') String createdByName, int version
+ String id, ClinicLocation branch, int number,@JsonKey(name: 'patient_id') String patientId,@JsonKey(name: 'invoice_date') DateTime invoiceDate,@JsonKey(name: 'total_minor') int totalMinor,@JsonKey(name: 'discount_minor') int discountMinor,@JsonKey(name: 'value_minor') int valueMinor,@JsonKey(name: 'net_collected_minor') int collectedMinor,@JsonKey(name: 'due_minor') int dueMinor,@JsonKey(name: 'refunded_minor') int refundedMinor,@JsonKey(name: 'later_discount_minor') int laterDiscountMinor,@JsonKey(fromJson: _statusFromJson, toJson: _statusToJson) InvoiceStatus status, String services,@JsonKey(fromJson: _doctorsFromJson) List<String> doctors,@JsonKey(name: 'created_at') DateTime createdAt,@JsonKey(name: 'created_by_name') String createdByName, int version
 });
 
 
@@ -65,7 +66,7 @@ class _$InvoiceSummaryCopyWithImpl<$Res>
 
 /// Create a copy of InvoiceSummary
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? branch = null,Object? number = null,Object? patientId = null,Object? invoiceDate = null,Object? totalMinor = null,Object? discountMinor = null,Object? valueMinor = null,Object? collectedMinor = null,Object? dueMinor = null,Object? refundedMinor = null,Object? status = null,Object? services = null,Object? doctors = null,Object? createdAt = null,Object? createdByName = null,Object? version = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? branch = null,Object? number = null,Object? patientId = null,Object? invoiceDate = null,Object? totalMinor = null,Object? discountMinor = null,Object? valueMinor = null,Object? collectedMinor = null,Object? dueMinor = null,Object? refundedMinor = null,Object? laterDiscountMinor = null,Object? status = null,Object? services = null,Object? doctors = null,Object? createdAt = null,Object? createdByName = null,Object? version = null,}) {
   return _then(_self.copyWith(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,branch: null == branch ? _self.branch : branch // ignore: cast_nullable_to_non_nullable
@@ -78,6 +79,7 @@ as int,valueMinor: null == valueMinor ? _self.valueMinor : valueMinor // ignore:
 as int,collectedMinor: null == collectedMinor ? _self.collectedMinor : collectedMinor // ignore: cast_nullable_to_non_nullable
 as int,dueMinor: null == dueMinor ? _self.dueMinor : dueMinor // ignore: cast_nullable_to_non_nullable
 as int,refundedMinor: null == refundedMinor ? _self.refundedMinor : refundedMinor // ignore: cast_nullable_to_non_nullable
+as int,laterDiscountMinor: null == laterDiscountMinor ? _self.laterDiscountMinor : laterDiscountMinor // ignore: cast_nullable_to_non_nullable
 as int,status: null == status ? _self.status : status // ignore: cast_nullable_to_non_nullable
 as InvoiceStatus,services: null == services ? _self.services : services // ignore: cast_nullable_to_non_nullable
 as String,doctors: null == doctors ? _self.doctors : doctors // ignore: cast_nullable_to_non_nullable
@@ -169,10 +171,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  ClinicLocation branch,  int number, @JsonKey(name: 'patient_id')  String patientId, @JsonKey(name: 'invoice_date')  DateTime invoiceDate, @JsonKey(name: 'total_minor')  int totalMinor, @JsonKey(name: 'discount_minor')  int discountMinor, @JsonKey(name: 'value_minor')  int valueMinor, @JsonKey(name: 'net_collected_minor')  int collectedMinor, @JsonKey(name: 'due_minor')  int dueMinor, @JsonKey(name: 'refunded_minor')  int refundedMinor, @JsonKey(fromJson: _statusFromJson, toJson: _statusToJson)  InvoiceStatus status,  String services, @JsonKey(fromJson: _doctorsFromJson)  List<String> doctors, @JsonKey(name: 'created_at')  DateTime createdAt, @JsonKey(name: 'created_by_name')  String createdByName,  int version)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  ClinicLocation branch,  int number, @JsonKey(name: 'patient_id')  String patientId, @JsonKey(name: 'invoice_date')  DateTime invoiceDate, @JsonKey(name: 'total_minor')  int totalMinor, @JsonKey(name: 'discount_minor')  int discountMinor, @JsonKey(name: 'value_minor')  int valueMinor, @JsonKey(name: 'net_collected_minor')  int collectedMinor, @JsonKey(name: 'due_minor')  int dueMinor, @JsonKey(name: 'refunded_minor')  int refundedMinor, @JsonKey(name: 'later_discount_minor')  int laterDiscountMinor, @JsonKey(fromJson: _statusFromJson, toJson: _statusToJson)  InvoiceStatus status,  String services, @JsonKey(fromJson: _doctorsFromJson)  List<String> doctors, @JsonKey(name: 'created_at')  DateTime createdAt, @JsonKey(name: 'created_by_name')  String createdByName,  int version)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _InvoiceSummary() when $default != null:
-return $default(_that.id,_that.branch,_that.number,_that.patientId,_that.invoiceDate,_that.totalMinor,_that.discountMinor,_that.valueMinor,_that.collectedMinor,_that.dueMinor,_that.refundedMinor,_that.status,_that.services,_that.doctors,_that.createdAt,_that.createdByName,_that.version);case _:
+return $default(_that.id,_that.branch,_that.number,_that.patientId,_that.invoiceDate,_that.totalMinor,_that.discountMinor,_that.valueMinor,_that.collectedMinor,_that.dueMinor,_that.refundedMinor,_that.laterDiscountMinor,_that.status,_that.services,_that.doctors,_that.createdAt,_that.createdByName,_that.version);case _:
   return orElse();
 
 }
@@ -190,10 +192,10 @@ return $default(_that.id,_that.branch,_that.number,_that.patientId,_that.invoice
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  ClinicLocation branch,  int number, @JsonKey(name: 'patient_id')  String patientId, @JsonKey(name: 'invoice_date')  DateTime invoiceDate, @JsonKey(name: 'total_minor')  int totalMinor, @JsonKey(name: 'discount_minor')  int discountMinor, @JsonKey(name: 'value_minor')  int valueMinor, @JsonKey(name: 'net_collected_minor')  int collectedMinor, @JsonKey(name: 'due_minor')  int dueMinor, @JsonKey(name: 'refunded_minor')  int refundedMinor, @JsonKey(fromJson: _statusFromJson, toJson: _statusToJson)  InvoiceStatus status,  String services, @JsonKey(fromJson: _doctorsFromJson)  List<String> doctors, @JsonKey(name: 'created_at')  DateTime createdAt, @JsonKey(name: 'created_by_name')  String createdByName,  int version)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  ClinicLocation branch,  int number, @JsonKey(name: 'patient_id')  String patientId, @JsonKey(name: 'invoice_date')  DateTime invoiceDate, @JsonKey(name: 'total_minor')  int totalMinor, @JsonKey(name: 'discount_minor')  int discountMinor, @JsonKey(name: 'value_minor')  int valueMinor, @JsonKey(name: 'net_collected_minor')  int collectedMinor, @JsonKey(name: 'due_minor')  int dueMinor, @JsonKey(name: 'refunded_minor')  int refundedMinor, @JsonKey(name: 'later_discount_minor')  int laterDiscountMinor, @JsonKey(fromJson: _statusFromJson, toJson: _statusToJson)  InvoiceStatus status,  String services, @JsonKey(fromJson: _doctorsFromJson)  List<String> doctors, @JsonKey(name: 'created_at')  DateTime createdAt, @JsonKey(name: 'created_by_name')  String createdByName,  int version)  $default,) {final _that = this;
 switch (_that) {
 case _InvoiceSummary():
-return $default(_that.id,_that.branch,_that.number,_that.patientId,_that.invoiceDate,_that.totalMinor,_that.discountMinor,_that.valueMinor,_that.collectedMinor,_that.dueMinor,_that.refundedMinor,_that.status,_that.services,_that.doctors,_that.createdAt,_that.createdByName,_that.version);case _:
+return $default(_that.id,_that.branch,_that.number,_that.patientId,_that.invoiceDate,_that.totalMinor,_that.discountMinor,_that.valueMinor,_that.collectedMinor,_that.dueMinor,_that.refundedMinor,_that.laterDiscountMinor,_that.status,_that.services,_that.doctors,_that.createdAt,_that.createdByName,_that.version);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -210,10 +212,10 @@ return $default(_that.id,_that.branch,_that.number,_that.patientId,_that.invoice
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  ClinicLocation branch,  int number, @JsonKey(name: 'patient_id')  String patientId, @JsonKey(name: 'invoice_date')  DateTime invoiceDate, @JsonKey(name: 'total_minor')  int totalMinor, @JsonKey(name: 'discount_minor')  int discountMinor, @JsonKey(name: 'value_minor')  int valueMinor, @JsonKey(name: 'net_collected_minor')  int collectedMinor, @JsonKey(name: 'due_minor')  int dueMinor, @JsonKey(name: 'refunded_minor')  int refundedMinor, @JsonKey(fromJson: _statusFromJson, toJson: _statusToJson)  InvoiceStatus status,  String services, @JsonKey(fromJson: _doctorsFromJson)  List<String> doctors, @JsonKey(name: 'created_at')  DateTime createdAt, @JsonKey(name: 'created_by_name')  String createdByName,  int version)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  ClinicLocation branch,  int number, @JsonKey(name: 'patient_id')  String patientId, @JsonKey(name: 'invoice_date')  DateTime invoiceDate, @JsonKey(name: 'total_minor')  int totalMinor, @JsonKey(name: 'discount_minor')  int discountMinor, @JsonKey(name: 'value_minor')  int valueMinor, @JsonKey(name: 'net_collected_minor')  int collectedMinor, @JsonKey(name: 'due_minor')  int dueMinor, @JsonKey(name: 'refunded_minor')  int refundedMinor, @JsonKey(name: 'later_discount_minor')  int laterDiscountMinor, @JsonKey(fromJson: _statusFromJson, toJson: _statusToJson)  InvoiceStatus status,  String services, @JsonKey(fromJson: _doctorsFromJson)  List<String> doctors, @JsonKey(name: 'created_at')  DateTime createdAt, @JsonKey(name: 'created_by_name')  String createdByName,  int version)?  $default,) {final _that = this;
 switch (_that) {
 case _InvoiceSummary() when $default != null:
-return $default(_that.id,_that.branch,_that.number,_that.patientId,_that.invoiceDate,_that.totalMinor,_that.discountMinor,_that.valueMinor,_that.collectedMinor,_that.dueMinor,_that.refundedMinor,_that.status,_that.services,_that.doctors,_that.createdAt,_that.createdByName,_that.version);case _:
+return $default(_that.id,_that.branch,_that.number,_that.patientId,_that.invoiceDate,_that.totalMinor,_that.discountMinor,_that.valueMinor,_that.collectedMinor,_that.dueMinor,_that.refundedMinor,_that.laterDiscountMinor,_that.status,_that.services,_that.doctors,_that.createdAt,_that.createdByName,_that.version);case _:
   return null;
 
 }
@@ -225,7 +227,7 @@ return $default(_that.id,_that.branch,_that.number,_that.patientId,_that.invoice
 @JsonSerializable()
 
 class _InvoiceSummary extends InvoiceSummary {
-  const _InvoiceSummary({required this.id, required this.branch, required this.number, @JsonKey(name: 'patient_id') required this.patientId, @JsonKey(name: 'invoice_date') required this.invoiceDate, @JsonKey(name: 'total_minor') required this.totalMinor, @JsonKey(name: 'discount_minor') required this.discountMinor, @JsonKey(name: 'value_minor') required this.valueMinor, @JsonKey(name: 'net_collected_minor') required this.collectedMinor, @JsonKey(name: 'due_minor') required this.dueMinor, @JsonKey(name: 'refunded_minor') required this.refundedMinor, @JsonKey(fromJson: _statusFromJson, toJson: _statusToJson) required this.status, this.services = '', @JsonKey(fromJson: _doctorsFromJson) final  List<String> doctors = const [], @JsonKey(name: 'created_at') required this.createdAt, @JsonKey(name: 'created_by_name') required this.createdByName, required this.version}): _doctors = doctors,super._();
+  const _InvoiceSummary({required this.id, required this.branch, required this.number, @JsonKey(name: 'patient_id') required this.patientId, @JsonKey(name: 'invoice_date') required this.invoiceDate, @JsonKey(name: 'total_minor') required this.totalMinor, @JsonKey(name: 'discount_minor') required this.discountMinor, @JsonKey(name: 'value_minor') required this.valueMinor, @JsonKey(name: 'net_collected_minor') required this.collectedMinor, @JsonKey(name: 'due_minor') required this.dueMinor, @JsonKey(name: 'refunded_minor') required this.refundedMinor, @JsonKey(name: 'later_discount_minor') this.laterDiscountMinor = 0, @JsonKey(fromJson: _statusFromJson, toJson: _statusToJson) required this.status, this.services = '', @JsonKey(fromJson: _doctorsFromJson) final  List<String> doctors = const [], @JsonKey(name: 'created_at') required this.createdAt, @JsonKey(name: 'created_by_name') required this.createdByName, required this.version}): _doctors = doctors,super._();
   factory _InvoiceSummary.fromJson(Map<String, dynamic> json) => _$InvoiceSummaryFromJson(json);
 
 @override final  String id;
@@ -238,7 +240,9 @@ class _InvoiceSummary extends InvoiceSummary {
 @override@JsonKey(name: 'value_minor') final  int valueMinor;
 @override@JsonKey(name: 'net_collected_minor') final  int collectedMinor;
 @override@JsonKey(name: 'due_minor') final  int dueMinor;
+/// Active refunds only; discounts given after issue are [laterDiscountMinor].
 @override@JsonKey(name: 'refunded_minor') final  int refundedMinor;
+@override@JsonKey(name: 'later_discount_minor') final  int laterDiscountMinor;
 @override@JsonKey(fromJson: _statusFromJson, toJson: _statusToJson) final  InvoiceStatus status;
 @override@JsonKey() final  String services;
  final  List<String> _doctors;
@@ -265,16 +269,16 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _InvoiceSummary&&(identical(other.id, id) || other.id == id)&&(identical(other.branch, branch) || other.branch == branch)&&(identical(other.number, number) || other.number == number)&&(identical(other.patientId, patientId) || other.patientId == patientId)&&(identical(other.invoiceDate, invoiceDate) || other.invoiceDate == invoiceDate)&&(identical(other.totalMinor, totalMinor) || other.totalMinor == totalMinor)&&(identical(other.discountMinor, discountMinor) || other.discountMinor == discountMinor)&&(identical(other.valueMinor, valueMinor) || other.valueMinor == valueMinor)&&(identical(other.collectedMinor, collectedMinor) || other.collectedMinor == collectedMinor)&&(identical(other.dueMinor, dueMinor) || other.dueMinor == dueMinor)&&(identical(other.refundedMinor, refundedMinor) || other.refundedMinor == refundedMinor)&&(identical(other.status, status) || other.status == status)&&(identical(other.services, services) || other.services == services)&&const DeepCollectionEquality().equals(other._doctors, _doctors)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.createdByName, createdByName) || other.createdByName == createdByName)&&(identical(other.version, version) || other.version == version));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _InvoiceSummary&&(identical(other.id, id) || other.id == id)&&(identical(other.branch, branch) || other.branch == branch)&&(identical(other.number, number) || other.number == number)&&(identical(other.patientId, patientId) || other.patientId == patientId)&&(identical(other.invoiceDate, invoiceDate) || other.invoiceDate == invoiceDate)&&(identical(other.totalMinor, totalMinor) || other.totalMinor == totalMinor)&&(identical(other.discountMinor, discountMinor) || other.discountMinor == discountMinor)&&(identical(other.valueMinor, valueMinor) || other.valueMinor == valueMinor)&&(identical(other.collectedMinor, collectedMinor) || other.collectedMinor == collectedMinor)&&(identical(other.dueMinor, dueMinor) || other.dueMinor == dueMinor)&&(identical(other.refundedMinor, refundedMinor) || other.refundedMinor == refundedMinor)&&(identical(other.laterDiscountMinor, laterDiscountMinor) || other.laterDiscountMinor == laterDiscountMinor)&&(identical(other.status, status) || other.status == status)&&(identical(other.services, services) || other.services == services)&&const DeepCollectionEquality().equals(other._doctors, _doctors)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.createdByName, createdByName) || other.createdByName == createdByName)&&(identical(other.version, version) || other.version == version));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,branch,number,patientId,invoiceDate,totalMinor,discountMinor,valueMinor,collectedMinor,dueMinor,refundedMinor,status,services,const DeepCollectionEquality().hash(_doctors),createdAt,createdByName,version);
+int get hashCode => Object.hash(runtimeType,id,branch,number,patientId,invoiceDate,totalMinor,discountMinor,valueMinor,collectedMinor,dueMinor,refundedMinor,laterDiscountMinor,status,services,const DeepCollectionEquality().hash(_doctors),createdAt,createdByName,version);
 
 @override
 String toString() {
-  return 'InvoiceSummary(id: $id, branch: $branch, number: $number, patientId: $patientId, invoiceDate: $invoiceDate, totalMinor: $totalMinor, discountMinor: $discountMinor, valueMinor: $valueMinor, collectedMinor: $collectedMinor, dueMinor: $dueMinor, refundedMinor: $refundedMinor, status: $status, services: $services, doctors: $doctors, createdAt: $createdAt, createdByName: $createdByName, version: $version)';
+  return 'InvoiceSummary(id: $id, branch: $branch, number: $number, patientId: $patientId, invoiceDate: $invoiceDate, totalMinor: $totalMinor, discountMinor: $discountMinor, valueMinor: $valueMinor, collectedMinor: $collectedMinor, dueMinor: $dueMinor, refundedMinor: $refundedMinor, laterDiscountMinor: $laterDiscountMinor, status: $status, services: $services, doctors: $doctors, createdAt: $createdAt, createdByName: $createdByName, version: $version)';
 }
 
 
@@ -285,7 +289,7 @@ abstract mixin class _$InvoiceSummaryCopyWith<$Res> implements $InvoiceSummaryCo
   factory _$InvoiceSummaryCopyWith(_InvoiceSummary value, $Res Function(_InvoiceSummary) _then) = __$InvoiceSummaryCopyWithImpl;
 @override @useResult
 $Res call({
- String id, ClinicLocation branch, int number,@JsonKey(name: 'patient_id') String patientId,@JsonKey(name: 'invoice_date') DateTime invoiceDate,@JsonKey(name: 'total_minor') int totalMinor,@JsonKey(name: 'discount_minor') int discountMinor,@JsonKey(name: 'value_minor') int valueMinor,@JsonKey(name: 'net_collected_minor') int collectedMinor,@JsonKey(name: 'due_minor') int dueMinor,@JsonKey(name: 'refunded_minor') int refundedMinor,@JsonKey(fromJson: _statusFromJson, toJson: _statusToJson) InvoiceStatus status, String services,@JsonKey(fromJson: _doctorsFromJson) List<String> doctors,@JsonKey(name: 'created_at') DateTime createdAt,@JsonKey(name: 'created_by_name') String createdByName, int version
+ String id, ClinicLocation branch, int number,@JsonKey(name: 'patient_id') String patientId,@JsonKey(name: 'invoice_date') DateTime invoiceDate,@JsonKey(name: 'total_minor') int totalMinor,@JsonKey(name: 'discount_minor') int discountMinor,@JsonKey(name: 'value_minor') int valueMinor,@JsonKey(name: 'net_collected_minor') int collectedMinor,@JsonKey(name: 'due_minor') int dueMinor,@JsonKey(name: 'refunded_minor') int refundedMinor,@JsonKey(name: 'later_discount_minor') int laterDiscountMinor,@JsonKey(fromJson: _statusFromJson, toJson: _statusToJson) InvoiceStatus status, String services,@JsonKey(fromJson: _doctorsFromJson) List<String> doctors,@JsonKey(name: 'created_at') DateTime createdAt,@JsonKey(name: 'created_by_name') String createdByName, int version
 });
 
 
@@ -302,7 +306,7 @@ class __$InvoiceSummaryCopyWithImpl<$Res>
 
 /// Create a copy of InvoiceSummary
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? branch = null,Object? number = null,Object? patientId = null,Object? invoiceDate = null,Object? totalMinor = null,Object? discountMinor = null,Object? valueMinor = null,Object? collectedMinor = null,Object? dueMinor = null,Object? refundedMinor = null,Object? status = null,Object? services = null,Object? doctors = null,Object? createdAt = null,Object? createdByName = null,Object? version = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? branch = null,Object? number = null,Object? patientId = null,Object? invoiceDate = null,Object? totalMinor = null,Object? discountMinor = null,Object? valueMinor = null,Object? collectedMinor = null,Object? dueMinor = null,Object? refundedMinor = null,Object? laterDiscountMinor = null,Object? status = null,Object? services = null,Object? doctors = null,Object? createdAt = null,Object? createdByName = null,Object? version = null,}) {
   return _then(_InvoiceSummary(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,branch: null == branch ? _self.branch : branch // ignore: cast_nullable_to_non_nullable
@@ -315,6 +319,7 @@ as int,valueMinor: null == valueMinor ? _self.valueMinor : valueMinor // ignore:
 as int,collectedMinor: null == collectedMinor ? _self.collectedMinor : collectedMinor // ignore: cast_nullable_to_non_nullable
 as int,dueMinor: null == dueMinor ? _self.dueMinor : dueMinor // ignore: cast_nullable_to_non_nullable
 as int,refundedMinor: null == refundedMinor ? _self.refundedMinor : refundedMinor // ignore: cast_nullable_to_non_nullable
+as int,laterDiscountMinor: null == laterDiscountMinor ? _self.laterDiscountMinor : laterDiscountMinor // ignore: cast_nullable_to_non_nullable
 as int,status: null == status ? _self.status : status // ignore: cast_nullable_to_non_nullable
 as InvoiceStatus,services: null == services ? _self.services : services // ignore: cast_nullable_to_non_nullable
 as String,doctors: null == doctors ? _self._doctors : doctors // ignore: cast_nullable_to_non_nullable

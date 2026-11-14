@@ -113,6 +113,10 @@ then runs these scripts:
 - staff_seniority_management.sql and staff_reference_details.sql (admin-only
   detail reads, atomic saves with the profile, validation, unique national
   IDs, unchanged behavior for callers that send no details)
+- invoice_fixture.sql + invoice_discounts.sql (discounts after issue:
+  permissions, the split between lines, payback, own number series, the
+  invoice keeping its number and receipts, the refund barrier, cancelling,
+  money and revenue reports, 100% discounts)
 - invoice_fixture.sql + invoice_reports.sql (report access, money totals and
   void log, revenue, exact doctor shares, outstanding balances, services)
 - invoice_fixture.sql + doctor_session_report.sql (doctor sessions access,

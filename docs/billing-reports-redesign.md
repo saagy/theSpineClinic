@@ -62,8 +62,10 @@ Revenue's description says so.
 - Plain, standard words (revised with the user the same day, after a first
   pass was too simplified): Paid, Refunded, Total price (never a bare
   "Price"), Balance due, Open invoices, Due since, Received by, Quantity,
-  Refund adjustment (a refund that moves paid money between services
-  without handing any back), No doctor. "Patient ID" stays; "File no." is
+  Adjustment (a refund or discount that moves paid money between services
+  without handing any back; renamed from "Refund adjustment" on November
+  14, 2026, when discounts after issue were added), No doctor. "Refunded"
+  became "Paid back" at the same time, since discounts can hand money back too. "Patient ID" stays; "File no." is
   not used. [How billing works](billing-explained.md) explains each term.
 - Table cells can carry a quiet second line (patient ID under the name, time
   under the date, number under the document kind), so the tables fit about

@@ -8,6 +8,7 @@ import '../../domain/invoice_action.dart';
 import '../../domain/service_catalog_item.dart';
 
 const _t = AppStrings.invoiceDetail;
+const _d = AppStrings.invoiceDiscount;
 const _i = AppStrings.invoices;
 
 /// Live outcome of the refund for review: the new invoice value, the money to
@@ -17,16 +18,73 @@ class RefundSummaryPanel extends StatelessWidget {
   final RefundDraft draft;
 
   @override
+  Widget build(BuildContext context) => ReductionSummaryPanel(
+    title: _t.refundSummary,
+    reductionLabel: _t.refundTitle,
+    currentMinor: draft.invoice.valueMinor,
+    reductionMinor: draft.refundValueMinor,
+    newValueMinor: draft.newValueMinor,
+    paidMinor: draft.invoice.collectedMinor,
+    paybackMinor: draft.paybackMinor,
+    dueMinor: draft.dueAfterMinor,
+    ptSessions: draft.sessionsOf(ServiceType.ptSession),
+    tractionSessions: draft.sessionsOf(ServiceType.tractionSession),
+  );
+}
+
+/// Live outcome of a discount: the same figures as a refund, without sessions.
+class DiscountSummaryPanel extends StatelessWidget {
+  const DiscountSummaryPanel({super.key, required this.draft});
+  final DiscountDraft draft;
+
+  @override
+  Widget build(BuildContext context) => ReductionSummaryPanel(
+    title: _d.summary,
+    reductionLabel: _d.title,
+    currentMinor: draft.invoice.valueMinor,
+    reductionMinor: draft.discountMinor,
+    newValueMinor: draft.newValueMinor,
+    paidMinor: draft.invoice.collectedMinor,
+    paybackMinor: draft.paybackMinor,
+    dueMinor: draft.dueAfterMinor,
+  );
+}
+
+/// Invoice value now, the reduction, the new value, what is paid back and
+/// what is left to pay. Over-typed values are reported on their fields, so
+/// the preview keeps every figure at zero or above.
+class ReductionSummaryPanel extends StatelessWidget {
+  const ReductionSummaryPanel({
+    super.key,
+    required this.title,
+    required this.reductionLabel,
+    required this.currentMinor,
+    required this.reductionMinor,
+    required this.newValueMinor,
+    required this.paidMinor,
+    required this.paybackMinor,
+    required this.dueMinor,
+    this.ptSessions = 0,
+    this.tractionSessions = 0,
+  });
+  final String title;
+  final String reductionLabel;
+  final int currentMinor;
+  final int reductionMinor;
+  final int newValueMinor;
+  final int paidMinor;
+  final int paybackMinor;
+  final int dueMinor;
+  final int ptSessions;
+  final int tractionSessions;
+
+  @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
-    final int pt = draft.sessionsOf(ServiceType.ptSession);
-    final int traction = draft.sessionsOf(ServiceType.tractionSession);
-    final int due = draft.dueAfterMinor;
-    // An over-typed value is reported on its field; keep the preview sane.
-    final int newValue = draft.newValueMinor < 0 ? 0 : draft.newValueMinor;
+    String money(int minor) => Money.format(minor < 0 ? 0 : minor);
     return Semantics(
       container: true,
-      label: _t.refundSummary,
+      label: title,
       child: Material(
         color: colors.surface,
         shape: RoundedRectangleBorder(
@@ -38,30 +96,31 @@ class RefundSummaryPanel extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Text(_t.refundSummary, style: AppTextStyles.headingSmall),
+              Text(title, style: AppTextStyles.headingSmall),
               const SizedBox(height: AppSizes.p16),
-              _Line(_t.currentValue, Money.format(draft.invoice.valueMinor)),
-              _Line(_t.refundTitle, '− ${Money.format(draft.refundValueMinor)}'),
+              _Line(_t.currentValue, Money.format(currentMinor)),
+              _Line(reductionLabel, '− ${money(reductionMinor)}'),
               const Divider(height: AppSizes.p24),
-              _Line(_t.newValue, Money.format(newValue), strong: true),
-              _Line(_t.paid, Money.format(draft.invoice.collectedMinor)),
+              _Line(_t.newValue, money(newValueMinor), strong: true),
+              _Line(_t.paid, Money.format(paidMinor)),
               const Divider(height: AppSizes.p24),
-              _Line(_t.payBack, Money.format(draft.paybackMinor), strong: true),
+              _Line(_t.payBack, Money.format(paybackMinor), strong: true),
               _Line(
                 _t.leftToPay,
-                Money.format(due < 0 ? 0 : due),
+                money(dueMinor),
                 strong: true,
-                color: due > 0 ? ClinicColors.of(context).warning : null,
+                color: dueMinor > 0 ? ClinicColors.of(context).warning : null,
               ),
-              if (pt > 0 || traction > 0) ...[
+              if (ptSessions > 0 || tractionSessions > 0) ...[
                 const Divider(height: AppSizes.p24),
                 Text(
                   _t.sessionsRemoved,
                   style: AppTextStyles.caption.copyWith(color: colors.onSurfaceVariant),
                 ),
                 const SizedBox(height: AppSizes.p4),
-                if (pt > 0) Text(_i.ptSessions(pt), style: AppTextStyles.bodyMedium),
-                if (traction > 0) Text(_i.tractionSessions(traction), style: AppTextStyles.bodyMedium),
+                if (ptSessions > 0) Text(_i.ptSessions(ptSessions), style: AppTextStyles.bodyMedium),
+                if (tractionSessions > 0)
+                  Text(_i.tractionSessions(tractionSessions), style: AppTextStyles.bodyMedium),
               ],
             ],
           ),

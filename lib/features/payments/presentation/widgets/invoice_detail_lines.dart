@@ -7,6 +7,7 @@ import '../../domain/invoice_detail.dart';
 
 const _t = AppStrings.invoiceDetail;
 const _i = AppStrings.invoices;
+const _d = AppStrings.invoiceDiscount;
 
 /// The invoice's service lines followed by the arithmetic down to the
 /// amount due, in one bordered surface.
@@ -23,7 +24,8 @@ class InvoiceDetailLines extends StatelessWidget {
       thickness: AppSizes.borderWidth,
       color: colors.outlineVariant,
     );
-    final bool reduced = summary.discountMinor > 0 || summary.refundedMinor > 0;
+    final bool reduced =
+        summary.discountMinor > 0 || summary.laterDiscountMinor > 0 || summary.refundedMinor > 0;
     return Material(
       color: colors.surface,
       clipBehavior: Clip.antiAlias,
@@ -42,6 +44,8 @@ class InvoiceDetailLines extends StatelessWidget {
                 if (reduced) _Amount(_i.subtotal, invoice.subtotalMinor),
                 if (summary.discountMinor > 0)
                   _Amount(_i.discount, -summary.discountMinor),
+                if (summary.laterDiscountMinor > 0)
+                  _Amount(_d.laterDiscounts, -summary.laterDiscountMinor),
                 if (summary.refundedMinor > 0) _Amount(_t.refunded, -summary.refundedMinor),
                 // Paid and due sit in the figures above; this is the value's arithmetic.
                 _Amount(reduced ? _t.invoiceValue : _i.total, summary.valueMinor, strong: true),
@@ -87,7 +91,7 @@ class _LineRow extends StatelessWidget {
                     child: Text(
                       [
                         if (line.sessionsCancelled > 0) _t.sessionsCancelled(line.sessionsCancelled),
-                        if (line.refundedMinor > 0) _t.afterRefund(Money.format(line.valueMinor)),
+                        if (line.refundedMinor > 0) _t.valueNow(Money.format(line.valueMinor)),
                       ].join(' · '),
                       style: muted,
                     ),

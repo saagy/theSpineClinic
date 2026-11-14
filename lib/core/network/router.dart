@@ -47,6 +47,7 @@ import 'package:spine_clinic_app/features/patient/presentation/patient_list_scre
 import 'package:spine_clinic_app/features/patient/presentation/patient_search_screen.dart';
 import 'package:spine_clinic_app/features/payments/presentation/billing_screen.dart';
 import 'package:spine_clinic_app/features/payments/presentation/correct_invoice_screen.dart';
+import 'package:spine_clinic_app/features/payments/presentation/discount_screen.dart';
 import 'package:spine_clinic_app/features/payments/presentation/invoice_detail_screen.dart';
 import 'package:spine_clinic_app/features/payments/presentation/new_invoice_screen.dart';
 import 'package:spine_clinic_app/features/payments/presentation/refund_screen.dart';

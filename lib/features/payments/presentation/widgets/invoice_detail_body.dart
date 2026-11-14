@@ -11,6 +11,7 @@ import 'invoice_detail_lines.dart';
 import 'invoice_timeline.dart';
 
 const _t = AppStrings.invoiceDetail;
+const _d = AppStrings.invoiceDiscount;
 
 /// Scrollable invoice content: identity and money first, then the services
 /// behind the total, then everything that happened to it.
@@ -35,7 +36,8 @@ class InvoiceDetailBody extends StatelessWidget {
                 InvoiceDetailHeader(invoice: invoice),
                 const SizedBox(height: AppSizes.p16),
                 InvoiceMoneyFigures(invoice: invoice),
-                if (invoice.canRecordPayment || (canManage && invoice.canRefund)) ...[
+                if (invoice.canRecordPayment ||
+                    (canManage && (invoice.canRefund || invoice.canDiscount))) ...[
                   const SizedBox(height: AppSizes.p16),
                   InvoicePrimaryActions(invoice: invoice, canManage: canManage),
                 ],
@@ -73,7 +75,8 @@ class _Heading extends StatelessWidget {
   );
 }
 
-/// Record payment and Refund, shown only when each is possible.
+/// Record payment, Add discount and Refund, shown only when each is possible.
+/// A discount lowers the price without replacing the invoice.
 class InvoicePrimaryActions extends StatelessWidget {
   const InvoicePrimaryActions({super.key, required this.invoice, required this.canManage});
   final InvoiceDetail invoice;
@@ -93,6 +96,13 @@ class InvoicePrimaryActions extends StatelessWidget {
             icon: const Icon(Icons.payments_outlined, size: AppSizes.iconSmall),
             label: Text(_t.recordPayment, style: AppTextStyles.bodyBold),
             style: FilledButton.styleFrom(minimumSize: minimum, shape: shape),
+          ),
+        if (canManage && invoice.canDiscount)
+          OutlinedButton.icon(
+            onPressed: () => openInvoiceDiscount(context, invoice),
+            icon: const Icon(Icons.discount_outlined, size: AppSizes.iconSmall),
+            label: Text(_d.addDiscount, style: AppTextStyles.bodyBold),
+            style: OutlinedButton.styleFrom(minimumSize: minimum, shape: shape),
           ),
         if (canManage && invoice.canRefund)
           OutlinedButton.icon(

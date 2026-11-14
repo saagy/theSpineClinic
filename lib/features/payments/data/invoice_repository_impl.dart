@@ -55,7 +55,7 @@ class InvoiceRepositoryImpl implements InvoiceRepository {
 
   static const String _registerColumns =
       'id, branch, number, patient_id, invoice_date, total_minor, discount_minor, '
-      'value_minor, net_collected_minor, due_minor, refunded_minor, status, services, '
+      'value_minor, net_collected_minor, due_minor, refunded_minor, later_discount_minor, status, services, '
       'doctors, created_at, created_by_name, version';
 
   @override

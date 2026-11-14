@@ -11,7 +11,7 @@ const _t = AppStrings.billingReports;
 /// or for one doctor (their lines with price, paid and their share).
 ReportView revenueReportView(RevenueReport report, {required bool singleDay}) {
   final DoctorTotals? byDoctor = report.byDoctor;
-  // A refund's adjustments add up to zero across the clinic, so the total
+  // Adjustments add up to zero across the clinic, so the total
   // figure appears only where it is not zero (one doctor's share); the By
   // doctor column appears whenever a doctor gained or lost by them.
   final bool moved = report.movedMinor != 0;

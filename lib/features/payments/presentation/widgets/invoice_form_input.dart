@@ -3,21 +3,17 @@ import '../../../../core/utils/money.dart';
 import '../../../patient/domain/clinic_location.dart';
 import '../../domain/invoice_draft.dart';
 import '../../domain/service_catalog_item.dart';
+import 'discount_fields.dart';
 import 'invoice_line_editor.dart';
 
 /// Everything the new-invoice form holds. Invalid typed amounts read as null
 /// so validators can report them; the preview treats them as zero.
-class InvoiceFormInput {
+class InvoiceFormInput with DiscountFields {
   InvoiceFormInput({required this.branch, required this.date});
 
   ClinicLocation branch;
   DateTime date;
   final List<InvoiceLineInput> lines = [];
-  /// The discount field typed in last, which holds the discount; the other
-  /// field mirrors it in its own unit. None while both are empty.
-  DiscountKind discountKind = DiscountKind.none;
-  final TextEditingController discountPercent = TextEditingController();
-  final TextEditingController discountAmount = TextEditingController();
   final TextEditingController cash = TextEditingController();
   final TextEditingController visa = TextEditingController();
   final TextEditingController note = TextEditingController();
@@ -37,51 +33,9 @@ class InvoiceFormInput {
 
   int get subtotalMinor => lines.fold(0, (sum, line) => sum + line.toDraft().grossMinor);
 
-  /// Basis points for a percentage (`12.5` → 1250), piasters for an amount.
-  int? get discountValue => switch (discountKind) {
-    DiscountKind.none => 0,
-    DiscountKind.percent => Money.parseMinor(discountPercent.text),
-    DiscountKind.amount => Money.parseMinor(discountAmount.text),
-  };
-
-  /// Records which field the user just typed in and mirrors it into the other.
-  void editDiscount(DiscountKind typed) {
-    final TextEditingController field = typed == DiscountKind.percent ? discountPercent : discountAmount;
-    discountKind = field.text.trim().isEmpty ? DiscountKind.none : typed;
-    syncDiscount();
-  }
-
-  /// Loads a saved discount, for example when correcting an invoice.
-  void setDiscount(DiscountKind kind, int value) {
-    discountKind = kind;
-    discountPercent.clear();
-    discountAmount.clear();
-    if (kind == DiscountKind.none) return;
-    (kind == DiscountKind.percent ? discountPercent : discountAmount).text = Money.editable(value);
-    syncDiscount();
-  }
-
-  void clearDiscount() => setDiscount(DiscountKind.none, 0);
-
-  /// Rewrites the mirrored field from the one that holds the discount, for
-  /// example after the subtotal changes. A percentage keeps its rate and a
-  /// fixed amount keeps its value. The mirror stays empty while the typed
-  /// value is invalid or there is nothing to discount.
-  void syncDiscount() {
-    final int subtotal = subtotalMinor;
-    final int? value = discountValue;
-    String mirror = '';
-    if (value != null && subtotal > 0) {
-      if (discountKind == DiscountKind.percent && value <= 10000) {
-        mirror = Money.editable(InvoiceDraft.percentOf(subtotal, value));
-      } else if (discountKind == DiscountKind.amount && value <= subtotal) {
-        mirror = Money.editable((value * 10000 + subtotal ~/ 2) ~/ subtotal);
-      }
-    }
-    final TextEditingController other = discountKind == DiscountKind.amount ? discountPercent : discountAmount;
-    if (discountKind == DiscountKind.none) discountPercent.clear();
-    if (other.text != mirror) other.text = mirror;
-  }
+  /// A new invoice's discount is a share of its subtotal.
+  @override
+  int get discountBaseMinor => subtotalMinor;
 
   int? get cashMinor => _optional(cash.text);
   int? get visaMinor => _optional(visa.text);

@@ -59,6 +59,16 @@ List<RouteBase> _buildRoutes() => [
     ),
   ),
   GoRoute(
+    path: AppRoutes.invoiceDiscount,
+    pageBuilder: (_, state) => appPage(
+      key: state.pageKey,
+      child: DiscountScreen(
+        patientId: state.pathParameters['id'] ?? '',
+        invoiceId: state.pathParameters['invoiceId'] ?? '',
+      ),
+    ),
+  ),
+  GoRoute(
     path: AppRoutes.invoiceCorrect,
     pageBuilder: (_, state) => appPage(
       key: state.pageKey,

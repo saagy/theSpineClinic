@@ -104,7 +104,7 @@ class RevenueReport extends BillingReportData {
   final int cashMinor;
   final int visaMinor;
 
-  /// Money a refund moved between lines without paying anything back.
+  /// Money a refund or discount moved between lines without paying anything back.
   final int movedMinor;
   final List<RevenueRow> rows;
 

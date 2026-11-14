@@ -1,7 +1,10 @@
 import '../../patient/domain/clinic_location.dart';
 import 'invoice_detail.dart';
+import 'invoice_discount_draft.dart';
 import 'invoice_draft.dart';
 import 'service_catalog_item.dart';
+
+export 'invoice_discount_draft.dart';
 
 /// Commands on an existing invoice, matching `execute_invoice_command` kinds.
 enum InvoiceActionKind {
@@ -9,6 +12,9 @@ enum InvoiceActionKind {
   receiptCorrect('receipt_correct'),
   receiptVoid('receipt_void'),
   refundCreate('refund_create'),
+  discountCreate('discount_create'),
+
+  /// Cancels a refund or a later discount.
   refundVoid('refund_void'),
   invoiceVoid('invoice_void'),
   invoiceVoidAll('invoice_void_all'),
@@ -61,6 +67,9 @@ class InvoiceAction {
 
   factory InvoiceAction.refund(RefundDraft draft) =>
       InvoiceAction._(InvoiceActionKind.refundCreate, draft.invoice, draft.toBody());
+
+  factory InvoiceAction.discount(DiscountDraft draft) =>
+      InvoiceAction._(InvoiceActionKind.discountCreate, draft.invoice, draft.toBody());
 
   factory InvoiceAction.voidRefund(InvoiceDetail invoice, InvoiceRefund refund, String reason) =>
       InvoiceAction._(InvoiceActionKind.refundVoid, invoice, {

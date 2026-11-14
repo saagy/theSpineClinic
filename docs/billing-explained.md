@@ -3,12 +3,12 @@
 A plain explanation of the clinic's billing, from the first invoice to the
 reports, written for the people who run the clinic rather than for
 developers. Every rule here is what the app and database actually do
-(checked against the database code on November 13, 2026). The design
+(checked against the database code on November 14, 2026). The design
 decisions behind them are in [the billing plan](billing-plan.md).
 
-## 1. The four documents
+## 1. The documents
 
-Everything in billing is one of four documents. Each has its own number
+Everything in billing is one of five documents. Each has its own number
 series per branch: Tagamoa numbers start with **TG-**, Masr El Gedida with
 **MG-**, Madinaty with **MD-**. Numbers are never reused, even when a document is cancelled.
 
@@ -17,7 +17,8 @@ series per branch: Tagamoa numbers start with **TG-**, Masr El Gedida with
 | **Invoice** | What the patient is charged: services, quantities, doctors, discount, date. | Any receptionist |
 | **Receipt** | Money the patient handed over, by cash or Visa, against one invoice. | Any receptionist |
 | **Refund** | A patient-requested reduction of an invoice, with any money handed back. | Payment receptionists and the admin |
-| **Cancellation** | Not a separate document: a cancelled invoice, receipt or refund stays visible, marked CANCELLED, with who, when and why. | Payment receptionists and the admin |
+| **Discount** | A price reduction given after the invoice was issued, with any money handed back. | Payment receptionists and the admin |
+| **Cancellation** | Not a separate document: a cancelled invoice, receipt, refund or discount stays visible, marked CANCELLED, with who, when and why. | Payment receptionists and the admin |
 
 The key idea: **an invoice is a promise to pay; a receipt is money actually
 received.** A patient can have an invoice and no receipt (they owe the
@@ -46,7 +47,9 @@ An invoice has:
   how the clinic knows who brought in the money (section 8).
 - **An optional discount** on the whole invoice, as a percentage or a fixed
   amount. Only payment receptionists and the admin can give one. A 100%
-  discount records free sessions while still keeping a record.
+  discount records free sessions while still keeping a record. When a
+  front-desk receptionist made the invoice, a payment receptionist adds the
+  discount afterwards with **Add discount** (section 6).
 
 **How a discount is spread.** The discount is shared between the lines in
 proportion to their prices, so every line knows its own price after
@@ -105,6 +108,8 @@ it happens and may hand money back.
 
 **Edit (correct a mistake).** Editing a receipt or invoice cancels the
 original and creates a corrected copy linked to it, in one step. An edited
+invoice gets a new number, so Edit is only for mistakes such as the wrong
+service or doctor. To lower the price, add a discount instead. An edited
 receipt keeps the original time the money was received, so the money stays
 on the day it was really taken.
 
@@ -126,8 +131,8 @@ so it is only allowed while the balance still has that many sessions free
 (not used and not booked for the future). If the patient has already used
 them, use a refund instead.
 
-**Order matters.** Once a refund is recorded, the receipts and refunds
-before it on that invoice are locked. To cancel or edit one of them, first
+**Order matters.** Once a refund or discount is recorded, the receipts,
+refunds and discounts before it on that invoice are locked. To cancel or edit one of them, first
 cancel the later refund. This keeps the money split between services
 consistent.
 
@@ -165,24 +170,24 @@ PT moves; traction keeps the 600 it already had. Revenue shows the refund as:
 | Service | Amount | Shown as |
 | --- | --- | --- |
 | PT sessions (Dr. Sara, Dr. Omar) | − 600 | Cash (handed back) |
-| PT sessions (Dr. Sara, Dr. Omar) | − 300 | Refund adjustment |
-| Traction | + 300 | Refund adjustment |
+| PT sessions (Dr. Sara, Dr. Omar) | − 300 | Adjustment |
+| Traction | + 300 | Adjustment |
 | **Total** | **− 600** | the cash handed back |
 
 The Cash rows of a refund always add up to the money handed back, and its
-refund adjustment rows always add up to zero.
+adjustment rows always add up to zero.
 
-**A refund adjustment** is paid money that a refund moved from one service
-to another, without any money leaving the drawer. When a refund hands
+**An adjustment** is paid money that a refund or discount moved from one
+service to another, without any money leaving the drawer. When a refund hands
 nothing back (the patient has not paid enough to be owed anything), all of
-its rows are refund adjustments:
+its rows are adjustments:
 
 > 6 PT sessions at 3,000 (Dr. Sara) and traction at 1,200: invoice 4,200.
 > The patient paid 2,100, counted as 1,500 for PT and 600 for traction.
 > They stop PT and staff refund 4 sessions at 2,000. PT now costs 1,000,
 > so 500 of the 1,500 counted for PT is extra. Nothing is handed back
 > (2,100 is less than the new value of 2,200), so the 500 moves to traction.
-> Revenue shows PT − 500 and traction + 500 as **Refund adjustment** rows.
+> Revenue shows PT − 500 and traction + 500 as **Adjustment** rows.
 > The patient still owes 100, all of it on traction.
 
 Without these rows, Dr. Sara would keep credit for money that now pays for
@@ -191,6 +196,36 @@ traction. Clinic revenue does not change: the rows add up to zero.
 A refund can itself be cancelled as a mistake. That restores the invoice
 value, the money handed back and the sessions.
 
+### Discounts after the invoice is issued
+
+A payment receptionist or the admin opens the invoice and chooses **Add
+discount**. They type a percentage or an amount (either one fills in the
+other), a reason such as who approved it, and, when money goes back, cash or
+Visa.
+
+- **The invoice keeps its number and its receipts.** Nothing is cancelled or
+  reissued, so the patient's printed invoice and receipts stay valid. The
+  discount is its own document with its own number series per branch.
+- **A percentage is of the invoice value now**, after any earlier refunds and
+  discounts.
+- **It is shared between the lines** in proportion to what each line is
+  worth now, like the discount on a new invoice.
+- **No sessions are cancelled.** To cancel sessions, use a refund.
+- **Money goes back only when the patient has paid more than the new
+  value**, with the same rule as a refund. That money shows in Payments &
+  refunds under the discount's name.
+- **The status does not turn to Refunded.** A paid invoice with a discount
+  stays Paid.
+- **Cancel a discount** from its menu if it was a mistake. That restores the
+  invoice value and any money handed back.
+
+> Example. The 4,200 invoice above, with 2,100 paid. The head receptionist
+> gives 10%: 420, split 300 to PT and 120 to traction. The invoice value is
+> now 3,780 and the patient owes 1,680. Nothing is handed back.
+
+Editing an invoice is still possible for mistakes, but only once its refunds
+and discounts are cancelled.
+
 ## 7. Invoice status
 
 | Status | Meaning |
@@ -198,11 +233,11 @@ value, the money handed back and the sessions.
 | Unpaid | Nothing paid yet. |
 | Partly paid | Some paid, some still due. |
 | Paid | Nothing due. |
-| Refunded | A refund reduced the invoice. |
+| Refunded | A refund reduced the invoice. A discount alone does not. |
 | Cancelled | Cancelled as a mistake; counts for nothing. |
 
-**Balance due** = invoice value after refunds − (money received − money
-handed back).
+**Balance due** = invoice value after refunds and discounts − (money
+received − money handed back).
 
 ## 8. Doctor revenue
 
@@ -227,8 +262,8 @@ Receptionists with a branch only see their branch.
 
 | Report | Answers | Dated by | One row per |
 | --- | --- | --- | --- |
-| **Payments & refunds** | What came into and went out of the drawer, and who took it? | When money changed hands | Receipt or refund |
-| **Revenue** | What did that money pay for, and which doctor brought it in? | When money changed hands | Service line of a receipt or refund |
+| **Payments & refunds** | What came into and went out of the drawer, and who took it? | When money changed hands | Receipt, or refund or discount that paid money back |
+| **Revenue** | What did that money pay for, and which doctor brought it in? | When money changed hands | Service line of a receipt, refund or discount |
 | **Doctor sessions** | How many sessions did each doctor do, by type? | Appointment time | Checked-in appointment |
 | **Services** | What was sold, and how much of it is paid so far? | Invoice date | Invoice line |
 | **Balances due** | Who owes money right now? | As of now | Patient |
@@ -248,9 +283,10 @@ Receptionists with a branch only see their branch.
 
 **Payments & refunds figures:**
 
-- **Cash** = cash received − cash refunded. This is what the drawer should
-  hold from the day's business (plus any opening float).
-- **Visa** = Visa received − Visa refunded. This should match the card
+- **Cash** = cash received − cash paid back (by refunds and discounts).
+  This is what the drawer should hold from the day's business (plus any
+  opening float).
+- **Visa** = Visa received − Visa paid back. This should match the card
   machine's settlement for the day.
 - **Total** = Cash + Visa.
 - **By receptionist** shows the same per person, for shift handover.

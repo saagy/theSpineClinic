@@ -17,8 +17,17 @@ class RefundLineInput {
   int? get valueMinor => value.text.trim().isEmpty ? 0 : Money.parseMinor(value.text);
 }
 
+/// Where a refund or discount is recorded, how any money goes back and why.
+abstract interface class PaybackDetailsInput {
+  ClinicLocation get branch;
+  set branch(ClinicLocation value);
+  PaymentMethod? get method;
+  set method(PaymentMethod? value);
+  TextEditingController get reason;
+}
+
 /// Everything the refund form holds.
-class RefundFormInput {
+class RefundFormInput implements PaybackDetailsInput {
   RefundFormInput({required this.invoice, required this.branch, required this.balances})
     : lines = [
         for (final line in invoice.lines)
@@ -31,8 +40,11 @@ class RefundFormInput {
   /// The patient's unused sessions by type. Sessions already used cannot be
   /// cancelled, whichever invoice they came from.
   final Map<ServiceType, int> balances;
+  @override
   ClinicLocation branch;
+  @override
   PaymentMethod? method;
+  @override
   final TextEditingController reason = TextEditingController();
 
   /// How many sessions [input] may cancel: what its line still holds, capped

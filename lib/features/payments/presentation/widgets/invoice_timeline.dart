@@ -9,13 +9,15 @@ import 'invoice_detail_actions.dart';
 import 'invoice_timeline_row.dart';
 
 const _t = AppStrings.invoiceDetail;
+const _d = AppStrings.invoiceDiscount;
 
 String paymentMethodLabel(PaymentMethod method) => method == PaymentMethod.cash ? _t.cash : _t.visa;
 
 enum _DocAction { print, correct, voidIt }
 
 /// Everything that happened to the invoice, oldest first: its creation, each
-/// receipt and refund (voided ones stay visible), and the invoice's own void.
+/// receipt, refund and discount (voided ones stay visible), and the invoice's
+/// own void.
 class InvoiceTimeline extends StatelessWidget {
   const InvoiceTimeline({super.key, required this.invoice, required this.canManage});
   final InvoiceDetail invoice;
@@ -108,8 +110,10 @@ class InvoiceTimeline extends StatelessWidget {
     final VoidStamp? voided = refund.voided;
     final PaymentMethod? method = refund.paybackMethod;
     return InvoiceTimelineRow(
-      icon: Icons.undo,
-      title: _t.refundNumber(refund.displayNumber),
+      icon: refund.isDiscount ? Icons.discount_outlined : Icons.undo,
+      title: refund.isDiscount
+          ? _d.number(refund.displayNumber)
+          : _t.refundNumber(refund.displayNumber),
       tag: voided != null ? _t.voided : null,
       subtitle: _t.byOn(refund.recordedByName, Formatters.formatDateTime(refund.recordedAt)),
       details: [
@@ -139,7 +143,7 @@ class InvoiceTimeline extends StatelessWidget {
   }
 
   /// Print for everyone; Correct and Void for payment staff on active
-  /// documents. A later refund locks both, and the menu says why.
+  /// documents. A later refund or discount locks both, and the menu says why.
   Widget _menu(
     BuildContext context, {
     required bool active,

@@ -28,6 +28,9 @@ abstract final class AppRoutes {
   /// Refund form for an invoice (full screen).
   static const String invoiceRefund = '/patient/:id/invoices/:invoiceId/refund';
 
+  /// Discount form for an issued invoice (full screen).
+  static const String invoiceDiscount = '/patient/:id/invoices/:invoiceId/discount';
+
   /// Correction form that replaces an invoice (full screen).
   static const String invoiceCorrect = '/patient/:id/invoices/:invoiceId/correct';
 
@@ -36,6 +39,9 @@ abstract final class AppRoutes {
 
   static String invoiceRefundLocation(String patientId, String invoiceId) =>
       '${invoiceDetailLocation(patientId, invoiceId)}/refund';
+
+  static String invoiceDiscountLocation(String patientId, String invoiceId) =>
+      '${invoiceDetailLocation(patientId, invoiceId)}/discount';
 
   static String invoiceCorrectLocation(String patientId, String invoiceId) =>
       '${invoiceDetailLocation(patientId, invoiceId)}/correct';

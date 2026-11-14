@@ -9,10 +9,11 @@ ClinicLocation _branch(Object? value) =>
 PaymentMethod? _method(Object? value) =>
     value == null ? null : PaymentMethod.fromDb(value as String);
 
-/// Receipt, refund or invoice, as the reports name documents.
+/// Receipt, refund, discount or invoice, as the reports name documents.
 enum ReportDocumentKind {
   receipt,
   refund,
+  discount,
   invoice;
 
   static ReportDocumentKind fromDb(Object? value) =>
@@ -47,7 +48,7 @@ class ReportParty {
   final String invoiceNumber;
 }
 
-/// One receipt, or one refund that paid money back.
+/// One receipt, or one refund or discount that paid money back.
 class MoneyRow {
   const MoneyRow({
     required this.kind,
@@ -77,12 +78,12 @@ class MoneyRow {
   final DateTime at;
   final PaymentMethod method;
 
-  /// Always positive; refunds are money out.
+  /// Always positive; refunds and discounts are money out.
   final int amountMinor;
   final String recordedBy;
   final ReportParty party;
 
-  int get signedMinor => kind == ReportDocumentKind.refund ? -amountMinor : amountMinor;
+  int get signedMinor => kind == ReportDocumentKind.receipt ? amountMinor : -amountMinor;
 }
 
 class MoneyStaffRow {

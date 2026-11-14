@@ -11,6 +11,7 @@ import 'package:spine_clinic_app/features/auth/domain/staff.dart';
 import 'package:spine_clinic_app/features/auth/presentation/auth_providers.dart';
 import 'package:spine_clinic_app/features/patient/presentation/patient_providers.dart';
 import 'package:spine_clinic_app/features/payments/presentation/correct_invoice_screen.dart';
+import 'package:spine_clinic_app/features/payments/presentation/discount_screen.dart';
 import 'package:spine_clinic_app/features/payments/presentation/invoice_detail_screen.dart';
 import 'package:spine_clinic_app/features/payments/presentation/refund_screen.dart';
 import 'package:spine_clinic_app/features/payments/presentation/service_catalog_providers.dart';
@@ -24,7 +25,7 @@ const invoiceBillingPage = 'Billing page';
 
 /// Opens an invoice from a stand-in patient page (or Billing page when
 /// [fromBilling]), with the production page builders so the side panel,
-/// refund and correction routes behave as shipped. The patient page shows
+/// refund, discount and correction routes behave as shipped. The patient page shows
 /// the workspace tab its link asked for.
 Future<GlobalKey> pumpInvoiceDetail(
   WidgetTester tester, {
@@ -77,6 +78,11 @@ Future<GlobalKey> pumpInvoiceDetail(
       GoRoute(
         path: AppRoutes.invoiceRefund,
         builder: (_, state) => RefundScreen(patientId: part(state, 'id'), invoiceId: part(state, 'invoiceId')),
+      ),
+      GoRoute(
+        path: AppRoutes.invoiceDiscount,
+        builder: (_, state) =>
+            DiscountScreen(patientId: part(state, 'id'), invoiceId: part(state, 'invoiceId')),
       ),
       GoRoute(
         path: AppRoutes.invoiceCorrect,

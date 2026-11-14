@@ -37,7 +37,7 @@ class RevenueRow {
   final DateTime at;
   final ReportDocumentKind kind;
 
-  /// Null when a refund only moved money between lines.
+  /// Null when a refund or discount only moved money between lines.
   final PaymentMethod? method;
   final int amountMinor;
 

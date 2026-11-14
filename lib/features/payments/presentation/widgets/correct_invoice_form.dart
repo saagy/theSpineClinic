@@ -172,7 +172,7 @@ class _CorrectInvoiceFormState extends ConsumerState<CorrectInvoiceForm> {
         onChanged: change,
         onAdd: _addLine,
       ),
-      InvoiceDiscountSection(input: _input, subtotalMinor: draft.subtotalMinor, enabled: enabled, onChanged: change),
+      InvoiceDiscountSection(input: _input, baseMinor: draft.subtotalMinor, enabled: enabled, onChanged: change),
       CorrectionReasonSection(controller: _reason, enabled: enabled),
     ];
     return PopScope(

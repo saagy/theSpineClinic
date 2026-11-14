@@ -5,26 +5,38 @@ import '../../../../core/constants/app_text_styles.dart';
 import '../../../../shared/widgets/form_field_pair.dart';
 import '../../../../shared/widgets/form_section.dart';
 import '../../domain/invoice_draft.dart';
-import 'invoice_form_input.dart';
+import 'discount_fields.dart';
 import 'service_form_controls.dart';
 
 const _t = AppStrings.invoices;
 
-/// Whole-invoice discount as two linked fields: typing a percentage fills in
-/// the amount and typing an amount fills in the percentage. The field typed
-/// in last is the one the invoice records.
+/// A discount as two linked fields: typing a percentage fills in the amount
+/// and typing an amount fills in the percentage. The field typed in last is
+/// the one that is recorded. Percentages are of [baseMinor].
 class InvoiceDiscountSection extends StatefulWidget {
   const InvoiceDiscountSection({
     super.key,
     required this.input,
-    required this.subtotalMinor,
+    required this.baseMinor,
     required this.enabled,
     required this.onChanged,
+    this.title,
+    this.description,
+    this.amountInvalid,
+    this.removable = true,
   });
-  final InvoiceFormInput input;
-  final int subtotalMinor;
+  final DiscountFields input;
+  final int baseMinor;
   final bool enabled;
   final ValueChanged<VoidCallback> onChanged;
+
+  /// Defaults to the new-invoice wording.
+  final String? title;
+  final String? description;
+  final String? amountInvalid;
+
+  /// Shows Remove discount once a value is typed.
+  final bool removable;
 
   @override
   State<InvoiceDiscountSection> createState() => _InvoiceDiscountSectionState();
@@ -34,9 +46,9 @@ class _InvoiceDiscountSectionState extends State<InvoiceDiscountSection> {
   @override
   void didUpdateWidget(InvoiceDiscountSection old) {
     super.didUpdateWidget(old);
-    // Lines changed: refresh the mirrored field once this frame is built,
+    // The base changed: refresh the mirrored field once this frame is built,
     // since changing a field's text during a build is not allowed.
-    if (old.subtotalMinor == widget.subtotalMinor) return;
+    if (old.baseMinor == widget.baseMinor) return;
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) widget.input.syncDiscount();
     });
@@ -46,7 +58,7 @@ class _InvoiceDiscountSectionState extends State<InvoiceDiscountSection> {
 
   @override
   Widget build(BuildContext context) {
-    final InvoiceFormInput input = widget.input;
+    final DiscountFields input = widget.input;
     final bool enabled = widget.enabled;
     String? check(DiscountKind kind, int max, String message) {
       if (input.discountKind != kind) return null;
@@ -55,8 +67,8 @@ class _InvoiceDiscountSectionState extends State<InvoiceDiscountSection> {
     }
 
     return FormSection(
-      title: _t.sectionDiscount,
-      description: _t.freeHint,
+      title: widget.title ?? _t.sectionDiscount,
+      description: widget.description ?? _t.freeHint,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -81,10 +93,14 @@ class _InvoiceDiscountSectionState extends State<InvoiceDiscountSection> {
               decimal: true,
               maxLength: 13,
               onChanged: (_) => _typed(DiscountKind.amount),
-              validator: (_) => check(DiscountKind.amount, widget.subtotalMinor, _t.discountAmountInvalid),
+              validator: (_) => check(
+                DiscountKind.amount,
+                widget.baseMinor,
+                widget.amountInvalid ?? _t.discountAmountInvalid,
+              ),
             ),
           ),
-          if (input.discountKind != DiscountKind.none) ...[
+          if (widget.removable && input.discountKind != DiscountKind.none) ...[
             const SizedBox(height: AppSizes.p8),
             Align(
               alignment: AlignmentDirectional.centerStart,

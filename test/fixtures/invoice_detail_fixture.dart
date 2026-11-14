@@ -23,6 +23,13 @@ Map<String, dynamic> refundJson(int number, {required int value, required int pa
   'lines': [{'line_id': line, 'sessions_cancelled': sessions, 'value_minor': value}],
 };
 
+/// A discount given after issue, all on the PT line; it never cancels sessions.
+Map<String, dynamic> discountJson(int number, {required int value, int payback = 0, int hour = 13,
+        String? voidedBy}) => {
+  ...refundJson(number, value: value, payback: payback, hour: hour, voidedBy: voidedBy),
+  'id': 'discount-$number', 'kind': 'discount', 'reason': 'Approved by the head receptionist',
+};
+
 /// The JSON `invoice_detail` returns: 6 PT sessions (EGP 2,400, one doctor)
 /// plus an initial assessment (EGP 600). Figures derive from the documents.
 Map<String, dynamic> invoiceDetailJson({
@@ -41,11 +48,13 @@ Map<String, dynamic> invoiceDetailJson({
       docs.where(active).fold(0, (total, doc) => total + (doc[key] as int));
   final int received = sum(receipts, 'amount_minor');
   final int paidBack = sum(refunds, 'payback_minor');
-  final int refunded = sum(refunds, 'value_minor');
+  final int reduced = sum(refunds, 'value_minor');
+  final int laterDiscount = sum(refunds.where((doc) => doc['kind'] == 'discount'), 'value_minor');
+  final int refunded = reduced - laterDiscount;
   final int cancelled = refunds.where(active).fold(
       0, (total, doc) => total + ((doc['lines'] as List).first as Map)['sessions_cancelled'] as int);
   const int total = 300000;
-  final int value = total - refunded, collected = received - paidBack;
+  final int value = total - reduced, collected = received - paidBack;
   final int due = voidedBy == null ? value - collected : 0;
   return {
     'id': id, 'branch': 'tagamoa', 'number': number, 'patient_id': 'patient-fixture',
@@ -53,7 +62,7 @@ Map<String, dynamic> invoiceDetailJson({
     'subtotal_minor': total, 'discount_kind': 'none', 'discount_value': 0, 'discount_minor': 0,
     'total_minor': total, 'note': null, 'created_at': '2026-11-10T08:30:00Z',
     'created_by_name': 'Nour Mahmoud', 'version': version, ..._void(voidedBy),
-    'refunded_minor': refunded, 'value_minor': value, 'received_minor': received,
+    'refunded_minor': refunded, 'later_discount_minor': laterDiscount, 'value_minor': value, 'received_minor': received,
     'paid_back_minor': paidBack, 'net_collected_minor': collected, 'due_minor': due,
     'status': voidedBy != null ? 'voided' : due == 0 ? (refunded > 0 ? 'refunded' : 'paid')
         : collected > 0 ? 'partially_paid' : 'unpaid',
@@ -63,7 +72,7 @@ Map<String, dynamic> invoiceDetailJson({
         'id': 'line-1', 'service_id': ptService, 'service_name': '6 PT sessions',
         'service_type': 'pt_session', 'quantity': 1, 'unit_price_minor': 240000,
         'gross_minor': 240000, 'net_minor': 240000, 'sessions_granted': 6,
-        'value_minor': 240000 - refunded, 'collected_minor': 0, 'sessions_left': 6 - cancelled,
+        'value_minor': 240000 - reduced, 'collected_minor': 0, 'sessions_left': 6 - cancelled,
         'doctors': [{'id': 'staff-fixture', 'name': 'Dr. Mariam Khaled'}],
       },
       {

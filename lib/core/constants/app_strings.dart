@@ -4,6 +4,7 @@ library;
 
 import 'billing_report_strings.dart';
 import 'invoice_detail_strings.dart';
+import 'invoice_discount_strings.dart';
 import 'invoice_strings.dart';
 import 'staff_details_strings.dart';
 
@@ -52,6 +53,7 @@ abstract final class AppStrings {
   static const String patientReferralSource = 'How they heard about us';
   static const invoices = InvoiceStrings();
   static const invoiceDetail = InvoiceDetailStrings();
+  static const invoiceDiscount = InvoiceDiscountStrings();
   static const billingReports = BillingReportStrings();
   static const staffDetails = StaffDetailsStrings();
   static String staffAppliedOn(String date) => 'Applied $date';

@@ -16,6 +16,7 @@ import 'invoice_payment_dialog.dart';
 import 'invoice_void_dialog.dart';
 
 const _t = AppStrings.invoiceDetail;
+const _d = AppStrings.invoiceDiscount;
 
 void _done(BuildContext context, bool? saved, String message) {
   if (saved == true && context.mounted) {
@@ -43,8 +44,8 @@ Future<void> correctInvoiceReceipt(
   if (context.mounted) _done(context, saved, _t.receiptCorrected);
 }
 
-/// Voids the given receipt or refund, or the invoice itself when neither is
-/// passed. Every void asks for a reason first.
+/// Voids the given receipt, refund or discount, or the invoice itself when
+/// neither is passed. Every void asks for a reason first.
 Future<void> voidInvoiceDocument(
   BuildContext context,
   InvoiceDetail invoice, {
@@ -57,6 +58,8 @@ Future<void> voidInvoiceDocument(
           _t.voidReceiptHelp(Money.format(receipt.amountMinor)),
           _t.receiptVoided,
         )
+      : refund != null && refund.isDiscount
+      ? (_d.voidTitle, _d.voidHelp, _d.voided)
       : refund != null
       ? (_t.voidRefundTitle, _t.voidRefundHelp, _t.refundVoided)
       : (_t.voidInvoice, _t.voidInvoiceHelp, _t.invoiceVoidedDone);
@@ -104,6 +107,14 @@ Future<void> openInvoiceRefund(BuildContext context, InvoiceDetail invoice) asyn
     AppRoutes.invoiceRefundLocation(invoice.patientId, invoice.id),
   );
   if (context.mounted) _done(context, saved, _t.refundRecorded);
+}
+
+/// Opens the discount form; it returns `true` once a discount is recorded.
+Future<void> openInvoiceDiscount(BuildContext context, InvoiceDetail invoice) async {
+  final bool? saved = await context.push<bool>(
+    AppRoutes.invoiceDiscountLocation(invoice.patientId, invoice.id),
+  );
+  if (context.mounted) _done(context, saved, _d.recorded);
 }
 
 Future<void> printInvoiceDocument(

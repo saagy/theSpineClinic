@@ -159,7 +159,7 @@ class _NewInvoiceFormState extends ConsumerState<NewInvoiceForm> {
       if (widget.canDiscount)
         InvoiceDiscountSection(
           input: _input,
-          subtotalMinor: draft.subtotalMinor,
+          baseMinor: draft.subtotalMinor,
           enabled: enabled,
           onChanged: change,
         ),

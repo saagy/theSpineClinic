@@ -22,7 +22,7 @@ final class InvoiceDetailStrings {
   String quantityLine(int quantity, String price) => '$quantity × $price';
   String sessionsCancelled(int count) =>
       count == 1 ? '1 session cancelled' : '$count sessions cancelled';
-  String afterRefund(String amount) => '$amount after refund';
+  String valueNow(String amount) => 'Value now $amount';
   String corrects(String number) => 'Replaces $number';
   String correctedBy(String number) => 'Replaced by $number';
   String voidedBy(String name, String time) => 'Cancelled by $name on $time';
@@ -38,9 +38,9 @@ final class InvoiceDetailStrings {
   final String correct = 'Edit';
   final String voidAction = 'Cancel';
   final String printFailed = 'The document could not be prepared. Try again.';
-  final String voidNeedsNoRefunds = 'Cancel its refunds first';
-  final String correctNeedsNoRefunds = 'Cancel its refunds first';
-  final String lockedByRefund = 'Cancel the later refund first';
+  final String voidNeedsNoRefunds = 'Cancel its refunds and discounts first';
+  final String correctNeedsNoRefunds = 'Cancel its refunds and discounts first';
+  final String lockedByRefund = 'Cancel the later refund or discount first';
 
   // Activity
   final String activity = 'Activity';
@@ -137,7 +137,7 @@ final class InvoiceDetailStrings {
   // Invoice edit
   String correctTitle(String number) => 'Edit $number';
   String correctHelp(String number) =>
-      'Saving cancels $number and creates a new invoice with a new number. Payments already received move to the new invoice. Services use current prices.';
+      'Use this to fix a mistake. Saving cancels $number and creates a new invoice with a new number. Payments already received move to the new invoice. Services use current prices. To lower the price, use Add discount instead.';
   String droppedServices(String names) =>
       'No longer sold and left out: $names. Add a replacement service if needed.';
   final String alreadyPaid = 'Already paid';
@@ -154,6 +154,7 @@ final class InvoiceDetailStrings {
   final String billedTo = 'Billed to';
   String fileNumber(int number) => 'File no. $number';
   final String forInvoice = 'For invoice';
+  final String documentDate = 'Date';
   final String columnQty = 'Qty';
   final String columnUnitPrice = 'Unit price';
   final String columnAmount = 'Amount';
@@ -170,13 +171,14 @@ final class InvoiceDetailStrings {
   Map<String, String> get errorKeys => const {
     'invoice_reason_required': 'Enter a reason of up to 500 characters.',
     'invoice_already_voided': 'This was already cancelled. The latest record is shown.',
-    'invoice_has_payments': 'Cancel the payments and refunds on this invoice first.',
-    'invoice_refunds_first': 'Cancel the refunds on this invoice first.',
+    'invoice_has_payments': 'Cancel the payments, refunds and discounts on this invoice first.',
+    'invoice_refunds_first': 'Cancel the refunds and discounts on this invoice first.',
     'invoice_invoice_voided': 'This invoice is cancelled and cannot be changed.',
     'invoice_refund_limit':
         'A refund value or session count is more than the invoice line has left.',
-    'invoice_refund_after': 'A later refund depends on this record. Cancel that refund first.',
-    'invoice_has_refunds': 'Cancel the refunds on this invoice before editing it.',
+    'invoice_refund_after':
+        'A later refund or discount depends on this record. Cancel that one first.',
+    'invoice_has_refunds': 'Cancel the refunds and discounts on this invoice before editing it.',
     'invoice_correction_below_paid': 'The new total is less than the money already received.',
     'invoice_sessions_in_use':
         'Some of these sessions are already used or booked. Cancel the future package bookings first.',

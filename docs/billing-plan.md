@@ -182,6 +182,7 @@ project by hand (SQL editor) on November 13, 2026.
 | Void | Cancels a mistake. It stays visible with actor, time, and reason, and is excluded from every total. Numbers are never reused. | Cancel |
 | Correction | Voids the invoice or receipt and creates a prefilled replacement linked to the original. This is the only editing path. | Edit |
 | Refund | A patient-requested reduction in invoice value. Unused sessions are cancelled and money is paid back immediately when needed. | Refund |
+| Discount | A price reduction given after issue, on the same invoice, with its own number series. No sessions are cancelled; overpaid money is paid back. | Add discount |
 
 ### Refund calculation
 
@@ -226,7 +227,11 @@ Rules:
   revenue. Refunds that only cancel unpaid debt do not change earnings.
 - **Discount** applies to the whole invoice as a percentage or fixed amount. It
   is allocated proportionally to lines. A 100% discount records free sessions.
-  Later goodwill reductions use Refund.
+  A discount after issue (for example added by a payment receptionist to an
+  invoice the front desk made) is its own document on the existing invoice:
+  the invoice keeps its number and receipts, the discount is split between
+  lines by their value now, and any overpaid money is handed back as with a
+  refund. It never cancels sessions. Edit stays for mistakes only.
 - **Dates:** the invoice date can be selected for today or a past date, never
   the future. The real entry time is also stored. Receipts and refunds always
   use the actual recording time so the daily cash report matches the drawer.

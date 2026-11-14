@@ -40,6 +40,7 @@ try {
     'test/invoice_fixture.sql', 'test/invoice_workflow.sql',
     'test/invoice_fixture.sql', 'test/invoice_corrections.sql',
     'test/invoice_fixture.sql', 'test/invoice_reports.sql',
+    'test/invoice_fixture.sql', 'test/invoice_discounts.sql',
     'test/invoice_fixture.sql', 'test/doctor_session_report.sql',
   ]) await run(file);
   const tables = await db.query(`SELECT count(*)::int AS count FROM pg_tables WHERE schemaname='public'`);

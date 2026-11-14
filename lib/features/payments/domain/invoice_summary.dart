@@ -42,7 +42,9 @@ abstract class InvoiceSummary with _$InvoiceSummary {
     @JsonKey(name: 'value_minor') required int valueMinor,
     @JsonKey(name: 'net_collected_minor') required int collectedMinor,
     @JsonKey(name: 'due_minor') required int dueMinor,
+    /// Active refunds only; discounts given after issue are [laterDiscountMinor].
     @JsonKey(name: 'refunded_minor') required int refundedMinor,
+    @JsonKey(name: 'later_discount_minor') @Default(0) int laterDiscountMinor,
     @JsonKey(fromJson: _statusFromJson, toJson: _statusToJson) required InvoiceStatus status,
     @Default('') String services,
     @JsonKey(fromJson: _doctorsFromJson) @Default([]) List<String> doctors,

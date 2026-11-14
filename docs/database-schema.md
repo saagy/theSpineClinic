@@ -118,13 +118,13 @@ minor units. Rows are never deleted; voided rows keep `voided_at`,
 | Table | Purpose |
 | --- | --- |
 | `service_catalog` | Name (unique ignoring case and outer spaces), `service_type` (`pt_session`, `traction_session`, `initial_assessment`, `reassessment`, `other`), `sessions_per_unit` (above 1 only for PT and traction), price, `attributes_doctors`, `active`, `version`. |
-| `invoice_number_series` | Last number per branch and kind (`invoice`, `receipt`, `refund`). |
+| `invoice_number_series` | Last number per branch and kind (`invoice`, `receipt`, `refund`, `discount`). |
 | `invoices` | Branch and number, patient name and file-number snapshots, `invoice_date` (today or earlier), subtotal, `discount_kind` (`none`, `percent` in basis points, `amount`), discount, total, optional note, `replaces_invoice_id` for corrections, creator snapshot, `version`. |
 | `invoice_lines` | Service snapshot (name, type, sessions per unit), quantity, unit price, gross, the line's share of the invoice discount, net, and `sessions_granted`. |
 | `invoice_line_doctors` | Zero or more doctors per line, with name snapshots. |
 | `invoice_receipts` | Branch and number, amount, `cash` or `visa`, `received_at` (kept by corrections), `recorded_at`, recorder snapshot, `replaces_receipt_id`. |
-| `invoice_refunds` | Branch and number, agreed `value_minor`, derived `payback_minor` and `payback_method`, required reason, recorder snapshot. |
-| `invoice_refund_lines` | Cancelled sessions and value per refunded line. |
+| `invoice_refunds` | Refunds and discounts given after issue. `kind` (`refund` or `discount`), branch and number (unique per branch and kind), `value_minor`, derived `payback_minor` and `payback_method`, required reason, recorder snapshot. |
+| `invoice_refund_lines` | Cancelled sessions and value per reduced line. Discount lines never cancel sessions. |
 | `invoice_allocations` | Signed collected-money shares per line for each receipt or refund; the basis for collected-money doctor earnings. |
 
 Rules enforced in the database:
@@ -138,7 +138,8 @@ Rules enforced in the database:
   `invoice_create` and `receipt_create`. `invoice_can('manage')` (payment
   receptionists and super admins) also covers discounts, `service_save`,
   `invoice_void`, `invoice_correct`, `receipt_void`, `receipt_correct`,
-  `refund_create` and `refund_void`. Doctors read nothing.
+  `refund_create`, `discount_create` and `refund_void` (which also cancels a
+  discount). Doctors read nothing.
 - Creating an invoice adds its PT and traction sessions to the patient's
   balance. Refunds and invoice voids remove only sessions that remain unused
   and are not committed to future package bookings (`sessions_in_use`).
@@ -149,10 +150,25 @@ Rules enforced in the database:
 - Receipts are allocated across lines in proportion to each line's
   uncollected value. A refund removes paid-back money from lines collected
   above their new value and moves the remainder to lines with room. A later
-  active refund blocks voiding earlier money documents (`refund_after`).
-- `invoice_register` (security invoker) adds `refunded_minor`, `value_minor`,
+  active refund or discount blocks voiding earlier money documents
+  (`refund_after`); active refunds and discounts block editing or cancelling
+  the invoice (`has_refunds`, `refunds_first`).
+- `discount_create` (migration `20261114120000`, applied to the linked
+  project on November 14, 2026 as version `20261114120320`) lowers an issued invoice
+  without replacing it: the invoice keeps its number and receipts. Payload
+  `discount {kind: percent|amount, value}`, `payback_minor`,
+  `payback_method`, `branch`, `reason`. A percentage (basis points, up to
+  10000) is of the invoice value now; the discount must be from 1 piaster to
+  that value (`invalid_discount`). It is stored in `invoice_refunds` with
+  `kind = 'discount'` and its own number series, split between lines in
+  proportion to each line's value now (cumulative integer division), and
+  reallocated like a refund. It never changes session balances. Payback and
+  `stale` work as for refunds.
+- `invoice_register` (security invoker) adds `refunded_minor` (refunds
+  only), `later_discount_minor` (discounts given after issue), `value_minor`,
   `received_minor`, `paid_back_minor`, `net_collected_minor`, `due_minor`,
-  `status` (`paid`, `partially_paid`, `unpaid`, `refunded`, `voided`), a
+  `status` (`paid`, `partially_paid`, `unpaid`, `refunded`, `voided`; a
+  discount alone never makes an invoice `refunded`), a
   `services` summary and `doctors`. `invoice_detail(id)` returns the
   complete document. `invoice_patient_summary(patient_id)` returns due,
   collected and invoice counts. Invoices also protect a patient from deletion.
@@ -160,7 +176,7 @@ Rules enforced in the database:
   `20261111144013`) is the only report entry point. It requires
   `invoice_can('manage')`, accepts at most 366 clinic days and returns JSON
   with `totals` and `rows` (capped at 5000; totals always cover every row).
-  Kinds: `money` (active receipts and refund paybacks by `received_at` /
+  Kinds: `money` (active receipts and refund and discount paybacks by `received_at` /
   `recorded_at` and their own branch, plus `staff` totals and `voids` listed
   by `voided_at`), `revenue` (one row per collected line allocation; the
   doctor filter keeps lines credited to that doctor), `doctor` (requires a
@@ -174,7 +190,8 @@ Rules enforced in the database:
   split (migration `20261113175332`, applied to the linked project on
   November 13, 2026): the money handed back keeps the payback method, and
   money that only moved between lines has a NULL method, reported as
-  "Refund adjustment". Only lines that lost money hold payback, shared in
+  "Adjustment". Since migration `20261114120000` report rows carry the
+  document's `kind` (`receipt`, `refund` or `discount`). Only lines that lost money hold payback, shared in
   proportion to what each lost; stored allocations are unchanged. The private builders
   (`invoice_report_*`) are not executable by clients.
 - `doctor_session_report(from, to, branch, doctor)` (migration
