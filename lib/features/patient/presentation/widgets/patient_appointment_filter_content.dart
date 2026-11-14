@@ -1,3 +1,4 @@
+import 'package:spine_clinic_app/shared/widgets/app_date_range_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:spine_clinic_app/core/constants/app_sizes.dart';
@@ -48,7 +49,7 @@ class _PatientAppointmentFilterContentState
   }
 
   Future<void> _pickDateRange() async {
-    final DateTimeRange? picked = await showDateRangePicker(
+    final DateTimeRange? picked = await showAppDateRangePicker(
       context: context,
       firstDate: DateTime(2020),
       lastDate: DateTime.now().add(const Duration(days: 365)),

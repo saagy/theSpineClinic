@@ -312,6 +312,10 @@ abstract final class AppStrings {
   static const String retry = 'Retry';
   static const String confirm = 'Confirm';
   static const String apply = 'Apply';
+  static const String dateRangeTitle = 'Choose a period';
+  static const String dateRangeFrom = 'From';
+  static const String dateRangeTo = 'To';
+  static const String dateRangeChoose = 'Choose a day';
   static const String close = 'Close';
   static const String submit = 'Submit';
   static const String upload = 'Upload';
