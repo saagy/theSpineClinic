@@ -18,10 +18,7 @@ abstract class _ReceptionistScheduleBase
   ClinicLocation? get _clinic {
     final Staff? user = ref.read(currentUserProvider).value;
     if (user?.role == UserRole.superAdmin) {
-      final String? override = ref.read(adminBranchFilterProvider);
-      if (override == 'tagamoa') return ClinicLocation.tagamoa;
-      if (override == 'masr_elgedida') return ClinicLocation.masrElgedida;
-      return null;
+      return ClinicLocation.fromDbValue(ref.read(adminBranchFilterProvider));
     }
     return ref.read(activeBranchProvider);
   }

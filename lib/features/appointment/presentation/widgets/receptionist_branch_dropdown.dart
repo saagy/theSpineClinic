@@ -15,18 +15,13 @@ class ReceptionistBranchDropdown extends ConsumerWidget {
 
   final ClinicLocation clinic;
 
-  static const Map<String, ClinicLocation> _dbToEnum = {
-    'tagamoa': ClinicLocation.tagamoa,
-    'masr_elgedida': ClinicLocation.masrElgedida,
-  };
-
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final cs = Theme.of(context).colorScheme;
     final adminBranch = ref.watch(adminBranchFilterProvider);
     final String display = adminBranch == null
         ? AppStrings.allBranches
-        : _dbToEnum[adminBranch]?.displayLabel ?? clinic.displayLabel;
+        : ClinicLocation.fromDbValue(adminBranch)?.displayLabel ?? clinic.displayLabel;
 
     return PopupMenuButton<String>(
       offset: const Offset(0, AppSizes.p32),
@@ -80,7 +75,7 @@ class ReceptionistBranchDropdown extends ConsumerWidget {
     if (value == '__all__') {
       ref.read(adminBranchFilterProvider.notifier).set(null);
       ref.read(allAppointmentsProvider.notifier).setClinicFilter(null);
-    } else if (_dbToEnum[value] != null) {
+    } else if (ClinicLocation.fromDbValue(value) != null) {
       ref.read(adminBranchFilterProvider.notifier).set(value);
       ref.read(allAppointmentsProvider.notifier).setClinicFilter(value);
     }

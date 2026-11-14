@@ -47,4 +47,5 @@ const _$UserRoleEnumMap = {
 const _$ClinicLocationEnumMap = {
   ClinicLocation.tagamoa: 'tagamoa',
   ClinicLocation.masrElgedida: 'masr_elgedida',
+  ClinicLocation.madinaty: 'madinaty',
 };

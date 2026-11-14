@@ -60,7 +60,7 @@ abstract class InvoiceSummary with _$InvoiceSummary {
 }
 
 String invoiceNumberLabel(ClinicLocation branch, int number) =>
-    '${branch == ClinicLocation.tagamoa ? 'TG' : 'MG'}-${number.toString().padLeft(5, '0')}';
+    '${branch.documentPrefix}-${number.toString().padLeft(5, '0')}';
 
 /// Money totals across a patient's active invoices.
 class PatientInvoiceTotals {

@@ -60,11 +60,28 @@ the existing `create_patient_with_doctors` grants to its current five-argument s
 | Type | Values | Notes |
 | --- | --- | --- |
 | `user_role` | `super_admin`, `receptionist`, `doctor` | `doctor` = physical therapist. No patient login exists — patients are data, not users. |
-| `clinic_location` | `tagamoa`, `masr_elgedida` | The two branches. |
+| `clinic_location` | `tagamoa`, `masr_elgedida`, `madinaty` | The branches. See "Adding a branch" below the table. |
 | `appointment_type` | `normal_pt_session`, `spinal_traction_session`, `initial_assessment`, `reassessment` | Only PT and traction sessions consume package balance; assessments never deduct. |
 | `appointment_status` | `scheduled`, `checked_in`, `cancelled` | `checked_in` deducts balance; reverting to `scheduled`/`cancelled` refunds it. |
 | `body_region` | `shoulder`, `elbow`, `hand`, `lumbar_spine`, `thoracic_spine`, `cervical_spine`, `hip_joint`, `knee_joint`, `ankle_joint`, `foot` | Body regions for condition catalog and injury classifications. |
 | `program_status` | `active`, `completed`, `archived` | Rehabilitation program lifecycle status. |
+
+### Adding a branch
+
+Branches are the `clinic_location` enum. Adding one is a developer task by design:
+there is no in-app branch management, and admins cannot add or rename branches.
+Keep it that way unless the product owner asks otherwise. To add one:
+
+1. Add a migration: `ALTER TYPE public.clinic_location ADD VALUE IF NOT EXISTS '<value>';`
+   and add the value to the enum in `supabase/full_schema.sql`. Enum values cannot be
+   removed, so agree the stored value first. Apply it before releasing the app.
+2. Add the value to `ClinicLocation` (`lib/features/patient/domain/clinic_location.dart`)
+   with its stored value and document-number prefix, and its label in `AppStrings`.
+3. Run `dart run build_runner build --delete-conflicting-outputs` so JSON enum maps
+   include it.
+
+Screens, filters, pickers, reports and number series read the enum, so nothing else
+changes. Invoice, receipt and refund numbers start a new series on first use.
 | `modality_type` | `muscle_pain`, `mass_built`, `tecar`, `tecar_focal`, `neurodynamic_non_wb`, `neurodynamic_wb`, `release`, `met`, `mobilization`, `mulligan`, `exercise` | Physiotherapy equipment & modality devices. |
 | `laterality` | `right`, `left`, `both` | Side selection for bilateral body regions. |
 
@@ -72,8 +89,13 @@ the existing `create_patient_with_doctors` grants to its current five-argument s
 
 ### Patient identity and details
 
-- `patients.file_number` is a unique, immutable database identity across branches
-  labeled **ID number** in the app.
+- `patients.file_number` is the patient's **ID number**, unique within a branch
+  (`UNIQUE (clinic, file_number)`). Each branch counts from 1 through
+  `patient_number_series`. Triggers assign it: a new patient takes the next
+  number of their branch; changing `clinic` restores the number the patient
+  held at that branch before (`patient_branch_ids`) or takes the next one.
+  Direct updates are rejected and numbers are never reused. Invoices keep the
+  ID the patient had when they were issued. Migration `20261112100000`.
 - `patients.personal_details` stores optional demographics, contact and referral
   fields. The profile RPCs normalize these values inside the existing patient
   creation or edit transaction. New profiles default to Egyptian nationality.

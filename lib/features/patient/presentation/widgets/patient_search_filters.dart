@@ -37,16 +37,12 @@ class PatientSearchFilters extends StatelessWidget {
                 selected: selectedClinic == null,
                 onTap: () => onClinicSelected(null),
               ),
-              _FilterChip(
-                label: AppStrings.clinicTagamoa,
-                selected: selectedClinic == ClinicLocation.tagamoa,
-                onTap: () => onClinicSelected(ClinicLocation.tagamoa),
-              ),
-              _FilterChip(
-                label: AppStrings.clinicMasrElgedida,
-                selected: selectedClinic == ClinicLocation.masrElgedida,
-                onTap: () => onClinicSelected(ClinicLocation.masrElgedida),
-              ),
+              for (final ClinicLocation branch in ClinicLocation.values)
+                _FilterChip(
+                  label: branch.displayLabel,
+                  selected: selectedClinic == branch,
+                  onTap: () => onClinicSelected(branch),
+                ),
             ],
           ),
           // Placeholder for future filter/sort rows (e.g., sorting dropdown or active status chips)

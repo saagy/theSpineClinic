@@ -43,6 +43,7 @@ Map<String, dynamic> _$PatientToJson(_Patient instance) => <String, dynamic>{
 const _$ClinicLocationEnumMap = {
   ClinicLocation.tagamoa: 'tagamoa',
   ClinicLocation.masrElgedida: 'masr_elgedida',
+  ClinicLocation.madinaty: 'madinaty',
 };
 
 _PatientPersonalDetails _$PatientPersonalDetailsFromJson(

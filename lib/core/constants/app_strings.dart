@@ -332,6 +332,7 @@ abstract final class AppStrings {
   static const String clinic = 'Clinic';
   static const String clinicTagamoa = 'Tagamoa';
   static const String clinicMasrElgedida = 'Masr El-Gedida';
+  static const String clinicMadinaty = 'Madinaty';
   static const String packageBalance = 'Package Balance';
   static const String sessionBalance = 'PT Session Balance';
   static const String tractionBalance = 'Spinal Traction Balance';

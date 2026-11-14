@@ -169,19 +169,16 @@ class _BranchFilterDropdown extends ConsumerWidget {
           color: Theme.of(context).colorScheme.onSurfaceVariant,
         ),
       ),
-      items: const [
-        DropdownMenuItem<ClinicLocation?>(
+      items: [
+        const DropdownMenuItem<ClinicLocation?>(
           value: null,
           child: Text(AppStrings.allBranches),
         ),
-        DropdownMenuItem<ClinicLocation?>(
-          value: ClinicLocation.tagamoa,
-          child: Text(AppStrings.clinicTagamoa),
-        ),
-        DropdownMenuItem<ClinicLocation?>(
-          value: ClinicLocation.masrElgedida,
-          child: Text(AppStrings.clinicMasrElgedida),
-        ),
+        for (final ClinicLocation branch in ClinicLocation.values)
+          DropdownMenuItem<ClinicLocation?>(
+            value: branch,
+            child: Text(branch.displayLabel),
+          ),
       ],
       onChanged: notifier.setClinicFilter,
     );

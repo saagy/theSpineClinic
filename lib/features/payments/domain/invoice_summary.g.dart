@@ -53,4 +53,5 @@ Map<String, dynamic> _$InvoiceSummaryToJson(_InvoiceSummary instance) =>
 const _$ClinicLocationEnumMap = {
   ClinicLocation.tagamoa: 'tagamoa',
   ClinicLocation.masrElgedida: 'masr_elgedida',
+  ClinicLocation.madinaty: 'madinaty',
 };

@@ -130,16 +130,12 @@ class _UnifiedFilterSheetState extends ConsumerState<UnifiedFilterSheet> {
                         isActive: _clinic == null,
                         onTap: () => setState(() => _clinic = null),
                       ),
-                      AppFilterChip(
-                        label: AppStrings.clinicTagamoa,
-                        isActive: _clinic == ClinicLocation.tagamoa,
-                        onTap: () => setState(() => _clinic = ClinicLocation.tagamoa),
-                      ),
-                      AppFilterChip(
-                        label: AppStrings.clinicMasrElgedida,
-                        isActive: _clinic == ClinicLocation.masrElgedida,
-                        onTap: () => setState(() => _clinic = ClinicLocation.masrElgedida),
-                      ),
+                      for (final ClinicLocation branch in ClinicLocation.values)
+                        AppFilterChip(
+                          label: branch.displayLabel,
+                          isActive: _clinic == branch,
+                          onTap: () => setState(() => _clinic = branch),
+                        ),
                     ],
                   ),
                 ],

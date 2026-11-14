@@ -70,7 +70,7 @@ class AppointmentFilterChipsSection extends StatelessWidget {
   }
 
   Widget _buildClinicOptions(ColorScheme cs) {
-    final clinics = <ClinicLocation?>[null, ClinicLocation.tagamoa, ClinicLocation.masrElgedida];
+    final clinics = <ClinicLocation?>[null, ...ClinicLocation.values];
     return Wrap(
       spacing: AppSizes.p8,
       runSpacing: AppSizes.p8,
