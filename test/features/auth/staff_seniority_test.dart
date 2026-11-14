@@ -76,16 +76,16 @@ void main() {
     );
     await tester.pumpAndSettle();
     expect(key.currentState!.fields['is_senior']!.value, isTrue);
-    await tester.ensureVisible(find.text(AppStrings.seniorDoctor));
-    await tester.tap(find.text(AppStrings.seniorDoctor));
+    await tester.ensureVisible(find.text(AppStrings.consultant));
+    await tester.tap(find.text(AppStrings.consultant));
     await tester.pumpAndSettle();
     expect(key.currentState!.fields['is_senior']!.value, isFalse);
     key.currentState!.fields['role']!.didChange(UserRole.receptionist);
     await tester.pumpAndSettle();
-    expect(find.text(AppStrings.seniorDoctor), findsNothing);
+    expect(find.text(AppStrings.consultant), findsNothing);
     key.currentState!.fields['role']!.didChange(UserRole.doctor);
     await tester.pumpAndSettle();
-    expect(find.text(AppStrings.seniorDoctor), findsOneWidget);
+    expect(find.text(AppStrings.consultant), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 }

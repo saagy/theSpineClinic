@@ -16,7 +16,7 @@ class StaffSeniorityField extends StatelessWidget {
     name: 'is_senior',
     enabled: enabled,
     initialValue: initialValue,
-    title: AppStrings.seniorDoctor,
+    title: AppStrings.consultant,
     description: AppStrings.isSeniorDoctorDescription,
   );
 }

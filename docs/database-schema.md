@@ -162,7 +162,7 @@ Auth-linked staff profiles. One row per Supabase Auth user (`auth.users`).
 - `role` (`user_role`, NOT NULL)
 - `is_active` (`boolean`, NOT NULL, default `true`)
 - `can_manage_payments` (`boolean`, NOT NULL, default `false`) — payment-write permission for receptionists
-- `is_senior` (`boolean`, NOT NULL, default `false`) — senior doctor assessment & program creation permission
+- `is_senior` (`boolean`, NOT NULL, default `false`) — senior doctor assessment & program creation permission; shown as **Consultant** in the app
 - `created_at` (`timestamptz`, NOT NULL, default `now()`)
 - `phone` (`text`, nullable)
 - `branch` (`clinic_location`, nullable)

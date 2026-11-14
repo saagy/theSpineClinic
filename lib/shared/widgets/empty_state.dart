@@ -84,7 +84,7 @@ class EmptyState extends StatelessWidget {
               Text(
                 secondaryMessage!,
                 style: AppTextStyles.caption.copyWith(
-                  color: cs.outline,
+                  color: cs.onSurfaceVariant,
                 ),
                 textAlign: TextAlign.center,
               ),

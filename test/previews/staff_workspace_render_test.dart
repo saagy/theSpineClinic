@@ -119,8 +119,8 @@ void main() {
           .fields['role']!
           .didChange(UserRole.doctor);
       await tester.pumpAndSettle();
-      await tester.ensureVisible(find.text(AppStrings.seniorDoctor));
-      await tester.tap(find.text(AppStrings.seniorDoctor));
+      await tester.ensureVisible(find.text(AppStrings.consultant));
+      await tester.tap(find.text(AppStrings.consultant));
       await tester.pumpAndSettle();
       await capturePolish(tester, key, 'staff-senior-$width');
       expect(tester.takeException(), isNull);

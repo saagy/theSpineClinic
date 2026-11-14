@@ -1,6 +1,7 @@
 library;
 
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:spine_clinic_app/core/constants/app_strings.dart';
 import 'package:spine_clinic_app/core/errors/app_exception.dart';
 import 'package:spine_clinic_app/core/errors/result.dart';
 import 'package:spine_clinic_app/core/network/supabase_service.dart';
@@ -43,7 +44,7 @@ class TreatmentPlanController extends _$TreatmentPlanController {
     if (!user.isActive || !user.isSeniorDoctor) {
       return const AuthException(
         code: 'auth/permission-denied',
-        message: 'Only senior doctors and super admins can manage treatment plans.',
+        message: AppStrings.consultantOnlyTreatmentPlans,
         userMessageKey: 'error_permission_denied',
       );
     }

@@ -231,7 +231,7 @@ Older patient-note/appointment sheets remain. See [scope and rendered validation
 
 Appointment creation now preselects the patient's assigned doctors once on patient
 selection and preserves that selection across appointment type changes. Assessment
-types show a review reminder; the doctor picker labels senior doctors. Package
+types show a review reminder; the doctor picker labels consultants. Package
 billing retains its prior session choice when staff switch to an assessment and
 back. Check-in uses the same status controller and actionable balance error in
 agenda and detail views.

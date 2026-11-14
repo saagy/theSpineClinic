@@ -1,4 +1,5 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:spine_clinic_app/core/constants/app_strings.dart';
 import 'package:spine_clinic_app/core/errors/app_exception.dart';
 import 'package:spine_clinic_app/core/errors/result.dart';
 import 'package:spine_clinic_app/features/appointment/presentation/appointment_providers.dart';
@@ -27,7 +28,7 @@ class DeletePatientController extends _$DeletePatientController {
       return const Result.failure(
         AuthException(
           code: 'security/permission-denied',
-          message: 'Only super admins, receptionists, and senior doctors can delete patients.',
+          message: AppStrings.patientDeleteNotAllowed,
         ),
       );
     }

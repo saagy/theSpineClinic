@@ -1,6 +1,7 @@
 library;
 
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:spine_clinic_app/core/constants/app_strings.dart';
 import 'package:spine_clinic_app/core/errors/app_exception.dart';
 import 'package:spine_clinic_app/core/errors/result.dart';
 import 'package:spine_clinic_app/features/auth/domain/staff.dart';
@@ -36,7 +37,7 @@ class ProgramController extends _$ProgramController with _ProgramSaveActions {
     if (!user.isActive || !user.isSeniorDoctor) {
       return const AuthException(
         code: 'auth/permission-denied',
-        message: 'Only senior doctors and super admins can perform this action.',
+        message: AppStrings.consultantOnlyPrograms,
         userMessageKey: 'error_permission_denied',
       );
     }
