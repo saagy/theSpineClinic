@@ -29,25 +29,19 @@ extension _NewAppointmentFormView on _NewAppointmentFormState {
         onSave: isSubmissionBlocked ? null : _submitForm,
         onCancel: () => context.pop(),
         child: FormColumns(
-          first: BookingFormFields(
-            preselectedPatient: patient,
-            onPatientTap: () => _openPatientSearch(context),
-            selectedType: _selectedType,
-            onTypeChanged: (type) => _mutate(() {
-              if (_selectedType.affectsPackageBalance) {
-                _sessionUsePackage = _usePackage;
-              }
-              _selectedType = type;
-              _usePackage = type.affectsPackageBalance ? _sessionUsePackage : false;
-            }),
-            isRecurring: _isRecurring,
-            onRecurringChanged: (value) => _mutate(() => _isRecurring = value),
-            selectedDate: _selectedDate,
-            onDateChanged: (date) => _mutate(() => _selectedDate = date),
-            selectedTime: _selectedTime,
-            onTimeChanged: (time) => _mutate(() => _selectedTime = time),
-            dateErrorText: _dateErrorText,
-            timeErrorText: _timeErrorText,
+          first: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              _buildBookingFields(context, patient),
+              if (isPatientValid && _selectedTime != null)
+                PatientVisitClashWarning(
+                  patientId: _patientId!,
+                  starts: [
+                    for (final DateTime day in _computedSlots)
+                      DateTime(day.year, day.month, day.day, _selectedTime!.hour, _selectedTime!.minute),
+                  ],
+                ),
+            ],
           ),
           second: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -79,4 +73,25 @@ extension _NewAppointmentFormView on _NewAppointmentFormState {
       ),
     );
   }
+
+  Widget _buildBookingFields(BuildContext context, Patient? patient) => BookingFormFields(
+    preselectedPatient: patient,
+    onPatientTap: () => _openPatientSearch(context),
+    selectedType: _selectedType,
+    onTypeChanged: (type) => _mutate(() {
+      if (_selectedType.affectsPackageBalance) {
+        _sessionUsePackage = _usePackage;
+      }
+      _selectedType = type;
+      _usePackage = type.affectsPackageBalance ? _sessionUsePackage : false;
+    }),
+    isRecurring: _isRecurring,
+    onRecurringChanged: (value) => _mutate(() => _isRecurring = value),
+    selectedDate: _selectedDate,
+    onDateChanged: (date) => _mutate(() => _selectedDate = date),
+    selectedTime: _selectedTime,
+    onTimeChanged: (time) => _mutate(() => _selectedTime = time),
+    dateErrorText: _dateErrorText,
+    timeErrorText: _timeErrorText,
+  );
 }

@@ -50,6 +50,23 @@ mixin _PatientAppointmentQueries on _AppointmentRepositoryBase {
   }
 
   @override
+  Future<Result<List<Appointment>>> getPatientVisitsFrom(
+    String patientId,
+    DateTime from,
+  ) {
+    return _run(() async {
+      final List<Map<String, dynamic>> rows = await _service
+          .from(_appointmentsTable)
+          .select()
+          .eq('patient_id', patientId)
+          .neq('status', AppointmentStatus.cancelled.dbValue)
+          .gte('scheduled_at', from.toUtc().toIso8601String())
+          .order('scheduled_at');
+      return rows.map(Appointment.fromJson).toList();
+    });
+  }
+
+  @override
   Future<Result<List<Appointment>>> getDoctorAppointmentsForPatient({
     required String patientId,
     required String doctorId,

@@ -3,6 +3,7 @@
 library;
 
 import 'billing_report_strings.dart';
+import 'booking_clash_strings.dart';
 import 'invoice_detail_strings.dart';
 import 'invoice_discount_strings.dart';
 import 'invoice_strings.dart';
@@ -58,6 +59,7 @@ abstract final class AppStrings {
   static const billingReports = BillingReportStrings();
   static const staffDetails = StaffDetailsStrings();
   static const staffSchedule = StaffScheduleStrings();
+  static const bookingClash = BookingClashStrings();
   static String staffAppliedOn(String date) => 'Applied $date';
   static const String noMatchingStaff = 'No staff match your search or filters.';
   static const String programActions = 'Program actions';

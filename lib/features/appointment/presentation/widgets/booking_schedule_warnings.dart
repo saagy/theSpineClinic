@@ -1,14 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:spine_clinic_app/core/constants/app_sizes.dart';
 import 'package:spine_clinic_app/core/constants/app_strings.dart';
-import 'package:spine_clinic_app/core/constants/app_text_styles.dart';
-import 'package:spine_clinic_app/core/constants/clinic_colors.dart';
 import 'package:spine_clinic_app/features/auth/domain/staff.dart';
 import 'package:spine_clinic_app/features/patient/domain/clinic_location.dart';
 import 'package:spine_clinic_app/features/staff/domain/staff_assignments.dart';
 import 'package:spine_clinic_app/features/staff/presentation/staff_details_providers.dart';
 import 'package:spine_clinic_app/features/staff/presentation/staff_schedule_format.dart';
+import 'booking_warning_panel.dart';
 
 /// One sentence per doctor whose usual schedule does not cover a visit at
 /// [branch] on one of [starts]: the first such visit explains it. Doctors
@@ -47,41 +45,10 @@ class BookingScheduleWarnings extends ConsumerWidget {
       assignments: assignments,
     );
     if (lines.isEmpty) return const SizedBox.shrink();
-    final ClinicColors clinic = ClinicColors.of(context);
-    final colors = Theme.of(context).colorScheme;
-    return Semantics(
-      liveRegion: true,
-      child: Container(
-        padding: const EdgeInsets.all(AppSizes.p12),
-        decoration: BoxDecoration(
-          color: clinic.warningContainer,
-          borderRadius: BorderRadius.circular(AppSizes.r8),
-          border: Border.all(color: clinic.warning.withAlpha(110), width: AppSizes.borderWidth),
-        ),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Icon(Icons.schedule_outlined, size: AppSizes.iconSmall, color: clinic.warning),
-            const SizedBox(width: AppSizes.p8),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  for (final String line in lines)
-                    Padding(
-                      padding: const EdgeInsets.only(bottom: AppSizes.p4),
-                      child: Text(line, style: AppTextStyles.bodyMedium.copyWith(color: colors.onSurface)),
-                    ),
-                  Text(
-                    AppStrings.staffSchedule.warningNote,
-                    style: AppTextStyles.caption.copyWith(color: colors.onSurfaceVariant),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
+    return BookingWarningPanel(
+      icon: Icons.schedule_outlined,
+      lines: lines,
+      note: AppStrings.staffSchedule.warningNote,
     );
   }
 }

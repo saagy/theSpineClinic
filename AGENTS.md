@@ -105,6 +105,16 @@ patient transfer never moves past visits. Staff branches
 booking warnings; never hide a doctor or block a booking with them. Doctors
 with no branches count as working everywhere until assigned.
 
+### Booking Warnings
+Appointments have no duration, so conflict checks are day- and minute-based
+advice, never blocks. New and Edit appointment show `BookingScheduleWarnings`
+(doctor outside their shifts at that branch) and `PatientVisitClashWarning`
+(the patient already has an uncancelled visit that day; "Same time:" when the
+minute matches). Both render through `BookingWarningPanel`. The clash query
+(`patientVisitsFromProvider`) is keyed by patient and first booked day only,
+so typing a recurring session count never queries; the edited appointment is
+excluded from its own check. A failed or loading check shows nothing.
+
 ### Status Callback Wiring
 Shared `AppointmentAgendaRow` menus are an exception to the legacy callback
 contract below: `AgendaStatusController` patches the schedule, All, patient and

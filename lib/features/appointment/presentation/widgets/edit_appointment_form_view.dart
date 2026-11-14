@@ -15,26 +15,17 @@ extension _EditAppointmentView on _EditAppointmentFormState {
         onSave: _submit,
         onCancel: () => context.pop(),
         child: FormColumns(
-          first: BookingFormFields(
-            preselectedPatient: widget.patient,
-            onPatientTap: null,
-            selectedType: _selectedType,
-            onTypeChanged: (type) => _mutate(() {
-              _selectedType = type;
-              if (!type.affectsPackageBalance) {
-                _usePackage = false;
-              }
-            }),
-            isRecurring: false,
-            onRecurringChanged: (_) {},
-            selectedDate: _selectedDate,
-            onDateChanged: (d) => _mutate(() => _selectedDate = d),
-            selectedTime: _selectedTime,
-            onTimeChanged: (t) => _mutate(() => _selectedTime = t),
-            dateErrorText: _dateErrorText,
-            timeErrorText: _timeErrorText,
-            showRecurringToggle: false,
-            enabled: isScheduled,
+          first: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              _buildBookingFields(isScheduled),
+              if (isScheduled && date != null && time != null)
+                PatientVisitClashWarning(
+                  patientId: widget.patient.id,
+                  starts: [DateTime(date.year, date.month, date.day, time.hour, time.minute)],
+                  ignoreAppointmentId: widget.appointment.id,
+                ),
+            ],
           ),
           second: FormSection(
             title: AppStrings.providerAndBilling,
@@ -103,4 +94,26 @@ extension _EditAppointmentView on _EditAppointmentFormState {
       ),
     );
   }
+
+  Widget _buildBookingFields(bool isScheduled) => BookingFormFields(
+    preselectedPatient: widget.patient,
+    onPatientTap: null,
+    selectedType: _selectedType,
+    onTypeChanged: (type) => _mutate(() {
+      _selectedType = type;
+      if (!type.affectsPackageBalance) {
+        _usePackage = false;
+      }
+    }),
+    isRecurring: false,
+    onRecurringChanged: (_) {},
+    selectedDate: _selectedDate,
+    onDateChanged: (d) => _mutate(() => _selectedDate = d),
+    selectedTime: _selectedTime,
+    onTimeChanged: (t) => _mutate(() => _selectedTime = t),
+    dateErrorText: _dateErrorText,
+    timeErrorText: _timeErrorText,
+    showRecurringToggle: false,
+    enabled: isScheduled,
+  );
 }

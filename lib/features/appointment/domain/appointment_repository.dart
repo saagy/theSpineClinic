@@ -62,6 +62,13 @@ abstract class AppointmentRepository {
   /// Resolves the list of all appointments for a patient.
   Future<Result<List<Appointment>>> getAppointmentsForPatient(String patientId);
 
+  /// The patient's uncancelled visits starting at or after [from], oldest
+  /// first. Feeds the booking double-booking warning.
+  Future<Result<List<Appointment>>> getPatientVisitsFrom(
+    String patientId,
+    DateTime from,
+  );
+
   /// Resolves active appointments between a patient and doctor.
   Future<Result<List<Appointment>>> getDoctorAppointmentsForPatient({
     required String patientId,

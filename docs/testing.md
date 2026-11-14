@@ -17,6 +17,8 @@ flutter build web --release --no-pub
 
 As of 27 September 2026, there are 88 Dart test files and 353 passing tests. The hardening suite covers
 schedule-cap/count, durable retry, upload reconciliation, booking-role,
+patient double-booking warnings (`patient_visit_clash_test.dart`,
+`patient_visit_clash_warning_test.dart`),
 pending-booking balance guards and bounded-cache regressions.
 The invoice detail slice (11 November 2026) adds
 `test/features/payments/invoice_rules_test.dart` (document parsing, action
@@ -136,6 +138,12 @@ then runs these scripts:
 - invoice_fixture.sql + doctor_session_report.sql (doctor sessions access,
   checked-in counts per type, shared sessions, traction and cancelled
   appointments left out, pending appointments, branch and doctor filters)
+
+- invoice_fixture.sql + report_edge_cases.sql (three-way doctor splits, a
+  correction that names another doctor, a refund on a shared line, a
+  cancelled paid invoice, a renamed and deactivated doctor, money and
+  sessions at the day boundary, a check-in that was undone, a visit handed
+  to another doctor)
 
 `invoice_fixture.sql` opens a transaction that the following invoice test
 rolls back, so always pass the pair together when running a subset.

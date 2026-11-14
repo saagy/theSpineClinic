@@ -117,4 +117,4 @@ final class ViewingBranchProvider
   }
 }
 
-String _$viewingBranchHash() => r'8adbd9d1232b284524a683824afc4e2090157077';
+String _$viewingBranchHash() => r'92e195db3b1c36417c06b1486a4644d14e01abf5';

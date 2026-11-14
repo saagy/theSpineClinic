@@ -26,6 +26,7 @@ import 'package:spine_clinic_app/features/auth/domain/user_role.dart';
 import 'package:spine_clinic_app/features/auth/presentation/auth_providers.dart';
 import 'package:spine_clinic_app/features/appointment/presentation/widgets/booking_branch_field.dart';
 import 'package:spine_clinic_app/features/appointment/presentation/widgets/booking_schedule_warnings.dart';
+import 'package:spine_clinic_app/features/appointment/presentation/widgets/patient_visit_clash_warning.dart';
 import 'package:spine_clinic_app/shared/widgets/doctor_select_field.dart';
 import 'package:spine_clinic_app/shared/widgets/app_snackbar.dart';
 

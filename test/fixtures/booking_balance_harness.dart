@@ -2,6 +2,7 @@ import 'package:spine_clinic_app/features/appointment/presentation/pending_booki
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:spine_clinic_app/core/errors/result.dart';
+import 'package:spine_clinic_app/features/appointment/domain/appointment.dart';
 import 'package:spine_clinic_app/features/appointment/domain/appointment_repository.dart';
 import 'package:spine_clinic_app/features/appointment/domain/appointment_type.dart';
 import 'package:spine_clinic_app/features/appointment/presentation/appointment_providers.dart';
@@ -14,9 +15,16 @@ import 'package:spine_clinic_app/features/patient/domain/patient.dart';
 import 'package:spine_clinic_app/features/patient/presentation/patient_providers.dart';
 
 class _FakeAppointmentRepo implements AppointmentRepository {
-  _FakeAppointmentRepo({this.assignedDoctors = const []});
+  _FakeAppointmentRepo({this.assignedDoctors = const [], this.existingVisits = const []});
 
   final List<Staff> assignedDoctors;
+  final List<Appointment> existingVisits;
+
+  @override
+  Future<Result<List<Appointment>>> getPatientVisitsFrom(
+    String patientId,
+    DateTime from,
+  ) async => Result.success(existingVisits);
 
   @override
   Future<Result<List<Staff>>> getAssignedDoctors(String patientId) async =>
@@ -40,6 +48,8 @@ class _TestCurrentUser extends CurrentUser {
   Future<Staff?> build() async => staff;
 }
 
+final bookingTestPatientId = '11111111-1111-1111-1111-111111111111';
+
 final _testPatient = Patient(
   id: '11111111-1111-1111-1111-111111111111',
   fullName: 'Test Patient',
@@ -62,6 +72,8 @@ final bookingTestStaff = Staff(
 Widget buildBookingBalanceHarness({
   List<Staff> assignedDoctors = const [],
   bool pendingRetry = false,
+  List<Appointment> existingVisits = const [],
+  ThemeData? theme,
 }) {
   return ProviderScope(
     overrides: [
@@ -69,7 +81,10 @@ Widget buildBookingBalanceHarness({
         _testPatient.id,
       ).overrideWith((ref) async => pendingRetry),
       appointmentRepositoryProvider.overrideWithValue(
-        _FakeAppointmentRepo(assignedDoctors: assignedDoctors),
+        _FakeAppointmentRepo(
+          assignedDoctors: assignedDoctors,
+          existingVisits: existingVisits,
+        ),
       ),
       patientDetailProvider(
         _testPatient.id,
@@ -83,6 +98,8 @@ Widget buildBookingBalanceHarness({
       )).overrideWith((ref) => Future.value(3)),
     ],
     child: MaterialApp(
+      debugShowCheckedModeBanner: false,
+      theme: theme,
       home: Scaffold(
         body: NewAppointmentForm(
           preselectedPatientId: _testPatient.id,

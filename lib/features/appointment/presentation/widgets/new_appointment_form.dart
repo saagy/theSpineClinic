@@ -21,6 +21,7 @@ import 'package:spine_clinic_app/features/appointment/presentation/booking_contr
 import 'package:spine_clinic_app/features/appointment/presentation/pending_booking_provider.dart';
 import 'package:spine_clinic_app/features/appointment/presentation/widgets/date_recurrence_utils.dart';
 import 'package:spine_clinic_app/features/appointment/presentation/widgets/patient_search_sheet.dart';
+import 'package:spine_clinic_app/features/appointment/presentation/widgets/patient_visit_clash_warning.dart';
 import 'package:spine_clinic_app/features/appointment/presentation/widgets/recurrence_guide.dart';
 import 'package:spine_clinic_app/features/appointment/presentation/widgets/recurring_pattern_picker.dart';
 import 'package:spine_clinic_app/features/auth/domain/staff.dart';
