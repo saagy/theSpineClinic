@@ -8,6 +8,7 @@ import '../../../../shared/widgets/form_section.dart';
 import '../../../../shared/widgets/record_action_menu.dart';
 import '../../../../shared/widgets/record_menu_select.dart';
 import '../../domain/patient.dart';
+import 'patient_choice_field.dart';
 
 class PatientPersonalFields extends StatelessWidget {
   const PatientPersonalFields({
@@ -46,10 +47,13 @@ class PatientPersonalFields extends StatelessWidget {
         ),
       ]),
       second: _fields([
-        _text(
-          AppStrings.patientNationality,
-          value.nationality,
-          (text) => onChanged(value.copyWith(nationality: text)),
+        PatientChoiceField(
+          label: AppStrings.patientNationality,
+          value: value.nationality,
+          choices: AppStrings.nationalityChoices,
+          icon: Icons.flag_outlined,
+          enabled: enabled,
+          onChanged: (text) => onChanged(value.copyWith(nationality: text)),
         ),
         RecordMenuSelect<PatientGender?>(
           label: AppStrings.patientGender,
@@ -76,10 +80,13 @@ class PatientPersonalFields extends StatelessWidget {
               ? (gender) => onChanged(value.copyWith(gender: gender))
               : null,
         ),
-        _text(
-          AppStrings.patientReferralSource,
-          value.referralSource,
-          (text) => onChanged(value.copyWith(referralSource: text)),
+        PatientChoiceField(
+          label: AppStrings.patientReferralSource,
+          value: value.referralSource,
+          choices: AppStrings.referralChoices,
+          icon: Icons.campaign_outlined,
+          enabled: enabled,
+          onChanged: (text) => onChanged(value.copyWith(referralSource: text)),
         ),
       ]),
     ),

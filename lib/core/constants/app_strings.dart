@@ -16,12 +16,40 @@ abstract final class AppStrings {
   static const String patientBirthDate = 'Date of birth';
   static const String patientNationality = 'Nationality';
   static const String egyptianNationality = 'Egyptian';
+  static const List<String> nationalityChoices = [
+    egyptianNationality,
+    'Saudi',
+    'Emirati',
+    'Kuwaiti',
+    'Qatari',
+    'Bahraini',
+    'Omani',
+    'Libyan',
+    'Sudanese',
+    'Jordanian',
+    'Syrian',
+    'Iraqi',
+    'Yemeni',
+    'Palestinian',
+    'Lebanese',
+  ];
+  static const List<String> referralChoices = [
+    'Doctor referral',
+    'Friend or family',
+    'Facebook',
+    'Instagram',
+    'Google',
+    'Passed by the clinic',
+    'Returning patient',
+  ];
+  static const String patientChoiceOther = 'Other';
+  static String patientChoiceOtherLabel(String label) => '$label (other)';
   static const String patientGender = 'Gender';
   static const String patientFemale = 'Female';
   static const String patientMale = 'Male';
   static const String patientNotSpecified = 'Not specified';
   static const String patientSecondaryPhone = 'Second phone number';
-  static const String patientReferralSource = 'How they heard about us / referral source';
+  static const String patientReferralSource = 'How they heard about us';
   static const invoices = InvoiceStrings();
   static const invoiceDetail = InvoiceDetailStrings();
   static const billingReports = BillingReportStrings();
