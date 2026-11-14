@@ -91,6 +91,12 @@ class AppointmentInfoCard extends StatelessWidget {
               ),
             ],
           ),
+          if (appointment.branch != null) ...[
+            const SizedBox(height: AppSizes.p16),
+            Text(AppStrings.staffSchedule.visitBranch.toUpperCase(), style: labelStyle),
+            const SizedBox(height: AppSizes.p4),
+            Text(appointment.branch!.displayLabel, style: valueStyle),
+          ],
           const SizedBox(height: AppSizes.p16),
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,

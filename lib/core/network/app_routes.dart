@@ -199,6 +199,13 @@ abstract final class AppRoutes {
   /// Admin staff form screen (create/edit).
   static const String staffForm = '/admin/staff/form';
 
+  /// Read-only staff directory for head receptionists.
+  static const String staffDirectory = '/staff';
+
+  /// One staff member's profile; `:id` is the staff ID.
+  static const String staffProfile = '/staff/:id';
+  static String staffProfileFor(String id) => '/staff/$id';
+
   /// Admin central hub dashboard.
   static const String adminHub = '/admin';
 

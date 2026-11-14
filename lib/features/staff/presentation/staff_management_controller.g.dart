@@ -9,17 +9,17 @@ part of 'staff_management_controller.dart';
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // ignore_for_file: type=lint, type=warning
 /// Notifier providing the reactive list of all clinic staff members (including doctors).
-/// Enforces Super Admin role-based access check on build.
+/// Super admins and head receptionists may read it.
 
 @ProviderFor(StaffList)
 final staffListProvider = StaffListProvider._();
 
 /// Notifier providing the reactive list of all clinic staff members (including doctors).
-/// Enforces Super Admin role-based access check on build.
+/// Super admins and head receptionists may read it.
 final class StaffListProvider
     extends $AsyncNotifierProvider<StaffList, List<Staff>> {
   /// Notifier providing the reactive list of all clinic staff members (including doctors).
-  /// Enforces Super Admin role-based access check on build.
+  /// Super admins and head receptionists may read it.
   StaffListProvider._()
     : super(
         from: null,
@@ -39,10 +39,10 @@ final class StaffListProvider
   StaffList create() => StaffList();
 }
 
-String _$staffListHash() => r'07668598e34b4460f1f955acc2b53c844b05a9b9';
+String _$staffListHash() => r'841bfafffac885ea03e8712fa4e8bd52be98bacc';
 
 /// Notifier providing the reactive list of all clinic staff members (including doctors).
-/// Enforces Super Admin role-based access check on build.
+/// Super admins and head receptionists may read it.
 
 abstract class _$StaffList extends $AsyncNotifier<List<Staff>> {
   FutureOr<List<Staff>> build();
@@ -99,7 +99,7 @@ final class StaffFormControllerProvider
 }
 
 String _$staffFormControllerHash() =>
-    r'731d671a8f0c0bb7eafed47f2fcd3d48519a1512';
+    r'67ad618c2ce814012c3657267a71987ef64b9bab';
 
 /// Controller managing staff account registration and modifications.
 

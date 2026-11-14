@@ -85,7 +85,7 @@ mixin _AllAppointmentQueries on _AppointmentRepositoryBase {
       builder = builder.lt('scheduled_at', dateTo.toUtc().toIso8601String());
     }
     if (status != null) builder = builder.eq('status', status);
-    if (clinic != null) builder = builder.eq('patient.clinic', clinic);
+    if (clinic != null) builder = builder.eq('branch', clinic);
     if (type != null) builder = builder.eq('type', type);
     if (doctorId != null) {
       builder = builder
@@ -126,7 +126,7 @@ mixin _AllAppointmentQueries on _AppointmentRepositoryBase {
       builder = builder.lt('scheduled_at', dateTo.toUtc().toIso8601String());
     }
     if (status != null) builder = builder.eq('status', status);
-    if (clinic != null) builder = builder.eq('patient.clinic', clinic);
+    if (clinic != null) builder = builder.eq('branch', clinic);
     if (type != null) builder = builder.eq('type', type);
     if (doctorId != null) {
       builder = builder

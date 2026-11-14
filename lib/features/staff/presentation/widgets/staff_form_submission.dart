@@ -15,12 +15,18 @@ extension _StaffFormSubmission on _StaffFormBodyState {
     try {
       final Map<String, Object?> values = _formKey.currentState!.value;
       final UserRole role = values['role'] as UserRole;
-      final ClinicLocation? branch = values['branch'] as ClinicLocation?;
+      final StaffSchedule schedule = values['schedule'] as StaffSchedule? ?? StaffSchedule.empty;
+      // New receptionists start at their first branch; the database keeps an
+      // existing one's working branch within their branches.
+      final ClinicLocation? branch = role != UserRole.receptionist
+          ? null
+          : widget.staff?.branch ?? schedule.branches.firstOrNull;
       final bool isEdit = widget.staff != null;
       final bool active = isEdit
           ? (values['is_active'] as bool? ?? widget.staff!.isActive)
           : true;
       if (await _blockedByDeactivationWarning(active) || !mounted) return;
+      if (await _blockedByBranchRemoval(role, schedule) || !mounted) return;
       final controller = ref.read(staffFormControllerProvider.notifier);
       final StaffDetails details = staffDetailsFromForm(values);
       final Result<void> result = isEdit
@@ -31,6 +37,7 @@ extension _StaffFormSubmission on _StaffFormBodyState {
                   : null,
               // Unchanged details are not sent, so the save leaves them alone.
               details: details == widget.details ? null : details,
+              schedule: schedule == widget.schedule ? null : schedule,
             )
           : await controller.createStaff(
               fullName: values['full_name'] as String,
@@ -44,6 +51,7 @@ extension _StaffFormSubmission on _StaffFormBodyState {
               phone: _phone(values),
               branch: branch,
               details: details.isEmpty ? null : details,
+              schedule: schedule.isEmpty ? null : schedule,
             );
       if (!mounted) return;
       result.when(
@@ -91,6 +99,40 @@ extension _StaffFormSubmission on _StaffFormBodyState {
       (values['can_manage_payments'] as bool? ??
           widget.staff?.canManagePayments ??
           false);
+  /// Asks before a doctor leaves a branch where they still have upcoming
+  /// visits. The visits stay booked either way.
+  Future<bool> _blockedByBranchRemoval(UserRole role, StaffSchedule schedule) async {
+    final Staff? staff = widget.staff;
+    if (staff == null || role != UserRole.doctor) return false;
+    final List<ClinicLocation> removed = [
+      for (final b in widget.schedule.branches) if (!schedule.branches.contains(b)) b,
+    ];
+    if (removed.isEmpty) return false;
+    final Result<Map<ClinicLocation, int>> counts = await ref
+        .read(staffFormControllerProvider.notifier)
+        .upcomingAtBranches(staff, removed);
+    if (!mounted || counts.isFailure) return true;
+    final Map<ClinicLocation, int> found = counts.dataOrNull!;
+    if (found.isEmpty) return false;
+    _setReviewing(true);
+    try {
+      final bool? confirmed = await showDialog<bool>(
+        context: context,
+        builder: (_) => ConfirmationDialog(
+          title: AppStrings.staffSchedule.removeBranchTitle,
+          message: AppStrings.staffSchedule.removeBranchMessage(staff.fullName, {
+            for (final e in found.entries) e.key.displayLabel: e.value,
+          }),
+          confirmLabel: AppStrings.staffSchedule.removeBranchConfirm,
+          cancelLabel: AppStrings.staffSchedule.keepBranch,
+        ),
+      );
+      return confirmed != true;
+    } finally {
+      if (mounted) _setReviewing(false);
+    }
+  }
+
   Future<bool> _blockedByDeactivationWarning(bool active) async {
     final Staff? staff = widget.staff;
     if (staff == null || !staff.isActive || active) return false;

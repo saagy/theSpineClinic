@@ -116,6 +116,7 @@ class _AgendaRecords extends StatelessWidget {
     children: [
       for (int i = 0; i < items.length; i++) ...[
         AppointmentAgendaRow(
+          showBranch: true,
           key: ValueKey(items[i].appointment.id),
           item: items[i],
           patientContext: true,

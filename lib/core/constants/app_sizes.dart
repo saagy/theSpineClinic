@@ -393,8 +393,17 @@ abstract final class AppSizes {
   /// Width of the From/To period calendar.
   static const double dateRangeDialogWidth = 340.0;
 
-  /// One weekday toggle in the staff working-days field.
+  /// Weekday label column in the staff weekly schedule.
   static const double staffWeekdayWidth = 56.0;
+
+  /// Content width of the add/edit working-hours dialog.
+  static const double shiftDialogWidth = 360.0;
+
+  /// Width of the label column in the staff profile's fact rows.
+  static const double staffProfileLabelWidth = 120.0;
+
+  /// Width of the staff profile's side column on wide windows.
+  static const double staffProfileSideWidth = 340.0;
 
   // ──────────────── Billing reports ────────────────
 

@@ -13,6 +13,10 @@ extension _NewAppointmentBooking on _NewAppointmentFormState {
           doctors: doctors,
           usePackage: _usePackage,
           expectedNextVisitDate: widget.expectedNextVisitDate,
+          branch: _bookingBranch(
+            ref.read(patientDetailProvider(_patientId!)).value,
+            listen: false,
+          ),
         );
     if (!mounted) return;
     if (result.isFailure) {

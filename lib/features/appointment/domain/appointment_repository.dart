@@ -154,6 +154,9 @@ abstract class AppointmentRepository {
   Future<Result<void>> updateAppointment(
     Appointment appointment, {
     List<String>? doctorIds,
+
+    /// Moves the visit to another branch; null leaves it where it is.
+    ClinicLocation? branch,
   });
 
   /// Hard-deletes an appointment by its ID.
@@ -168,6 +171,9 @@ abstract class AppointmentRepository {
     required String? creatorId,
     required List<String> doctorIds,
     DateTime? expectedNextVisitDate,
+
+    /// Where the visits happen; null uses the patient's branch.
+    ClinicLocation? branch,
   });
 
   Future<Result<BulkDoctorReplacementResult>> bulkReplaceDoctor({

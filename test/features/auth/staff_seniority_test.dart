@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_form_builder/flutter_form_builder.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:spine_clinic_app/features/staff/domain/staff_assignments.dart';
 import 'package:spine_clinic_app/features/staff/domain/staff_details.dart';
 import 'package:spine_clinic_app/core/constants/app_strings.dart';
 import 'package:spine_clinic_app/features/auth/domain/user_role.dart';
@@ -66,6 +67,7 @@ void main() {
                   isSelf: false,
                   formKey: key,
                   details: StaffDetails.empty,
+                  schedule: StaffSchedule.empty,
                   staff: staffRoster[1].copyWith(isSenior: true),
                 ),
               ),

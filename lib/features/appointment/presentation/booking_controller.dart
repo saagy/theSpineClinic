@@ -10,6 +10,7 @@ import 'package:spine_clinic_app/core/errors/app_exception.dart';
 import 'package:spine_clinic_app/core/errors/result.dart';
 import 'package:spine_clinic_app/features/appointment/domain/appointment_type.dart';
 import 'package:spine_clinic_app/features/auth/domain/staff.dart';
+import 'package:spine_clinic_app/features/patient/domain/clinic_location.dart';
 
 part 'booking_controller.g.dart';
 
@@ -27,6 +28,7 @@ class BookingController extends _$BookingController {
     required List<Staff> doctors,
     required bool usePackage,
     DateTime? expectedNextVisitDate,
+    ClinicLocation? branch,
   }) async {
     final Staff? creator = ref.read(currentUserProvider).value;
     if (creator == null ||
@@ -63,6 +65,7 @@ class BookingController extends _$BookingController {
             creatorId: creator.id,
             doctorIds: doctorIds,
             expectedNextVisitDate: expectedNextVisitDate,
+            branch: branch,
           );
     } on AppException catch (error) {
       return Result.failure(error);

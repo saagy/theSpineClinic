@@ -8,6 +8,7 @@ import 'package:spine_clinic_app/core/errors/result.dart';
 import 'package:spine_clinic_app/features/auth/domain/user_role.dart';
 import 'package:spine_clinic_app/features/auth/presentation/auth_providers.dart';
 import 'package:spine_clinic_app/features/patient/domain/clinic_location.dart';
+import 'package:spine_clinic_app/features/staff/domain/staff_assignments.dart';
 import 'package:spine_clinic_app/features/staff/presentation/staff_management_controller.dart';
 import 'package:spine_clinic_app/features/staff/presentation/staff_providers.dart';
 import '../../fixtures/staff_editor_harness.dart';
@@ -39,7 +40,7 @@ void main() {
       form.fields['phone']!.didChange('01011112222');
       form.fields['role']!.didChange(UserRole.receptionist);
       await tester.pumpAndSettle();
-      form.fields['branch']!.didChange(ClinicLocation.values.last);
+      form.fields['schedule']!.didChange(StaffSchedule(branches: [ClinicLocation.values.last]));
       form.fields['can_manage_payments']!.didChange(true);
       for (final double width in [390, 840, 1440]) {
         tester.view.physicalSize = Size(width, 900);
@@ -48,13 +49,14 @@ void main() {
         expect(form.fields['email']!.value, 'draft@example.invalid');
         expect(form.fields['phone']!.value, '01011112222');
         expect(form.fields['role']!.value, UserRole.receptionist);
-        expect(form.fields['branch']!.value, ClinicLocation.values.last);
+        expect((form.fields['schedule']!.value as StaffSchedule).branches, [ClinicLocation.values.last]);
         expect(form.fields['can_manage_payments']!.value, isTrue);
         expect(tester.takeException(), isNull);
       }
       await tester.tap(find.text(AppStrings.saveChanges));
       await tester.pumpAndSettle();
       expect(repo.submitted!.canManagePayments, isTrue);
+      expect(repo.submittedSchedule!.branches, [ClinicLocation.values.last]);
       expect(repo.submitted!.isSenior, isFalse);
     },
   );

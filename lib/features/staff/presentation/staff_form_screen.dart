@@ -7,6 +7,7 @@ import 'package:spine_clinic_app/core/network/app_routes.dart';
 import 'package:spine_clinic_app/features/auth/domain/staff.dart';
 import 'package:spine_clinic_app/features/auth/domain/user_role.dart';
 import 'package:spine_clinic_app/features/auth/presentation/auth_providers.dart';
+import 'package:spine_clinic_app/features/staff/domain/staff_assignments.dart';
 import 'package:spine_clinic_app/features/staff/domain/staff_details.dart';
 import 'package:spine_clinic_app/features/staff/presentation/staff_details_providers.dart';
 import 'package:spine_clinic_app/features/staff/presentation/widgets/staff_form_body.dart';
@@ -56,22 +57,36 @@ class StaffFormScreen extends ConsumerWidget {
         }
         final Staff? existing = staff;
         if (existing == null) {
-          return StaffFormBody(currentUser: currentUser, details: StaffDetails.empty);
+          return StaffFormBody(
+            currentUser: currentUser,
+            details: StaffDetails.empty,
+            schedule: StaffSchedule.empty,
+          );
         }
-        // The form opens only with the saved details, so a save never
-        // replaces them with blanks.
-        return ref.watch(staffDetailsProvider(existing.id)).when(
-          loading: () => _frame(const FormPageSkeleton()),
-          error: (Object error, StackTrace _) => _frame(
+        // The form opens only with the saved details and schedule, so a save
+        // never replaces them with blanks.
+        final AsyncValue<StaffDetails> details = ref.watch(staffDetailsProvider(existing.id));
+        final AsyncValue<StaffAssignments> assignments = ref.watch(staffAssignmentsProvider);
+        if (details.hasError || assignments.hasError) {
+          final Object? error = details.error ?? assignments.error;
+          return _frame(
             ErrorView(
               exception: error is AppException
                   ? error
                   : UnknownException(message: AppStrings.staffDetails.loadFailed),
-              onRetry: () => ref.invalidate(staffDetailsProvider(existing.id)),
+              onRetry: () {
+                ref.invalidate(staffDetailsProvider(existing.id));
+                ref.invalidate(staffAssignmentsProvider);
+              },
             ),
-          ),
-          data: (StaffDetails details) =>
-              StaffFormBody(staff: existing, currentUser: currentUser, details: details),
+          );
+        }
+        if (!details.hasValue || !assignments.hasValue) return _frame(const FormPageSkeleton());
+        return StaffFormBody(
+          staff: existing,
+          currentUser: currentUser,
+          details: details.requireValue,
+          schedule: assignments.requireValue.scheduleOf(existing.id),
         );
       },
     );

@@ -7,6 +7,7 @@ import 'package:spine_clinic_app/core/errors/result.dart';
 import 'package:spine_clinic_app/features/auth/domain/staff.dart';
 import 'package:spine_clinic_app/features/staff/domain/staff_details.dart';
 import '../fixtures/staff_editor_harness.dart';
+import '../fixtures/staff_branches_fixture.dart';
 import '../fixtures/staff_workspace.dart';
 import 'ui_polish_capture.dart';
 
@@ -60,12 +61,10 @@ void main() {
           nationalId: '29001011234567',
           birthDate: DateTime(1990, 1, 1),
           hireDate: DateTime(2024, 3, 1),
-          workingDays: const [6, 7, 1, 2, 3, 4],
-          workStartMinutes: 9 * 60,
-          workEndMinutes: 17 * 60,
-        );
+        )
+        ..assignments = demoAssignments;
       await pumpStaffEditor(tester, repo, staff: staffRoster[1], captureKey: key, dark: dark, scale: scale);
-      await tester.ensureVisible(find.text(AppStrings.staffDetails.workingDays));
+      await tester.ensureVisible(find.text(AppStrings.staffSchedule.weeklySchedule));
       await tester.pumpAndSettle();
       expect(tester.takeException(), isNull);
       await capturePolish(tester, key, 'staff-details-$name');

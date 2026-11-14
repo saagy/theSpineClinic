@@ -66,6 +66,13 @@ abstract class Staff with _$Staff {
       role == UserRole.superAdmin ||
       (role == UserRole.receptionist && canManagePayments);
 
+  /// A receptionist who manages payments acts as a branch manager.
+  bool get isHeadReceptionist => isActive && role == UserRole.receptionist && canManagePayments;
+
+  /// Who may open the staff directory and profiles: active super admins,
+  /// and head receptionists (read-only).
+  bool get canViewStaffRecords => isActive && (role == UserRole.superAdmin || isHeadReceptionist);
+
   /// Whether the user has permission to create and manage patient programs.
   bool get isSeniorDoctor =>
       role == UserRole.superAdmin ||

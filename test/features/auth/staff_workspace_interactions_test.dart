@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_form_builder/flutter_form_builder.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:spine_clinic_app/features/staff/domain/staff_assignments.dart';
 import 'package:spine_clinic_app/features/staff/domain/staff_details.dart';
 import 'package:go_router/go_router.dart';
 import 'package:spine_clinic_app/core/constants/app_strings.dart';
@@ -34,6 +35,7 @@ class _Save extends StaffFormController {
     required Staff staff,
     String? newPassword,
     StaffDetails? details,
+    StaffSchedule? schedule,
   }) async {
     submitted = staff;
     calls++;
@@ -62,7 +64,7 @@ void main() {
           GoRoute(
             path: '/edit',
             builder: (_, _) =>
-                StaffFormBody(currentUser: staffAdmin, staff: staffAdmin, details: StaffDetails.empty),
+                StaffFormBody(currentUser: staffAdmin, staff: staffAdmin, details: StaffDetails.empty, schedule: StaffSchedule.empty),
           ),
         ],
       );
@@ -145,7 +147,7 @@ void main() {
         ProviderScope(
           overrides: [staffFormControllerProvider.overrideWith(() => save)],
           child: MaterialApp(
-            home: StaffFormBody(currentUser: staffAdmin, staff: staffAdmin, details: StaffDetails.empty),
+            home: StaffFormBody(currentUser: staffAdmin, staff: staffAdmin, details: StaffDetails.empty, schedule: StaffSchedule.empty),
           ),
         ),
       );

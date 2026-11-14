@@ -5,6 +5,7 @@ import 'package:spine_clinic_app/core/network/supabase_service.dart';
 import 'package:spine_clinic_app/features/auth/domain/staff.dart';
 import 'package:spine_clinic_app/features/auth/domain/user_role.dart';
 import 'package:spine_clinic_app/features/patient/domain/clinic_location.dart';
+import 'package:spine_clinic_app/features/staff/domain/staff_assignments.dart';
 import 'package:spine_clinic_app/features/staff/domain/staff_details.dart';
 
 Future<Result<void>> createStaffAccount(
@@ -18,8 +19,12 @@ Future<Result<void>> createStaffAccount(
   String? phone,
   ClinicLocation? branch,
   StaffDetails? details,
+  StaffSchedule? schedule,
 }) async {
   try {
+    final Map<String, Object?>? extra = details == null && schedule == null
+        ? null
+        : {...?details?.toJson(), ...?schedule?.toJson()};
     await service.guardQuery(
       () => service.rpc(
         'create_staff_account',
@@ -32,7 +37,7 @@ Future<Result<void>> createStaffAccount(
           'new_is_senior': role == UserRole.doctor && isSenior,
           'new_can_manage_payments': role == UserRole.receptionist && canManagePayments,
           'new_branch': role == UserRole.receptionist ? branch?.dbValue : null,
-          'new_details': details?.toJson(),
+          'new_details': extra,
         },
       ),
     );
@@ -49,6 +54,7 @@ Future<Result<void>> updateStaffAccount(
   required Staff staff,
   String? newPassword,
   StaffDetails? details,
+  StaffSchedule? schedule,
 }) async {
   try {
     if (staff.userId == service.currentUserId && !staff.isActive) {
@@ -61,8 +67,8 @@ Future<Result<void>> updateStaffAccount(
         'update_staff_account',
         params: {
           'target_staff_id': staff.id,
-          // Without a details key the database leaves them unchanged.
-          'profile': {..._row(staff), 'details': ?details?.toJson()},
+          // Without a details or branches key the database leaves them unchanged.
+          'profile': {..._row(staff), 'details': ?details?.toJson(), ...?schedule?.toJson()},
           'new_password': newPassword,
         },
       ),

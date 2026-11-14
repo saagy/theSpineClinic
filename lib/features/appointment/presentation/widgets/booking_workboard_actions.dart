@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:spine_clinic_app/features/admin/presentation/branch_providers.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -42,6 +43,7 @@ abstract final class BookingWorkboardActions {
     final picked = await DoctorPickerSheet.showSingle(
       context: context,
       selectedDoctorId: state.doctorId,
+      branch: ref.read(viewingBranchProvider),
       showAllOption: true,
       showDeactivated: true,
       title: AppStrings.filterByDoctor,

@@ -61,11 +61,13 @@ extension _NewAppointmentFormActions on _NewAppointmentFormState {
       });
 
     _doctorFieldKey.currentState?.didChange(sorted);
+    _mutate(() => _doctors = sorted);
   }
 
   void _onPatientSelected(Patient patient) {
     _doctorFieldKey.currentState?.didChange([]);
     _mutate(() {
+      _doctors = const [];
       _patientId = patient.id;
       _doctorFieldEnabled = false;
       _isFetchingDoctors = true;

@@ -11,8 +11,8 @@ mixin _TodayAppointmentQueries on _AppointmentRepositoryBase {
       final DateTime end = start.add(const Duration(days: 1));
       var query = _service
           .from(_appointmentsTable)
-          .select('*, patient:patients!inner(clinic)');
-      if (clinic != null) query = query.eq('patient.clinic', clinic.dbValue);
+          .select('*');
+      if (clinic != null) query = query.eq('branch', clinic.dbValue);
       final List<Map<String, dynamic>> rows = await query
           .gte('scheduled_at', start.toIso8601String())
           .lt('scheduled_at', end.toIso8601String())
@@ -36,7 +36,7 @@ mixin _TodayAppointmentQueries on _AppointmentRepositoryBase {
           .select(
             '*, patient:patients!inner(*), appointment_doctors(is_active, staff:staff!doctor_id(full_name))',
           );
-      if (clinic != null) query = query.eq('patient.clinic', clinic.dbValue);
+      if (clinic != null) query = query.eq('branch', clinic.dbValue);
       final List<Map<String, dynamic>> rows = await query
           .gte('scheduled_at', start.toIso8601String())
           .lt('scheduled_at', end.toIso8601String())

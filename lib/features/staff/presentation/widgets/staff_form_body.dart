@@ -10,6 +10,7 @@ import 'package:spine_clinic_app/core/network/app_routes.dart';
 import 'package:spine_clinic_app/features/auth/domain/staff.dart';
 import 'package:spine_clinic_app/features/auth/domain/user_role.dart';
 import 'package:spine_clinic_app/features/patient/domain/clinic_location.dart';
+import 'package:spine_clinic_app/features/staff/domain/staff_assignments.dart';
 import 'package:spine_clinic_app/features/staff/domain/staff_details.dart';
 import 'package:spine_clinic_app/features/staff/presentation/staff_management_controller.dart';
 import 'package:spine_clinic_app/shared/widgets/form_page_body.dart';
@@ -21,12 +22,21 @@ import 'staff_form_fields.dart';
 part 'staff_form_submission.dart';
 
 class StaffFormBody extends ConsumerStatefulWidget {
-  const StaffFormBody({super.key, required this.currentUser, required this.details, this.staff});
+  const StaffFormBody({
+    super.key,
+    required this.currentUser,
+    required this.details,
+    required this.schedule,
+    this.staff,
+  });
   final Staff currentUser;
   final Staff? staff;
 
-  /// Saved reference details; empty for a new staff member.
+  /// Saved employment details; empty for a new staff member.
   final StaffDetails details;
+
+  /// Saved branches and weekly hours; empty for a new staff member.
+  final StaffSchedule schedule;
   @override
   ConsumerState<StaffFormBody> createState() => _StaffFormBodyState();
 }
@@ -138,6 +148,7 @@ class _StaffFormBodyState extends ConsumerState<StaffFormBody> {
                   isSelf: isSelf,
                   staff: widget.staff,
                   details: widget.details,
+                  schedule: widget.schedule,
                   formKey: _formKey,
                   onSubmit: _submit,
                 ),

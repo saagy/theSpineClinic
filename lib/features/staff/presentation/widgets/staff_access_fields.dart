@@ -6,7 +6,6 @@ import 'package:spine_clinic_app/core/constants/app_strings.dart';
 import 'package:spine_clinic_app/core/constants/app_text_styles.dart';
 import 'package:spine_clinic_app/features/auth/domain/staff.dart';
 import 'package:spine_clinic_app/features/auth/domain/user_role.dart';
-import 'package:spine_clinic_app/features/patient/domain/clinic_location.dart';
 import 'package:spine_clinic_app/shared/widgets/app_input_decoration.dart';
 import 'package:spine_clinic_app/shared/widgets/form_field_pair.dart';
 import 'package:spine_clinic_app/shared/widgets/labeled_form_field.dart';
@@ -74,10 +73,7 @@ class _StaffAccessFieldsState extends State<StaffAccessFields> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        FormFieldPair(
-          first: role,
-          second: _role == UserRole.receptionist ? _branch(context) : null,
-        ),
+        FormFieldPair(first: role, halfWidth: true),
         if (widget.isSelf) ...[
           const SizedBox(height: AppSizes.p8),
           Text(
@@ -107,34 +103,4 @@ class _StaffAccessFieldsState extends State<StaffAccessFields> {
       ],
     );
   }
-
-  Widget _branch(BuildContext context) => LabeledFormField(
-    label: AppStrings.branch,
-    enabled: widget.enabled,
-    child: FormBuilderDropdown<ClinicLocation>(
-      name: 'branch',
-      isExpanded: true,
-      borderRadius: BorderRadius.circular(AppSizes.r6),
-      dropdownColor: Theme.of(context).colorScheme.surface,
-      style: AppTextStyles.body.copyWith(
-        color: Theme.of(context).colorScheme.onSurface,
-      ),
-      menuMaxHeight: AppSizes.overlayDropdownMaxHeight,
-      enabled: widget.enabled,
-      initialValue: widget.staff?.branch,
-      decoration: appInputDecoration(
-        context,
-        enabled: widget.enabled,
-        hintText: AppStrings.selectBranch,
-      ),
-      items: ClinicLocation.values
-          .map(
-            (ClinicLocation branch) => DropdownMenuItem(
-              value: branch,
-              child: Text(branch.displayLabel),
-            ),
-          )
-          .toList(),
-    ),
-  );
 }

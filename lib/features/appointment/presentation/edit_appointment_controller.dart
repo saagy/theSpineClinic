@@ -1,4 +1,5 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:spine_clinic_app/features/appointment/domain/appointment_status.dart';
 import 'package:spine_clinic_app/core/errors/app_exception.dart';
 import 'package:spine_clinic_app/core/errors/result.dart';
 import 'package:spine_clinic_app/features/appointment/domain/appointment.dart';
@@ -29,6 +30,13 @@ class EditAppointmentController extends _$EditAppointmentController {
     required List<String> doctorIds,
   }) async {
     final user = ref.read(currentUserProvider).value;
+    // A visit that is no longer scheduled keeps its branch unless a super
+    // admin corrects it; the database enforces the same rule.
+    if (appointment.branch != null &&
+        appointment.status != AppointmentStatus.scheduled &&
+        user?.role != UserRole.superAdmin) {
+      appointment = appointment.copyWith(branch: null);
+    }
     if (user == null || !user.isActive) {
       return const Result.failure(
         AuthException(
@@ -61,6 +69,7 @@ class EditAppointmentController extends _$EditAppointmentController {
     final Result<void> updateResult = await repo.updateAppointment(
       appointment,
       doctorIds: doctorIds,
+      branch: appointment.branch,
     );
     if (updateResult is Failure<void>) return updateResult;
 

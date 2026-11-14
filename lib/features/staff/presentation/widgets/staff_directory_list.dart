@@ -4,7 +4,7 @@ import 'package:spine_clinic_app/core/constants/app_sizes.dart';
 import 'package:spine_clinic_app/features/auth/domain/staff.dart';
 import 'package:spine_clinic_app/features/staff/presentation/staff_details_providers.dart';
 import 'package:spine_clinic_app/features/staff/presentation/widgets/staff_account_tile.dart';
-import 'package:spine_clinic_app/features/staff/presentation/widgets/staff_schedule_label.dart';
+import 'package:spine_clinic_app/features/staff/domain/staff_assignments.dart';
 
 /// Preserve global sort order instead of regrouping by role.
 class StaffDirectoryList extends ConsumerWidget {
@@ -13,7 +13,7 @@ class StaffDirectoryList extends ConsumerWidget {
   final ValueChanged<Staff> onTap;
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final schedules = ref.watch(staffSchedulesProvider).value ?? const {};
+    final StaffAssignments assignments = ref.watch(staffAssignmentsProvider).value ?? StaffAssignments.none;
     return ListView.separated(
       physics: const AlwaysScrollableScrollPhysics(),
       padding: const EdgeInsets.fromLTRB(AppSizes.p16, 0, AppSizes.p16, AppSizes.p16),
@@ -23,7 +23,7 @@ class StaffDirectoryList extends ConsumerWidget {
       itemBuilder: (context, index) => StaffAccountTile(
         key: ValueKey(staffList[index].id),
         staff: staffList[index],
-        schedule: staffScheduleLabel(context, schedules[staffList[index].id]),
+        branches: assignments.branchesOf(staffList[index].id),
         onTap: () => onTap(staffList[index]),
       ),
     );

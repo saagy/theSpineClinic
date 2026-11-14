@@ -203,8 +203,8 @@ Rules enforced in the database:
   so a shared session counts once per doctor (`totals.credits`) and once in
   `totals.sessions`. Spinal traction is never counted, even on older
   appointments that still have a doctor. Past appointments still `scheduled`
-  are returned as `pending` and are not counted. The branch is the patient's
-  branch. Returns `totals`, `rows` (per doctor: `pt_sessions`, `assessments`,
+  are returned as `pending` and are not counted. The branch is the
+  appointment's own branch (migration `20261114150000`). Returns `totals`, `rows` (per doctor: `pt_sessions`, `assessments`,
   `reassessments`, `total`, `shared`, `pending`), `sessions` (one row per
   doctor credit, with `shared_with`) and `pending` (with `doctors`).
 
@@ -220,23 +220,50 @@ Auth-linked staff profiles. One row per Supabase Auth user (`auth.users`).
 - `is_senior` (`boolean`, NOT NULL, default `false`) — senior doctor assessment & program creation permission; shown as **Consultant** in the app
 - `created_at` (`timestamptz`, NOT NULL, default `now()`)
 - `phone` (`text`, nullable)
-- `branch` (`clinic_location`, nullable)
+- `branch` (`clinic_location`, nullable) — a receptionist's working branch
+  right now; NULL for other roles. When they have branches in
+  `staff_branches` it must be one of them (trigger
+  `tr_guard_staff_working_branch`, error `branch_not_assigned`).
 - `deactivated_at` (`timestamptz`, nullable)
 
+### `staff_branches`
+Which branches a person works at (migration `20261114150000`, applied to
+the linked project on November 14, 2026). Primary key
+`(staff_id, branch)`; `created_at`, `created_by`. Every active staff member
+can read it (pickers list a branch's staff first); nothing is hidden or
+blocked by it. Backfilled from `staff.branch`.
+
+### `staff_shifts`
+The weekly schedule, one row per shift at one branch: `staff_id`, `branch`
+(FK `(staff_id, branch)` → `staff_branches`, ON DELETE CASCADE),
+`weekday` (ISO 1–7), `starts_at < ends_at`. Shifts of one person on one day
+may touch but not overlap (`staff_shifts_overlap`). Readable by every
+active staff member; used only for booking warnings, never to block one.
+
+`create_staff_account` reads `branches` and `shifts` from `new_details`;
+`update_staff_account` replaces both when `profile` has a `branches` key and
+leaves them alone otherwise. Both call the private `staff_save_branches`
+(`staff_schedule_invalid` for bad values) and keep a receptionist's working
+branch within their branches (`staff_working_branch`).
+`staff_upcoming_at_branch(staff, branch)` (super admins) counts a doctor's
+upcoming scheduled visits at a branch, for the warning before removing it.
+
 ### `staff_details`
-Reference details for one staff member (billing plan slice 7, migration
+Employment details for one staff member (billing plan slice 7, migration
 `20261111170000`, applied to the linked project on November 12, 2026). Kept apart from `staff` because every active staff member
-can read the staff directory; only active super admins can read these rows
-(`staff_details_admin_read`). There are no client write policies.
+can read the staff directory; active super admins read every row
+(`staff_details_admin_read`) and head receptionists (receptionists who
+manage payments) read colleagues who share a branch with them
+(`staff_details_branch_manager_read`, `current_staff_manages`). There are no
+client write policies. The working days and hours columns moved to
+`staff_shifts` in `20261114150000`.
 - `staff_id` (`uuid`, PK/FK → `staff(id)` ON DELETE CASCADE)
 - `national_id` (`text`, nullable, exactly 14 digits, unique when set)
 - `birth_date` (`date`, nullable, not in the future)
 - `hire_date` (`date`, nullable, after `birth_date`, at most a year ahead)
-- `working_days` (`smallint[]`, NOT NULL, default `{}`) — ISO weekdays 1–7, sorted, no duplicates
-- `work_starts_at`, `work_ends_at` (`time`, nullable) — both or neither; end after start
 - `updated_at` (`timestamptz`), `updated_by` (`uuid`, FK → `staff(id)` ON DELETE SET NULL)
 
-They are for reference only and never restrict bookings. Writes go through
+Writes go through
 `create_staff_account(..., new_details jsonb)` and
 `update_staff_account(id, profile, password)` with a `details` key in
 `profile`; a profile without that key leaves the details unchanged. Both
@@ -341,6 +368,18 @@ Visit schedule.
 - `scheduled_at` (`timestamptz`, NOT NULL, default `now()`)
 - `created_by` (`uuid`, FK → `staff(id)` ON DELETE SET NULL, nullable)
 - `created_at` (`timestamptz`, NOT NULL, default `now()`)
+- `branch` (`clinic_location`, NOT NULL) — where the visit happens
+  (migration `20261114150000`; existing rows took the patient's branch).
+  `book_recurring_appointments(..., p_branch)` sets it (the dispatcher passes
+  `p_branch` from the booking payload); a caller that sends none gets the
+  patient's branch (trigger `tr_default_appointment_branch`). It changes
+  through `update_appointment_details(..., p_branch)`: allowed while
+  `scheduled` with the usual edit permission, afterwards only for super
+  admins (`appointment_branch_locked`). Every change is logged in
+  `appointment_branch_changes` (`from_branch`, `to_branch`, `changed_by`,
+  `changed_at`; management can read it). Transferring a patient never moves
+  their visits. Schedule, booking and filter queries use this column; the
+  due-patients queue stays on the patient's branch.
 
 ### `appointment_doctors`
 Per-appointment doctor assignments.

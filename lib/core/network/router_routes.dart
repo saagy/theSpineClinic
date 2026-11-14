@@ -339,6 +339,20 @@ final List<RouteBase> _shellRoutes = [
       child: const StaffListScreen(),
     ),
   ),
+  GoRoute(
+    path: AppRoutes.staffDirectory,
+    pageBuilder: (_, state) => appPage(
+      key: state.pageKey,
+      child: const StaffListScreen(),
+    ),
+  ),
+  GoRoute(
+    path: AppRoutes.staffProfile,
+    pageBuilder: (_, state) => appPage(
+      key: state.pageKey,
+      child: StaffProfileScreen(staffId: state.pathParameters['id']!),
+    ),
+  ),
 ];
 
 Patient? _extractPatient(Object? extra) {

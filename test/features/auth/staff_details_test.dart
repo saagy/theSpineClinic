@@ -5,21 +5,21 @@ import 'package:spine_clinic_app/core/constants/app_strings.dart';
 import 'package:spine_clinic_app/core/errors/app_exception.dart';
 import 'package:spine_clinic_app/core/errors/result.dart';
 import 'package:spine_clinic_app/features/auth/domain/user_role.dart';
+import 'package:spine_clinic_app/features/patient/domain/clinic_location.dart';
+import 'package:spine_clinic_app/features/staff/domain/staff_assignments.dart';
 import 'package:spine_clinic_app/features/staff/domain/staff_details.dart';
-import 'package:spine_clinic_app/features/staff/presentation/widgets/staff_schedule_label.dart';
 import 'package:spine_clinic_app/shared/widgets/labeled_form_field.dart';
+import '../../fixtures/staff_branches_fixture.dart';
 import '../../fixtures/staff_editor_harness.dart';
 import '../../fixtures/staff_workspace.dart';
 
 const t = AppStrings.staffDetails;
+const s = AppStrings.staffSchedule;
 
 final saved = StaffDetails(
   nationalId: '29001011234567',
   birthDate: DateTime(1990, 1, 1),
   hireDate: DateTime(2024, 3, 1),
-  workingDays: const [7, 6, 1, 2, 3, 4],
-  workStartMinutes: 9 * 60,
-  workEndMinutes: 17 * 60,
 );
 
 Finder field(String label) => find.descendant(
@@ -27,8 +27,7 @@ Finder field(String label) => find.descendant(
   matching: find.byType(TextField),
 );
 
-FormBuilderState form(WidgetTester tester) =>
-    tester.state<FormBuilderState>(find.byType(FormBuilder));
+FormBuilderState form(WidgetTester tester) => tester.state<FormBuilderState>(find.byType(FormBuilder));
 
 Future<void> save(WidgetTester tester, String label) async {
   await tester.pumpAndSettle();
@@ -41,119 +40,82 @@ Future<void> save(WidgetTester tester, String label) async {
 void main() {
   test('details round-trip in the database shape', () {
     final json = saved.toJson();
-    expect(json, {
-      'national_id': '29001011234567',
-      'birth_date': '1990-01-01',
-      'hire_date': '2024-03-01',
-      'working_days': [1, 2, 3, 4, 6, 7],
-      'work_starts_at': '09:00',
-      'work_ends_at': '17:00',
-    });
-    final read = StaffDetails.fromJson({
-      ...json,
-      'work_starts_at': '09:00:00',
-      'work_ends_at': '17:00:00',
-    });
+    expect(json, {'national_id': '29001011234567', 'birth_date': '1990-01-01', 'hire_date': '2024-03-01'});
+    final read = StaffDetails.fromJson({...json, 'updated_at': '2026-11-14T10:00:00Z', 'updated_by': 'admin'});
     expect(read, saved);
-    expect(read.workingDaysInWeekOrder, [6, 7, 1, 2, 3, 4]);
+    expect(read.updatedById, 'admin');
     expect(StaffDetails.empty.isEmpty, isTrue);
     expect(StaffDetails.empty.toJson()['national_id'], '');
-    expect(StaffDetails(workingDays: const [3, 3, 1]).workingDays, [1, 3]);
   });
 
-  testWidgets('directory schedule reads as ranges and hours', (tester) async {
-    late BuildContext context;
-    await tester.pumpWidget(MaterialApp(home: Builder(builder: (c) => const SizedBox())));
-    context = tester.element(find.byType(SizedBox));
-    expect(staffScheduleLabel(context, saved), 'Sat–Thu · 9:00 AM – 5:00 PM');
-    expect(staffScheduleLabel(context, StaffDetails(workingDays: const [6, 1, 3])), 'Sat, Mon, Wed');
-    expect(staffScheduleLabel(context, StaffDetails(workingDays: const [1, 2, 3, 4, 5, 6, 7])), t.everyDay);
-    expect(staffScheduleLabel(context, StaffDetails(workingDays: const [7, 1, 2, 5])), 'Sun–Tue, Fri');
-    expect(staffScheduleLabel(context, StaffDetails.empty), isNull);
-    expect(staffScheduleLabel(context, null), isNull);
-  });
-
-  testWidgets('the editor opens with saved details and leaves them alone', (tester) async {
-    final repo = StaffEditorRepository()..details = saved;
+  testWidgets('the editor opens with saved details and schedule and leaves them alone', (tester) async {
+    final repo = StaffEditorRepository()
+      ..details = saved
+      ..assignments = demoAssignments;
     await pumpStaffEditor(tester, repo, staff: staffRoster[1]);
     expect(repo.detailsReads, 1);
     expect(find.text('29001011234567'), findsOneWidget);
     expect(find.text('Jan 1, 1990'), findsOneWidget);
-    expect(find.text('9:00 AM'), findsOneWidget);
+    expect(find.textContaining('Tagamoa · 10:00 AM – 2:00 PM'), findsOneWidget);
     await tester.enterText(field(AppStrings.fullName), 'Dr Renamed');
     await save(tester, AppStrings.saveChanges);
     expect(repo.writes, 1);
     expect(repo.submittedDetails, isNull);
+    expect(repo.submittedSchedule, isNull);
   });
 
-  testWidgets('changed details are saved with the profile', (tester) async {
-    final repo = StaffEditorRepository()..details = saved;
+  testWidgets('adding a branch saves branches and shifts with the profile', (tester) async {
+    final repo = StaffEditorRepository()..assignments = demoAssignments;
     await pumpStaffEditor(tester, repo, staff: staffRoster[1]);
-    await tester.ensureVisible(find.text(t.weekday(5)));
-    await tester.tap(find.text(t.weekday(5)));
-    await tester.tap(find.text(t.weekday(7)));
-    await tester.pump();
+    await tester.ensureVisible(find.text(ClinicLocation.masrElgedida.displayLabel));
+    await tester.tap(find.text(ClinicLocation.masrElgedida.displayLabel));
     await save(tester, AppStrings.saveChanges);
     expect(repo.writes, 1);
-    expect(repo.submittedDetails!.workingDays, [1, 2, 3, 4, 5, 6]);
-    expect(repo.submittedDetails!.nationalId, saved.nationalId);
+    expect(repo.submittedSchedule!.branches, ClinicLocation.values);
+    expect(repo.submittedSchedule!.shifts, demoAssignments.shiftsOf('doctor'));
   });
 
-  testWidgets('toggling a day back leaves the form unchanged', (tester) async {
-    final repo = StaffEditorRepository()..details = saved;
+  testWidgets('removing a doctor\'s branch with upcoming visits asks first', (tester) async {
+    final repo = StaffEditorRepository()
+      ..assignments = demoAssignments
+      ..upcomingAt = {ClinicLocation.madinaty: 4};
     await pumpStaffEditor(tester, repo, staff: staffRoster[1]);
-    await tester.ensureVisible(find.text(t.weekday(5)));
-    await tester.tap(find.text(t.weekday(5)));
-    await tester.pump();
-    await tester.tap(find.text(t.weekday(5)));
+    await tester.ensureVisible(find.text(ClinicLocation.madinaty.displayLabel).first);
+    await tester.tap(find.text(ClinicLocation.madinaty.displayLabel).first);
+    await save(tester, AppStrings.saveChanges);
+    expect(find.text(s.removeBranchTitle), findsOneWidget);
+    expect(find.textContaining('4 upcoming visits at Madinaty'), findsOneWidget);
+    await tester.tap(find.text(s.keepBranch));
     await tester.pumpAndSettle();
-    final button = tester.widget<ButtonStyleButton>(
-      find.ancestor(of: find.text(AppStrings.saveChanges).last, matching: find.bySubtype<ButtonStyleButton>()),
-    );
-    expect(button.onPressed, isNull);
+    expect(repo.writes, 0);
+    await save(tester, AppStrings.saveChanges);
+    await tester.tap(find.text(s.removeBranchConfirm));
+    await tester.pumpAndSettle();
+    expect(repo.writes, 1);
+    expect(repo.submittedSchedule!.branches, [ClinicLocation.tagamoa]);
+    expect(repo.submittedSchedule!.shifts.every((x) => x.branch == ClinicLocation.tagamoa), isTrue);
   });
 
-  testWidgets('invalid national ID and hours block the save', (tester) async {
+  testWidgets('a receptionist needs at least one branch', (tester) async {
     final repo = StaffEditorRepository();
+    await pumpStaffEditor(tester, repo, staff: staffRoster[2]);
+    await save(tester, AppStrings.saveChanges);
+    form(tester).fields['full_name']!.didChange('Nour M');
+    await save(tester, AppStrings.saveChanges);
+    expect(repo.writes, 0);
+    expect(find.text(s.receptionistNeedsBranch), findsOneWidget);
+  });
+
+  testWidgets('an invalid national ID and a hire date before birth block the save', (tester) async {
+    final repo = StaffEditorRepository()..details = saved;
     await pumpStaffEditor(tester, repo, staff: staffRoster[1]);
     await tester.enterText(field(t.nationalId), '12345abc');
     await tester.pump();
     expect(find.text('12345'), findsOneWidget);
-    form(tester).fields['work_starts_at']!.didChange(17 * 60);
-    form(tester).fields['work_ends_at']!.didChange(9 * 60);
-    await tester.pump();
+    form(tester).fields['hire_date']!.didChange(DateTime(1980, 1, 1));
     await save(tester, AppStrings.saveChanges);
     expect(repo.writes, 0);
     expect(find.text(t.nationalIdInvalid), findsOneWidget);
-    expect(find.text(t.hoursOrder), findsOneWidget);
-    form(tester).fields['work_ends_at']!.didChange(null);
-    await tester.pump();
-    form(tester).fields['work_ends_at']!.validate();
-    await tester.pump();
-    expect(find.text(t.hoursBoth), findsOneWidget);
-  });
-
-  testWidgets('a start time alone is only flagged on save, under the end time', (tester) async {
-    final repo = StaffEditorRepository();
-    await pumpStaffEditor(tester, repo, staff: staffRoster[1]);
-    form(tester).fields['work_starts_at']!.didChange(9 * 60);
-    await tester.pumpAndSettle();
-    expect(find.text(t.hoursBoth), findsNothing);
-    await save(tester, AppStrings.saveChanges);
-    expect(repo.writes, 0);
-    expect(find.text(t.hoursBoth), findsOneWidget);
-    form(tester).fields['work_ends_at']!.didChange(17 * 60);
-    await tester.pumpAndSettle();
-    expect(find.text(t.hoursBoth), findsNothing);
-  });
-
-  testWidgets('a hire date before the birth date is rejected', (tester) async {
-    final repo = StaffEditorRepository()..details = saved;
-    await pumpStaffEditor(tester, repo, staff: staffRoster[1]);
-    form(tester).fields['hire_date']!.didChange(DateTime(1980, 1, 1));
-    await tester.pump();
-    await save(tester, AppStrings.saveChanges);
-    expect(repo.writes, 0);
     expect(find.text(t.hireBeforeBirth), findsOneWidget);
   });
 
@@ -170,7 +132,7 @@ void main() {
     expect(find.text('29001011234567'), findsOneWidget);
   });
 
-  testWidgets('new staff send details only when some were entered', (tester) async {
+  testWidgets('new staff send details and branches only when entered', (tester) async {
     final repo = StaffEditorRepository();
     await pumpStaffEditor(tester, repo, create: true);
     expect(repo.detailsReads, 0);
@@ -185,6 +147,11 @@ void main() {
     await save(tester, AppStrings.addStaff);
     expect(repo.writes, 1);
     expect(repo.submittedDetails!.nationalId, '29505051234567');
-    expect(repo.submittedDetails!.workingDays, isEmpty);
+    expect(repo.submittedSchedule, isNull);
+  });
+
+  test('a new receptionist starts at their first branch', () {
+    final StaffSchedule schedule = StaffSchedule(branches: [ClinicLocation.madinaty, ClinicLocation.tagamoa]);
+    expect(schedule.branches, [ClinicLocation.tagamoa, ClinicLocation.madinaty]);
   });
 }

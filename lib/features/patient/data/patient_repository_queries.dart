@@ -61,6 +61,8 @@ class PatientRepositoryQueries {
     }
     if (filters.clinic != null) {
       query = query.eq('clinic', filters.clinic!.dbValue);
+    } else if (filters.clinics.isNotEmpty) {
+      query = query.inFilter('clinic', [for (final c in filters.clinics) c.dbValue]);
     }
     return withSearch(query, filters.search ?? '');
   }

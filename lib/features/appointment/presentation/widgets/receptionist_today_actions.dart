@@ -27,6 +27,7 @@ abstract final class ReceptionistTodayActions {
     final picked = await DoctorPickerSheet.showSingle(
       context: context,
       selectedDoctorId: state.filterDoctorId,
+      branch: ref.read(viewingBranchProvider),
       showAllOption: true,
       showDeactivated: true,
       title: AppStrings.filterByDoctor,
@@ -42,6 +43,7 @@ abstract final class ReceptionistTodayActions {
     final absentDoctor = await DoctorPickerSheet.showSingle(
       context: context,
       title: AppStrings.selectAbsentDoctor,
+      branch: ref.read(viewingBranchProvider),
       showAllOption: false,
       showDeactivated: true,
     );

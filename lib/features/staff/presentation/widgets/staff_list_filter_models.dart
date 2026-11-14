@@ -30,10 +30,12 @@ class StaffListFilters {
       (status == null ? 0 : 1) +
       (branch == null ? 0 : 1);
 
-  bool matches(Staff staff) {
+  /// [branchesOf] gives a person's assigned branches; a branch filter
+  /// matches anyone assigned there.
+  bool matches(Staff staff, List<ClinicLocation> Function(String staffId) branchesOf) {
     if (role != null && staff.role != role) return false;
     if (status != null && staff.accountStatus != status) return false;
-    if (branch != null && staff.branch != branch) return false;
+    if (branch != null && !branchesOf(staff.id).contains(branch) && staff.branch != branch) return false;
     return true;
   }
 

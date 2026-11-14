@@ -4,6 +4,7 @@ import 'package:spine_clinic_app/core/utils/local_settings_service.dart';
 import 'package:spine_clinic_app/core/utils/local_settings_providers.dart';
 import 'package:spine_clinic_app/features/patient/domain/clinic_location.dart';
 import 'package:spine_clinic_app/features/auth/domain/staff.dart';
+import 'package:spine_clinic_app/features/auth/domain/user_role.dart';
 import 'package:spine_clinic_app/features/auth/presentation/auth_providers.dart';
 
 part 'branch_providers.g.dart';
@@ -57,3 +58,15 @@ final adminBranchFilterProvider =
     NotifierProvider<AdminBranchFilterNotifier, String?>(
       AdminBranchFilterNotifier.new,
     );
+
+/// The branch the signed-in person is looking at: a receptionist's working
+/// branch, or the branch a super admin chose (null for all branches).
+/// Others have none. Pickers list this branch's staff first.
+@riverpod
+ClinicLocation? viewingBranch(Ref ref) {
+  final Staff? user = ref.watch(currentUserProvider).value;
+  if (user == null) return null;
+  if (user.role == UserRole.receptionist) return user.branch;
+  if (user.role == UserRole.superAdmin) return ClinicLocation.fromDbValue(ref.watch(adminBranchFilterProvider));
+  return null;
+}

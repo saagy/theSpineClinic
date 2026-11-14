@@ -16,7 +16,7 @@ flutter build web --release --no-pub
 ```
 
 As of 27 September 2026, there are 88 Dart test files and 353 passing tests. The hardening suite covers
-schedule-cap/count, durable retry, upload reconciliation, booking-role/bundle,
+schedule-cap/count, durable retry, upload reconciliation, booking-role,
 pending-booking balance guards and bounded-cache regressions.
 The invoice detail slice (11 November 2026) adds
 `test/features/payments/invoice_rules_test.dart` (document parsing, action
@@ -40,6 +40,14 @@ details saved, validation, failed load with Retry, creation) and
 employment-details captures in `test/previews/staff_editor_render_test.dart`;
 the full suite is 617 tests. The native date and time pickers are not
 exercised by tests.
+The staff branches slice (14 November 2026) adds
+`test/features/staff/staff_schedule_rules_test.dart` (shift order and
+overlap, schedule mismatch for bookings, branch-first doctor picker rows,
+head-receptionist access, the patient identity line), reworks
+`staff_details_test.dart` around branches and the weekly schedule, and adds
+`test/previews/staff_profile_render_test.dart`,
+`patient_record_render_test.dart` and `booking_branch_render_test.dart`;
+the full suite is 680 tests.
 The billing freshness follow-up (14 November 2026) adds
 `test/features/payments/billing_freshness_test.dart` (invoice commands reload
 open reports, Billing reloads on return and resume, reloaded tables keep page
@@ -113,6 +121,12 @@ then runs these scripts:
 - staff_seniority_management.sql and staff_reference_details.sql (admin-only
   detail reads, atomic saves with the profile, validation, unique national
   IDs, unchanged behavior for callers that send no details)
+- staff_branches.sql (split weeks, touching versus overlapping shifts,
+  shifts at unassigned branches, working branch moved when its branch is
+  removed, receptionists kept within their branches, head-receptionist
+  detail reads by shared branch, booking with and without `p_branch`,
+  transfers leaving visits in place, the branch lock after check-in and the
+  change log)
 - invoice_fixture.sql + invoice_discounts.sql (discounts after issue:
   permissions, the split between lines, payback, own number series, the
   invoice keeping its number and receipts, the refund barrier, cancelling,

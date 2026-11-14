@@ -13,14 +13,14 @@ DO $$
 DECLARE
   created uuid; doctor public.staff; other public.staff; d public.staff_details; before_name text;
 BEGIN
-  -- Creation saves details with the account; days are sorted and de-duplicated.
+  -- Creation saves details with the account.
   created := public.create_staff_account('details-doctor@example.test', 'test-password',
     'Dr Details', 'doctor', new_details => '{"national_id":"29001011234567","birth_date":"1990-01-01",
-    "hire_date":"2024-03-01","working_days":[7,6,1,6],"work_starts_at":"09:00","work_ends_at":"17:30"}');
+    "hire_date":"2024-03-01"}');
   SELECT * INTO doctor FROM public.staff WHERE user_id = created;
   SELECT * INTO d FROM public.staff_details WHERE staff_id = doctor.id;
-  IF d.national_id IS DISTINCT FROM '29001011234567' OR d.working_days IS DISTINCT FROM '{1,6,7}'::smallint[]
-    OR d.work_ends_at IS DISTINCT FROM '17:30'::time OR d.updated_by IS NULL THEN
+  IF d.national_id IS DISTINCT FROM '29001011234567' OR d.hire_date IS DISTINCT FROM '2024-03-01'::date
+    OR d.updated_by IS NULL THEN
     RAISE EXCEPTION 'Creation details wrong: %', d;
   END IF;
 
@@ -35,9 +35,9 @@ BEGIN
 
   -- Updates replace details; empty values clear fields.
   PERFORM public.update_staff_account(doctor.id, to_jsonb(doctor) || jsonb_build_object('details',
-    '{"national_id":"","birth_date":"1990-01-01","working_days":[],"work_starts_at":"","work_ends_at":""}'::jsonb));
+    '{"national_id":"","birth_date":"1990-01-01"}'::jsonb));
   SELECT * INTO d FROM public.staff_details WHERE staff_id = doctor.id;
-  IF d.national_id IS NOT NULL OR d.hire_date IS NOT NULL OR d.working_days <> '{}' OR d.work_starts_at IS NOT NULL THEN
+  IF d.national_id IS NOT NULL OR d.hire_date IS NOT NULL THEN
     RAISE EXCEPTION 'Details were not cleared: %', d;
   END IF;
 
@@ -51,24 +51,6 @@ BEGIN
   END;
   IF (SELECT full_name FROM public.staff WHERE id = doctor.id) IS DISTINCT FROM before_name THEN
     RAISE EXCEPTION 'Failed details did not roll back the profile'; END IF;
-  BEGIN
-    PERFORM public.update_staff_account(doctor.id, to_jsonb(doctor) || jsonb_build_object('details',
-      '{"work_starts_at":"17:00","work_ends_at":"09:00"}'::jsonb));
-    RAISE EXCEPTION 'TEST: reversed hours accepted';
-  EXCEPTION WHEN invalid_parameter_value THEN NULL;
-  END;
-  BEGIN
-    PERFORM public.update_staff_account(doctor.id, to_jsonb(doctor) || jsonb_build_object('details',
-      '{"work_starts_at":"09:00"}'::jsonb));
-    RAISE EXCEPTION 'TEST: start without end accepted';
-  EXCEPTION WHEN invalid_parameter_value THEN NULL;
-  END;
-  BEGIN
-    PERFORM public.update_staff_account(doctor.id, to_jsonb(doctor) || jsonb_build_object('details',
-      '{"working_days":[8]}'::jsonb));
-    RAISE EXCEPTION 'TEST: weekday 8 accepted';
-  EXCEPTION WHEN invalid_parameter_value THEN NULL;
-  END;
   BEGIN
     PERFORM public.update_staff_account(doctor.id, to_jsonb(doctor) || jsonb_build_object('details',
       jsonb_build_object('birth_date', (current_date + 3)::text)));

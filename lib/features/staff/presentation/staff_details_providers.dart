@@ -5,18 +5,25 @@ import 'package:spine_clinic_app/core/errors/provider_retry.dart';
 import 'package:spine_clinic_app/features/auth/domain/staff.dart';
 import 'package:spine_clinic_app/features/auth/domain/user_role.dart';
 import 'package:spine_clinic_app/features/auth/presentation/auth_providers.dart';
+import 'package:spine_clinic_app/features/patient/domain/clinic_location.dart';
+import 'package:spine_clinic_app/features/staff/domain/staff_assignments.dart';
 import 'package:spine_clinic_app/features/staff/domain/staff_details.dart';
 import 'package:spine_clinic_app/features/staff/presentation/staff_providers.dart';
 
 part 'staff_details_providers.g.dart';
 
-bool _isAdmin(Staff? user) => user != null && user.isActive && user.role == UserRole.superAdmin;
+/// Who may open the staff directory and profiles: active super admins, and
+/// head receptionists (receptionists who manage payments), read-only.
+bool canViewStaffRecords(Staff? user) => user?.canViewStaffRecords ?? false;
 
-/// One staff member's reference details for the editor. Only transient
-/// network failures retry in the background; others show Retry at once.
+bool canEditStaffRecords(Staff? user) => user != null && user.isActive && user.role == UserRole.superAdmin;
+
+/// One staff member's employment details. Row-level security returns
+/// nothing for colleagues a head receptionist does not share a branch with,
+/// which reads as empty. Only transient failures retry in the background.
 @Riverpod(retry: retryTransientErrors)
 Future<StaffDetails> staffDetails(Ref ref, String staffId) async {
-  if (!_isAdmin(ref.watch(currentUserProvider).value)) {
+  if (!canViewStaffRecords(ref.watch(currentUserProvider).value)) {
     throw const AuthException(
       code: 'security/permission-denied',
       message: AppStrings.staffAdminPermissionDenied,
@@ -29,13 +36,24 @@ Future<StaffDetails> staffDetails(Ref ref, String staffId) async {
   );
 }
 
-/// Working days and hours by staff ID for the directory. Empty for anyone
-/// but super admins, and on failure the directory simply omits them.
-@riverpod
-Future<Map<String, StaffDetails>> staffSchedules(Ref ref) async {
-  if (!_isAdmin(ref.watch(currentUserProvider).value)) return const {};
-  return (await ref.watch(staffRepositoryProvider).getStaffSchedules()).when(
-    success: (schedules) => schedules,
-    failure: (_) => const {},
+/// Every staff member's branches and weekly shifts. Pickers, filters and
+/// booking warnings read it; it is reloaded after a staff save.
+@Riverpod(keepAlive: true, retry: retryTransientErrors)
+Future<StaffAssignments> staffAssignments(Ref ref) async {
+  final Staff? user = ref.watch(currentUserProvider).value;
+  if (user == null || !user.isActive) return StaffAssignments.none;
+  return (await ref.watch(staffRepositoryProvider).getStaffAssignments()).when(
+    success: (assignments) => assignments,
+    failure: (error) => throw error,
   );
+}
+
+/// The branches the signed-in person belongs to; empty when they have none
+/// or while the assignments load (branches only order and default lists,
+/// so a missing value never hides anything).
+@riverpod
+List<ClinicLocation> myBranches(Ref ref) {
+  final Staff? user = ref.watch(currentUserProvider).value;
+  if (user == null) return const [];
+  return (ref.watch(staffAssignmentsProvider).value ?? StaffAssignments.none).branchesOf(user.id);
 }

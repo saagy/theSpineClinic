@@ -23,6 +23,7 @@ class AppointmentAgendaWideRow extends StatelessWidget {
     required this.showDoctor,
     this.patientContext = false,
     this.showDate = false,
+    this.showBranch = false,
   });
 
   final AppointmentWithPatient item;
@@ -32,6 +33,9 @@ class AppointmentAgendaWideRow extends StatelessWidget {
   final bool showDoctor;
   final bool patientContext;
   final bool showDate;
+
+  /// Shows where the visit happens, for people who work at several branches.
+  final bool showBranch;
 
   Widget _buildTypePill(ColorScheme cs, String label) {
     return Container(
@@ -117,7 +121,19 @@ class AppointmentAgendaWideRow extends StatelessWidget {
                 flex: 3,
                 child: Align(
                   alignment: Alignment.centerLeft,
-                  child: _buildTypePill(cs, appt.type.displayLabel),
+                  child: showBranch && appt.branch != null
+                      ? Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            _buildTypePill(cs, appt.type.displayLabel),
+                            const SizedBox(height: AppSizes.p4),
+                            Text(
+                              appt.branch!.displayLabel,
+                              style: AppTextStyles.caption.copyWith(color: cs.onSurfaceVariant),
+                            ),
+                          ],
+                        )
+                      : _buildTypePill(cs, appt.type.displayLabel),
                 ),
               ),
               if (showDoctor && !patientContext) ...[

@@ -68,6 +68,11 @@ String? authRedirect(AsyncValue<Staff?> asyncUser, Uri uri) {
     return _homeRouteForRole(user.role);
   }
 
+  if ((location == AppRoutes.staffDirectory || location.startsWith('${AppRoutes.staffDirectory}/')) &&
+      !user.canViewStaffRecords) {
+    return _homeRouteForRole(user.role);
+  }
+
   if (_isAdminRoute(location) && user.role != UserRole.superAdmin) {
     return _homeRouteForRole(user.role);
   }

@@ -32,6 +32,7 @@ mixin _AppointmentMutations on _AppointmentRepositoryBase {
   Future<Result<void>> updateAppointment(
     Appointment appointment, {
     List<String>? doctorIds,
+    ClinicLocation? branch,
   }) {
     return _run(
       () => _service.rpc(
@@ -42,6 +43,7 @@ mixin _AppointmentMutations on _AppointmentRepositoryBase {
           'p_type': appointment.type.dbValue,
           'p_use_package': appointment.usePackage,
           'p_doctor_ids': doctorIds,
+          'p_branch': ?branch?.dbValue,
         },
       ),
     );
@@ -81,6 +83,7 @@ mixin _AppointmentMutations on _AppointmentRepositoryBase {
     required String? creatorId,
     required List<String> doctorIds,
     DateTime? expectedNextVisitDate,
+    ClinicLocation? branch,
   }) async {
     try {
       await ClinicMutations(
@@ -94,6 +97,8 @@ mixin _AppointmentMutations on _AppointmentRepositoryBase {
         'p_expected_next_visit_date': expectedNextVisitDate == null
             ? null
             : _dateOnly(expectedNextVisitDate),
+        // Older databases ignore it; without it the patient's branch is used.
+        'p_branch': ?branch?.dbValue,
       });
       return const Result.success(null);
     } on AppException catch (error) {

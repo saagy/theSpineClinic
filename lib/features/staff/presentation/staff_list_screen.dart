@@ -25,8 +25,16 @@ class StaffListScreen extends ConsumerWidget {
       error: (error, _) =>
           _ErrorScaffold(error: error, onRetry: () => ref.invalidate(currentUserProvider)),
       data: (user) {
-        if (user == null || user.role != UserRole.superAdmin) {
+        if (user == null || !user.canViewStaffRecords) {
           return const _BlockedScaffold();
+        }
+        if (user.role != UserRole.superAdmin) {
+          // Head receptionists browse the directory read-only.
+          return Scaffold(
+            backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+            appBar: AppBar(title: const Text(AppStrings.staff)),
+            body: const StaffDirectoryTab(canAdd: false),
+          );
         }
 
         final pendingAsync = ref.watch(pendingStaffApplicationsProvider);

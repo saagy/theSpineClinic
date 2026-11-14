@@ -2,11 +2,20 @@ part of 'new_appointment_form.dart';
 
 extension _NewAppointmentProviderSection on _NewAppointmentFormState {
   Widget _buildProviderSection(BuildContext context) {
+    final Patient? patient = _resolvePatient();
+    final ClinicLocation? branch = _bookingBranch(patient);
+    final TimeOfDay? time = _selectedTime;
     return FormSection(
       title: AppStrings.providerAndBilling,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
+          BookingBranchField(
+            value: branch,
+            registeredAt: patient?.clinic,
+            onChanged: (next) => _mutate(() => _branch = next),
+          ),
+          const SizedBox(height: AppSizes.p16),
           if (_isFetchingDoctors && _selectedType.needsDoctor) ...[
             Padding(
               padding: const EdgeInsets.symmetric(vertical: AppSizes.p8),
@@ -41,14 +50,27 @@ extension _NewAppointmentProviderSection on _NewAppointmentFormState {
               key: _doctorFieldKey,
               initialValue: const [],
               enabled: _doctorFieldEnabled,
+              branch: branch,
+              collapseOtherBranches: true,
               onSavedDoctors: (_) {},
-              onChanged: (_) {},
+              onChanged: (doctors) => _mutate(() => _doctors = doctors),
               validator: (doctors) =>
                   _selectedType.needsDoctor && (doctors == null || doctors.isEmpty)
                   ? AppStrings.atLeastOneDoctorRequired
                   : null,
             ),
           ),
+          if (_selectedType.needsDoctor && branch != null && time != null) ...[
+            const SizedBox(height: AppSizes.p12),
+            BookingScheduleWarnings(
+              doctors: _doctors,
+              branch: branch,
+              starts: [
+                for (final day in _computedSlots)
+                  DateTime(day.year, day.month, day.day, time.hour, time.minute),
+              ],
+            ),
+          ],
           if (!_selectedType.needsDoctor)
             Text(
               AppStrings.tractionNoDoctor,

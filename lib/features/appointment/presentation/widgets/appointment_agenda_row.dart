@@ -15,11 +15,15 @@ class AppointmentAgendaRow extends ConsumerWidget {
     this.showDoctor = true,
     this.patientContext = false,
     this.showDate = false,
+    this.showBranch = false,
   });
   final AppointmentWithPatient item;
   final bool showDoctor;
   final bool patientContext;
   final bool showDate;
+
+  /// Shows where the visit happens, for people who work at several branches.
+  final bool showBranch;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -38,6 +42,7 @@ class AppointmentAgendaRow extends ConsumerWidget {
             showDoctor: showDoctor,
             patientContext: patientContext,
             showDate: showDate,
+            showBranch: showBranch,
           );
         }
         return AppointmentAgendaCompactRow(
@@ -48,6 +53,7 @@ class AppointmentAgendaRow extends ConsumerWidget {
           showDoctor: showDoctor,
           patientContext: patientContext,
           showDate: showDate,
+          showBranch: showBranch,
         );
       },
     );

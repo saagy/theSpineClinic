@@ -7,6 +7,7 @@ import 'package:spine_clinic_app/features/auth/domain/staff.dart';
 import 'package:spine_clinic_app/features/auth/domain/user_role.dart';
 import 'package:spine_clinic_app/features/patient/domain/clinic_location.dart';
 import 'package:spine_clinic_app/features/patient/domain/patient.dart';
+import 'package:spine_clinic_app/features/staff/domain/staff_assignments.dart';
 import 'package:spine_clinic_app/features/staff/domain/staff_details.dart';
 import 'package:spine_clinic_app/features/staff/data/staff_details_queries.dart';
 import 'package:spine_clinic_app/features/staff/data/staff_repository_queries.dart';
@@ -39,17 +40,28 @@ abstract class StaffRepository {
     String? phone,
     ClinicLocation? branch,
     StaffDetails? details,
+    StaffSchedule? schedule,
   });
 
-  /// Saves the profile and, when [details] is given, the reference details.
-  Future<Result<void>> updateStaff({required Staff staff, String? newPassword, StaffDetails? details});
+  /// Saves the profile and, when given, the employment details and the
+  /// branches with their weekly shifts, in one transaction.
+  Future<Result<void>> updateStaff({
+    required Staff staff,
+    String? newPassword,
+    StaffDetails? details,
+    StaffSchedule? schedule,
+  });
   Future<Result<int>> countUpcomingAppointments(String staffId);
 
-  /// Reference details (super admins only); empty when none were saved.
+  /// Employment details; empty when none were saved or the caller may not
+  /// read them.
   Future<Result<StaffDetails>> getStaffDetails(String staffId);
 
-  /// Working days and hours by staff ID (super admins only).
-  Future<Result<Map<String, StaffDetails>>> getStaffSchedules();
+  /// Every staff member's branches and weekly shifts.
+  Future<Result<StaffAssignments>> getStaffAssignments();
+
+  /// Upcoming scheduled visits [staffId] has at [branch].
+  Future<Result<int>> countUpcomingAtBranch(String staffId, ClinicLocation branch);
 }
 
 class StaffRepositoryImpl implements StaffRepository {
@@ -169,6 +181,7 @@ class StaffRepositoryImpl implements StaffRepository {
     String? phone,
     ClinicLocation? branch,
     StaffDetails? details,
+    StaffSchedule? schedule,
   }) async {
     return createStaffAccount(
       _service,
@@ -181,18 +194,27 @@ class StaffRepositoryImpl implements StaffRepository {
       phone: phone,
       branch: branch,
       details: details,
+      schedule: schedule,
     );
   }
 
   @override
-  Future<Result<void>> updateStaff({required Staff staff, String? newPassword, StaffDetails? details}) =>
-      updateStaffAccount(_service, staff: staff, newPassword: newPassword, details: details);
+  Future<Result<void>> updateStaff({
+    required Staff staff,
+    String? newPassword,
+    StaffDetails? details,
+    StaffSchedule? schedule,
+  }) => updateStaffAccount(_service, staff: staff, newPassword: newPassword, details: details, schedule: schedule);
 
   @override
   Future<Result<StaffDetails>> getStaffDetails(String staffId) => fetchStaffDetails(_service, staffId);
 
   @override
-  Future<Result<Map<String, StaffDetails>>> getStaffSchedules() => fetchStaffSchedules(_service);
+  Future<Result<StaffAssignments>> getStaffAssignments() => fetchStaffAssignments(_service);
+
+  @override
+  Future<Result<int>> countUpcomingAtBranch(String staffId, ClinicLocation branch) =>
+      fetchUpcomingAtBranch(_service, staffId, branch);
 
   /// Counts upcoming appointments where [staffId] is an active assignee.
   ///

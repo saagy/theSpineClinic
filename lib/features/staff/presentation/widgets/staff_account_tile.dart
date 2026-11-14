@@ -5,6 +5,7 @@ import 'package:spine_clinic_app/core/constants/app_text_styles.dart';
 import 'package:spine_clinic_app/core/utils/formatters.dart';
 import 'package:spine_clinic_app/features/auth/domain/staff.dart';
 import 'package:spine_clinic_app/features/auth/domain/user_role.dart';
+import 'package:spine_clinic_app/features/patient/domain/clinic_location.dart';
 import 'package:spine_clinic_app/features/staff/presentation/widgets/staff_account_status.dart';
 import 'package:spine_clinic_app/features/patient/presentation/widgets/patient_monogram_badge.dart';
 
@@ -16,11 +17,11 @@ class StaffAccountTile extends StatelessWidget {
     this.onTap,
     this.showCreatedDate = false,
     this.action,
-    this.schedule,
+    this.branches = const [],
   });
 
-  /// Working days and hours, shown to administrators.
-  final String? schedule;
+  /// The branches this person works at.
+  final List<ClinicLocation> branches;
   final Staff staff;
   final VoidCallback? onTap;
   final bool showCreatedDate;
@@ -60,11 +61,6 @@ class StaffAccountTile extends StatelessWidget {
                   if (staff.phone?.trim().isNotEmpty ?? false)
                     Text(
                       Formatters.formatPhone(staff.phone!),
-                      style: AppTextStyles.caption.copyWith(color: colors.onSurfaceVariant),
-                    ),
-                  if (schedule != null)
-                    Text(
-                      schedule!,
                       style: AppTextStyles.caption.copyWith(color: colors.onSurfaceVariant),
                     ),
                   if (!wide) ...[
@@ -133,9 +129,11 @@ class StaffAccountTile extends StatelessWidget {
         role,
         style: AppTextStyles.captionBold.copyWith(color: Theme.of(context).colorScheme.onSurface),
       ),
-      if (staff.role == UserRole.receptionist)
+      if (staff.role != UserRole.superAdmin)
         Text(
-          staff.branch?.displayLabel ?? AppStrings.noBranch,
+          branches.isEmpty
+              ? (staff.branch?.displayLabel ?? AppStrings.noBranch)
+              : branches.map((b) => b.displayLabel).join(', '),
           style: AppTextStyles.caption.copyWith(
             color: Theme.of(context).colorScheme.onSurfaceVariant,
           ),

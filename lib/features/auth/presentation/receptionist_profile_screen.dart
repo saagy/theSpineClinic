@@ -17,7 +17,6 @@ import 'package:spine_clinic_app/core/network/app_routes.dart';
 
 import 'package:spine_clinic_app/core/constants/app_sizes.dart';
 import 'package:spine_clinic_app/core/constants/app_strings.dart';
-import 'package:spine_clinic_app/core/constants/app_text_styles.dart';
 import 'package:spine_clinic_app/core/errors/app_exception.dart';
 import 'package:spine_clinic_app/core/utils/theme_mode_controller.dart';
 import 'package:spine_clinic_app/features/admin/presentation/branch_providers.dart';
@@ -26,6 +25,9 @@ import 'package:spine_clinic_app/features/auth/presentation/auth_providers.dart'
 import 'package:spine_clinic_app/features/patient/domain/clinic_location.dart';
 import 'package:spine_clinic_app/shared/widgets/error_view.dart';
 import 'package:spine_clinic_app/shared/widgets/profile_menu_row.dart';
+import 'package:spine_clinic_app/shared/widgets/record_action_menu.dart';
+import 'package:spine_clinic_app/shared/widgets/record_menu_select.dart';
+import 'package:spine_clinic_app/features/staff/presentation/staff_details_providers.dart';
 import 'package:spine_clinic_app/shared/widgets/staff_profile_header.dart';
 
 /// Profile/settings screen for receptionists.
@@ -89,11 +91,21 @@ class ReceptionistProfileScreen extends ConsumerWidget {
                     onTap: null,
                     trailing: _BranchDropdown(
                       value: activeBranch,
+                      // Only their own branches; everyone's while none are set.
+                      branches: ref.watch(myBranchesProvider).isEmpty
+                          ? ClinicLocation.values
+                          : ref.watch(myBranchesProvider),
                       onChanged: (loc) => ref
                           .read(activeBranchProvider.notifier)
                           .setBranch(loc),
                     ),
                   ),
+                  if (user.canViewStaffRecords)
+                    ProfileMenuRow(
+                      title: AppStrings.staff,
+                      leadingIcon: Icons.badge_outlined,
+                      onTap: () => context.push(AppRoutes.staffDirectory),
+                    ),
                   ProfileMenuRow(
                     title: AppStrings.theme,
                     subtitle: AppStrings.themeSubtitle,
@@ -121,38 +133,22 @@ class ReceptionistProfileScreen extends ConsumerWidget {
 }
 
 /// Compact inline branch picker rendered as the trailing slot of the
-/// Active Branch menu row. Drops the legacy [Container]-wrapped chrome
-/// in favor of plain dropdown chrome inside the menu tile.
+/// Active Branch menu row.
 class _BranchDropdown extends StatelessWidget {
-  /// Creates an [_BranchDropdown].
-  const _BranchDropdown({required this.value, required this.onChanged});
+  const _BranchDropdown({required this.value, required this.branches, required this.onChanged});
 
-  /// The currently selected branch.
   final ClinicLocation value;
-
-  /// Callback invoked when the user picks a different branch.
+  final List<ClinicLocation> branches;
   final ValueChanged<ClinicLocation> onChanged;
 
   @override
-  Widget build(BuildContext context) {
-    final Color textColor = Theme.of(context).colorScheme.onSurface;
-
-    return DropdownButtonHideUnderline(
-      child: DropdownButton<ClinicLocation>(
-        isDense: true,
-        value: value,
-        borderRadius: const BorderRadius.all(Radius.circular(AppSizes.r8)),
-        style: AppTextStyles.bodyMedium.copyWith(color: textColor),
-        items: ClinicLocation.values
-            .map(
-              (loc) =>
-                  DropdownMenuItem(value: loc, child: Text(loc.displayLabel)),
-            )
-            .toList(),
-        onChanged: (ClinicLocation? next) {
-          if (next != null) onChanged(next);
-        },
-      ),
-    );
-  }
+  Widget build(BuildContext context) => RecordMenuSelect<ClinicLocation>(
+    label: AppStrings.activeBranch,
+    value: value,
+    options: [
+      for (final loc in branches)
+        RecordMenuAction(loc, loc.displayLabel, Icons.location_on_outlined, selected: loc == value),
+    ],
+    onChanged: branches.length > 1 || !branches.contains(value) ? onChanged : null,
+  );
 }

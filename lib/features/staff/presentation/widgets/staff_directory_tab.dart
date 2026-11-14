@@ -10,6 +10,7 @@ import 'package:spine_clinic_app/core/constants/app_text_styles.dart';
 import 'package:spine_clinic_app/core/errors/app_exception.dart';
 import 'package:spine_clinic_app/core/network/app_routes.dart';
 import 'package:spine_clinic_app/features/auth/domain/staff.dart';
+import 'package:spine_clinic_app/features/staff/domain/staff_assignments.dart';
 import 'package:spine_clinic_app/features/staff/presentation/staff_management_controller.dart';
 import 'package:spine_clinic_app/features/staff/presentation/widgets/staff_active_filter_chips.dart';
 import 'package:spine_clinic_app/features/staff/presentation/widgets/staff_filter_sheet.dart';
@@ -23,7 +24,10 @@ import 'package:spine_clinic_app/shared/widgets/skeleton_loader.dart';
 /// Tab view displaying the searchable, filterable staff roster for admin management.
 class StaffDirectoryTab extends ConsumerStatefulWidget {
   /// Creates a [StaffDirectoryTab] instance.
-  const StaffDirectoryTab({super.key});
+  const StaffDirectoryTab({super.key, this.canAdd = true});
+
+  /// Super admins add staff; head receptionists only browse.
+  final bool canAdd;
 
   @override
   ConsumerState<StaffDirectoryTab> createState() => _StaffDirectoryTabState();
@@ -64,6 +68,7 @@ class _StaffDirectoryTabState extends ConsumerState<StaffDirectoryTab> {
                     style: AppTextStyles.bodyBold,
                   ),
                 ),
+                if (widget.canAdd) ...[
                 const SizedBox(width: AppSizes.p12),
                 FilledButton.icon(
                   onPressed: () => context.push(AppRoutes.staffForm),
@@ -74,6 +79,7 @@ class _StaffDirectoryTabState extends ConsumerState<StaffDirectoryTab> {
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppSizes.r8)),
                   ),
                 ),
+                ],
               ],
             ),
           ),
@@ -118,7 +124,7 @@ class _StaffDirectoryTabState extends ConsumerState<StaffDirectoryTab> {
           key: const ValueKey('staff_data'),
           child: StaffDirectoryList(
             staffList: display,
-            onTap: (s) => context.push(AppRoutes.staffForm, extra: s),
+            onTap: (s) => context.push(AppRoutes.staffProfileFor(s.id)),
           ),
         );
       },
@@ -135,7 +141,7 @@ class _StaffDirectoryTabState extends ConsumerState<StaffDirectoryTab> {
 
     return RefreshIndicator(
       onRefresh: () async {
-        ref.invalidate(staffSchedulesProvider);
+        ref.invalidate(staffAssignmentsProvider);
         await ref.read(staffListProvider.notifier).refreshStaff();
       },
       color: Theme.of(context).colorScheme.primary,
@@ -151,11 +157,12 @@ class _StaffDirectoryTabState extends ConsumerState<StaffDirectoryTab> {
   }
 
   List<Staff> _filtered(List<Staff> staff) {
+    final StaffAssignments assignments = ref.watch(staffAssignmentsProvider).value ?? StaffAssignments.none;
     final q = _query.trim().toLowerCase();
     final list = staff.where((s) {
       final queryMatch =
           q.isEmpty || s.fullName.toLowerCase().contains(q) || s.email.toLowerCase().contains(q);
-      return queryMatch && _filters.matches(s);
+      return queryMatch && _filters.matches(s, assignments.branchesOf);
     }).toList();
     switch (_sort) {
       case StaffSortOption.nameAsc:

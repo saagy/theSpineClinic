@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:spine_clinic_app/core/constants/app_sizes.dart';
 import 'package:spine_clinic_app/core/constants/app_text_styles.dart';
 import 'package:spine_clinic_app/features/auth/domain/staff.dart';
+import 'package:spine_clinic_app/features/patient/domain/clinic_location.dart';
 import 'package:spine_clinic_app/shared/widgets/doctor_picker_sheet.dart';
 import 'package:spine_clinic_app/shared/widgets/doctor_select_card.dart';
 
@@ -15,6 +16,8 @@ class DoctorSelectField extends FormField<List<Staff>> {
     super.validator,
     bool enabled = true,
     bool showDeactivated = false,
+    ClinicLocation? branch,
+    bool collapseOtherBranches = false,
   }) : super(
          initialValue: List<Staff>.of(initialValue),
          onSaved: onSavedDoctors == null
@@ -26,6 +29,8 @@ class DoctorSelectField extends FormField<List<Staff>> {
              onChanged: onChanged,
              enabled: enabled,
              showDeactivated: showDeactivated,
+             branch: branch,
+             collapseOtherBranches: collapseOtherBranches,
            );
          },
        );
@@ -37,8 +42,12 @@ class _DoctorSelectFieldWidget extends StatelessWidget {
     this.onChanged,
     required this.enabled,
     required this.showDeactivated,
+    required this.branch,
+    required this.collapseOtherBranches,
   });
 
+  final ClinicLocation? branch;
+  final bool collapseOtherBranches;
   final FormFieldState<List<Staff>> state;
   final ValueChanged<List<Staff>>? onChanged;
   final bool enabled;
@@ -51,6 +60,8 @@ class _DoctorSelectFieldWidget extends StatelessWidget {
       context: context,
       initialSelected: current,
       showDeactivated: showDeactivated,
+      branch: branch,
+      collapseOtherBranches: collapseOtherBranches,
     );
     if (picked != null) {
       state.didChange(picked);

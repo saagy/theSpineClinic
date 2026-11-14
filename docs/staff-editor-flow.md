@@ -76,12 +76,33 @@ errors retain entered values. Corrected fields revalidate on interaction, and
 changing a password revalidates a previously edited or invalid confirmation.
 No database/schema or deployment change is part of this editor follow-up.
 
+## Branches and schedule (November 14, 2026)
+
+A **Branches and schedule** section after Clinic access replaces the
+receptionist-only Branch dropdown and the old working days/hours fields.
+Branches are multi-select chips (receptionists need at least one). The weekly
+schedule lists the clinic week Saturday first; each day holds removable
+chips such as `Tagamoa · 10:00 AM – 2:00 PM`, and **+** opens a small dialog
+for the branch and times (end after start, no overlap with that day's other
+hours). Removing a branch takes its hours with it. Removing a doctor's branch
+where they still have upcoming visits asks first and says how many; the
+visits stay booked. The section saves in the same transaction as the profile
+and is sent only when it changed.
+
+Tapping someone in the directory opens a read-only **staff profile**
+(`/staff/:id`): identity and branches, contact, the weekly schedule, and
+employment details with the national ID masked to its last four digits until
+Show, age and time at the clinic, and who last changed them. Super admins
+get Edit. Head receptionists reach a read-only directory (`/staff`) from
+their profile menu and see employment details of colleagues who share a
+branch with them.
+
 ## Employment details (billing plan slice 7)
 
 Between Personal details and Clinic access, an Employment details section
 holds the national ID (digits only, 14 required when entered), date of birth,
-hire date, working days and working hours, with a note that they are for the
-record only and never limit bookings. Dates and times use the shared
+and hire date, for the record only. (Working days and hours moved to
+Branches and schedule.) Dates and times use the shared
 `FormDateField` / `FormTimeField` (`shared/widgets/form_picker_field.dart`):
 a field with the same chrome and height as the text inputs that opens the
 native picker and offers Clear. Working days are seven toggles in clinic-week
@@ -95,8 +116,7 @@ The editor opens an existing staff member only after their saved details
 load; a failed load shows Retry instead of an empty section, so a save never
 blanks them. Unchanged details are not sent; changed details save in the
 same transaction as the profile and password. Only super admins can read the
-details. The staff directory shows working days and hours under the contact
-lines, such as `Sat–Thu · 9:00 AM – 5:00 PM`.
+details. The staff directory shows each person's branches under their role.
 
 ## Validation and limits
 

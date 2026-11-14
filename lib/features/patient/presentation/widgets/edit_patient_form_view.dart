@@ -81,6 +81,7 @@ extension _EditPatientView on _EditPatientFormState {
                                 .toList(),
                           )
                         : DoctorSelectField(
+                            branch: _selectedClinic,
                             initialValue: _selectedDoctors,
                             onSavedDoctors: (doctors) => _mutate(() {
                               _selectedDoctors.clear();

@@ -13,9 +13,13 @@ class PatientFilterResult {
     required this.clinic,
     required this.doctorId,
     required this.sortOption,
+    this.mine = false,
   });
 
   final ClinicLocation? clinic;
+
+  /// "My branches" was chosen.
+  final bool mine;
   final String? doctorId;
   final PatientSortOption sortOption;
 }
@@ -30,8 +34,12 @@ class PatientFilterSheet extends ConsumerStatefulWidget {
     required this.initialDoctorId,
     required this.initialSort,
     required this.canFilterDoctor,
+    this.myBranches = const [],
+    this.initialMine = false,
   });
 
+  final List<ClinicLocation> myBranches;
+  final bool initialMine;
   final ClinicLocation? initialClinic;
   final String? initialDoctorId;
   final PatientSortOption initialSort;
@@ -43,10 +51,14 @@ class PatientFilterSheet extends ConsumerStatefulWidget {
     required String? doctorId,
     required PatientSortOption sort,
     required bool canFilterDoctor,
+    List<ClinicLocation> myBranches = const [],
+    bool mine = false,
   }) {
     return FilterSheetFrame.show<PatientFilterResult>(
       context: context,
       builder: (ctx) => PatientFilterSheet(
+        myBranches: myBranches,
+        initialMine: mine,
         initialClinic: clinic,
         initialDoctorId: doctorId,
         initialSort: sort,
@@ -62,12 +74,14 @@ class PatientFilterSheet extends ConsumerStatefulWidget {
 class _PatientFilterSheetState extends ConsumerState<PatientFilterSheet> {
   _FilterSheetPage _page = _FilterSheetPage.main;
   late ClinicLocation? _clinic = widget.initialClinic;
+  late bool _mine = widget.initialMine && widget.initialClinic == null;
   late String? _doctorId = widget.initialDoctorId;
   late PatientSortOption _sort = widget.initialSort;
 
   void _reset() {
     setState(() {
       _clinic = null;
+      _mine = false;
       _doctorId = null;
       _sort = PatientSortOption.nameAsc;
     });
@@ -76,7 +90,7 @@ class _PatientFilterSheetState extends ConsumerState<PatientFilterSheet> {
   void _apply() {
     Navigator.of(
       context,
-    ).pop(PatientFilterResult(clinic: _clinic, doctorId: _doctorId, sortOption: _sort));
+    ).pop(PatientFilterResult(clinic: _clinic, doctorId: _doctorId, sortOption: _sort, mine: _mine));
   }
 
   @override
@@ -100,11 +114,20 @@ class _PatientFilterSheetState extends ConsumerState<PatientFilterSheet> {
               )
             : PatientFilterMainView(
                 selectedClinic: _clinic,
+                myBranches: widget.myBranches,
+                mine: _mine,
+                onMine: () => setState(() {
+                  _mine = true;
+                  _clinic = null;
+                }),
                 selectedDoctorId: _doctorId,
                 selectedSort: _sort,
                 canFilterDoctor: widget.canFilterDoctor,
                 doctors: doctors,
-                onClinicChanged: (c) => setState(() => _clinic = c),
+                onClinicChanged: (c) => setState(() {
+                  _clinic = c;
+                  _mine = false;
+                }),
                 onOpenDoctorPicker: () => setState(() => _page = _FilterSheetPage.doctorPicker),
                 onSortChanged: (s) => setState(() => _sort = s),
                 onReset: _reset,

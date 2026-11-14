@@ -3,6 +3,11 @@ part of 'edit_appointment_form.dart';
 extension _EditAppointmentView on _EditAppointmentFormState {
   Widget _buildForm(BuildContext context) {
     final isScheduled = widget.appointment.status == AppointmentStatus.scheduled;
+    final bool canMoveBranch =
+        isScheduled || ref.watch(currentUserProvider).value?.role == UserRole.superAdmin;
+    final ClinicLocation? branch = _branch;
+    final TimeOfDay? time = _selectedTime;
+    final DateTime? date = _selectedDate;
     return Form(
       key: _formKey,
       child: FormPageBody(
@@ -43,20 +48,37 @@ extension _EditAppointmentView on _EditAppointmentFormState {
                   ),
                   const SizedBox(height: AppSizes.p16),
                 ],
+                BookingBranchField(
+                  value: branch,
+                  registeredAt: widget.patient.clinic,
+                  onChanged: canMoveBranch ? (next) => _mutate(() => _branch = next) : null,
+                  lockedMessage: canMoveBranch ? null : AppStrings.staffSchedule.branchLocked,
+                ),
+                const SizedBox(height: AppSizes.p16),
                 Visibility(
                   visible: _selectedType.needsDoctor,
                   maintainState: true,
                   child: DoctorSelectField(
                     key: _doctorFieldKey,
                     initialValue: widget.initialDoctors,
+                    branch: branch,
+                    collapseOtherBranches: true,
                     onSavedDoctors: (_) {},
-                    onChanged: (_) {},
+                    onChanged: (doctors) => _mutate(() => _doctors = doctors),
                     validator: (doctors) =>
                         _selectedType.needsDoctor && (doctors == null || doctors.isEmpty)
                         ? AppStrings.atLeastOneDoctorRequired
                         : null,
                   ),
                 ),
+                if (isScheduled && _selectedType.needsDoctor && branch != null && date != null && time != null) ...[
+                  const SizedBox(height: AppSizes.p12),
+                  BookingScheduleWarnings(
+                    doctors: _doctors,
+                    branch: branch,
+                    starts: [DateTime(date.year, date.month, date.day, time.hour, time.minute)],
+                  ),
+                ],
                 if (!_selectedType.needsDoctor)
                   Text(
                     AppStrings.tractionNoDoctor,

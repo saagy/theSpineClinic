@@ -4,7 +4,11 @@ import 'package:spine_clinic_app/core/constants/app_sizes.dart';
 import 'package:spine_clinic_app/core/constants/app_strings.dart';
 import 'package:spine_clinic_app/core/constants/app_text_styles.dart';
 import 'package:spine_clinic_app/features/auth/domain/staff.dart';
+import 'package:spine_clinic_app/features/patient/domain/clinic_location.dart';
+import 'package:spine_clinic_app/features/staff/domain/staff_assignments.dart';
+import 'package:spine_clinic_app/features/staff/presentation/staff_details_providers.dart';
 import 'package:spine_clinic_app/features/staff/presentation/staff_providers.dart';
+import 'package:spine_clinic_app/shared/widgets/doctor_picker_rows.dart';
 import 'package:spine_clinic_app/shared/widgets/app_avatar.dart';
 import 'package:spine_clinic_app/shared/widgets/app_bottom_sheet.dart';
 import 'package:spine_clinic_app/shared/widgets/app_button.dart';
@@ -21,7 +25,15 @@ class DoctorPickerSheet extends ConsumerStatefulWidget {
     this.showDeactivated = true,
     this.excludeDoctorIds,
     this.scrollController,
+    this.branch,
+    this.collapseOtherBranches = false,
   });
+
+  /// Lists this branch's doctors first; null keeps one flat list.
+  final ClinicLocation? branch;
+
+  /// For new bookings: other branches' doctors stay behind a toggle.
+  final bool collapseOtherBranches;
 
   final Set<String> selectedDoctorIds;
   final bool isMultiSelect;
@@ -36,6 +48,8 @@ class DoctorPickerSheet extends ConsumerStatefulWidget {
     bool showDeactivated = false,
     List<String>? excludeDoctorIds,
     String? title,
+    ClinicLocation? branch,
+    bool collapseOtherBranches = false,
   }) {
     final selectedIds = initialSelected.map((d) => d.id).toSet();
     return AppBottomSheet.show<List<Staff>>(
@@ -47,6 +61,8 @@ class DoctorPickerSheet extends ConsumerStatefulWidget {
         showDeactivated: showDeactivated,
         excludeDoctorIds: excludeDoctorIds,
         scrollController: scrollCtrl,
+        branch: branch,
+        collapseOtherBranches: collapseOtherBranches,
       ),
     );
   }
@@ -58,6 +74,8 @@ class DoctorPickerSheet extends ConsumerStatefulWidget {
     bool showDeactivated = true,
     List<String>? excludeDoctorIds,
     String? title,
+    ClinicLocation? branch,
+    bool collapseOtherBranches = false,
   }) {
     final selectedIds = selectedDoctorId != null ? {selectedDoctorId} : <String>{};
     return AppBottomSheet.show<Staff?>(
@@ -70,6 +88,8 @@ class DoctorPickerSheet extends ConsumerStatefulWidget {
         showDeactivated: showDeactivated,
         excludeDoctorIds: excludeDoctorIds,
         scrollController: scrollCtrl,
+        branch: branch,
+        collapseOtherBranches: collapseOtherBranches,
       ),
     );
   }
@@ -82,6 +102,7 @@ class _DoctorPickerSheetState extends ConsumerState<DoctorPickerSheet> {
   final TextEditingController _searchCtrl = TextEditingController();
   late Set<String> _selectedIds;
   String _query = '';
+  bool _othersExpanded = false;
 
   @override
   void initState() {
@@ -183,7 +204,16 @@ class _DoctorPickerSheetState extends ConsumerState<DoctorPickerSheet> {
             ),
             data: (allDoctors) {
               final filtered = _filter(allDoctors);
-              final itemCount = filtered.length + (widget.showAllOption ? 1 : 0);
+              final List<DoctorPickerRow> rows = doctorPickerRows(
+                doctors: filtered,
+                branch: widget.branch,
+                assignments: ref.watch(staffAssignmentsProvider).value ?? StaffAssignments.none,
+                collapseOthers: widget.collapseOtherBranches,
+                expanded: _othersExpanded,
+                searching: _query.trim().isNotEmpty,
+                selectedIds: _selectedIds,
+              );
+              final itemCount = rows.length + (widget.showAllOption ? 1 : 0);
 
               if (filtered.isEmpty && !widget.showAllOption) {
                 return Center(
@@ -210,14 +240,20 @@ class _DoctorPickerSheetState extends ConsumerState<DoctorPickerSheet> {
                       onTap: () => Navigator.of(context).pop(null),
                     );
                   }
-                  final docIndex = widget.showAllOption ? index - 1 : index;
-                  final doctor = filtered[docIndex];
-                  return DoctorPickerTile(
-                    doctor: doctor,
-                    isSelected: _selectedIds.contains(doctor.id),
-                    isMultiSelect: widget.isMultiSelect,
-                    onTap: () => _onDoctorTap(doctor, allDoctors),
-                  );
+                  final DoctorPickerRow row = rows[widget.showAllOption ? index - 1 : index];
+                  return switch (row) {
+                    DoctorPickerHeading(:final label) => DoctorPickerHeadingTile(label: label),
+                    DoctorPickerToggle(:final expanded) => DoctorPickerToggleTile(
+                      expanded: expanded,
+                      onPressed: () => setState(() => _othersExpanded = !expanded),
+                    ),
+                    DoctorPickerDoctor(:final doctor) => DoctorPickerTile(
+                      doctor: doctor,
+                      isSelected: _selectedIds.contains(doctor.id),
+                      isMultiSelect: widget.isMultiSelect,
+                      onTap: () => _onDoctorTap(doctor, allDoctors),
+                    ),
+                  };
                 },
               );
             },

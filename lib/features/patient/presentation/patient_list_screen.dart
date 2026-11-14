@@ -67,12 +67,15 @@ class _PatientListScreenState extends ConsumerState<PatientListScreen> {
       doctorId: notifier.currentDoctorFilter,
       sort: PatientSortOption.fromParams(notifier.orderBy, notifier.isAscending),
       canFilterDoctor: canFilterDoctor,
+      myBranches: notifier.myBranches,
+      mine: notifier.showsMyBranches,
     );
 
     if (result != null && mounted) {
       final (orderBy, ascending) = result.sortOption.sortParams;
       ref.read(patientListProvider.notifier).applyFilters(
         clinic: result.clinic, doctorId: result.doctorId, orderBy: orderBy, ascending: ascending,
+        mine: result.mine,
       );
     }
   }
@@ -108,7 +111,7 @@ class _PatientListScreenState extends ConsumerState<PatientListScreen> {
         (user.role != UserRole.doctor || user.isSeniorDoctor);
 
     int activeFiltersCount = 0;
-    if (notifier.currentClinicFilter != null) activeFiltersCount++;
+    if (notifier.currentClinicFilter != null || notifier.showsMyBranches) activeFiltersCount++;
     if (notifier.currentDoctorFilter != null) activeFiltersCount++;
 
     return Scaffold(

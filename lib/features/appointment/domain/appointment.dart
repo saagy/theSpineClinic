@@ -6,6 +6,7 @@ library;
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:spine_clinic_app/features/appointment/domain/appointment_status.dart';
 import 'package:spine_clinic_app/features/appointment/domain/appointment_type.dart';
+import 'package:spine_clinic_app/features/patient/domain/clinic_location.dart';
 
 part 'appointment.freezed.dart';
 part 'appointment.g.dart';
@@ -38,6 +39,10 @@ abstract class Appointment with _$Appointment {
 
     /// Row creation timestamp.
     @JsonKey(name: 'created_at') required DateTime createdAt,
+
+    /// Where the visit happens. Filled from the patient's branch by the
+    /// database when a caller sends none.
+    @JsonKey(unknownEnumValue: JsonKey.nullForUndefinedEnumValue) ClinicLocation? branch,
   }) = _Appointment;
 
   /// Deserialises a JSON map (e.g. from a Supabase query) into [Appointment].

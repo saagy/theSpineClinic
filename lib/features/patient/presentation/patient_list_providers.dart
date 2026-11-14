@@ -12,6 +12,7 @@ import 'package:spine_clinic_app/features/patient/domain/clinic_location.dart';
 import 'package:spine_clinic_app/features/patient/domain/patient.dart';
 import 'package:spine_clinic_app/features/patient/domain/patient_filters.dart';
 import 'package:spine_clinic_app/features/patient/presentation/patient_providers.dart';
+import 'package:spine_clinic_app/features/staff/presentation/staff_details_providers.dart';
 
 part 'patient_list_providers.g.dart';
 
@@ -25,15 +26,28 @@ class PatientList extends _$PatientList {
   String _orderBy = 'full_name';
   bool _ascending = true;
   bool _hasInitializedClinic = false;
+
+  /// Consultants start on their own branches ("My branches") until they
+  /// pick a branch filter, including All branches.
+  bool _mine = false;
+  bool _mineDecided = false;
+  List<ClinicLocation> _myBranches = const [];
   bool _isLoadingMore = false;
   int _requestId = 0;
   int? _totalCount;
   static const int _pageSize = 30;
 
   PatientFilters get currentFilters => PatientFilters(
-      clinic: _clinicFilter, doctorId: _doctorId, search: _currentQuery.isEmpty ? null : _currentQuery);
+      clinic: _clinicFilter,
+      clinics: _clinicFilter == null && _mine ? _myBranches : const [],
+      doctorId: _doctorId,
+      search: _currentQuery.isEmpty ? null : _currentQuery);
 
   ClinicLocation? get currentClinicFilter => _clinicFilter;
+
+  /// Whether the list shows only the signed-in consultant's branches.
+  bool get showsMyBranches => _clinicFilter == null && _mine && _myBranches.isNotEmpty;
+  List<ClinicLocation> get myBranches => _myBranches;
   String get currentQuery => _currentQuery;
   String? get currentDoctorFilter => _doctorId;
   String get orderBy => _orderBy;
@@ -52,6 +66,11 @@ class PatientList extends _$PatientList {
     });
 
     final user = ref.watch(currentUserProvider).value;
+    _myBranches = ref.watch(myBranchesProvider);
+    if (!_mineDecided && user != null && ref.watch(staffAssignmentsProvider).hasValue) {
+      _mine = user.role == UserRole.doctor && user.isSeniorDoctor && _myBranches.isNotEmpty;
+      _mineDecided = true;
+    }
     if (!_hasInitializedClinic && user != null) {
       _clinicFilter = user.role == UserRole.receptionist
           ? ref.read(activeBranchProvider)
@@ -132,15 +151,19 @@ class PatientList extends _$PatientList {
     String? doctorId,
     String? orderBy,
     bool? ascending,
+    bool? mine,
   }) {
     final user = ref.read(currentUserProvider).value;
     final canDoc = user == null || user.role != UserRole.doctor || user.isSeniorDoctor;
     final targetDoc = canDoc ? doctorId : _doctorId;
     final targetOrder = orderBy ?? _orderBy;
     final targetAsc = ascending ?? _ascending;
-    if (_clinicFilter == clinic && _doctorId == targetDoc && _orderBy == targetOrder && _ascending == targetAsc) {
+    final bool targetMine = clinic == null && (mine ?? _mine);
+    if (_clinicFilter == clinic && _doctorId == targetDoc && _orderBy == targetOrder && _ascending == targetAsc &&
+        _mine == targetMine) {
       return;
     }
+    _mine = targetMine;
     _clinicFilter = clinic;
     _doctorId = targetDoc;
     _orderBy = targetOrder;
@@ -149,7 +172,7 @@ class PatientList extends _$PatientList {
   }
 
   void setDoctorFilter(String? docId) => applyFilters(clinic: _clinicFilter, doctorId: docId);
-  void setClinicFilter(ClinicLocation? clinic) => applyFilters(clinic: clinic, doctorId: _doctorId);
+  void setClinicFilter(ClinicLocation? clinic) => applyFilters(clinic: clinic, doctorId: _doctorId, mine: false);
   void setSort(String order, bool asc) => applyFilters(clinic: _clinicFilter, doctorId: _doctorId, orderBy: order, ascending: asc);
 
   int get currentPage => (_offset / _pageSize).floor() + 1;

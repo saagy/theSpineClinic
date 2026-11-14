@@ -97,6 +97,14 @@ rejects related appointments, payments, programs, notes, documents, medical
 history and nonzero session/traction balances. Do not restore a privileged-role
 bypass or replace the RPC with a direct client delete.
 
+### Branches
+A visit's branch is `appointments.branch`, not the patient's `clinic`:
+schedules, booking, filters and the Doctor sessions report use it, and a
+patient transfer never moves past visits. Staff branches
+(`staff_branches`) and shifts (`staff_shifts`) only order pickers and drive
+booking warnings; never hide a doctor or block a booking with them. Doctors
+with no branches count as working everywhere until assigned.
+
 ### Status Callback Wiring
 Shared `AppointmentAgendaRow` menus are an exception to the legacy callback
 contract below: `AgendaStatusController` patches the schedule, All, patient and

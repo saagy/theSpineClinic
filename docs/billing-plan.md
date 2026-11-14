@@ -101,7 +101,8 @@ Doctor sessions report (added November 13, 2026, migration
   so and each session lists who it was shared with. Spinal traction is done
   without a doctor and is never counted, including older appointments that
   still have one attached.
-- The branch is the patient's branch, as on the schedule screens.
+- The branch is where each session happened (`appointments.branch`, since
+  November 14, 2026), so a patient's transfer never moves past sessions.
 - All doctors: one row per doctor that expands to their sessions. Printing
   gives the summary, the unchecked appointments, then each doctor's sessions
   on a page of their own, ready to hand out. One doctor: their figures and

@@ -22,7 +22,15 @@ class PatientFilterMainView extends StatelessWidget {
     required this.onSortChanged,
     required this.onReset,
     required this.onApply,
+    this.myBranches = const [],
+    this.mine = false,
+    this.onMine,
   });
+
+  /// The viewer's own branches; with more than one, "My branches" is offered.
+  final List<ClinicLocation> myBranches;
+  final bool mine;
+  final VoidCallback? onMine;
 
   final ClinicLocation? selectedClinic;
   final String? selectedDoctorId;
@@ -45,10 +53,12 @@ class PatientFilterMainView extends StatelessWidget {
         spacing: AppSizes.p8,
         runSpacing: AppSizes.p8,
         children: [
+          if (myBranches.isNotEmpty && onMine != null)
+            FilterOptionChip(label: AppStrings.myBranches, isSelected: mine, onTap: onMine!),
           for (final clinic in <ClinicLocation?>[null, ...ClinicLocation.values])
             FilterOptionChip(
               label: clinic?.displayLabel ?? AppStrings.filterAllBranches,
-              isSelected: selectedClinic == clinic,
+              isSelected: !mine && selectedClinic == clinic,
               onTap: () => onClinicChanged(clinic),
             ),
         ],

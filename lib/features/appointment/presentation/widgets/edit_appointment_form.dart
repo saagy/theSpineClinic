@@ -21,6 +21,11 @@ import 'package:spine_clinic_app/features/appointment/presentation/edit_appointm
 import 'package:spine_clinic_app/features/appointment/presentation/widgets/booking_form_fields.dart';
 import 'package:spine_clinic_app/features/auth/domain/staff.dart';
 import 'package:spine_clinic_app/features/patient/domain/patient.dart';
+import 'package:spine_clinic_app/features/patient/domain/clinic_location.dart';
+import 'package:spine_clinic_app/features/auth/domain/user_role.dart';
+import 'package:spine_clinic_app/features/auth/presentation/auth_providers.dart';
+import 'package:spine_clinic_app/features/appointment/presentation/widgets/booking_branch_field.dart';
+import 'package:spine_clinic_app/features/appointment/presentation/widgets/booking_schedule_warnings.dart';
 import 'package:spine_clinic_app/shared/widgets/doctor_select_field.dart';
 import 'package:spine_clinic_app/shared/widgets/app_snackbar.dart';
 
@@ -50,6 +55,8 @@ class _EditAppointmentFormState extends ConsumerState<EditAppointmentForm> {
   late bool _usePackage;
   late DateTime? _selectedDate;
   late TimeOfDay? _selectedTime;
+  late ClinicLocation? _branch = widget.appointment.branch ?? widget.patient.clinic;
+  late List<Staff> _doctors = widget.initialDoctors;
   String? _dateErrorText;
   String? _timeErrorText;
   bool _isSubmitting = false;
@@ -97,6 +104,8 @@ class _EditAppointmentFormState extends ConsumerState<EditAppointmentForm> {
       type: _selectedType,
       usePackage: _usePackage,
       scheduledAt: updatedScheduledAt,
+      // Sent only when it changed, so an unchanged branch never trips the lock.
+      branch: _branch == widget.appointment.branch ? null : _branch,
     );
 
     try {

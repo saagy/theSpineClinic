@@ -33,7 +33,7 @@ final class BookingControllerProvider
   BookingController create() => BookingController();
 }
 
-String _$bookingControllerHash() => r'f92913584538557555b1bb9071b1f9ba89015cc3';
+String _$bookingControllerHash() => r'd2f57c97fa552327f21973e1afa546bc2b87749b';
 
 abstract class _$BookingController extends $AsyncNotifier<void> {
   FutureOr<void> build();

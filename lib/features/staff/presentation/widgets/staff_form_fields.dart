@@ -7,12 +7,15 @@ import 'package:spine_clinic_app/core/constants/app_text_styles.dart';
 import 'package:spine_clinic_app/features/auth/domain/staff.dart';
 import 'package:spine_clinic_app/shared/widgets/form_field_pair.dart';
 import 'package:spine_clinic_app/shared/widgets/form_section.dart';
+import 'package:spine_clinic_app/features/auth/domain/user_role.dart';
+import 'package:spine_clinic_app/features/staff/domain/staff_assignments.dart';
 import 'package:spine_clinic_app/features/staff/domain/staff_details.dart';
 import 'staff_access_fields.dart';
 import 'staff_details_fields.dart';
 import 'staff_account_fields.dart';
 import 'staff_form_controls.dart';
 import 'staff_password_fields.dart';
+import 'staff_schedule_field.dart';
 
 class StaffFormFields extends StatelessWidget {
   const StaffFormFields({
@@ -21,10 +24,12 @@ class StaffFormFields extends StatelessWidget {
     required this.isSelf,
     required this.formKey,
     required this.details,
+    required this.schedule,
     this.staff,
     this.onSubmit,
   });
   final StaffDetails details;
+  final StaffSchedule schedule;
   final bool enabled;
   final bool isSelf;
   final GlobalKey<FormBuilderState> formKey;
@@ -111,6 +116,20 @@ class StaffFormFields extends StatelessWidget {
           enabled: enabled,
           isSelf: isSelf,
           staff: staff,
+        ),
+      ),
+      const SizedBox(height: AppSizes.p24),
+      FormSection(
+        title: AppStrings.staffSchedule.section,
+        description: AppStrings.staffSchedule.sectionHelp,
+        child: StaffScheduleField(
+          enabled: enabled,
+          initialValue: schedule,
+          validator: (value) =>
+              formKey.currentState?.fields['role']?.value == UserRole.receptionist &&
+                  (value?.branches.isEmpty ?? true)
+              ? AppStrings.staffSchedule.receptionistNeedsBranch
+              : null,
         ),
       ),
       const SizedBox(height: AppSizes.p24),

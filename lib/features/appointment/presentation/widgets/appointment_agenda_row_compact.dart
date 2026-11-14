@@ -22,6 +22,7 @@ class AppointmentAgendaCompactRow extends StatelessWidget {
     required this.showDoctor,
     this.patientContext = false,
     this.showDate = false,
+    this.showBranch = false,
   });
 
   final AppointmentWithPatient item;
@@ -31,6 +32,9 @@ class AppointmentAgendaCompactRow extends StatelessWidget {
   final bool showDoctor;
   final bool patientContext;
   final bool showDate;
+
+  /// Shows where the visit happens, for people who work at several branches.
+  final bool showBranch;
 
   @override
   Widget build(BuildContext context) {
@@ -88,7 +92,9 @@ class AppointmentAgendaCompactRow extends StatelessWidget {
                         style: AppTextStyles.caption.copyWith(color: cs.onSurfaceVariant),
                       ),
                     Text(
-                      appt.type.displayLabel,
+                      showBranch && appt.branch != null
+                          ? '${appt.type.displayLabel} · ${appt.branch!.displayLabel}'
+                          : appt.type.displayLabel,
                       style: AppTextStyles.caption.copyWith(color: cs.onSurfaceVariant),
                     ),
                   ],

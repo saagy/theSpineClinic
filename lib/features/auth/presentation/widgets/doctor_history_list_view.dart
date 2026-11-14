@@ -70,6 +70,7 @@ class _DoctorHistoryListViewState extends State<DoctorHistoryListView> {
                 index: index,
                 animatedIndices: _animatedIndices,
                 child: AppointmentAgendaRow(
+                  showBranch: true,
                   key: ValueKey(item.appointment.id),
                   item: AppointmentWithPatient(
                     appointment: item.appointment,

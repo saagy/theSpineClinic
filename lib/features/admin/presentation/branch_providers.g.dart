@@ -65,3 +65,56 @@ abstract class _$ActiveBranch extends $Notifier<ClinicLocation> {
     element.handleCreate(ref, build);
   }
 }
+
+/// The branch the signed-in person is looking at: a receptionist's working
+/// branch, or the branch a super admin chose (null for all branches).
+/// Others have none. Pickers list this branch's staff first.
+
+@ProviderFor(viewingBranch)
+final viewingBranchProvider = ViewingBranchProvider._();
+
+/// The branch the signed-in person is looking at: a receptionist's working
+/// branch, or the branch a super admin chose (null for all branches).
+/// Others have none. Pickers list this branch's staff first.
+
+final class ViewingBranchProvider
+    extends
+        $FunctionalProvider<ClinicLocation?, ClinicLocation?, ClinicLocation?>
+    with $Provider<ClinicLocation?> {
+  /// The branch the signed-in person is looking at: a receptionist's working
+  /// branch, or the branch a super admin chose (null for all branches).
+  /// Others have none. Pickers list this branch's staff first.
+  ViewingBranchProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'viewingBranchProvider',
+        isAutoDispose: true,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$viewingBranchHash();
+
+  @$internal
+  @override
+  $ProviderElement<ClinicLocation?> $createElement($ProviderPointer pointer) =>
+      $ProviderElement(pointer);
+
+  @override
+  ClinicLocation? create(Ref ref) {
+    return viewingBranch(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(ClinicLocation? value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<ClinicLocation?>(value),
+    );
+  }
+}
+
+String _$viewingBranchHash() => r'8adbd9d1232b284524a683824afc4e2090157077';

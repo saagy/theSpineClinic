@@ -27,6 +27,10 @@ import 'package:spine_clinic_app/features/auth/domain/staff.dart';
 import 'package:spine_clinic_app/features/auth/domain/user_role.dart';
 import 'package:spine_clinic_app/features/auth/presentation/auth_providers.dart';
 import 'package:spine_clinic_app/features/patient/domain/patient.dart';
+import 'package:spine_clinic_app/features/patient/domain/clinic_location.dart';
+import 'package:spine_clinic_app/features/admin/presentation/branch_providers.dart';
+import 'package:spine_clinic_app/features/appointment/presentation/widgets/booking_branch_field.dart';
+import 'package:spine_clinic_app/features/appointment/presentation/widgets/booking_schedule_warnings.dart';
 import 'package:spine_clinic_app/features/patient/presentation/patient_providers.dart';
 import 'package:spine_clinic_app/shared/widgets/doctor_select_field.dart';
 import 'package:spine_clinic_app/shared/widgets/app_snackbar.dart';
@@ -82,6 +86,11 @@ class _NewAppointmentFormState extends ConsumerState<NewAppointmentForm> {
   String? _daysErrorText;
   String? _patientId;
 
+  /// The branch the visit happens at, once someone picks one; until then
+  /// the booking branch follows [_defaultBranch].
+  ClinicLocation? _branch;
+  List<Staff> _doctors = const [];
+
   static const Duration _fetchTimeout = Duration(seconds: 15);
 
   @override
@@ -108,6 +117,23 @@ class _NewAppointmentFormState extends ConsumerState<NewAppointmentForm> {
   }
 
   void _mutate(VoidCallback mutation) => setState(mutation);
+
+  /// Receptionists book at their working branch, super admins at the branch
+  /// they are viewing; otherwise the patient's own branch.
+  /// Pass [listen] false outside build.
+  ClinicLocation? _bookingBranch(Patient? patient, {bool listen = true}) {
+    if (_branch != null) return _branch;
+    final Staff? user = (listen ? ref.watch(currentUserProvider) : ref.read(currentUserProvider)).value;
+    // A receptionist's working branch is saved on their profile.
+    if (user?.role == UserRole.receptionist && user?.branch != null) return user!.branch;
+    if (user?.role == UserRole.superAdmin) {
+      final ClinicLocation? viewing = ClinicLocation.fromDbValue(
+        listen ? ref.watch(adminBranchFilterProvider) : ref.read(adminBranchFilterProvider),
+      );
+      if (viewing != null) return viewing;
+    }
+    return patient?.clinic;
+  }
 
   @override
   Widget build(BuildContext context) => _buildForm(context);

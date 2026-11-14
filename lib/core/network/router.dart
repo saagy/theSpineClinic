@@ -56,6 +56,7 @@ import 'package:spine_clinic_app/features/payments/presentation/service_form_scr
 import 'package:spine_clinic_app/features/payments/domain/invoice_access.dart';
 import 'package:spine_clinic_app/features/staff/presentation/staff_form_screen.dart';
 import 'package:spine_clinic_app/features/staff/presentation/staff_list_screen.dart';
+import 'package:spine_clinic_app/features/staff/presentation/staff_profile_screen.dart';
 import 'package:spine_clinic_app/shared/widgets/app_shell.dart';
 import 'package:spine_clinic_app/shared/widgets/nav_tabs.dart';
 

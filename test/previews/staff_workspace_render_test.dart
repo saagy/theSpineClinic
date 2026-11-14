@@ -3,7 +3,9 @@ import 'package:flutter_form_builder/flutter_form_builder.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:spine_clinic_app/features/staff/presentation/staff_details_providers.dart';
+import 'package:spine_clinic_app/features/staff/domain/staff_assignments.dart';
 import 'package:spine_clinic_app/features/staff/domain/staff_details.dart';
+import '../fixtures/staff_branches_fixture.dart';
 import 'package:spine_clinic_app/core/constants/app_palette.dart';
 import 'package:spine_clinic_app/core/constants/app_strings.dart';
 import 'package:spine_clinic_app/core/constants/app_theme.dart';
@@ -35,14 +37,7 @@ void main() {
                 currentUserProvider.overrideWith(StaffWorkspaceUser.new),
                 staffListProvider.overrideWith(StaffWorkspaceRoster.new),
                 pendingStaffApplicationsProvider.overrideWith(StaffWorkspacePending.new),
-                staffSchedulesProvider.overrideWith((ref) async => {
-                  staffRoster[1].id: StaffDetails(
-                    workingDays: const [6, 7, 1, 2, 3, 4],
-                    workStartMinutes: 9 * 60,
-                    workEndMinutes: 17 * 60,
-                  ),
-                  staffRoster[2].id: StaffDetails(workingDays: const [6, 1, 3]),
-                }),
+                staffAssignmentsProvider.overrideWith((ref) async => demoAssignments),
               ],
               child: MaterialApp(
                 debugShowCheckedModeBanner: false,
@@ -94,7 +89,7 @@ void main() {
             child: MaterialApp(
               debugShowCheckedModeBanner: false,
               theme: AppTheme.light(clinicalBluePaletteLight),
-              home: StaffFormBody(currentUser: staffAdmin, details: StaffDetails.empty),
+              home: StaffFormBody(currentUser: staffAdmin, details: StaffDetails.empty, schedule: StaffSchedule.empty),
             ),
           ),
         ),

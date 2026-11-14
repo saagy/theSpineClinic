@@ -82,6 +82,7 @@ extension _NewPatientView on _NewPatientFormState {
                   name: 'assigned_doctors',
                   initialValue: const [],
                   builder: (state) => DoctorSelectField(
+                    branch: ref.watch(viewingBranchProvider),
                     enabled: !isSaving,
                     initialValue: List<Staff>.from(state.value ?? []),
                     onSavedDoctors: state.didChange,

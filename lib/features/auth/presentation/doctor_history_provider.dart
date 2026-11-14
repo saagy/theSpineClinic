@@ -109,7 +109,7 @@ class DoctorHistoryState {
         return false;
       }
       if (typeFilter != null && i.appointment.type != typeFilter) return false;
-      if (branchFilter != null && i.patient.clinic != branchFilter) {
+      if (branchFilter != null && (i.appointment.branch ?? i.patient.clinic) != branchFilter) {
         return false;
       }
       return true;

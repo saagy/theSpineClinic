@@ -7,6 +7,7 @@ import 'invoice_detail_strings.dart';
 import 'invoice_discount_strings.dart';
 import 'invoice_strings.dart';
 import 'staff_details_strings.dart';
+import 'staff_schedule_strings.dart';
 
 /// Application-wide string constants.
 abstract final class AppStrings {
@@ -56,6 +57,7 @@ abstract final class AppStrings {
   static const invoiceDiscount = InvoiceDiscountStrings();
   static const billingReports = BillingReportStrings();
   static const staffDetails = StaffDetailsStrings();
+  static const staffSchedule = StaffScheduleStrings();
   static String staffAppliedOn(String date) => 'Applied $date';
   static const String noMatchingStaff = 'No staff match your search or filters.';
   static const String programActions = 'Program actions';
@@ -266,6 +268,7 @@ abstract final class AppStrings {
     ...invoices.errorKeys,
     ...invoiceDetail.errorKeys,
     ...staffDetails.errorKeys,
+    ...staffSchedule.errorKeys,
     'payment_changed': paymentChanged,
     'mutation_previous_completed': mutationPreviousCompleted,
     'error_unknown': errorUnknown,
@@ -784,6 +787,11 @@ abstract final class AppStrings {
   // Profile / Settings
   static const String profile = 'Profile';
   static const String activeBranch = 'Active Branch';
+  static const String myBranches = 'My branches';
+  static const String nextVisitOverdue = 'Overdue';
+  static const String patientContact = 'Contact';
+  static const String patientRegistration = 'Registration';
+  static String patientAgeYears(int years) => years < 1 ? 'Under 1 yr' : '$years yrs';
   static const String selectBranch = 'Select Branch';
   static const String signOut = 'Sign Out';
   static const String historicAppointments = 'Historic Appointments';

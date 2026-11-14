@@ -17,6 +17,11 @@ _Appointment _$AppointmentFromJson(Map<String, dynamic> json) => _Appointment(
   usePackage: json['use_package'] as bool? ?? true,
   createdBy: json['created_by'] as String?,
   createdAt: DateTime.parse(json['created_at'] as String),
+  branch: $enumDecodeNullable(
+    _$ClinicLocationEnumMap,
+    json['branch'],
+    unknownValue: JsonKey.nullForUndefinedEnumValue,
+  ),
 );
 
 Map<String, dynamic> _$AppointmentToJson(_Appointment instance) =>
@@ -29,6 +34,7 @@ Map<String, dynamic> _$AppointmentToJson(_Appointment instance) =>
       'use_package': instance.usePackage,
       'created_by': instance.createdBy,
       'created_at': instance.createdAt.toIso8601String(),
+      'branch': _$ClinicLocationEnumMap[instance.branch],
     };
 
 const _$AppointmentTypeEnumMap = {
@@ -42,4 +48,10 @@ const _$AppointmentStatusEnumMap = {
   AppointmentStatus.scheduled: 'scheduled',
   AppointmentStatus.checkedIn: 'checked_in',
   AppointmentStatus.cancelled: 'cancelled',
+};
+
+const _$ClinicLocationEnumMap = {
+  ClinicLocation.tagamoa: 'tagamoa',
+  ClinicLocation.masrElgedida: 'masr_elgedida',
+  ClinicLocation.madinaty: 'madinaty',
 };

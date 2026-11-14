@@ -193,6 +193,21 @@ class DatabaseException extends AppException {
         pgCode: pgCode,
       );
     }
+    for (final String key in const [
+      'staff_shifts_overlap',
+      'staff_schedule_invalid',
+      'branch_not_assigned',
+      'appointment_branch_locked',
+    ]) {
+      if (error.message.contains(key)) {
+        return DatabaseException(
+          code: 'db/$key',
+          message: error.message,
+          userMessageKey: key,
+          pgCode: pgCode,
+        );
+      }
+    }
     if (error.message.contains('staff_details_invalid')) {
       return DatabaseException(
         code: 'db/staff-details-invalid',
