@@ -4,6 +4,7 @@ import 'package:spine_clinic_app/core/constants/app_sizes.dart';
 import 'package:spine_clinic_app/core/constants/app_text_styles.dart';
 import 'package:spine_clinic_app/core/utils/formatters.dart';
 import 'package:spine_clinic_app/features/patient/domain/patient.dart';
+import 'package:spine_clinic_app/features/patient/presentation/widgets/patient_identity_line.dart';
 import 'package:spine_clinic_app/features/patient/presentation/widgets/patient_monogram_badge.dart';
 import 'package:spine_clinic_app/features/patient/presentation/widgets/patient_phone_options_sheet.dart';
 import 'package:spine_clinic_app/shared/widgets/patient_id_label.dart';
@@ -36,6 +37,10 @@ class WorkspaceHeader extends StatelessWidget {
                   patient.fullName,
                   style: AppTextStyles.cardTitle.copyWith(color: cs.onSurface),
                 ),
+                if (patientIdentityLine(patient.personalDetails) case final String identity) ...[
+                  const SizedBox(height: AppSizes.p2),
+                  Text(identity, style: AppTextStyles.caption.copyWith(color: cs.onSurface)),
+                ],
                 const SizedBox(height: AppSizes.p4),
                 Wrap(
                   spacing: AppSizes.p8,

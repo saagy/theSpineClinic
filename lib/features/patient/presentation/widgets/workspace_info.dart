@@ -22,48 +22,21 @@ class WorkspaceInfo extends ConsumerWidget {
       title: AppStrings.patientDetails,
       child: RecordFactGrid(
         children: [
-          InkWell(
-            onTap: () => PatientPhoneOptionsSheet.show(context, patient.phoneNumber),
-            borderRadius: BorderRadius.circular(AppSizes.r6),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(vertical: AppSizes.p8),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    AppStrings.phone,
-                    style: AppTextStyles.caption.copyWith(
-                      color: Theme.of(context).colorScheme.onSurfaceVariant,
-                    ),
-                  ),
-                  const SizedBox(height: AppSizes.p4),
-                  Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(Icons.phone_outlined, size: AppSizes.iconSmall, color: Theme.of(context).colorScheme.primary),
-                      const SizedBox(width: AppSizes.p6),
-                      Flexible(
-                        child: Text(
-                          Formatters.formatPhone(patient.phoneNumber),
-                          style: AppTextStyles.bodyMedium.copyWith(
-                            color: Theme.of(context).colorScheme.primary,
-                          ),
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-          ),
-          RecordFact(label: AppStrings.clinic, value: patient.clinic.displayLabel),
+          // The main phone is the call action in the header.
+          if (_text(patient.personalDetails.secondaryPhone) case final String second)
+            _PhoneFact(label: AppStrings.patientSecondaryPhone, phone: second),
+          if (_text(patient.personalDetails.address) case final String address)
+            RecordFact(label: AppStrings.patientAddress, value: address),
           RecordFact(label: AppStrings.registered, value: Formatters.formatDateMedium(patient.createdAt)),
           if (patient.lastAppointmentDate != null)
             RecordFact(
               label: AppStrings.lastVisit,
               value: Formatters.formatDateMedium(patient.lastAppointmentDate!),
             ),
+          if (_text(patient.personalDetails.referralSource) case final String source)
+            RecordFact(label: AppStrings.patientReferralSource, value: source),
+          if (_text(patient.personalDetails.nationality) case final String nationality)
+            RecordFact(label: AppStrings.patientNationality, value: nationality),
           RecordAsync(
             value: ref.watch(doctors),
             onRetry: () => ref.invalidate(doctors),
@@ -95,6 +68,48 @@ class WorkspaceInfo extends ConsumerWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+String? _text(String? value) => value == null || value.trim().isEmpty ? null : value;
+
+/// A phone number that opens the call and WhatsApp options.
+class _PhoneFact extends StatelessWidget {
+  const _PhoneFact({required this.label, required this.phone});
+  final String label;
+  final String phone;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+    return InkWell(
+      onTap: () => PatientPhoneOptionsSheet.show(context, phone),
+      borderRadius: BorderRadius.circular(AppSizes.r6),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: AppSizes.p8),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(label, style: AppTextStyles.caption.copyWith(color: colors.onSurfaceVariant)),
+            const SizedBox(height: AppSizes.p4),
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(Icons.phone_outlined, size: AppSizes.iconSmall, color: colors.primary),
+                const SizedBox(width: AppSizes.p6),
+                Flexible(
+                  child: Text(
+                    Formatters.formatPhone(phone),
+                    style: AppTextStyles.bodyMedium.copyWith(color: colors.primary),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }

@@ -74,10 +74,10 @@ class WorkspaceFollowUp extends ConsumerWidget {
         return LayoutBuilder(
           builder: (context, constraints) {
             final isWide = constraints.maxWidth >= 600;
-            final width = isWide ? (constraints.maxWidth - AppSizes.p12) / 2 : constraints.maxWidth;
+            final width = isWide ? (constraints.maxWidth - AppSizes.p24) / 2 : constraints.maxWidth;
             return Wrap(
-              spacing: AppSizes.p12,
-              runSpacing: AppSizes.p12,
+              spacing: AppSizes.p24,
+              runSpacing: AppSizes.p16,
               children: [
                 if (nextAppt != null) SizedBox(width: width, child: _buildApptTile(context, ref, cs, nextAppt)),
                 SizedBox(width: isWide && nextAppt != null ? width : constraints.maxWidth, child: _buildTargetTile(context, ref, cs, mutating)),
@@ -90,13 +90,9 @@ class WorkspaceFollowUp extends ConsumerWidget {
   }
 
   Widget _buildApptTile(BuildContext context, WidgetRef ref, ColorScheme cs, Appointment appt) {
-    return Container(
-      padding: const EdgeInsets.all(AppSizes.p14),
-      decoration: BoxDecoration(
-        color: cs.surfaceContainerLowest,
-        borderRadius: BorderRadius.circular(AppSizes.r12),
-        border: Border.all(color: cs.outlineVariant.withAlpha(100)),
-      ),
+    // Flat inside the overview surface: no box inside a box.
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: AppSizes.p4),
       child: InkWell(
         borderRadius: BorderRadius.circular(AppSizes.r8),
         onTap: () async {
@@ -139,13 +135,9 @@ class WorkspaceFollowUp extends ConsumerWidget {
 
   Widget _buildTargetTile(BuildContext context, WidgetRef ref, ColorScheme cs, bool mutating) {
     final hasDate = patient.nextVisitDate != null;
-    return Container(
-      padding: const EdgeInsets.all(AppSizes.p14),
-      decoration: BoxDecoration(
-        color: cs.surfaceContainerLowest,
-        borderRadius: BorderRadius.circular(AppSizes.r12),
-        border: Border.all(color: cs.outlineVariant.withAlpha(100)),
-      ),
+    // Flat inside the overview surface: no box inside a box.
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: AppSizes.p4),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -172,9 +164,8 @@ class WorkspaceFollowUp extends ConsumerWidget {
                 IconButton(
                   tooltip: AppStrings.tapToSetNextVisit,
                   onPressed: mutating ? null : () => _setDate(context, ref),
-                  icon: const Icon(Icons.add, size: 18),
-                  padding: EdgeInsets.zero,
-                  constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+                  icon: const Icon(Icons.add, size: AppSizes.iconSmall),
+                  constraints: const BoxConstraints(minWidth: AppSizes.tappableMin, minHeight: AppSizes.tappableMin),
                 )
               else
                 RecordActionMenu<bool>(
@@ -188,13 +179,30 @@ class WorkspaceFollowUp extends ConsumerWidget {
                 ),
             ],
           ),
-          const SizedBox(height: AppSizes.p8),
-          Text(
-            hasDate ? Formatters.formatDateMedium(patient.nextVisitDate!) : AppStrings.noNextVisitSet,
-            style: hasDate ? AppTextStyles.bodyBold.copyWith(color: cs.onSurface) : AppTextStyles.body.copyWith(color: cs.onSurfaceVariant),
+          const SizedBox(height: AppSizes.p4),
+          Wrap(
+            spacing: AppSizes.p8,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            children: [
+              Text(
+                hasDate ? Formatters.formatDateMedium(patient.nextVisitDate!) : AppStrings.noNextVisitSet,
+                style: hasDate
+                    ? AppTextStyles.bodyBold.copyWith(color: cs.onSurface)
+                    : AppTextStyles.body.copyWith(color: cs.onSurfaceVariant),
+              ),
+              if (_isPast(patient.nextVisitDate))
+                Text(AppStrings.nextVisitOverdue, style: AppTextStyles.captionBold.copyWith(color: cs.error)),
+            ],
           ),
         ],
       ),
     );
+  }
+
+  /// A follow-up date before today that nobody has booked yet.
+  static bool _isPast(DateTime? date) {
+    if (date == null) return false;
+    final DateTime now = DateTime.now();
+    return date.isBefore(DateTime(now.year, now.month, now.day));
   }
 }

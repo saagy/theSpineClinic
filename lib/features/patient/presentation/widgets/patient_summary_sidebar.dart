@@ -1,17 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
-import 'package:go_router/go_router.dart';
 import 'package:spine_clinic_app/core/constants/app_sizes.dart';
 import 'package:spine_clinic_app/core/constants/app_strings.dart';
 import 'package:spine_clinic_app/core/constants/app_text_styles.dart';
-import 'package:spine_clinic_app/core/network/app_routes.dart';
 import 'package:spine_clinic_app/core/utils/formatters.dart';
 import 'package:spine_clinic_app/features/patient/domain/patient.dart';
 import 'package:spine_clinic_app/features/patient/presentation/patient_providers.dart';
+import 'package:spine_clinic_app/features/patient/presentation/widgets/patient_identity_line.dart';
 import 'package:spine_clinic_app/features/patient/presentation/widgets/patient_monogram_badge.dart';
 import 'package:spine_clinic_app/features/patient/presentation/widgets/patient_phone_options_sheet.dart';
 import 'package:spine_clinic_app/features/patient/presentation/widgets/patient_summary_balance_cards.dart';
+import 'package:spine_clinic_app/features/patient/presentation/widgets/patient_summary_facts.dart';
 import 'package:spine_clinic_app/shared/widgets/patient_id_label.dart';
 
 /// Modern 2026 SaaS Summary Rail anchored on the left of the patient workspace.
@@ -42,7 +42,7 @@ class PatientSummarySidebar extends ConsumerWidget {
           const SizedBox(height: AppSizes.p24),
           _buildAttendingDoctors(context, ref, cs),
           const SizedBox(height: AppSizes.p24),
-          _buildMetadata(context, cs),
+          PatientSummaryFacts(patient: patient),
         ],
       ),
     );
@@ -62,18 +62,29 @@ class PatientSummarySidebar extends ConsumerWidget {
                 patient.fullName,
                 style: AppTextStyles.headingMedium.copyWith(color: cs.onSurface),
               ),
-              if (patient.fileNumber case final int number) PatientIdLabel(number),
+              if (patientIdentityLine(patient.personalDetails) case final String identity) ...[
+                const SizedBox(height: AppSizes.p2),
+                Text(identity, style: AppTextStyles.bodyMedium.copyWith(color: cs.onSurface)),
+              ],
               const SizedBox(height: AppSizes.p4),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: AppSizes.p8, vertical: AppSizes.p2),
-                decoration: BoxDecoration(
-                  color: cs.secondaryContainer.withAlpha(120),
-                  borderRadius: BorderRadius.circular(AppSizes.r6),
-                ),
-                child: Text(
-                  patient.clinic.displayLabel,
-                  style: AppTextStyles.captionBold.copyWith(color: cs.onSecondaryContainer),
-                ),
+              Wrap(
+                spacing: AppSizes.p8,
+                runSpacing: AppSizes.p4,
+                crossAxisAlignment: WrapCrossAlignment.center,
+                children: [
+                  if (patient.fileNumber case final int number) PatientIdLabel(number),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: AppSizes.p8, vertical: AppSizes.p2),
+                    decoration: BoxDecoration(
+                      color: cs.secondaryContainer.withAlpha(120),
+                      borderRadius: BorderRadius.circular(AppSizes.r6),
+                    ),
+                    child: Text(
+                      patient.clinic.displayLabel,
+                      style: AppTextStyles.captionBold.copyWith(color: cs.onSecondaryContainer),
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
@@ -82,6 +93,8 @@ class PatientSummarySidebar extends ConsumerWidget {
     );
   }
 
+  /// Calling is the frequent action here. Editing lives in the app bar,
+  /// which checks who may edit, on every window size.
   Widget _buildQuickActions(BuildContext context, ColorScheme cs) {
     final hasPhone = patient.phoneNumber.trim().isNotEmpty;
     return Wrap(
@@ -94,11 +107,6 @@ class PatientSummarySidebar extends ConsumerWidget {
             label: Formatters.formatPhone(patient.phoneNumber),
             onTap: () => PatientPhoneOptionsSheet.show(context, patient.phoneNumber),
           ),
-        _ActionPill(
-          icon: LucideIcons.pencil,
-          label: AppStrings.edit,
-          onTap: () => context.push(AppRoutes.editPatient.replaceFirst(':id', patient.id)),
-        ),
       ],
     );
   }
@@ -137,34 +145,6 @@ class PatientSummarySidebar extends ConsumerWidget {
           error: (_, _) => const SizedBox.shrink(),
         ),
       ],
-    );
-  }
-
-  Widget _buildMetadata(BuildContext context, ColorScheme cs) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Divider(color: cs.outlineVariant.withAlpha(80), height: 1),
-        const SizedBox(height: AppSizes.p12),
-        _metaRow(cs, AppStrings.phone, Formatters.formatPhone(patient.phoneNumber)),
-        _metaRow(cs, AppStrings.registered, Formatters.formatDateMedium(patient.createdAt)),
-        if (patient.lastAppointmentDate != null)
-          _metaRow(cs, AppStrings.lastVisit, Formatters.formatDateMedium(patient.lastAppointmentDate!),
-          ),
-      ],
-    );
-  }
-
-  Widget _metaRow(ColorScheme cs, String label, String value) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: AppSizes.p4),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(label, style: AppTextStyles.caption.copyWith(color: cs.onSurfaceVariant)),
-          Text(value, style: AppTextStyles.captionBold.copyWith(color: cs.onSurface)),
-        ],
-      ),
     );
   }
 }
