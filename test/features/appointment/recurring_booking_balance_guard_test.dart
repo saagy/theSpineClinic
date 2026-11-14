@@ -129,27 +129,12 @@ void main() {
     },
   );
 
-  testWidgets(
-    'Bundled assessment does not show secondary package balance toggle',
-    (tester) async {
-      await tester.pumpWidget(buildBookingBalanceHarness());
-      await tester.pumpAndSettle();
+  testWidgets('booking offers no bundled assessment', (tester) async {
+    await tester.pumpWidget(buildBookingBalanceHarness());
+    await tester.pumpAndSettle();
 
-      // Toggle bundling on
-      final bundleSwitch = find.widgetWithText(
-        SwitchListTile,
-        AppStrings.bundleAssessmentHint,
-      );
-      expect(bundleSwitch, findsOneWidget);
-      await tester.ensureVisible(bundleSwitch);
-      await tester.tap(bundleSwitch);
-      await tester.pumpAndSettle();
-
-      expect(find.text(AppStrings.secondarySession), findsOneWidget);
-      expect(
-        find.text('Use package balance for secondary session'),
-        findsNothing,
-      );
-    },
-  );
+    expect(find.byType(SwitchListTile), findsNothing);
+    expect(find.text(AppStrings.recurringBooking), findsOneWidget);
+    expect(find.text(AppStrings.reassessment), findsOneWidget);
+  });
 }

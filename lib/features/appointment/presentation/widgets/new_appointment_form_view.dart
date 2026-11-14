@@ -39,47 +39,23 @@ extension _NewAppointmentFormView on _NewAppointmentFormState {
               }
               _selectedType = type;
               _usePackage = type.affectsPackageBalance ? _sessionUsePackage : false;
-
-              if (!type.affectsPackageBalance) {
-                _bundleSecondarySession = false;
-              }
             }),
             isRecurring: _isRecurring,
-            onRecurringChanged: (value) => _mutate(() {
-              _isRecurring = value;
-              if (value) {
-                _bundleSecondarySession = false;
-              }
-            }),
+            onRecurringChanged: (value) => _mutate(() => _isRecurring = value),
             selectedDate: _selectedDate,
             onDateChanged: (date) => _mutate(() => _selectedDate = date),
             selectedTime: _selectedTime,
-            onTimeChanged: (time) => _mutate(() {
-              _selectedTime = time;
-              _secondaryTime = time;
-            }),
+            onTimeChanged: (time) => _mutate(() => _selectedTime = time),
             dateErrorText: _dateErrorText,
             timeErrorText: _timeErrorText,
-            showRecurringToggle: !_bundleSecondarySession,
           ),
           second: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              if (_selectedType == AppointmentType.normalPtSession ||
-                  _selectedType == AppointmentType.spinalTractionSession) ...[
-                if (!_isRecurring) ...[
-                  _buildBundlingToggle(context),
-                  if (_bundleSecondarySession) ...[
-                    const SizedBox(height: AppSizes.p16),
-                    _buildSecondarySessionFields(context),
-                  ],
-                ],
-              ],
               if (_isRecurring) ...[
-                const SizedBox(height: AppSizes.p16),
                 _buildRecurrenceSection(context),
+                const SizedBox(height: AppSizes.p16),
               ],
-              const SizedBox(height: AppSizes.p16),
               _buildProviderSection(context),
               if (isPatientValid) ...[
                 const SizedBox(height: AppSizes.p24),
@@ -103,20 +79,4 @@ extension _NewAppointmentFormView on _NewAppointmentFormState {
       ),
     );
   }
-
-  Widget _buildBundlingToggle(BuildContext context) => FormSection(
-    title: AppStrings.bundleAssessment,
-    child: SwitchListTile(
-      contentPadding: EdgeInsets.zero,
-      title: const Text(AppStrings.bundleAssessmentHint, style: AppTextStyles.body),
-      value: _bundleSecondarySession,
-      onChanged: (value) => _mutate(() {
-        _bundleSecondarySession = value;
-        if (value) {
-          _isRecurring = false;
-          _secondaryTime ??= _selectedTime;
-        }
-      }),
-    ),
-  );
 }

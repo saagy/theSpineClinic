@@ -28,7 +28,8 @@ navigation, partial profile saves and Sentry diagnostics.
   Patient search filters reference their selected `patient` alias.
 - Payments, collections and booking batches have durable request IDs and database
   receipts. A lost response can be retried without repeating money, credits or
-  appointments. Bundled treatment/assessment booking is one transaction.
+  appointments. Every slot of a booking (including recurring series) is one
+  transaction.
   Pending booking retries can reach reconciliation even if the successful first
   attempt used the remaining credits; fresh bookings retain the balance guard.
 - Collections additionally compare the displayed prior paid amount under a row
@@ -84,9 +85,10 @@ database snapshot during concurrent rescheduling/deletion; manual refresh remain
 
 `execute_clinic_mutation(uuid,text,jsonb)` serializes each ID, verifies ownership
 and payload identity, and writes the outcome in the same transaction. Existing
-booking/payment rules and balance triggers remain authoritative. A bundle calls
-the existing booking function twice inside this single transaction; either both
-parts commit or neither does. `resolve_clinic_mutation(uuid)` fences edited retries.
+booking/payment rules and balance triggers remain authoritative. The booking
+handler still accepts an optional `companion` payload, but the app stopped sending
+one on 14 November 2026 when bundled assessments were removed from New
+appointment: an assessment is booked first and treatment is decided afterwards. `resolve_clinic_mutation(uuid)` fences edited retries.
 
 `20260927020000_document_upload_receipts.sql` adds `document_uploads`:
 
@@ -140,7 +142,7 @@ and account for outstanding signed PUT URLs before deleting any object.
 
 Local regression coverage includes >1,000 appointments with a lower server page
 cap, exact counts, later-page failure, browser retry persistence, duplicate clicks,
-changed pending requests, upload response loss, role checks and atomic bundles.
+changed pending requests, upload response loss, role checks and atomic booking batches.
 The SQL runner tests schema snapshot and migration replay in ephemeral PostgreSQL;
 it does not simulate multiple database connections. Edge tests use fake storage.
 Original hardening results: zero analyzer issues, 341 Flutter tests, 11 Node tests, eight

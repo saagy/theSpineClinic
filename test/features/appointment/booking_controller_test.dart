@@ -60,7 +60,7 @@ void main() {
   );
 
   for (final role in ['reception', 'senior', 'doctor']) {
-    test('$role booking permissions and atomic companion submission', () async {
+    test('$role booking permissions and single-request submission', () async {
       final repository = _Repository();
       final container = ProviderContainer(
         overrides: [
@@ -79,9 +79,6 @@ void main() {
             time: const TimeOfDay(hour: 12, minute: 0),
             doctors: [workspaceStaff('doctor')],
             usePackage: false,
-            companionType: AppointmentType.initialAssessment,
-            companionTime: const TimeOfDay(hour: 13, minute: 30),
-            companionDoctors: [workspaceStaff('senior')],
           );
       if (role == 'doctor') {
         expect(result.isFailure, true);
@@ -92,9 +89,8 @@ void main() {
         final call = repository.calls.single;
         expect(call.memberName, #createRecurringBookings);
         expect(call.namedArguments[#slots], [DateTime(2026, 10, 2, 12)]);
-        final companion = call.namedArguments[#companion] as BookingCompanion;
-        expect(companion.type, AppointmentType.initialAssessment);
-        expect(companion.slots, [DateTime(2026, 10, 2, 13, 30)]);
+        expect(call.namedArguments[#doctorIds], ['staff-fixture']);
+        expect(call.namedArguments.containsKey(#companion), false);
       }
     });
   }

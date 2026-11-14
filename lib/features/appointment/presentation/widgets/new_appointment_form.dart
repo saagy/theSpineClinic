@@ -29,7 +29,6 @@ import 'package:spine_clinic_app/features/auth/presentation/auth_providers.dart'
 import 'package:spine_clinic_app/features/patient/domain/patient.dart';
 import 'package:spine_clinic_app/features/patient/presentation/patient_providers.dart';
 import 'package:spine_clinic_app/shared/widgets/doctor_select_field.dart';
-import 'package:spine_clinic_app/features/appointment/presentation/widgets/booking_form_controls.dart';
 import 'package:spine_clinic_app/shared/widgets/app_snackbar.dart';
 
 import 'package:spine_clinic_app/features/appointment/presentation/receptionist_appointments_providers.dart';
@@ -43,7 +42,6 @@ part 'new_appointment_form_actions.dart';
 part 'new_appointment_validation.dart';
 part 'new_appointment_booking.dart';
 part 'new_appointment_form_view.dart';
-part 'new_appointment_secondary_fields.dart';
 part 'new_appointment_provider_section.dart';
 part 'new_appointment_recurrence_section.dart';
 
@@ -83,13 +81,6 @@ class _NewAppointmentFormState extends ConsumerState<NewAppointmentForm> {
   String? _timeErrorText;
   String? _daysErrorText;
   String? _patientId;
-
-  // Bundling state variables
-  bool _bundleSecondarySession = false;
-  AppointmentType _secondaryType = AppointmentType.initialAssessment;
-  final _secondaryDoctorFieldKey = GlobalKey<FormFieldState<List<Staff>>>();
-  TimeOfDay? _secondaryTime = const TimeOfDay(hour: 9, minute: 0);
-  String? _secondaryTimeErrorText;
 
   static const Duration _fetchTimeout = Duration(seconds: 15);
 

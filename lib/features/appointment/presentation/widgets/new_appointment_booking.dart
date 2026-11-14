@@ -1,11 +1,7 @@
 part of 'new_appointment_form.dart';
 
 extension _NewAppointmentBooking on _NewAppointmentFormState {
-  Future<void> _executeBooking(
-    Staff creator,
-    List<Staff> doctors,
-    List<Staff> secondaryDoctors,
-  ) async {
+  Future<void> _executeBooking(List<Staff> doctors) async {
     _mutate(() => _isSubmitting = true);
     final result = await ref
         .read(bookingControllerProvider.notifier)
@@ -17,9 +13,6 @@ extension _NewAppointmentBooking on _NewAppointmentFormState {
           doctors: doctors,
           usePackage: _usePackage,
           expectedNextVisitDate: widget.expectedNextVisitDate,
-          companionType: _bundleSecondarySession ? _secondaryType : null,
-          companionTime: _bundleSecondarySession ? _secondaryTime : null,
-          companionDoctors: secondaryDoctors,
         );
     if (!mounted) return;
     if (result.isFailure) {
@@ -36,14 +29,6 @@ extension _NewAppointmentBooking on _NewAppointmentFormState {
     }
     _mutate(() => _isSubmitting = false);
     _invalidateBookingData();
-    if (_bundleSecondarySession) {
-      ref.invalidate(
-        availableBalanceForTypeProvider((
-          patientId: _patientId!,
-          type: _secondaryType,
-        )),
-      );
-    }
     AppSnackbar.show(
       context,
       message: _isRecurring

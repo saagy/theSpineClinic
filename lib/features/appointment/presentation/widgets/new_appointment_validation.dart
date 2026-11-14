@@ -6,10 +6,6 @@ extension _NewAppointmentValidation on _NewAppointmentFormState {
     _mutate(() {
       _dateErrorText = _selectedDate == null ? AppStrings.dateRequired : null;
       _timeErrorText = _selectedTime == null ? AppStrings.timeRequired : null;
-      _secondaryTimeErrorText =
-          _bundleSecondarySession && _secondaryTime == null
-          ? AppStrings.timeRequired
-          : null;
       _daysErrorText = _isRecurring && _selectedWeekdays.isEmpty
           ? AppStrings.daysRequired
           : null;
@@ -28,7 +24,6 @@ extension _NewAppointmentValidation on _NewAppointmentFormState {
     if (!isFormValid ||
         _dateErrorText != null ||
         _timeErrorText != null ||
-        _secondaryTimeErrorText != null ||
         _daysErrorText != null) {
       return;
     }
@@ -47,17 +42,6 @@ extension _NewAppointmentValidation on _NewAppointmentFormState {
       AppSnackbar.show(
         context,
         message: AppStrings.noAssignedDoctors,
-        variant: AppSnackbarVariant.error,
-      );
-      return;
-    }
-    final secondaryDoctors = _bundleSecondarySession
-        ? (_secondaryDoctorFieldKey.currentState?.value ?? [])
-        : const <Staff>[];
-    if (_bundleSecondarySession && secondaryDoctors.isEmpty) {
-      AppSnackbar.show(
-        context,
-        message: 'Secondary doctor is required',
         variant: AppSnackbarVariant.error,
       );
       return;
@@ -96,6 +80,6 @@ extension _NewAppointmentValidation on _NewAppointmentFormState {
       }
     }
 
-    await _executeBooking(creator, doctors, secondaryDoctors);
+    await _executeBooking(doctors);
   }
 }

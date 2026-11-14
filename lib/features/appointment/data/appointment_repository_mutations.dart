@@ -81,21 +81,12 @@ mixin _AppointmentMutations on _AppointmentRepositoryBase {
     required String? creatorId,
     required List<String> doctorIds,
     DateTime? expectedNextVisitDate,
-    BookingCompanion? companion,
   }) async {
     try {
       await ClinicMutations(
         _service,
       ).execute('booking', patientId, <String, dynamic>{
         'p_patient_id': patientId,
-        if (companion != null)
-          'companion': {
-            'type': companion.type.dbValue,
-            'slots': companion.slots
-                .map((slot) => slot.toUtc().toIso8601String())
-                .toList(),
-            'doctor_ids': [...companion.doctorIds]..sort(),
-          },
         'p_type': type.dbValue,
         'p_slots': slots.map((slot) => slot.toUtc().toIso8601String()).toList(),
         'p_use_package': type.affectsPackageBalance ? usePackage : false,

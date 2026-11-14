@@ -8,7 +8,6 @@ import 'appointment_providers.dart';
 import 'pending_booking_provider.dart';
 import 'package:spine_clinic_app/core/errors/app_exception.dart';
 import 'package:spine_clinic_app/core/errors/result.dart';
-import 'package:spine_clinic_app/features/appointment/domain/appointment_repository.dart';
 import 'package:spine_clinic_app/features/appointment/domain/appointment_type.dart';
 import 'package:spine_clinic_app/features/auth/domain/staff.dart';
 
@@ -19,7 +18,7 @@ class BookingController extends _$BookingController {
   @override
   FutureOr<void> build() {}
 
-  /// Both parts of a bundle share one atomic, retryable database request.
+  /// All slots of one booking share one atomic, retryable database request.
   Future<Result<void>> executeBooking({
     required String patientId,
     required AppointmentType type,
@@ -28,9 +27,6 @@ class BookingController extends _$BookingController {
     required List<Staff> doctors,
     required bool usePackage,
     DateTime? expectedNextVisitDate,
-    AppointmentType? companionType,
-    TimeOfDay? companionTime,
-    List<Staff> companionDoctors = const [],
   }) async {
     final Staff? creator = ref.read(currentUserProvider).value;
     if (creator == null ||
@@ -67,25 +63,6 @@ class BookingController extends _$BookingController {
             creatorId: creator.id,
             doctorIds: doctorIds,
             expectedNextVisitDate: expectedNextVisitDate,
-            companion: companionType == null || companionTime == null
-                ? null
-                : BookingCompanion(
-                    type: companionType,
-                    slots: slots
-                        .map(
-                          (slot) => DateTime(
-                            slot.year,
-                            slot.month,
-                            slot.day,
-                            companionTime.hour,
-                            companionTime.minute,
-                          ),
-                        )
-                        .toList(),
-                    doctorIds: companionDoctors
-                        .map((doctor) => doctor.id)
-                        .toList(),
-                  ),
           );
     } on AppException catch (error) {
       return Result.failure(error);

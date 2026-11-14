@@ -175,7 +175,7 @@ field through an aliased parent list. Appointment status actions invalidate the
 patient detail cache as well as appointment lists, refreshing package balances.
 
 September 27: [durable request receipts](production-hardening.md) protect payments,
-collections, atomic booking bundles and document upload reconciliation. Booking
+collections, atomic booking batches and document upload reconciliation. Booking
 submission now uses a generated keepAlive Riverpod controller.
 
 Schedule return refresh uses a shared lifecycle/route visibility widget and

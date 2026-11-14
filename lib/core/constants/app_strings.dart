@@ -127,9 +127,6 @@ abstract final class AppStrings {
   static const String searchAppointmentTypes = 'Search appointment type';
   static const String checkedInEditHint =
       'Undo check-in before changing the appointment type or billing.';
-  static const String secondarySession = 'Assessment session';
-  static const String bundleAssessmentHint = 'Book an assessment alongside this treatment';
-  static const String bundleAssessment = 'Bundle with assessment';
   static const String patient = 'Patient';
   static const String changePatient = 'Change patient';
   static const String recurringBooking = 'Recurring booking';

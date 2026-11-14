@@ -65,7 +65,6 @@ extension _NewAppointmentFormActions on _NewAppointmentFormState {
 
   void _onPatientSelected(Patient patient) {
     _doctorFieldKey.currentState?.didChange([]);
-    _secondaryDoctorFieldKey.currentState?.didChange([]);
     _mutate(() {
       _patientId = patient.id;
       _doctorFieldEnabled = false;
