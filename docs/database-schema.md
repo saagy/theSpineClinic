@@ -10,8 +10,10 @@ All times are stored as `timestamptz`; clinic-local calendar logic goes through
 `clinic_timezone()` (currently `Africa/Cairo`).
 
 The schedule seed helpers are omitted from the schema snapshot. Migration
-`20261110203200_restrict_schedule_seed_functions.sql` revokes `EXECUTE` from
+`20261114033333_restrict_schedule_seed_functions.sql` revokes `EXECUTE` from
 `PUBLIC`, `anon`, `authenticated`, and `service_role` on every installed overload.
+It was written on November 10 but only applied to the linked project on
+November 14, 2026; until then signed-out callers could run the helpers.
 The [standalone seed script](../supabase/seed_realistic_data.sql) is for disposable
 development databases and applies the same restrictions when it installs the helpers.
 
