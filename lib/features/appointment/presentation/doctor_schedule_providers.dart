@@ -142,7 +142,7 @@ class DoctorScheduleNotifier extends Notifier<DoctorScheduleState> {
         .map(
           (AppointmentWithPatient item) => item.appointment.id == appointmentId
               ? item.copyWith(
-                  appointment: item.appointment.copyWith(status: newStatus),
+                  appointment: item.appointment.copyWith(status: newStatus, statusChangedAt: DateTime.now()),
                 )
               : item,
         )

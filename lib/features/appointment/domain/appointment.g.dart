@@ -22,6 +22,9 @@ _Appointment _$AppointmentFromJson(Map<String, dynamic> json) => _Appointment(
     json['branch'],
     unknownValue: JsonKey.nullForUndefinedEnumValue,
   ),
+  statusChangedAt: json['status_changed_at'] == null
+      ? null
+      : DateTime.parse(json['status_changed_at'] as String),
 );
 
 Map<String, dynamic> _$AppointmentToJson(_Appointment instance) =>
@@ -48,6 +51,7 @@ const _$AppointmentStatusEnumMap = {
   AppointmentStatus.scheduled: 'scheduled',
   AppointmentStatus.checkedIn: 'checked_in',
   AppointmentStatus.cancelled: 'cancelled',
+  AppointmentStatus.noShow: 'no_show',
 };
 
 const _$ClinicLocationEnumMap = {

@@ -115,6 +115,20 @@ minute matches). Both render through `BookingWarningPanel`. The clash query
 so typing a recurring session count never queries; the edited appointment is
 excluded from its own check. A failed or loading check shows nothing.
 
+### Visit Outcomes and Balances
+Visit status changes go through `set_appointment_status` (repository
+`updateAppointmentStatus`, UI `changeVisitStatus`). An outcome recorded on
+an earlier day (both its recorded day and the visit's day are over) is
+changed only by payment staff with a reason; the database enforces it
+(`visit_outcome_locked`) and `Appointment.outcomeLocked` mirrors it in the UI.
+`appointment_events` is the visit history; never write it from the client.
+PT and traction always use the package (`tr_appointment_package_rule`);
+booking warns on a short balance, check-in refuses it. Balances change only
+through invoice commands, check-in triggers and `adjust_patient_balance`
+(recorded in `patient_balance_adjustments`); `guard_patient_balance_write`
+refuses every other write by a signed-in user, so any new server function
+that writes balances must set the `app.balance_write` marker.
+
 ### Status Callback Wiring
 Shared `AppointmentAgendaRow` menus are an exception to the legacy callback
 contract below: `AgendaStatusController` patches the schedule, All, patient and
@@ -250,7 +264,6 @@ lib/
 - **Forgot Password Flow**: Secure and free password recovery is supported by the Supabase backend (`resetPasswordForEmail`), but the frontend views (Forgot/Reset screens and routing) are deferred.
 - **Progressive Onboarding**: Registration already uses a two-step role/identity then credentials flow; preserve its validation and back-navigation behavior.
 - **Clinic Package Settings Product Definition**: The dormant `clinic_settings` table was removed by migration `20260713010000`; no active client references remain. Any future settings feature needs explicit package/balance semantics, change permissions, audit history and an admin UX.
-- **Direct Balance Writes**: The app no longer edits session balances by hand (billing plan slice 5), but `guard_patient_balance_write` still accepts a direct `patients.session_balance` update from a receptionist or super admin. Restricting it to the invoice commands and appointment triggers needs a marker those commands set, because they write under the caller's identity.
 - **Unreachable Legacy Widgets**: Several pre-overhaul widgets under `patient/presentation/widgets/` (`patient_tab_*`, `patient_info_*`, `patient_payments_skeleton`) and the old `receptionist_appointment_card*` family are no longer reachable from `main.dart`; some still have tests. Remove them with their tests in a dedicated cleanup.
 - **Doctor Pay Rates**: The Billing tab's Doctor sessions report counts checked-in sessions per doctor and type. Pay rates are not defined yet; adding them needs per-type (or per-doctor) amounts, who may change them, change history, and a decision on how shared sessions are paid.
 - **Staff Feature Domain Layer**: `lib/features/staff/domain/` holds only `StaffDetails`; the repository interface still lives in `data/staff_repository.dart`. Move it into `domain/` to match every other feature.

@@ -32,7 +32,7 @@ class AgendaStatusController extends _$AgendaStatusController {
   @override
   AgendaStatusState build(String appointmentId) => const AgendaStatusState();
 
-  Future<Result<void>?> update(String patientId, AppointmentStatus status) async {
+  Future<Result<void>?> update(String patientId, AppointmentStatus status, {String? reason}) async {
     if (state.pending) return null;
     state = state.copyWith(pending: true);
     try {
@@ -59,7 +59,7 @@ class AgendaStatusController extends _$AgendaStatusController {
       }
       final result = await ref
           .read(cache.appointmentRepositoryProvider)
-          .updateAppointmentStatus(appointmentId, status);
+          .updateAppointmentStatus(appointmentId, status, reason: reason);
       if (result is Success<void>) _refresh(patientId, status);
       return result;
     } catch (error) {
@@ -80,6 +80,7 @@ class AgendaStatusController extends _$AgendaStatusController {
     ref.invalidate(cache.todayAppointmentsProvider);
     ref.invalidate(cache.patientAppointmentsProvider(patientId));
     ref.invalidate(cache.singleAppointmentProvider(appointmentId));
+    ref.invalidate(cache.appointmentEventsProvider(appointmentId));
     ref.invalidate(appointmentDetailControllerProvider(appointmentId));
     ref.invalidate(cache.futureScheduledAppointmentsCountProvider(patientId));
     ref.invalidate(cache.availablePackageBalanceProvider(patientId));

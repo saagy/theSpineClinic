@@ -103,9 +103,8 @@ class AppointmentAgendaCompactRow extends StatelessWidget {
               const SizedBox(width: AppSizes.p4),
               AppointmentStatusIndicator(status: appt.status, pending: isCheckingIn),
               AppointmentAgendaMenu(
-                appointmentId: appt.id,
+                appointment: appt,
                 patientId: item.patient.id,
-                status: appt.status,
               ),
             ],
           ),

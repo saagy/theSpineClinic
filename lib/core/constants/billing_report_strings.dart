@@ -131,6 +131,12 @@ final class BillingReportStrings {
   final String colShare = 'Share';
   final String colDoctor = 'Doctor';
   final String colOldest = 'Due since';
+  // Age of unpaid money, counted from the invoice date.
+  final String colAge30 = '0–30 days';
+  final String colAge60 = '31–60 days';
+  final String colAge90 = '61–90 days';
+  final String colAgeOver90 = 'Over 90 days';
+  final String dueOver90 = 'Due over 90 days';
   final String colType = 'Type';
   final String colDate = 'Invoice date';
   final String colQuantity = 'Qty';

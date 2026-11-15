@@ -102,6 +102,7 @@ final class InvoiceStrings {
   final String statusPaid = 'Paid';
   final String statusPartial = 'Partly paid';
   final String statusUnpaid = 'Unpaid';
+  final String statusPartlyRefunded = 'Partly refunded';
   final String statusRefunded = 'Refunded';
   final String statusVoided = 'Cancelled';
   String totalPaidLine(String total, String paid) => 'Total $total · Paid $paid';

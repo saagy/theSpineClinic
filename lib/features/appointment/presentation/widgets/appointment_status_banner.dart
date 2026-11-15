@@ -58,6 +58,12 @@ class AppointmentStatusBanner extends StatelessWidget {
         icon = Icons.cancel_outlined;
         description = AppStrings.appointmentCancelledDescription;
         break;
+      case AppointmentStatus.noShow:
+        bg = colorScheme.surfaceContainerHighest;
+        fg = colorScheme.onSurfaceVariant;
+        icon = Icons.person_off_outlined;
+        description = AppStrings.visit.noShowDescription;
+        break;
     }
 
     return AnimatedContainer(

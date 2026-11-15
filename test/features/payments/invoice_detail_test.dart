@@ -158,7 +158,11 @@ void main() {
   });
 
   testWidgets('a refund cancels unused sessions and pays back the excess', (tester) async {
-    final repo = repoWith(sampleDetail(receipts: [receiptJson(31, 300000)]));
+    // Paid mostly by card: money handed back starts as Visa, and can change.
+    final repo = repoWith(sampleDetail(receipts: [
+      receiptJson(31, 100000),
+      receiptJson(32, 200000, method: 'visa', hour: 10),
+    ]));
     await pumpInvoiceDetail(tester, repo: repo, user: cashier);
     await tap(tester, find.widgetWithText(OutlinedButton, t.refund));
     expect(find.text(t.paybackNone), findsOneWidget);
@@ -174,9 +178,11 @@ void main() {
 
     final save = find.widgetWithText(FilledButton, t.recordRefund);
     await tap(tester, save);
-    expect(find.text(t.paybackMethodRequired), findsOneWidget);
+    expect(find.text(t.paybackMethodRequired), findsNothing);
     expect(find.text(t.reasonRequired), findsOneWidget);
     expect(repo.actions, isEmpty);
+    final methods = find.byType(SegmentedButton<PaymentMethod>);
+    expect(tester.widget<SegmentedButton<PaymentMethod>>(methods).selected, {PaymentMethod.visa});
 
     await tap(tester, find.text(t.cash));
     await fill(tester, t.reason, 'Patient is travelling');

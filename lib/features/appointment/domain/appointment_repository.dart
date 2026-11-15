@@ -7,6 +7,7 @@ library;
 import 'package:spine_clinic_app/core/errors/result.dart';
 import 'package:spine_clinic_app/features/appointment/domain/appointment.dart';
 import 'package:spine_clinic_app/features/appointment/domain/appointment_doctor.dart';
+import 'package:spine_clinic_app/features/appointment/domain/appointment_event.dart';
 import 'package:spine_clinic_app/features/appointment/domain/appointment_status.dart';
 import 'package:spine_clinic_app/features/appointment/domain/appointment_type.dart';
 import 'package:spine_clinic_app/features/appointment/domain/bulk_doctor_replacement_result.dart';
@@ -16,6 +17,7 @@ import 'package:spine_clinic_app/features/appointment/domain/appointment_with_pa
 import 'package:spine_clinic_app/features/patient/domain/clinic_location.dart';
 
 export 'package:spine_clinic_app/features/appointment/domain/appointment_with_patient.dart';
+export 'package:spine_clinic_app/features/appointment/domain/appointment_event.dart';
 
 /// Defines the appointment data operations available to the application.
 ///
@@ -37,14 +39,19 @@ abstract class AppointmentRepository {
     ClinicLocation? clinic,
   );
 
-  /// Updates the status column of an appointment.
+  /// Records a visit's status through `set_appointment_status`.
   ///
   /// Package deductions/refunds are handled automatically by the database trigger,
-  /// so this method does not manually mutate patient balances.
+  /// so this method does not manually mutate patient balances. [reason] is
+  /// required by the database when changing an earlier day's outcome.
   Future<Result<void>> updateAppointmentStatus(
     String appointmentId,
-    AppointmentStatus status,
-  );
+    AppointmentStatus status, {
+    String? reason,
+  });
+
+  /// The visit's history, oldest first.
+  Future<Result<List<AppointmentEvent>>> getAppointmentEvents(String appointmentId);
 
   /// Queries all active doctors attached to a specific appointment.
   ///

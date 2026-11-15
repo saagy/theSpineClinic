@@ -20,6 +20,8 @@ import 'invoice_fixture.dart';
 import 'workspace_data.dart';
 import 'workspace_document_repository.dart';
 import 'package:spine_clinic_app/features/medical_records/presentation/screens/program_gallery_viewer_screen.dart';
+import 'package:spine_clinic_app/features/patient/presentation/balance_adjustment_providers.dart';
+import 'balance_adjustment_fixture.dart';
 import 'workspace_overrides.dart';
 import 'package:spine_clinic_app/features/staff/presentation/staff_providers.dart';
 
@@ -33,6 +35,7 @@ class WorkspaceHarness extends StatefulWidget {
     this.longName = false,
     this.scale = 1,
     this.profile,
+    this.balances,
   });
   final String role;
   final bool dark;
@@ -41,6 +44,9 @@ class WorkspaceHarness extends StatefulWidget {
   final bool longName;
   final double scale;
   final PatientPersonalDetails? profile;
+
+  /// Balance corrections; defaults to one earlier correction.
+  final FakeBalanceAdjustmentRepository? balances;
   @override
   State<WorkspaceHarness> createState() => _HarnessState();
 }
@@ -84,6 +90,9 @@ class _HarnessState extends State<WorkspaceHarness> {
         allDoctorsForFilterProvider.overrideWith((ref) async => [workspaceStaff('doctor')]),
         patientDocumentsRepositoryProvider.overrideWithValue(WorkspaceDocumentRepository()),
         currentUserProvider.overrideWith(() => WorkspaceUser(widget.role)),
+        balanceAdjustmentRepositoryProvider.overrideWithValue(
+          widget.balances ?? FakeBalanceAdjustmentRepository(empty: widget.empty),
+        ),
         staffProfileProvider('staff-fixture').overrideWith((ref) async => workspaceStaff('doctor')),
         canAccessPatientProvider(id).overrideWith((ref) async => true),
         patientDetailProvider(id).overrideWith(

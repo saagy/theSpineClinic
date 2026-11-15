@@ -19,7 +19,11 @@ BEGIN
       WHEN 'history' THEN INSERT INTO public.patient_medical_history(patient_id) VALUES(p);
       WHEN 'note' THEN INSERT INTO public.patient_notes(patient_id,created_by,note_text) VALUES(p,author,'Fixture');
       WHEN 'document' THEN INSERT INTO public.patient_documents(patient_id,file_url,file_name) VALUES(p,'private/key','Fixture.jpg');
-      WHEN 'balance' THEN UPDATE public.patients SET session_balance=1 WHERE id=p;
+      WHEN 'balance' THEN
+        -- Direct writes are refused; this stands in for an invoice granting a session.
+        PERFORM set_config('app.balance_write','on',true);
+        UPDATE public.patients SET session_balance=1 WHERE id=p;
+        PERFORM set_config('app.balance_write','',true);
     END CASE;
     BEGIN
       PERFORM public.delete_empty_patient(p);

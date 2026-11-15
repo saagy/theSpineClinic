@@ -8,7 +8,11 @@ import '../../../../shared/widgets/record_section.dart';
 import '../../../../shared/widgets/refresh_on_return.dart';
 import '../../../auth/presentation/auth_providers.dart';
 import '../../../patient/domain/patient.dart';
+import '../../../../shared/widgets/app_snackbar.dart';
+import '../../../patient/presentation/balance_adjustment_providers.dart';
 import '../../../patient/presentation/patient_providers.dart';
+import '../../../patient/presentation/widgets/balance_adjust_dialog.dart';
+import '../../../patient/presentation/widgets/balance_adjustments_section.dart';
 import '../../../patient/presentation/widgets/workspace_tab_header.dart';
 import '../../domain/invoice_access.dart';
 import '../../domain/invoice_summary.dart';
@@ -27,13 +31,16 @@ class PatientInvoicesTab extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final request = patientInvoicesProvider(patient.id);
-    final bool canIssue = InvoiceAccess.canIssue(ref.watch(currentUserProvider).value);
+    final user = ref.watch(currentUserProvider).value;
+    final bool canIssue = InvoiceAccess.canIssue(user);
+    final bool canAdjust = canAdjustBalances(user);
     // Back on this tab or into the app again: other staff may have billed
     // the patient, which also moves their session balances.
     void refreshOnReturn() {
       if (ref.read(request).isLoading) return;
       ref.invalidate(request);
       ref.invalidate(patientDetailProvider(patient.id));
+      ref.invalidate(balanceAdjustmentsProvider(patient.id));
     }
 
     return RefreshOnReturn(
@@ -61,7 +68,19 @@ class PatientInvoicesTab extends ConsumerWidget {
                   ptSessions: patient.sessionBalance,
                   tractionSessions: patient.tractionBalance,
                 ),
-                const SizedBox(height: AppSizes.p20),
+                if (canAdjust)
+                  Align(
+                    alignment: AlignmentDirectional.centerEnd,
+                    child: TextButton.icon(
+                      onPressed: () => _adjust(context),
+                      style: TextButton.styleFrom(
+                        minimumSize: const Size(AppSizes.tappableMin, AppSizes.tappableMin),
+                      ),
+                      icon: const Icon(Icons.tune_rounded, size: AppSizes.iconSmall),
+                      label: Text(AppStrings.balances.adjust),
+                    ),
+                  ),
+                SizedBox(height: canAdjust ? AppSizes.p8 : AppSizes.p20),
                 if (invoices.isEmpty)
                   _surface(
                     context,
@@ -104,12 +123,23 @@ class PatientInvoicesTab extends ConsumerWidget {
                       ],
                     ),
                   ),
+                BalanceAdjustmentsSection(patientId: patient.id),
               ],
             ),
           ),
         ],
       ),
     );
+  }
+
+  Future<void> _adjust(BuildContext context) async {
+    final bool? saved = await showDialog<bool>(
+      context: context,
+      builder: (_) => BalanceAdjustDialog(patient: patient),
+    );
+    if (saved == true && context.mounted) {
+      AppSnackbar.show(context, message: AppStrings.balances.saved, variant: AppSnackbarVariant.success);
+    }
   }
 
   Widget _surface(BuildContext context, Widget child) {

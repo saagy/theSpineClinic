@@ -1,20 +1,26 @@
 import 'package:auto_size_text/auto_size_text.dart';
 import 'package:flutter/material.dart';
 import 'package:spine_clinic_app/core/constants/app_sizes.dart';
+import 'package:spine_clinic_app/core/constants/app_strings.dart';
 import 'package:spine_clinic_app/core/constants/app_text_styles.dart';
 import 'package:spine_clinic_app/shared/widgets/app_button.dart';
 
-/// Scheduled: asymmetric row with text "Cancel Appt." (flex 10) + solid teal "Check In" button (flex 19).
+/// Scheduled: quiet "Cancel Appt.", then "No-show" once the visit's day has
+/// come, then the solid "Check In" button.
 class ScheduledActions extends StatelessWidget {
   const ScheduledActions({
     super.key,
     required this.loading,
     required this.onCheckIn,
     required this.onCancel,
+    this.onNoShow,
   });
   final bool loading;
   final VoidCallback onCheckIn;
   final VoidCallback onCancel;
+
+  /// Null hides the button: a visit on a later day cannot be missed yet.
+  final VoidCallback? onNoShow;
 
   @override
   Widget build(BuildContext context) {
@@ -24,11 +30,23 @@ class ScheduledActions extends StatelessWidget {
           flex: 10,
           child: _flatCancelButton(context: context, loading: loading, onCancel: onCancel),
         ),
+        if (onNoShow != null) ...[
+          const SizedBox(width: AppSizes.p8),
+          Flexible(
+            flex: 10,
+            child: AppButton(
+              labelText: AppStrings.visit.noShowShort,
+              onPressed: loading ? null : onNoShow,
+              variant: AppButtonVariant.secondary,
+              shape: AppButtonShape.rounded12,
+            ),
+          ),
+        ],
         const SizedBox(width: AppSizes.p12),
         Flexible(
           flex: 19,
           child: AppButton(
-            labelText: 'Check In',
+            labelText: AppStrings.checkIn,
             onPressed: loading ? null : onCheckIn,
             isLoading: loading,
             shape: AppButtonShape.rounded12,
@@ -63,7 +81,7 @@ class CheckedInActions extends StatelessWidget {
         Flexible(
           flex: 19,
           child: AppButton(
-            labelText: 'Undo Check-In',
+            labelText: AppStrings.undoCheckIn,
             onPressed: loading ? null : onRevert,
             isLoading: loading,
             variant: AppButtonVariant.secondary,
@@ -75,21 +93,24 @@ class CheckedInActions extends StatelessWidget {
   }
 }
 
-/// Cancelled: single full-width secondary "Restore Appointment".
-class CancelledActions extends StatelessWidget {
-  const CancelledActions({
+/// Cancelled or no-show: one full-width secondary action that puts the visit
+/// back on the schedule.
+class SingleRestoreAction extends StatelessWidget {
+  const SingleRestoreAction({
     super.key,
+    required this.label,
     required this.loading,
-    required this.onRestore,
+    required this.onPressed,
   });
+  final String label;
   final bool loading;
-  final VoidCallback onRestore;
+  final VoidCallback onPressed;
 
   @override
   Widget build(BuildContext context) {
     return AppButton(
-      labelText: 'Restore Appointment',
-      onPressed: loading ? null : onRestore,
+      labelText: label,
+      onPressed: loading ? null : onPressed,
       isLoading: loading,
       variant: AppButtonVariant.secondary,
       shape: AppButtonShape.rounded12,
@@ -112,7 +133,7 @@ Widget _flatCancelButton({
       minimumSize: const Size.fromHeight(AppSizes.tappableMin),
     ),
     child: AutoSizeText(
-      'Cancel Appt.',
+      AppStrings.visit.cancelShort,
       style: AppTextStyles.button.copyWith(
         color: Theme.of(context).colorScheme.error,
         fontSize: 14,

@@ -212,6 +212,13 @@ Future<int> availablePackageBalance(Ref ref, String patientId) async {
   return value ?? 0;
 }
 
+/// A visit's history, oldest first.
+@riverpod
+Future<List<AppointmentEvent>> appointmentEvents(Ref ref, String appointmentId) async {
+  final result = await ref.watch(appointmentRepositoryProvider).getAppointmentEvents(appointmentId);
+  return result.when(success: (data) => data, failure: (err) => throw err);
+}
+
 /// Family provider resolving a single appointment by ID.
 @riverpod
 Future<Appointment> singleAppointment(Ref ref, String appointmentId) async {

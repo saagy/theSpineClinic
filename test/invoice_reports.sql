@@ -125,7 +125,8 @@ BEGIN
 
   -- 5. Outstanding: one patient, two open invoices.
   r := public.invoice_report('outstanding', today, today);
-  IF r->'totals' IS DISTINCT FROM jsonb_build_object('due_minor', 66667, 'open_invoices', 2, 'row_count', 1)
+  IF r->'totals' IS DISTINCT FROM jsonb_build_object('due_minor', 66667, 'open_invoices', 2, 'row_count', 1,
+      'due_0_30_minor', 66667, 'due_31_60_minor', 0, 'due_61_90_minor', 0, 'due_over_90_minor', 0)
     OR r->'rows'->0->>'patient_name' IS DISTINCT FROM 'Invoice Patient'
     OR (r->'rows'->0->>'oldest_date')::date IS DISTINCT FROM today THEN
     RAISE EXCEPTION 'Outstanding report wrong: %', r;

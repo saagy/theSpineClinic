@@ -6,6 +6,7 @@ import 'package:spine_clinic_app/core/constants/app_sizes.dart';
 import 'package:spine_clinic_app/core/constants/app_strings.dart';
 import 'package:spine_clinic_app/core/constants/app_text_styles.dart';
 import 'package:spine_clinic_app/core/network/app_routes.dart';
+import 'package:spine_clinic_app/features/appointment/domain/appointment.dart';
 import 'package:spine_clinic_app/features/appointment/domain/appointment_status.dart';
 import 'package:spine_clinic_app/features/appointment/presentation/appointment_providers.dart';
 import 'package:spine_clinic_app/features/appointment/presentation/agenda_status_controller.dart';
@@ -13,31 +14,31 @@ import 'package:spine_clinic_app/features/appointment/presentation/widgets/agend
 import 'package:spine_clinic_app/features/auth/presentation/auth_providers.dart';
 import 'package:spine_clinic_app/shared/widgets/confirmation_dialog.dart';
 
-enum _AgendaAction { patientDetails, checkIn, edit, revert, restore, cancel }
+enum _AgendaAction { patientDetails, checkIn, noShow, edit, revert, restore, undoNoShow, cancel }
 
 /// Compact anchored popup menu for appointment row operations.
 class AppointmentAgendaMenu extends ConsumerWidget {
   const AppointmentAgendaMenu({
     super.key,
-    required this.appointmentId,
+    required this.appointment,
     required this.patientId,
-    required this.status,
   });
 
-  final String appointmentId;
+  final Appointment appointment;
   final String patientId;
-  final AppointmentStatus status;
+
+  String get appointmentId => appointment.id;
+  AppointmentStatus get status => appointment.status;
 
   Future<void> _updateStatus(
     BuildContext context,
     WidgetRef ref,
     AppointmentStatus newStatus,
   ) async {
-    await updateAgendaStatus(
+    await changeVisitStatus(
       context,
       ref,
-      appointmentId: appointmentId,
-      patientId: patientId,
+      appointment: appointment.copyWith(patientId: patientId),
       status: newStatus,
     );
   }
@@ -48,9 +49,11 @@ class AppointmentAgendaMenu extends ConsumerWidget {
         context.push(AppRoutes.patientDetail.replaceAll(':id', patientId));
       case _AgendaAction.checkIn:
         await _updateStatus(context, ref, AppointmentStatus.checkedIn);
+      case _AgendaAction.noShow:
+        await _updateStatus(context, ref, AppointmentStatus.noShow);
       case _AgendaAction.edit:
         context.push(AppRoutes.editAppointment.replaceAll(':id', appointmentId));
-      case _AgendaAction.revert || _AgendaAction.restore:
+      case _AgendaAction.revert || _AgendaAction.restore || _AgendaAction.undoNoShow:
         await _updateStatus(context, ref, AppointmentStatus.scheduled);
       case _AgendaAction.cancel:
         final confirmed = await showDialog<bool>(
@@ -88,6 +91,8 @@ class AppointmentAgendaMenu extends ConsumerWidget {
                 .value ??
             false);
     final pending = ref.watch(agendaStatusControllerProvider(appointmentId)).pending;
+    // An earlier day's outcome is changed only by payment staff, with a reason.
+    final bool canChange = canAccess && canChangeVisitOutcome(appointment, user);
 
     return GestureDetector(
       behavior: HitTestBehavior.opaque,
@@ -113,13 +118,25 @@ class AppointmentAgendaMenu extends ConsumerWidget {
               height: AppSizes.tappableMin,
               child: _item(LucideIcons.log_in, AppStrings.checkIn, cs.primary),
             ),
-          if (canAccess && status == AppointmentStatus.checkedIn)
+          if (canAccess && status == AppointmentStatus.scheduled && visitDayHasCome(appointment))
+            PopupMenuItem(
+              value: _AgendaAction.noShow,
+              height: AppSizes.tappableMin,
+              child: _item(LucideIcons.user_x, AppStrings.visit.markNoShow, cs.onSurface),
+            ),
+          if (canChange && status == AppointmentStatus.checkedIn)
             PopupMenuItem(
               value: _AgendaAction.revert,
               height: AppSizes.tappableMin,
               child: _item(LucideIcons.undo_2, AppStrings.undoCheckIn, cs.onSurface),
             ),
-          if (canAccess && status == AppointmentStatus.cancelled)
+          if (canChange && status == AppointmentStatus.noShow)
+            PopupMenuItem(
+              value: _AgendaAction.undoNoShow,
+              height: AppSizes.tappableMin,
+              child: _item(LucideIcons.undo_2, AppStrings.visit.undoNoShow, cs.onSurface),
+            ),
+          if (canChange && status == AppointmentStatus.cancelled)
             PopupMenuItem(
               value: _AgendaAction.restore,
               height: AppSizes.tappableMin,
@@ -130,13 +147,13 @@ class AppointmentAgendaMenu extends ConsumerWidget {
             height: AppSizes.tappableMin,
             child: _item(LucideIcons.user_round, AppStrings.patientDetails, cs.onSurface),
           ),
-          if (canEdit && status != AppointmentStatus.cancelled)
+          if (canEdit && (status == AppointmentStatus.scheduled || status == AppointmentStatus.checkedIn))
             PopupMenuItem(
               value: _AgendaAction.edit,
               height: AppSizes.tappableMin,
               child: _item(LucideIcons.pencil, AppStrings.editAppointment, cs.onSurface),
             ),
-          if (canAccess && status != AppointmentStatus.cancelled)
+          if (canChange && (status == AppointmentStatus.scheduled || status == AppointmentStatus.checkedIn))
             PopupMenuItem(
               value: _AgendaAction.cancel,
               height: AppSizes.tappableMin,

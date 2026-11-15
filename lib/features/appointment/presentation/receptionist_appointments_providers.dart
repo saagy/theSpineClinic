@@ -73,7 +73,7 @@ class ReceptionistAppointmentsNotifier extends _ReceptionistScheduleBase {
         .map(
           (item) => item.appointment.id == appointmentId
               ? item.copyWith(
-                  appointment: item.appointment.copyWith(status: newStatus),
+                  appointment: item.appointment.copyWith(status: newStatus, statusChangedAt: DateTime.now()),
                 )
               : item,
         )
@@ -100,7 +100,7 @@ class ReceptionistAppointmentsNotifier extends _ReceptionistScheduleBase {
       state.allItems.map((item) {
         if (!ids.contains(item.appointment.id)) return item;
         return item.copyWith(
-          appointment: item.appointment.copyWith(status: newStatus),
+          appointment: item.appointment.copyWith(status: newStatus, statusChangedAt: DateTime.now()),
         );
       }).toList(),
     );

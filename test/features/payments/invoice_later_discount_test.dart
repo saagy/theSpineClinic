@@ -83,11 +83,11 @@ void main() {
     expect(find.widgetWithText(TextField, '300'), findsOneWidget);
     expect(find.text(Money.format(270000)), findsOneWidget); // New invoice value.
     await tap(tester, save);
-    expect(find.text(t.paybackMethodRequired), findsOneWidget);
+    // Paid in cash, so money handed back starts as cash.
+    expect(find.text(t.paybackMethodRequired), findsNothing);
     expect(find.text(t.reasonRequired), findsOneWidget);
     expect(repo.actions, isEmpty);
 
-    await tap(tester, find.text(t.cash));
     await fill(tester, t.reason, 'Approved by the head receptionist');
     await tap(tester, save);
     expect(repo.actions.single.kind, InvoiceActionKind.discountCreate);

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter_test/flutter_test.dart';
+import 'package:spine_clinic_app/core/utils/money.dart';
 import 'package:spine_clinic_app/core/constants/app_sizes.dart';
 import 'package:spine_clinic_app/core/constants/app_strings.dart';
 import 'package:spine_clinic_app/core/errors/app_exception.dart';
@@ -214,6 +215,16 @@ void main() {
     final first = outstanding.sections.single.sheet.rows.first;
     expect(first.cells[1].text, 'Oct 2, 2026');
     expect(first.cells[0].sub, AppStrings.patientIdLabel(1042));
+    // Unpaid money by age: 0–30, 31–60, 61–90, over 90 days, then the total.
+    expect(first.cells.skip(3).take(4).map((cell) => cell.text), [
+      Money.format(50000),
+      Money.format(150000),
+      Money.format(0),
+      Money.format(0),
+    ]);
+    expect(first.cells[4].tone, ReportTone.warning);
+    expect(first.cells[5].tone, ReportTone.muted);
+    expect(outstanding.sections.single.sheet.footer![4].text, Money.format(150000));
   });
 
   testWidgets('a report prints as an A4 document', (tester) async {

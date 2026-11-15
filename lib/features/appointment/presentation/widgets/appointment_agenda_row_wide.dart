@@ -165,9 +165,8 @@ class AppointmentAgendaWideRow extends StatelessWidget {
               SizedBox(
                 width: AppSizes.tappableMin,
                 child: AppointmentAgendaMenu(
-                  appointmentId: appt.id,
+                  appointment: appt,
                   patientId: item.patient.id,
-                  status: appt.status,
                 ),
               ),
             ],

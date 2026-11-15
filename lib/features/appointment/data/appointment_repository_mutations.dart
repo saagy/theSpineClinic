@@ -4,14 +4,32 @@ mixin _AppointmentMutations on _AppointmentRepositoryBase {
   @override
   Future<Result<void>> updateAppointmentStatus(
     String appointmentId,
-    AppointmentStatus status,
-  ) {
+    AppointmentStatus status, {
+    String? reason,
+  }) {
     return _run(
-      () => _service
-          .from(_appointmentsTable)
-          .update(<String, dynamic>{'status': status.dbValue})
-          .eq('id', appointmentId),
+      () => _service.rpc(
+        'set_appointment_status',
+        params: <String, dynamic>{
+          'p_appointment_id': appointmentId,
+          'p_status': status.dbValue,
+          'p_reason': reason?.trim(),
+        },
+      ),
     );
+  }
+
+  @override
+  Future<Result<List<AppointmentEvent>>> getAppointmentEvents(String appointmentId) {
+    return _run(() async {
+      final List<Map<String, dynamic>> rows = await _service
+          .from('appointment_events')
+          .select('kind, from_status, to_status, reason, actor_name, at')
+          .eq('appointment_id', appointmentId)
+          .order('at')
+          .order('id');
+      return rows.map(AppointmentEvent.fromJson).toList();
+    });
   }
 
   @override

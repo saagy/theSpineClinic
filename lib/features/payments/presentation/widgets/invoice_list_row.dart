@@ -66,7 +66,7 @@ class InvoiceListRow extends StatelessWidget {
                   const SizedBox(width: AppSizes.p16),
                   SizedBox(
                     width: AppSizes.invoiceStatusColumnWidth,
-                    child: InvoiceStatusLabel(invoice.status),
+                    child: InvoiceStatusLabel(invoice.displayStatus),
                   ),
                 ],
               )
@@ -84,7 +84,7 @@ class InvoiceListRow extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(width: AppSizes.p8),
-                      InvoiceStatusLabel(invoice.status),
+                      InvoiceStatusLabel(invoice.displayStatus),
                     ],
                   ),
                   const SizedBox(height: AppSizes.p4),

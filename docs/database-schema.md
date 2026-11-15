@@ -62,7 +62,7 @@ the existing `create_patient_with_doctors` grants to its current five-argument s
 | `user_role` | `super_admin`, `receptionist`, `doctor` | `doctor` = physical therapist. No patient login exists — patients are data, not users. |
 | `clinic_location` | `tagamoa`, `masr_elgedida`, `madinaty` | The branches. See "Adding a branch" below the table. |
 | `appointment_type` | `normal_pt_session`, `spinal_traction_session`, `initial_assessment`, `reassessment` | Only PT and traction sessions consume package balance; assessments never deduct. |
-| `appointment_status` | `scheduled`, `checked_in`, `cancelled` | `checked_in` deducts balance; reverting to `scheduled`/`cancelled` refunds it. |
+| `appointment_status` | `scheduled`, `checked_in`, `cancelled`, `no_show` | `checked_in` deducts balance; reverting to `scheduled`/`cancelled` refunds it. `no_show` (migration `20261115120000`) uses no session and is not pending. |
 | `body_region` | `shoulder`, `elbow`, `hand`, `lumbar_spine`, `thoracic_spine`, `cervical_spine`, `hip_joint`, `knee_joint`, `ankle_joint`, `foot` | Body regions for condition catalog and injury classifications. |
 | `program_status` | `active`, `completed`, `archived` | Rehabilitation program lifecycle status. |
 | `modality_type` | `muscle_pain`, `mass_built`, `tecar`, `high_power_laser`, `tecar_focal`, `neurodynamic_non_wb`, `neurodynamic_wb`, `release`, `met`, `mobilization`, `mulligan`, `exercise` | Physiotherapy equipment & modality devices. |
@@ -168,7 +168,8 @@ Rules enforced in the database:
   only), `later_discount_minor` (discounts given after issue), `value_minor`,
   `received_minor`, `paid_back_minor`, `net_collected_minor`, `due_minor`,
   `status` (`paid`, `partially_paid`, `unpaid`, `refunded`, `voided`; a
-  discount alone never makes an invoice `refunded`), a
+  discount alone never makes an invoice `refunded`; the app shows a
+  `refunded` invoice whose `value_minor` is above zero as Partly refunded), a
   `services` summary and `doctors`. `invoice_detail(id)` returns the
   complete document. `invoice_patient_summary(patient_id)` returns due,
   collected and invoice counts. Invoices also protect a patient from deletion.
@@ -183,8 +184,12 @@ Rules enforced in the database:
   doctor; that doctor's share of each allocation), `doctors` (share per
   doctor, with a NULL-doctor row for lines without doctor credit),
   `outstanding` (due per patient as of now, by invoice branch; dates are
-  ignored) and `services` (lines on non-voided invoices dated in the range:
-  units, current value and money collected on them to date, with the lines).
+  ignored; since migration `20261115120100` rows and totals add
+  `due_0_30_minor`, `due_31_60_minor`, `due_61_90_minor` and
+  `due_over_90_minor` by days since the invoice date) and `services` (lines
+  on non-voided invoices dated in the range: units, current value and money
+  collected on them to date, with the lines; a line refunded in full, with no
+  value and no sessions left after an active `refund`, is left out).
   An allocation is split equally among the line's doctors with cumulative
   floors, so shares always add up to the money collected. Each refund row is
   split (migration `20261113175332`, applied to the linked project on
@@ -288,7 +293,19 @@ Patient registry plus package credit balances.
 - `phone_number` (`text`, NOT NULL)
 - `clinic` (`clinic_location`, NOT NULL)
 - `session_balance` (`integer`, NOT NULL, default `0`) — PT session credits
-- `traction_balance` (`integer`, NOT NULL, default `0`) — traction session credits
+- `traction_balance` (`integer`, NOT NULL, default `0`) — traction session credits.
+  Signed-in users cannot write either directly (`guard_patient_balance_write`,
+  on insert and update since migration `20261115120100`): balances change
+  through invoice commands (`invoice_adjust_sessions` sets the
+  `app.balance_write` marker), check-in triggers, and
+  `adjust_patient_balance(patient, expected_pt, expected_traction, pt,
+  traction, reason)` for payment staff, which refuses `balance_changed` when
+  the expected values are stale and `invalid_adjustment` for negative values,
+  no change or a blank reason. Each correction is a row in
+  `patient_balance_adjustments` (`pt_before`, `pt_after`, `traction_before`,
+  `traction_after`, `reason`, `adjusted_by`, `adjusted_by_name`,
+  `adjusted_at`; readable by anyone with access to the patient, no client
+  writes).
 - `next_visit_date` (`date`, nullable) — recall date for the due-patients queue
 - `created_by` (`uuid`, FK → `staff(id)` ON DELETE SET NULL, nullable)
 - `created_at` (`timestamptz`, NOT NULL, default `now()`)
@@ -375,7 +392,27 @@ Visit schedule.
 - `patient_id` (`uuid`, FK → `patients(id)` ON DELETE CASCADE, NOT NULL)
 - `type` (`appointment_type`, NOT NULL)
 - `status` (`appointment_status`, NOT NULL, default `'scheduled'`)
-- `use_package` (`boolean`, NOT NULL, default `true`)
+- `use_package` (`boolean`, NOT NULL, default `true`). For signed-in users
+  `tr_appointment_package_rule` sets it: true for PT and traction, false for
+  assessments, on insert, on a type change and while `scheduled`; a recorded
+  outcome keeps its flag. Booking never refuses a short balance; check-in
+  does (`Insufficient package balance`).
+- Migrations `20261115120000` (through the MCP server) and `20261115120100`
+  (by hand in the SQL editor, so it is not in the project's migration list)
+  were applied to the linked project on November 15, 2026 and checked there.
+- `status_changed_at` (`timestamptz`, nullable) — when the current status was
+  recorded (null for older rows: the visit's time stands in). Set by
+  `tr_guard_appointment_status`, which also refuses `visit_outcome_locked`
+  when an outcome is changed after both its recorded day and the visit's day
+  have passed, unless the caller is payment staff and gave a reason.
+  The app changes status only through
+  `set_appointment_status(appointment, status, reason)` (caller's rights).
+  A visit ever checked in cannot be deleted (`visit_was_attended`).
+  `appointment_events` keeps every booking (`booked`), status change
+  (`status`, with `from_status`, `to_status`, `reason`) and deletion
+  (`deleted`), with `actor_id`, `actor_name` and `at`; it has no foreign
+  keys so it outlives the visit, is readable by anyone with access to the
+  patient, and is written only by `tr_record_appointment_event`.
 - `scheduled_at` (`timestamptz`, NOT NULL, default `now()`)
 - `created_by` (`uuid`, FK → `staff(id)` ON DELETE SET NULL, nullable)
 - `created_at` (`timestamptz`, NOT NULL, default `now()`)
@@ -501,7 +538,9 @@ appointments             <- patient_notes.appointment_id (optional)
 | `update_appointment_doctors(...)` | Synchronizes appointment doctor assignments. Spinal traction never has a doctor; every other type needs at least one (migration `20261112113000`). |
 | `execute_invoice_command` kind `invoice_void_all` | Cancels an invoice and all its active receipts in one transaction with one reason (`invoice_void_with_receipts`), for payments entered by mistake. Refused with `refunds_first` while a refund is active. Migration `20261113120000`, applied to the linked project on November 13, 2026. |
 | `remove_service(service_id, version)` | Removes a catalog service for payment staff: deletes it when no invoice line uses it, otherwise sets `active = false` so issued invoices keep it. Returns `{ok, outcome: deleted|hidden}` or `{ok: false, error}`. Migration `20261113090000`, applied to the linked project by hand (SQL editor) on November 13, 2026. |
-| `book_recurring_appointments(...)` | Books slots with package balance locking. Rejects doctors on spinal traction and requires one for other types. |
+| `book_recurring_appointments(...)` | Books slots; PT and traction always use the package and a short balance is not refused (migration `20261115120100`; `p_use_package` is ignored). Rejects doctors on spinal traction and requires one for other types. |
+| `set_appointment_status(...)` | Records a visit's status with an optional reason (required for an earlier day's outcome). |
+| `adjust_patient_balance(...)` | Payment staff's hand correction of both balances, recorded in `patient_balance_adjustments`. |
 | `bulk_replace_appointment_doctor(...)` | Swaps an absent doctor off a day's appointments. |
 | `get_due_patients(...)` | Branch-scoped due-patient queue. |
 | `create_patient_program(...)` | Atomically creates a patient rehabilitation program with conditions and attached imaging documents. |
@@ -564,12 +603,13 @@ Deployment is unverified; see [review results](pre-delivery-review-results.md).
 | can_current_staff_edit_appointment(id) | Management, permanent assignment, or covering doctor within the clinic-local edit window. |
 | update_patient_details(...) | Demographics and optional doctor assignments in one transaction; preserves balances. |
 | update_appointment_details(...) | Schedule/type/package and optional doctor assignments in one transaction. |
-| guard_patient_balance_write() | Rejects direct balance changes by doctors; permits nested balance triggers and the invoice commands. |
+| guard_patient_balance_write() | Rejects any direct balance write by a signed-in user; permits nested balance triggers and writes marked by the invoice commands and `adjust_patient_balance`. |
 | guard_appointment_edit() | Protects identity and enforces schedule/delete permission. |
 
-book_recurring_appointments respects cash/package selection,
-counts only matching future package reservations and validates the expected
-recall date. Assessment appointments do not consume package credits.
+book_recurring_appointments always books PT and traction on the package and
+validates the expected recall date. Assessment appointments do not consume
+package credits. Removing sessions (refunds, cancelled invoices) must leave
+enough for every package visit still scheduled from the start of today.
 
 Financial constraints require finite positive amounts, a finite total at least
 as large as the amount (when present), and nonnegative purchased credits. They

@@ -86,26 +86,8 @@ extension _NewAppointmentProviderSection on _NewAppointmentFormState {
             ),
           ],
           const SizedBox(height: AppSizes.p16),
-          if (_selectedType.affectsPackageBalance)
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Expanded(
-                  child: Text(
-                    AppStrings.usePackageBalance,
-                    style: AppTextStyles.body.copyWith(
-                      color: Theme.of(context).colorScheme.onSurface,
-                    ),
-                  ),
-                ),
-                Switch(
-                  value: _usePackage,
-                  onChanged: (value) => _mutate(() => _usePackage = value),
-                  activeThumbColor: Theme.of(context).colorScheme.primary,
-                ),
-              ],
-            )
-          else
+          // PT and traction always use the package balance; assessments are billed apart.
+          if (!_selectedType.affectsPackageBalance)
             Container(
               padding: const EdgeInsets.symmetric(horizontal: AppSizes.p12, vertical: AppSizes.p8),
               decoration: BoxDecoration(

@@ -369,13 +369,15 @@ abstract final class AppSizes {
   // ──────────────── Invoices ────────────────
 
   /// Width at which a patient's invoice rows use aligned columns.
-  static const double invoiceListWideBreakpoint = 680.0;
+  static const double invoiceListWideBreakpoint = 696.0;
 
   /// Width at which the patient money summary shows four figures in a row.
   static const double invoiceTotalsWideBreakpoint = 560.0;
   static const double invoiceNumberColumnWidth = 116.0;
   static const double invoiceAmountColumnWidth = 104.0;
-  static const double invoiceStatusColumnWidth = 112.0;
+
+  /// Fits the longest status, Partly refunded, on one line.
+  static const double invoiceStatusColumnWidth = 128.0;
 
   /// The new-invoice form places its summary beside the form from here.
   static const double invoiceFormWideBreakpoint = 900.0;
@@ -390,6 +392,9 @@ abstract final class AppSizes {
 
   /// Width of the payment, void and receipt-correction dialogs.
   static const double invoiceDialogWidth = 440.0;
+
+  /// Dialogs that ask why a recorded change is made.
+  static const double reasonDialogWidth = 440.0;
 
   /// Width of the From/To period calendar.
   static const double dateRangeDialogWidth = 340.0;

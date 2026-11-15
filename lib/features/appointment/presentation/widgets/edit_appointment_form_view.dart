@@ -78,14 +78,8 @@ extension _EditAppointmentView on _EditAppointmentFormState {
                     ),
                   ),
                 const SizedBox(height: AppSizes.p16),
-                if (_selectedType.affectsPackageBalance)
-                  SwitchListTile(
-                    contentPadding: EdgeInsets.zero,
-                    title: const Text(AppStrings.usePackageBalance, style: AppTextStyles.body),
-                    value: _usePackage,
-                    onChanged: isScheduled ? (value) => _mutate(() => _usePackage = value) : null,
-                  )
-                else
+                // PT and traction always use the package balance.
+                if (!_selectedType.affectsPackageBalance)
                   const Text(AppStrings.paidSeparately, style: AppTextStyles.bodySecondary),
               ],
             ),
@@ -99,12 +93,7 @@ extension _EditAppointmentView on _EditAppointmentFormState {
     preselectedPatient: widget.patient,
     onPatientTap: null,
     selectedType: _selectedType,
-    onTypeChanged: (type) => _mutate(() {
-      _selectedType = type;
-      if (!type.affectsPackageBalance) {
-        _usePackage = false;
-      }
-    }),
+    onTypeChanged: (type) => _mutate(() => _selectedType = type),
     isRecurring: false,
     onRecurringChanged: (_) {},
     selectedDate: _selectedDate,

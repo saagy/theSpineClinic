@@ -142,6 +142,11 @@ then runs these scripts:
 - invoice_fixture.sql + invoice_workflow.sql also checks that the front desk
   cannot date an invoice before today, and report_edge_cases.sql that payment
   staff can and the invoice counts in Services on its own date.
+- invoice_fixture.sql + visit_outcomes.sql (visit history, the earlier-day
+  outcome lock and its reason, attended visits kept, PT always on the
+  package, sessions held for the whole day, no-shows, balance corrections and
+  the direct-write guard, fully refunded lines left out of Services, aged
+  Balances due)
 - invoice_fixture.sql + report_edge_cases.sql (three-way doctor splits, a
   correction that names another doctor, a refund on a shared line, a
   cancelled paid invoice, a renamed and deactivated doctor, money and

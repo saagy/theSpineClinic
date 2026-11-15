@@ -51,6 +51,7 @@ class _GroupedSubAppointmentRow extends ConsumerWidget {
             AppointmentStatus.scheduled => clinic.neutral,
             AppointmentStatus.checkedIn => clinic.success,
             AppointmentStatus.cancelled => theme.colorScheme.error,
+            AppointmentStatus.noShow => theme.colorScheme.onSurfaceVariant,
           };
 
     return LayoutBuilder(

@@ -33,6 +33,10 @@ extension AppointmentStatusBadgeColors on AppointmentStatus {
         textColor: cs.onErrorContainer,
         backgroundColor: cs.errorContainer,
       ),
+      AppointmentStatus.noShow => AppointmentBadgeColors(
+        textColor: cs.onSurfaceVariant,
+        backgroundColor: cs.surfaceContainerHighest,
+      ),
     };
   }
 }

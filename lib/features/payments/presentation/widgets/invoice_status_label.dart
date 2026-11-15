@@ -12,6 +12,7 @@ extension InvoiceStatusText on InvoiceStatus {
     InvoiceStatus.paid => _t.statusPaid,
     InvoiceStatus.partiallyPaid => _t.statusPartial,
     InvoiceStatus.unpaid => _t.statusUnpaid,
+    InvoiceStatus.partlyRefunded => _t.statusPartlyRefunded,
     InvoiceStatus.refunded => _t.statusRefunded,
     InvoiceStatus.voided => _t.statusVoided,
   };
@@ -30,7 +31,7 @@ class InvoiceStatusLabel extends StatelessWidget {
       InvoiceStatus.paid => (Icons.check_circle, clinic.success),
       InvoiceStatus.partiallyPaid => (Icons.timelapse, clinic.warning),
       InvoiceStatus.unpaid => (Icons.radio_button_unchecked, clinic.warning),
-      InvoiceStatus.refunded => (Icons.undo, muted),
+      InvoiceStatus.partlyRefunded || InvoiceStatus.refunded => (Icons.undo, muted),
       InvoiceStatus.voided => (Icons.block, muted),
     };
     return Row(

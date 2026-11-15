@@ -123,7 +123,7 @@ class AllAppointmentsNotifier extends AllAppointmentsData with AllAppointmentsFi
       } else if (status != null && status != newStatus.dbValue) {
         _totalCount = (_totalCount - 1).clamp(0, _totalCount);
       } else {
-        updated.add(item.copyWith(appointment: item.appointment.copyWith(status: newStatus)));
+        updated.add(item.copyWith(appointment: item.appointment.copyWith(status: newStatus, statusChangedAt: DateTime.now())));
       }
     }
     state = AsyncValue.data(updated);

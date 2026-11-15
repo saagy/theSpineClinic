@@ -198,6 +198,11 @@ class DatabaseException extends AppException {
       'staff_schedule_invalid',
       'branch_not_assigned',
       'appointment_branch_locked',
+      'visit_outcome_locked',
+      'visit_was_attended',
+      'visit_not_found',
+      'balance_changed',
+      'invalid_adjustment',
     ]) {
       if (error.message.contains(key)) {
         return DatabaseException(

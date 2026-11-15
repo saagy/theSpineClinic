@@ -11,7 +11,7 @@ extension _NewAppointmentBooking on _NewAppointmentFormState {
           slots: _computedSlots,
           time: _selectedTime!,
           doctors: doctors,
-          usePackage: _usePackage,
+          usePackage: _selectedType.affectsPackageBalance,
           expectedNextVisitDate: widget.expectedNextVisitDate,
           branch: _bookingBranch(
             ref.read(patientDetailProvider(_patientId!)).value,

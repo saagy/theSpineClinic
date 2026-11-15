@@ -59,7 +59,7 @@ mixin _PatientAppointmentQueries on _AppointmentRepositoryBase {
           .from(_appointmentsTable)
           .select()
           .eq('patient_id', patientId)
-          .neq('status', AppointmentStatus.cancelled.dbValue)
+          .not('status', 'in', '(${AppointmentStatus.cancelled.dbValue},${AppointmentStatus.noShow.dbValue})')
           .gte('scheduled_at', from.toUtc().toIso8601String())
           .order('scheduled_at');
       return rows.map(Appointment.fromJson).toList();
@@ -112,7 +112,8 @@ mixin _PatientAppointmentQueries on _AppointmentRepositoryBase {
           .eq('patient_id', patientId)
           .eq('status', 'scheduled')
           .eq('use_package', true)
-          .gte('scheduled_at', DateTime.now().toUtc().toIso8601String());
+          // A visit holds its session for its whole day (invoice_adjust_sessions).
+          .gte('scheduled_at', DateUtils.dateOnly(DateTime.now()).toUtc().toIso8601String());
       if (type != null) query = query.eq('type', type.dbValue);
       final response = await query.limit(1).count(CountOption.exact);
       return response.count;

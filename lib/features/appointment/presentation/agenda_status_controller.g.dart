@@ -63,7 +63,7 @@ final class AgendaStatusControllerProvider
 }
 
 String _$agendaStatusControllerHash() =>
-    r'41769a03105a19fc0d6acafa9d08f10b76af5102';
+    r'78a774f1d1a24b9bb9f837ded70fa3cde5930ad9';
 
 /// One in-flight mutation per appointment, shared by row and menu.
 

@@ -58,28 +58,6 @@ extension _NewAppointmentValidation on _NewAppointmentFormState {
       return;
     }
 
-    final bool pendingRetry = await ref.read(
-      pendingBookingProvider(_patientId!).future,
-    );
-    if (!mounted) return;
-    if (!pendingRetry && _selectedType.affectsPackageBalance && _usePackage) {
-      final available = await ref.read(
-        availableBalanceForTypeProvider((
-          patientId: _patientId!,
-          type: _selectedType,
-        )).future,
-      );
-      if (!mounted) return;
-      if (_computedSlots.length > (available ?? 0)) {
-        AppSnackbar.show(
-          context,
-          message: AppStrings.insufficientPackageBalance,
-          variant: AppSnackbarVariant.error,
-        );
-        return;
-      }
-    }
-
     await _executeBooking(doctors);
   }
 }

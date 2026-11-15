@@ -111,16 +111,17 @@ class AppointmentBalanceDiagnostics extends ConsumerWidget {
     final bool isDeficit = requestedCount > netAvailable;
     final int leftover = netAvailable - requestedCount;
 
+    // A shortfall warns but never blocks: check-in is where a session is needed.
     final Color cardBorderColor = isDeficit
-        ? Theme.of(context).colorScheme.error
+        ? ClinicColors.of(context).warning
         : ClinicColors.of(context).success;
     final Color cardBgColor = isDeficit
-        ? Theme.of(context).colorScheme.errorContainer
+        ? ClinicColors.of(context).warningContainer
         : ClinicColors.of(context).successContainer;
     final Color statusTextColor = isDeficit
-        ? Theme.of(context).colorScheme.error
+        ? ClinicColors.of(context).warning
         : ClinicColors.of(context).success;
-    final IconData statusIcon = isDeficit ? Icons.error_outline : Icons.check_circle_outline;
+    final IconData statusIcon = isDeficit ? Icons.warning_amber_rounded : Icons.check_circle_outline;
 
     return Container(
       decoration: BoxDecoration(
@@ -164,7 +165,7 @@ class AppointmentBalanceDiagnostics extends ConsumerWidget {
                 : AppStrings.projectedLeftoverMessage(leftover),
             style: AppTextStyles.bodySecondary.copyWith(
               color: isDeficit
-                  ? Theme.of(context).colorScheme.error
+                  ? ClinicColors.of(context).warning
                   : Theme.of(context).colorScheme.onSurfaceVariant,
             ),
           ),
@@ -192,9 +193,9 @@ class AppointmentBalanceDiagnostics extends ConsumerWidget {
           if (isDeficit && requestedCount > 0) ...[
             const SizedBox(height: AppSizes.p8),
             Text(
-              AppStrings.insufficientPackageBalance,
+              AppStrings.balances.shortAtBooking,
               style: AppTextStyles.bodySecondary.copyWith(
-                color: Theme.of(context).colorScheme.error,
+                color: Theme.of(context).colorScheme.onSurface,
               ),
             ),
           ],

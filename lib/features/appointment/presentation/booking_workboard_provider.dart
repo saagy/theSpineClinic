@@ -61,7 +61,7 @@ class BookingWorkboard extends _$BookingWorkboard {
       schedule: [
         for (final item in state.schedule)
           if (item.appointment.id == id)
-            item.copyWith(appointment: item.appointment.copyWith(status: status))
+            item.copyWith(appointment: item.appointment.copyWith(status: status, statusChangedAt: DateTime.now()))
           else
             item,
       ],

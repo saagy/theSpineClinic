@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:spine_clinic_app/core/constants/app_strings.dart';
 import 'package:spine_clinic_app/core/network/app_routes.dart';
 import 'package:spine_clinic_app/core/network/auth_redirect.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -7,7 +8,9 @@ import 'package:spine_clinic_app/features/payments/domain/invoice_action.dart';
 import 'package:spine_clinic_app/features/payments/domain/invoice_detail.dart';
 import 'package:spine_clinic_app/features/payments/domain/invoice_summary.dart';
 import 'package:spine_clinic_app/features/payments/presentation/invoice_document_pdf.dart';
+import 'package:spine_clinic_app/features/payments/presentation/widgets/invoice_status_label.dart';
 import '../../fixtures/invoice_detail_fixture.dart';
+import '../../fixtures/invoice_fixture.dart';
 import '../../fixtures/service_catalog_fixture.dart';
 
 RefundDraft refund(InvoiceDetail invoice, int sessions, int value, {PaymentMethod? method}) => RefundDraft(
@@ -37,6 +40,17 @@ void main() {
     expect(invoiceNumberLabel(ClinicLocation.madinaty, 7), 'MD-00007');
     expect(ClinicLocation.fromDbValue('madinaty'), ClinicLocation.madinaty);
     expect(ClinicLocation.fromDbValue('unknown'), isNull);
+  });
+
+  test('a refund that leaves part of the invoice shows as partly refunded', () {
+    final part = sampleInvoice(1, '12 PT sessions', total: 450000, paid: 270000, refunded: 180000);
+    final whole = sampleInvoice(2, '12 PT sessions', total: 450000, refunded: 450000);
+    final paid = sampleInvoice(3, '12 PT sessions', total: 450000, paid: 450000);
+    expect(part.status, InvoiceStatus.refunded);
+    expect(part.displayStatus, InvoiceStatus.partlyRefunded);
+    expect(part.displayStatus.label, AppStrings.invoices.statusPartlyRefunded);
+    expect(whole.displayStatus, InvoiceStatus.refunded);
+    expect(paid.displayStatus, InvoiceStatus.paid);
   });
 
   test('the invoice document parses with its figures and documents', () {

@@ -22,6 +22,18 @@ ReportColumn _count(String label) => ReportColumn(
 );
 
 ReportView outstandingReportView(OutstandingReport report) {
+  // Zero buckets stay quiet so the money that is late stands out.
+  List<ReportCell> aged(OutstandingAge age) => [
+    for (final (index, minor) in age.buckets.indexed)
+      ReportCell.money(
+        minor,
+        tone: minor == 0
+            ? ReportTone.muted
+            : index > 0
+            ? ReportTone.warning
+            : ReportTone.normal,
+      ),
+  ];
   final sheet = ReportSheet(
     columns: [
       ReportColumn(_t.colPatient, role: ReportCellRole.title),
@@ -31,12 +43,11 @@ ReportView outstandingReportView(OutstandingReport report) {
         width: AppSizes.reportDateColumnWidth,
         role: ReportCellRole.figure,
       ),
-      ReportColumn(
-        _t.openInvoices,
-        width: AppSizes.reportAmountColumnWidth,
-        numeric: true,
-        role: ReportCellRole.figure,
-      ),
+      _count(_t.openInvoices),
+      _amount(_t.colAge30),
+      _amount(_t.colAge60),
+      _amount(_t.colAge90),
+      _amount(_t.colAgeOver90),
       _amount(_t.amountDue, role: ReportCellRole.lead),
     ],
     rows: [
@@ -46,6 +57,7 @@ ReportView outstandingReportView(OutstandingReport report) {
             ReportCell.patient(row.patientName, row.fileNumber),
             ReportCell.day(row.oldestDate),
             ReportCell.count(row.openInvoices),
+            ...aged(row.aged),
             ReportCell.money(row.dueMinor, tone: ReportTone.warning),
           ],
           // An unpaid balance opens on the patient's invoices.
@@ -55,6 +67,13 @@ ReportView outstandingReportView(OutstandingReport report) {
           ),
         ),
     ],
+    footer: [
+      ReportCell(_t.totalRow),
+      const ReportCell(''),
+      ReportCell.count(report.openInvoices),
+      ...aged(report.aged),
+      ReportCell.money(report.dueMinor),
+    ],
   );
   return ReportView(
     figures: [
@@ -62,6 +81,11 @@ ReportView outstandingReportView(OutstandingReport report) {
         _t.amountDue,
         Money.format(report.dueMinor),
         tone: report.dueMinor > 0 ? ReportTone.warning : ReportTone.normal,
+      ),
+      ReportFigure(
+        _t.dueOver90,
+        Money.format(report.aged.over90Minor),
+        tone: report.aged.over90Minor > 0 ? ReportTone.warning : ReportTone.normal,
       ),
       ReportFigure(_t.patients, '${report.rowCount}'),
       ReportFigure(_t.openInvoices, '${report.openInvoices}'),

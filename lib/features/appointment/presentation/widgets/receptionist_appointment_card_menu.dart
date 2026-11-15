@@ -74,6 +74,7 @@ mixin _ReceptionistAppointmentCardMenu
           _item('restore', Icons.refresh_rounded, clinic.success,
               AppStrings.restoreAppointment),
         ],
+      AppointmentStatus.noShow => const <PopupMenuItem<String>>[],
     };
   }
 

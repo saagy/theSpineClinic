@@ -30,7 +30,10 @@ List<PatientVisitClash> findPatientVisitClashes({
 }) {
   final List<Appointment> live = [
     for (final Appointment visit in existing)
-      if (visit.status != AppointmentStatus.cancelled && visit.id != ignoreId) visit,
+      if (visit.status != AppointmentStatus.cancelled &&
+          visit.status != AppointmentStatus.noShow &&
+          visit.id != ignoreId)
+        visit,
   ];
   final List<PatientVisitClash> clashes = [];
   for (final DateTime start in requested) {

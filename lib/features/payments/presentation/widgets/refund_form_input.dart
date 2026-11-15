@@ -29,7 +29,8 @@ abstract interface class PaybackDetailsInput {
 /// Everything the refund form holds.
 class RefundFormInput implements PaybackDetailsInput {
   RefundFormInput({required this.invoice, required this.branch, required this.balances})
-    : lines = [
+    : method = invoice.mainPaymentMethod,
+      lines = [
         for (final line in invoice.lines)
           if (line.isRefundable) RefundLineInput(line),
       ];
@@ -42,6 +43,7 @@ class RefundFormInput implements PaybackDetailsInput {
   final Map<ServiceType, int> balances;
   @override
   ClinicLocation branch;
+  /// Starts as the way the invoice was paid; staff can change it.
   @override
   PaymentMethod? method;
   @override
@@ -59,7 +61,7 @@ class RefundFormInput implements PaybackDetailsInput {
 
   bool get isPristine =>
       reason.text.trim().isEmpty &&
-      method == null &&
+      method == invoice.mainPaymentMethod &&
       lines.every((line) => line.sessions == 0 && line.value.text.trim().isEmpty);
 
   RefundDraft draft() => RefundDraft(

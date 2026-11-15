@@ -59,7 +59,7 @@ final class PatientAppointmentsProvider
 }
 
 String _$patientAppointmentsHash() =>
-    r'71d6cb07c9c1aa86bdf18e82471fbcf59c4c987a';
+    r'a7e05a4ba504223356f09d6ec558df510b2ddb7f';
 
 final class PatientAppointmentsFamily extends $Family
     with

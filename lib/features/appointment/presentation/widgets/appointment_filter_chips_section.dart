@@ -92,6 +92,7 @@ class AppointmentFilterChipsSection extends StatelessWidget {
       null,
       AppointmentStatus.scheduled,
       AppointmentStatus.checkedIn,
+      AppointmentStatus.noShow,
       AppointmentStatus.cancelled,
     ];
     return Wrap(

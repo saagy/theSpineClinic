@@ -10,7 +10,7 @@ import '../../fixtures/booking_balance_harness.dart';
 
 void main() {
   testWidgets(
-    'type changes retain the chosen doctor and session billing choice',
+    'type changes retain the chosen doctor and PT always uses the package',
     (tester) async {
       final assignedDoctor = bookingTestStaff.copyWith(
         id: 'doctor-assigned',
@@ -33,8 +33,7 @@ void main() {
 
       fieldState.didChange([selectedDoctor]);
       await tester.pumpAndSettle();
-      await tester.tap(find.byType(Switch).last);
-      await tester.pumpAndSettle();
+      expect(find.text(AppStrings.usePackageBalance), findsNothing);
 
       await tester.ensureVisible(find.text(AppStrings.reassessment));
       await tester.tap(find.text(AppStrings.reassessment));
@@ -46,7 +45,7 @@ void main() {
       await tester.tap(find.text(AppStrings.normalPtSession));
       await tester.pumpAndSettle();
       expect(fieldState.value?.map((doctor) => doctor.id), [selectedDoctor.id]);
-      expect(tester.widget<Switch>(find.byType(Switch).last).value, false);
+      expect(find.text(AppStrings.usePackageBalance), findsNothing);
       expect(tester.takeException(), isNull);
     },
   );
@@ -87,13 +86,13 @@ void main() {
 
       // Verify Ledger Preview immediately updates with deficit
       expect(find.text(AppStrings.packageDeficitMessage(2)), findsOneWidget);
-      expect(find.text(AppStrings.insufficientPackageBalance), findsOneWidget);
+      expect(find.text(AppStrings.balances.shortAtBooking), findsOneWidget);
 
-      // Verify Save button is disabled
+      // A shortfall warns but still lets the visit be booked.
       final saveButton = tester.widget<FilledButton>(
         find.widgetWithText(FilledButton, AppStrings.save),
       );
-      expect(saveButton.onPressed, isNull);
+      expect(saveButton.onPressed, isNotNull);
 
       // Type 3 sessions (exact balance)
       await tester.enterText(sessionsInput, '3');
@@ -117,7 +116,7 @@ void main() {
       await tester.pumpAndSettle();
       await tester.enterText(find.byType(TextField).last, '5');
       await tester.pumpAndSettle();
-      expect(find.text(AppStrings.insufficientPackageBalance), findsOneWidget);
+      expect(find.text(AppStrings.balances.shortAtBooking), findsOneWidget);
       expect(
         tester
             .widget<FilledButton>(

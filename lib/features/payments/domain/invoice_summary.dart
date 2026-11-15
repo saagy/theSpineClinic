@@ -4,11 +4,13 @@ import '../../patient/domain/clinic_location.dart';
 part 'invoice_summary.freezed.dart';
 part 'invoice_summary.g.dart';
 
-/// Matches `invoice_register.status`.
+/// Matches `invoice_register.status`, except [partlyRefunded], which the
+/// register reports as `refunded` (see [InvoiceSummary.displayStatus]).
 enum InvoiceStatus {
   paid,
   partiallyPaid,
   unpaid,
+  partlyRefunded,
   refunded,
   voided;
 
@@ -56,6 +58,11 @@ abstract class InvoiceSummary with _$InvoiceSummary {
   factory InvoiceSummary.fromJson(Map<String, dynamic> json) => _$InvoiceSummaryFromJson(json);
 
   bool get isVoided => status == InvoiceStatus.voided;
+
+  /// The status to show. The register calls a settled invoice refunded once
+  /// it has any refund; while part of its value remains it is partly refunded.
+  InvoiceStatus get displayStatus =>
+      status == InvoiceStatus.refunded && valueMinor > 0 ? InvoiceStatus.partlyRefunded : status;
 
   /// Branch-prefixed document number, for example `TG-00012`.
   String get displayNumber => invoiceNumberLabel(branch, number);

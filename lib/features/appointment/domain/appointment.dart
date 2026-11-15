@@ -3,6 +3,7 @@
 /// Maps exactly to the schema defined in AGENT_CONTEXT §3.
 library;
 
+import 'package:flutter/material.dart' show DateUtils;
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:spine_clinic_app/features/appointment/domain/appointment_status.dart';
 import 'package:spine_clinic_app/features/appointment/domain/appointment_type.dart';
@@ -43,7 +44,26 @@ abstract class Appointment with _$Appointment {
     /// Where the visit happens. Filled from the patient's branch by the
     /// database when a caller sends none.
     @JsonKey(unknownEnumValue: JsonKey.nullForUndefinedEnumValue) ClinicLocation? branch,
+
+    /// When the current status was recorded; null for visits recorded
+    /// before this was kept.
+    @JsonKey(name: 'status_changed_at', includeToJson: false) DateTime? statusChangedAt,
   }) = _Appointment;
+
+  const Appointment._();
+
+  /// Whether the recorded outcome is past the day it can be freely changed:
+  /// both the day it was recorded and the visit's own day are over. After
+  /// that only payment staff may change it, with a reason (the database
+  /// enforces the same rule).
+  bool outcomeLocked({DateTime? now}) {
+    if (!status.isOutcome) return false;
+    final DateTime today = DateUtils.dateOnly(now ?? DateTime.now());
+    final DateTime visitDay = DateUtils.dateOnly(scheduledAt.toLocal());
+    final DateTime recordedDay = DateUtils.dateOnly((statusChangedAt ?? scheduledAt).toLocal());
+    final DateTime latest = recordedDay.isAfter(visitDay) ? recordedDay : visitDay;
+    return latest.isBefore(today);
+  }
 
   /// Deserialises a JSON map (e.g. from a Supabase query) into [Appointment].
   factory Appointment.fromJson(Map<String, dynamic> json) =>

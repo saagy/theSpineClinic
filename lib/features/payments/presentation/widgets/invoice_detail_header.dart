@@ -54,7 +54,7 @@ class InvoiceDetailHeader extends ConsumerWidget {
             const SizedBox(width: AppSizes.p12),
             Padding(
               padding: const EdgeInsets.only(top: AppSizes.p4),
-              child: InvoiceStatusLabel(summary.status),
+              child: InvoiceStatusLabel(summary.displayStatus),
             ),
           ],
         ),

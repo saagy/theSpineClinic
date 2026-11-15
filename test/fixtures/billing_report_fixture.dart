@@ -156,7 +156,10 @@ final doctorsJson = <String, dynamic>{
 };
 
 final outstandingJson = <String, dynamic>{
-  'totals': {'due_minor': 266667, 'open_invoices': 3, 'row_count': 2},
+  'totals': {
+    'due_minor': 266667, 'open_invoices': 3, 'row_count': 2,
+    'due_0_30_minor': 116667, 'due_31_60_minor': 150000, 'due_61_90_minor': 0, 'due_over_90_minor': 0,
+  },
   'rows': [
     {
       'patient_id': 'patient-2',
@@ -165,6 +168,10 @@ final outstandingJson = <String, dynamic>{
       'open_invoices': 2,
       'due_minor': 200000,
       'oldest_date': '2026-10-02',
+      'due_0_30_minor': 50000,
+      'due_31_60_minor': 150000,
+      'due_61_90_minor': 0,
+      'due_over_90_minor': 0,
     },
     {
       'patient_id': 'patient-1',
@@ -173,6 +180,10 @@ final outstandingJson = <String, dynamic>{
       'open_invoices': 1,
       'due_minor': 66667,
       'oldest_date': '2026-11-09',
+      'due_0_30_minor': 66667,
+      'due_31_60_minor': 0,
+      'due_61_90_minor': 0,
+      'due_over_90_minor': 0,
     },
   ],
 };

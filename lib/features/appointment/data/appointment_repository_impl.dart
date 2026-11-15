@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart' show DateUtils;
 import 'package:spine_clinic_app/core/network/clinic_mutations.dart';
 import 'package:spine_clinic_app/core/errors/app_exception.dart';
 import 'package:spine_clinic_app/core/errors/result.dart';

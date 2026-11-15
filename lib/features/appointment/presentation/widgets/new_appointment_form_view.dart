@@ -4,29 +4,13 @@ extension _NewAppointmentFormView on _NewAppointmentFormState {
   Widget _buildForm(BuildContext context) {
     final Patient? patient = _resolvePatient();
     final bool isPatientValid = _patientId != null;
-    final availableAsync = isPatientValid
-        ? ref.watch(availableBalanceForTypeProvider((patientId: _patientId!, type: _selectedType)))
-        : null;
-    final int proposedCount = (_selectedType.affectsPackageBalance && _usePackage)
-        ? _computedSlots.length
-        : 0;
-
-    final bool pendingRetry =
-        isPatientValid && (ref.watch(pendingBookingProvider(_patientId!)).value ?? false);
-    final bool isSubmissionBlocked =
-        !pendingRetry &&
-        isPatientValid &&
-        proposedCount > 0 &&
-        (availableAsync == null ||
-            availableAsync.isLoading ||
-            availableAsync.hasError ||
-            proposedCount > (availableAsync.value ?? 0));
+    final int proposedCount = _selectedType.affectsPackageBalance ? _computedSlots.length : 0;
 
     return Form(
       key: _formKey,
       child: FormPageBody(
         isSaving: _isSubmitting,
-        onSave: isSubmissionBlocked ? null : _submitForm,
+        onSave: _submitForm,
         onCancel: () => context.pop(),
         child: FormColumns(
           first: Column(
@@ -64,7 +48,7 @@ extension _NewAppointmentFormView on _NewAppointmentFormState {
                 BookingSlotsPreview(
                   slots: _computedSlots,
                   timeOfDay: _selectedTime,
-                  usePackage: _usePackage,
+                  usePackage: _selectedType.affectsPackageBalance,
                 ),
               ],
             ],
@@ -78,13 +62,7 @@ extension _NewAppointmentFormView on _NewAppointmentFormState {
     preselectedPatient: patient,
     onPatientTap: () => _openPatientSearch(context),
     selectedType: _selectedType,
-    onTypeChanged: (type) => _mutate(() {
-      if (_selectedType.affectsPackageBalance) {
-        _sessionUsePackage = _usePackage;
-      }
-      _selectedType = type;
-      _usePackage = type.affectsPackageBalance ? _sessionUsePackage : false;
-    }),
+    onTypeChanged: (type) => _mutate(() => _selectedType = type),
     isRecurring: _isRecurring,
     onRecurringChanged: (value) => _mutate(() => _isRecurring = value),
     selectedDate: _selectedDate,

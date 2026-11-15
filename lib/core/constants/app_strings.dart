@@ -9,6 +9,8 @@ import 'invoice_discount_strings.dart';
 import 'invoice_strings.dart';
 import 'staff_details_strings.dart';
 import 'staff_schedule_strings.dart';
+import 'balance_strings.dart';
+import 'visit_strings.dart';
 
 /// Application-wide string constants.
 abstract final class AppStrings {
@@ -60,6 +62,8 @@ abstract final class AppStrings {
   static const staffDetails = StaffDetailsStrings();
   static const staffSchedule = StaffScheduleStrings();
   static const bookingClash = BookingClashStrings();
+  static const visit = VisitStrings();
+  static const balances = BalanceStrings();
   static String staffAppliedOn(String date) => 'Applied $date';
   static const String noMatchingStaff = 'No staff match your search or filters.';
   static const String programActions = 'Program actions';
@@ -271,6 +275,8 @@ abstract final class AppStrings {
     ...invoiceDetail.errorKeys,
     ...staffDetails.errorKeys,
     ...staffSchedule.errorKeys,
+    ...visit.errorKeys,
+    ...balances.errorKeys,
     'payment_changed': paymentChanged,
     'mutation_previous_completed': mutationPreviousCompleted,
     'error_unknown': errorUnknown,

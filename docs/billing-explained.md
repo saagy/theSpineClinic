@@ -66,10 +66,12 @@ and traction sessions are added to the patient's balance, whether or not
 anything is paid. The patient can start their sessions before paying.
 Packages never expire.
 
-**Sessions are used at check-in.** A package session is taken off the
-balance when the appointment is checked in, not when it is booked. Booking
-only checks that enough sessions are left for all the future package
-appointments already booked.
+**Sessions are used at check-in.** PT and traction visits always use the
+package balance; there is no switch to book them without it. A session is
+taken off the balance when the appointment is checked in, not when it is
+booked. Booking never refuses a short balance: the form warns, and the
+check-in is refused until the sessions are on an invoice (section 9b).
+Assessments and reassessments have no balance and are billed on their own.
 
 ## 4. Taking payments (receipts)
 
@@ -139,8 +141,8 @@ to the patient:
 Sessions are one shared balance per patient, not tied to a particular
 invoice. Cancelling an invoice takes all of its sessions off that balance,
 so it is only allowed while the balance still has that many sessions free
-(not used and not booked for the future). If the patient has already used
-them, use a refund instead.
+(not used, and not held by a package visit still scheduled from the start
+of today). If the patient has already used them, use a refund instead.
 
 **Order matters.** Once a refund or discount is recorded, the receipts,
 refunds and discounts before it on that invoice are locked. To cancel or edit one of them, first
@@ -151,7 +153,8 @@ consistent.
 
 Staff choose which line to refund, how many **unused** sessions to cancel,
 the **refund value** agreed with the patient, a reason, and how any money was
-handed back (cash or Visa).
+handed back (cash or Visa). The method starts as the one most of the invoice
+was paid with; staff can change it.
 
 The app then works out the rest:
 
@@ -225,8 +228,8 @@ Visa.
 - **Money goes back only when the patient has paid more than the new
   value**, with the same rule as a refund. That money shows in Payments &
   refunds under the discount's name.
-- **The status does not turn to Refunded.** A paid invoice with a discount
-  stays Paid.
+- **The status does not turn to Refunded or Partly refunded.** A paid
+  invoice with a discount stays Paid.
 - **Cancel a discount** from its menu if it was a mistake. That restores the
   invoice value and any money handed back.
 
@@ -244,7 +247,8 @@ and discounts are cancelled.
 | Unpaid | Nothing paid yet. |
 | Partly paid | Some paid, some still due. |
 | Paid | Nothing due. |
-| Refunded | A refund reduced the invoice. A discount alone does not. |
+| Partly refunded | Nothing due, and a refund reduced the invoice but part of its value remains. A discount alone does not. |
+| Refunded | The whole invoice was refunded: its value is now zero. |
 | Cancelled | Cancelled as a mistake; counts for nothing. |
 
 **Balance due** = invoice value after refunds and discounts − (money
@@ -277,7 +281,7 @@ Receptionists with a branch only see their branch.
 | **Revenue** | What did that money pay for, and which doctor brought it in? | When money changed hands | Service line of a receipt, refund or discount |
 | **Doctor sessions** | How many sessions did each doctor do, by type? | Appointment time | Checked-in appointment |
 | **Services** | What was sold, and how much of it is paid so far? | Invoice date | Invoice line |
-| **Balances due** | Who owes money right now? | As of now | Patient |
+| **Balances due** | Who owes money right now, and for how long? | As of now | Patient |
 
 **How they relate:**
 
@@ -290,7 +294,14 @@ Receptionists with a branch only see their branch.
   whenever that money came in.
 - **Doctor sessions has nothing to do with money.** It counts appointments
   checked in, for working out doctor pay.
-- **Balances due ignores the period.** It is always today's picture.
+- **Balances due ignores the period.** It is always today's picture. Each
+  patient's balance is split by how long its invoices have been open,
+  counted from the invoice date: 0–30, 31–60, 61–90 and over 90 days. Older
+  money is harder to collect, so follow it up first.
+- **Services counts what was sold.** A line refunded in full (no value and
+  no sessions left) is left out. A partly refunded package still counts as
+  one sold, at its reduced value. A free line, or one discounted to zero,
+  still counts.
 
 **Payments & refunds figures:**
 
@@ -302,6 +313,36 @@ Receptionists with a branch only see their branch.
 - **Total** = Cash + Visa.
 - **By receptionist** shows the same per person, for shift handover.
 - **Cancelled** lists documents cancelled that day. They are not in any total.
+
+## 9b. Visits and session balances
+
+**Who records what.** Check-in, No-show and Cancel are recorded on the
+schedule or the appointment. A visit can be marked as a no-show from its
+own day onwards; it uses no session.
+
+**Changing an outcome later.** On the day an outcome is recorded (and on
+the visit's own day) anyone who may change the visit can undo it. After
+that, only payment receptionists and the admin can change it, and they are
+asked for a reason. This protects past Doctor sessions reports and stops a
+used session from quietly going back on the balance.
+
+**History.** Every booking, check-in, undo, cancellation, no-show and
+deletion is kept with who did it, when and any reason. The appointment
+screen shows it under **History**. A visit that was ever checked in cannot
+be deleted; cancel it instead.
+
+**Sessions held for the day.** A scheduled package visit holds its session
+for its whole day. A refund or invoice cancellation cannot take that session
+away, even after the start time has passed, until the visit is checked in,
+cancelled or marked as a no-show. Visits from earlier days hold nothing.
+
+**Correcting a balance by hand.** Payment receptionists and the admin can
+use **Adjust balance** on the patient's Payments tab, for example for
+sessions carried over from the old system. They enter the new PT and
+traction balances and a reason. Each correction is listed under **Balance
+corrections** with the numbers before and after, who made it and when.
+Nothing else can change a balance directly: invoices, refunds and check-ins
+change it by themselves.
 
 ## 10. A suggested routine
 

@@ -153,6 +153,7 @@ class OutstandingReport extends BillingReportData {
     required this.dueMinor,
     required this.openInvoices,
     required this.rows,
+    this.aged = const OutstandingAge(),
   });
 
   factory OutstandingReport.fromJson(Map<String, dynamic> json) {
@@ -162,12 +163,14 @@ class OutstandingReport extends BillingReportData {
       dueMinor: _int(totals['due_minor']),
       openInvoices: _int(totals['open_invoices']),
       rows: _list(json['rows'], OutstandingRow.fromJson),
+      aged: OutstandingAge.fromJson(totals),
     );
   }
 
   final int dueMinor;
   final int openInvoices;
   final List<OutstandingRow> rows;
+  final OutstandingAge aged;
 
   @override
   int get shownCount => rows.length;

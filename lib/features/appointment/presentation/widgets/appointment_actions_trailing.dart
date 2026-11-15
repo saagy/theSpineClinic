@@ -142,6 +142,7 @@ class _AppointmentActionsTrailingState
           _menuItem('restore', Icons.refresh_rounded, clinic.success,
               AppStrings.restoreAppointment),
         ],
+      AppointmentStatus.noShow => const <PopupMenuItem<String>>[],
     };
   }
 

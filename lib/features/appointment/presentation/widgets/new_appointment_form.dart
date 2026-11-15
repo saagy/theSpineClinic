@@ -18,7 +18,6 @@ import 'package:spine_clinic_app/features/appointment/presentation/widgets/appoi
 import 'package:spine_clinic_app/features/appointment/presentation/widgets/booking_form_fields.dart';
 import 'package:spine_clinic_app/features/appointment/presentation/widgets/booking_slots_preview.dart';
 import 'package:spine_clinic_app/features/appointment/presentation/booking_controller.dart';
-import 'package:spine_clinic_app/features/appointment/presentation/pending_booking_provider.dart';
 import 'package:spine_clinic_app/features/appointment/presentation/widgets/date_recurrence_utils.dart';
 import 'package:spine_clinic_app/features/appointment/presentation/widgets/patient_search_sheet.dart';
 import 'package:spine_clinic_app/features/appointment/presentation/widgets/patient_visit_clash_warning.dart';
@@ -75,8 +74,6 @@ class _NewAppointmentFormState extends ConsumerState<NewAppointmentForm> {
   AppointmentType _selectedType = AppointmentType.normalPtSession;
   bool _isRecurring = false;
   bool _isSubmitting = false;
-  bool _usePackage = true;
-  bool _sessionUsePackage = true;
   bool _isFetchingDoctors = false;
   bool _doctorFieldEnabled = true;
   DateTime? _selectedDate;

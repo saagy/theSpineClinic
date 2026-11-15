@@ -10,15 +10,18 @@ BEGIN
     VALUES(p,'Original','000','tagamoa',2);
   INSERT INTO public.patient_doctors VALUES(p,d,now());
   PERFORM set_config('request.jwt.claim.sub',u::text,true);
+  -- PT always uses the package, whatever the caller sends.
   PERFORM public.book_recurring_appointments(p,'normal_pt_session',ARRAY[now()+interval '1 day'],false,admin,ARRAY[d]);
   SELECT count(*) INTO n FROM public.appointments WHERE patient_id=p AND use_package;
-  IF n<>0 THEN RAISE EXCEPTION 'Cash booking incorrectly uses package'; END IF;
+  IF n<>1 THEN RAISE EXCEPTION 'PT booking skipped the package'; END IF;
   PERFORM public.book_recurring_appointments(p,'normal_pt_session',ARRAY[now()+interval '2 days',now()+interval '3 days'],true,admin,ARRAY[d]);
+  -- Booking past the balance of 2 is allowed; check-in is where it stops.
   SELECT count(*) INTO n FROM public.appointments WHERE patient_id=p AND use_package;
-  IF n<>2 THEN RAISE EXCEPTION 'Cash booking wrongly reserved a credit'; END IF;
+  IF n<>3 THEN RAISE EXCEPTION 'Booking beyond the balance was refused'; END IF;
+  -- A failed booking leaves nothing behind.
   BEGIN
-    PERFORM public.book_recurring_appointments(p,'normal_pt_session',ARRAY[now()+interval '4 days'],true,admin,ARRAY[d]);
-    RAISE EXCEPTION 'Overbooked package accepted';
+    PERFORM public.book_recurring_appointments(p,'normal_pt_session',ARRAY[now()+interval '4 days'],true,admin,ARRAY[admin]);
+    RAISE EXCEPTION 'Booking with a non-doctor accepted';
   EXCEPTION WHEN data_exception THEN NULL;
   END;
   SELECT count(*) INTO n FROM public.appointments WHERE patient_id=p;

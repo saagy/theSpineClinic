@@ -90,6 +90,7 @@ class OutstandingRow {
     required this.openInvoices,
     required this.dueMinor,
     required this.oldestDate,
+    this.aged = const OutstandingAge(),
   });
 
   factory OutstandingRow.fromJson(Map<String, dynamic> json) => OutstandingRow(
@@ -99,6 +100,7 @@ class OutstandingRow {
     openInvoices: _int(json['open_invoices']),
     dueMinor: _int(json['due_minor']),
     oldestDate: _time(json['oldest_date']),
+    aged: OutstandingAge.fromJson(json),
   );
 
   final String patientId;
@@ -107,6 +109,32 @@ class OutstandingRow {
   final int openInvoices;
   final int dueMinor;
   final DateTime oldestDate;
+  final OutstandingAge aged;
+}
+
+/// Unpaid money by how long its invoice has been open, counted from the
+/// invoice date: 0–30, 31–60, 61–90 and over 90 days.
+class OutstandingAge {
+  const OutstandingAge({
+    this.upTo30Minor = 0,
+    this.upTo60Minor = 0,
+    this.upTo90Minor = 0,
+    this.over90Minor = 0,
+  });
+
+  factory OutstandingAge.fromJson(Map<String, dynamic> json) => OutstandingAge(
+    upTo30Minor: _int(json['due_0_30_minor']),
+    upTo60Minor: _int(json['due_31_60_minor']),
+    upTo90Minor: _int(json['due_61_90_minor']),
+    over90Minor: _int(json['due_over_90_minor']),
+  );
+
+  final int upTo30Minor;
+  final int upTo60Minor;
+  final int upTo90Minor;
+  final int over90Minor;
+
+  List<int> get buckets => [upTo30Minor, upTo60Minor, upTo90Minor, over90Minor];
 }
 
 class ServiceSummaryRow {

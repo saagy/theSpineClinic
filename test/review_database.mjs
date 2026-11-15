@@ -44,6 +44,7 @@ try {
     'test/invoice_fixture.sql', 'test/invoice_discounts.sql',
     'test/invoice_fixture.sql', 'test/doctor_session_report.sql',
     'test/invoice_fixture.sql', 'test/report_edge_cases.sql',
+    'test/invoice_fixture.sql', 'test/visit_outcomes.sql',
   ]) await run(file);
   const tables = await db.query(`SELECT count(*)::int AS count FROM pg_tables WHERE schemaname='public'`);
   console.log(`Public tables loaded: ${tables.rows[0].count}`);

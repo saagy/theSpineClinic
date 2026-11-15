@@ -105,7 +105,7 @@ class PatientAppointments extends _$PatientAppointments {
           !state.statusFilter!.contains(newStatus)) {
         removed++;
       } else {
-        updated.add(item.copyWith(appointment: item.appointment.copyWith(status: newStatus)));
+        updated.add(item.copyWith(appointment: item.appointment.copyWith(status: newStatus, statusChangedAt: DateTime.now())));
       }
     }
     final total = (state.totalCount - removed).clamp(0, state.totalCount);

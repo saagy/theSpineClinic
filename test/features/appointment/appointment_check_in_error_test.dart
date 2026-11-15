@@ -10,14 +10,16 @@ import 'package:spine_clinic_app/features/appointment/domain/appointment_type.da
 import 'package:spine_clinic_app/features/appointment/presentation/agenda_status_controller.dart';
 import 'package:spine_clinic_app/features/appointment/presentation/widgets/appointment_action_buttons.dart';
 import 'package:spine_clinic_app/features/auth/domain/user_role.dart';
+import 'package:spine_clinic_app/features/auth/presentation/auth_providers.dart';
 import '../../fixtures/workspace_data.dart';
+import '../../fixtures/workspace_overrides.dart';
 
 class _InsufficientBalanceController extends AgendaStatusController {
   @override
   AgendaStatusState build(String appointmentId) => const AgendaStatusState();
 
   @override
-  Future<Result<void>?> update(String patientId, AppointmentStatus status) async =>
+  Future<Result<void>?> update(String patientId, AppointmentStatus status, {String? reason}) async =>
       const Failure<void>(DatabaseException(
         code: 'db/insufficient-package-balance',
         message: 'Insufficient package balance',
@@ -41,6 +43,7 @@ void main() {
           agendaStatusControllerProvider(_appointment.id).overrideWith(
             _InsufficientBalanceController.new,
           ),
+          currentUserProvider.overrideWith(() => WorkspaceUser('reception')),
         ],
         child: MaterialApp(
           home: Scaffold(

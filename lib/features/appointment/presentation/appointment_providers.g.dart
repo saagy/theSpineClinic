@@ -771,6 +771,92 @@ final class AvailablePackageBalanceFamily extends $Family
   String toString() => r'availablePackageBalanceProvider';
 }
 
+/// A visit's history, oldest first.
+
+@ProviderFor(appointmentEvents)
+final appointmentEventsProvider = AppointmentEventsFamily._();
+
+/// A visit's history, oldest first.
+
+final class AppointmentEventsProvider
+    extends
+        $FunctionalProvider<
+          AsyncValue<List<AppointmentEvent>>,
+          List<AppointmentEvent>,
+          FutureOr<List<AppointmentEvent>>
+        >
+    with
+        $FutureModifier<List<AppointmentEvent>>,
+        $FutureProvider<List<AppointmentEvent>> {
+  /// A visit's history, oldest first.
+  AppointmentEventsProvider._({
+    required AppointmentEventsFamily super.from,
+    required String super.argument,
+  }) : super(
+         retry: null,
+         name: r'appointmentEventsProvider',
+         isAutoDispose: true,
+         dependencies: null,
+         $allTransitiveDependencies: null,
+       );
+
+  @override
+  String debugGetCreateSourceHash() => _$appointmentEventsHash();
+
+  @override
+  String toString() {
+    return r'appointmentEventsProvider'
+        ''
+        '($argument)';
+  }
+
+  @$internal
+  @override
+  $FutureProviderElement<List<AppointmentEvent>> $createElement(
+    $ProviderPointer pointer,
+  ) => $FutureProviderElement(pointer);
+
+  @override
+  FutureOr<List<AppointmentEvent>> create(Ref ref) {
+    final argument = this.argument as String;
+    return appointmentEvents(ref, argument);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is AppointmentEventsProvider && other.argument == argument;
+  }
+
+  @override
+  int get hashCode {
+    return argument.hashCode;
+  }
+}
+
+String _$appointmentEventsHash() => r'600a589748964d61ac2a7b9dfbe29242551a4636';
+
+/// A visit's history, oldest first.
+
+final class AppointmentEventsFamily extends $Family
+    with $FunctionalFamilyOverride<FutureOr<List<AppointmentEvent>>, String> {
+  AppointmentEventsFamily._()
+    : super(
+        retry: null,
+        name: r'appointmentEventsProvider',
+        dependencies: null,
+        $allTransitiveDependencies: null,
+        isAutoDispose: true,
+      );
+
+  /// A visit's history, oldest first.
+
+  AppointmentEventsProvider call(String appointmentId) =>
+      AppointmentEventsProvider._(argument: appointmentId, from: this);
+
+  @override
+  String toString() => r'appointmentEventsProvider';
+}
+
 /// Family provider resolving a single appointment by ID.
 
 @ProviderFor(singleAppointment)

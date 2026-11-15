@@ -105,7 +105,7 @@ class _MockAppointmentRepository implements AppointmentRepository {
   }) async => const Result.success([]);
 
   @override
-  Future<Result<void>> updateAppointmentStatus(String id, AppointmentStatus status) async =>
+  Future<Result<void>> updateAppointmentStatus(String id, AppointmentStatus status, {String? reason}) async =>
       const Result.success(null);
 
   @override

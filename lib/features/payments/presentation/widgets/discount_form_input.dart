@@ -9,11 +9,13 @@ import 'refund_form_input.dart';
 /// Everything the discount form holds. A percentage is of the invoice value
 /// now, after any earlier refunds and discounts.
 class DiscountFormInput with DiscountFields implements PaybackDetailsInput {
-  DiscountFormInput({required this.invoice, required this.branch});
+  DiscountFormInput({required this.invoice, required this.branch})
+    : method = invoice.mainPaymentMethod;
 
   final InvoiceDetail invoice;
   @override
   ClinicLocation branch;
+  /// Starts as the way the invoice was paid; staff can change it.
   @override
   PaymentMethod? method;
   @override
@@ -23,7 +25,9 @@ class DiscountFormInput with DiscountFields implements PaybackDetailsInput {
   int get discountBaseMinor => invoice.valueMinor;
 
   bool get isPristine =>
-      discountKind == DiscountKind.none && method == null && reason.text.trim().isEmpty;
+      discountKind == DiscountKind.none &&
+      method == invoice.mainPaymentMethod &&
+      reason.text.trim().isEmpty;
 
   DiscountDraft draft() => DiscountDraft(
     invoice: invoice,

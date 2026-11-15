@@ -25,7 +25,9 @@ mixin _$Appointment {
 @JsonKey(name: 'created_by') String? get createdBy;/// Row creation timestamp.
 @JsonKey(name: 'created_at') DateTime get createdAt;/// Where the visit happens. Filled from the patient's branch by the
 /// database when a caller sends none.
-@JsonKey(unknownEnumValue: JsonKey.nullForUndefinedEnumValue) ClinicLocation? get branch;
+@JsonKey(unknownEnumValue: JsonKey.nullForUndefinedEnumValue) ClinicLocation? get branch;/// When the current status was recorded; null for visits recorded
+/// before this was kept.
+@JsonKey(name: 'status_changed_at', includeToJson: false) DateTime? get statusChangedAt;
 /// Create a copy of Appointment
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -38,16 +40,16 @@ $AppointmentCopyWith<Appointment> get copyWith => _$AppointmentCopyWithImpl<Appo
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is Appointment&&(identical(other.id, id) || other.id == id)&&(identical(other.patientId, patientId) || other.patientId == patientId)&&(identical(other.type, type) || other.type == type)&&(identical(other.scheduledAt, scheduledAt) || other.scheduledAt == scheduledAt)&&(identical(other.status, status) || other.status == status)&&(identical(other.usePackage, usePackage) || other.usePackage == usePackage)&&(identical(other.createdBy, createdBy) || other.createdBy == createdBy)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.branch, branch) || other.branch == branch));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is Appointment&&(identical(other.id, id) || other.id == id)&&(identical(other.patientId, patientId) || other.patientId == patientId)&&(identical(other.type, type) || other.type == type)&&(identical(other.scheduledAt, scheduledAt) || other.scheduledAt == scheduledAt)&&(identical(other.status, status) || other.status == status)&&(identical(other.usePackage, usePackage) || other.usePackage == usePackage)&&(identical(other.createdBy, createdBy) || other.createdBy == createdBy)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.branch, branch) || other.branch == branch)&&(identical(other.statusChangedAt, statusChangedAt) || other.statusChangedAt == statusChangedAt));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,patientId,type,scheduledAt,status,usePackage,createdBy,createdAt,branch);
+int get hashCode => Object.hash(runtimeType,id,patientId,type,scheduledAt,status,usePackage,createdBy,createdAt,branch,statusChangedAt);
 
 @override
 String toString() {
-  return 'Appointment(id: $id, patientId: $patientId, type: $type, scheduledAt: $scheduledAt, status: $status, usePackage: $usePackage, createdBy: $createdBy, createdAt: $createdAt, branch: $branch)';
+  return 'Appointment(id: $id, patientId: $patientId, type: $type, scheduledAt: $scheduledAt, status: $status, usePackage: $usePackage, createdBy: $createdBy, createdAt: $createdAt, branch: $branch, statusChangedAt: $statusChangedAt)';
 }
 
 
@@ -58,7 +60,7 @@ abstract mixin class $AppointmentCopyWith<$Res>  {
   factory $AppointmentCopyWith(Appointment value, $Res Function(Appointment) _then) = _$AppointmentCopyWithImpl;
 @useResult
 $Res call({
- String id,@JsonKey(name: 'patient_id') String patientId, AppointmentType type,@JsonKey(name: 'scheduled_at') DateTime scheduledAt, AppointmentStatus status,@JsonKey(name: 'use_package') bool usePackage,@JsonKey(name: 'created_by') String? createdBy,@JsonKey(name: 'created_at') DateTime createdAt,@JsonKey(unknownEnumValue: JsonKey.nullForUndefinedEnumValue) ClinicLocation? branch
+ String id,@JsonKey(name: 'patient_id') String patientId, AppointmentType type,@JsonKey(name: 'scheduled_at') DateTime scheduledAt, AppointmentStatus status,@JsonKey(name: 'use_package') bool usePackage,@JsonKey(name: 'created_by') String? createdBy,@JsonKey(name: 'created_at') DateTime createdAt,@JsonKey(unknownEnumValue: JsonKey.nullForUndefinedEnumValue) ClinicLocation? branch,@JsonKey(name: 'status_changed_at', includeToJson: false) DateTime? statusChangedAt
 });
 
 
@@ -75,7 +77,7 @@ class _$AppointmentCopyWithImpl<$Res>
 
 /// Create a copy of Appointment
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? patientId = null,Object? type = null,Object? scheduledAt = null,Object? status = null,Object? usePackage = null,Object? createdBy = freezed,Object? createdAt = null,Object? branch = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? patientId = null,Object? type = null,Object? scheduledAt = null,Object? status = null,Object? usePackage = null,Object? createdBy = freezed,Object? createdAt = null,Object? branch = freezed,Object? statusChangedAt = freezed,}) {
   return _then(_self.copyWith(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,patientId: null == patientId ? _self.patientId : patientId // ignore: cast_nullable_to_non_nullable
@@ -86,7 +88,8 @@ as AppointmentStatus,usePackage: null == usePackage ? _self.usePackage : usePack
 as bool,createdBy: freezed == createdBy ? _self.createdBy : createdBy // ignore: cast_nullable_to_non_nullable
 as String?,createdAt: null == createdAt ? _self.createdAt : createdAt // ignore: cast_nullable_to_non_nullable
 as DateTime,branch: freezed == branch ? _self.branch : branch // ignore: cast_nullable_to_non_nullable
-as ClinicLocation?,
+as ClinicLocation?,statusChangedAt: freezed == statusChangedAt ? _self.statusChangedAt : statusChangedAt // ignore: cast_nullable_to_non_nullable
+as DateTime?,
   ));
 }
 
@@ -171,10 +174,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id, @JsonKey(name: 'patient_id')  String patientId,  AppointmentType type, @JsonKey(name: 'scheduled_at')  DateTime scheduledAt,  AppointmentStatus status, @JsonKey(name: 'use_package')  bool usePackage, @JsonKey(name: 'created_by')  String? createdBy, @JsonKey(name: 'created_at')  DateTime createdAt, @JsonKey(unknownEnumValue: JsonKey.nullForUndefinedEnumValue)  ClinicLocation? branch)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id, @JsonKey(name: 'patient_id')  String patientId,  AppointmentType type, @JsonKey(name: 'scheduled_at')  DateTime scheduledAt,  AppointmentStatus status, @JsonKey(name: 'use_package')  bool usePackage, @JsonKey(name: 'created_by')  String? createdBy, @JsonKey(name: 'created_at')  DateTime createdAt, @JsonKey(unknownEnumValue: JsonKey.nullForUndefinedEnumValue)  ClinicLocation? branch, @JsonKey(name: 'status_changed_at', includeToJson: false)  DateTime? statusChangedAt)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _Appointment() when $default != null:
-return $default(_that.id,_that.patientId,_that.type,_that.scheduledAt,_that.status,_that.usePackage,_that.createdBy,_that.createdAt,_that.branch);case _:
+return $default(_that.id,_that.patientId,_that.type,_that.scheduledAt,_that.status,_that.usePackage,_that.createdBy,_that.createdAt,_that.branch,_that.statusChangedAt);case _:
   return orElse();
 
 }
@@ -192,10 +195,10 @@ return $default(_that.id,_that.patientId,_that.type,_that.scheduledAt,_that.stat
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id, @JsonKey(name: 'patient_id')  String patientId,  AppointmentType type, @JsonKey(name: 'scheduled_at')  DateTime scheduledAt,  AppointmentStatus status, @JsonKey(name: 'use_package')  bool usePackage, @JsonKey(name: 'created_by')  String? createdBy, @JsonKey(name: 'created_at')  DateTime createdAt, @JsonKey(unknownEnumValue: JsonKey.nullForUndefinedEnumValue)  ClinicLocation? branch)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id, @JsonKey(name: 'patient_id')  String patientId,  AppointmentType type, @JsonKey(name: 'scheduled_at')  DateTime scheduledAt,  AppointmentStatus status, @JsonKey(name: 'use_package')  bool usePackage, @JsonKey(name: 'created_by')  String? createdBy, @JsonKey(name: 'created_at')  DateTime createdAt, @JsonKey(unknownEnumValue: JsonKey.nullForUndefinedEnumValue)  ClinicLocation? branch, @JsonKey(name: 'status_changed_at', includeToJson: false)  DateTime? statusChangedAt)  $default,) {final _that = this;
 switch (_that) {
 case _Appointment():
-return $default(_that.id,_that.patientId,_that.type,_that.scheduledAt,_that.status,_that.usePackage,_that.createdBy,_that.createdAt,_that.branch);case _:
+return $default(_that.id,_that.patientId,_that.type,_that.scheduledAt,_that.status,_that.usePackage,_that.createdBy,_that.createdAt,_that.branch,_that.statusChangedAt);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -212,10 +215,10 @@ return $default(_that.id,_that.patientId,_that.type,_that.scheduledAt,_that.stat
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id, @JsonKey(name: 'patient_id')  String patientId,  AppointmentType type, @JsonKey(name: 'scheduled_at')  DateTime scheduledAt,  AppointmentStatus status, @JsonKey(name: 'use_package')  bool usePackage, @JsonKey(name: 'created_by')  String? createdBy, @JsonKey(name: 'created_at')  DateTime createdAt, @JsonKey(unknownEnumValue: JsonKey.nullForUndefinedEnumValue)  ClinicLocation? branch)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id, @JsonKey(name: 'patient_id')  String patientId,  AppointmentType type, @JsonKey(name: 'scheduled_at')  DateTime scheduledAt,  AppointmentStatus status, @JsonKey(name: 'use_package')  bool usePackage, @JsonKey(name: 'created_by')  String? createdBy, @JsonKey(name: 'created_at')  DateTime createdAt, @JsonKey(unknownEnumValue: JsonKey.nullForUndefinedEnumValue)  ClinicLocation? branch, @JsonKey(name: 'status_changed_at', includeToJson: false)  DateTime? statusChangedAt)?  $default,) {final _that = this;
 switch (_that) {
 case _Appointment() when $default != null:
-return $default(_that.id,_that.patientId,_that.type,_that.scheduledAt,_that.status,_that.usePackage,_that.createdBy,_that.createdAt,_that.branch);case _:
+return $default(_that.id,_that.patientId,_that.type,_that.scheduledAt,_that.status,_that.usePackage,_that.createdBy,_that.createdAt,_that.branch,_that.statusChangedAt);case _:
   return null;
 
 }
@@ -226,8 +229,8 @@ return $default(_that.id,_that.patientId,_that.type,_that.scheduledAt,_that.stat
 /// @nodoc
 @JsonSerializable()
 
-class _Appointment implements Appointment {
-  const _Appointment({required this.id, @JsonKey(name: 'patient_id') required this.patientId, required this.type, @JsonKey(name: 'scheduled_at') required this.scheduledAt, this.status = AppointmentStatus.scheduled, @JsonKey(name: 'use_package') this.usePackage = true, @JsonKey(name: 'created_by') this.createdBy, @JsonKey(name: 'created_at') required this.createdAt, @JsonKey(unknownEnumValue: JsonKey.nullForUndefinedEnumValue) this.branch});
+class _Appointment extends Appointment {
+  const _Appointment({required this.id, @JsonKey(name: 'patient_id') required this.patientId, required this.type, @JsonKey(name: 'scheduled_at') required this.scheduledAt, this.status = AppointmentStatus.scheduled, @JsonKey(name: 'use_package') this.usePackage = true, @JsonKey(name: 'created_by') this.createdBy, @JsonKey(name: 'created_at') required this.createdAt, @JsonKey(unknownEnumValue: JsonKey.nullForUndefinedEnumValue) this.branch, @JsonKey(name: 'status_changed_at', includeToJson: false) this.statusChangedAt}): super._();
   factory _Appointment.fromJson(Map<String, dynamic> json) => _$AppointmentFromJson(json);
 
 /// Primary key (`uuid`).
@@ -249,6 +252,9 @@ class _Appointment implements Appointment {
 /// Where the visit happens. Filled from the patient's branch by the
 /// database when a caller sends none.
 @override@JsonKey(unknownEnumValue: JsonKey.nullForUndefinedEnumValue) final  ClinicLocation? branch;
+/// When the current status was recorded; null for visits recorded
+/// before this was kept.
+@override@JsonKey(name: 'status_changed_at', includeToJson: false) final  DateTime? statusChangedAt;
 
 /// Create a copy of Appointment
 /// with the given fields replaced by the non-null parameter values.
@@ -263,16 +269,16 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _Appointment&&(identical(other.id, id) || other.id == id)&&(identical(other.patientId, patientId) || other.patientId == patientId)&&(identical(other.type, type) || other.type == type)&&(identical(other.scheduledAt, scheduledAt) || other.scheduledAt == scheduledAt)&&(identical(other.status, status) || other.status == status)&&(identical(other.usePackage, usePackage) || other.usePackage == usePackage)&&(identical(other.createdBy, createdBy) || other.createdBy == createdBy)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.branch, branch) || other.branch == branch));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _Appointment&&(identical(other.id, id) || other.id == id)&&(identical(other.patientId, patientId) || other.patientId == patientId)&&(identical(other.type, type) || other.type == type)&&(identical(other.scheduledAt, scheduledAt) || other.scheduledAt == scheduledAt)&&(identical(other.status, status) || other.status == status)&&(identical(other.usePackage, usePackage) || other.usePackage == usePackage)&&(identical(other.createdBy, createdBy) || other.createdBy == createdBy)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.branch, branch) || other.branch == branch)&&(identical(other.statusChangedAt, statusChangedAt) || other.statusChangedAt == statusChangedAt));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,patientId,type,scheduledAt,status,usePackage,createdBy,createdAt,branch);
+int get hashCode => Object.hash(runtimeType,id,patientId,type,scheduledAt,status,usePackage,createdBy,createdAt,branch,statusChangedAt);
 
 @override
 String toString() {
-  return 'Appointment(id: $id, patientId: $patientId, type: $type, scheduledAt: $scheduledAt, status: $status, usePackage: $usePackage, createdBy: $createdBy, createdAt: $createdAt, branch: $branch)';
+  return 'Appointment(id: $id, patientId: $patientId, type: $type, scheduledAt: $scheduledAt, status: $status, usePackage: $usePackage, createdBy: $createdBy, createdAt: $createdAt, branch: $branch, statusChangedAt: $statusChangedAt)';
 }
 
 
@@ -283,7 +289,7 @@ abstract mixin class _$AppointmentCopyWith<$Res> implements $AppointmentCopyWith
   factory _$AppointmentCopyWith(_Appointment value, $Res Function(_Appointment) _then) = __$AppointmentCopyWithImpl;
 @override @useResult
 $Res call({
- String id,@JsonKey(name: 'patient_id') String patientId, AppointmentType type,@JsonKey(name: 'scheduled_at') DateTime scheduledAt, AppointmentStatus status,@JsonKey(name: 'use_package') bool usePackage,@JsonKey(name: 'created_by') String? createdBy,@JsonKey(name: 'created_at') DateTime createdAt,@JsonKey(unknownEnumValue: JsonKey.nullForUndefinedEnumValue) ClinicLocation? branch
+ String id,@JsonKey(name: 'patient_id') String patientId, AppointmentType type,@JsonKey(name: 'scheduled_at') DateTime scheduledAt, AppointmentStatus status,@JsonKey(name: 'use_package') bool usePackage,@JsonKey(name: 'created_by') String? createdBy,@JsonKey(name: 'created_at') DateTime createdAt,@JsonKey(unknownEnumValue: JsonKey.nullForUndefinedEnumValue) ClinicLocation? branch,@JsonKey(name: 'status_changed_at', includeToJson: false) DateTime? statusChangedAt
 });
 
 
@@ -300,7 +306,7 @@ class __$AppointmentCopyWithImpl<$Res>
 
 /// Create a copy of Appointment
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? patientId = null,Object? type = null,Object? scheduledAt = null,Object? status = null,Object? usePackage = null,Object? createdBy = freezed,Object? createdAt = null,Object? branch = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? patientId = null,Object? type = null,Object? scheduledAt = null,Object? status = null,Object? usePackage = null,Object? createdBy = freezed,Object? createdAt = null,Object? branch = freezed,Object? statusChangedAt = freezed,}) {
   return _then(_Appointment(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,patientId: null == patientId ? _self.patientId : patientId // ignore: cast_nullable_to_non_nullable
@@ -311,7 +317,8 @@ as AppointmentStatus,usePackage: null == usePackage ? _self.usePackage : usePack
 as bool,createdBy: freezed == createdBy ? _self.createdBy : createdBy // ignore: cast_nullable_to_non_nullable
 as String?,createdAt: null == createdAt ? _self.createdAt : createdAt // ignore: cast_nullable_to_non_nullable
 as DateTime,branch: freezed == branch ? _self.branch : branch // ignore: cast_nullable_to_non_nullable
-as ClinicLocation?,
+as ClinicLocation?,statusChangedAt: freezed == statusChangedAt ? _self.statusChangedAt : statusChangedAt // ignore: cast_nullable_to_non_nullable
+as DateTime?,
   ));
 }
 

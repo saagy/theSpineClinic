@@ -26,6 +26,7 @@ class AppointmentStatusIndicator extends StatelessWidget {
       AppointmentStatus.scheduled => Icons.schedule_outlined,
       AppointmentStatus.checkedIn => Icons.check_circle_rounded,
       AppointmentStatus.cancelled => Icons.cancel_outlined,
+      AppointmentStatus.noShow => Icons.person_off_outlined,
     };
     return Semantics(
       label: status.displayLabel,

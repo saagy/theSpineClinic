@@ -53,7 +53,6 @@ class _EditAppointmentFormState extends ConsumerState<EditAppointmentForm> {
   final _formKey = GlobalKey<FormState>();
   final _doctorFieldKey = GlobalKey<FormFieldState<List<Staff>>>();
   late AppointmentType _selectedType;
-  late bool _usePackage;
   late DateTime? _selectedDate;
   late TimeOfDay? _selectedTime;
   late ClinicLocation? _branch = widget.appointment.branch ?? widget.patient.clinic;
@@ -66,7 +65,6 @@ class _EditAppointmentFormState extends ConsumerState<EditAppointmentForm> {
   void initState() {
     super.initState();
     _selectedType = widget.appointment.type;
-    _usePackage = widget.appointment.usePackage;
     _selectedDate = widget.appointment.scheduledAt.toLocal();
     _selectedTime = TimeOfDay.fromDateTime(widget.appointment.scheduledAt.toLocal());
   }
@@ -103,7 +101,7 @@ class _EditAppointmentFormState extends ConsumerState<EditAppointmentForm> {
 
     final updatedAppt = widget.appointment.copyWith(
       type: _selectedType,
-      usePackage: _usePackage,
+      usePackage: _selectedType.affectsPackageBalance,
       scheduledAt: updatedScheduledAt,
       // Sent only when it changed, so an unchanged branch never trips the lock.
       branch: _branch == widget.appointment.branch ? null : _branch,

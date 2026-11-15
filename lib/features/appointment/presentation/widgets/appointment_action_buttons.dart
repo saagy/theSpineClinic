@@ -1,23 +1,22 @@
-/// Role-guarded action buttons for the appointment detail screen.
+/// Role- and status-guarded action buttons for the appointment detail screen.
 ///
-/// SCHEDULED → full-width teal "Check In" + borderless red "Cancel".
-/// CHECKED_IN → outlined "Revert to Scheduled" + borderless "Cancel".
-/// CANCELLED → outlined "Restore Appointment".
-///
-/// Rule 1 — under 200 lines.
+/// SCHEDULED → "Cancel", "No-show" once the visit's day has come, "Check In".
+/// CHECKED_IN → "Cancel" + "Undo Check-In".
+/// NO_SHOW → "Undo no-show". CANCELLED → "Restore Appointment".
+/// An outcome recorded on an earlier day is changed only by payment staff,
+/// who are asked for a reason; others see why there is nothing to do.
 library;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:spine_clinic_app/core/constants/app_strings.dart';
-import 'package:spine_clinic_app/core/errors/app_exception.dart';
-import 'package:spine_clinic_app/core/errors/result.dart';
+import 'package:spine_clinic_app/core/constants/app_text_styles.dart';
 import 'package:spine_clinic_app/features/appointment/domain/appointment.dart';
 import 'package:spine_clinic_app/features/appointment/domain/appointment_status.dart';
-import 'package:spine_clinic_app/features/appointment/presentation/agenda_status_controller.dart';
-import 'package:spine_clinic_app/features/auth/domain/user_role.dart';
+import 'package:spine_clinic_app/features/appointment/presentation/widgets/agenda_status_action.dart';
 import 'package:spine_clinic_app/features/appointment/presentation/widgets/appointment_status_actions.dart';
-import 'package:spine_clinic_app/shared/widgets/app_snackbar.dart';
+import 'package:spine_clinic_app/features/auth/domain/user_role.dart';
+import 'package:spine_clinic_app/features/auth/presentation/auth_providers.dart';
 import 'package:spine_clinic_app/shared/widgets/confirmation_dialog.dart';
 
 /// Displays role- and status-guarded action buttons in a low-profile sticky bar.
@@ -31,55 +30,71 @@ class AppointmentActionButtons extends ConsumerStatefulWidget {
   final UserRole userRole;
 
   @override
-  ConsumerState<AppointmentActionButtons> createState() =>
-      _AppointmentActionButtonsState();
+  ConsumerState<AppointmentActionButtons> createState() => _AppointmentActionButtonsState();
 }
 
-class _AppointmentActionButtonsState
-    extends ConsumerState<AppointmentActionButtons> {
+class _AppointmentActionButtonsState extends ConsumerState<AppointmentActionButtons> {
   bool _loading = false;
 
-  bool get _isScheduled =>
-      widget.appointment.status == AppointmentStatus.scheduled;
-  bool get _isCheckedIn =>
-      widget.appointment.status == AppointmentStatus.checkedIn;
-  bool get _isCancelled =>
-      widget.appointment.status == AppointmentStatus.cancelled;
-
-  // ── Status-conditional build ─────────────────────────────────────
+  Appointment get _appointment => widget.appointment;
 
   @override
   Widget build(BuildContext context) {
-    final Widget child;
-    if (_isScheduled) {
-      child = KeyedSubtree(
+    final bool canChange = canChangeVisitOutcome(_appointment, ref.watch(currentUserProvider).value);
+    final Widget child = switch (_appointment.status) {
+      AppointmentStatus.scheduled => KeyedSubtree(
         key: const ValueKey('scheduled_actions'),
         child: ScheduledActions(
           loading: _loading,
-          onCheckIn: () => _act(_checkIn),
-          onCancel: () => _act(_cancel),
+          onCheckIn: () => _act(AppointmentStatus.checkedIn, AppStrings.checkInPatient, AppStrings.confirmCheckIn),
+          onCancel: () => _act(
+            AppointmentStatus.cancelled,
+            AppStrings.cancelAppointment,
+            AppStrings.confirmCancel,
+            destructive: true,
+          ),
+          onNoShow: visitDayHasCome(_appointment)
+              ? () => _act(AppointmentStatus.noShow, AppStrings.visit.markNoShow, AppStrings.visit.confirmNoShow)
+              : null,
         ),
-      );
-    } else if (_isCheckedIn) {
-      child = KeyedSubtree(
+      ),
+      _ when !canChange => KeyedSubtree(
+        key: const ValueKey('locked_actions'),
+        child: Text(
+          AppStrings.visit.lockedForDesk,
+          style: AppTextStyles.bodySecondary.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
+        ),
+      ),
+      AppointmentStatus.checkedIn => KeyedSubtree(
         key: const ValueKey('checked_in_actions'),
         child: CheckedInActions(
           loading: _loading,
-          onRevert: () => _act(_revert),
-          onCancel: () => _act(_cancel),
+          onRevert: () => _act(AppointmentStatus.scheduled, AppStrings.revertToScheduled, AppStrings.confirmRevert),
+          onCancel: () => _act(
+            AppointmentStatus.cancelled,
+            AppStrings.cancelAppointment,
+            AppStrings.confirmCancel,
+            destructive: true,
+          ),
         ),
-      );
-    } else if (_isCancelled) {
-      child = KeyedSubtree(
-        key: const ValueKey('cancelled_actions'),
-        child: CancelledActions(
+      ),
+      AppointmentStatus.noShow => KeyedSubtree(
+        key: const ValueKey('no_show_actions'),
+        child: SingleRestoreAction(
+          label: AppStrings.visit.undoNoShow,
           loading: _loading,
-          onRestore: () => _act(_restore),
+          onPressed: () => _act(AppointmentStatus.scheduled, AppStrings.visit.undoNoShow, AppStrings.visit.confirmUndoNoShow),
         ),
-      );
-    } else {
-      child = const SizedBox.shrink(key: ValueKey('empty_actions'));
-    }
+      ),
+      AppointmentStatus.cancelled => KeyedSubtree(
+        key: const ValueKey('cancelled_actions'),
+        child: SingleRestoreAction(
+          label: AppStrings.restoreAppointment,
+          loading: _loading,
+          onPressed: () => _act(AppointmentStatus.scheduled, AppStrings.restoreToScheduled, AppStrings.confirmRestore),
+        ),
+      ),
+    };
 
     return AnimatedSize(
       duration: const Duration(milliseconds: 200),
@@ -88,95 +103,31 @@ class _AppointmentActionButtonsState
         duration: const Duration(milliseconds: 200),
         switchInCurve: Curves.easeOutCubic,
         switchOutCurve: Curves.easeInCubic,
-        transitionBuilder: (child, animation) =>
-            FadeTransition(opacity: animation, child: child),
+        transitionBuilder: (child, animation) => FadeTransition(opacity: animation, child: child),
         child: child,
       ),
     );
   }
 
-  // ── Action dispatcher ───────────────────────────────────────────────────
-
-  Future<void> _act(Future<void> Function() action) async {
+  /// Confirms, then records [status]. An earlier day's outcome also asks for
+  /// a reason (in [changeVisitStatus]).
+  Future<void> _act(
+    AppointmentStatus status,
+    String title,
+    String message, {
+    bool destructive = false,
+  }) async {
+    if (_loading) return;
+    final bool? ok = await showDialog<bool>(
+      context: context,
+      builder: (_) => ConfirmationDialog(title: title, message: message, isDestructive: destructive),
+    );
+    if (ok != true || !mounted) return;
     setState(() => _loading = true);
     try {
-      await action();
-    } on AppException catch (error) {
-      if (mounted) {
-        AppSnackbar.show(context,
-            message: AppStrings.fromKey(error.userMessageKey),
-            variant: AppSnackbarVariant.error);
-      }
-    } on Exception catch (_) {
-      if (mounted) {
-        AppSnackbar.show(context,
-            message: AppStrings.statusUpdateError,
-            variant: AppSnackbarVariant.error);
-      }
+      await changeVisitStatus(context, ref, appointment: _appointment, status: status);
     } finally {
-      if (mounted) {
-        setState(() => _loading = false);
-      }
-    }
-  }
-
-  Future<void> _checkIn() async {
-    final ok = await showDialog<bool>(
-      context: context,
-      builder: (_) => const ConfirmationDialog(
-          title: AppStrings.checkInPatient,
-          message: AppStrings.confirmCheckIn),
-    );
-    if (ok != true) return;
-    await _updateStatus(AppointmentStatus.checkedIn);
-  }
-
-  Future<void> _cancel() async {
-    final ok = await showDialog<bool>(
-      context: context,
-      builder: (_) => ConfirmationDialog(
-          title: AppStrings.cancelAppointment,
-          message: AppStrings.confirmCancel,
-          isDestructive: true),
-    );
-    if (ok != true) return;
-    await _updateStatus(AppointmentStatus.cancelled);
-  }
-
-  Future<void> _revert() async {
-    final ok = await showDialog<bool>(
-      context: context,
-      builder: (_) => const ConfirmationDialog(
-          title: AppStrings.revertToScheduled,
-          message: AppStrings.confirmRevert),
-    );
-    if (ok != true) return;
-    await _updateStatus(AppointmentStatus.scheduled);
-  }
-
-  Future<void> _restore() async {
-    final ok = await showDialog<bool>(
-      context: context,
-      builder: (_) => const ConfirmationDialog(
-          title: AppStrings.restoreToScheduled,
-          message: AppStrings.confirmRestore),
-    );
-    if (ok != true) return;
-    await _updateStatus(AppointmentStatus.scheduled);
-  }
-
-  Future<void> _updateStatus(AppointmentStatus status) async {
-    final Result<void>? result = await ref
-        .read(agendaStatusControllerProvider(widget.appointment.id).notifier)
-        .update(widget.appointment.patientId, status);
-    if (!mounted || result == null) return;
-    switch (result) {
-      case Success<void>():
-        AppSnackbar.show(context,
-            message: AppStrings.statusUpdateSuccess,
-            variant: AppSnackbarVariant.success);
-      case Failure<void>(:final exception):
-        throw exception;
+      if (mounted) setState(() => _loading = false);
     }
   }
 }

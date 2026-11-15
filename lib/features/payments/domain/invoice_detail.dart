@@ -154,6 +154,17 @@ class InvoiceDetail {
   Iterable<InvoiceReceipt> get activeReceipts => receipts.where((receipt) => !receipt.isVoided);
   Iterable<InvoiceRefund> get activeRefunds => refunds.where((refund) => !refund.isVoided);
 
+  /// How most of the money was paid, so money handed back can default to it.
+  /// Null when nothing has been paid.
+  PaymentMethod? get mainPaymentMethod {
+    final Map<PaymentMethod, int> paid = {};
+    for (final receipt in activeReceipts) {
+      paid[receipt.method] = (paid[receipt.method] ?? 0) + receipt.amountMinor;
+    }
+    if (paid.isEmpty) return null;
+    return paid.entries.reduce((best, next) => next.value > best.value ? next : best).key;
+  }
+
   bool get canRecordPayment => !isVoided && dueMinor > 0;
   bool get canRefund => !isVoided && lines.any((line) => line.isRefundable);
 

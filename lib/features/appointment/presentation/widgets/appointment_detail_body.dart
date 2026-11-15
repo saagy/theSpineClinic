@@ -14,6 +14,7 @@ import 'package:spine_clinic_app/features/appointment/presentation/appointment_p
 import 'package:spine_clinic_app/features/appointment/presentation/widgets/appointment_action_buttons.dart';
 import 'package:spine_clinic_app/features/appointment/presentation/widgets/appointment_detail_header.dart';
 import 'package:spine_clinic_app/features/appointment/presentation/widgets/appointment_doctors_section.dart';
+import 'package:spine_clinic_app/features/appointment/presentation/widgets/appointment_history_section.dart';
 import 'package:spine_clinic_app/features/appointment/presentation/widgets/appointment_info_card.dart';
 import 'package:spine_clinic_app/features/appointment/presentation/widgets/appointment_notes_card.dart';
 import 'package:spine_clinic_app/features/appointment/presentation/widgets/appointment_program_pdf_tile.dart';
@@ -42,11 +43,6 @@ class AppointmentDetailBody extends ConsumerWidget {
         icon: Icons.event_busy_rounded,
       );
     }
-
-    final bool hasActions =
-        state.appointment.status == AppointmentStatus.scheduled ||
-        state.appointment.status == AppointmentStatus.checkedIn ||
-        state.appointment.status == AppointmentStatus.cancelled;
 
     final otherAppointmentsAsync = ref.watch(
       patientAppointmentsProvider(state.appointment.patientId),
@@ -78,6 +74,7 @@ class AppointmentDetailBody extends ConsumerWidget {
               ref.invalidate(
                 appointmentDetailControllerProvider(state.appointment.id),
               );
+              ref.invalidate(appointmentEventsProvider(state.appointment.id));
               try {
                 await ref.read(
                   appointmentDetailControllerProvider(
@@ -111,36 +108,38 @@ class AppointmentDetailBody extends ConsumerWidget {
                     activeDoctors: state.activeDoctors,
                     inactiveDoctors: state.inactiveDoctors,
                   ),
+                  AppointmentHistorySection(
+                    appointmentId: state.appointment.id,
+                  ),
                   const SizedBox(height: AppSizes.p24),
                 ],
               ),
             ),
           ),
         ),
-        if (hasActions)
-          SafeArea(
-            child: Container(
-              padding: const EdgeInsets.fromLTRB(
-                AppSizes.p16,
-                AppSizes.p12,
-                AppSizes.p16,
-                AppSizes.p12,
-              ),
-              decoration: BoxDecoration(
-                color: theme.colorScheme.surface,
-                border: Border(
-                  top: BorderSide(
-                    color: theme.colorScheme.outlineVariant,
-                    width: 0.5,
-                  ),
+        SafeArea(
+          child: Container(
+            padding: const EdgeInsets.fromLTRB(
+              AppSizes.p16,
+              AppSizes.p12,
+              AppSizes.p16,
+              AppSizes.p12,
+            ),
+            decoration: BoxDecoration(
+              color: theme.colorScheme.surface,
+              border: Border(
+                top: BorderSide(
+                  color: theme.colorScheme.outlineVariant,
+                  width: 0.5,
                 ),
               ),
-              child: AppointmentActionButtons(
-                appointment: state.appointment,
-                userRole: userRole,
-              ),
+            ),
+            child: AppointmentActionButtons(
+              appointment: state.appointment,
+              userRole: userRole,
             ),
           ),
+        ),
       ],
     );
   }

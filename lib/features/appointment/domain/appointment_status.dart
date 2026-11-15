@@ -1,6 +1,6 @@
 /// Appointment status enum mapping to Supabase `appointment_status` type.
 ///
-/// Values: `'scheduled'` | `'checked_in'` | `'cancelled'`.
+/// Values: `'scheduled'` | `'checked_in'` | `'cancelled'` | `'no_show'`.
 /// Display labels come from [AppStrings] (Rule 7).
 library;
 
@@ -17,7 +17,10 @@ enum AppointmentStatus {
   checkedIn('checked_in'),
 
   /// Appointment was cancelled.
-  cancelled('cancelled');
+  cancelled('cancelled'),
+
+  /// The patient did not come. Uses no session.
+  noShow('no_show');
 
   const AppointmentStatus(this.dbValue);
 
@@ -29,5 +32,9 @@ enum AppointmentStatus {
     AppointmentStatus.scheduled => AppStrings.scheduled,
     AppointmentStatus.checkedIn => AppStrings.checkedIn,
     AppointmentStatus.cancelled => AppStrings.cancelled,
+    AppointmentStatus.noShow => AppStrings.visit.noShow,
   };
+
+  /// Whether what happened at the visit has been recorded.
+  bool get isOutcome => this != AppointmentStatus.scheduled;
 }
