@@ -65,6 +65,8 @@ the existing `create_patient_with_doctors` grants to its current five-argument s
 | `appointment_status` | `scheduled`, `checked_in`, `cancelled` | `checked_in` deducts balance; reverting to `scheduled`/`cancelled` refunds it. |
 | `body_region` | `shoulder`, `elbow`, `hand`, `lumbar_spine`, `thoracic_spine`, `cervical_spine`, `hip_joint`, `knee_joint`, `ankle_joint`, `foot` | Body regions for condition catalog and injury classifications. |
 | `program_status` | `active`, `completed`, `archived` | Rehabilitation program lifecycle status. |
+| `modality_type` | `muscle_pain`, `mass_built`, `tecar`, `high_power_laser`, `tecar_focal`, `neurodynamic_non_wb`, `neurodynamic_wb`, `release`, `met`, `mobilization`, `mulligan`, `exercise` | Physiotherapy equipment & modality devices. |
+| `laterality` | `right`, `left`, `both` | Side selection for bilateral body regions. |
 
 ### Adding a branch
 
@@ -82,8 +84,6 @@ Keep it that way unless the product owner asks otherwise. To add one:
 
 Screens, filters, pickers, reports and number series read the enum, so nothing else
 changes. Invoice, receipt and refund numbers start a new series on first use.
-| `modality_type` | `muscle_pain`, `mass_built`, `tecar`, `tecar_focal`, `neurodynamic_non_wb`, `neurodynamic_wb`, `release`, `met`, `mobilization`, `mulligan`, `exercise` | Physiotherapy equipment & modality devices. |
-| `laterality` | `right`, `left`, `both` | Side selection for bilateral body regions. |
 
 ## 2. Tables
 
@@ -353,6 +353,7 @@ Equipment/modalities attached to a treatment plan (1:N with treatment plans).
 - `treatment_plan_id` (`uuid`, FK → `treatment_plans(id)` ON DELETE CASCADE, NOT NULL)
 - `modality_type` (`modality_type`, NOT NULL)
 - `notes` (`text`, nullable)
+- `sort_order` (`bigint`, identity, NOT NULL): records the order the doctor selected modalities. Saves replace a plan's rows in that order; `TreatmentPlan.fromJson` sorts by it on every read path.
 
 ### `modality_regions`
 Target regions and duration for modality configurations (1:N with plan modalities).

@@ -15,7 +15,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$TreatmentPlan {
 
- String get id;@JsonKey(name: 'program_id') String get programId;@JsonKey(name: 'created_by') String get createdBy;@JsonKey(name: 'plan_name') String get planName;@JsonKey(name: 'is_active') bool get isActive; String? get notes;@JsonKey(name: 'created_at') DateTime get createdAt;@JsonKey(name: 'updated_at') DateTime get updatedAt;@JsonKey(name: 'plan_modalities') List<PlanModality> get modalities;
+ String get id;@JsonKey(name: 'program_id') String get programId;@JsonKey(name: 'created_by') String get createdBy;@JsonKey(name: 'plan_name') String get planName;@JsonKey(name: 'is_active') bool get isActive; String? get notes;@JsonKey(name: 'created_at') DateTime get createdAt;@JsonKey(name: 'updated_at') DateTime get updatedAt;@JsonKey(name: 'plan_modalities', readValue: _modalitiesInChosenOrder) List<PlanModality> get modalities;
 /// Create a copy of TreatmentPlan
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -48,7 +48,7 @@ abstract mixin class $TreatmentPlanCopyWith<$Res>  {
   factory $TreatmentPlanCopyWith(TreatmentPlan value, $Res Function(TreatmentPlan) _then) = _$TreatmentPlanCopyWithImpl;
 @useResult
 $Res call({
- String id,@JsonKey(name: 'program_id') String programId,@JsonKey(name: 'created_by') String createdBy,@JsonKey(name: 'plan_name') String planName,@JsonKey(name: 'is_active') bool isActive, String? notes,@JsonKey(name: 'created_at') DateTime createdAt,@JsonKey(name: 'updated_at') DateTime updatedAt,@JsonKey(name: 'plan_modalities') List<PlanModality> modalities
+ String id,@JsonKey(name: 'program_id') String programId,@JsonKey(name: 'created_by') String createdBy,@JsonKey(name: 'plan_name') String planName,@JsonKey(name: 'is_active') bool isActive, String? notes,@JsonKey(name: 'created_at') DateTime createdAt,@JsonKey(name: 'updated_at') DateTime updatedAt,@JsonKey(name: 'plan_modalities', readValue: _modalitiesInChosenOrder) List<PlanModality> modalities
 });
 
 
@@ -161,7 +161,7 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id, @JsonKey(name: 'program_id')  String programId, @JsonKey(name: 'created_by')  String createdBy, @JsonKey(name: 'plan_name')  String planName, @JsonKey(name: 'is_active')  bool isActive,  String? notes, @JsonKey(name: 'created_at')  DateTime createdAt, @JsonKey(name: 'updated_at')  DateTime updatedAt, @JsonKey(name: 'plan_modalities')  List<PlanModality> modalities)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id, @JsonKey(name: 'program_id')  String programId, @JsonKey(name: 'created_by')  String createdBy, @JsonKey(name: 'plan_name')  String planName, @JsonKey(name: 'is_active')  bool isActive,  String? notes, @JsonKey(name: 'created_at')  DateTime createdAt, @JsonKey(name: 'updated_at')  DateTime updatedAt, @JsonKey(name: 'plan_modalities', readValue: _modalitiesInChosenOrder)  List<PlanModality> modalities)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _TreatmentPlan() when $default != null:
 return $default(_that.id,_that.programId,_that.createdBy,_that.planName,_that.isActive,_that.notes,_that.createdAt,_that.updatedAt,_that.modalities);case _:
@@ -182,7 +182,7 @@ return $default(_that.id,_that.programId,_that.createdBy,_that.planName,_that.is
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id, @JsonKey(name: 'program_id')  String programId, @JsonKey(name: 'created_by')  String createdBy, @JsonKey(name: 'plan_name')  String planName, @JsonKey(name: 'is_active')  bool isActive,  String? notes, @JsonKey(name: 'created_at')  DateTime createdAt, @JsonKey(name: 'updated_at')  DateTime updatedAt, @JsonKey(name: 'plan_modalities')  List<PlanModality> modalities)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id, @JsonKey(name: 'program_id')  String programId, @JsonKey(name: 'created_by')  String createdBy, @JsonKey(name: 'plan_name')  String planName, @JsonKey(name: 'is_active')  bool isActive,  String? notes, @JsonKey(name: 'created_at')  DateTime createdAt, @JsonKey(name: 'updated_at')  DateTime updatedAt, @JsonKey(name: 'plan_modalities', readValue: _modalitiesInChosenOrder)  List<PlanModality> modalities)  $default,) {final _that = this;
 switch (_that) {
 case _TreatmentPlan():
 return $default(_that.id,_that.programId,_that.createdBy,_that.planName,_that.isActive,_that.notes,_that.createdAt,_that.updatedAt,_that.modalities);case _:
@@ -202,7 +202,7 @@ return $default(_that.id,_that.programId,_that.createdBy,_that.planName,_that.is
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id, @JsonKey(name: 'program_id')  String programId, @JsonKey(name: 'created_by')  String createdBy, @JsonKey(name: 'plan_name')  String planName, @JsonKey(name: 'is_active')  bool isActive,  String? notes, @JsonKey(name: 'created_at')  DateTime createdAt, @JsonKey(name: 'updated_at')  DateTime updatedAt, @JsonKey(name: 'plan_modalities')  List<PlanModality> modalities)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id, @JsonKey(name: 'program_id')  String programId, @JsonKey(name: 'created_by')  String createdBy, @JsonKey(name: 'plan_name')  String planName, @JsonKey(name: 'is_active')  bool isActive,  String? notes, @JsonKey(name: 'created_at')  DateTime createdAt, @JsonKey(name: 'updated_at')  DateTime updatedAt, @JsonKey(name: 'plan_modalities', readValue: _modalitiesInChosenOrder)  List<PlanModality> modalities)?  $default,) {final _that = this;
 switch (_that) {
 case _TreatmentPlan() when $default != null:
 return $default(_that.id,_that.programId,_that.createdBy,_that.planName,_that.isActive,_that.notes,_that.createdAt,_that.updatedAt,_that.modalities);case _:
@@ -217,7 +217,7 @@ return $default(_that.id,_that.programId,_that.createdBy,_that.planName,_that.is
 @JsonSerializable()
 
 class _TreatmentPlan implements TreatmentPlan {
-  const _TreatmentPlan({required this.id, @JsonKey(name: 'program_id') required this.programId, @JsonKey(name: 'created_by') required this.createdBy, @JsonKey(name: 'plan_name') this.planName = 'Plan 1', @JsonKey(name: 'is_active') this.isActive = true, this.notes, @JsonKey(name: 'created_at') required this.createdAt, @JsonKey(name: 'updated_at') required this.updatedAt, @JsonKey(name: 'plan_modalities') final  List<PlanModality> modalities = const []}): _modalities = modalities;
+  const _TreatmentPlan({required this.id, @JsonKey(name: 'program_id') required this.programId, @JsonKey(name: 'created_by') required this.createdBy, @JsonKey(name: 'plan_name') this.planName = 'Plan 1', @JsonKey(name: 'is_active') this.isActive = true, this.notes, @JsonKey(name: 'created_at') required this.createdAt, @JsonKey(name: 'updated_at') required this.updatedAt, @JsonKey(name: 'plan_modalities', readValue: _modalitiesInChosenOrder) final  List<PlanModality> modalities = const []}): _modalities = modalities;
   factory _TreatmentPlan.fromJson(Map<String, dynamic> json) => _$TreatmentPlanFromJson(json);
 
 @override final  String id;
@@ -229,7 +229,7 @@ class _TreatmentPlan implements TreatmentPlan {
 @override@JsonKey(name: 'created_at') final  DateTime createdAt;
 @override@JsonKey(name: 'updated_at') final  DateTime updatedAt;
  final  List<PlanModality> _modalities;
-@override@JsonKey(name: 'plan_modalities') List<PlanModality> get modalities {
+@override@JsonKey(name: 'plan_modalities', readValue: _modalitiesInChosenOrder) List<PlanModality> get modalities {
   if (_modalities is EqualUnmodifiableListView) return _modalities;
   // ignore: implicit_dynamic_type
   return EqualUnmodifiableListView(_modalities);
@@ -269,7 +269,7 @@ abstract mixin class _$TreatmentPlanCopyWith<$Res> implements $TreatmentPlanCopy
   factory _$TreatmentPlanCopyWith(_TreatmentPlan value, $Res Function(_TreatmentPlan) _then) = __$TreatmentPlanCopyWithImpl;
 @override @useResult
 $Res call({
- String id,@JsonKey(name: 'program_id') String programId,@JsonKey(name: 'created_by') String createdBy,@JsonKey(name: 'plan_name') String planName,@JsonKey(name: 'is_active') bool isActive, String? notes,@JsonKey(name: 'created_at') DateTime createdAt,@JsonKey(name: 'updated_at') DateTime updatedAt,@JsonKey(name: 'plan_modalities') List<PlanModality> modalities
+ String id,@JsonKey(name: 'program_id') String programId,@JsonKey(name: 'created_by') String createdBy,@JsonKey(name: 'plan_name') String planName,@JsonKey(name: 'is_active') bool isActive, String? notes,@JsonKey(name: 'created_at') DateTime createdAt,@JsonKey(name: 'updated_at') DateTime updatedAt,@JsonKey(name: 'plan_modalities', readValue: _modalitiesInChosenOrder) List<PlanModality> modalities
 });
 
 

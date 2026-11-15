@@ -52,6 +52,10 @@ no remote history was marked reverted or repaired. Future deployment must
 reconcile history or repeat this isolated approach rather than blindly push
 all local historical files.
 
+On November 10, migration `20261110090000_laser_and_elbow_conditions.sql`
+was applied to the linked project using the same isolated-history approach.
+The post-deployment dry run reported the database up to date.
+
 Live verification: receptionist `update_patient_details` saved the fictional
 QA patient while retaining package balances. The `document-storage` edge
 function was also deployed. This does not publish the web frontend.

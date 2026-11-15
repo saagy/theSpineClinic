@@ -32,6 +32,7 @@ const _$ModalityTypeEnumMap = {
   ModalityType.musclePain: 'muscle_pain',
   ModalityType.massBuilt: 'mass_built',
   ModalityType.tecar: 'tecar',
+  ModalityType.highPowerLaser: 'high_power_laser',
   ModalityType.tecarFocal: 'tecar_focal',
   ModalityType.neurodynamicNonWb: 'neurodynamic_non_wb',
   ModalityType.neurodynamicWb: 'neurodynamic_wb',

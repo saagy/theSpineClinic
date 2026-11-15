@@ -1248,6 +1248,7 @@ abstract final class AppStrings {
   static const String modalityMusclePain = 'Muscle Pain';
   static const String modalityMassBuilt = 'Mass Built';
   static const String modalityTecar = 'TECAR';
+  static const String modalityHighPowerLaser = 'High Power LASER';
   static const String modalityTecarFocal = 'TECAR Focal Technique';
   static const String modalityNeurodynamicNonWb = 'Neurodynamic (Non-WB)';
   static const String modalityNeurodynamicWb = 'Neurodynamic (WB)';
@@ -1335,8 +1336,6 @@ abstract final class AppStrings {
   static const String clinicalFindingsSection = 'Clinical Findings';
   static const String positionsSection = 'Positions & Notes';
   static const String treatmentPlanSection = 'Treatment Plan';
-  static const String treatmentPlanSectionSubtitle =
-      'Prescribe modalities, target regions, and session parameters';
   static const String noConditionsSelected =
       'Select at least one injury to define the affected regions.';
   static const String programNotFound = 'Program not found.';

@@ -25,6 +25,20 @@ void main() {
       expect(regions.length, 11);
       expect(regions.first.name, 'Shoulder');
     });
+
+    test('High Power LASER matches TECAR regions and timing', () {
+      expect(ModalityType.values.indexOf(ModalityType.highPowerLaser),
+          ModalityType.values.indexOf(ModalityType.tecar) + 1);
+      final regions = ModalityRegionCatalog.regionsFor(ModalityType.highPowerLaser);
+      expect(regions, ModalityRegionCatalog.regionsFor(ModalityType.tecar));
+      for (final region in regions) {
+        expect(ModalityRegionCatalog.isRegionBilateral(ModalityType.highPowerLaser, region.name),
+            ModalityRegionCatalog.isRegionBilateral(ModalityType.tecar, region.name));
+        expect(ModalityRegionCatalog.hasDuration(ModalityType.highPowerLaser, region.name),
+            ModalityRegionCatalog.hasDuration(ModalityType.tecar, region.name));
+      }
+      expect(ModalityType.highPowerLaser.hasRegionSubSelections, isTrue);
+    });
   });
 
   group('ModalityChipSelector Widget Tests', () {
