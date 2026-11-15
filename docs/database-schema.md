@@ -398,8 +398,9 @@ Visit schedule.
   outcome keeps its flag. Booking never refuses a short balance; check-in
   does (`Insufficient package balance`).
 - Migrations `20261115120000` (through the MCP server) and `20261115120100`
-  (by hand in the SQL editor, so it is not in the project's migration list)
-  were applied to the linked project on November 15, 2026 and checked there.
+  (by hand in the SQL editor) were applied to the linked project on
+  November 15, 2026 and checked there; both are recorded in its migration
+  history.
 - `status_changed_at` (`timestamptz`, nullable) — when the current status was
   recorded (null for older rows: the visit's time stands in). Set by
   `tr_guard_appointment_status`, which also refuses `visit_outcome_locked`
