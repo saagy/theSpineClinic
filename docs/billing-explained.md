@@ -39,8 +39,10 @@ does not change old invoices.
 
 An invoice has:
 
-- **A date.** Today or an earlier day, never a future one. The real time it
-  was entered is also stored.
+- **A date.** Today, never a future day. Only payment receptionists and the
+  admin may date an invoice on an earlier day, for example one written on
+  paper during an outage; the front desk sees today's date as fixed text. The
+  real time it was entered is also stored.
 - **A branch.** Receptionists with a branch always invoice at their branch.
 - **Lines.** Each line is a service and a quantity, at the catalog price.
 - **Doctors on each line.** Zero, one or several doctors per line. This is
@@ -79,6 +81,15 @@ overpaid.
 Each receipt is dated by **when the money was received** and belongs to the
 **branch where it was received**. This is what makes the daily report match
 the drawer.
+
+**Past days stay as reported.** Nobody can date money on an earlier day: the
+time is set by the server when the money is taken. Cancelling or correcting a
+payment needs a payment receptionist or the admin and a reason, and when the
+payment was taken on an earlier day the dialog says so: cancelling it changes
+that day's totals, and money that was really given back belongs in a refund,
+which is dated today. Corrections keep the original time, so the day's
+figures move only when a mistake is fixed, and the change is listed under
+Cancelled with who did it and why.
 
 **Where each payment goes.** A receipt is split across the invoice's lines
 in proportion to what is still unpaid on each line. This decides which

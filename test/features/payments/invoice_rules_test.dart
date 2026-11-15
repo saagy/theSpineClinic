@@ -24,6 +24,13 @@ RefundDraft refund(InvoiceDetail invoice, int sessions, int value, {PaymentMetho
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
+  test('money taken before today is recognised by the calendar day', () {
+    final DateTime now = DateTime(2026, 11, 15, 9);
+    expect(takenBeforeToday(DateTime(2026, 11, 14, 23, 59), now: now), isTrue);
+    expect(takenBeforeToday(DateTime(2026, 11, 15, 0, 1), now: now), isFalse);
+    expect(takenBeforeToday(DateTime(2026, 11, 15, 8), now: now), isFalse);
+  });
+
   test('each branch numbers documents with its own prefix', () {
     expect(invoiceNumberLabel(ClinicLocation.tagamoa, 7), 'TG-00007');
     expect(invoiceNumberLabel(ClinicLocation.masrElgedida, 7), 'MG-00007');

@@ -226,6 +226,13 @@ Auth-linked staff profiles. One row per Supabase Auth user (`auth.users`).
   `tr_guard_staff_working_branch`, error `branch_not_assigned`).
 - `deactivated_at` (`timestamptz`, nullable)
 
+### Invoice dates
+`tr_guard_invoice_backdate` (migration `20261115100000`) rejects an invoice
+dated before today unless the signed-in user is payment staff
+(`invoice_can('manage')`), with error `backdate_not_allowed`. Receipts and
+refunds are always dated by the server. Seeds and maintenance with no
+signed-in user are unaffected.
+
 ### `staff_branches`
 Which branches a person works at (migration `20261114150000`, applied to
 the linked project on November 14, 2026). Primary key

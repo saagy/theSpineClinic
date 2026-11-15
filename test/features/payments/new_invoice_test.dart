@@ -57,6 +57,9 @@ void main() {
     final repo = FakeInvoiceRepository();
     await pumpNewInvoice(tester, repo: repo, user: frontDesk);
     expect(find.text(t.sectionDiscount), findsNothing); // Discounts are payment-staff only.
+    // The front desk cannot choose the invoice date: invoices are dated today.
+    expect(find.byIcon(Icons.calendar_today_outlined), findsNothing);
+    expect(find.byTooltip(t.invoiceDateToday), findsOneWidget);
 
     await tester.tap(createButton);
     await tester.pumpAndSettle();
@@ -104,6 +107,8 @@ void main() {
   testWidgets('payment staff can give a free 100% discount', (tester) async {
     final repo = FakeInvoiceRepository();
     await pumpNewInvoice(tester, repo: repo, user: cashier);
+    // Payment staff may date an invoice before today.
+    expect(find.byIcon(Icons.calendar_today_outlined), findsOneWidget);
     await addService(tester, 'PT session');
     await tester.ensureVisible(find.text(t.discountPercentLabel));
     await tester.pumpAndSettle();

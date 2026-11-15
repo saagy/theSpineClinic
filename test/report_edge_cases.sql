@@ -86,6 +86,16 @@ BEGIN
   IF (r->'totals'->>'cash_in_minor')::bigint <> 350000
       OR NOT EXISTS (SELECT 1 FROM jsonb_array_elements(r->'voids') v WHERE v->>'void_reason' = 'Wrong patient') THEN
     RAISE EXCEPTION 'Cancelled payment not moved to the cancelled list: %', r; END IF;
+
+  -- Payment staff may date an invoice in the past (the front desk may not:
+  -- see invoice_workflow.sql). It counts in Services on its own date.
+  inv := pg_temp.ok(cashier, 'invoice_create', pg_temp.bill(jsonb_build_array(pg_temp.line(pt_one, 1)))
+    || jsonb_build_object('invoice_date', today - 5));
+  IF (public.invoice_report('services', today - 5, today - 5)->'totals'->>'units')::int <> 1
+      OR (public.invoice_report('services', today, today)->'totals'->>'units')::int <> 3 THEN
+    RAISE EXCEPTION 'Backdated invoice counted on the wrong day'; END IF;
+  PERFORM pg_temp.ok(cashier, 'invoice_void', jsonb_build_object('id', inv,
+    'version', pg_temp.version(inv), 'reason', 'Test entry'));
 END;
 $$;
 

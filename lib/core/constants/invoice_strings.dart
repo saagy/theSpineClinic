@@ -171,6 +171,8 @@ final class InvoiceStrings {
       'A selected doctor is no longer available. Review the doctors.';
   final String errorInvalidDiscount = 'Check the discount.';
   final String errorInvalidInvoice = 'Check the invoice date and services.';
+  final String errorBackdate = 'Only payment receptionists can date an invoice before today.';
+  final String invoiceDateToday = 'Invoices are dated today.';
   final String errorReceiptLimit = 'A payment is more than the amount due.';
 
   Map<String, String> get errorKeys => {
@@ -179,6 +181,7 @@ final class InvoiceStrings {
     'invoice_invalid_doctors': errorInvalidDoctors,
     'invoice_invalid_discount': errorInvalidDiscount,
     'invoice_invalid_invoice': errorInvalidInvoice,
+    'invoice_backdate_not_allowed': errorBackdate,
     'invoice_receipt_limit': errorReceiptLimit,
     'invoice_duplicate': errorDuplicate,
     'invoice_stale': errorStale,

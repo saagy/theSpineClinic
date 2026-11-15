@@ -15,7 +15,11 @@ class InvoiceVoidDialog extends StatefulWidget {
     required this.help,
     required this.action,
     this.confirmLabel,
+    this.notice,
   });
+
+  /// A caution shown above the reason, such as changing a past day's money.
+  final String? notice;
   final String title;
 
   /// Defaults to [title].
@@ -40,6 +44,7 @@ class _InvoiceVoidDialogState extends State<InvoiceVoidDialog> {
   Widget build(BuildContext context) => InvoiceActionDialog(
     title: widget.title,
     help: widget.help,
+    notice: widget.notice,
     confirmLabel: widget.confirmLabel ?? widget.title,
     dismissLabel: _t.keepIt,
     destructive: true,

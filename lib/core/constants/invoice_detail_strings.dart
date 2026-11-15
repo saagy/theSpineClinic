@@ -69,6 +69,14 @@ final class InvoiceDetailStrings {
   String amountTooHigh(String amount) => 'Enter $amount or less';
   final String paymentRecorded = 'Payment recorded';
   final String correctReceipt = 'Edit receipt';
+  /// Shown before changing money that was taken on an earlier day.
+  String pastDayCancelNotice(String day) =>
+      "This payment was taken on $day. Cancelling it changes that day's totals. "
+      'If the money was given back, record a refund instead.';
+  String pastDayCorrectNotice(String day) =>
+      "This payment was taken on $day. Correcting it changes that day's totals.";
+  String pastDayInvoiceNotice(String day) =>
+      "This invoice has a payment taken on $day. Cancelling it changes that day's totals.";
   final String correctReceiptHelp =
       'The old receipt is cancelled and a new one takes its place, with the same time received.';
   final String saveCorrection = 'Save changes';

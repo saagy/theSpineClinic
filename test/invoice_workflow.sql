@@ -47,6 +47,10 @@ BEGIN
   -- Front desk limits and validation.
   PERFORM pg_temp.fails(desk, 'invoice_create', pg_temp.bill(jsonb_build_array(pg_temp.line(pt_single, 1)),
     '[]', '{"kind":"percent","value":1000}'), 'discount_not_allowed');
+  -- The front desk dates invoices today; only payment staff use a past date.
+  PERFORM pg_temp.fails(desk, 'invoice_create', pg_temp.bill(jsonb_build_array(pg_temp.line(pt_single, 1)))
+    || jsonb_build_object('invoice_date', (now() AT TIME ZONE public.clinic_timezone())::date - 1),
+    'backdate_not_allowed');
   PERFORM pg_temp.fails(desk, 'invoice_create',
     pg_temp.bill(jsonb_build_array(pg_temp.line(tr_six, 1, ARRAY[dr_a]))), 'invalid_doctors');
   PERFORM pg_temp.fails(desk, 'invoice_create', pg_temp.bill(jsonb_build_array(

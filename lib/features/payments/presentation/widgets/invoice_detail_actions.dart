@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/constants/app_sizes.dart';
 import '../../../../core/constants/app_strings.dart';
 import '../../../../core/network/app_routes.dart';
+import '../../../../core/utils/formatters.dart';
 import '../../../../core/utils/money.dart';
 import '../../../../shared/widgets/app_snackbar.dart';
 import '../../../../shared/widgets/record_action_menu.dart';
@@ -68,6 +69,9 @@ Future<void> voidInvoiceDocument(
     builder: (_) => InvoiceVoidDialog(
       title: title,
       help: help,
+      notice: receipt != null && takenBeforeToday(receipt.receivedAt)
+          ? _t.pastDayCancelNotice(Formatters.formatDateMedium(receipt.receivedAt.toLocal()))
+          : null,
       action: (reason) => receipt != null
           ? InvoiceAction.voidReceipt(invoice, receipt, reason)
           : refund != null
@@ -94,6 +98,12 @@ Future<void> cancelInvoice(BuildContext context, InvoiceDetail invoice) async {
     builder: (_) => InvoiceVoidDialog(
       title: _t.voidInvoice,
       help: _t.cancelWithPaymentsHelp(Money.format(invoice.receivedMinor)),
+      notice: switch (invoice.activeReceipts.where((r) => takenBeforeToday(r.receivedAt)).firstOrNull) {
+        final InvoiceReceipt past => _t.pastDayInvoiceNotice(
+          Formatters.formatDateMedium(past.receivedAt.toLocal()),
+        ),
+        null => null,
+      },
       confirmLabel: _t.cancelWithPayments,
       action: (reason) => InvoiceAction.voidInvoiceWithPayments(invoice, reason),
     ),

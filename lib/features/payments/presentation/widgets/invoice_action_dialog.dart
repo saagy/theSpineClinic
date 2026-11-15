@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/constants/app_sizes.dart';
 import '../../../../core/constants/app_strings.dart';
 import '../../../../core/constants/app_text_styles.dart';
+import '../../../../core/constants/clinic_colors.dart';
 import '../../../../core/errors/app_exception.dart';
 import '../../domain/invoice_action.dart';
 import '../invoice_detail_providers.dart';
@@ -18,11 +19,15 @@ class InvoiceActionDialog extends ConsumerStatefulWidget {
     required this.buildAction,
     required this.child,
     this.help,
+    this.notice,
     this.dismissLabel = AppStrings.cancel,
     this.destructive = false,
   });
   final String title;
   final String? help;
+
+  /// A caution shown above the form, such as changing a past day's money.
+  final String? notice;
   final String confirmLabel;
 
   /// Label of the button that closes the dialog without saving.
@@ -97,6 +102,10 @@ class _InvoiceActionDialogState extends ConsumerState<InvoiceActionDialog> {
                     ),
                     const SizedBox(height: AppSizes.p20),
                   ],
+                  if (widget.notice != null) ...[
+                    InvoiceNotice(text: widget.notice!),
+                    const SizedBox(height: AppSizes.p20),
+                  ],
                   widget.child,
                   if (_error != null) ...[
                     const SizedBox(height: AppSizes.p16),
@@ -139,6 +148,38 @@ class _InvoiceActionDialogState extends ConsumerState<InvoiceActionDialog> {
                 ],
                 Text(widget.confirmLabel, style: AppTextStyles.button),
               ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// A caution inside an invoice dialog. It informs; it never blocks.
+class InvoiceNotice extends StatelessWidget {
+  const InvoiceNotice({super.key, required this.text});
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    final ClinicColors clinic = ClinicColors.of(context);
+    return Container(
+      padding: const EdgeInsets.all(AppSizes.p12),
+      decoration: BoxDecoration(
+        color: clinic.warningContainer,
+        borderRadius: BorderRadius.circular(AppSizes.r8),
+        border: Border.all(color: clinic.warning.withAlpha(110), width: AppSizes.borderWidth),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(Icons.history, size: AppSizes.iconSmall, color: clinic.warning),
+          const SizedBox(width: AppSizes.p8),
+          Expanded(
+            child: Text(
+              text,
+              style: AppTextStyles.bodyMedium.copyWith(color: Theme.of(context).colorScheme.onSurface),
             ),
           ),
         ],

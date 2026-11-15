@@ -14,6 +14,14 @@ ClinicLocation _branch(Object? value) =>
 
 DateTime _time(Object? value) => DateTime.parse(value! as String);
 
+/// Whether money was taken on a day before today (device time). Changing
+/// it then changes a day that has already been reported.
+bool takenBeforeToday(DateTime receivedAt, {DateTime? now}) {
+  final DateTime local = receivedAt.toLocal();
+  final DateTime today = now ?? DateTime.now();
+  return DateTime(local.year, local.month, local.day).isBefore(DateTime(today.year, today.month, today.day));
+}
+
 /// Who voided a document, when and why. Voided documents stay on record.
 class VoidStamp {
   const VoidStamp({required this.at, required this.byName, required this.reason});

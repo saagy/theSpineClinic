@@ -139,6 +139,9 @@ then runs these scripts:
   checked-in counts per type, shared sessions, traction and cancelled
   appointments left out, pending appointments, branch and doctor filters)
 
+- invoice_fixture.sql + invoice_workflow.sql also checks that the front desk
+  cannot date an invoice before today, and report_edge_cases.sql that payment
+  staff can and the invoice counts in Services on its own date.
 - invoice_fixture.sql + report_edge_cases.sql (three-way doctor splits, a
   correction that names another doctor, a refund on a shared line, a
   cancelled paid invoice, a renamed and deactivated doctor, money and

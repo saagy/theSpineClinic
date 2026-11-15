@@ -42,6 +42,15 @@ void main() {
       await capturePolish(tester, key, 'invoice-payment-$name');
     });
 
+    testWidgets("cancelling an earlier day's payment warns on $name", (tester) async {
+      final key = await open(tester);
+      await tap(tester, find.byTooltip(AppStrings.moreActions).first);
+      await tap(tester, find.text(t.voidAction));
+      expect(find.textContaining("changes that day's totals"), findsOneWidget);
+      expect(tester.takeException(), isNull);
+      await capturePolish(tester, key, 'invoice-past-day-void-$name');
+    });
+
     testWidgets('refunded invoice renders on $name', (tester) async {
       final key = await open(tester, refunded: true);
       expect(find.text(t.refundNumber('TG-00004')), findsOneWidget);

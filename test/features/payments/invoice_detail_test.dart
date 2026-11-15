@@ -86,6 +86,9 @@ void main() {
     await tap(tester, menus.first); // Receipt TG-00031; the invoice menu comes last.
     await tap(tester, find.text(t.voidAction));
     expect(find.text(t.voidReceiptHelp(Money.format(100000))), findsOneWidget);
+    // The fixture payment was taken on an earlier day: the dialog says that
+    // cancelling it changes that day and points to a refund instead.
+    expect(find.textContaining("changes that day's totals"), findsOneWidget);
     final confirm = find.widgetWithText(FilledButton, t.voidReceiptTitle);
     await tap(tester, confirm);
     expect(find.text(t.reasonRequired), findsOneWidget);

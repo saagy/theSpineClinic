@@ -83,6 +83,9 @@ class _InvoicePaymentDialogState extends ConsumerState<InvoicePaymentDialog> {
     return InvoiceActionDialog(
       title: old == null ? _t.recordPayment : _t.correctReceipt,
       help: old == null ? null : _t.correctReceiptHelp,
+      notice: old == null || !takenBeforeToday(old.receivedAt)
+          ? null
+          : _t.pastDayCorrectNotice(Formatters.formatDateMedium(old.receivedAt.toLocal())),
       confirmLabel: old == null ? _t.recordPayment : _t.saveCorrection,
       buildAction: _action,
       child: Column(

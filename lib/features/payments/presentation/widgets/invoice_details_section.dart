@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../auth/presentation/auth_providers.dart';
+import '../../domain/invoice_access.dart';
 import '../../../../core/constants/app_sizes.dart';
 import '../../../../core/constants/app_strings.dart';
 import '../../../../core/constants/app_text_styles.dart';
@@ -15,7 +18,7 @@ import 'service_form_controls.dart';
 const _t = AppStrings.invoices;
 
 /// Who the invoice is for, where and when it was issued, and an optional note.
-class InvoiceDetailsSection extends StatelessWidget {
+class InvoiceDetailsSection extends ConsumerWidget {
   const InvoiceDetailsSection({
     super.key,
     required this.patient,
@@ -29,8 +32,10 @@ class InvoiceDetailsSection extends StatelessWidget {
   final ValueChanged<VoidCallback> onChanged;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final colors = Theme.of(context).colorScheme;
+    // The front desk dates invoices today; payment staff may use a past date.
+    final bool canBackdate = InvoiceAccess.canManage(ref.watch(currentUserProvider).value);
     return FormSection(
       title: _t.invoiceDetails,
       child: Column(
@@ -52,7 +57,18 @@ class InvoiceDetailsSection extends StatelessWidget {
             second: LabeledFormField(
               label: _t.invoiceDate,
               enabled: enabled,
-              child: InkWell(
+              child: !canBackdate
+                  ? ConstrainedBox(
+                      constraints: const BoxConstraints(minHeight: AppSizes.tappableMin),
+                      child: Align(
+                        alignment: AlignmentDirectional.centerStart,
+                        child: Tooltip(
+                          message: _t.invoiceDateToday,
+                          child: Text(Formatters.formatDateMedium(input.date), style: AppTextStyles.bodyMedium),
+                        ),
+                      ),
+                    )
+                  : InkWell(
                 onTap: enabled ? () => _pickDate(context) : null,
                 borderRadius: BorderRadius.circular(AppSizes.r6),
                 child: InputDecorator(
