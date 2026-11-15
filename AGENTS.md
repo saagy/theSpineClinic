@@ -230,7 +230,7 @@ lib/
 - **Sentry:** persistent API access on this Windows account uses Credential Manager, not a repo secret. Read `docs/sentry-access.md` for the local helper, scopes, issue endpoints and private source-map release steps. Never print credentials or commit raw events.
 - **Schema Docs (agent-readable):** `docs/database-schema.md` — full DB reference (tables, columns, enums, indexes, functions, triggers, RLS summary)
 - **Schema DDL (recreation):** `supabase/full_schema.sql` — run this to recreate the DB schema from scratch
-- **Migrations:** `supabase/migrations/` — incremental changes; `full_schema.sql` stays in sync with them
+- **Migrations:** `supabase/migrations/` — incremental changes; `full_schema.sql` stays in sync with them. The linked project's `supabase_migrations.schema_migrations` was synced to these files on 2026-11-15 (same versions and names, 69 rows). The files are reference only: never run `supabase db push`, `db reset` or `migration repair`, and `apply_migration` is denied in `.claude/settings.local.json`. A schema change is applied by hand (SQL editor), then recorded with a matching file and tracking row in the same task.
 
 ## Design Direction and UI Overhaul
 
