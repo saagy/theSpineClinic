@@ -227,7 +227,10 @@ Auth-linked staff profiles. One row per Supabase Auth user (`auth.users`).
 - `deactivated_at` (`timestamptz`, nullable)
 
 ### Invoice dates
-`tr_guard_invoice_backdate` (migration `20261115100000`) rejects an invoice
+`tr_guard_invoice_backdate` (migration `20261115100000`, applied to the
+linked project on November 15, 2026 and checked there: the front desk is
+refused yesterday's date, a head receptionist and today's date are
+accepted) rejects an invoice
 dated before today unless the signed-in user is payment staff
 (`invoice_can('manage')`), with error `backdate_not_allowed`. Receipts and
 refunds are always dated by the server. Seeds and maintenance with no
